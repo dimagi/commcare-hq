@@ -85,7 +85,7 @@ class ProfileTest(TestCase, TestXmlMixin):
 
     def _test_dependencies(self, profile, key, value, setting):
         node = profile.find('./features/dependencies')
-        if node:
+        if node is not None:
             app_dependencies = node.findall('./android_package')
             actual_value = [n.get('id') for n in app_dependencies]
         else:
@@ -107,6 +107,8 @@ class ProfileTest(TestCase, TestXmlMixin):
     def test_profile_properties(self, *args):
         for setting in get_custom_commcare_settings():
             if setting['id'] == 'users':
+                continue
+            if setting['id'] == 'credentials':
                 continue
             if setting.get('widget') == 'multiSelect':
                 for values in all_combinations(setting['values']):
@@ -141,6 +143,22 @@ class ProfileTest(TestCase, TestXmlMixin):
         profile = self.app.create_profile(build_profile_id=self.build_profile_id)
         self._test_custom_property(ET.fromstring(profile), 'heartbeat-url',
                                    self.app.heartbeat_url(self.build_profile_id))
+
+    def test_credentials_in_profile(self):
+        self.app.profile = {
+            'features': {
+                'credentials': '3MON_ACTIVE',
+            }
+        }
+        profile = self.app.create_profile()
+
+        profile_xml = ET.fromstring(profile)
+        credentials_element = self._get_node(profile_xml, "credentials", './features/{}')
+
+        self.assertEqual(credentials_element.attrib.get("active"), "true")
+        credential_el = credentials_element[0]
+        self.assertEqual(credential_el.attrib.get("type"), "APP_ACTIVITY")
+        self.assertEqual(credential_el.attrib.get("level"), "3MON_ACTIVE")
 
     def test_version(self):
         profile_xml = ET.fromstring(self.app.create_profile())

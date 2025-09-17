@@ -4,14 +4,16 @@ import re
 from collections import defaultdict
 
 import random  # temporary for testing
-import requests
-
 from django.conf import settings
 from django.utils.text import camel_case_to_spaces
 
 import jsonschema
+import requests
 
-from corehq.apps.integration.kyc.models import KycVerificationFailureCause, KycVerificationStatus
+from corehq.apps.integration.kyc.models import (
+    KycVerificationFailureCause,
+    KycVerificationStatus,
+)
 from corehq.util.metrics import metrics_counter
 
 
@@ -160,7 +162,7 @@ def get_user_data_for_api(kyc_user, config):
     """
     return {
         api_field: kyc_user.get(user_data_property)
-        for api_field, user_data_property in config.api_field_to_user_data_map.items()
+        for api_field, user_data_property in config.get_api_field_to_user_data_map_values().items()
         if kyc_user.get(user_data_property) is not None
     }
 

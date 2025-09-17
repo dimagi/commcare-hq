@@ -24,6 +24,8 @@ MAX_ATTEMPTS = 3
 #       being conflated with MAX_ATTEMPTS.
 MAX_BACKOFF_ATTEMPTS = 6
 
+COMMCARE_CONNECT_URL = 'https://connect.dimagi.com/api/receiver/'
+
 
 class State(IntegerChoices):
     # powers of two to allow multiple simultaneous states (not currently used)
@@ -32,10 +34,23 @@ class State(IntegerChoices):
     Success = 4, _('Succeeded')
     Cancelled = 8, _('Cancelled')
     Empty = 16, _('Empty')  # There was nothing to send. Implies Success.
-    InvalidPayload = 32, _('Invalid Payload')  # Implies Cancelled.
+    PayloadRejected = 32, _('Payload Rejected')  # Implies Cancelled.
+    ErrorGeneratingPayload = 64, _('Error Generating Payload')  # Unsent like Empty, but implies Cancelled
+
+    @staticmethod
+    def state_for_key(key):
+        # Keys match RepeatRecordStateFilter.options[*][0]
+        state_map = {s.name.upper(): s for s in State}
+        return state_map.get(key.upper() if key else None)
 
 
 RECORD_QUEUED_STATES = (State.Pending, State.Fail)
+RECORD_FAILED_STATES = (
+    State.Fail,
+    State.Cancelled,
+    State.PayloadRejected,
+    State.ErrorGeneratingPayload,
+)
 
 
 class UCRRestrictionFFStatus(IntegerChoices):

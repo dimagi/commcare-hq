@@ -55,7 +55,6 @@ from corehq.apps.app_manager.views import (
     get_form_questions,
     get_multimedia_sizes,
     get_xform_source,
-    import_app,
     list_apps,
     multimedia_ajax,
     new_app,
@@ -89,7 +88,7 @@ from corehq.apps.app_manager.views import (
     view_module_legacy,
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
-from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
+from corehq.apps.app_manager.views.modules import ExistingCaseTypesView, AllCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
@@ -162,7 +161,6 @@ urlpatterns = [
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
     url(r'^app_exchange/$', app_exchange, name='app_exchange'),
     url(r'^enable_usercase/$', enable_usercase, name="enable_usercase"),
-    url(r'^import_app/$', import_app, name='import_app'),
     url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
@@ -275,6 +273,7 @@ urlpatterns = [
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(),
         name=AppDiffView.urlname),
     url(r'existing_case_types', ExistingCaseTypesView.as_view(), name=ExistingCaseTypesView.urlname),
+    url(r'all_case_types/', AllCaseTypesView.as_view(), name=AllCaseTypesView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
 ]

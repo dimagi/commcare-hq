@@ -71,8 +71,7 @@ class Command(BaseCommand):
 
         for config in configs:
             if not config.is_static:
-                config.meta.build.rebuilt_asynchronously = True
-                config.save()
+                config.save_rebuilt_async()
 
     @property
     def fake_change_doc(self):

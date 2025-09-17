@@ -3,7 +3,7 @@ from corehq.blobs import get_blob_db
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
-    FIXTURE_BUCKET,
+    fixture_bucket,
     Field,
     LookupTable,
     LookupTableRow,
@@ -37,11 +37,13 @@ class OtaFixtureTest(TestCase):
         cls.group2 = Group(domain=DOMAIN, name='group2', case_sharing=True, users=[])
         cls.group2.save()
 
-        make_item_lists(SA_PROVINCES, 'western cape'),
-        make_item_lists(FR_PROVINCES, 'burgundy', cls.group1),
-        make_item_lists(CA_PROVINCES, 'alberta', cls.group2),
+        sa_data_type, _ = make_item_lists(SA_PROVINCES, 'western cape')
+        fr_data_type, _ = make_item_lists(FR_PROVINCES, 'burgundy', cls.group1)
+        ca_data_type, _ = make_item_lists(CA_PROVINCES, 'alberta', cls.group2)
 
-        cls.addClassCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + "/" + DOMAIN)
+        cls.addClassCleanup(get_blob_db().delete, key=fixture_bucket(sa_data_type.id, DOMAIN))
+        cls.addClassCleanup(get_blob_db().delete, key=fixture_bucket(fr_data_type.id, DOMAIN))
+        cls.addClassCleanup(get_blob_db().delete, key=fixture_bucket(ca_data_type.id, DOMAIN))
 
         cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)
 

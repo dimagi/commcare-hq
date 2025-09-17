@@ -117,13 +117,13 @@ class TestUsersByLocation(TestCase):
 
     def test_user_ids_at_locations(self):
         self.assertItemsEqual(
-            mobile_user_ids_at_locations([self.meereen._id]),
+            mobile_user_ids_at_locations(self.domain, [self.meereen._id]),
             [self.daenerys._id, self.tyrion._id]
         )
 
     def test_all_user_ids_at_locations(self):
         self.assertItemsEqual(
-            user_ids_at_locations([self.meereen._id]),
+            user_ids_at_locations(self.domain, [self.meereen._id]),
             [self.daenerys._id, self.tyrion._id, self.george._id]
         )
 

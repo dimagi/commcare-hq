@@ -126,7 +126,7 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
 
 
 @mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
-@mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
+@mock.patch('corehq.apps.users.views.mobile.users.UserES', UserESFake)
 class TestAccessRestrictions(LocationHierarchyTestCase):
     domain = 'test-access-restrictions-domain'
     location_type_names = ['state', 'county', 'city']
@@ -214,7 +214,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
                       args=[self.domain, user._id])
         with mock.patch(
             'corehq.apps.users.views.mobile.users.get_domain_languages',
-            new=lambda *args: None,
+            new=lambda *args, **kwargs: None,
         ):
             self._assert_url_returns_status(url, status_code)
 

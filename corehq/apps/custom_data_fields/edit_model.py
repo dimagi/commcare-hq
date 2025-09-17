@@ -15,7 +15,7 @@ from corehq import privileges
 from memoized import memoized
 from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.users.models import SQLUserData, CouchUser
 
@@ -279,7 +279,6 @@ class CustomDataModelMixin(object):
     profile_required_for_options = []
 
     @use_bootstrap5
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(CustomDataModelMixin, self).dispatch(request, *args, **kwargs)
 
@@ -399,7 +398,7 @@ class CustomDataModelMixin(object):
                 user_data = SQLUserData.objects.filter(profile=profile)
                 for ud in user_data:
                     user = CouchUser.get_by_user_id(ud.user_id)
-                    if user.is_active and self.domain in user.domains:
+                    if user.is_active_in_domain(self.domain) and self.domain in user.domains:
                         errors.append(_("Could not delete profile '{}' because it has users "
                                         "assigned.").format(profile.name))
                         break

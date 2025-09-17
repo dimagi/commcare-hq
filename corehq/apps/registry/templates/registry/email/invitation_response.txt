@@ -16,5 +16,5 @@ The '{{ domain }}' project space has opted out of the '{{ registry_name }}' Comm
 
 {% blocktrans %}Thank you for using CommCare.
 Best regards,
-The CommCare HQ Team
+The CommCare Team
 www.commcarehq.org{% endblocktrans %}

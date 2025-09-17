@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
@@ -9,6 +9,7 @@ from corehq.apps.users.validation import (
 )
 
 
+@override_settings(HQ_ACCOUNT_ROOT="commcarehq.org")
 class TestMobileUsernameValidation(TestCase):
 
     @classmethod
@@ -67,6 +68,7 @@ class TestMobileUsernameValidation(TestCase):
                          "Username 'retired@test-domain.commcarehq.org' is already taken or reserved.")
 
 
+@override_settings(HQ_ACCOUNT_ROOT="commcarehq.org")
 class TestValidateCompleteUsername(SimpleTestCase):
 
     def test_no_exception_raised_if_valid_email(self):
@@ -97,3 +99,11 @@ class TestValidateCompleteUsername(SimpleTestCase):
 
         self.assertEqual(cm.exception.message,
                          "The username email domain '@domain2.commcarehq.org' should be '@domain.commcarehq.org'.")
+
+    @override_settings(HQ_ACCOUNT_ROOT="example.com")
+    def test_exception_raised_if_incorrect_account_root(self):
+        with self.assertRaises(ValidationError) as cm:
+            _validate_complete_username('user@domain.commcarehq.org', 'domain')
+
+        self.assertEqual(cm.exception.message,
+                         "The username email domain '@domain.commcarehq.org' should be '@domain.example.com'.")

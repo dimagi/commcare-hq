@@ -28,6 +28,9 @@ from ..signals import update_user_in_es
 @patch('corehq.apps.sms.tasks.sync_user_phone_numbers', new=MagicMock())
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock())
 @patch('corehq.apps.users.models.CommCareUser.project', new=MagicMock())
+@patch('corehq.apps.callcenter.tasks.Domain.get_by_name', new=lambda _: MagicMock(usercase_enabled=True))
+@patch('corehq.apps.analytics.signals.get_subscription_properties_by_user', new=MagicMock(return_value={}))
+@patch('corehq.apps.analytics.signals.get_domain_membership_properties', new=MagicMock(return_value={}))
 @es_test
 class TestUserSignals(SimpleTestCase):
 
@@ -37,7 +40,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.users.signals._update_user_in_es')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_usercases,
                                update_hubspot_properties):
-        CommCareUser(username='test').save()
+        CommCareUser(username='test', domain='domain').save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
@@ -50,11 +53,11 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.users.signals._update_user_in_es')
     def test_webuser_save(self, send_to_es, invalidate, sync_usercases,
                           update_hubspot_properties):
-        WebUser().save()
+        WebUser(domains=['domain']).save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
-        self.assertFalse(sync_usercases.called)
+        self.assertTrue(sync_usercases.called)
         self.assertTrue(update_hubspot_properties.called)
 
 
@@ -104,6 +107,7 @@ class TestUserSyncToEs(SimpleTestCase):
             'domain': user.domain,
             'username': user.username,
             'is_active': True,
+            'domain_membership': {'domain': user.domain, 'is_active': True},
             'first_name': user.first_name,
             'last_name': user.last_name,
             'doc_type': user.doc_type,

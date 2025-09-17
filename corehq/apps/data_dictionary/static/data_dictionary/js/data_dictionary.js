@@ -6,28 +6,33 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import hqMain from "hqwebapp/js/bootstrap3/main";
 import googleAnalytics from "analytix/js/google";
 import uiElementKeyValueList from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list";
-import DOMPurify from "DOMPurify/dist/purify.min";
+import DOMPurify from "dompurify";
 import toggles from "hqwebapp/js/toggles";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
 import "data_interfaces/js/make_read_only";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 import "knockout-sortable/build/knockout-sortable";
+import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
 
 var caseType = function (
     name,
     fhirResourceType,
     deprecated,
     moduleCount,
+    propertyCount,
+    deprecatedPropertyCount,
     geoCaseProp,
     isSafeToDelete,
     changeSaveButton,
     resetSaveButton,
-    dataUrl
+    dataUrl,
 ) {
     var self = {};
     self.name = name || gettext("No Name");
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
+    self.propertyCount = propertyCount;
+    self.deprecatedPropertyCount = deprecatedPropertyCount;
     self.url = "#" + name;
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
@@ -39,22 +44,37 @@ var caseType = function (
 
     self.groups.subscribe(changeSaveButton);
 
-    self.fetchCaseProperties = function () {
+    self.loadCaseProperties = function (isLoading) {
         if (self.groups().length === 0) {
-            let caseTypeUrl = self.dataUrl + self.name + '/';
-            recurseChunks(caseTypeUrl);
+            isLoading(true);
+            const caseTypeUrl = self.dataUrl + self.name + '/';
+            fetchCaseProperties(caseTypeUrl).then(() => {
+                self.groups.sort(sortGroupsFn);
+                self.resetSaveButton();
+                isLoading(false);
+            });
         }
     };
 
-    const recurseChunks = function (nextUrl) {
-        $.getJSON(nextUrl, function (data) {
+    const fetchCaseProperties = function (nextUrl) {
+        return $.getJSON(nextUrl).then(function (data) {
             setCaseProperties(data.groups);
             self.resetSaveButton();
             nextUrl = data._links.next;
             if (nextUrl) {
-                recurseChunks(nextUrl);
+                return fetchCaseProperties(nextUrl);
             }
         });
+    };
+
+    const sortGroupsFn = function (left, right) {
+        if (left.index === undefined || left.index > right.index) {
+            return 1;
+        }
+        if (right.index === undefined || right.index > left.index) {
+            return -1;
+        }
+        return 0;
     };
 
     const setCaseProperties = function (groupData) {
@@ -69,7 +89,8 @@ var caseType = function (
                     group.name,
                     group.description,
                     group.deprecated,
-                    self.changeSaveButton
+                    group.index,
+                    self.changeSaveButton,
                 );
                 self.groups.push(groupObj);
             }
@@ -87,7 +108,7 @@ var caseType = function (
                     self.name,
                     isGeoCaseProp,
                     groupObj.name(),
-                    self.changeSaveButton
+                    self.changeSaveButton,
                 );
                 groupObj.properties.push(propObj);
             }
@@ -103,7 +124,8 @@ var groupsViewModel = function (
     name,
     description,
     deprecated,
-    changeSaveButton
+    index,
+    changeSaveButton,
 ) {
     var self = {};
     self.id = id;
@@ -115,6 +137,7 @@ var groupsViewModel = function (
     self.expanded = ko.observable(true);
     self.toggleExpanded = () => self.expanded(!self.expanded());
     self.deprecated = deprecated;
+    self.index = index;
     // Ensures that groups are not directly hidden on clicking the deprecated button
     self.toBeDeprecated = ko.observable(deprecated || false);
     self.deprecateGroup = function () {
@@ -136,14 +159,14 @@ var groupsViewModel = function (
                 'label': self.newPropertyName(),
                 'allowedValues': {},
             };
-            let propObj = propertyListItem(
+            const propObj = propertyListItem(
                 prop,
                 false,
                 self.name(),
                 self.caseType,
                 false,
                 self.name(),
-                changeSaveButton
+                changeSaveButton,
             );
             self.newPropertyName(undefined);
             self.properties.push(propObj);
@@ -165,7 +188,7 @@ var propertyListItem = function (
     caseType,
     isGeoCaseProp,
     loadedGroup,
-    changeSaveButton
+    changeSaveButton,
 ) {
     var self = {};
     self.id = prop.id;
@@ -220,7 +243,7 @@ var propertyListItem = function (
         interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
         subTitle, /* subTitle */
         {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
-        10 /* maxDisplay */
+        10, /* maxDisplay */
     );
     self.allowedValues.val(prop.allowed_values);
     if (initialPageData.get('read_only_mode')) {
@@ -293,7 +316,7 @@ var propertyListItem = function (
     return self;
 };
 
-var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes) {
+var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit) {
     var self = {};
     self.caseTypes = ko.observableArray();
     self.activeCaseType = ko.observable();
@@ -304,6 +327,9 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.showAll = ko.observable(false);
     self.availableDataTypes = typeChoices;
     self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
+    self.caseTypeIsLoading = ko.observable();
+
+    self.casePropertyWarningViewModel = new casePropertyWarningViewModel(casePropertyLimit);
 
     const params = new URLSearchParams(document.location.search);
     self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
@@ -319,7 +345,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
             const properties = [];
             _.each(self.activeCaseTypeData(), function (group, index) {
                 if (group.name() !== "") {
-                    let groupData = {
+                    const groupData = {
                         'caseType': group.caseType,
                         'id': group.id,
                         'name': group.name(),
@@ -343,7 +369,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                     }
 
                     const allowedValues = element.allowedValues.val();
-                    let pureAllowedValues = {};
+                    const pureAllowedValues = {};
                     for (const key in allowedValues) {
                         pureAllowedValues[DOMPurify.sanitize(key)] = DOMPurify.sanitize(allowedValues[key]);
                     }
@@ -402,11 +428,13 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.fhir_resource_type,
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
+                        caseTypeData.property_count,
+                        caseTypeData.deprecated_property_count,
                         data.geo_case_property,
                         caseTypeData.is_safe_to_delete,
                         changeSaveButton,
                         resetSaveButton,
-                        dataUrl
+                        dataUrl,
                     );
                     self.caseTypes.push(caseTypeObj);
                 });
@@ -415,19 +443,21 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                     // Check that hash navigation has not already loaded the first case type
                     && self.caseTypes()[0] !== self.getHashNavigationCaseType()
                 ) {
-                    // `self.goToCaseType()` calls `caseType.fetchCaseProperties()`
+                    // `self.goToCaseType()` calls `caseType.loadCaseProperties()`
                     // to fetch the case properties of the first case type
-                    let caseType = self.caseTypes()[0];
+                    const caseType = self.caseTypes()[0];
                     self.goToCaseType(caseType);
                 }
                 self.fhirResourceType.subscribe(changeSaveButton);
                 self.removefhirResourceType.subscribe(changeSaveButton);
+            })
+            .always(function () {
                 callback();
             });
     };
 
     self.getHashNavigationCaseType = function () {
-        let fullHash = window.location.hash.split('?')[0],
+        const fullHash = window.location.hash.split('?')[0],
             hash = fullHash.substring(1);
         return _.find(self.caseTypes(), function (prop) {
             return prop.name === hash;
@@ -441,15 +471,12 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.getCaseTypeGroupsObservable = function () {
-        let caseType = self.getActiveCaseType();
-        if (caseType) {
-            return caseType.groups;  // The observable, not its value
-        }
+        const caseType = self.getActiveCaseType();
+        return caseType ? caseType.groups : ko.observableArray();
     };
 
     self.activeCaseTypeData = function () {
-        const groupsObs = self.getCaseTypeGroupsObservable();
-        return (groupsObs) ? groupsObs() : [];
+        return ko.unwrap(self.getCaseTypeGroupsObservable());
     };
 
     self.isActiveCaseTypeDeprecated = function () {
@@ -476,7 +503,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     };
 
     self.deprecateOrRestoreCaseType = function (shouldDeprecate) {
-        let activeCaseType = self.getActiveCaseType();
+        const activeCaseType = self.getActiveCaseType();
         if (!activeCaseType) {
             return;
         }
@@ -519,7 +546,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 return;
             }
         }
-        caseType.fetchCaseProperties();
+        caseType.loadCaseProperties(self.caseTypeIsLoading);
         self.activeCaseType(caseType.name);
         self.fhirResourceType(caseType.fhirResourceType());
         self.removefhirResourceType(false);
@@ -584,9 +611,10 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                 self.newGroupName(),
                 '',
                 false,
-                changeSaveButton
+                null,
+                changeSaveButton,
             );
-            let groupsObs = self.getCaseTypeGroupsObservable();
+            const groupsObs = self.getCaseTypeGroupsObservable();
             groupsObs.push(group);  // TODO: Broken for computed value
             self.newGroupName(undefined);
         }
@@ -605,6 +633,12 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
             next = self.casePropertyList()[i];
         }
     };
+
+    self.activeCaseType.subscribe(function () {
+        const caseType = self.getActiveCaseType();
+        const nonDeprecatedPropertyCount = caseType.propertyCount - caseType.deprecatedPropertyCount;
+        self.casePropertyWarningViewModel.updateViewModel(caseType.name, nonDeprecatedPropertyCount);
+    });
 
     self.showDeprecated = function () {
         self.showAll(true);
@@ -646,7 +680,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
             self.nameChecked(false);
             return;
         }
-        let existing = _.find(self.caseTypes(), function (prop) {
+        const existing = _.find(self.caseTypes(), function (prop) {
             return prop.name === value;
         });
         self.nameUnique(!existing);
@@ -681,19 +715,24 @@ $(function () {
         casePropertyUrl = initialPageData.reverse('update_case_property'),
         typeChoices = initialPageData.get('typeChoices'),
         fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
-        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
+        casePropertyLimit = initialPageData.get('casePropertyLimit'),
+        viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes, casePropertyLimit);
 
     function doHashNavigation() {
-        let caseType = viewModel.getHashNavigationCaseType();
+        const caseType = viewModel.getHashNavigationCaseType();
         if (caseType) {
             viewModel.goToCaseType(caseType);
         }
     }
 
-    window.onhashchange = doHashNavigation;
+    function ready() {
+        doHashNavigation();
+        $('#hq-content').parent().koApplyBindings(viewModel);
+        $('#dd-loading').addClass('hide');
+    }
 
-    viewModel.init(doHashNavigation);
-    $('#hq-content').parent().koApplyBindings(viewModel);
+    window.onhashchange = doHashNavigation;
+    viewModel.init(ready);
     $('#download-dict').click(function () {
         googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
     });

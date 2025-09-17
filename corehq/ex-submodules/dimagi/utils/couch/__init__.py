@@ -295,7 +295,7 @@ class CriticalSection(object):
     def __enter__(self):
         try:
             for key in self.keys:
-                name = "_".join(re.split(r"_|-", key, 2)[:2])
+                name = "_".join(re.split(r"_|-", key, maxsplit=2)[:2])
                 lock = get_redis_lock(key, timeout=self.timeout, name=name)
                 self.locks.append(lock)
             for lock in self.locks:

@@ -26,13 +26,13 @@ from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
     MOBILE_UCR_V1_ALL_REFERENCES,
     MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppManagerException,
     PracticeUserException,
     SuiteError,
@@ -205,11 +205,10 @@ CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 
-def is_valid_case_type(case_type, module):
+def is_valid_case_type(case_type):
     """
     Returns ``True`` if ``case_type`` is valid for ``module``
 
-    >>> from corehq.apps.app_manager.const import USERCASE_TYPE
     >>> from corehq.apps.app_manager.models import Module, AdvancedModule
     >>> is_valid_case_type('foo', Module())
     True
@@ -221,15 +220,9 @@ def is_valid_case_type(case_type, module):
     False
     >>> is_valid_case_type(None, Module())
     False
-    >>> is_valid_case_type(USERCASE_TYPE, Module())
-    False
-    >>> is_valid_case_type(USERCASE_TYPE, AdvancedModule())
-    True
     """
-    from corehq.apps.app_manager.models import AdvancedModule
     matches_regex = bool(_case_type_regex.match(case_type or ''))
-    prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
-    return matches_regex and prevent_usercase_type
+    return matches_regex
 
 
 def module_case_hierarchy_has_circular_reference(module):
@@ -634,7 +627,7 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
             _("User {username} has been deleted, you can't use that user as practice user").format(
                 username=user.username)
         )
-    if not user.is_active:
+    if not user.is_active_in_domain(domain):
         raise PracticeUserException(
             _("User {username} has been deactivated, you can't use that user as practice user").format(
                 username=user.username)
@@ -650,7 +643,7 @@ def get_form_source_download_url(xform):
 
     try:
         app = get_app(xform.domain, xform.build_id)
-    except Http404:
+    except (Http404, AppInDifferentDomainException):
         return None
     if app.is_remote_app():
         return None

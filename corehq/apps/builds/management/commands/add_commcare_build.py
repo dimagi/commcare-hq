@@ -1,8 +1,7 @@
 import textwrap
+import requests
 
 from django.core.management.base import BaseCommand, CommandError
-
-from github import Github
 
 from corehq.apps.builds.models import (
     BuildMenuItem,
@@ -48,23 +47,11 @@ class Command(BaseCommand):
 
 
 def _get_latest_commcare_build_version():
-    """Get the latest commcare build version from the github tags.
-
-    FIXME: create a custom test API token for this test?
-    NOTE: this doctest is _not_ executed because GitHub rate-limits
-    unauthenticated API requests _very_ fast.
-    See also: corehq/apps/builds/tests.py
-
-    >>> repo = Github().get_organization('dimagi')
-    >>> tag = repo.get_repo("commcare-android").get_latest_release().tag_name
-    >>> tag.startswith("commcare_")
-    True
-    >>> version = tag.split('commcare_')[1]
-    >>> _get_latest_commcare_build_version() == version
-    True
-    """
-    repo = Github().get_organization('dimagi').get_repo("commcare-android")
-    latest_release_tag = repo.get_latest_release().tag_name
+    """Get the latest commcare build version from the github tags."""
+    url = "https://api.github.com/repos/dimagi/commcare-android/releases/latest"
+    response = requests.get(url)
+    response.raise_for_status()
+    latest_release_tag = response.json()["tag_name"]
 
     return latest_release_tag.split('commcare_')[1]
 

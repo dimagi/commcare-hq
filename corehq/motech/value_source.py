@@ -9,7 +9,7 @@ from schema import And, Or, Schema, SchemaError
 from couchforms.const import TAG_FORM, TAG_META
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.apps.users.cases import get_owner_id, get_owner_location_id
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import (  # noqa: F401
     COMMCARE_DATA_TYPE_DECIMAL,
@@ -681,12 +681,7 @@ def get_case_location(case):
 
 
 def get_owner_location(domain, owner_id):
-    owner = get_wrapped_owner(owner_id)
-    if not owner:
-        return None
-    if isinstance(owner, SQLLocation):
-        return owner
-    location_id = owner.get_location_id(domain)
+    location_id = get_owner_location_id(owner_id, domain)
     return SQLLocation.by_location_id(location_id) if location_id else None
 
 

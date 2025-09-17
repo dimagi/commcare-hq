@@ -66,6 +66,12 @@ def get_all_web_users_by_domain(domain):
     return map(WebUser.wrap, iter_docs(WebUser.get_db(), ids))
 
 
+def get_all_users_by_domain(domain, include_inactive=True):
+    from corehq.apps.users.models import CouchUser
+    ids = get_all_user_ids_by_domain(domain, include_inactive=include_inactive)
+    return map(CouchUser.wrap_correctly, iter_docs(CouchUser.get_db(), ids))
+
+
 def get_mobile_usernames_by_filters(domain, user_filters):
     query = _get_es_query(domain, MOBILE_USER_TYPE, user_filters)
     return query.values_list('base_username', flat=True)
@@ -75,18 +81,18 @@ def _get_es_query(domain, user_type, user_filters):
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
     location_id = user_filters.get('location_id', None)
-    # The following two filters applies only to MOBILE_USER_TYPE
-    selected_location_only = user_filters.get('selected_location_only', False)
     user_active_status = user_filters.get('user_active_status', None)
+    # The following filter applies only to MOBILE_USER_TYPE
+    selected_location_only = user_filters.get('selected_location_only', False)
 
     if user_active_status is None:
         # Show all users in domain - will always be true for WEB_USER_TYPE
-        query = UserES().domain(domain).remove_default_filter('active')
+        query = UserES().domain(domain, include_inactive=True)
     elif user_active_status:
         # Active users filtered by default
         query = UserES().domain(domain)
     else:
-        query = UserES().domain(domain).show_only_inactive()
+        query = UserES().domain(domain, include_active=False, include_inactive=True)
 
     if user_type == MOBILE_USER_TYPE:
         query = query.mobile_users()
@@ -163,7 +169,7 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
         query = _get_es_query(domain, user_type, user_filters)
         if count_only:
             return query.count()
-        user_ids = query.scroll_ids()
+        user_ids = list(query.scroll_ids())
         return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
 
 
@@ -183,6 +189,11 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
     support ES search syntax, it's just a case-insensitive substring search.
     Ignores any other filters.
     """
+    only_active = user_filters.get("user_active_status", None)
+    if only_active is False:  # only want deactivated users; invited users are considered active
+        if count_only:
+            return 0
+        return []
     filters = {}
     search_string = user_filters.get("search_string", None)
     if search_string:
@@ -202,12 +213,13 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
     return invitations
 
 
-def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):
+def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True, include_inactive=True):
     """Return generator of user IDs"""
     return (row['id'] for row in get_all_user_rows(
         domain,
         include_web_users=include_web_users,
-        include_mobile_users=include_mobile_users
+        include_mobile_users=include_mobile_users,
+        include_inactive=include_inactive,
     ))
 
 
@@ -230,7 +242,7 @@ def get_active_web_usernames_by_domain(domain):
 
 
 def get_web_user_count(domain, include_inactive=True):
-    return sum([
+    total = sum([
         row['value']
         for row in get_all_user_rows(
             domain,
@@ -240,6 +252,7 @@ def get_web_user_count(domain, include_inactive=True):
             count_only=True
         ) if row
     ])
+    return total
 
 
 def get_mobile_user_count(domain, include_inactive=True):
@@ -287,7 +300,7 @@ def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
         for doc_type in doc_types:
             key = [flag, domain, doc_type]
             for row in CommCareUser.get_db().view(
-                    'users/by_domain',
+                    'users_by_domain/view',
                     startkey=key,
                     endkey=key + [{}],
                     reduce=count_only,

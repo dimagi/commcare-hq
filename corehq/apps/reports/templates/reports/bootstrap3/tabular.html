@@ -99,7 +99,9 @@
       {% endblock reporttable %}
     </div>
   </div>
-  {% block posttable %}{% endblock posttable %}
+  {% block posttable %}
+    <div id="report-timing-profile"></div>
+  {% endblock posttable %}
 {% endblock reportcontent %}
 
 {% block js-inline %} {{ block.super }}

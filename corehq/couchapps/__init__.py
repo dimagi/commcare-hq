@@ -20,7 +20,9 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'forms_by_app_info': settings.APPS_DB,
     'apps_with_submissions': settings.APPS_DB,
     'saved_apps_auto_generated': settings.APPS_DB,
+    'latest_apps': settings.APPS_DB,
     'registry_data_sources': settings.META_DB,
     'registry_data_sources_by_last_modified': settings.META_DB,
     'registry_report_configs': settings.META_DB,
+    'users_by_domain': settings.USERS_GROUPS_DB,
 })

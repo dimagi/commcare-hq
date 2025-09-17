@@ -413,12 +413,13 @@ class TestConfigurableReportDataResource(APIResourceTest):
         ).decode('utf-8')
 
 
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestUCRPaginated(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.addClassCleanup(Subscription._get_active_subscription_by_domain.clear, Subscription, cls.domain.name)
+        cls.addClassCleanup(Subscription.clear_caches, cls.domain.name)
         cls.addClassCleanup(cls.domain.delete)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'

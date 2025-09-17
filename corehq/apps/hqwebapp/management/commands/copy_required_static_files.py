@@ -44,8 +44,6 @@ class Command(BaseCommand):
         # Additional directories to copy
         additional_dirs = ['jsi18n', 'webpack', 'webpack_b3', 'CACHE']
 
-        files_to_copy = ['build.b3.js', 'build.b3.txt', 'build.b5.js', 'build.b5.txt', 'build.js', 'build.txt']
-
         def should_copy_directory(dir_name):
             return dir_name in installed_apps or dir_name in additional_dirs
 
@@ -64,12 +62,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'Successfully copied {copied_count} directories to {static_filtered}'
         ))
-
-        # copy files to copy
-        for file in files_to_copy:
-            src_path = os.path.join(static_root, file)
-            dst_path = os.path.join(static_filtered, file)
-            shutil.copy2(src_path, dst_path)
 
         # Print total size of copied files
         total_size = 0

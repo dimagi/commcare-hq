@@ -1,18 +1,10 @@
 import doctest
 import json
-from base64 import b64encode
 
-from django.conf import settings
 from django.test import SimpleTestCase, override_settings
-
-from Crypto.Cipher import AES
 
 import corehq.motech.utils
 from corehq.motech.utils import (
-    AES_BLOCK_SIZE,
-    AES_KEY_MAX_LEN,
-    b64_aes_decrypt,
-    b64_aes_encrypt,
     b64_aes_cbc_encrypt,
     b64_aes_cbc_decrypt,
     get_endpoint_url,
@@ -59,58 +51,9 @@ class UnpadTests(SimpleTestCase):
 class DecryptTests(SimpleTestCase):
 
     def test_crypto_padded(self):
-        ciphertext_using_crypto_padding = 'Vh2Tmlnr5+out2PQDefkudZ2frfze5onsAlUGTLv3Oc='
-        plaintext = b64_aes_decrypt(ciphertext_using_crypto_padding)
+        ciphertext_using_crypto_padding = 'RkmfhFuw5pudnb2eq1O8Rxu4MQjngXH307Nu0BtW3Ih/9dXOl1QE1p5F4aseK5iI'
+        plaintext = b64_aes_cbc_decrypt(ciphertext_using_crypto_padding)
         self.assertEqual(plaintext, 'Around you is a forest.')
-
-    def test_simple_padded(self):
-        """
-        Make sure we can decrypt old passwords
-        """
-        ciphertext_using_simple_padding = 'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
-        plaintext = b64_aes_decrypt(ciphertext_using_simple_padding)
-        self.assertEqual(plaintext, 'Around you is a forest.')
-
-    def test_known_bad_0x80(self):
-        # This test documents behavior of the current implementation, and can
-        # be removed when there are no encrypted passwords padded with spaces.
-        password = 'a' * 14 + 'À'
-        assert len(password.encode('utf-8')) == AES_BLOCK_SIZE
-        ciphertext = self._encrypt_with_simple_padding(password)
-        with self.assertRaises(UnicodeDecodeError):
-            b64_aes_decrypt(ciphertext)
-
-    def test_known_bad_0x00(self):
-        # This test documents behavior of the current implementation, and can
-        # be removed when there are no encrypted passwords padded with spaces.
-        password = 'a' + 15 * '\x00'
-        assert len(password.encode('utf-8')) == AES_BLOCK_SIZE
-        ciphertext = self._encrypt_with_simple_padding(password)
-        with self.assertRaisesRegex(ValueError, 'Padding is incorrect.'):
-            b64_aes_decrypt(ciphertext)
-
-    def test_known_bad_0x80_0x00(self):
-        # This test documents behavior of the current implementation, and can
-        # be removed when there are no encrypted passwords padded with spaces.
-        password = 'aÀ' + 13 * '\x00'
-        assert len(password.encode('utf-8')) == AES_BLOCK_SIZE
-        ciphertext = self._encrypt_with_simple_padding(password)
-        with self.assertRaises(UnicodeDecodeError):
-            b64_aes_decrypt(ciphertext)
-
-    def _encrypt_with_simple_padding(self, message):
-        """
-        Encrypts passwords the way we used to
-        """
-        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
-        aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-        aes = AES.new(aes_key, AES.MODE_ECB)
-
-        message_bytes = message.encode('utf8')
-        plaintext_bytes = simple_pad(message_bytes, AES_BLOCK_SIZE)
-        ciphertext_bytes = aes.encrypt(plaintext_bytes)
-        b64ciphertext_bytes = b64encode(ciphertext_bytes)
-        return b64ciphertext_bytes.decode('ascii')
 
 
 class PFormatJSONTests(SimpleTestCase):
@@ -193,22 +136,6 @@ class PFormatJSONTests(SimpleTestCase):
 
 
 class EncryptionTests(SimpleTestCase):
-
-    def assert_message_equals_plaintext_using_ecb(self, message):
-        assert isinstance(message, str)
-        ciphertext = b64_aes_encrypt(message)
-        plaintext = b64_aes_decrypt(ciphertext)
-        self.assertEqual(plaintext, message)
-        self.assertIsInstance(ciphertext, str)
-        self.assertIsInstance(plaintext, str)
-
-    def test_encrypt_decrypt_ascii(self):
-        message = 'Around you is a forest.'
-        self.assert_message_equals_plaintext_using_ecb(message)
-
-    def test_encrypt_decrypt_utf8(self):
-        message = 'आपके आसपास एक जंगल है'
-        self.assert_message_equals_plaintext_using_ecb(message)
 
     def assert_message_equals_plaintext_using_cbc(self, message):
         assert isinstance(message, str)

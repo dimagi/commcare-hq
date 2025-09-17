@@ -90,9 +90,6 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
     def test_owner_name(self, *args):
         self._test_generic_suite('owner-name')
 
-    def test_printing(self, *args):
-        self._test_generic_suite('app_print_detail', 'suite-print-detail')
-
     @privilege_enabled(privileges.APP_DEPENDENCIES)
     @flag_enabled('MOBILE_UCR')
     def test_report_module(self, *args):
@@ -314,7 +311,10 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                format="plain",
+                useXpathExpression=True,
                 optimization='cache',
+
             )
         ]
 
@@ -325,12 +325,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field>
             <header>
               <text>
-                <locale id="m0.case_short.case_prop1_1.header"/>
+                <locale id="m0.case_short.case_calculated_property_1.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop1"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop1"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -356,6 +360,8 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                format="plain",
+                useXpathExpression=True,
                 optimization='cache',
             )
         ]
@@ -367,12 +373,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field>
             <header>
               <text>
-                <locale id="m0.case_short.case_prop1_1.header"/>
+                <locale id="m0.case_short.case_calculated_property_1.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop1"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop1"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -399,6 +409,106 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                format="plain",
+                useXpathExpression=True,
+                optimization='cache',
+            )
+        ]
+
+        suite = factory.app.create_suite()
+
+        cached_property_template = """
+            <partial>
+              <field>
+                <header>
+                  <text>
+                    <locale id="m0.case_short.case_calculated_property_1.header"/>
+                  </text>
+                </header>
+                <template>
+                  <text>
+                    <xpath function="$calculated_property">
+                      <variable name="calculated_property">
+                        <xpath function="prop1"/>
+                      </variable>
+                    </xpath>
+                  </text>
+                </template>
+              </field>
+            </partial>
+            """
+
+        self.assertXmlPartialEqual(
+            cached_property_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]'
+        )
+
+        # No optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short">', str(suite))
+
+    @flag_enabled('CASE_LIST_OPTIMIZATIONS')
+    def test_case_list_optimizations_for_non_supported_format_property(self):
+        factory = AppFactory(build_version='2.56.0')
+        module, form = factory.new_basic_module('m0', 'case')
+        module.show_case_list_optimization_options = True
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'CachedProperty'},
+                model='case',
+                field="prop1",
+                format="unsupported_format",
+                useXpathExpression=True,
+                optimization='cache',
+            )
+        ]
+
+        suite = factory.app.create_suite()
+
+        cached_property_template = """
+        <partial>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_short.case_calculated_property_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop1"/>
+                  </variable>
+                </xpath>
+              </text>
+            </template>
+          </field>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            cached_property_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]'
+        )
+
+        # No optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short">', str(suite))
+
+    @flag_enabled('CASE_LIST_OPTIMIZATIONS')
+    def test_case_list_optimizations_for_non_calculated_property(self):
+        factory = AppFactory(build_version='2.56.0')
+        module, form = factory.new_basic_module('m0', 'case')
+        module.show_case_list_optimization_options = True
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'CachedProperty'},
+                model='case',
+                field="prop1",
+                format="plain",
+                useXpathExpression=False,
                 optimization='cache',
             )
         ]
@@ -442,18 +552,24 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                format="plain",
+                useXpathExpression=True,
                 optimization='cache',
             ),
             DetailColumn(
                 header={'en': 'lazyLoadedProperty'},
                 model='case',
                 field="prop2",
+                format="plain",
+                useXpathExpression=True,
                 optimization='lazy_load',
             ),
             DetailColumn(
                 header={'en': 'Cached&LazyLoadedProperty'},
                 model='case',
                 field="prop3",
+                format="plain",
+                useXpathExpression=True,
                 optimization='cache_and_lazy_load',
             ),
         ]
@@ -465,12 +581,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field cache_enabled="true">
             <header>
               <text>
-                <locale id="m0.case_short.case_prop1_1.header"/>
+                <locale id="m0.case_short.case_calculated_property_1.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop1"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop1"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -488,12 +608,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field lazy_loading="true">
             <header>
               <text>
-                <locale id="m0.case_short.case_prop2_2.header"/>
+                <locale id="m0.case_short.case_calculated_property_2.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop2"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop2"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -511,12 +635,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field cache_enabled="true" lazy_loading="true">
             <header>
               <text>
-                <locale id="m0.case_short.case_prop3_3.header"/>
+                <locale id="m0.case_short.case_calculated_property_3.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop3"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop3"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>

@@ -16,12 +16,14 @@ from .views import (
     delete_phone_number,
     delete_request,
     check_sso_trust,
+    deactivate_web_user,
     delete_user_role,
     domain_accounts,
     make_phone_number_default,
     paginate_enterprise_users,
     paginate_web_users,
     post_user_role,
+    reactivate_web_user,
     register_fcm_device_token,
     remove_web_user,
     test_httpdigest,
@@ -58,6 +60,7 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
+    set_personalid_link_status,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
@@ -71,13 +74,15 @@ from .views.mobile.users import (
     toggle_demo_mode,
     update_user_groups,
     user_download_job_poll,
-    CommCareUserConfirmAccountView,
+    CommCareUserConfirmAccountViewByEmailView,
     send_confirmation_email,
     send_confirmation_sms,
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
     link_connectid_user,
     bulk_user_upload_api,
+    CommCareUserPasswordResetView,
+    CommCareUserAccountConfirmedView,
 )
 from ..hqwebapp.decorators import waf_allow
 
@@ -90,6 +95,8 @@ user_management_urls = [
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
     url(r'^change_password/(?P<login_id>[ \w-]+)/$', change_password, name="change_password"),
+    url(r'^send_password_reset_email/(?P<couch_user_id>[ \w-]+)/$', CommCareUserPasswordResetView.as_view(),
+        name=CommCareUserPasswordResetView.urlname),
     url(r'^domain_accounts/(?P<couch_user_id>[ \w-]+)/$', domain_accounts, name='domain_accounts'),
     url(r'^delete_phone_number/(?P<couch_user_id>[ \w-]+)/$', delete_phone_number, name='delete_phone_number'),
     url(
@@ -106,6 +113,8 @@ urlpatterns = [
     url(r'^web/account/(?P<couch_user_id>[ \w-]+)/$', EditWebUserView.as_view(), name=EditWebUserView.urlname),
     url(r'^web/remove/(?P<couch_user_id>[ \w-]+)/$', remove_web_user, name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[ \w-]+)/$', undo_remove_web_user, name='undo_remove_web_user'),
+    url(r'^web/deactivate/(?P<couch_user_id>[ \w-]+)/$', deactivate_web_user, name='deactivate_web_user'),
+    url(r'^web/reactivate/(?P<couch_user_id>[ \w-]+)/$', reactivate_web_user, name='reactivate_web_user'),
     url(r'^web/invite/$', InviteWebUserView.as_view(), name=InviteWebUserView.urlname),
     url(r'^web/invite/edit/(?P<invitation_id>[ \w-]+)/$', InviteWebUserView.as_view(), name='edit_invitation'),
     url(r'^web/reinvite/$', reinvite_web_user, name='reinvite_web_user'),
@@ -157,6 +166,11 @@ urlpatterns = [
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', update_user_groups, name='update_user_groups'),
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
+    url(
+        r'^commcare/personalid_link/(?P<username>[ \w-]+)/status/$',
+        set_personalid_link_status,
+        name='set_personalid_link_status'
+    ),
     url(
         r'^commcare/send_confirmation_email/(?P<user_id>[ \w-]+)/$',
         send_confirmation_email,
@@ -232,9 +246,14 @@ urlpatterns = [
         name=ConfirmBillingAccountForExtraUsersView.urlname
     ),
     url(
-        r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$',
-        CommCareUserConfirmAccountView.as_view(),
-        name=CommCareUserConfirmAccountView.urlname
+        r'^commcare/confirm_account/(?P<user_invite_hash>[\S-]+)/$',
+        CommCareUserConfirmAccountViewByEmailView.as_view(),
+        name=CommCareUserConfirmAccountViewByEmailView.urlname
+    ),
+    url(
+        r'^commcare/account_confirmed/$',
+        CommCareUserAccountConfirmedView.as_view(),
+        name=CommCareUserAccountConfirmedView.urlname
     ),
     url(
         r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$',

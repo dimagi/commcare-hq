@@ -14,7 +14,7 @@ from memoized import memoized
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.apps.domain.extension_points import custom_domain_module
-from corehq.motech.utils import b64_aes_encrypt
+from corehq.motech.utils import b64_aes_cbc_encrypt
 from corehq.util.test_utils import unit_testing_only
 
 from corehq.apps.domain.models import Domain
@@ -44,7 +44,7 @@ def normalize_domain_name(domain):
     if domain:
         normalized = domain.replace('_', '-').lower()
         if settings.DEBUG:
-            assert(re.match('^%s$' % grandfathered_domain_re, normalized))
+            assert (re.match('^%s$' % grandfathered_domain_re, normalized))
         return normalized
     return domain
 
@@ -141,11 +141,37 @@ def clear_domain_names(*domain_names):
             domain.delete()
 
 
-def get_serializable_wire_invoice_general_credit(general_credit):
-    if general_credit > 0:
+def get_serializable_wire_invoice_prepaid_item(prepaid_total, prepaid_label, prepaid_credits):
+    """
+    Returns a JSON serializable representation of a previously-paid item to be credited to the customer on a
+    prepayment invoice, or an empty list if not negative. Used with celery task `create_wire_credits_invoice`.
+    """
+    if prepaid_total < 0:
         return [{
-            'type': 'General Credits',
-            'amount': simplejson.dumps(general_credit, use_decimal=True)
+            'type': prepaid_label,
+            'unit_cost': "0.00",
+            'quantity': 0,
+            'amount': "0.00",
+            'applied_credit': simplejson.dumps(prepaid_credits, use_decimal=True),
+            'total': simplejson.dumps(prepaid_total, use_decimal=True),
+        }]
+
+    return []
+
+
+def get_serializable_wire_invoice_general_credit(credit_total, credit_label, unit_cost, quantity):
+    """
+    Returns a JSON serializable representation of an item to be paid by the customer to purchase credits on a
+    prepayment invoice, or an empty list if not positive. Used with celery task `create_wire_credits_invoice`.
+    """
+    if credit_total > 0:
+        return [{
+            'type': credit_label,
+            'unit_cost': simplejson.dumps(unit_cost, use_decimal=True),
+            'quantity': quantity,
+            'amount': simplejson.dumps(credit_total, use_decimal=True),
+            'applied_credit': "0.00",
+            'total': simplejson.dumps(credit_total, use_decimal=True),
         }]
 
     return []
@@ -157,7 +183,7 @@ def log_domain_changes(user, domain, new_obj, old_obj):
 
 def encrypt_account_confirmation_info(commcare_user):
     data = {"user_id": commcare_user.get_id, "time": int(time.time())}
-    return b64_aes_encrypt(json.dumps(data))
+    return b64_aes_cbc_encrypt(json.dumps(data))
 
 
 def is_domain_in_use(domain_name):

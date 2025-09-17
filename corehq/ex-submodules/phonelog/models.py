@@ -14,6 +14,8 @@ class DeviceReportEntry(models.Model):
     server_date = models.DateTimeField(db_index=True)
     domain = models.CharField(max_length=100)
     device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
+    android_version = models.CharField(max_length=32, null=True)
+    device_model = models.CharField(max_length=32, null=True)
     app_version = models.TextField(null=True)
     username = models.CharField(max_length=100, null=True)
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
@@ -22,11 +24,11 @@ class DeviceReportEntry(models.Model):
         db_table = 'phonelog_daily_partitioned_devicereportentry'
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
-        index_together = [
-            ("domain", "date"),
-            ("domain", "device_id"),
-            ("domain", "username"),
-            ("domain", "type"),
+        indexes = [
+            models.Index(fields=["domain", "date"]),
+            models.Index(fields=["domain", "device_id"]),
+            models.Index(fields=["domain", "username"]),
+            models.Index(fields=["domain", "type"]),
         ]
 
     def __repr__(self):
@@ -56,8 +58,8 @@ class UserErrorEntry(models.Model):
     class Meta(object):
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
-        index_together = [
-            ("domain", "app_id", "version_number"),
+        indexes = [
+            models.Index(fields=["domain", "app_id", "version_number"]),
         ]
 
     def __repr__(self):
@@ -102,9 +104,7 @@ class ForceCloseEntry(models.Model):
 
     class Meta(object):
         app_label = 'phonelog'
-        index_together = [
-            ("domain", "server_date"),
-        ]
+        indexes = [models.Index(fields=["domain", "server_date"])]
 
     def __repr__(self):
         return "ForceCloseEntry(domain='{}', msg='{}')".format(self.domain, self.msg)

@@ -725,17 +725,29 @@ class DeleteCasePropertyTests(SimpleTestCase):
         """)
         self.assert_expected_case_block(case_property, case_block_re)
 
-    def test_too_much_rope_error(self):
+    def test_deletable_kwargs_1(self):
         case_property = "case_id"
-        with self.assertRaises(TypeError):
-            delete_case_property(DOMAIN, "CASE_ID", case_property)
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <case_id />
+              </update>
+            </case>
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
 
-    def test_too_much_rope_no_error(self):
+    def test_deletable_kwargs_2(self):
         case_property = "update"
         case_block_re = strip_xml(f"""
             <case case_id="CASE_ID" »
                   date_modified="{DATETIME_PATTERN}" »
-                  xmlns="http://commcarehq.org/case/transaction/v2" />
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <update />
+              </update>
+            </case>
         """)
         self.assert_expected_case_block(case_property, case_block_re)
 

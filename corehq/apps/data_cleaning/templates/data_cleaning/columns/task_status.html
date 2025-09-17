@@ -1,13 +1,22 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+<a
+  class="py-2 pe-2"
+  href="{{ record.session_url }}"
+  x-tooltip=""
+  data-bs-title="{% trans "Open Session" %}"
+  @click="$store.gtm.sendEvent('bulk_edit_open_session_from_tasks_table');"
+>
+  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+</a>
 {% if record.completed_on %}
-  <span class="badge text-bg-success"> {% trans "Success" %} </span>
+  <span class="badge text-bg-success"> {% trans "Completed" %} </span>
 {% elif record.percent and record.percent < 100 %}
   <div
     class="progress"
     role="progressbar"
-    aria-label="{% trans_html_attr 'Cleaning progress' %}"
+    aria-label="{% trans_html_attr 'Applying edits progress' %}"
     aria-valuenow="{{ record.percent }}"
     aria-valuemin="0"
     aria-valuemax="100"
@@ -21,4 +30,12 @@
   </div>
 {% elif record.committed_on %}
   <span class="badge text-bg-secondary"> {% trans "Pending" %} </span>
+{% else %}
+  <span
+    class="badge text-bg-primary"
+    x-tooltip=""
+    data-bs-title="{% trans "Only one active session per case type allowed." %}"
+  >
+    {% trans "Active" %}
+  </span>
 {% endif %}

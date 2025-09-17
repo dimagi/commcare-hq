@@ -4,11 +4,12 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler, SsoTestUserAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import (
@@ -18,6 +19,7 @@ from corehq.apps.sso.forms import (
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
     page_title = gettext_lazy("Manage Single Sign-On")
     urlname = 'manage_sso'
@@ -33,6 +35,7 @@ class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMixin):
     page_title = gettext_lazy("Edit Identity Provider")
     urlname = 'edit_idp_enterprise'
@@ -41,10 +44,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         SSOExemptUsersAdminAsyncHandler,
         SsoTestUserAdminAsyncHandler,
     ]
-
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

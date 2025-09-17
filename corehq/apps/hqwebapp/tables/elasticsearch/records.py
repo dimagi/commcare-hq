@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
-from corehq.apps.case_search.utils import get_case_id_sort_block
 from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
+from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -35,6 +35,15 @@ class BaseElasticRecord(ABC):
     def verbose_name_plural(self):
         """
         The full (plural) human-friendly name for the data.
+
+        :return: string
+        """
+
+    @property
+    @abstractmethod
+    def record_id(self):
+        """
+        Return the primary id of the record
 
         :return: string
         """
@@ -73,17 +82,65 @@ class CaseSearchElasticRecord(BaseElasticRecord):
     def __getitem__(self, item):
         return self.record.get(item)
 
+    @property
+    def name(self):
+        """
+        Used to populate the name attribute of an input (checkbox) in the table.
+        Used by the built-in CheckBoxColumn from django_tables2.
+        """
+        return "selected_case"
+
+    @property
+    def record_id(self):
+        """
+        Return the primary id of the record
+
+        :return: string
+        """
+        return self.record.case.case_id
+
     @staticmethod
     def get_sorted_query(query, accessors):
         for accessor in accessors:
             try:
                 meta_property = INDEXED_METADATA_BY_KEY[accessor.bare]
-                if meta_property.key == '@case_id':
-                    # This condition is added because ES 5 does not allow sorting on _id.
-                    #  When we will have case_id in root of the document, this should be removed.
-                    query.es_query['sort'] = get_case_id_sort_block(accessor.is_descending)
-                    return query
                 query = query.sort(meta_property.es_field_name, desc=accessor.is_descending)
             except KeyError:
                 query = query.sort_by_case_property(accessor.bare, desc=accessor.is_descending)
         return query
+
+
+class UserElasticRecord(BaseElasticRecord):
+    verbose_name = gettext_lazy("user")
+    verbose_name_plural = gettext_lazy("users")
+
+    def __init__(self, record, request, **kwargs):
+        data = record.get("_source", record)
+        record = CouchUser.wrap_correctly(data)
+        super().__init__(record, request, **kwargs)
+
+    def __getitem__(self, item):
+        return self.record.get(item)
+
+    @property
+    def name(self):
+        """
+        Used to populate the name attribute of an input (checkbox) in the table.
+        Used by the built-in CheckBoxColumn from django_tables2.
+        """
+        return "selected_user"
+
+    @property
+    def record_id(self):
+        """
+        Return the primary id of the record
+
+        :return: string
+        """
+        return self.record.get_id
+
+    @staticmethod
+    def get_sorted_query(query, accessors):
+        # Sorting is not supported for all fields in User ES.
+        # Update this method if sorting is required for fields that do support it.
+        raise NotImplementedError("UserElasticRecord does not support sorting.")

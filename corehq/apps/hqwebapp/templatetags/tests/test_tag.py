@@ -77,104 +77,13 @@ class TagTest(SimpleTestCase):
             'domain': 'hqsharedtags'
         })
 
-    def test_javascript_libraries_jquery_only(self):
-        self._test('javascript_libraries_jquery_only', {})
-
-    def test_javascript_libraries_hq(self):
-        self._test('javascript_libraries_hq', {
-            'hq': True,
-        })
-
-    def test_javascript_libraries_hq_bootstrap5(self):
-        self._test(
-            'javascript_libraries_hq',
-            {
-                'hq': True,
-                'use_bootstrap5': True,
-            },
-            rendered_filename='javascript_libraries_hq_bootstrap5'
-        )
-
-    def test_requirejs_main(self):
-        self.assertEqual(
-            self.render("""
-                {% extends "requirejs_base.html" %}
-                {% load hq_shared_tags %}
-                {% requirejs_main "requirejs/main" %}
-                {% block content %}{% if use_js_bundler %}{{requirejs_main}}{% endif %}{% endblock %}
-            """).strip(),
-            "requirejs/main after tag\nrequirejs/main",
-        )
-
-    def test_requirejs_main_no_arg(self):
-        # this version can be used in a base template that may or may not use requirejs
-        self.assertEqual(
-            self.render("""
-                {% load hq_shared_tags %}
-                {% requirejs_main %}
-                {% if use_js_bundler %}unexpected truth{% endif %}
-                {% if requirejs_main %}unexpected truth 2{% endif %}
-                {{requirejs_main}}
-            """).strip(),
-            "",
-        )
-
-    def test_requirejs_main_in_context(self):
-        self.assertEqual(
-            self.render(
-                """
-                {% extends "requirejs_base.html" %}
-                {% load hq_shared_tags %}
-                {% requirejs_main "requirejs/main" %}
-                {% block content %}{{requirejs_main}}{% endblock %}
-                """,
-                {"requirejs_main": "rjs/context"}
-            ).strip(),
-            "rjs/context before tag\n\n"
-            "rjs/context after tag\n"
-            "rjs/context",
-        )
-
-    def test_requirejs_main_multiple_tags(self):
-        msg = r"multiple 'requirejs_main' tags not allowed \(\"requirejs/two\"\)"
-        with self.assertRaisesRegex(TemplateSyntaxError, msg):
-            self.render("""
-                {% load hq_shared_tags %}
-                {% requirejs_main "requirejs/one" %}
-                {% requirejs_main "requirejs/two" %}
-            """)
-
-    def test_requirejs_main_too_short(self):
-        msg = r"bad 'requirejs_main' argument: '"
-        with self.assertRaisesRegex(TemplateSyntaxError, msg):
-            self.render("""
-                {% load hq_shared_tags %}
-                {% requirejs_main ' %}
-            """)
-
-    def test_requirejs_main_bad_string(self):
-        msg = r"bad 'requirejs_main' argument: \.'"
-        with self.assertRaisesRegex(TemplateSyntaxError, msg):
-            self.render("""
-                {% load hq_shared_tags %}
-                {% requirejs_main .' %}
-            """)
-
-    def test_requirejs_main_mismatched_delimiter(self):
-        msg = r"bad 'requirejs_main' argument: 'x\""
-        with self.assertRaisesRegex(TemplateSyntaxError, msg):
-            self.render("""
-                {% load hq_shared_tags %}
-                {% requirejs_main 'x" %}
-            """)
-
     def test_js_entry(self):
         self.assertEqual(
             self.render("""
                 {% extends "webpack_base.html" %}
                 {% load hq_shared_tags %}
                 {% js_entry "webpack/main" %}
-                {% block content %}{% if use_js_bundler %}{{js_entry}}{% endif %}{% endblock %}
+                {% block content %}{{js_entry}}{% endblock %}
             """).strip(),
             "webpack/main after tag\nwebpack/main",
         )
@@ -185,7 +94,6 @@ class TagTest(SimpleTestCase):
             self.render("""
                 {% load hq_shared_tags %}
                 {% js_entry %}
-                {% if use_js_bundler %}unexpected truth{% endif %}
                 {% if js_entry %}unexpected truth 2{% endif %}
                 {{js_entry}}
             """).strip(),
@@ -239,13 +147,4 @@ class TagTest(SimpleTestCase):
             self.render("""
                 {% load hq_shared_tags %}
                 {% js_entry 'x" %}
-            """)
-
-    def test_requirejs_main_js_entry_conflict(self):
-        msg = "Discarding module/two js_entry value because module/one is using requirejs_main"
-        with self.assertRaisesMessage(AssertionError, msg):
-            self.render("""
-                {% load hq_shared_tags %}
-                {% requirejs_main "module/one" %}
-                {% js_entry "module/two" %}
             """)

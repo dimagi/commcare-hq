@@ -34,7 +34,7 @@ def log_accounting_info(message):
     logger.info("[BILLING] %s" % message)
 
 
-def months_from_date(reference_date, months_from_date):
+def get_first_day_x_months_later(reference_date, months_from_date):
     year, month = add_months(reference_date.year, reference_date.month, months_from_date)
     return datetime.date(year, month, 1)
 
@@ -479,7 +479,7 @@ def get_pending_plan_context(request, domain):
 
     current_sub = Subscription.get_active_subscription_by_domain(domain)
     if (not current_sub
-            or not current_sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            or not current_sub.plan_version.plan.edition == SoftwarePlanEdition.FREE
             or not request.couch_user.can_edit_billing()
             or not SelfSignupWorkflow.get_in_progress_for_domain(domain)):
         return {}
@@ -510,3 +510,11 @@ def count_form_submitting_mobile_workers(domain, start, end):
 def self_signup_workflow_in_progress(domain):
     from corehq.apps.registration.models import SelfSignupWorkflow
     return SelfSignupWorkflow.get_in_progress_for_domain(domain)
+
+
+def is_date_range_overlapping(start_1, end_1, start_2, end_2):
+    if end_1 is None:
+        end_1 = datetime.date.max
+    if end_2 is None:
+        end_2 = datetime.date.max
+    return start_1 < end_2 and start_2 < end_1

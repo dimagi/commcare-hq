@@ -2,10 +2,10 @@ import glob
 import json
 import os
 import re
-from ast import literal_eval
+import sqlalchemy
 from collections import namedtuple
 from copy import copy, deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import cached_property
 from uuid import UUID
 
@@ -15,10 +15,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext as _
 
-import requests
 import yaml
-from celery.states import FAILURE
-from couchdbkit.exceptions import BadValueError
+from couchdbkit.exceptions import BadValueError, ResourceConflict
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
 from memoized import memoized
@@ -52,11 +50,17 @@ from corehq.apps.cachehq.mixins import (
 )
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.app_manager.data_source_meta import (
+from corehq.pillows.utils import get_deleted_doc_types
+from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.quickcache import quickcache
+
+from .alembic_diffs import get_tables_to_rebuild
+from .app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
-from corehq.apps.userreports.columns import get_expanded_column_config
-from corehq.apps.userreports.const import (
+from .columns import get_expanded_column_config
+from .const import (
     ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
@@ -66,7 +70,7 @@ from corehq.apps.userreports.const import (
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
-from corehq.apps.userreports.dbaccessors import (
+from .dbaccessors import (
     get_all_registry_data_source_ids,
     get_datasources_for_domain,
     get_number_of_registry_report_configs_by_data_source,
@@ -75,7 +79,7 @@ from corehq.apps.userreports.dbaccessors import (
     get_registry_report_configs_for_domain,
     get_report_configs_for_domain,
 )
-from corehq.apps.userreports.exceptions import (
+from .exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     DuplicateColumnIdError,
@@ -84,32 +88,31 @@ from corehq.apps.userreports.exceptions import (
     StaticDataSourceConfigurationNotFoundError,
     ValidationError,
 )
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.extension_points import (
+from .expressions.factory import ExpressionFactory
+from .extension_points import (
     static_ucr_data_source_paths,
     static_ucr_report_paths,
 )
-from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.reports.factory import (
+from .filters.factory import FilterFactory
+from .indicators import CompoundIndicator
+from .indicators.factory import IndicatorFactory
+from .reports.factory import (
     ChartFactory,
     ReportColumnFactory,
     ReportOrderByFactory,
 )
-from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.sql.util import decode_column_name
-from corehq.apps.userreports.util import (
+from .reports.filters.factory import ReportFilterFactory
+from .reports.filters.specs import FilterSpec
+from .specs import EvaluationContext, FactoryContext
+from .sql import get_indicator_table
+from .sql.util import decode_column_name
+from .util import (
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
+    get_table_name,
+    get_ucr_datasource_config_by_id,
     wrap_report_config_by_type,
 )
-from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
-from corehq.util.couch import DocumentNotFound, get_document_or_not_found
-from corehq.util.quickcache import quickcache
 
 ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
@@ -210,72 +213,6 @@ class DataSourceBuildInformation(DocumentSchema):
     @property
     def is_rebuild_in_progress(self):
         return self.is_rebuilding or self.is_rebuilding_in_place
-
-    def rebuild_failed(self, data_source_config_id):
-        """
-        Returns ``True`` if the rebuild failed, ``False`` if it succeeded
-        or has not yet failed, or ``None`` if Flower is not available.
-        """
-        flower_url = getattr(settings, 'CELERY_FLOWER_URL', None)
-
-        def none_max(a, b):
-            if a is None:
-                return b
-            if b is None:
-                return a
-            return max(a, b)
-
-        def format_datetime(dt):
-            return dt.strftime('%Y-%m-%d %H:%M')
-
-        def is_this_data_source(rebuild_task):
-            args = literal_eval(rebuild_task['args'])  # a tuple
-            return args[0] == data_source_config_id
-
-        def iter_tasks():
-            task_names = (
-                'corehq.apps.userreports.tasks.rebuild_indicators',
-                'corehq.apps.userreports.tasks.rebuild_indicators_in_place',
-                'corehq.apps.userreports.tasks.resume_building_indicators',
-            )
-            initiated_at = none_max(self.initiated, self.initiated_in_place)
-            start = format_datetime(initiated_at - timedelta(seconds=60))
-            for task_name in task_names:
-                tasks = requests.get(
-                    flower_url + '/api/tasks',
-                    params={
-                        'taskname': task_name,
-                        'received_start': start,
-                    },
-                    timeout=3,
-                ).json()
-                for task_uuid, task in tasks.items():
-                    if is_this_data_source(task):
-                        yield task
-
-        if not self.initiated and not self.initiated_in_place:
-            # The rebuild task hasn't started.
-            return False
-
-        if (
-            (self.initiated and self.finished)
-            or (self.initiated_in_place and self.finished_in_place)
-        ):
-            # The rebuild task completed.
-            return False
-
-        if not flower_url:
-            # We are unable to find out about the rebuild task.
-            return None
-
-        rebuild_tasks = sorted(iter_tasks(), key=lambda t: t['started'])
-        if rebuild_tasks:
-            # Return True if the last task failed, otherwise return False.
-            return rebuild_tasks[-1]['state'] == FAILURE
-
-        # The rebuild is not finished and the task is not found. It must
-        # have died.
-        return True
 
 
 class DataSourceMeta(DocumentSchema):
@@ -742,16 +679,93 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             columns = self.sql_settings.primary_key
         return columns
 
-    @cached_property
-    def rebuild_failed(self):
-        # `has_died()` returns `None` if we can't use the Flower API,
-        # and so we don't know. Treating `None` as falsy allows calling
-        # code to give `rebuild_has_died` the benefit of the doubt.
-        return self.meta.build.rebuild_failed(self._id)
+    def set_rebuild_flags(self):
+        """
+        Sets rebuild flags based on whether a build is required.
 
-    @property
-    def rebuild_awaiting_or_in_progress(self):
-        return self.meta.build.awaiting or (self.meta.build.is_rebuild_in_progress and not self.rebuild_failed)
+        If a build is in progress, and diffs require a rebuild, then the
+        awaiting flag is set. If a build is already awaiting, and diffs
+        do not require a rebuild, then the awaiting flag remains set.
+        """
+        from .rebuild import get_table_diffs
+
+        if not self.meta.build.awaiting:
+            engine = connection_manager.get_engine(self.engine_id)
+            table_name = get_table_name(self.domain, self.table_id)
+            # use a fresh metadata because the one from get_metadata might be stale
+            engine_metadata = sqlalchemy.MetaData()
+            if not sqlalchemy.Table(table_name, engine_metadata).exists(bind=engine):
+                self.set_build_queued()
+            else:
+                # get fresh table configuration; this also updates table schema in engine_metadata
+                get_indicator_table(self, engine_metadata)
+                diffs = get_table_diffs(engine, [table_name], engine_metadata)
+                tables_to_rebuild = get_tables_to_rebuild(diffs)
+                if table_name in tables_to_rebuild:
+                    self.set_build_queued()
+                else:
+                    self.set_build_not_required()
+
+    def set_build_queued(self, *, reset_init_fin=True):
+        self.meta.build.awaiting = True
+        if reset_init_fin:
+            self.meta.build.initiated = None
+            self.meta.build.finished = False
+
+    def set_build_not_required(self):
+        self.meta.build.awaiting = False
+        self.meta.build.initiated = None
+        self.meta.build.finished = False
+
+    def save_build_started(self, *, in_place=False):
+        # Save the start time now in case anything goes wrong. This way
+        # we'll be able to see if the rebuild started a long time ago
+        # without finishing.
+        start_time = datetime.utcnow()
+        self.meta.build.awaiting = False
+        if in_place:
+            self.meta.build.initiated_in_place = start_time
+            self.meta.build.finished_in_place = False
+        else:
+            self.meta.build.initiated = start_time
+            self.meta.build.finished = False
+        self.meta.build.rebuilt_asynchronously = False
+        self.save()
+
+    def save_build_resumed(self):
+        self.meta.build.awaiting = False
+        self.save()
+
+    def save_build_finished(self, *, in_place=False):
+        self.meta.build.awaiting = False
+        if in_place:
+            self.meta.build.finished_in_place = True
+        else:
+            self.meta.build.finished = True
+
+        try:
+            self.save()
+        except ResourceConflict:
+            current_config = get_ucr_datasource_config_by_id(self._id)
+            # check that a new build has not yet started
+            if in_place:
+                if (
+                    self.meta.build.initiated_in_place
+                    == current_config.meta.build.initiated_in_place
+                ):
+                    current_config.meta.build.finished_in_place = True
+            else:
+                if (
+                    self.meta.build.initiated
+                    == current_config.meta.build.initiated
+                ):
+                    current_config.meta.build.finished = True
+            current_config.save()
+
+    def save_rebuilt_async(self):
+        self.meta.build.awaiting = False
+        self.meta.build.rebuilt_asynchronously = True
+        self.save()
 
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
@@ -951,9 +965,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def cached_data_source(self):
-        from corehq.apps.userreports.reports.data_source import (
-            ConfigurableReportDataSource,
-        )
+        from .reports.data_source import ConfigurableReportDataSource
         return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
@@ -1018,9 +1030,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         return langs
 
     def validate(self, required=True):
-        from corehq.apps.userreports.reports.data_source import (
-            ConfigurableReportDataSource,
-        )
+        from .reports.data_source import ConfigurableReportDataSource
 
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list

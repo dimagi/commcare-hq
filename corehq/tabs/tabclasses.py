@@ -17,7 +17,6 @@ from corehq.apps.accounting.dispatcher import (
 from corehq.apps.accounting.models import BillingAccount, Invoice, Subscription
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
-    domain_is_on_trial,
     is_accounting_admin,
 )
 from corehq.apps.accounting.utils.subscription import is_domain_enterprise
@@ -36,6 +35,11 @@ from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.domain.views.settings import (
+    EditIPAccessConfigView,
+    EditMyProjectSettingsView,
+    ImportAppFromAnotherServerView,
+)
 from corehq.apps.email.views import EmailSMTPSettingsView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
@@ -49,6 +53,8 @@ from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
+    FeaturePreviewStatusReport,
+    FeaturePreviewAuditReport,
     UserAuditReport,
     UserListReport,
     UCRDataLoadReport,
@@ -92,10 +98,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
-)
-from corehq.feature_previews import (
-    EXPLORE_CASE_DATA_PREVIEW,
-    is_eligible_for_ecd_preview,
+    can_access_payments_report,
 )
 from corehq.messaging.scheduling.views import \
     BroadcastListView as NewBroadcastListView
@@ -167,7 +170,7 @@ class ProjectReportsTab(UITab):
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-            'icon': 'icon-tasks fa fa-tasks',
+            'icon': 'fa-solid fa-floppy-disk',
             'show_in_dropdown': True,
         }]
         is_ucr_toggle_enabled = (
@@ -596,11 +599,6 @@ class ProjectDataTab(UITab):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
-    def can_view_ecd_preview(self):
-        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request)
-                and is_eligible_for_ecd_preview(self._request))
-
-    @property
     def _can_view_geospatial(self):
         return toggles.MICROPLANNING.enabled(self.domain)
 
@@ -633,7 +631,7 @@ class ProjectDataTab(UITab):
         if self.can_edit_commcare_data:
             items.extend(self._get_edit_section())
 
-        explore_data_views = self._get_explore_data_views()
+        explore_data_views = self._get_explore_data_views()  # TODO: Delete
         if explore_data_views:
             items.append([_("Explore Data"), explore_data_views])
 
@@ -993,11 +991,11 @@ class ProjectDataTab(UITab):
 
         if self._can_view_case_data_cleaning:
             from corehq.apps.data_cleaning.views.main import (
-                CleanCasesMainView,
+                BulkEditCasesMainView,
             )
             clean_cases_view = {
-                'title': _(CleanCasesMainView.page_title),
-                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'title': _(BulkEditCasesMainView.page_title),
+                'url': reverse(BulkEditCasesMainView.urlname, args=[self.domain]),
                 'icon': 'fa-solid fa-shower',
             }
             edit_section[0][1].append(clean_cases_view)
@@ -1008,21 +1006,10 @@ class ProjectDataTab(UITab):
     def _can_view_case_data_cleaning(self):
         return (
             bulk_data_cleaning_enabled_for_request(self._request)
-            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
         )
 
     def _get_explore_data_views(self):
         explore_data_views = []
-        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
-             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
-            from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            explore_data_views.append({
-                'title': _(ExploreCaseDataView.page_title),
-                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
-                'show_in_dropdown': False,
-                'icon': 'fa-solid fa-location-dot',
-                'subpages': [],
-            })
         if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
             from corehq.apps.case_search.models import (
                 case_search_enabled_for_domain,
@@ -1084,7 +1071,10 @@ class ProjectDataTab(UITab):
 
     @cached_property
     def _can_view_payments_integration(self):
-        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+        return (
+            toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+            and can_access_payments_report(self.couch_user, self.domain)
+        )
 
     def _get_payments_verification_views(self):
         from corehq.apps.integration.payments.views import PaymentsVerificationReportView
@@ -1133,12 +1123,6 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
-            ))
-        if self.can_view_ecd_preview and self.can_edit_commcare_data:
-            from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            items.append(dropdown_dict(
-                _('Explore Case Data (Preview)'),
-                url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
         if self.can_view_odata_feed:
             from corehq.apps.export.views.list import ODataFeedListView
@@ -1201,10 +1185,6 @@ class ApplicationsTab(UITab):
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app)
-            if 'created_from_template' in app and app['created_from_template'] == 'appcues':
-                if domain_is_on_trial(self.domain):
-                    # If trial is over, domain may have lost web apps access, don't do appcues intro
-                    url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
                 app_title,
@@ -2071,11 +2051,16 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-        from corehq.apps.domain.views.settings import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
+
+        if toggles.IP_ACCESS_CONTROLS.enabled(self.domain):
+            project_info.append({
+                'title': _(EditIPAccessConfigView.page_title),
+                'url': reverse(EditIPAccessConfigView.urlname, args=[self.domain])
+            })
 
         items.append((_('Project Information'), project_info))
 
@@ -2085,6 +2070,11 @@ class ProjectSettingsTab(UITab):
                 section = _get_administration_section(self.domain)
             elif user_can_manage_domain_alerts:
                 section = _get_manage_domain_alerts_section(self.domain)
+            if self.couch_user.can_edit_apps():
+                section.append({
+                    'title': ImportAppFromAnotherServerView.page_title,
+                    'url': reverse(ImportAppFromAnotherServerView.urlname, args=[self.domain]),
+                })
             if section:
                 items.append((_('Project Administration'), section))
 
@@ -2194,6 +2184,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views.settings import (
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
+        CredentialsApplicationSettingsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -2231,6 +2222,10 @@ def _get_administration_section(domain):
             'title': _(ManageDomainMobileWorkersView.page_title),
             'url': reverse(ManageDomainMobileWorkersView.urlname, args=[domain]),
         }))
+    administration.append({
+        'title': _(CredentialsApplicationSettingsView.page_title),
+        'url': reverse(CredentialsApplicationSettingsView.urlname, args=[domain]),
+    })
 
     return administration
 
@@ -2716,7 +2711,12 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [UserAuditReport, UCRDataLoadReport]
+            } for report in [
+                UserAuditReport,
+                FeaturePreviewStatusReport,
+                FeaturePreviewAuditReport,
+                UCRDataLoadReport,
+            ]
         ]))
         return sections
 

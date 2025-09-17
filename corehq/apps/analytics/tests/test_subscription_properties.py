@@ -8,7 +8,6 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
-    SubscriptionAdjustment,
     SubscriptionType,
 )
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -28,15 +27,15 @@ class TestSubscriptionProperties(TestCase):
         cls.user = WebUser.create(cls.base_domain.name, "tarso", "*****", None, None)
         cls.user.save()
 
-        cls.community = Domain(name="community", is_active=True)
-        cls.community.save()
-        cls._setup_subscription(cls.community.name, SoftwarePlanEdition.COMMUNITY)
+        cls.free = Domain(name="free", is_active=True)
+        cls.free.save()
+        cls._setup_subscription(cls.free.name, SoftwarePlanEdition.FREE)
 
         cls.enterprise = Domain(name="enterprise", is_active=True)
         cls.enterprise.save()
         cls._setup_subscription(cls.enterprise.name, SoftwarePlanEdition.ENTERPRISE)
 
-        for domain in [cls.community, cls.enterprise]:
+        for domain in [cls.free, cls.enterprise]:
             cls.user.add_domain_membership(domain.name, is_admin=True)
 
     @classmethod
@@ -61,7 +60,7 @@ class TestSubscriptionProperties(TestCase):
 
     def test_properties(self):
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['_is_on_community_plan'], 'yes')
+        self.assertEqual(properties['_is_on_free_edition'], 'yes')
         self.assertEqual(properties['_is_on_standard_plan'], 'no')
         self.assertEqual(properties['_is_on_pro_plan'], 'no')
         self.assertEqual(properties['_max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
@@ -70,12 +69,12 @@ class TestSubscriptionProperties(TestCase):
         properties = get_subscription_properties_by_user(self.user)
 
         self.assertEqual(properties['_is_on_pro_bono_plan'], 'no')
-        self._change_to_probono(self.community.name, ProBonoStatus.YES)
+        self._change_to_probono(self.free.name, ProBonoStatus.YES)
         properties = get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['_is_on_pro_bono_plan'], 'yes')
 
         self.assertEqual(properties['_is_on_discounted_plan'], 'no')
-        self._change_to_probono(self.community.name, ProBonoStatus.DISCOUNTED)
+        self._change_to_probono(self.free.name, ProBonoStatus.DISCOUNTED)
         properties = get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['_is_on_discounted_plan'], 'yes')
 
@@ -83,7 +82,7 @@ class TestSubscriptionProperties(TestCase):
         properties = get_subscription_properties_by_user(self.user)
 
         self.assertEqual(properties['_is_on_extended_trial_plan'], 'no')
-        self._change_to_extended_trial(self.community.name)
+        self._change_to_extended_trial(self.free.name)
         properties = get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['_is_on_extended_trial_plan'], 'yes')
 

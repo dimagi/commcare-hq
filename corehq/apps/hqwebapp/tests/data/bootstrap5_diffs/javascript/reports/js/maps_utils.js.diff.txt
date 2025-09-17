@@ -1,13 +1,11 @@
 --- 
 +++ 
-@@ -1,8 +1,8 @@
--hqDefine("reports/js/bootstrap3/maps_utils", [
-+hqDefine("reports/js/bootstrap5/maps_utils", [
-     'jquery',
-     'knockout',
-     'underscore',
--    'reports/js/bootstrap3/datatables_config',
-+    'reports/js/bootstrap5/datatables_config',
-     'leaflet',
- ], function (
-     $,
+@@ -1,7 +1,7 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import _ from "underscore";
+-import dataTablesConfig from "reports/js/bootstrap3/datatables_config";
++import dataTablesConfig from "reports/js/bootstrap5/datatables_config";
+ import L from "leaflet";
+ 
+ var module = {};

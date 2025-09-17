@@ -34,11 +34,6 @@ from corehq.apps.accounting.decorators import (
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_jquery_ui,
-    use_timepicker,
-)
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.sms.filters import EventStatusFilter, EventTypeFilter
 from corehq.apps.sms.models import (
@@ -318,7 +313,6 @@ class BroadcastListView(BaseMessagingSectionView):
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
-    @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
 
@@ -449,8 +443,6 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     read_only_mode = False
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
-    @use_jquery_ui
-    @use_timepicker
     def dispatch(self, *args, **kwargs):
         return super(CreateScheduleView, self).dispatch(*args, **kwargs)
 
@@ -622,10 +614,6 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
     ACTION_DELETE = 'delete'
     ACTION_RESTART = 'restart'
 
-    @use_datatables
-    def dispatch(self, *args, **kwargs):
-        return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
-
     @cached_property
     def limit_rule_restarts(self):
         # If the user is a superuser, don't limit the number of times they
@@ -786,8 +774,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return format_html(_('For information on Conditional Alerts, see the {} help page.'), link)
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
-    @use_jquery_ui
-    @use_timepicker
     def dispatch(self, *args, **kwargs):
         return super(CreateConditionalAlertView, self).dispatch(*args, **kwargs)
 

@@ -77,6 +77,7 @@ from datetime import datetime, timedelta
 from inspect import cleandoc
 
 from django.conf import settings
+from django.db import connection
 
 from celery import chord
 from celery.schedules import crontab
@@ -114,6 +115,7 @@ from .const import (
     State,
 )
 from .models import (
+    DataSourceUpdate,
     Repeater,
     RepeatRecord,
     domain_can_forward,
@@ -403,7 +405,7 @@ def process_failed_repeat_record(repeat_record_id, domain):
 
 
 def process_ready_repeat_record(repeat_record_id):
-    state_or_none = None
+    state = None
     with TimingContext('process_repeat_record') as timer:
         try:
             repeat_record = (
@@ -417,7 +419,7 @@ def process_ready_repeat_record(repeat_record_id):
             _metrics_wait_duration(repeat_record)
             report_repeater_attempt(repeat_record.repeater.repeater_id)
             with timer('fire_timing') as fire_timer:
-                state_or_none = repeat_record.fire(timing_context=fire_timer)
+                state = repeat_record.fire(timing_context=fire_timer)
             report_repeater_usage(
                 repeat_record.domain,
                 # round up to the nearest millisecond, meaning always at least 1ms
@@ -425,7 +427,7 @@ def process_ready_repeat_record(repeat_record_id):
             )
         except Exception:
             logging.exception(f'Failed to process repeat record {repeat_record_id}')
-    return state_or_none
+    return state
 
 
 def is_repeat_record_ready(repeat_record):
@@ -448,10 +450,15 @@ def is_repeat_record_ready(repeat_record):
 def _metrics_wait_duration(repeat_record):
     """
     The duration since ``repeat_record`` was registered or last attempted.
-
-    Buckets are exponential: [1m, 6m, 36m, 3.6h, 21.6h, 5.4d]
     """
-    buckets = [60 * (6 ** exp) for exp in range(6)]
+    buckets = make_buckets_from_timedeltas(
+        timedelta(minutes=1),
+        timedelta(minutes=10),
+        timedelta(hours=1),
+        timedelta(hours=6),
+        timedelta(days=1),
+        timedelta(days=7),
+    )
     metrics_histogram(
         'commcare.repeaters.process_repeaters.repeat_record_wait',
         _get_wait_duration_seconds(repeat_record),
@@ -486,21 +493,24 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
     """
     repeater = Repeater.objects.get(id=repeater_id)
     try:
-        if all(s in (State.Empty, None) for s in repeat_record_states):
-            # We can't tell anything about the remote endpoint.
-            return
-        success_or_invalid = (State.Success, State.InvalidPayload)
-        if any(s in success_or_invalid for s in repeat_record_states):
-            # The remote endpoint appears to be healthy.
-            repeater.reset_backoff()
-        else:
-            # All the payloads that were sent failed. Try again later.
-            metrics_counter(
-                'commcare.repeaters.process_repeaters.repeater_backoff',
-                tags={'domain': repeater.domain},
-            )
-            more = False
-            repeater.set_backoff()
+        if toggles.BACKOFF_REPEATERS.enabled(repeater.domain, namespace=toggles.NAMESPACE_DOMAIN):
+            remote_is_bad = False
+            for state in repeat_record_states:
+                if state in (State.Success, State.PayloadRejected):
+                    repeater.reset_backoff()
+                    break  # Skips the `else` clause below
+                if state in (State.Fail, State.Cancelled):
+                    remote_is_bad = True
+            else:
+                if remote_is_bad:
+                    # All the payloads that were sent failed with server or
+                    # connection errors. Try again later.
+                    metrics_counter(
+                        'commcare.repeaters.process_repeaters.repeater_backoff',
+                        tags={'domain': repeater.domain},
+                    )
+                    more = False
+                    repeater.set_backoff()
     finally:
         lock = RepeaterLock(repeater_id, lock_token)
         if more:
@@ -547,6 +557,21 @@ class RepeaterLock:
         if self.token:
             lock.local.token = self.token
         return lock
+
+
+@periodic_task(
+    run_every=crontab(hour='5', minute='0', day_of_month='1'),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
+def purge_old_datasourceupdates():
+    table_name_format = f'{DataSourceUpdate.Meta.db_table}_y%Ym%m'
+    oldest_date = DataSourceUpdate.objects.get_oldest_date()
+    oldest_allowed = datetime.today() - DataSourceUpdate.MAX_AGE
+    while oldest_date and oldest_date < oldest_allowed:
+        table_name = oldest_date.strftime(table_name_format)
+        with connection.cursor() as cursor:
+            cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
+        oldest_date += timedelta(days=31)
 
 
 metrics_gauge_task(

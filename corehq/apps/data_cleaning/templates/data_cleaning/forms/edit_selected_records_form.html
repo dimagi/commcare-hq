@@ -1,0 +1,63 @@
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<div
+  id="{{ container_id }}"
+  hx-swap="outerHTML"
+  hq-hx-refresh-swap="#EditCasesTable"
+>
+  {% if change %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {# todo: make this more descriptive #}
+      {% blocktrans with change.records.count as num_records %}
+        Previewed edits on {{ num_records }} cases.
+      {% endblocktrans %}
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="{% trans "Close" %}"
+        data-bs-dismiss="alert"
+      ></button>
+    </div>
+  {% endif %}
+  {% if form.is_form_visible %}
+    {% if are_bulk_edits_allowed %}
+      <form
+        hx-post="{{ request.path_info }}"
+        hx-target="#{{ container_id }}"
+        hx-disabled-elt="find button"
+        hq-hx-action="create_bulk_edit_change"
+      >
+        {% crispy form %}
+      </form>
+    {% else %}
+      <div class="alert alert-warning">
+        <h5>{% trans "Edit history is too large..." %}</h5>
+        <p>
+          {% blocktrans %}
+            The edit history for this session is too large to support new bulk
+            edits. You can either apply the current edits, undo edits, or clear
+            the edit history to start over.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-primary">
+      <h5>{% trans "No editible case properties are visible" %}</h5>
+      {# prettier-ignore-start #}
+      {% blocktrans %}
+        Please
+        <a
+          href="#"
+          class="fw-bold"
+          data-bs-dismiss="offcanvas"
+          @click.prevent="$dispatch('wiggle-configure-columns-button');"
+        >Configure Columns</a>
+        to include editable case properties in the column list in order to edit
+        the selected cases.
+      {% endblocktrans %}
+      {# prettier-ignore-end #}
+    </div>
+  {% endif %}
+</div>

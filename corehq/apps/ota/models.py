@@ -98,8 +98,7 @@ class SerialIdBucket(models.Model):
     current_value = models.IntegerField(default=-1)
 
     class Meta(object):
-        index_together = ('domain', 'bucket_id',)
-        unique_together = ('domain', 'bucket_id',)
+        unique_together = ('domain', 'bucket_id')
 
     @classmethod
     def get_next(cls, domain, bucket_id, session_id=None):
@@ -216,6 +215,14 @@ class DeviceLogRequest(models.Model):
     def is_pending(cls, domain, username):
         """Is there a pending device log request matching these params?"""
         return (domain, raw_username(username)) in _all_device_log_requests()
+
+
+class IntegritySamplePercentage(models.Model):
+    """
+    Model to store the percentage of users to sample for app integrity reporting.
+    This is used to control the sampling rate for reporting app integrity to the PersonalID server.
+    """
+    percentage = models.FloatField(default=0.1)  # Default to 0.1%
 
 
 @memoized

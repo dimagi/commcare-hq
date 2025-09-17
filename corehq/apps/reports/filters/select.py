@@ -15,6 +15,7 @@ from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseSingleOptionFilter,
 )
+from corehq.feature_previews import all_previews
 from corehq.motech.repeaters.const import State, UCRRestrictionFFStatus
 from corehq.motech.repeaters.models import Repeater
 
@@ -31,10 +32,6 @@ class GroupFilterMixin(object):
 
 class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
     placeholder = gettext_lazy('Click to select a group')
-
-
-class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
-    placeholder = gettext_lazy('Click to select groups')
 
 
 class YearFilter(BaseSingleOptionFilter):
@@ -140,11 +137,12 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(s.name.upper(), s.label) for s in [
-            State.Success,
+            State.Success,  # Includes Empty
             State.Pending,
             State.Cancelled,
             State.Fail,
-            State.InvalidPayload,
+            State.PayloadRejected,  # Includes ErrorGeneratingPayload
+            # See templates/repeaters/partials/repeater_row.html
         ]]
 
 
@@ -161,3 +159,13 @@ class UCRRebuildStatusFilter(BaseSingleOptionFilter):
             UCRRestrictionFFStatus.ShouldEnable,
             UCRRestrictionFFStatus.CanDisable,
         ]]
+
+
+class FeatureFilter(BaseSingleOptionFilter):
+    slug = "feature"
+    label = gettext_lazy("Feature")
+    default_text = gettext_lazy("Select Feature")
+
+    @property
+    def options(self):
+        return [(feature.slug, feature.label) for feature in all_previews()]

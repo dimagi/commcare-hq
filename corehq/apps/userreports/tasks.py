@@ -13,7 +13,7 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
     ProtocolError,
 )
 from celery.schedules import crontab
-from couchdbkit import ResourceConflict, ResourceNotFound
+from couchdbkit import ResourceNotFound
 
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
@@ -26,29 +26,8 @@ from corehq.apps.celery import periodic_task, task
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
+from corehq.apps.export.const import MAX_DAILY_EXPORT_SIZE
 from corehq.apps.reports.util import send_report_download_email
-from corehq.apps.userreports.const import (
-    ASYNC_INDICATOR_CHUNK_SIZE,
-    ASYNC_INDICATOR_MAX_RETRIES,
-    ASYNC_INDICATOR_QUEUE_TIME,
-    UCR_CELERY_QUEUE,
-    UCR_INDICATOR_CELERY_QUEUE,
-)
-from corehq.apps.userreports.exceptions import (
-    DataSourceConfigurationNotFoundError,
-)
-from corehq.apps.userreports.models import (
-    AsyncIndicator,
-    DataSourceActionLog,
-    id_is_static,
-)
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.util import (
-    get_async_indicator_modify_lock_key,
-    get_indicator_adapter,
-    get_ucr_datasource_config_by_id,
-)
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
 from corehq.util.decorators import serial_task
@@ -62,6 +41,22 @@ from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX, MPM_MIN
 from corehq.util.queries import paginated_queryset
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
+
+from .const import (
+    ASYNC_INDICATOR_CHUNK_SIZE,
+    ASYNC_INDICATOR_MAX_RETRIES,
+    ASYNC_INDICATOR_QUEUE_TIME,
+    UCR_CELERY_QUEUE,
+    UCR_INDICATOR_CELERY_QUEUE,
+)
+from .exceptions import DataSourceConfigurationNotFoundError
+from .models import AsyncIndicator, DataSourceActionLog, id_is_static
+from .specs import EvaluationContext
+from .util import (
+    get_async_indicator_modify_lock_key,
+    get_indicator_adapter,
+    get_ucr_datasource_config_by_id,
+)
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -111,13 +106,7 @@ def rebuild_indicators(
                 raise AssertionError("Engine ID does not match adapter")
 
         if not id_is_static(indicator_config_id):
-            # Save the start time now in case anything goes wrong. This way we'll be
-            # able to see if the rebuild started a long time ago without finishing.
-            config.meta.build.awaiting = False
-            config.meta.build.initiated = datetime.utcnow()
-            config.meta.build.finished = False
-            config.meta.build.rebuilt_asynchronously = False
-            config.save()
+            config.save_build_started()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
         rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
@@ -142,11 +131,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
         adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
-            config.meta.build.awaiting = False
-            config.meta.build.initiated_in_place = datetime.utcnow()
-            config.meta.build.finished_in_place = False
-            config.meta.build.rebuilt_asynchronously = False
-            config.save()
+            config.save_build_started(in_place=True)
 
         rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
         try:
@@ -194,7 +179,7 @@ def _report_metric_number_of_days_since_first_build(config, action):
 
 
 def _report_metric_rebuild_error(config, action):
-    from corehq.apps.userreports.views import number_of_records_to_be_processed
+    from .views import number_of_records_to_be_processed
     expected_rows_to_process = number_of_records_to_be_processed(config)
     metrics_gauge(
         f'commcare.ucr.{action}.failed.expected_rows_to_process',
@@ -213,34 +198,12 @@ def _report_metric_increase_in_rows_count(config, action, adapter, rows_count_be
             metrics_counter(f'commcare.ucr.{action}.increase_in_rows', tags={'domain': config.domain})
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def resume_building_indicators(indicator_config_id, initiated_by=None):
-    config = get_ucr_datasource_config_by_id(indicator_config_id)
-    success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
-    failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
-    with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
-        if not id_is_static(indicator_config_id):
-            config.meta.build.awaiting = False
-            config.save()
-        resume_helper = DataSourceResumeHelper(config)
-        adapter = get_indicator_adapter(config)
-        adapter.log_table_build(
-            initiated_by=initiated_by,
-            source='resume_building_indicators',
-        )
-        _iteratively_build_table(config, resume_helper)
-
-
-def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-1):
-    resume_helper = resume_helper or DataSourceResumeHelper(config)
+def _iteratively_build_table(config, in_place=False, limit=-1):
     indicator_config_id = config._id
     case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
     domains = config.data_domains
 
     loop_iterations = list(itertools.product(domains, case_type_or_xmlns_list))
-    completed_iterations = resume_helper.get_completed_iterations()
-    if completed_iterations:
-        loop_iterations = list(set(loop_iterations) - set(completed_iterations))
 
     for domain, case_type_or_xmlns in loop_iterations:
         relevant_ids = []
@@ -261,31 +224,13 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
         if relevant_ids:
             _build_indicators(config, document_store, relevant_ids)
 
-        resume_helper.add_completed_iteration(domain, case_type_or_xmlns)
-
-    resume_helper.clear_resume_info()
     if not id_is_static(indicator_config_id):
-        if in_place:
-            config.meta.build.finished_in_place = True
-        else:
-            config.meta.build.finished = True
-        try:
-            config.save()
-        except ResourceConflict:
-            current_config = get_ucr_datasource_config_by_id(config._id)
-            # check that a new build has not yet started
-            if in_place:
-                if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
-                    current_config.meta.build.finished_in_place = True
-            else:
-                if config.meta.build.initiated == current_config.meta.build.initiated:
-                    current_config.meta.build.finished = True
-            current_config.save()
+        config.save_build_finished(in_place=in_place)
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def delete_data_source_task(domain, config_id):
-    from corehq.apps.userreports.views import delete_data_source_shared
+    from .views import delete_data_source_shared
     delete_data_source_shared(domain, config_id)
 
 
@@ -644,8 +589,12 @@ def export_ucr_async(report_export, download_id, user):
     filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
 
-    report_export.create_export(file_path, Format.XLS_2007)
+    # Excel files max out at 1,048,576 rows, so we can reasonably limit excel exports to 1M rows
+    limit = MAX_DAILY_EXPORT_SIZE
+
+    report_export.create_export(file_path, Format.XLS_2007, limit=limit)
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx', owner_ids=[user.get_id])
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
-    send_report_download_email(report_export.title, user.get_email(), link, domain=report_export.domain)
+    send_report_download_email(report_export.title, user.get_email(), link,
+                               domain=report_export.domain, limit=limit)

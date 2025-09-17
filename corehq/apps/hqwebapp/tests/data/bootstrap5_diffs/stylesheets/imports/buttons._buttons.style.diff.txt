@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,34 +1,5 @@
+@@ -1,34 +1,11 @@
 -@import "../../../../../../node_modules/bootstrap/less/buttons.less";
 -
 -.btn-primary {
@@ -29,14 +29,19 @@
 -.btn-danger {
 -  .button-variant(@cc-att-neg-mid; #ffffff; @cc-att-neg-mid);
 -}
--
++// b5 default background color for outline buttons is transparent
++// it looks weird if the container's background is not white.
++.btn-outline-danger {
++  background-color: #ffffff;
++};
+ 
  .btn-purple {
 -  .button-variant(white; @cc-dark-cool-accent-mid; darken(@cc-dark-cool-accent-mid, 5));
 +  @include button-variant($white, $cc-dark-cool-accent-mid, darken($cc-dark-cool-accent-mid, 5));
  }
  
  .btn-full-width {
-@@ -38,25 +9,35 @@
+@@ -38,25 +15,40 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -87,4 +92,9 @@
 +  @extend .btn;
 +  @extend .btn-sm;
 +  @extend .btn-outline-primary;
++}
++
++.btn-wiggle {
++  animation: attention-wiggle 0.3s ease-in-out;
++  animation-iteration-count: 3;
 +}

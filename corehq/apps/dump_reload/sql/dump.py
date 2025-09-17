@@ -157,6 +157,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('integration.SimprintsIntegration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.KycConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.MoMoConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('ip_access.IPAccessConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
@@ -190,6 +191,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('user_importer.UserUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.ConnectIDUserLink', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.ConnectIDMessagingKey', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.UserCredential', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DeactivateMobileWorkerTrigger', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DomainRequest', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.Invitation', SimpleFilter('domain')),
@@ -223,11 +225,13 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ApplicationReleaseLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ResourceOverride', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.CredentialApplication', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     # Repeat Records might foreign key to deleted repeaters, override default manager to include deleted repeaters
     FilteredModelIteratorBuilder('repeaters.Repeater', SimpleFilter('domain'), use_all_objects=True),
+    FilteredModelIteratorBuilder('repeaters.DataSourceUpdate', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.RequestLog', SimpleFilter('domain')),
     # NH (2021-01-08): Including RepeatRecord because we dump (Couch)
@@ -269,6 +273,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('email.EmailSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
+    FilteredModelIteratorBuilder('export.DeIdHash', SimpleFilter('domain')),
 ]]
 
 

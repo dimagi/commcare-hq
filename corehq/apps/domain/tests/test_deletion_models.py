@@ -36,6 +36,7 @@ IGNORE_APPS = {
     'start_enterprise',  # TODO delete this along with SMSs
     'tastypie',
     'telerivet',
+    'toggles',
     'toggle_ui',
     'sso',
 }
@@ -74,6 +75,7 @@ IGNORE_MODELS = {
     'users.ConnectIDMessagingKey',   # handled by cascading delete of user link model (from user model)
     'users.InvitationHistory',
     'users.UserHistory',
+    'ota.IntegritySamplePercentage',
 }
 
 

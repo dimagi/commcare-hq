@@ -36,6 +36,7 @@ module.exports = {
         "it": false,
         "describe": false,
         "beforeEach": false,
+        "afterEach": false,
         "nv": false,
         "d3": false,
     },

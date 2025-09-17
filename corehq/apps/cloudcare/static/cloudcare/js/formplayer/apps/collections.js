@@ -1,17 +1,12 @@
 
-hqDefine("cloudcare/js/formplayer/apps/collections", [
-    'backbone',
-    'cloudcare/js/formplayer/apps/models',
-], function (
-    Backbone,
-    Models,
-) {
-    var self = Backbone.Collection.extend({
-        url: "appSelects",
-        model: Models,
-    });
+import Backbone from "backbone";
+import Models from "cloudcare/js/formplayer/apps/models";
 
-    return function (apps) {
-        return new self(apps);
-    };
+var self = Backbone.Collection.extend({
+    url: "appSelects",
+    model: Models,
 });
+
+export default function (apps) {
+    return new self(apps);
+}

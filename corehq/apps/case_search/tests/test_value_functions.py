@@ -2,7 +2,7 @@ from django.test import TestCase
 
 import pytest
 from eulxml.xpath import parse as parse_xpath
-from freezegun import freeze_time
+from time_machine import travel
 from testil import assert_raises, eq
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
@@ -20,7 +20,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 
 
-@freeze_time('2021-08-02T22:03:16Z')
+@travel('2021-08-02T22:03:16Z', tick=False)
 class TestDateFunctions(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -70,7 +70,7 @@ class TestDateFunctions(TestCase):
         eq(result, '2021-08-02T22:03:16+00:00')
 
 
-@freeze_time('2021-08-02T22:03:16Z')
+@travel('2021-08-02T22:03:16Z', tick=False)
 @pytest.mark.parametrize("expression, expected", [
     ("datetime('2021-08-02')", '2021-08-02T00:00:00+00:00'),
     ("datetime('2021-08-02T11:22:16')", '2021-08-02T11:22:16+00:00'),
@@ -84,7 +84,7 @@ def test_datetime(expression, expected):
     eq(result, expected)
 
 
-@freeze_time('2021-08-02T22:03:16Z')
+@travel('2021-08-02T22:03:16Z', tick=False)
 @pytest.mark.parametrize("expression, expected", [
     ("date-add('2020-02-29', 'years', 1)", "2021-02-28"),
     ("date-add('2020-02-29', 'years', 1.0)", "2021-02-28"),
@@ -147,7 +147,7 @@ def test_date_add_errors(expression):
         fn(node, SearchFilterContext("domain"))
 
 
-@freeze_time('2021-08-02T22:03:16Z')
+@travel('2021-08-02T22:03:16Z', tick=False)
 @pytest.mark.parametrize("expression, expected", [
     ("double('1.3')", 1.3),
     ("double('13')", 13.0),

@@ -177,6 +177,35 @@ class TestWebUserAuthorizationFunctions(BaseAuthorizationTest):
             created_via=None,
         )
 
+    def test_inactive_no_permissions(self):
+        dm = self.user.get_domain_membership(self.domain)
+        with (
+                patch.object(dm, 'is_active', False),
+                self._set_role(self.domain, self.user)
+        ):
+            self.assertFalse(self.user.has_permission(self.domain, 'edit_web_users'))
+
+    def test_inactive_admin_no_permissions(self):
+        dm = self.user.get_domain_membership(self.domain)
+        with (
+                patch.object(dm, 'is_active', False),
+                self._set_role(self.domain, self.user, is_admin=True)
+        ):
+            self.assertFalse(self.user.has_permission(self.domain, 'edit_web_users'))
+
+    def test_reactivating_restores_permissions(self):
+        dm = self.user.get_domain_membership(self.domain)
+        with (
+            patch.object(dm, 'is_active', False),
+            self._set_role(self.domain, self.user)
+        ):
+            self.assertFalse(self.user.has_permission(self.domain, 'edit_web_users'))
+            with (
+                patch.object(dm, 'is_active', True),
+                self._set_role(self.domain, self.user)
+            ):
+                self.assertTrue(self.user.has_permission(self.domain, 'edit_web_users'))
+
 
 class TestSuperUserAuthorizationFunctions(BaseAuthorizationTest):
     @classmethod
@@ -284,3 +313,20 @@ class TestSuperUserAuthorizationFunctions(BaseAuthorizationTest):
     @patch('corehq.apps.users.models.domain_restricts_superusers', return_value=True)
     def test_has_permission__default_yes__no_membership__domain_restricts_superusers(self, _mock):
         self.assertFalse(self.user.has_permission('other', 'report_an_issue'))
+
+    def test_has_permission__default_no__no_is_active(self):
+        dm = self.user.get_domain_membership(self.domain)
+        with (
+                patch.object(dm, 'is_active', False),
+                self._set_role(self.domain, self.user),
+        ):
+            self.assertTrue(self.user.has_permission('other', 'report_an_issue'))
+
+    @patch('corehq.apps.users.models.domain_restricts_superusers', return_value=True)
+    def test_has_permission__default_no__no_is_active__domain_restricts_superusers(self, _mock):
+        dm = self.user.get_domain_membership(self.domain)
+        with (
+                patch.object(dm, 'is_active', False),
+                self._set_role(self.domain, self.user),
+        ):
+            self.assertFalse(self.user.has_permission('other', 'report_an_issue'))

@@ -7,6 +7,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 from corehq.apps.es import (
     CaseES,
@@ -321,9 +322,8 @@ def get_groups_by_querystring(domain, query, case_sharing_only):
 def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
-        .user_ids(user_ids)
-        .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
+            .user_ids(user_ids)
+            .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
@@ -417,13 +417,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
 
 
 def _duration_script():
-    # ES 5 returns long where as ES 6 returns a JodaCompatibleZonedDateTime
-    # This class can't use - operator directly
-    from corehq.apps.es.client import manager
-    script = "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
-    if manager.elastic_major_version >= 6:
-        script = "doc['form.meta.timeEnd'].value.getMillis() - doc['form.meta.timeStart'].value.getMillis()"
-    return script
+    return "doc['form.meta.timeEnd'].value.getMillis() - doc['form.meta.timeStart'].value.getMillis()"
 
 
 def get_form_duration_stats_by_user(
@@ -665,4 +659,18 @@ def get_case_types_for_domain(domain, include_deprecated=False):
     if not include_deprecated:
         deprecated_case_types = get_data_dict_deprecated_case_types(domain)
         all_case_types -= deprecated_case_types
+    return all_case_types
+
+
+def get_non_system_case_types_for_domain(domain):
+    """
+    Returns non-deprecated case types defined in the data dictionary, which includes those referenced in an app
+    and those added manually.
+    Excludes system case types.
+    """
+    all_case_types = get_data_dict_case_types(domain, is_deprecated=False)
+
+    # Exclude system case types
+    all_case_types -= {USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE}
+
     return all_case_types

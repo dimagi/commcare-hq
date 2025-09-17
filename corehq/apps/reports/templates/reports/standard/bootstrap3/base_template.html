@@ -19,6 +19,10 @@
           rel="stylesheet"
           media="all"
           href="{% static 'reports/less/reports.less' %}" />
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'reports/css/timing-profile.css' %}" />
   {% endcompress %}
   {% include 'reports/partials/filters_css.html' %}
 
@@ -59,7 +63,8 @@
   {% initial_page_data 'action' action %}
   {% registerurl "case_action_options" domain %}
   {% registerurl "receiver_secure_post" domain %}
-  {% registerurl "copy_cases" domain %}
+  {% registerurl "copy_cases_action" domain %}
+  {% registerurl "reassign_cases_action" domain %}
 
   {% if request.datespan %}
     {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}

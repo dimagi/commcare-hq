@@ -7,7 +7,7 @@ from .models import CaseSearchConfig
 
 
 class CaseSearchConfigForm(forms.ModelForm):
-    index_name = BooleanField(label="Use dedicated index")
+    index_name = BooleanField(label="Use dedicated index", required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

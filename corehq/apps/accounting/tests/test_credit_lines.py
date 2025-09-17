@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 
-from dimagi.utils.dates import add_months_to_date
+from dimagi.utils.dates import add_months_to_date, first_of_next_month
 
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
@@ -131,7 +131,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         Tests line item credits for three invoicing periods.
         """
         for month_num in range(2, 5):
-            invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
+            invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, month_num)
             tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
@@ -163,7 +163,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         # other subscription credit that shouldn't count toward this invoice
         other_domain = generator.arbitrary_domain()
         # so that the other subscription doesn't draw from the same account credits, have it start 4 months later
-        new_subscription_start = utils.months_from_date(self.subscription.date_start, 4)
+        new_subscription_start = utils.get_first_day_x_months_later(self.subscription.date_start, 4)
 
         other_subscription = generator.generate_domain_subscription(
             self.account,
@@ -232,7 +232,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
     def _test_final_invoice_balance(self):
         for month_num in range(2, 5):
-            invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
+            invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, month_num)
             tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
@@ -477,11 +477,11 @@ class TestCreditTransfers(BaseAccountingTest):
             self.assertEqual(credit_line.account.pk, self.account.pk)
 
 
-class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
+class TestSubscriptionChangeTransfersSubscriptionLevelCredit(BaseAccountingTest):
 
     @classmethod
     def setUpClass(cls):
-        super(TestUserSubscriptionChangeTransfers, cls).setUpClass()
+        super().setUpClass()
 
         generator.bootstrap_test_software_plan_versions()
         generator.init_default_currency()
@@ -492,57 +492,61 @@ class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
             cls.domain, created_by=cls.billing_contact,
         )[0]
         generator.arbitrary_contact_info(cls.account, cls.billing_contact)
-
-    def tearDown(self):
-        for user in self.domain.all_users():
-            user.delete(self.domain.name, deleted_by=None)
-        super(BaseAccountingTest, self).tearDown()
+        cls.standard_plan = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.STANDARD
+        )
+        cls.pro_plan = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.PRO
+        )
 
     @classmethod
     def tearDownClass(cls):
         utils.clear_plan_version_cache()
-        super(TestUserSubscriptionChangeTransfers, cls).tearDownClass()
+        super().tearDownClass()
 
     def _get_credit_total(self, subscription):
-        credit_lines = CreditLine.get_credits_by_subscription_and_features(
-            subscription
-        )
+        any_type_credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription)
+        other_type_credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
+        credit_lines = any_type_credit_lines.union(other_type_credit_lines)
         return sum([c.balance for c in credit_lines])
 
-    def test_subscription_credits_transfer_in_invoice(self):
-        standard_plan = DefaultProductPlan.get_default_plan_version(
-            edition=SoftwarePlanEdition.STANDARD
-        )
-        pro_plan = DefaultProductPlan.get_default_plan_version(
-            edition=SoftwarePlanEdition.PRO
-        )
-
-        first_sub = Subscription.new_domain_subscription(
-            self.account, self.domain.name, standard_plan,
-            date_start=datetime.date(2019, 9, 1),
-        )
-        credit_amount = Decimal('5000.00')
-        CreditLine.add_credit(
-            credit_amount, subscription=first_sub,
-        )
-
+    def _change_plan_to_pro_on_date(self, subscription, date):
         # this is the key step where the expected transfer happens
-        second_sub = first_sub.change_plan(pro_plan)
+        new_sub = subscription.change_plan(self.pro_plan)
 
-        first_sub = Subscription.visible_objects.get(id=first_sub.id)
-        first_sub.date_end = datetime.date(2019, 9, 10)
-        first_sub.save()
-        second_sub.date_start = first_sub.date_end
-        second_sub.save()
+        # manually set when the plan change happens otherwise it will be today
+        old_sub = Subscription.visible_objects.get(id=subscription.id)
+        old_sub.date_end = date
+        old_sub.save()
+        new_sub.date_start = date
+        new_sub.save()
+        return new_sub
 
-        invoice_date = utils.months_from_date(first_sub.date_start, 1)
+    def _generate_user_history(self, num_users, invoice_date):
         user_record_date = invoice_date - relativedelta(days=1)
         DomainUserHistory.objects.create(
             domain=self.domain,
-            num_users=0,
+            num_users=num_users,
             record_date=user_record_date
         )
-        tasks.generate_invoices_based_on_date(utils.months_from_date(first_sub.date_start, 1))
+
+    def test_any_type_credits_transfer_in_invoice(self):
+        first_sub = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_start=datetime.date(2019, 9, 1),
+        )
+        credit_amount = Decimal('5000.00')
+        # Any type of credits is neither product nor has a feature type
+        CreditLine.add_credit(
+            credit_amount, subscription=first_sub, is_product=False, feature_type=None
+        )
+
+        change_date = datetime.date(2019, 9, 10)
+        second_sub = self._change_plan_to_pro_on_date(first_sub, change_date)
+
+        invoice_date = first_of_next_month(change_date)
+        self._generate_user_history(num_users=0, invoice_date=invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
 
         self.assertEqual(first_sub.invoice_set.count(), 1)
         self.assertEqual(second_sub.invoice_set.count(), 1)
@@ -552,4 +556,88 @@ class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
 
         self.assertEqual(first_invoice.balance, Decimal('0.0000'))
         self.assertEqual(second_invoice.balance, Decimal('0.0000'))
+
+        # Credit calculation breakdown:
+        # - Initial credit: $5000.00
+        # - Standard plan (9/1-9/9): $300/month × (9/30) = $90.00
+        # - Pro plan (9/10-9/30): $600/month × (21/30) = $420.00
+        # - Total charges: $90 + $420 = $510.00
+        # - Expected remaining credit: $5000 - $510 = $4490.00
         self.assertEqual(self._get_credit_total(second_sub), Decimal('4490.0000'))
+
+    def test_product_type_credits_transfer_in_invoice(self):
+        first_sub = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_start=datetime.date(2019, 9, 1),
+        )
+        credit_amount = Decimal('5000.00')
+        # Add product type credits
+        CreditLine.add_credit(
+            credit_amount, subscription=first_sub, is_product=True, feature_type=None
+        )
+
+        change_date = datetime.date(2019, 9, 10)
+        second_sub = self._change_plan_to_pro_on_date(first_sub, change_date)
+
+        invoice_date = first_of_next_month(change_date)
+        self._generate_user_history(num_users=0, invoice_date=invoice_date)
+        tasks.generate_invoices_based_on_date(invoice_date)
+
+        self.assertEqual(first_sub.invoice_set.count(), 1)
+        self.assertEqual(second_sub.invoice_set.count(), 1)
+
+        first_invoice = first_sub.invoice_set.first()
+        second_invoice = second_sub.invoice_set.first()
+
+        self.assertEqual(first_invoice.balance, Decimal('0.0000'))
+        self.assertEqual(second_invoice.balance, Decimal('0.0000'))
+
+        # Credit calculation breakdown:
+        # - Initial credit: $5000.00
+        # - Standard plan fee (9/1-9/9): $300/month × (9/30) = $90.00
+        # - Pro plan fee (9/10-9/30): $600/month × (21/30) = $420.00
+        # - Total charges: $90 + $420 = $510.00
+        # - Expected remaining credit: $5000 - $510 = $4490.00
+        self.assertEqual(self._get_credit_total(second_sub), Decimal('4490.0000'))
+
+    def test_user_feature_type_credits_transfer_in_invoice(self):
+        first_sub = Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.standard_plan,
+            date_start=datetime.date(2019, 9, 1),
+        )
+        credit_amount = Decimal('5000.00')
+        # Add User type credits
+        CreditLine.add_credit(
+            credit_amount, subscription=first_sub, is_product=False, feature_type=FeatureType.USER
+        )
+
+        change_date = datetime.date(2019, 9, 10)
+        second_sub = self._change_plan_to_pro_on_date(first_sub, change_date)
+
+        invoice_date = first_of_next_month(change_date)
+        # Standard plan has 4 users, Pro plan has 6 users
+        # 10 users will result in 6 excess users for Standard plan and 4 excess users for Pro plan
+        self._generate_user_history(num_users=10, invoice_date=invoice_date)
+
+        tasks.generate_invoices_based_on_date(invoice_date)
+
+        self.assertEqual(first_sub.invoice_set.count(), 1)
+        self.assertEqual(second_sub.invoice_set.count(), 1)
+
+        first_invoice = first_sub.invoice_set.first()
+        second_invoice = second_sub.invoice_set.first()
+
+        # No product type credit and ANY type credit are added
+        # Thus the balance will have the plan fee
+        # - Standard plan fee (9/1-9/9): $300/month × (9/30) = $90.00
+        # - Pro plan fee (9/10-9/30): $600/month × (21/30) = $420.00
+        self.assertEqual(first_invoice.balance, Decimal('90.0000'))
+        self.assertEqual(second_invoice.balance, Decimal('420.0000'))
+
+        # Credit calculation breakdown:
+        # - Initial credit: $5000.00
+        # - Standard plan excess users (9/1-9/9): $1/user/month × (6 users) * (9/30) = $1.80
+        # - Pro plan excess users (9/10-9/30): $1/user/month × (4 users) * (21/30) = $2.80
+        # - Total charges: $1.80 + $2.80 = $4.60
+        # - Expected remaining credit: $5000 - $4.60 = $4995.40
+        self.assertEqual(self._get_credit_total(second_sub), Decimal('4995.4000'))

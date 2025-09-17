@@ -12,7 +12,7 @@
 -                  enctype="multipart/form-data"
 -                  role="form">
 -                {% csrf_token %}
--                <input type="hidden" id="bug-report-url" name="url"/>
+-                <input type="hidden" id="bug-report-url" name="url" value="{{ request.build_absolute_uri }}"/>
 -                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
 -                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
 -                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
@@ -36,7 +36,7 @@
 +            enctype="multipart/form-data"
 +            role="form">
 +        {% csrf_token %}
-+        <input type="hidden" id="bug-report-url" name="url"/>
++        <input type="hidden" id="bug-report-url" name="url" value="{{ request.build_absolute_uri }}"/>
 +        <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
 +        <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
 +        <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>

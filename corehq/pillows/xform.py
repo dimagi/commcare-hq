@@ -1,4 +1,4 @@
-import collections
+from collections.abc import MutableMapping
 
 from dateutil import parser
 from django.conf import settings
@@ -38,7 +38,7 @@ def flatten(d, parent_key='', delimiter='/'):
         if k in RESERVED_WORDS:
             continue
         new_key = parent_key + delimiter + k if parent_key else k
-        if isinstance(v, collections.MutableMapping):
+        if isinstance(v, MutableMapping):
             items.extend(list(flatten(v, new_key, delimiter).items()))
         elif not isinstance(v, list):
             items.append((new_key, v))
@@ -91,7 +91,6 @@ def get_xform_pillow(
         exclude_ucrs=None,
         num_processes=1,
         process_num=0,
-        ucr_configs=None,
         skip_ucr=False,
         processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
         topics=None,
@@ -127,7 +126,6 @@ def get_xform_pillow(
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
-        ucr_configs=ucr_configs
     )
 
     xform_to_es_processor = BulkElasticProcessor(

@@ -14,6 +14,7 @@ from dimagi.utils.parsing import json_format_date
 import corehq.apps.events.tasks as attendance_tracking_tasks
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
+from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.exceptions import DomainDoesNotExist
@@ -327,14 +328,14 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_mobile_worker_creation(domain, new_plan_version):
-        """ Deactivates users if there are too many for a community plan """
+        """ Deactivates users if there are too many for a free plan """
         from corehq.apps.accounting.models import (
             UNLIMITED_FEATURE_USAGE,
             DefaultProductPlan,
             FeatureType,
         )
 
-        # checks for community plan
+        # checks for free plan
         if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
             return True
 
@@ -369,6 +370,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ATTENDANCE_TRACKING: cls.response_add_attendance_coordinator_role,
+            privileges.USERCASE: cls.response_enable_usercase,
         }
         privs_to_respones.update({
             p: cls.response_report_builder
@@ -422,6 +424,11 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                     )
             except DataSourceConfigurationNotFoundError:
                 pass
+        return True
+
+    @staticmethod
+    def response_enable_usercase(project, new_plan_version):
+        enable_usercase(project.name)
         return True
 
 
@@ -655,7 +662,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 else:
                     return _fmt_alert(
                         ngettext(
-                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
+                            "Free plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Worker, "
                             "all your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. "
@@ -663,7 +670,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                             "in an additional charge of USD %(excess_fee)s, totalling "
                             "USD %(monthly_total)s per month.",
 
-                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
+                            "Free plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Workers, "
                             "all your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. "

@@ -1,7 +1,7 @@
-<p>Your account on CommCare HQ has been {{ verb }} for the following reason:</p>
+<p>Your account on CommCare has been {{ verb }} for the following reason:</p>
 
 <p><em>{{ reason }}</em></p>
 
 {% if not user.is_active %}
-  <p>To re-enable it please contact <a href="mailto:{{ support_email }}">CommCare HQ Support</a>.</p>
+  <p>To re-enable it please contact <a href="mailto:{{ support_email }}">CommCare Support</a>.</p>
 {% endif %}

@@ -1,10 +1,7 @@
 import sinon from "sinon";
-import Debugger from "cloudcare/js/debugger/debugger";
+import { API, CloudCareDebuggerFormEntry, EvaluateXPath } from "cloudcare/js/debugger/debugger";
 
 describe('Debugger', function () {
-    let EvaluateXPath = Debugger.EvaluateXPath,
-        API = Debugger.API,
-        CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry;
 
     describe('EvaluateXPath', function () {
         it('should correctly match xpath input', function () {
@@ -36,7 +33,7 @@ describe('Debugger', function () {
         let ccDebugger;
 
         beforeEach(function () {
-            ccDebugger = new CloudCareDebugger();
+            ccDebugger = new CloudCareDebuggerFormEntry();
             sinon.stub(API, 'evaluateXPath').returns($.Deferred());
             sinon.stub(API, 'formattedQuestions').returns($.Deferred());
         });

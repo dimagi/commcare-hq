@@ -67,3 +67,17 @@ class TestRepeaterViews(BaseViewTest):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f'/a/{self.domain.name}/motech/forwarding/')
         self.assertEqual(FormRepeater.objects.get(id=repeater.id).is_paused, False)
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_no_access_to_repeater_from_outside_domain(self):
+        repeater = FormRepeater.objects.create(
+            domain='other-domain',
+            connection_settings=self.connection_setting,
+        )
+        url_kwargs = {
+            'domain': self.domain.name,
+            'repeater_type': repeater.repeater_type,
+            'repeater_id': repeater.repeater_id
+        }
+        response = self.client.get(reverse('edit_repeater', kwargs=url_kwargs))
+        assert response.status_code == 404

@@ -25,7 +25,7 @@ from looseversion import LooseVersion
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
@@ -114,15 +114,10 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_app, REPORT_FIXTURE, LOOKUP_TABLE_FIXTURE
 from corehq.apps.fixtures.models import LookupTable
-from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
-from corehq.apps.hqmedia.models import (
-    ApplicationMediaReference,
-    CommCareMultimedia,
-)
-from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
+    get_non_system_case_types_for_domain,
     get_case_types_for_domain_es
 )
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
@@ -291,29 +286,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             },
         },
     }
-    if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
-        slug = 'module_%s_detail_print' % module.unique_id
-        print_template = module.case_details.long.print_template
-        print_uploader = MultimediaHTMLUploadController(
-            slug,
-            reverse(
-                ProcessDetailPrintTemplateUploadView.urlname,
-                args=[app.domain, app.id, module.unique_id],
-            )
-        )
-        if not print_template:
-            print_template = {
-                'path': 'jr://file/commcare/text/%s.html' % slug,
-            }
-        context.update({
-            'print_uploader': print_uploader,
-            'print_uploader_js': print_uploader.js_options,
-            'print_ref': ApplicationMediaReference(
-                print_template.get('path'),
-                media_class=CommCareMultimedia,
-            ).as_dict(),
-            'print_media_info': print_template,
-        })
     return context
 
 
@@ -721,9 +693,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            raise AppMisconfigurationError('"{}" is a reserved case type'.format(USERCASE_TYPE))
-        elif case_type and not is_valid_case_type(case_type, module):
+        if case_type and not is_valid_case_type(case_type):
             raise AppMisconfigurationError("case type is improperly formatted")
         else:
             old_case_type = module["case_type"]
@@ -816,9 +786,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
 
         if not old_root and module['root_module_id']:
-            track_workflow(request.couch_user.username, "User associated module with a parent")
+            track_workflow_noop(request.couch_user.username, "User associated module with a parent")
         elif old_root and not module['root_module_id']:
-            track_workflow(request.couch_user.username, "User orphaned a child module")
+            track_workflow_noop(request.couch_user.username, "User orphaned a child module")
 
     if should_edit('additional_case_types'):
         module.search_config.additional_case_types = list(set(request.POST.getlist('additional_case_types')))
@@ -1005,7 +975,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'multi_select',
-        'print_template',
         'search_properties',
         'search_default_properties',
         'search_claim_options',
@@ -1209,7 +1178,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
     case_tile_template = params.get('caseTileTemplate', None)
-    print_template = params.get('printTemplate', None)
     custom_variables_dict = {
         'short': params.get("short_custom_variables_dict", None),
         'long': params.get("long_custom_variables_dict", None)
@@ -1238,8 +1206,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.columns = list(map(DetailColumn.from_json, long_))
         if tabs is not None:
             detail.long.tabs = list(map(DetailTab.wrap, tabs))
-        if print_template is not None:
-            detail.long.print_template = print_template
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
@@ -1588,8 +1554,8 @@ def new_module(request, domain, app_id):
                 followup = app.new_form(module_id, _("Followup Form"), lang, attachment=attachment)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
-
-            _init_module_case_type(module)
+            case_type = request.POST.get('case_type', None)
+            _init_module_case_type(module, case_type)
         else:
             form_id = 0
             app.new_form(module_id, _("Survey"), lang)
@@ -1613,14 +1579,17 @@ def new_module(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
 
 
-# Set initial module case type, copying from another module in the same app
-def _init_module_case_type(module):
-    app = module.get_app()
-    app_case_types = [m.case_type for m in app.modules if m.case_type]
-    if len(app_case_types):
-        module.case_type = app_case_types[0]
+# Set initial module case type, copying from another module in the same app if no case type is provided
+def _init_module_case_type(module, case_type=None):
+    if case_type:
+        module.case_type = case_type
     else:
-        module.case_type = 'case'
+        app = module.get_app()
+        app_case_types = [m.case_type for m in app.modules if m.case_type]
+        if len(app_case_types):
+            module.case_type = app_case_types[0]
+        else:
+            module.case_type = 'case'
 
 
 def _init_biometrics_enroll_module(app, lang):
@@ -1749,6 +1718,18 @@ class ExistingCaseTypesView(LoginAndDomainMixin, View):
     def get(self, request, domain):
         return JsonResponse({
             'existing_case_types': list(get_case_types_for_domain_es(domain)),
+            'deprecated_case_types': list(get_data_dict_deprecated_case_types(domain))
+        })
+
+
+class AllCaseTypesView(LoginAndDomainMixin, View):
+    urlname = 'all_case_types'
+
+    def get(self, request, domain):
+        existing_case_types = list(get_non_system_case_types_for_domain(domain))
+        existing_case_types.sort(key=str.lower)  # Sort case-insensitively
+        return JsonResponse({
+            'existing_case_types': existing_case_types,
             'deprecated_case_types': list(get_data_dict_deprecated_case_types(domain))
         })
 

@@ -69,7 +69,7 @@ The Submission API is specifically for submitting XForms.
 
 If you are not already working with XForms, the easiest way to get started is to use a form that has already been submitted to CommCare. If your project focuses on cases, go to the "Case List" report, choose a case, and select the "Case History" tab. There you will find a list of the form submissions that built the case. Choose a form, and select the "Raw XML" tab. You will find the XForm submission.
 
-If your project is just based on forms, not cases, use the "Submit History" report. Choose a form, and select the "Raw XML" tab.
+If your project is just based on forms, not cases, use the "Submission History" report. Choose a form, and select the "Raw XML" tab.
 
 Once you have an example, modify it to suit your needs.
 

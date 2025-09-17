@@ -297,8 +297,8 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    # Disabled due to: https://github.com/github/feedback/discussions/8848
-    # [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
+    # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
+    [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
     docker compose pull --quiet
 
@@ -354,8 +354,7 @@ else
         fi
         docker volume rm \
             ${VOLUME_PREFIX}couchdb \
-            ${VOLUME_PREFIX}elasticsearch2 \
-            ${VOLUME_PREFIX}elasticsearch5 \
+            ${VOLUME_PREFIX}elasticsearch6 \
             ${VOLUME_PREFIX}kafka \
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \

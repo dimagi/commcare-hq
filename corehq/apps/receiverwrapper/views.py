@@ -31,7 +31,7 @@ from corehq.apps.domain.auth import (
 from corehq.apps.domain.decorators import (
     api_auth,
     check_domain_mobile_access,
-    login_or_basic_ex,
+    login_or_basic_or_api_key_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
     login_or_oauth2_ex,
@@ -52,10 +52,11 @@ from corehq.apps.receiverwrapper.util import (
     get_app_and_build_ids,
     should_ignore_submission,
 )
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils import convert_xform_to_json
+from corehq.form_processor.utils.xform import convert_xform_to_json, sanitize_instance_xml
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
@@ -102,9 +103,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     try:
         instance, attachments = couchforms.get_instance_and_attachment(request)
+        instance = sanitize_instance_xml(instance, request)
     except MultimediaBug:
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
+            instance = sanitize_instance_xml(instance, request)
             xform = convert_xform_to_json(instance)
             meta = xform.get("meta", {})
         except Exception:
@@ -145,9 +148,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         # let normal response handle invalid xml
         pass
     else:
-        device_id = instance_json.get('meta', {}).get('deviceID')
-        submitting_user_id = instance_json.get('meta', {}).get('userID')
-        should_limit = device_rate_limiter.rate_limit_device(domain, submitting_user_id, device_id)
+        meta = instance_json.get('meta', {})
+        device_id = meta.get('deviceID')
+        submitting_user_id = meta.get('userID')
+        submitting_user = CouchUser.get_by_user_id(submitting_user_id) if submitting_user_id else None
+        should_limit = device_rate_limiter.rate_limit_device(domain, submitting_user, device_id)
         if should_limit:
             return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
 
@@ -304,6 +309,7 @@ def _noauth_post(request, domain, app_id=None):
     except BadSubmissionRequest as e:
         return HttpResponseBadRequest(e.message)
 
+    instance = sanitize_instance_xml(instance, request)
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
 
@@ -375,7 +381,7 @@ def _secure_post_digest(request, domain, app_id=None):
 
 
 @handle_401_response
-@login_or_basic_ex(allow_cc_users=True)
+@login_or_basic_or_api_key_ex(allow_cc_users=True)
 @two_factor_exempt
 @set_request_duration_reporting_threshold(60)
 def _secure_post_basic(request, domain, app_id=None):

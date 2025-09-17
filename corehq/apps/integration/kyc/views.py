@@ -5,16 +5,22 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
 from corehq import toggles
-from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, KycVerificationFailureCause
-from corehq.apps.integration.kyc.services import (
-    verify_users,
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycVerificationStatus,
+    UserDataStore,
 )
-from corehq.apps.integration.kyc.tables import KycVerifyTable
+from corehq.apps.integration.kyc.services import verify_users
+from corehq.apps.integration.kyc.tables import (
+    KycCaseElasticRecord,
+    KycUserElasticRecord,
+    KycVerifyTable,
+)
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
 
@@ -73,7 +79,7 @@ class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
 class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     urlname = 'kyc_verify_table'
@@ -84,54 +90,32 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return KycConfig.objects.get(domain=self.request.domain)
 
     def get_table_kwargs(self):
+        orderable = True
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            record_class = KycUserElasticRecord
+            orderable = False
+        else:
+            record_class = KycCaseElasticRecord
+        self.table_class.record_class = record_class
+
         return {
             'extra_columns': KycVerifyTable.get_extra_columns(self.kyc_config),
+            'record_kwargs': {'kyc_config': self.kyc_config},
+            'orderable': orderable,
         }
 
     def get_queryset(self):
-        kyc_users = self.kyc_config.get_kyc_users()
-        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
-
-    def _parse_row(self, kyc_user):
-        row_data = {
-            'id': kyc_user.user_id,
-            'has_invalid_data': False,
-            'kyc_verification_status': {
-                'status': kyc_user.get('kyc_verification_status'),
-                'error_message': self._get_verification_error_message(kyc_user),
-            },
-            'kyc_last_verified_at': kyc_user.get('kyc_verification_status'),
-        }
-
-        for field in self.kyc_config.api_field_to_user_data_map.values():
-            value = kyc_user.get(field)
-            if not value:
-                row_data['has_invalid_data'] = True
-            else:
-                row_data[field] = value
-        return row_data
-
-    @staticmethod
-    def _get_verification_error_message(kyc_user):
-        verification_error = kyc_user.get('kyc_verification_error')
-        if verification_error:
-            try:
-                return KycVerificationFailureCause(verification_error).label
-            except ValueError:
-                return _('Unknown error')
-        return None
-
-    @staticmethod
-    def _is_invalid_value(value):
-        return value in ['', None]
+        return self.kyc_config.get_kyc_users_query()
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         if request.POST.get('verify_all') == 'true':
-            kyc_users = self.kyc_config.get_kyc_users()
+            kyc_users = list(self.kyc_config.get_all_kyc_users())
         else:
             selected_ids = request.POST.getlist('selected_ids')
-            kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
+            kyc_users = list(self.kyc_config.get_kyc_users_by_ids(selected_ids))
+        kyc_users = self._filter_valid_users(kyc_users)
+
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
         results = verify_users(kyc_users, self.kyc_config)
         success_count = sum(1 for result in results.values() if result == KycVerificationStatus.PASSED)
@@ -144,6 +128,13 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         self._report_success_on_reverification_metric(existing_failed_user_ids, results)
 
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
+
+    def _filter_valid_users(self, kyc_users):
+        def is_user_valid(kyc_user):
+            return all(kyc_user.get(field) for field in kyc_user_api_fields)
+
+        kyc_user_api_fields = self.kyc_config.get_api_field_to_user_data_map_values().values()
+        return [kyc_user for kyc_user in kyc_users if is_user_valid(kyc_user)]
 
     def _report_success_on_reverification_metric(self, existing_failed_user_ids, results):
         successful_user_ids = [user_id for user_id, status in results.items() if status is True]
@@ -197,9 +188,8 @@ class KycVerificationReportView(BaseDomainView):
     def _report_users_count_metric(self):
         if self.domain_has_config:
             kyc_config = KycConfig.objects.get(domain=self.domain)
-            total_users = len(kyc_config.get_kyc_users())
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
-                total_users,
+                kyc_config.get_kyc_users_count(),
                 tags={'domain': self.domain}
             )

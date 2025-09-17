@@ -1,39 +1,30 @@
-$appicon-height-xs: 150px;
-$appicon-icon-height-xs: $appicon-height-xs - 30px;
-
-
 @mixin make-appicon-size($container-height, $icon-height, $title-height, $title-size) {
   .appicon {
     min-height: $container-height;
 
     .appicon-title {
       height: $title-height;
-      bottom: $container-height * 0.05;
+      bottom: $container-height * 0.07;
       h3 {
         font-size: $title-size;
         padding: 0 calc($title-size / 2);
       }
     }
     .appicon-icon {
-      top: 0.05*$icon-height;
+      top: $container-height * 0.09 + 5;
       margin-left: calc(-1 * $icon-height / 2);
       width: $icon-height;
       height: $icon-height;
       line-height: $icon-height;
       font-size: $icon-height;
-      &[class*='fa-'] {
-        font-size: $icon-height * .8;
-      }
     }
     .appicon-custom {
       // the default icons have internal padding in the image itself.
       // this prevents users from needing to replicate that
-      top: 0.05*$icon-height + 10;
+      top: $container-height * 0.09 + 10;
       height: $icon-height - 10;
+      width: $icon-height - 10;
     }
-  }
-  .appicon-default .appicon-icon {
-    font-size: $icon-height * .9;
   }
 }
 
@@ -117,77 +108,92 @@ $appicon-icon-height-xs: $appicon-height-xs - 30px;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
 }
 
-@include make-appicon-size(170px, 115px, 35px, 16px);
+@include make-appicon-size(170px, 85px, 35px, 16px);
 @include make-gridicon-size(70px);
 
 @include media-breakpoint-up(sm) {
-  @include make-appicon-size(200px, 135px, 35px, 16px);
+  @include make-appicon-size(200px, 105px, 35px, 16px);
   @include make-gridicon-size(60px);
 }
 
 @include media-breakpoint-up(md) {
-  @include make-appicon-size(210px, 140px, 40px, 18px);
+  @include make-appicon-size(210px, 110px, 40px, 18px);
   @include make-gridicon-size(70px);
 }
 
 @include media-breakpoint-up(lg) {
-  @include make-appicon-size(230px, 150px, 45px, 20px);
+  @include make-appicon-size(230px, 120px, 50px, 20px);
   @include make-gridicon-size(130px);
 }
 
 .appicon-start {
-  background-color: $cc-att-pos-mid;
-  .appicon-icon-fg { color: $cc-att-pos-hi; }
-  .appicon-icon-bg { color: $cc-att-pos-low; }
+  background-color: $home-screen-start-button;
+  .appicon-icon { color: $white; }
   &:hover {
-    background-color: darken($cc-att-pos-mid, 5);
-    .appicon-icon-fg { color: lighten($cc-att-pos-hi, 5); }
-    .appicon-icon-bg { color: darken($cc-att-pos-low, 10); }
+    background-color: darken($home-screen-start-button, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($home-screen-start-button, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-incomplete {
-  background-color: $cc-dark-warm-accent-mid;
-  .appicon-icon-fg { color: $cc-dark-warm-accent-hi; }
-  .appicon-icon-bg { color: $cc-dark-warm-accent-low; }
+  background-color: $dimagi-sunset;
+  .appicon-icon { color: $white; }
   &:hover {
-    background-color: darken($cc-dark-warm-accent-mid, 7);
-    .appicon-icon-fg { color: lighten($cc-dark-warm-accent-hi, 5); }
-    .appicon-icon-bg { color: darken($cc-dark-warm-accent-low, 10); }
+    background-color: darken($dimagi-sunset, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($dimagi-sunset, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-sync {
-  background-color: $cc-brand-mid;
+  background-color: $primary;
   .appicon-icon {
-    top: 2px;
-    color: $cc-brand-hi;
+    color: $white;
   }
   &:hover {
-    background-color: darken($cc-brand-mid, 10);
-    .appicon-icon { color: lighten($cc-brand-hi, 5); }
+    background-color: darken($primary, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-brand-mid, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-restore-as {
-  background-color: $cc-dark-cool-accent-mid;
+  background-color: $purple-400;
   .appicon-icon {
-    color: $cc-dark-cool-accent-hi;
+    color: $white;
   }
   &:hover {
-    background-color: darken($cc-dark-cool-accent-mid, 5);
-    .appicon-icon { color: lighten($cc-dark-cool-accent-hi, 5); }
+    background-color: darken($purple-400, 10);
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($purple-400, 20);
+    .appicon-icon { color: $white; }
   }
 }
 
 .appicon-settings {
   background-color: $cc-neutral-low;
   .appicon-icon {
-    color: $cc-neutral-hi;
+    color: $white;
   }
   &:hover {
     background-color: darken($cc-neutral-low, 5);
-    .appicon-icon { color: lighten($cc-neutral-hi, 5); }
+    .appicon-icon { color: $white; }
+  }
+  &:active {
+    background-color: darken($cc-neutral-low, 10);
+    .appicon-icon { color: $white; }
   }
 }
 
@@ -195,7 +201,7 @@ $appicon-icon-height-xs: $appicon-height-xs - 30px;
   background-color: white;
   color: lighten($cc-text, 30);
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-  .appicon-icon { color: $cc-brand-mid; }
+  .appicon-icon { color: $primary; }
   &:hover {
     background-color: darken(white, 5);
   }

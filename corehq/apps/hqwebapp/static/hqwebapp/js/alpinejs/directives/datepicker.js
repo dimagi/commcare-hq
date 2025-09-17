@@ -7,7 +7,6 @@ import _ from 'underscore';
 const defaultTranslations = {
     clear: gettext('Clear selection'),
     close: gettext('Close the picker'),
-    dayViewHeaderFormat: { month: gettext('long'), year: gettext('2-digit') },
     decrementHour: gettext('Decrement Hour'),
     decrementMinute: gettext('Decrement Minute'),
     decrementSecond: gettext('Decrement Second'),
@@ -58,6 +57,7 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
         clock: false,
     };
     let localization = {
+        dayViewHeaderFormat: { month: 'long', year: '2-digit' },
         format: 'yyyy-MM-dd',
     };
 
@@ -66,6 +66,7 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
             seconds: true,
         };
         localization = {
+            dayViewHeaderFormat: { month: 'long', year: '2-digit' },
             hourCycle: 'h23',
             format: 'yyyy-MM-dd H:mm:ss',
         };

@@ -1,0 +1,31 @@
+{% load i18n %}
+
+<div id="{{ group_id }}" class="accordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button
+        class="accordion-button collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#{{ accordion_id }}"
+        aria-expanded="false"
+        aria-controls="{{ accordion_id }}"
+      >
+        {% trans "Show edit history" %}
+      </button>
+    </h2>
+    <div
+      id="{{ accordion_id }}"
+      class="accordion-collapse collapse"
+      data-bs-parent="#{{ group_id }}"
+    >
+      <div class="accordion-body">
+        <div class="list-group list-group-flush">
+          {% for change in changes %}
+            {% include "data_cleaning/summary/partial/change_detail.html" with change=change %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

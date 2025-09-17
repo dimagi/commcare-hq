@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 from functools import partial
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.auditcare.models import NavigationEventAudit
 from .utils import APIResourceTest
@@ -40,14 +41,16 @@ class TestNavigationEventAuditResource(APIResourceTest):
     resource = v0_5.NavigationEventAuditResource
     default_limit = resource._meta.limit
     max_limit = resource._meta.max_limit
-    base_params = partial(v0_5.NavigationEventAuditResourceParams,
-                          default_limit=default_limit, max_limit=max_limit)
+    base_params = staticmethod(
+        partial(v0_5.NavigationEventAuditResourceParams,
+                default_limit=default_limit, max_limit=max_limit))
     api_name = 'v0.5'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
 
+        cls.domain = Domain.get_by_name(cls.domain.name)
         cls.domain.default_timezone = 'America/Los_Angeles'
         cls.domain.save()
 

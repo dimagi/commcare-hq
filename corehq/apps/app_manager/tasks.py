@@ -12,12 +12,13 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_ids,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppValidationError,
     SavedAppBuildException,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.dbaccessors import get_all_users_by_domain
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
+from corehq.toggles import VELLUM_SAVE_TO_CASE
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter
 
@@ -27,11 +28,7 @@ logger = get_task_logger(__name__)
 @task(queue='background_queue', ignore_result=True)
 def create_usercases(domain_name):
     from corehq.apps.callcenter.sync_usercase import sync_usercases
-    if USH_USERCASES_FOR_WEB_USERS.enabled(domain_name):
-        users = CouchUser.by_domain(domain_name)
-    else:
-        users = CommCareUser.by_domain(domain_name)
-    for user in users:
+    for user in get_all_users_by_domain(domain_name, include_inactive=False):
         sync_usercases(user, domain_name, sync_call_center=False)
 
 
@@ -86,15 +83,31 @@ def prune_auto_generated_builds(domain, app_id):
 
 @task(queue='background_queue', ignore_result=True)
 def refresh_data_dictionary_from_app(domain, app_id):
+    from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+
+    _refresh_data_dictionary_from_app(domain, app_id)
+    clear_caches_case_data_cleaning(domain)
+
+
+def _refresh_data_dictionary_from_app(domain, app_id):
     try:
         app = get_app(domain, app_id)
-    except Http404:
-        # If there's no app, trhere's nothing to do
+    except (Http404, AppInDifferentDomainException):
+        # If there's no app in the domain, there's nothing to do
+        return
+
+    # RemoteApp does not implement get_modules()/get_forms() (would raise AttributeError).
+    # As RemoteApp has not been actively used since 2016, it's safe to skip syncing it.
+    if app.is_remote_app():
         return
 
     from corehq.apps.app_manager.util import actions_use_usercase
     from corehq.apps.data_dictionary.util import create_properties_for_case_types
+
     case_type_to_prop = defaultdict(set)
+    if VELLUM_SAVE_TO_CASE.enabled(domain):
+        for form in app.get_forms():
+            case_type_to_prop.update(form.get_save_to_case_updates())
     for module in app.get_modules():
         if not module.is_surveys:
             for form in module.get_forms():

@@ -60,3 +60,33 @@ def send_subscription_renewal_alert(domain, new_subscription, old_subscription):
 def send_self_start_subscription_alert(domain, new_subscription, old_subscription):
     send_subscription_change_alert(domain, new_subscription, old_subscription,
                                    subject_template=SubjectTemplate.SELF_START)
+
+
+def send_flagged_pay_annually_subscription_alert(subscription, current_invoice, prepay_invoice):
+    domain = subscription.subscriber.domain
+
+    email_context = {
+        'domain': domain,
+        'domain_url': get_default_domain_url(domain),
+        'plan_version': subscription.plan_version,
+        'subscription': subscription,
+        'billing_account': subscription.account,
+        'current_invoice': current_invoice,
+        'prepay_invoice': prepay_invoice,
+    }
+
+    subject_template = "{env}Pay Annually Alert: Product Fees Not Credited for {domain}"
+    email_subject = subject_template.format(
+        env=("[{}] ".format(settings.SERVER_ENVIRONMENT.upper())
+             if settings.SERVER_ENVIRONMENT == "staging" else ""),
+        domain=email_context['domain'],
+    )
+
+    sub_change_email_address = settings.SUBSCRIPTION_CHANGE_EMAIL
+
+    send_html_email_async.delay(
+        email_subject,
+        sub_change_email_address,
+        render_to_string('accounting/email/pay_annually_unpaid.html', email_context),
+        text_content=render_to_string('accounting/email/pay_annually_unpaid.txt', email_context),
+    )

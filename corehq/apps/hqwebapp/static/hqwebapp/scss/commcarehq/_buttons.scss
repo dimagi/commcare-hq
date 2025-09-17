@@ -1,3 +1,9 @@
+// b5 default background color for outline buttons is transparent
+// it looks weird if the container's background is not white.
+.btn-outline-danger {
+  background-color: #ffffff;
+};
+
 .btn-purple {
   @include button-variant($white, $cc-dark-cool-accent-mid, darken($cc-dark-cool-accent-mid, 5));
 }
@@ -40,4 +46,9 @@ input::file-selector-button {
   @extend .btn;
   @extend .btn-sm;
   @extend .btn-outline-primary;
+}
+
+.btn-wiggle {
+  animation: attention-wiggle 0.3s ease-in-out;
+  animation-iteration-count: 3;
 }

@@ -1,14 +1,16 @@
 import pickle
 from contextlib import contextmanager
+from unittest.mock import patch
 
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import generate_cases
 
 from ..models import (
     SQLLocation,
     get_domain_locations,
 )
-from .util import LocationHierarchyTestCase
+from .util import LocationHierarchyTestCase, setup_locations_and_types
 
 
 class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
@@ -192,30 +194,62 @@ class TestFilterByUserInput(LocationHierarchyTestCase):
         ])
     ]
 
-    def test_path_queries(self):
-        for querystring, expected in [
-            ('', SQLLocation.objects.filter(domain=self.domain)
-                                    .values_list('name', flat=True)),
-            ('Suff', ['Suffolk']),
-            ('Suffolk', ['Suffolk']),
-            ('Cambridge', ['Cambridge', 'Cambridge']),
-            ('Massachusetts/Cambridge', ['Cambridge']),
-            ('"Copycat"/Cambridge', []),
-            ('"Middlesex"/Cambridge', ['Cambridge']),
-            ('"Middlesex/Cambridge', ['Cambridge', 'Cambridge']),
-            ('"Middlesex"/Somerville', ['Somerville', 'Evil Somerville']),
-            ('"Middlesex"/"Somer', ['Somerville', 'Evil Somerville']),
-            ('"Middlesex"/"Somerville"', ['Somerville']),
-            ('mass/mid/Som', ['Somerville', 'Evil Somerville']),
-            ('Middl', ['Middlesex', 'Evil Middlesex']),
-            ('Middl/', ['Cambridge', 'Somerville', 'Evil Somerville', 'Cambridge', 'Somerville']),
-            ('Middl/camb', ['Cambridge', 'Cambridge']),
-        ]:
-            actual = list(SQLLocation.objects
-                          .filter_by_user_input(self.domain, querystring)
-                          .values_list('name', flat=True))
-            error_msg = f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
-            self.assertItemsEqual(actual, expected, error_msg)
+    def assert_query_has_results(self, querystring, expected):
+        actual = list(SQLLocation.objects
+                      .filter_by_user_input(self.domain, querystring)
+                      .values_list('name', flat=True))
+        error_msg = f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
+        self.assertItemsEqual(actual, expected, error_msg)
+
+    def test_empty_path_query(self):
+        all_locations = (
+            SQLLocation.objects
+            .filter(domain=self.domain)
+            .values_list('name', flat=True)
+        )
+        self.assert_query_has_results('', all_locations)
+
+    @patch('corehq.apps.locations.models.Domain.get_by_name', lambda n: FakeDomain)
+    def test_location_in_different_domain(self):
+        setup_locations_and_types(
+            FakeDomain.name,
+            self.location_type_names,
+            [],
+            [
+                ('Middle Mass', [
+                    ('Upper Middlesex', [
+                        ('Lower Cambridge', []),
+                    ]),
+                ]),
+            ],
+        )
+
+        self.assert_query_has_results('mass/cam', ['Cambridge'])
+
+@generate_cases([  # noqa: E302
+    ('Suff', ['Suffolk']),
+    ('Suffolk', ['Suffolk']),
+    ('Cambridge', ['Cambridge', 'Cambridge']),
+    ('Massachusetts/Cambridge', ['Cambridge']),
+    ('"Copycat"/Cambridge', []),
+    ('"Middlesex"/Cambridge', ['Cambridge']),
+    ('"Middlesex/Cambridge', ['Cambridge', 'Cambridge']),
+    ('"Middlesex"/Somerville', ['Somerville', 'Evil Somerville']),
+    ('"Middlesex"/"Somer', ['Somerville', 'Evil Somerville']),
+    ('"Middlesex"/"Somerville"', ['Somerville']),
+    ('mass/mid/Som', ['Somerville', 'Evil Somerville']),
+    ('Middl', ['Middlesex', 'Evil Middlesex']),
+    ('Middl/', ['Cambridge', 'Somerville', 'Evil Somerville', 'Cambridge', 'Somerville']),
+    ('Middl/camb', ['Cambridge', 'Cambridge']),
+    ('/evil', ['Evil Somerville', 'Evil Middlesex']),
+], TestFilterByUserInput)
+def test_path_query(self, querystring, expected):
+    self.assert_query_has_results(querystring, expected)
+
+
+class FakeDomain:
+    name = 'other-domain'
+    commtrack_enabled = False
 
 
 @contextmanager

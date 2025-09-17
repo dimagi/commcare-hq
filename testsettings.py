@@ -2,6 +2,7 @@ import os
 from warnings import filterwarnings
 
 import settingshelper as helper
+
 assert helper.is_testing(), 'test mode is required before importing settings'
 from settings import *  # noqa: E402, F403
 
@@ -9,7 +10,7 @@ from settings import *  # noqa: E402, F403
 # if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
 #     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
-ELASTICSEARCH_MAJOR_VERSION = 5
+ELASTICSEARCH_MAJOR_VERSION = 6
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
@@ -41,7 +42,7 @@ ES_SMS_INDEX_SWAPPED = False
 ES_USERS_INDEX_SWAPPED = False
 
 # This should be updated when a new value is added to ES_REINDEX_LOG else test will fail
-ES_MULTIPLEX_TO_VERSION = '6'
+ES_MULTIPLEX_TO_VERSION = '7'
 ES_SETTINGS = {
     'default': {
         'number_of_replicas': 0,

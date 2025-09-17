@@ -150,11 +150,11 @@ Elasticsearch
 Elasticsearch_ is a flexible and powerful open source, distributed real-time search and analytics engine for the
 cloud. CommCare uses Elasticsearch for several distinct purposes:
 
-Much of CommCare's data is defined by users in the application configuration. In order to provide performant
-reporting and querying of user data CommCare makes use of Elasticsearch.
+Much of CommCare's data is defined by users in the application configuration. CommCare makes use of Elasticsearch
+to provide performant reporting and querying of user data.
 
-CommCare also serves portions of the REST API from a read-only copy of form and case data that is replicated in
-real time to an Elasticsearch service.
+A read-only copy of form and case data is replicated in real time to an Elasticsearch service. CommCare also
+serves portions of the REST API from this service.
 
 This also allows independent scaling of the transactional data services and the reporting services.
 

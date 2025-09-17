@@ -1,12 +1,18 @@
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 import pytest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus
+from corehq.apps.es.users import user_adapter
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycUser,
+    KycVerificationStatus,
+    UserDataStore,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
@@ -51,6 +57,7 @@ class TestGetConnectionSettings(TestCase):
             config.get_connection_settings()
 
 
+@es_test(requires=[case_search_adapter, user_adapter])
 class BaseKycUsersSetup(TestCase):
     def setUp(self):
         super().setUp()
@@ -59,6 +66,8 @@ class BaseKycUsersSetup(TestCase):
             None, None,
             user_data={'custom_field': 'custom_value'},
         )
+        user_adapter.bulk_index([self.commcare_user], refresh=True)
+
         self.addCleanup(self.commcare_user.delete, DOMAIN, deleted_by=None)
         self.user_case = create_case(
             DOMAIN,
@@ -67,7 +76,7 @@ class BaseKycUsersSetup(TestCase):
             name='test.user',
             external_id=self.commcare_user._id,
             save=True,
-            case_json={'user_case_property': 'user_case_value'},
+            case_json={'user_case_property': 'user_case_value', 'hq_user_id': self.commcare_user._id},
         )
         self.other_case = create_case(
             DOMAIN,
@@ -75,6 +84,7 @@ class BaseKycUsersSetup(TestCase):
             save=True,
             case_json={'other_case_property': 'other_case_value'},
         )
+        case_search_adapter.bulk_index([self.user_case, self.other_case], refresh=True)
         self.addCleanup(
             CommCareCase.objects.hard_delete_cases,
             DOMAIN,
@@ -89,7 +99,7 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             domain=DOMAIN,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
         )
-        kyc_users = config.get_kyc_users()
+        kyc_users = list(config.get_all_kyc_users())
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'commcare_profile': '',
@@ -102,7 +112,7 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
         )
         selected_ids = [self.commcare_user.user_id]
-        kyc_users = config.get_kyc_users_by_ids(selected_ids)
+        kyc_users = list(config.get_kyc_users_by_ids(selected_ids))
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'commcare_profile': '',
@@ -114,10 +124,11 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             domain=DOMAIN,
             user_data_store=UserDataStore.USER_CASE,
         )
-        kyc_users = config.get_kyc_users()
+        kyc_users = list(config.get_all_kyc_users())
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'user_case_property': 'user_case_value',
+            'hq_user_id': self.commcare_user._id,
         }
 
     def test_user_case_by_ids(self):
@@ -125,11 +136,37 @@ class TestGetUserObjectsUsers(BaseKycUsersSetup):
             domain=DOMAIN,
             user_data_store=UserDataStore.USER_CASE,
         )
-        selected_ids = [self.commcare_user.user_id]
-        kyc_users = config.get_kyc_users_by_ids(selected_ids)
+        selected_ids = [self.user_case.get_case_property('hq_user_id')]
+        kyc_users = list(config.get_kyc_users_by_ids(selected_ids))
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'user_case_property': 'user_case_value',
+            'hq_user_id': self.commcare_user._id,
+        }
+
+    def test_other_case_type(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other_case_type',
+        )
+        kyc_users = list(config.get_all_kyc_users())
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
+            'other_case_property': 'other_case_value',
+        }
+
+    def test_other_case_type_by_ids(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other_case_type',
+        )
+        selected_ids = [self.other_case.case_id]
+        kyc_users = list(config.get_kyc_users_by_ids(selected_ids))
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
+            'other_case_property': 'other_case_value',
         }
 
 
@@ -156,7 +193,7 @@ class TestGetUserObjectsCases(TestCase):
             user_data_store=UserDataStore.OTHER_CASE_TYPE,
             other_case_type='other_case_type',
         )
-        kyc_users = config.get_kyc_users()
+        kyc_users = list(config.get_all_kyc_users())
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'other_case_property': 'other_case_value',
@@ -169,7 +206,7 @@ class TestGetUserObjectsCases(TestCase):
             other_case_type='other_case_type',
         )
         selected_ids = [self.other_case.case_id]
-        kyc_users = config.get_kyc_users_by_ids(selected_ids)
+        kyc_users = list(config.get_kyc_users_by_ids(selected_ids))
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'other_case_property': 'other_case_value',
@@ -189,7 +226,7 @@ class TestGetUserObjectsCases(TestCase):
             user_data_store=UserDataStore.OTHER_CASE_TYPE,
         )
         with pytest.raises(AssertionError):
-            config.get_kyc_users()
+            config.get_all_kyc_users()
 
 
 class TestKycUser(BaseKycUsersSetup):
@@ -214,10 +251,13 @@ class TestKycUser(BaseKycUsersSetup):
             user_data_store=UserDataStore.USER_CASE,
         )
 
-        kyc_user = KycUser(config, self.commcare_user)
+        kyc_user = KycUser(config, self.user_case)
 
-        assert kyc_user.user_data == {'user_case_property': 'user_case_value'}
-        assert kyc_user.user_id == self.commcare_user.user_id
+        assert kyc_user.user_data == {
+            'user_case_property': 'user_case_value',
+            'hq_user_id': self.commcare_user._id
+        }
+        assert kyc_user.user_id == self.user_case.get_case_property('hq_user_id')
 
     def test_other_case_type(self):
         config = KycConfig(
@@ -242,7 +282,7 @@ class TestKycUser(BaseKycUsersSetup):
         assert kyc_user.kyc_verification_status == KycVerificationStatus.PENDING
         assert kyc_user.kyc_last_verified_at is None
         assert kyc_user.kyc_provider is None
-        assert kyc_user.kyc_verification_error is None
+        assert kyc_user.kyc_verification_error_message is None
 
     def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider):
         assert kyc_user.kyc_verification_status == expected_status
@@ -266,7 +306,7 @@ class TestKycUser(BaseKycUsersSetup):
             user_data_store=UserDataStore.USER_CASE,
         )
 
-        kyc_user = KycUser(config, self.commcare_user)
+        kyc_user = KycUser(config, self.user_case)
         kyc_user.update_verification_status(KycVerificationStatus.PASSED)
 
         self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
@@ -281,3 +321,77 @@ class TestKycUser(BaseKycUsersSetup):
         kyc_user.update_verification_status(KycVerificationStatus.PASSED)
 
         self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+
+    def test_verification_status_invalid_value(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+        )
+        user = CommCareUser.create(
+            DOMAIN, f'test.user2@{DOMAIN}.commcarehq.org', 'Passw0rd!', None, None,
+            user_data={'kyc_verification_status': 'invalid-status'},
+        )
+        self.addCleanup(user.delete, DOMAIN, deleted_by=None)
+        kyc_user = KycUser(config, user)
+
+        assert kyc_user.kyc_verification_status == KycVerificationStatus.INVALID
+
+
+class TestKycConfig(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.kyc_config = KycConfig(
+            domain=DOMAIN,
+            api_field_to_user_data_map={
+                'first_name': {
+                    'data_field': 'first_name',
+                },
+                'last_name': {
+                    'data_field': 'last_name',
+                    'is_sensitive': True,
+                },
+                'email': {
+                    'data_field': 'email',
+                    'is_sensitive': 'falsey',
+                    'random_prop': 123,
+                },
+                'phone_number': {
+                    'data_field': 'phone_number',
+                    'is_sensitive': 'true',
+                },
+                'street_address': {
+                    'is_sensitive': False,
+                },
+                'id_num': 'id_num',
+                'country': {},
+                'reg_num': {
+                    'DATA_FIELD': 'reg_num'
+                }
+            }
+        )
+
+    def test_get_api_field_to_user_data_map_values(self):
+        map_values = self.kyc_config.get_api_field_to_user_data_map_values()
+        assert map_values == {
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email',
+            'phone_number': 'phone_number',
+        }
+
+    def test_is_sensitive_field(self):
+        expected_output = {
+            'first_name': False,
+            'last_name': True,
+            'email': False,
+            'phone_number': False,
+            'street_address': False,
+            'id_num': False,
+            'country': False,
+            'reg_num': False,
+        }
+        for field, expected_val in expected_output.items():
+            is_sensitive = self.kyc_config.is_sensitive_field(field)
+            assert is_sensitive == expected_val

@@ -7,9 +7,10 @@ from django.utils.translation import gettext as _
 
 import jsonfield
 
-from corehq.apps.es.case_search import CaseSearchES
-from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
+from corehq.apps.es.users import UserES
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
@@ -80,50 +81,75 @@ class KycConfig(models.Model):
         else:
             raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
 
-    def get_kyc_users(self):
-        """
-        Returns all CommCareUser or CommCareCase instances based on the
-        user data store.
-        """
-        if self.user_data_store in (
-            UserDataStore.CUSTOM_USER_DATA,
-            UserDataStore.USER_CASE,
-        ):
-            return [
-                KycUser(self, user_obj)
-                for user_obj in CommCareUser.by_domain(self.domain)
-            ]
+    def get_kyc_users_query(self):
+        if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            return UserES().domain(self.domain).mobile_users()
+        if self.user_data_store == UserDataStore.USER_CASE:
+            case_type = USERCASE_TYPE
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
-            case_ids = (
-                CaseSearchES()
-                .domain(self.domain)
-                .case_type(self.other_case_type)
-            ).get_ids()
-            if not case_ids:
-                return []
-            return [
-                KycUser(self, user_obj)
-                for user_obj in CommCareCase.objects.get_cases(case_ids, self.domain)
-            ]
+            case_type = self.other_case_type
+        return CaseSearchES().domain(self.domain).case_type(case_type)
+
+    def get_all_kyc_users(self):
+        """
+        Yields all kyc users in the domain based on the user data store.
+        """
+        hits = self.get_kyc_users_query().run().hits
+        return self._es_hits_to_kyc_users(hits)
 
     def get_kyc_users_by_ids(self, obj_ids):
         """
-        Returns all CommCareUser or CommCareCase instances based on the
-        user data store and user IDs.
+        Yields kyc users for object ids in the domain based on the user data store.
+        param obj_ids: list of user_ids (for CUSTOM_USER_DATA, USER_CASE) or case_ids (for OTHER_CASE_TYPE)
         """
-        if self.user_data_store in (
-            UserDataStore.CUSTOM_USER_DATA,
-            UserDataStore.USER_CASE,
-        ):
-            user_objs = [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
-            return [KycUser(self, user_obj) for user_obj in user_objs]
-        elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
-            assert self.other_case_type
-            return [
-                KycUser(self, user_obj)
-                for user_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
-            ]
+        if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            query = self.get_kyc_users_query().user_ids(obj_ids)
+        elif self.user_data_store == UserDataStore.USER_CASE:
+            query = self.get_kyc_users_query().case_property_query('hq_user_id', obj_ids)
+        else:
+            query = self.get_kyc_users_query().case_ids(obj_ids)
+        hits = query.run().hits
+        return self._es_hits_to_kyc_users(hits)
+
+    def _es_hits_to_kyc_users(self, hits):
+        for hit in hits:
+            if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                wrapped_data = CouchUser.wrap_correctly(hit.get('_source', hit))
+            else:
+                wrapped_data = wrap_case_search_hit(hit)
+            yield KycUser(self, wrapped_data)
+
+    def get_kyc_users_count(self):
+        return self.get_kyc_users_query().count()
+
+    def get_api_field_to_user_data_map_values(self):
+        """
+        The dict values for `api_field_to_user_data_map` consist of a dict with the following structure:
+        ```
+        {
+            'data_field': 'field_name',
+            'is_sensitive': True/False
+        }
+        ```
+        This method parses through `api_field_to_user_data_map` and returns a dict with only the mapping values.
+        """
+        map_vals = {}
+        for provider_field, field in self.api_field_to_user_data_map.items():
+            if not isinstance(field, dict) or 'data_field' not in field:
+                continue
+            map_vals[provider_field] = field['data_field']
+        return map_vals
+
+    def is_sensitive_field(self, field):
+        if field not in self.api_field_to_user_data_map:
+            return False
+        field_data = self.api_field_to_user_data_map[field]
+        return (
+            isinstance(field_data, dict)
+            and 'is_sensitive' in field_data
+            and field_data['is_sensitive'] is True
+        )
 
 
 class KycUser:
@@ -147,8 +173,10 @@ class KycUser:
         """
         self.kyc_config = kyc_config
         self._user_or_case_obj = user_or_case_obj
-        if isinstance(self._user_or_case_obj, CommCareUser):
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             self.user_id = self._user_or_case_obj.user_id
+        elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
+            self.user_id = self._user_or_case_obj.get_case_property('hq_user_id')
         else:
             self.user_id = self._user_or_case_obj.case_id
         self._user_data = None
@@ -166,6 +194,9 @@ class KycUser:
         ):
             # Fall back to CommCareUser
             return getattr(self._user_or_case_obj, item)
+        if item == 'name' and self.kyc_config.user_data_store == UserDataStore.USER_CASE:
+            # Special case for usercase where name is stored directly on CommCareCase
+            return self._user_or_case_obj.name
         else:
             raise KeyError(item)
 
@@ -180,12 +211,7 @@ class KycUser:
         if self._user_data is None:
             if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
                 self._user_data = self._user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
-            elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-                custom_user_case = self._user_or_case_obj.get_usercase()
-                if not custom_user_case:
-                    raise UserCaseNotFound("User case not found for the user.")
-                self._user_data = custom_user_case.case_json
-            else:  # UserDataStore.OTHER_CASE_TYPE
+            else:  # User Case or UserDataStore.OTHER_CASE_TYPE
                 self._user_data = self._user_or_case_obj.case_json
         return self._user_data
 
@@ -194,19 +220,26 @@ class KycUser:
         return self.user_data.get('kyc_last_verified_at')
 
     @property
-    def kyc_verification_error(self):
-        return self.user_data.get('kyc_verification_error')
+    def kyc_verification_error_message(self):
+        if kyc_verification_error := self.user_data.get('kyc_verification_error'):
+            try:
+                return KycVerificationFailureCause(kyc_verification_error).label
+            except ValueError:
+                return _('Unknown error')
+        return None
 
     @property
     def kyc_verification_status(self):
         value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
-        assert value in (
+        if value not in (
             KycVerificationStatus.PENDING,
             KycVerificationStatus.PASSED,
             KycVerificationStatus.FAILED,
+            KycVerificationStatus.ERROR,
             ''
-        )
+        ):
+            value = KycVerificationStatus.INVALID
         return value or KycVerificationStatus.PENDING
 
     @property
@@ -255,6 +288,7 @@ class KycVerificationStatus:
     # as case property/field does not exist or is empty.
     PENDING = None
     ERROR = 'error'
+    INVALID = 'invalid'   # indicates an invalid value was manually set by a user
 
 
 class KycVerificationFailureCause(models.TextChoices):

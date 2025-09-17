@@ -19,6 +19,12 @@ module.exports = Object.assign({}, commonDefault, {
         new hqPlugins.EntryChunksPlugin({
             filename: 'manifest_b3.json',
         }),
+
+        // Supports hqAnalytics in vellum when VELLUM_DEBUG=True
+        new webpack.NormalModuleReplacementPlugin(
+            /hqAnalytics\.js/,
+            path.resolve(utils.getStaticPathForApp('app_manager', 'js/forms/'), 'form_designer_analytics.js'),
+        ),
     ],
 
     resolve: {
@@ -28,6 +34,12 @@ module.exports = Object.assign({}, commonDefault, {
             "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
             "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         }),
+
+        // Needed for js-xpath in app manager
+        fallback: {
+            "path": false,
+            "fs": false,
+        },
     },
 
     optimization: {

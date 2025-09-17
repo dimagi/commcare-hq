@@ -93,6 +93,9 @@
   "export": {
     "is_complete": true
   },
+  "geospatial": {
+    "in_progress": true
+  },
   "groups": {
     "is_complete": true
   },
@@ -173,6 +176,23 @@
       "js/user_api_keys.js"
     ],
     "is_complete": true
+  },
+  "sso": {
+    "in_progress": true,
+    "templates": [
+      "accounting_admin/edit_identity_provider.html",
+      "accounting_admin/new_identity_provider.html",
+      "enterprise_admin/edit_identity_provider.html",
+      "enterprise_admin/manage_sso.html",
+      "partials/admin_danger_zone.html",
+      "partials/manage_authenticated_email_domains.html",
+      "partials/manage_sso_exempt_users.html",
+      "partials/manage_sso_test_users.html",
+      "permissions/untrusted_identity_provider_for_domain.html"
+    ],
+    "javascript": [
+      "js/enterprise_edit_identity_provider.js"
+    ]
   },
   "user_importer": {
     "is_complete": true

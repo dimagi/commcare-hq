@@ -12,7 +12,6 @@ def pytest_sessionstart():
     patch_django_test_case()
     patch_assertItemsEqual()
     patch_testcase_databases()
-    extend_freezegun_ignore_list()
     patch_es_user_signals()
     patch_foreign_value_caches()
     patch_domain_deletion()
@@ -28,7 +27,7 @@ def patch_unittest_TestCase_doClassCleanup():
 
     @classmethod
     def doClassCleanupAndRaiseLastError(cls):
-        doClassCleanups()
+        doClassCleanups(cls)
         errors = cls.tearDown_exceptions
         if errors:
             if len(errors) > 1:
@@ -41,7 +40,7 @@ def patch_unittest_TestCase_doClassCleanup():
     import sys
     from traceback import print_exception
     from unittest.case import TestCase
-    doClassCleanups = TestCase.doClassCleanups
+    doClassCleanups = TestCase.doClassCleanups.__func__
     TestCase.doClassCleanups = doClassCleanupAndRaiseLastError
 
 
@@ -63,13 +62,3 @@ def patch_django_test_case():
 def patch_assertItemsEqual():
     import unittest
     unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
-
-
-GLOBAL_FREEZEGUN_IGNORE_LIST = ["kafka."]
-
-
-def extend_freezegun_ignore_list():
-    """Extend the freezegun ignore list"""
-    import freezegun
-
-    freezegun.configure(extend_ignore_list=GLOBAL_FREEZEGUN_IGNORE_LIST)

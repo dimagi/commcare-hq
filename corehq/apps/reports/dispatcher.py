@@ -7,7 +7,6 @@ from django.views.generic.base import View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -20,12 +19,16 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
+from corehq.apps.hqwebapp.utils.bootstrap.reports.debug import (
+    reports_bootstrap5_template_debugger,
+)
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.util.quickcache import quickcache
 
+from .const import AllowedRenderings
 from .lookup import ReportLookup
-from ..hqwebapp.utils.bootstrap import set_bootstrap_version5
-from ..hqwebapp.utils.bootstrap.reports.debug import reports_bootstrap5_template_debugger
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -120,17 +123,17 @@ class ReportDispatcher(View):
     @datespan_default
     def dispatch(self, request, domain=None, report_slug=None, render_as=None,
                  permissions_check=None, *args, **kwargs):
-        render_as = render_as or 'view'
+        render_as = render_as or AllowedRenderings.VIEW
         domain = domain or getattr(request, 'domain', None)
 
         redirect_slug = self._redirect_slug(report_slug)
 
-        if redirect_slug and render_as == 'email':
+        if redirect_slug and render_as == AllowedRenderings.EMAIL:
             # todo saved reports should probably change the slug to the redirected slug. this seems like a hack.
             raise Http404
         elif redirect_slug:
             new_args = [domain] if domain else []
-            if render_as != 'view':
+            if render_as != AllowedRenderings.VIEW:
                 new_args.append(render_as)
             new_args.append(redirect_slug)
             return HttpResponseRedirect(reverse(self.name(), args=new_args))
@@ -192,7 +195,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'print']
+        return [e.value for e in AllowedRenderings]
 
     @classmethod
     def navigation_sections(cls, request, domain):
@@ -259,7 +262,7 @@ class ProjectReportDispatcher(ReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if domain is None:
             return False
-        if not request.couch_user.is_active:
+        if not request.couch_user.is_active_in_domain(domain):
             return False
         return request.couch_user.can_view_report(domain, report)
 
@@ -270,7 +273,7 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
 
     def dispatch(self, request, *args, **kwargs):
         render_as = kwargs.get('render_as')
-        if not render_as == 'email':
+        if not render_as == AllowedRenderings.EMAIL:
             return self.dispatch_with_priv(request, *args, **kwargs)
         if not domain_has_privilege(request.domain, privileges.CUSTOM_REPORTS):
             raise PermissionDenied()
@@ -332,5 +335,7 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
     map_name = 'RELEASE_MANAGEMENT_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        from corehq.apps.linked_domain.util import can_user_access_linked_domains
+        from corehq.apps.linked_domain.util import (
+            can_user_access_linked_domains,
+        )
         return can_user_access_linked_domains(request.couch_user, domain)

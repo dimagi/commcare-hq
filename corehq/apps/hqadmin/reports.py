@@ -1,38 +1,48 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from dateutil.parser import parse
+from dimagi.utils.logging import notify_exception
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from django.contrib.humanize.templatetags.humanize import naturaltime
-
-from dateutil.parser import parse
 from memoized import memoized
 
-from dimagi.utils.logging import notify_exception
-
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
-from corehq.apps.auditcare.utils.export import navigation_events_by_user
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
+from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.auditcare.utils.export import (
+    all_audit_events_by_user,
+    filters_for_audit_event_query,
+    get_generic_log_event_row,
+)
+from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.exceptions import ESError
+from corehq.apps.es.forms import FormES
+from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
+from corehq.apps.reports.filters.select import FeatureFilter
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.case_search import CaseSearchES
-from corehq.apps.es.forms import FormES
-from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
+from corehq.feature_previews import find_preview_by_slug
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
-from corehq.apps.es.aggregations import TermsAggregation
-from corehq.apps.es.exceptions import ESError
+from corehq.toggles import (
+    NAMESPACE_DOMAIN,
+    RESTRICT_DATA_SOURCE_REBUILD,
+    USER_CONFIGURABLE_REPORTS,
+)
 
 
 class AdminReport(GenericTabularReport):
@@ -98,11 +108,13 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 class UserAuditReport(AdminReport, DatespanMixin):
     slug = 'user_audit_report'
     name = gettext_lazy("User Audit Events")
+    MAX_RECORDS = 4000  # Tuned based on performance testing and user experience
+    report_template_path = "hqadmin/user_audit_report.html"
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.simple.SimpleUsername',
-        'corehq.apps.reports.filters.simple.SimpleDomain',
+        'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
     ]
     emailable = False
     exportable = True
@@ -121,30 +133,61 @@ class UserAuditReport(AdminReport, DatespanMixin):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(gettext_lazy("Date")),
+            DataTablesColumn(gettext_lazy("Doc Type")),
             DataTablesColumn(gettext_lazy("Username")),
             DataTablesColumn(gettext_lazy("Domain")),
             DataTablesColumn(gettext_lazy("IP Address")),
-            DataTablesColumn(gettext_lazy("Request Method")),
-            DataTablesColumn(gettext_lazy("Request Path")),
+            DataTablesColumn(gettext_lazy("Action")),
+            DataTablesColumn(gettext_lazy("Resource")),
+            DataTablesColumn(gettext_lazy("Description")),
         )
 
     @property
     def rows(self):
+        # Either domain or user must have a value
+        if not (self.selected_domain or self.selected_user):
+            return []
+
+        if self._is_limit_exceeded():
+            return []
+
         rows = []
-        events = navigation_events_by_user(
-            self.selected_user, self.datespan.startdate, self.datespan.enddate
+        events = all_audit_events_by_user(
+            self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate
         )
         for event in events:
-            if not self.selected_domain or self.selected_domain == event.domain:
-                rows.append([
-                    event.event_date,
-                    event.user,
-                    event.domain or '',
-                    event.ip_address,
-                    event.request_method,
-                    event.request_path
-                ])
-        return rows
+            row = get_generic_log_event_row(event)
+            rows.append(row)
+
+        # sort by date asc
+        return sorted(rows, key=lambda x: x[0])
+
+    @memoized
+    def _is_limit_exceeded(self):
+        where = filters_for_audit_event_query(
+            user=self.selected_user,
+            domain=self.selected_domain,
+            start_date=self.datespan.startdate,
+            end_date=self.datespan.enddate
+        )
+        return NavigationEventAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+
+    @property
+    def report_context(self):
+        context = super().report_context
+
+        if not (self.selected_domain or self.selected_user):
+            context['warning_message'] = _("You must specify either a username or a domain. "
+                    "Requesting all audit events across all users and domains would exceed system limits.")
+        elif self._is_limit_exceeded():
+            context['warning_message'] = self._get_limit_exceeded_message()
+
+        return context
+
+    def _get_limit_exceeded_message(self):
+        return _("Your search returned more than {max_records} records. "
+                 "Please narrow down your search by selecting a specific user, domain, or a shorter date range."
+                 ).format(max_records=self.MAX_RECORDS)
 
 
 class UserListReport(GetParamsMixin, AdminReport):
@@ -390,6 +433,7 @@ class UCRRebuildRestrictionTable:
 
     def _ucr_rebuild_restriction_status_column_data(self, domain, case_count, form_count):
         from django.utils.safestring import mark_safe
+
         from corehq.apps.toggle_ui.views import ToggleEditView
 
         restriction_ff_enabled = self._rebuild_restricted_ff_enabled(domain)
@@ -518,7 +562,131 @@ class StaleCasesTable:
     def _get_domains(self):
         return list(set(
             Subscription.visible_objects
-            .exclude(plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY)
+            .exclude(plan_version__plan__edition=SoftwarePlanEdition.FREE)
             .filter(is_active=True)
             .values_list('subscriber__domain', flat=True)
         ))
+
+
+class FeaturePreviewStatusReport(AdminReport):
+    slug = 'feature_preview_status_report'
+    name = gettext_lazy("Feature Preview Status Report")
+
+    fields = [
+        'corehq.apps.reports.filters.select.FeatureFilter',
+    ]
+    emailable = False
+    exportable = True
+
+    def selected_feature(self):
+        return self.get_request_param(FeatureFilter.slug, None, from_json=True)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Domain")),
+            DataTablesColumn(gettext_lazy("Enabled By")),
+            DataTablesColumn(gettext_lazy("Enabled At")),
+        )
+
+    @property
+    def rows(self):
+        if not self.selected_feature():
+            return []
+        feature = find_preview_by_slug(self.selected_feature())
+        if not feature:
+            return []
+        rows = []
+        domains = feature.get_enabled_domains()
+        records = (
+            ToggleAudit.objects
+            .filter(slug=feature.slug, namespace=NAMESPACE_DOMAIN, item__in=domains)
+            .order_by('item', 'created')
+            .distinct('item')
+        )
+
+        for record in records:
+            rows.append([
+                record.item,
+                record.username,
+                record.created,
+            ])
+
+        domains_with_records = {record.item for record in records}
+        domains_without_records = set(domains) - domains_with_records
+
+        for domain in domains_without_records:
+            rows.append([
+                domain,
+                _("Not recorded"),
+                _("Not recorded"),
+            ])
+
+        return rows
+
+
+class FeaturePreviewAuditReport(AdminReport):
+    slug = 'feature_preview_audit_report'
+    name = gettext_lazy("Feature Preview Audit Report")
+
+    fields = [
+        'corehq.apps.reports.filters.simple.SimpleDomain',
+        'corehq.apps.reports.filters.select.FeatureFilter',
+    ]
+    emailable = False
+    exportable = True
+
+    @property
+    def selected_domain(self):
+        selected_domain = self.request.GET.get('domain_name', None)
+        return selected_domain or None
+
+    def selected_feature(self):
+        return self.get_request_param(FeatureFilter.slug, None, from_json=True)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Feature")),
+            DataTablesColumn(gettext_lazy("Action")),
+            DataTablesColumn(gettext_lazy("Changed By")),
+            DataTablesColumn(gettext_lazy("Changed At")),
+        )
+
+    @property
+    def rows(self):
+        if not self.selected_domain:
+            return []
+
+        base_filter = {
+            'namespace': NAMESPACE_DOMAIN,
+            'item': self.selected_domain
+        }
+
+        if self.selected_feature():
+            feature = find_preview_by_slug(self.selected_feature())
+            if not feature:
+                return []
+            base_filter['slug'] = feature.slug
+        else:
+            from corehq.feature_previews import all_previews
+            all_slugs = [preview.slug for preview in all_previews()]
+            base_filter['slug__in'] = all_slugs
+
+        rows = []
+        records = ToggleAudit.objects.filter(**base_filter)
+
+        for record in records:
+            action = _("Enabled")
+            if record.action == ToggleAudit.ACTION_REMOVE:
+                action = _("Disabled")
+            elif record.action == ToggleAudit.ACTION_UPDATE_RANDOMNESS:
+                action = _("Update Randomness")
+            rows.append([
+                find_preview_by_slug(record.slug).label,
+                action,
+                record.username,
+                record.created,
+            ])
+
+        return rows

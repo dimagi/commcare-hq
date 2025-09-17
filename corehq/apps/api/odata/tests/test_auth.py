@@ -83,7 +83,7 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
 
     def test_success_with_api_key(self):
         self.api_key = generate_api_key_from_web_user(self.web_user)
-        credentials = self._get_basic_credentials(self.web_user.username, self.api_key.key)
+        credentials = self._get_basic_credentials(self.web_user.username, self.api_key.plaintext_key)
         response = self._execute_query(credentials)
         self.assertEqual(response.status_code, 200)
 

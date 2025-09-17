@@ -31,6 +31,7 @@
             </ul>
           </li>
           <li><a href="#dimagi-colors">Dimagi Palette</a></li>
+          <li><a href="#custom-text-colors">Custom Text Colors</a></li>
         </ul>
       </li>
     </ul>
@@ -160,4 +161,25 @@
     <code>$dimagi-sky</code> similar to <code>$blue-400</code>, we prefer to avoid use of those colors.
   </p>
   {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.dimagi %}
+
+  <h3 id="custom-text-colors" class="pt-4">
+    Custom Text Colors
+  </h3>
+  <p>
+    Below are colors complementary to commcare blue that are highlighted in certain theme elements and available as text colors:
+  </p>
+  <h4 class="text-periwinkle pt-3">
+    text-periwinkle
+  </h4>
+  <p>
+    Used in a border-less <code>alert-primary</code> with help elements:
+  </p>
+  <div class="alert alert-primary border-0">
+    <h3 class="text-periwinkle fs-3">
+      Some Helpful Details
+    </h3>
+    <p>
+      Other helpful details will be here.
+    </p>
+  </div>
 {% endblock content %}

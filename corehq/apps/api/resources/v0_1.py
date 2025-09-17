@@ -13,6 +13,7 @@ from corehq.apps.api.resources import (
 )
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.es import users as user_es
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.helpers import UserChangeLogger
@@ -159,12 +160,15 @@ class WebUserResource(UserResource):
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         username = bundle.request.GET.get('web_username')
+
+        SIMPLE_FILTERS = {
+            'username': user_es.username
+        }
+        filters = []
         if username:
-            user = WebUser.get_by_username(username)
-            if not (user and user.is_member_of(domain) and user.is_active):
-                user = None
-            return [user] if user else []
-        return list(WebUser.by_domain(domain))
+            filters.append(SIMPLE_FILTERS['username'](username))
+        queryset = UserQuerySetAdapter(domain, show_archived=False, is_web_user=True, filters=filters)
+        return queryset
 
 
 def _safe_bool(bundle, param, default=False):

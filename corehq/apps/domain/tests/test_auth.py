@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.http.request import HttpRequest
 from django.test import SimpleTestCase, TestCase
 
-from freezegun import freeze_time
+from time_machine import travel
 
 from corehq.apps.domain.auth import (
     ApiKeyFallbackBackend,
@@ -145,7 +145,7 @@ class ApiKeyFallbackTests(TestCase):
 
         request = self._create_request()
 
-        with freeze_time(datetime(year=2020, month=3, day=9)):
+        with travel(datetime(year=2020, month=3, day=9), tick=False):
             self.assertEqual(self.backend.authenticate(request, 'test@dimagi.com', '1234'), user)
 
     def test_cannot_use_expired_key(self):
@@ -154,8 +154,15 @@ class ApiKeyFallbackTests(TestCase):
 
         request = self._create_request()
 
-        with freeze_time(datetime(year=2020, month=3, day=11)):
+        with travel(datetime(year=2020, month=3, day=11), tick=False):
             self.assertIsNone(self.backend.authenticate(request, 'test@dimagi.com', '1234'))
+
+    def test_domain_scoped_api_key_allows_authentication_to_domain_agnostic_urls(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', domain='test-domain')
+        request = self._create_request()
+
+        self.assertEqual(self.backend.authenticate(request, 'test@dimagi.com', '1234'), user)
 
     def setUp(self):
         self.backend = ApiKeyFallbackBackend()
@@ -178,7 +185,7 @@ class ApiKeyFallbackTests(TestCase):
         allowed_ips = allowed_ips or []
         return HQApiKey.objects.create(
             user=user,
-            key=key,
+            plaintext_key=key,
             name=name,
             ip_allowlist=allowed_ips,
             domain=domain,
@@ -289,7 +296,7 @@ class HQApiKeyAuthenticationTests(TestCase):
 
         auth = HQApiKeyAuthentication()
 
-        with freeze_time(datetime(year=2020, month=3, day=9)):
+        with travel(datetime(year=2020, month=3, day=9), tick=False):
             self.assertIs(auth.is_authenticated(request), True)
 
     def test_user_cannot_authenticate_with_expired_key(self):
@@ -299,7 +306,7 @@ class HQApiKeyAuthenticationTests(TestCase):
 
         auth = HQApiKeyAuthentication()
 
-        with freeze_time(datetime(year=2020, month=3, day=11)):
+        with travel(datetime(year=2020, month=3, day=11), tick=False):
             response = auth.is_authenticated(request)
             self.assertEqual(response.status_code, 401)
 
@@ -330,7 +337,7 @@ class HQApiKeyAuthenticationTests(TestCase):
         allowed_ips = allowed_ips or []
         return HQApiKey.objects.create(
             user=user,
-            key=key,
+            plaintext_key=key,
             name=name,
             ip_allowlist=allowed_ips,
             domain=domain,

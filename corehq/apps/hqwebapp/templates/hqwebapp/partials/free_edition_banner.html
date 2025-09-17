@@ -1,0 +1,13 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div class="alert alert-warning alert-trial" id="cta-community-banner">
+  <i class="fa fa-info-circle"></i>
+  {% url 'domain_subscription_view' domain as url_sub %}
+  {% blocktrans %}
+    You're using the free edition of CommCare intended only for practice
+    purposes.
+    <a href="{{ url_sub }}" id="cta-community-sub">Upgrade to a plan</a> for
+    full access.
+  {% endblocktrans %}
+</div>

@@ -5,10 +5,11 @@ from unittest.mock import MagicMock, patch
 from django.test import SimpleTestCase, TestCase
 
 import pytest
-from freezegun import freeze_time
+from time_machine import travel
 
+from corehq import privileges
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, flag_disabled, privilege_enabled
 
 from ..const import State
 from ..models import FormRepeater, Repeater, RepeatRecord
@@ -16,10 +17,12 @@ from ..tasks import (
     RepeaterLock,
     _get_wait_duration_seconds,
     _process_repeat_record,
+    check_repeaters,
     delete_old_request_logs,
     get_repeater_ids_by_domain,
     iter_ready_repeater_ids,
     update_repeater,
+    process_repeaters,
 )
 
 DOMAIN = 'test-tasks'
@@ -309,6 +312,7 @@ def test_get_repeater_ids_by_domain():
 
 
 @flag_enabled('PROCESS_REPEATERS')
+@flag_enabled('BACKOFF_REPEATERS')
 class TestUpdateRepeater(SimpleTestCase):
 
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
@@ -325,13 +329,37 @@ class TestUpdateRepeater(SimpleTestCase):
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_resets_backoff_on_invalid(self, mock_get_repeater, __):
-        repeat_record_states = [State.InvalidPayload, State.Fail, State.Empty, None]
+        repeat_record_states = [State.PayloadRejected, State.Fail, State.Empty, None]
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
         update_repeater(repeat_record_states, 1, 'token', False)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
+
+    @flag_disabled('BACKOFF_REPEATERS')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_does_not_reset_backoff_on_success_if_backoff_disabled(self, mock_get_repeater, __):
+        repeat_record_states = [State.Success, State.Fail, State.Empty, None]
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+        update_repeater(repeat_record_states, 1, 'token', False)
+
+        mock_repeater.set_backoff.assert_not_called()
+        mock_repeater.reset_backoff.assert_not_called()
+
+    @flag_disabled('BACKOFF_REPEATERS')
+    @patch('corehq.motech.repeaters.tasks.RepeaterLock')
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_does_not_set_backoff_on_invalid_if_backoff_disabled(self, mock_get_repeater, __):
+        repeat_record_states = [State.Success, State.Fail, State.Empty, None]
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+        update_repeater(repeat_record_states, 1, 'token', False)
+
+        mock_repeater.set_backoff.assert_not_called()
+        mock_repeater.reset_backoff.assert_not_called()
 
     @patch('corehq.motech.repeaters.tasks.process_repeater')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
@@ -411,7 +439,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_lock.release.assert_called_once()
 
 
-@freeze_time('2025-01-01')
+@travel('2025-01-01', tick=False)
 class TestGetWaitDurationSeconds(TestCase):
 
     @classmethod
@@ -510,3 +538,95 @@ class TestRepeaterLock(TestCase):
                 url='http://www.example.com/api/'
             ),
         )
+
+
+@privilege_enabled(privileges.DATA_FORWARDING)
+class TestRepeaterFeatureFlags(TestCase):
+    """
+    Primarily asserts that BACKOFF_REPEATERS on its own will not switch to process_repeaters, and
+    that that is controlled by PROCESS_REPEATERS
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-feature-flags'
+        cls.conn_settings = ConnectionSettings.objects.create(domain=cls.domain, url='test-url')
+        cls.one_week_ago = datetime.utcnow() - timedelta(days=7)
+        cls.yesterday = datetime.utcnow() - timedelta(days=1)
+
+    @flag_disabled("BACKOFF_REPEATERS")
+    @flag_disabled("PROCESS_REPEATERS")
+    def test_process_repeaters_is_noop_when_process_and_backoff_disabled(self):
+        repeater = Repeater.objects.create(domain=self.domain, connection_settings_id=self.conn_settings.id)
+        RepeatRecord.objects.create(
+            domain=self.domain,
+            payload_id="abc123",
+            repeater=repeater,
+            state=State.Pending,
+            registered_at=self.one_week_ago,
+            next_check=self.yesterday,
+        )
+
+        process_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater, state=State.Pending).count() == 1
+
+        check_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater).exclude(state=State.Pending).count() == 1
+
+    @flag_enabled("BACKOFF_REPEATERS")
+    @flag_disabled("PROCESS_REPEATERS")
+    def test_process_repeaters_is_noop_when_process_disabled_but_backoff_enabled(self):
+        repeater = Repeater.objects.create(domain=self.domain, connection_settings_id=self.conn_settings.id)
+        RepeatRecord.objects.create(
+            domain=self.domain,
+            payload_id="abc123",
+            repeater=repeater,
+            state=State.Pending,
+            registered_at=self.one_week_ago,
+            next_check=self.yesterday,
+        )
+
+        process_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater, state=State.Pending).count() == 1
+
+        check_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater).exclude(state=State.Pending).count() == 1
+
+    @flag_disabled("BACKOFF_REPEATERS")
+    @flag_enabled("PROCESS_REPEATERS")
+    def test_check_repeaters_is_noop_when_process_enabled_and_backoff_disabled(self):
+        repeater = Repeater.objects.create(domain=self.domain, connection_settings_id=self.conn_settings.id)
+        RepeatRecord.objects.create(
+            domain=self.domain,
+            payload_id="abc123",
+            repeater=repeater,
+            state=State.Pending,
+            registered_at=self.one_week_ago,
+            next_check=self.yesterday,
+        )
+
+        check_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater, state=State.Pending).count() == 1
+
+        process_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater).exclude(state=State.Pending).count() == 1
+
+    @flag_enabled("BACKOFF_REPEATERS")
+    @flag_enabled("PROCESS_REPEATERS")
+    def test_check_repeaters_is_noop_when_process_and_backoff_enabled(self):
+        repeater = Repeater.objects.create(domain=self.domain, connection_settings_id=self.conn_settings.id)
+        RepeatRecord.objects.create(
+            domain=self.domain,
+            payload_id="abc123",
+            repeater=repeater,
+            state=State.Pending,
+            registered_at=self.one_week_ago,
+            next_check=self.yesterday,
+        )
+
+        check_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater, state=State.Pending).count() == 1
+
+        process_repeaters()
+        assert RepeatRecord.objects.filter(repeater=repeater).exclude(state=State.Pending).count() == 1

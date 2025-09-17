@@ -1,11 +1,16 @@
 import logging
 
 from django.core.management.base import BaseCommand
+
 from django_prbac.models import Role
 
 from corehq.apps.accounting.models import SoftwarePlanVersion
 from corehq.apps.accounting.utils import revoke_privs_for_grantees
-from corehq.apps.hqadmin.management.commands.cchq_prbac_grandfather_privs import _confirm, _get_role_edition
+from corehq.apps.hqadmin.management.commands.cchq_prbac_grandfather_privs import (
+    _confirm,
+    _confirm_community_deprecated,
+    _get_role_edition,
+)
 from corehq.privileges import MAX_PRIVILEGES
 
 logger = logging.getLogger(__name__)
@@ -30,15 +35,18 @@ class Command(BaseCommand):
         skipped_editions = []
         if skip_edition:
             skipped_editions = skip_edition.split(',')
+            if not _confirm_community_deprecated(skipped_editions, noinput=noinput):
+                return
+
             query = query.exclude(plan__edition__in=skipped_editions)
 
         all_role_slugs = set(
             query.distinct('role__slug').values_list('role__slug', flat=True)
         )
         all_plan_slugs = (
-            all_role_slugs -
-            set(MAX_PRIVILEGES) -  # no privileges should be in software plan roles, this is just a safeguard
-            set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
+            all_role_slugs
+            - set(MAX_PRIVILEGES)  # no privileges should be in software plan roles, this is just a safeguard
+            - set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
         )
 
         # make sure that these roles are not attached to SoftwarePlanEditions

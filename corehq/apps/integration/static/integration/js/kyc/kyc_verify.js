@@ -2,6 +2,7 @@ import "commcarehq";
 import "hqwebapp/js/htmx_and_alpine";
 import $ from "jquery";
 import { multiCheckboxSelectionHandler } from "integration/js/checkbox_selection_handler";
+import htmx from 'htmx.org';
 
 function updateVerifyButton(selectedIds) {
     const $verifyBtn = $('#verify-selected-btn');
@@ -31,8 +32,14 @@ $(document).on('htmx:afterRequest', function (event) {
     // Reset on pagination as the table is recreated after htmx request
     const requestPath = event.detail.requestConfig.path;
     const method = event.detail.requestConfig.verb;
-    if (requestPath.includes('/kyc/verify/table/') && method === 'get' && event.detail.successful) {
-        handler.selectedIds = [];
-        updateVerifyButton([]);
+    if (requestPath.includes('/kyc/verify/table/') && event.detail.successful) {
+        if (method === 'get') {
+            handler.selectedIds = [];
+            updateVerifyButton([]);
+        } else if (method === 'post') {
+            const endpoint = requestPath + window.location.search;
+            $('#kyc-verify-table').text('');
+            htmx.ajax('get', endpoint, {target: '#kyc-verify-table', indicator: '#kyc-loader'});
+        }
     }
 });

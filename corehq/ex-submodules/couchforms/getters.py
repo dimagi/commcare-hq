@@ -98,8 +98,16 @@ def _valid_attachment_file_mimetype(file):
         file.content_type.startswith(("audio/", "image/", "video/"))
         # default mimetype set by CommCare
         or file.content_type == "application/octet-stream"
-        # supported by formplayer
-        or file.content_type == "application/pdf"
+        # select allowed document types
+        or file.content_type in [
+            "application/pdf",
+            "application/docx",
+            "application/xlsx",
+            "application/msg",
+            "text/txt",
+            "text/rtf",
+            "text/html"
+        ]
     )
 
 

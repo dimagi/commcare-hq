@@ -99,12 +99,27 @@ class TestCaseListAPI(TestCase):
         self.assertIn('last_case_id', cursor)
 
         res = get_list(self.domain, self.couch_user, res['next'])
-        self.assertEqual(res['matching_records'], 2)
+        self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
             ['chaney', 'ned'],
             [c['external_id'] for c in res['cases']]
         )
         self.assertNotIn('next', res)  # No pages after this one
+
+    def test_pagination_continues(self):
+        """
+        If the page size is a divisor of the total number of docs, the user will need to paginate until the
+        result set is empty
+        """
+        query_dict = QueryDict('limit=1&case_type=person&case_type=household')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        for _ in range(4):
+            res = get_list(self.domain, self.couch_user, res['next'])
+        # after iterating through all 5 docs, we still have a next param
+        self.assertIn('next', res)
+        res = get_list(self.domain, self.couch_user, res['next'])
+        self.assertFalse(res['cases'])  # empty result set
+        self.assertNotIn('next', res)  # no next param
 
     def test_deprecated_case_type(self):
         self.case_type_obj.is_deprecated = True

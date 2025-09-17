@@ -35,6 +35,7 @@ from corehq.apps.es.transient_util import doc_adapter_from_cname
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
+from .aggregations import TermsAggregation, FilterAggregation, NestedAggregation
 from .cases import case_adapter
 from .client import BulkActionItem, ElasticDocumentAdapter, create_document_adapter
 from .const import (
@@ -411,6 +412,51 @@ def indexed_on(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
 
 
+def get_case_property_unique_values(domain, case_type, property_name, include_empty=False):
+    """
+    Gets unique values for a specific case property for given domain and case type.
+    Notes:
+    - Uses an ES terms aggregation (avoid high-cardinality fields like UUIDs or datetimes).
+    - Empty string values are returned as '' if include_empty=True.
+    """
+    terms_agg = TermsAggregation(
+        'unique_values',
+        'case_properties.value.exact'
+    )
+
+    filter_agg = FilterAggregation(
+        'property_filter',
+        filters.term('case_properties.key.exact', property_name)
+    ).aggregation(terms_agg)
+
+    nested_agg = NestedAggregation(
+        'nested_case_props',
+        'case_properties'
+    ).aggregation(filter_agg)
+
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .case_type(case_type)
+        .aggregation(nested_agg)
+        .size(0)
+    )
+
+    results = query.run()
+
+    buckets = (
+        results.aggregations
+        .nested_case_props
+        .property_filter
+        .unique_values
+        .normalized_buckets
+    )
+    if include_empty:
+        return [b['key'] for b in buckets]
+    else:
+        return [b['key'] for b in buckets if b['key'] != '']
+
+
 def wrap_case_search_hit(hit, include_score=False):
     """Convert case search index hit to CommCareCase
 
@@ -472,5 +518,4 @@ CONVERSIONS = {
     "modified_on": iso_string_to_datetime,
     "opened_on": iso_string_to_datetime,
     "server_modified_on": iso_string_to_datetime,
-    "closed_on": iso_string_to_datetime,
 }

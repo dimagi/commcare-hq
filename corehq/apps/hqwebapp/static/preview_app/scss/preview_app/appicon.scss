@@ -1,14 +1,14 @@
-$appicon-height-preview: 130px;
+$appicon-height-preview: 90px;
 $appicon-icon-height-preview: $appicon-height-preview - 40px;
 
 .appicon {
-  min-height: $appicon-height-preview;
+  min-height: $appicon-height-preview + 25;
   margin-bottom: 10px;
 
   .appicon-title {
     transition: height $transition-speed;
-    height: 30px;
-    bottom: 7px;
+    height: 35px;
+    bottom: 10px;
     h3 {
       font-size: 14px;
       font-weight: 300;
@@ -16,14 +16,12 @@ $appicon-icon-height-preview: $appicon-height-preview - 40px;
   }
 
   .appicon-icon {
+    top: 15px;
     margin-left: -$appicon-icon-height-preview / 2;
     width: $appicon-icon-height-preview;
     height: $appicon-icon-height-preview;
     line-height: $appicon-icon-height-preview;
     font-size: $appicon-icon-height-preview;
-    &[class*='fa-'] {
-      font-size: 70px;
-    }
   }
 }
 
@@ -33,7 +31,7 @@ $appicon-icon-height-preview: $appicon-height-preview - 40px;
 .appicon-restore-as,
 .preview-tablet-mode .appicon-incomplete {
   .appicon-title {
-    height: 21px;
+    height: 25px;
   }
 }
 

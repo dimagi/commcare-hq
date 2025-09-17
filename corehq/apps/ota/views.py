@@ -37,6 +37,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq import toggles
+from corehq.toggles import deterministic_random
 from corehq.apps.app_manager.dbaccessors import (
     get_app_cached,
     get_latest_released_app_version,
@@ -69,9 +70,10 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.metrics import limit_domains, metrics_histogram, limit_tags
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import set_request_duration_reporting_threshold
 
 from .case_restore import get_case_restore_response
-from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
+from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket, IntegritySamplePercentage
 from .rate_limiter import rate_limit_restore
 from .utils import (
     demo_user_restore_response,
@@ -90,6 +92,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @handle_401_response
 @mobile_auth_or_formplayer
 @check_domain_mobile_access
+@set_request_duration_reporting_threshold(seconds=300)
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -100,6 +103,8 @@ def restore(request, domain, app_id=None):
 
     response, timing_context = get_restore_response(
         domain, request.couch_user, app_id, **get_restore_params(request, domain))
+    if timing_context:
+        timing_context.add_to_sentry_breadcrumbs()
     return response
 
 
@@ -317,10 +322,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         msg = _('Invalid restore as user {}').format(as_user)
         return HttpResponse(msg, status=401), None
 
-    restoring_user_id = as_user_obj._id if uses_login_as else couch_user._id
-    should_limit = device_rate_limiter.rate_limit_device(domain, restoring_user_id, device_id)
+    user_to_limit_on = as_user_obj if uses_login_as else couch_user
+    should_limit = device_rate_limiter.rate_limit_device(domain, user_to_limit_on, device_id)
     if should_limit:
-        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE), None
 
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -388,7 +393,7 @@ def heartbeat(request, domain, app_build_id):
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
     should_limit = device_rate_limiter.rate_limit_device(
-        domain, request.couch_user._id, request.GET.get('device_id')
+        domain, request.couch_user, request.GET.get('device_id')
     )
     if should_limit:
         return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
@@ -412,6 +417,12 @@ def heartbeat(request, domain, app_build_id):
 
     if _should_force_log_submission(request):
         info['force_logs'] = True
+
+    # Select % of app users to report app integrity to PersonalID server
+    sample_string = f"{request.couch_user.user_id}_{str(datetime.utcnow().date())}"
+    if (deterministic_random(sample_string) * 100) <= IntegritySamplePercentage.objects.first().percentage:
+        info["report_integrity"] = request.couch_user.user_id
+
     return JsonResponse(info)
 
 

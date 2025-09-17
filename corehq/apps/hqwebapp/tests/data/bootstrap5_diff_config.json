@@ -128,10 +128,6 @@
           "_alert.scss"
         ],
         [
-          "appcues.less",
-          "_appcues.scss"
-        ],
-        [
           "backgrounds.less",
           "_backgrounds.scss"
         ],
@@ -170,6 +166,10 @@
         [
           "feedback.less",
           "_feedback.scss"
+        ],
+        [
+          "flag_icons.less",
+          "_flag_icons.scss"
         ],
         [
           "form_steps.less",
@@ -229,7 +229,7 @@
         ],
         [
           "panels.less",
-          "_panels.scss"
+          "_cards.scss"
         ],
         [
           "plan_notice.less",
@@ -274,6 +274,10 @@
         [
           "utils.less",
           "_utils.scss"
+        ],
+        [
+          "ocs_widget.less",
+          "_ocs_widget.scss"
         ]
       ]
     }
@@ -905,6 +909,48 @@
       ],
       "file_type": "javascript",
       "label": "javascript/userreports/js",
+      "compare_all_files": true
+    }
+  ],
+  "apps/geospatial/templates/geospatial": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "geospatial",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "geospatial/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/geospatial/static/geospatial/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/geospatial/js",
+      "compare_all_files": true
+    }
+  ],
+  "apps/sso/templates/sso": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "sso",
       "compare_all_files": true
     }
   ]

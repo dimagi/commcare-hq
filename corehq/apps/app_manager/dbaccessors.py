@@ -8,7 +8,10 @@ from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
+    BuildNotFoundException,
+)
 from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
@@ -148,11 +151,6 @@ def get_build_doc_by_version(domain, app_id, version):
     return get_build_by_version(domain, app_id, version, return_doc=True)
 
 
-def get_build_doc_by_build_id(build_id):
-    from .models import Application
-    return Application.get_db().get(build_id)
-
-
 def wrap_app(app_doc, wrap_cls=None):
     """Will raise DocTypeError if it can't figure out the correct class"""
     from corehq.apps.app_manager.util import get_correct_app_class
@@ -169,7 +167,7 @@ def get_current_app_version(domain, app_id):
     return result['value']['version']
 
 
-def get_current_app_doc(domain, app_id):
+def get_app_doc(domain, app_id):
     from .models import Application
     app = Application.get_db().get(app_id)
     if app.get('domain', None) != domain:
@@ -178,7 +176,7 @@ def get_current_app_doc(domain, app_id):
 
 
 def get_current_app(domain, app_id):
-    return wrap_app(get_current_app_doc(domain, app_id))
+    return wrap_app(get_app_doc(domain, app_id))
 
 
 def get_app_cached(domain, app_id):
@@ -213,7 +211,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
     Here are some common usages and the simpler dbaccessor alternatives:
         current_app = get_app(domain, app_id)
-                    = get_current_app_doc(domain, app_id)
+                    = get_app_doc(domain, app_id)
         latest_released_build = get_app(domain, app_id, latest=True)
                               = get_latest_released_app_doc(domain, app_id)
         latest_build = get_app(domain, app_id, latest=True, target='build')
@@ -242,12 +240,18 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             # If the app_id passed in was the working copy, just use that app.
             # If it's a build, get the working copy.
             if app.get('copy_of'):
-                app = get_current_app_doc(domain, app_id)
+                app = get_app_doc(domain, app_id)
         else:
             app = get_latest_released_app_doc(domain, app_id) or app
 
     if domain and app['domain'] != domain:
-        raise Http404()
+        raise AppInDifferentDomainException(
+            _("App {app_id} is in domain {app_domain} but requested from domain {requested_domain}").format(
+                app_id=app_id,
+                app_domain=app['domain'],
+                requested_domain=domain
+            )
+        )
     try:
         return wrap_app(app, wrap_cls=wrap_cls)
     except DocTypeError:
@@ -306,15 +310,6 @@ def get_app_ids_in_domain(domain):
         startkey=[domain, None],
         endkey=[domain, None, {}]
     )]
-
-
-def get_apps_by_id(domain, app_ids):
-    from .models import Application
-    from corehq.apps.app_manager.util import get_correct_app_class
-    if isinstance(app_ids, str):
-        app_ids = [app_ids]
-    docs = iter_docs(Application.get_db(), app_ids)
-    return [get_correct_app_class(doc).wrap(doc) for doc in docs]
 
 
 def get_build_ids_after_version(domain, app_id, version):
@@ -529,14 +524,14 @@ def _get_case_types_from_apps_query(domain, is_build=False):
     )
 
 
-def get_case_types_from_apps(domain):
+def get_case_types_from_apps(domain, include_save_to_case_updates=True):
     """
     Get the case types of modules in applications in the domain.
     Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
     :returns: A set of case_types
     """
     save_to_case_updates = set()
-    if VELLUM_SAVE_TO_CASE.enabled(domain):
+    if include_save_to_case_updates and VELLUM_SAVE_TO_CASE.enabled(domain):
         save_to_case_updates = _get_save_to_case_updates(domain)
     q = _get_case_types_from_apps_query(domain)
     case_types = set(q.run().aggregations.modules.case_types.keys)
@@ -582,3 +577,19 @@ def get_app_languages(domain):
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
     apps = get_apps_in_domain(domain, include_remote=False)
     return [a for a in apps if a.case_sharing and exclude_app_id != a.id]
+
+
+def get_latest_app_meta(domain, target):
+    """:param target: should be set to one of: 'save', 'build', 'release'"""
+    from .models import Application
+    prefix = {'save': 'SAVE', 'build': 'BUILD', 'release': 'RELEASE'}[target]
+    # The key is [target, domain, origin_id, version]
+    # reduce with group_level=3 yields the highest version for each
+    # (target, domain, origin_id)
+    return [res['value'] for res in Application.get_db().view(
+        'latest_apps/view',
+        startkey=[prefix, domain],
+        endkey=[prefix, domain, {}],
+        group_level=3,
+        reduce=True,
+    )]

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 import logging
 from looseversion import LooseVersion
@@ -45,10 +46,6 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
-from corehq.apps.app_manager.views.notifications import (
-    get_facility_for_form,
-    notify_form_opened,
-)
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     bail,
@@ -58,8 +55,8 @@ from corehq.apps.app_manager.views.utils import (
 from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
-from corehq.util.context_processors import websockets_override
+from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
+from corehq.util.view_utils import reverse as reverse_with_params
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +101,25 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
     return _get_form_designer_view(request, domain, app, module, form)
 
 
+def get_form_submit_history_url_for_last_30_days(request, domain, app, module, form):
+    if not has_permission_to_view_report(request.couch_user, domain, SUBMISSION_HISTORY_PERMISSION):
+        return None
+
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+
+    params = {
+        'form_status': 'active',
+        'form_app_id': app.id if app else '',
+        'form_module': module.id if module else '',
+        'form_xmlns': form.xmlns if form and form.xmlns else '',
+        'startdate': start_date.strftime('%Y-%m-%d'),
+        'enddate': end_date.strftime('%Y-%m-%d'),
+    }
+
+    return reverse_with_params('project_report_dispatcher', args=[domain, 'submit_history'], params=params)
+
+
 def _get_form_designer_view(request, domain, app, module, form):
     if app and app.copy_of:
         messages.warning(request, _(
@@ -141,24 +157,28 @@ def _get_form_designer_view(request, domain, app, module, form):
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
 
+    ckeditor_basepath = "formdesigner" if settings.VELLUM_DEBUG else "app_manager/js/vellum"
+    ckeditor_basepath += "/lib/ckeditor/"
+
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
         'nav_form': form,
         'formdesigner': True,
 
-        'CKEDITOR_BASEPATH': "app_manager/js/vellum/lib/ckeditor/",
+        'CKEDITOR_BASEPATH': ckeditor_basepath,
         'show_live_preview': should_show_preview_app(
             request,
             app,
             request.couch_user.username,
         ),
+        'form_submit_history_url': get_form_submit_history_url_for_last_30_days(
+            request,
+            domain,
+            app,
+            module,
+            form,
+        ),
     })
-    context.update(_get_requirejs_context())
-
-    if request.user.is_superuser:
-        context.update({'notification_options': _get_notification_options(request, domain, app, form)})
-
-    notify_form_opened(domain, request.couch_user, app.id, form.unique_id)
 
     response = render(request, "app_manager/form_designer.html", context)
     set_lang_cookie(response, context['lang'])
@@ -322,6 +342,7 @@ def _get_vellum_features(request, domain, app):
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
         'markdown_tables': app.enable_markdown_tables,
         'use_custom_repeat_button_text': app.build_version >= LooseVersion('2.55'),
+        'support_document_upload': app.support_document_upload,
     })
     return vellum_features
 
@@ -376,32 +397,3 @@ def _get_core_context_scheduler_data_nodes(module, form):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
     return scheduler_data_nodes
-
-
-def _get_notification_options(request, domain, app, form):
-    notification_options = websockets_override(request)
-    if notification_options['WS4REDIS_HEARTBEAT'] in ['null', 'undefined']:
-        notification_options['WS4REDIS_HEARTBEAT'] = None
-    notification_options.update({
-        'notify_facility': get_facility_for_form(domain, app.id,
-                                                 form.unique_id),
-        'user_id': request.couch_user.get_id,
-    })
-    return notification_options
-
-
-def _get_requirejs_context():
-    requirejs = {
-        'requirejs_args': 'version={}{}'.format(
-            cachebuster("app_manager/js/vellum/src/main-components.js"),
-            cachebuster("app_manager/js/vellum/src/local-deps.js")
-        ),
-    }
-    if not settings.VELLUM_DEBUG:
-        requirejs_url = "app_manager/js/vellum/src"
-    elif settings.VELLUM_DEBUG == "dev-min":
-        requirejs_url = "formdesigner/_build/src"
-    else:
-        requirejs_url = "formdesigner/src"
-    requirejs['requirejs_url'] = requirejs_url
-    return requirejs
