@@ -6223,11 +6223,17 @@ msgstr ""
 "Будь ласка, оновіть підписку, щоб скористатися цією функцією."
 
 #: corehq/apps/app_manager/helpers/validators.py
+#, fuzzy
+#| msgid ""
+#| "Your application is using User Properties and your current subscription "
+#| "does not support that. You can remove User Properties functionality by "
+#| "opening the User Properties tab in a form that uses it, and clicking "
+#| "\"Remove User Properties\"."
 msgid ""
-"Your application is using User Properties and your current subscription does "
-"not support that. You can remove User Properties functionality by opening "
-"the User Properties tab in a form that uses it, and clicking \"Remove User "
-"Properties\"."
+"Your application is using User Properties or using `commcare-user` as a "
+"menu's case type, and your current subscription does not support that. You "
+"can remove User Propertiesfunctionality by opening the User Properties tab "
+"in a form that uses it and clicking 'Remove User Properties.'"
 msgstr ""
 "Ваш додаток використовує Властивості Користувача, і ваш поточний тариф цього "
 "не підтримує. Ви можете видалити функціонал Властивостей Користувача, "
@@ -13228,6 +13234,7 @@ msgstr "Звіт"
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/program.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -33286,6 +33293,12 @@ msgid "User Audit Events"
 msgstr "Події аудиту користувача"
 
 #: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Document Type"
+msgid "Doc Type"
+msgstr "Тип документа"
+
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/reports/filters/simple.py
 msgid "Domain"
@@ -33295,14 +33308,11 @@ msgstr "Домен"
 msgid "IP Address"
 msgstr "IP-адреса"
 
-#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
-msgid "Request Method"
-msgstr "Метод запиту"
-
 #: corehq/apps/hqadmin/reports.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "Request Path"
-msgstr "Шлях запиту"
+#, fuzzy
+#| msgid "Resource Slug"
+msgid "Resource"
+msgstr "Ідентифікатор ресурсу (Resource Slug)"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -35094,6 +35104,10 @@ msgstr "Додаткові деталі"
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "HTMX Event Error"
 msgstr "Помилка події HTMX"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "Request Path"
+msgstr "Шлях запиту"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/htmx_action_error.html
 #, python-format
@@ -48281,13 +48295,17 @@ msgstr "Тестові користувачі SSO"
 msgid "Danger Zone"
 msgstr "Небезпечна зона"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid "Single Sign-On Request Failed"
 msgstr "Запит єдиного входу не виконано"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
-#: corehq/apps/sso/templates/sso/config_errors.html
-#: corehq/apps/sso/templates/sso/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -48297,7 +48315,8 @@ msgstr ""
 "                Єдиний вхід\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                Sorry, but we're having trouble signing you in.\n"
@@ -48307,7 +48326,8 @@ msgstr ""
 "                Вибачте, виникли проблеми з входом у систему.\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  The issue looks like it might be related to the "
@@ -48320,7 +48340,8 @@ msgstr ""
 "                  вашого постачальника ідентифікації та CommCare HQ.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This is the error message we are seeing:\n"
@@ -48330,7 +48351,8 @@ msgstr ""
 "                  Ось повідомлення про помилку, яке ми бачимо:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48345,7 +48367,8 @@ msgstr ""
 "                  щодо налаштування SSO з %(idp_service_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If the error message and documentation are not helping, "
@@ -48359,7 +48382,8 @@ msgstr ""
 "                  зверніться до вашої служби підтримки.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This issue might be due to the following reason:\n"
@@ -48369,7 +48393,8 @@ msgstr ""
 "                  Причиною цієї проблеми може бути наступне:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If this error persists, please contact your project's\n"
@@ -48381,11 +48406,13 @@ msgstr ""
 "адміністратора вашого проєкту за допомогою.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid "Single Sign-On is misconfigured"
 msgstr "Єдиний вхід налаштовано неправильно"
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Your Redirect URL is invalid.\n"
@@ -48395,7 +48422,8 @@ msgstr ""
 "                  Ваш URL перенаправлення недійсний.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  The redirect URL you have specified is not valid. Please\n"
@@ -48412,7 +48440,8 @@ msgstr ""
 "рішення.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48423,7 +48452,8 @@ msgstr ""
 "                  Виникла проблема з входом через %(service)s:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48435,7 +48465,8 @@ msgstr ""
 "                  Схоже, виникла проблема з конфігурацією %(idp_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Please reach out to support, so we can quickly resolve "
@@ -48449,7 +48480,8 @@ msgstr ""
 "                  проблему. Дякуємо!\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like your setup is not complete.\n"
@@ -48459,7 +48491,8 @@ msgstr ""
 "                    Схоже, ваше налаштування не завершене.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48477,7 +48510,8 @@ msgstr ""
 "                    щодо налаштування SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like we are missing your certificate.\n"
@@ -48487,7 +48521,8 @@ msgstr ""
 "                    Схоже, у нас відсутній ваш сертифікат.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48506,7 +48541,8 @@ msgstr ""
 "                    щодо налаштування SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    Obtaining User Information Was Not Possible\n"
@@ -48516,7 +48552,8 @@ msgstr ""
 "                    Отримати інформацію про користувача не вдалося\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48535,7 +48572,8 @@ msgstr ""
 "                    щодо налаштування SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OpenID Connect Session Unknown\n"
@@ -48545,7 +48583,8 @@ msgstr ""
 "                    Невідома сесія OpenID Connect\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48562,7 +48601,8 @@ msgstr ""
 "href=\"%(docs_link)s\">документацію</a> щодо налаштування SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OIDC Method Not Allowed\n"
@@ -48572,7 +48612,8 @@ msgstr ""
 "                    Метод OIDC не дозволено\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48587,7 +48628,8 @@ msgstr ""
 "href=\"%(docs_link)s\">документацію</a> щодо налаштування SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like there is an issue with your SSO "
@@ -48598,7 +48640,8 @@ msgstr ""
 "                    Схоже, виникла проблема з вашою конфігурацією SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -48614,6 +48657,74 @@ msgstr ""
 "                    вашої служби підтримки з цією інформацією, щоб ми могли\n"
 "                    допомогти з вирішенням цієї проблеми.\n"
 "                  "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "Єдиний вхід (Single Sign-On)"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your\n"
+"                project's SSO settings. Please contact your project\n"
+"                administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  Термін дії запрошення минув.\n"
+"                  Зверніться до адміністратора проєкту, щоб отримати нове "
+"запрошення.\n"
+"                "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid "Single Sign-On Request Denied"
+msgstr "Запит на єдиний вхід відхилено"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid ""
+"\n"
+"                Single Sign-On Not Allowed\n"
+"              "
+msgstr ""
+"\n"
+"                Єдиний вхід не дозволено\n"
+"              "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-"
+#| "On.\n"
+#| "                If this is in error, please contact your project's "
+#| "administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"                You do not have permission to sign in with Single Sign-On. "
+"If\n"
+"                this is in error, please contact your project's "
+"administrator.\n"
+"              "
+msgstr ""
+"\n"
+"                У вас немає дозволу на вхід через єдиний вхід (SSO).\n"
+"                Якщо це помилка, будь ласка, зверніться до адміністратора "
+"вашого проєкту.\n"
+"              "
 
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
@@ -48886,10 +48997,16 @@ msgid "Manage Single Sign-On"
 msgstr "Керування єдиним входом (SSO)"
 
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Configure external Identity Providers associated with your\n"
+#| "      Enterprise Account below.\n"
+#| "    "
 msgid ""
 "\n"
-"      Configure external Identity Providers associated with your\n"
-"      Enterprise Account below.\n"
+"      Configure external Identity Providers associated with your Enterprise\n"
+"      Account below.\n"
 "    "
 msgstr ""
 "\n"
@@ -48939,10 +49056,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>WARNING:</strong> Deleting an Identity Provider "
+#| "is not reversible.\n"
+#| "              "
 msgid ""
 "\n"
 "                <strong>WARNING:</strong> Deleting an Identity Provider is "
-"not reversible.\n"
+"not\n"
+"                reversible.\n"
 "              "
 msgstr ""
 "\n"
@@ -48951,12 +49075,21 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Deletion will immediately affect any client's SSO setup. "
+#| "Please\n"
+#| "                exercise extreme caution. An active Identity Provider\n"
+#| "                will not be deleted.\n"
+#| "              "
 msgid ""
 "\n"
 "                Deletion will immediately affect any client's SSO setup. "
 "Please\n"
-"                exercise extreme caution. An active Identity Provider\n"
-"                will not be deleted.\n"
+"                exercise extreme caution. An active Identity Provider will "
+"not\n"
+"                be deleted.\n"
 "              "
 msgstr ""
 "\n"
@@ -48968,10 +49101,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Users with email addresses ending in these domain names must\n"
+#| "            log in with SSO if the Identity Provider is active.\n"
+#| "          "
 msgid ""
 "\n"
-"            Users with email addresses ending in these domain names must\n"
-"            log in with SSO if the Identity Provider is active.\n"
+"            Users with email addresses ending in these domain names must log "
+"in\n"
+"            with SSO if the Identity Provider is active.\n"
 "          "
 msgstr ""
 "\n"
@@ -49014,10 +49154,18 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            No users are exempt from SSO for this Identity Provider.\n"
+#| "            Please add at least <strong>one enterprise admin</strong>\n"
+#| "            before making this Identity Provider active!\n"
+#| "          "
 msgid ""
 "\n"
-"            No users are exempt from SSO for this Identity Provider.\n"
-"            Please add at least <strong>one enterprise admin</strong>\n"
+"            No users are exempt from SSO for this Identity Provider. Please "
+"add\n"
+"            at least <strong>one enterprise admin</strong>\n"
 "            before making this Identity Provider active!\n"
 "          "
 msgstr ""
@@ -49030,11 +49178,19 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            When the Identity Provider is in \"Test\" mode for Login "
+#| "Enforcement, only\n"
+#| "            the users in this list will be directed to sign in with SSO.\n"
+#| "          "
 msgid ""
 "\n"
 "            When the Identity Provider is in \"Test\" mode for Login "
-"Enforcement, only\n"
-"            the users in this list will be directed to sign in with SSO.\n"
+"Enforcement,\n"
+"            only the users in this list will be directed to sign in with "
+"SSO.\n"
 "          "
 msgstr ""
 "\n"
@@ -49078,61 +49234,6 @@ msgstr ""
 "      Будь ласка, зверніться до адміністратора проєкту для відновлення "
 "доступу.\n"
 "    "
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-#, fuzzy
-#| msgid "Single Sign-On"
-msgid "Single Sign-On Error"
-msgstr "Єдиний вхід (Single Sign-On)"
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                  Invitation link has expired.\n"
-#| "                  Contact your project administrator to send new invite.\n"
-#| "                "
-msgid ""
-"\n"
-"                This error is likely due to a misconfiguration with your "
-"project's\n"
-"                SSO settings. Please contact your project administrator to "
-"resolve this issue.\n"
-"              "
-msgstr ""
-"\n"
-"                  Термін дії запрошення минув.\n"
-"                  Зверніться до адміністратора проєкту, щоб отримати нове "
-"запрошення.\n"
-"                "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid "Single Sign-On Request Denied"
-msgstr "Запит на єдиний вхід відхилено"
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                Single Sign-On Not Allowed\n"
-"              "
-msgstr ""
-"\n"
-"                Єдиний вхід не дозволено\n"
-"              "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                You do not have permission to sign in with Single Sign-On.\n"
-"                If this is in error, please contact your project's "
-"administrator.\n"
-"              "
-msgstr ""
-"\n"
-"                У вас немає дозволу на вхід через єдиний вхід (SSO).\n"
-"                Якщо це помилка, будь ласка, зверніться до адміністратора "
-"вашого проєкту.\n"
-"              "
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid "today!"
@@ -60375,8 +60476,14 @@ msgid "Cancelled"
 msgstr "Скасовано"
 
 #: corehq/motech/repeaters/const.py
-msgid "Invalid Payload"
-msgstr "Недійсний вміст"
+#, fuzzy
+#| msgid "Rejected"
+msgid "Payload Rejected"
+msgstr "Відхилено"
+
+#: corehq/motech/repeaters/const.py
+msgid "Error Generating Payload"
+msgstr ""
 
 #: corehq/motech/repeaters/const.py
 msgid "Is enabled"
@@ -60869,8 +60976,16 @@ msgid "Unable to generate url for record"
 msgstr "Не вдалося згенерувати URL для запису"
 
 #: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Invalid payload"
-msgstr "Некоректний вміст (payload)"
+#, fuzzy
+#| msgid "Invitation rejected"
+msgid "Payload rejected"
+msgstr "Запрошення відхилено"
+
+#: corehq/motech/repeaters/views/repeat_record_display.py
+#, fuzzy
+#| msgid "Errors in upload: {}"
+msgid "Error generating payload"
+msgstr "Помилки при завантаженні: {}"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Remote Service"
@@ -61008,6 +61123,10 @@ msgstr "Тривалість (мс)"
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
 msgstr "Жодного запиту до API не було зафіксовано."
+
+#: corehq/motech/views.py
+msgid "Request Method"
+msgstr "Метод запиту"
 
 #: corehq/motech/views.py
 msgid "Request URL"
@@ -62329,6 +62448,12 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Invalid Payload"
+#~ msgstr "Недійсний вміст"
+
+#~ msgid "Invalid payload"
+#~ msgstr "Некоректний вміст (payload)"
 
 #~ msgid ""
 #~ "\n"

@@ -222,6 +222,13 @@ msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "يمكن أن تتضمن أنواع الحالات فقط الأحرف a-z، والأرقام 0-9، و'-' و'_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"This is a reserved case type. Refer to <a href=\"https://dimagi.atlassian."
+"net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\" "
+"target=\"_blank\" rel=\"noopener\">doc</a> before using."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "هذا نوع حالة محجوز. يرجى اختيار اسم آخر."
 
