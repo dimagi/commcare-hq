@@ -3,6 +3,8 @@ import sys
 
 import gevent
 
+from dimagi.utils.logging import notify_exception
+
 from pillowtop import get_all_pillow_instances
 from pillowtop.utils import get_pillow_by_name
 
@@ -58,13 +60,22 @@ def run_gevent_pillows(pillow_name, num_processes, process_number, gevent_worker
     workers = []
     for worker_num in range(gevent_workers):
         workers.append(gevent.spawn(
-            run_pillow_by_name,
+            run_gevent_worker,
             pillow_name,
             num_processes=num_processes * gevent_workers + offset,
             process_number=process_number * gevent_workers + offset + worker_num,
             **options
         ))
     gevent.joinall(workers)
+
+
+def run_gevent_worker(pillow_name, *, process_number, **kw):
+    """Run gevent worker forever, restarting on unexpected exit"""
+    while True:
+        try:
+            run_pillow_by_name(pillow_name, process_number=process_number, **kw)
+        except Exception as exc:
+            notify_exception(None, f"[{pillow_name} {process_number}] Unexpected gevent pillow exit: {exc}")
 
 
 def start_pillows(pillows=None):
