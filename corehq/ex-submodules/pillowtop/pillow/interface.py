@@ -217,6 +217,10 @@ class ConstructedPillow:
             for change in chunk:
                 self.process_with_error_handling(change, processor)
 
+        pillow_logging.info(
+            '[%s %s] Processing %s changes',
+            self.pillow_id, self.process_num, len(changes_chunk),
+        )
         for processor in self.batch_processors:
             if not changes_chunk:
                 return set(), 0
