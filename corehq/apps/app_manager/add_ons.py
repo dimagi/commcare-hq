@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from corehq import feature_previews, toggles
+from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 from corehq.apps.domain.models import Domain
@@ -220,10 +220,6 @@ def show(slug, request, app, module=None, form=None):
     # Do not show if there's a required privilege missing
     if not add_on.has_privilege(request) and add_on.upgrade_text is None:
         return False
-
-    # Show if flag to enable all toggles is on
-    if toggles.ENABLE_ALL_ADD_ONS.enabled_for_request(request):
-        return True
 
     if _grandfathered(slug, app):
         return True
