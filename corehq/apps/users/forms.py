@@ -5,7 +5,6 @@ import string
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.tokens import default_token_generator
 from django.core.validators import EmailValidator, validate_email
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
@@ -627,15 +626,10 @@ class SendCommCareUserPasswordResetEmailForm(forms.Form):
         )
         super(SendCommCareUserPasswordResetEmailForm, self).__init__(*args, **kwargs)
 
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             use_https=False, token_generator=default_token_generator, request=None):
+    def save(self, request=None, **kwargs):
         user_id = self.data.get('user_id')
         django_user = CommCareUser.get(user_id).get_django_user()
-
-        send_password_reset_email([django_user], domain_override, subject_template_name,
-                                  email_template_name, use_https, token_generator, request)
+        send_password_reset_email([django_user], request)
 
 
 class NewMobileWorkerForm(forms.Form):
