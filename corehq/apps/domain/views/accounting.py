@@ -1948,8 +1948,7 @@ def enable_subscription_auto_renew(request, domain):
 
     next_subscription = current_subscription.next_subscription
     if next_subscription is not None:
-        # can't enable auto renewal because we don't know what to do with the next subscription
-        # this is blocked via UI but validate here as well
+        # the UI should already prevent this interaction, but enforcing from the server to make sure
         messages.error(
             request, _("Auto renewal cannot be enabled for the current subscription.")
         )
