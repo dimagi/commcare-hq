@@ -27,6 +27,7 @@ class PaymentProperties(str, Enum):
 
 PAYMENT_SUCCESS_STATUS_CODE = 202
 PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
+PAYMENT_STATUS_DEVICE_ID = 'momo_payment_status_service'
 
 
 class PaymentStatus(models.TextChoices):
@@ -36,6 +37,9 @@ class PaymentStatus(models.TextChoices):
     PENDING_SUBMISSION = 'pending_submission', _("Pending Submission")
     SUBMITTED = 'submitted', _("Submitted")
     REQUEST_FAILED = 'request_failed', _("Request failed")
+    SUCCESSFUL = 'successful', _("Successful")
+    FAILED = 'failed', _("Failed")
+    ERROR = 'error', _("Error")
 
     @classmethod
     def normalize(cls, value):
@@ -46,6 +50,9 @@ class PaymentStatus(models.TextChoices):
             "pending_submission": cls.PENDING_SUBMISSION,
             "submitted": cls.SUBMITTED,
             "request_failed": cls.REQUEST_FAILED,
+            "successful": cls.SUCCESSFUL,
+            "failed": cls.FAILED,
+            "error": cls.ERROR,
         }
         return value_map[value]
 
