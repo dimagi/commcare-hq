@@ -16,10 +16,13 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 patches = [
     patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
        MagicMock(return_value={})),
-    patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False)),
-    patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use', MagicMock(return_value=False)),
-    patch('corehq.apps.app_manager.app_schemas.session_schema.is_usercase_in_use', MagicMock(return_value=False)),
-    patch('corehq.apps.app_manager.app_schemas.case_properties.is_usercase_in_use', MagicMock(return_value=False)),
+    patch('corehq.apps.app_manager.models.domain_has_usercase_access', MagicMock(return_value=False)),
+    patch('corehq.apps.app_manager.app_schemas.casedb_schema.domain_has_usercase_access',
+        MagicMock(return_value=False)),
+    patch('corehq.apps.app_manager.app_schemas.session_schema.domain_has_usercase_access',
+        MagicMock(return_value=False)),
+    patch('corehq.apps.app_manager.app_schemas.case_properties.domain_has_usercase_access',
+        MagicMock(return_value=False)),
     patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', MagicMock(return_value={})),
     patch(
         'corehq.apps.app_manager.app_schemas.case_properties.domain_has_privilege',
@@ -360,8 +363,8 @@ class CaseSchemaTest(BaseSchemaTest):
             'name': ConditionalCaseUpdate(question_path='/data/username'),
             'role': ConditionalCaseUpdate(question_path='/data/userrole'),
         })
-        with patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use') as mock1, \
-                patch('corehq.apps.app_manager.app_schemas.case_properties.is_usercase_in_use') as mock2:
+        with patch('corehq.apps.app_manager.app_schemas.casedb_schema.domain_has_usercase_access') as mock1, \
+                patch('corehq.apps.app_manager.app_schemas.case_properties.domain_has_usercase_access') as mock2:
             mock1.return_value = True
             mock2.return_value = True
             schema = get_casedb_schema(form)
@@ -573,8 +576,8 @@ class SessionSchemaTests(BaseSchemaTest):
 
     def test_get_session_schema_with_usercase(self):
         module, form = self.factory.new_basic_module('village', 'village')
-        with patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use') as mock1, \
-                patch('corehq.apps.app_manager.app_schemas.session_schema.is_usercase_in_use') as mock2:
+        with patch('corehq.apps.app_manager.app_schemas.casedb_schema.domain_has_usercase_access') as mock1, \
+                patch('corehq.apps.app_manager.app_schemas.session_schema.domain_has_usercase_access') as mock2:
             mock1.return_value = True
             mock2.return_value = True
             schema = get_session_schema(form)
