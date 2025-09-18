@@ -152,6 +152,13 @@ class KycConfig(models.Model):
         )
 
 
+class KycProperties:
+    KYC_VERIFICATION_STATUS = 'kyc_verification_status'
+    KYC_LAST_VERIFIED_AT = 'kyc_last_verified_at'
+    KYC_VERIFICATION_ERROR = 'kyc_verification_error'
+    KYC_PROVIDER = 'kyc_provider'
+
+
 class KycUser:
 
     # CommCareUser properties that could map to API fields
@@ -217,11 +224,11 @@ class KycUser:
 
     @property
     def kyc_last_verified_at(self):
-        return self.user_data.get('kyc_last_verified_at')
+        return self.user_data.get(KycProperties.KYC_LAST_VERIFIED_AT)
 
     @property
     def kyc_verification_error_message(self):
-        if kyc_verification_error := self.user_data.get('kyc_verification_error'):
+        if kyc_verification_error := self.user_data.get(KycProperties.KYC_VERIFICATION_ERROR):
             try:
                 return KycVerificationFailureCause(kyc_verification_error).label
             except ValueError:
@@ -230,21 +237,18 @@ class KycUser:
 
     @property
     def kyc_verification_status(self):
-        value = self.user_data.get('kyc_verification_status')
-        # value can be '' when field is defined as a custom field in custom user data
-        if value not in (
-            KycVerificationStatus.PENDING,
-            KycVerificationStatus.PASSED,
-            KycVerificationStatus.FAILED,
-            KycVerificationStatus.ERROR,
-            ''
-        ):
+        value = self.user_data.get(KycProperties.KYC_VERIFICATION_STATUS)
+        # For records where KYC has not been initiated, the verification status is returned as None or ''
+        # because the case property/custom user field either does not exist or is empty.
+        if value in (None, ''):
+            return KycVerificationStatus.PENDING
+        if value not in KycVerificationStatus.values:
             value = KycVerificationStatus.INVALID
-        return value or KycVerificationStatus.PENDING
+        return value
 
     @property
     def kyc_provider(self):
-        return self.user_data.get('kyc_provider')
+        return self.user_data.get(KycProperties.KYC_PROVIDER)
 
     def update_verification_status(self, verification_status, device_id=None, error_message=None):
         from corehq.apps.hqcase.utils import update_case
@@ -255,10 +259,10 @@ class KycUser:
             KycVerificationStatus.ERROR,
         ]
         update = {
-            'kyc_provider': self.kyc_config.provider,
-            'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
-            'kyc_verification_status': verification_status,
-            'kyc_verification_error': error_message if error_message else '',
+            KycProperties.KYC_PROVIDER: self.kyc_config.provider,
+            KycProperties.KYC_LAST_VERIFIED_AT: datetime.utcnow().isoformat(),
+            KycProperties.KYC_VERIFICATION_STATUS: verification_status,
+            KycProperties.KYC_VERIFICATION_ERROR: error_message if error_message else '',
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
@@ -280,15 +284,12 @@ class KycUser:
         self._user_data = None
 
 
-class KycVerificationStatus:
-    PASSED = 'passed'
-    # FAILED indicates a request was made to KYC Provider and the KYC failed
-    FAILED = 'failed'
-    # PENDING indicates KYC is yet to be initiated and in that case, verification status is returned as None
-    # as case property/field does not exist or is empty.
-    PENDING = None
-    ERROR = 'error'
-    INVALID = 'invalid'   # indicates an invalid value was manually set by a user
+class KycVerificationStatus(models.TextChoices):
+    PASSED = 'passed', _('Passed')
+    FAILED = 'failed', _('Failed')
+    PENDING = 'pending', _('Pending')
+    ERROR = 'error', _('Error')
+    INVALID = 'invalid', _('Invalid')  # indicates an invalid value was manually set by a user
 
 
 class KycVerificationFailureCause(models.TextChoices):
