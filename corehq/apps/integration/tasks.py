@@ -9,7 +9,7 @@ from corehq.apps.es import filters
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.apps.integration.payments.services import request_payments_for_cases
+from corehq.apps.integration.payments.services import request_payments_for_cases, request_payments_status_for_cases
 from corehq.toggles import KYC_VERIFICATION, MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util.metrics import metrics_gauge
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
@@ -115,5 +115,32 @@ def _get_payment_case_ids_on_domain(domain):
                     case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.SUBMITTED),
                 ),
             )
+        )
+    ).values_list('_id', flat=True)
+
+
+@periodic_task(
+    run_every=crontab(minute=0, hour=3),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+    acks_late=True,
+    ignore_result=True,
+)
+def fetch_momo_payments_status():
+    for domain in MTN_MOBILE_WORKER_VERIFICATION.get_enabled_domains():
+        try:
+            config = MoMoConfig.objects.get(domain=domain)
+            case_ids = _get_submitted_payment_case_ids_on_domain(domain)
+            request_payments_status_for_cases(case_ids, config)
+        except MoMoConfig.DoesNotExist:
+            continue
+
+
+def _get_submitted_payment_case_ids_on_domain(domain):
+    return (
+        CaseSearchES()
+        .domain(domain)
+        .case_type(MOMO_PAYMENT_CASE_TYPE)
+        .filter(
+            case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.SUBMITTED),
         )
     ).values_list('_id', flat=True)
