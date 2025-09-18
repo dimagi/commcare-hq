@@ -44,7 +44,6 @@ class TestWebUserSyncUsercase(TestCase):
             self.domain_name, user_id, USERCASE_TYPE
         ).case_json
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_sync_usercases(self):
         sync_usercases(self.user, self.domain_name)
         usercase = CommCareCase.objects.get_case_by_external_id(self.domain_name, self.user_id, USERCASE_TYPE)

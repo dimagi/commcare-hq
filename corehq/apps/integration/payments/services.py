@@ -126,7 +126,7 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
         )
     payment_properties_update = {
         PaymentProperties.PAYMENT_VERIFIED: 'True',
-        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
+        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: datetime.utcnow().isoformat(),
         PaymentProperties.PAYMENT_VERIFIED_BY: verifying_user.username,
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: verifying_user.user_id,
         PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
