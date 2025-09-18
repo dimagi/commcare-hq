@@ -125,6 +125,7 @@ TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION = 'two_stage_mobile_worker_account_crea
 CASE_DEDUPE = 'case_deduplicate'
 CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 APP_DEPENDENCIES = 'app_dependencies'
+ENABLE_ALL_ADD_ONS = 'show_enable_all_add_ons_button'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -190,6 +191,7 @@ MAX_PRIVILEGES = [
     CASE_DEDUPE,
     CUSTOM_DOMAIN_ALERTS,
     APP_DEPENDENCIES,
+    ENABLE_ALL_ADD_ONS,
     BULK_DATA_EDITING,
     TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
 ]
@@ -272,5 +274,6 @@ class Titles(object):
             CASE_DEDUPE: _("Deduplication Rules"),
             CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
             APP_DEPENDENCIES: _("App Dependencies"),
+            ENABLE_ALL_ADD_ONS: _('Show "Enable All Add-Ons" button'),
             TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION: _("Two-stage Mobile Worker Account Creation"),
         }.get(privilege, privilege)
