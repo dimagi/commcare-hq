@@ -313,6 +313,78 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
                 ),
             )
 
+    @hq_hx_action('post')
+    def trigger_submissions(self, request, *args, **kwargs):
+        """Demo method to trigger payment submissions synchronously"""
+        try:
+            # Import the task function here to avoid circular imports
+            from corehq.apps.integration.tasks import _request_momo_payments_for_domain
+            from corehq.apps.integration.payments.models import MoMoConfig
+
+            # Get the config for this domain
+            config = MoMoConfig.objects.get(domain=request.domain)
+
+            # Execute the task synchronously for demo purposes
+            _request_momo_payments_for_domain(request.domain, config)
+
+            context = {
+                'message': _("Payment submissions were successful for demo purposes."),
+                'message_type': 'success'
+            }
+        except MoMoConfig.DoesNotExist:
+            context = {
+                'message': _("Payment configuration not found. Please configure payments first."),
+                'message_type': 'error'
+            }
+        except Exception as e:
+            context = {
+                'message': _("Failed to trigger payment submissions: {}").format(str(e)),
+                'message_type': 'error'
+            }
+
+        return self.render_htmx_partial_response(
+            request,
+            'payments/partials/demo_alert.html',
+            context,
+        )
+
+    @hq_hx_action('post')
+    def trigger_fetch_status(self, request, *args, **kwargs):
+        """Demo method to trigger payment status fetching synchronously"""
+        try:
+            # Import the task function here to avoid circular imports
+            from corehq.apps.integration.payments.services import request_payments_status_for_cases
+            from corehq.apps.integration.payments.models import MoMoConfig
+            from corehq.apps.integration.tasks import _get_submitted_payment_case_ids_on_domain
+
+            # Get the config for this domain
+            config = MoMoConfig.objects.get(domain=request.domain)
+
+            # Get submitted payment case IDs and execute status fetch synchronously
+            case_ids = _get_submitted_payment_case_ids_on_domain(request.domain)
+            request_payments_status_for_cases(case_ids, config)
+
+            context = {
+                'message': _("Payment status fetched successfully for demo purposes."),
+                'message_type': 'success'
+            }
+        except MoMoConfig.DoesNotExist:
+            context = {
+                'message': _("Payment configuration not found. Please configure payments first."),
+                'message_type': 'error'
+            }
+        except Exception as e:
+            context = {
+                'message': _("Failed to trigger payment status fetching: {}").format(str(e)),
+                'message_type': 'error'
+            }
+
+        return self.render_htmx_partial_response(
+            request,
+            'payments/partials/demo_alert.html',
+            context,
+        )
+
     @hq_hx_action('get')
     def export(self, request, *args, **kwargs):
         res = self.trigger_export()
