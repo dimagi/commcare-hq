@@ -1981,8 +1981,7 @@ def disable_subscription_auto_renew(request, domain):
                 reason=SubscriptionAdjustmentReason.CREATE
             ).exists()
             if next_created_by_auto_renew:
-                next_subscription.is_hidden_to_ops = True
-                next_subscription.save()
+                next_subscription.suppress_subscription()
 
         current_subscription.auto_renew = False
         current_subscription.save()

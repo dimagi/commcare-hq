@@ -1641,6 +1641,16 @@ class Subscription(models.Model):
 
         return renewed_subscription
 
+    def suppress_subscription(self):
+        if self.is_active:
+            raise SubscriptionAdjustmentError(
+                "Cannot suppress active subscription, id %d"
+                % self.id
+            )
+        else:
+            self.is_hidden_to_ops = True
+            self.save()
+
     def transfer_credits(self, subscription=None):
         """Transfers all credit balances related to an account or subscription
         (if specified).

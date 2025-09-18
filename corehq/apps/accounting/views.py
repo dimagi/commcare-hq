@@ -58,7 +58,6 @@ from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
     NewSubscriptionError,
-    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.forms import (
     AdjustBalanceForm,
@@ -503,7 +502,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             self.cancel_subscription()
             messages.success(request, "The subscription has been cancelled.")
         elif SuppressSubscriptionForm.submit_kwarg in self.request.POST and self.suppress_form.is_valid():
-            self.suppress_subscription()
+            self.subscription.suppress_subscription()
             return HttpResponseRedirect(SubscriptionInterface.get_url())
         elif 'subscription_change_note' in self.request.POST and self.change_subscription_form.is_valid():
             try:
@@ -521,16 +520,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             web_user=self.request.user.username,
         )
         self.subscription_canceled = True
-
-    def suppress_subscription(self):
-        if self.subscription.is_active:
-            raise SubscriptionAdjustmentError(
-                "Cannot suppress active subscription, id %d"
-                % self.subscription.id
-            )
-        else:
-            self.subscription.is_hidden_to_ops = True
-            self.subscription.save()
 
 
 class NewSoftwarePlanView(AccountingSectionView):
