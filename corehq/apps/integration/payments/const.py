@@ -23,6 +23,8 @@ class PaymentProperties(str, Enum):
     ACTIVITY = 'activity'
     FUNDER = 'funder'
     PAYMENT_ERROR = 'payment_error'
+    # If this property is present, it must be set to True for the payment to be processed.
+    FINAL_MOBILE_VALIDATION = 'commcare_final_mobile_validation'
 
 
 PAYMENT_SUCCESS_STATUS_CODE = 202

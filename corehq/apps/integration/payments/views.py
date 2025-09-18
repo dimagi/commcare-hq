@@ -10,7 +10,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
-from corehq.apps.es.case_search import case_property_query
+from corehq.apps.es.case_search import case_property_query, case_property_missing
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -128,6 +128,12 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        query = query.filter(
+            filters.OR(
+                case_property_missing(PaymentProperties.FINAL_MOBILE_VALIDATION),
+                case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, True),
+            ),
+        )
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         query = add_case_owners_and_location_access(
             query,
