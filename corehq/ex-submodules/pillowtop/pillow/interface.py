@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 
 from django.conf import settings
+from django.db import close_old_connections
 from memoized import memoized
 
 from sentry_sdk import Scope
@@ -129,6 +130,9 @@ class ConstructedPillow:
             updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         if updated:
             self._record_checkpoint_in_datadog()
+        # Prevent connection timeout
+        # https://github.com/jneight/django-db-geventpool#using-orm-when-not-serving-requests
+        close_old_connections()
 
     @property
     @memoized
