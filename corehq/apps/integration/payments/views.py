@@ -131,7 +131,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
         query = query.filter(
             filters.OR(
                 case_property_missing(PaymentProperties.FINAL_MOBILE_VALIDATION),
-                case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, True),
+                case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, 'true'),
             ),
         )
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)

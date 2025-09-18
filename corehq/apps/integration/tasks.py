@@ -112,7 +112,7 @@ def _get_payment_case_ids_on_domain(domain):
             filters.AND(
                 filters.OR(
                     case_property_missing(PaymentProperties.FINAL_MOBILE_VALIDATION),
-                    case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, True),
+                    case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, 'true'),
                 ),
                 case_property_query(PaymentProperties.PAYMENT_VERIFIED, 'True'),
                 filters.NOT(
@@ -148,7 +148,7 @@ def _get_submitted_payment_case_ids_on_domain(domain):
             filters.AND(
                 filters.OR(
                     case_property_missing(PaymentProperties.FINAL_MOBILE_VALIDATION),
-                    case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, True),
+                    case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, 'true'),
                 ),
                 case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.SUBMITTED),
             )
