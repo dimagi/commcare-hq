@@ -1308,13 +1308,23 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
         for action in keyword.keywordaction_set.all():
             if action.recipient == KeywordAction.RECIPIENT_SENDER:
-                if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
-                    content_type = cls.CONTENT_SMS_SURVEY
+                if action.action in (
+                    KeywordAction.ACTION_SMS_SURVEY,
+                    KeywordAction.ACTION_STRUCTURED_SMS,
+                    KeywordAction.ACTION_CONNECT_SURVEY,
+                ):
+                    content_type = (
+                        cls.CONTENT_CONNECT_SURVEY
+                        if action.action == KeywordAction.ACTION_CONNECT_SURVEY
+                        else cls.CONTENT_SMS_SURVEY
+                    )
                     app_id = action.app_id
                     form_unique_id = action.form_unique_id
                     form_name = cls.get_form_name_or_none(keyword.domain, action.app_id, action.form_unique_id)
                 elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
+                elif action.action == KeywordAction.ACTION_CONNECT_MESSAGE:
+                    content_type = cls.CONTENT_CONNECT
 
         return (content_type, app_id, form_unique_id, form_name)
 
@@ -2607,6 +2617,12 @@ class KeywordAction(models.Model):
     # Start an SMS Survey
     ACTION_SMS_SURVEY = "survey"
 
+    # Send a Connect Message
+    ACTION_CONNECT_MESSAGE = "connect_message"
+
+    # Start a Connect Survey
+    ACTION_CONNECT_SURVEY = "connect_survey"
+
     # Process the text as structured SMS. The expected format of the structured
     # SMS is described using the fields on this object.
     ACTION_STRUCTURED_SMS = "structured_sms"
@@ -2668,10 +2684,10 @@ class KeywordAction(models.Model):
         if self.recipient == self.RECIPIENT_USER_GROUP and not self.recipient_id:
             raise self.InvalidModelStateException("Expected a value for recipient_id")
 
-        if self.action == self.ACTION_SMS and not self.message_content:
+        if self.action in [self.ACTION_SMS, self.ACTION_CONNECT_MESSAGE] and not self.message_content:
             raise self.InvalidModelStateException("Expected a value for message_content")
 
-        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS]:
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS, self.ACTION_CONNECT_SURVEY]:
             if not self.app_id:
                 raise self.InvalidModelStateException("Expected a value for app_id")
             if not self.form_unique_id:
