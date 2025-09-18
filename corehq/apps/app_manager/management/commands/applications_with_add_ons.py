@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 import csv
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, Domain
 from corehq.apps.toggle_ui.utils import find_static_toggle
@@ -13,7 +12,6 @@ class Command(BaseCommand):
     help = """
     Checks if an add on is enabled or was ever enabled for applications under all domains
     or under a specific domain with domain name if passed
-    Also checks if toggle ENABLE_ALL_ADD_ONS enabled for domains
     Can also enable the domains found for another toggle in case the add-on is meant to
     be switched to a toggle
     Example: ./manage.py applications_with_add_ons custom_icon_badges
@@ -47,25 +45,22 @@ class Command(BaseCommand):
             if not add_to_toggle:
                 raise CommandError('Toggle %s not found.' % add_to_toggle)
         with open("apps_with_feature_%s.csv" % add_on_name, "w", encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile,
-                                    fieldnames=[
-                                        'domain', 'application_id', 'app_name',
-                                        'all_add_ons_enabled', 'status'
-                                    ])
+            writer = csv.DictWriter(
+                csvfile,
+                fieldnames=['domain', 'application_id', 'app_name', 'status']
+            )
             writer.writeheader()
             for domain_obj in self._iter_domains(options):
                 application_ids = get_app_ids_in_domain(domain_obj.name)
                 for application_id in application_ids:
                     application = Application.get(application_id)
                     if not application.is_remote_app():
-                        all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain_obj.name)
-                        if add_on_name in application.add_ons or all_add_ons_enabled:
+                        if add_on_name in application.add_ons:
                             try:
                                 writer.writerow({
                                     'domain': domain_obj.name.encode('utf-8'),
                                     'application_id': application.get_id,
                                     'app_name': application.name.encode('utf-8'),
-                                    'all_add_ons_enabled': all_add_ons_enabled,
                                     'status': application.add_ons.get(add_on_name)
                                 })
                                 if add_to_toggle:
@@ -76,6 +71,5 @@ class Command(BaseCommand):
                                     'domain': domain_obj.name,
                                     'application_id': application.get_id,
                                     'app_name': application.name,
-                                    'all_add_ons_enabled': all_add_ons_enabled,
                                     'status': application.add_ons.get(add_on_name)
                                 })

@@ -110,7 +110,20 @@ $(document).on("click", ".section-changer ul a", function (e) {
     e.preventDefault();
 });
 
+var expandSection = function (page, sectionSlug) {
+    var key = getKey(page, sectionSlug);
+    var $sectionChanger = $(".section-changer[data-collapse-key='" + page + "']");
+    var $form = $sectionChanger.closest("form");
+    var $panel = $form.find(".panel-appmanager[data-slug='" + sectionSlug + "']");
+    var $link = $sectionChanger.find("ul a[data-slug='" + sectionSlug + "']");
+
+    $panel.removeClass("hide");
+    $link.addClass("selected");
+    localStorage.setItem(key, "");
+};
+
 export default {
     attachToForm: attachToForm,
     shouldCollapse: shouldCollapse,
+    expandSection: expandSection,
 };
