@@ -56,3 +56,17 @@ def make_fake_constructed_pillow(pillow_id, checkpoint_id):
         processor=LoggingProcessor(),
     )
     return pillow
+
+
+def patch_pillow_connection_cleanup():
+    """Do not close database connections when running tests
+
+    Prevents "connection already closed" errors in tests
+    that process pillow changes.
+    """
+    from ..pillow.interface import ConstructedPillow
+
+    def do_not_close_old_connections(self):
+        pass
+
+    ConstructedPillow._close_old_connections = do_not_close_old_connections
