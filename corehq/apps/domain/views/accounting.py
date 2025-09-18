@@ -1973,7 +1973,7 @@ def disable_subscription_auto_renew(request, domain):
     with transaction.atomic():
         next_subscription = current_subscription.next_subscription
         if next_subscription is not None:
-            # if next subscription was created by auto renewal, cancel that subscription
+            # if next subscription was created by auto renewal, suppress that subscription
             next_created_by_auto_renew = SubscriptionAdjustment.objects.filter(
                 subscription=next_subscription,
                 method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
