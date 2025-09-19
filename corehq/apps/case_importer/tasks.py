@@ -23,9 +23,9 @@ from .util import (
 )
 
 
-# an import shouldn't last longer than 5 hours (capped at 100k cases)
+# set a timeout long enough to give queued tasks a chance to process before timing out
 @serial_task(
-    '{domain}', default_retry_delay=60 * 5, max_retries=62, timeout=5 * 60 * 60, queue='case_import_queue'
+    '{domain}', default_retry_delay=60 * 10, max_retries=144, timeout=24 * 60 * 60, queue='case_import_queue'
 )
 def bulk_import_async(config_list_json, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
