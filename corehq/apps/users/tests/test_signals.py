@@ -28,7 +28,7 @@ from ..signals import update_user_in_es
 @patch('corehq.apps.sms.tasks.sync_user_phone_numbers', new=MagicMock())
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock())
 @patch('corehq.apps.users.models.CommCareUser.project', new=MagicMock())
-@patch('corehq.apps.callcenter.tasks.Domain.get_by_name', new=lambda _: MagicMock(usercase_enabled=True))
+@patch('corehq.apps.callcenter.tasks.Domain.get_by_name', new=lambda _: MagicMock())
 @patch('corehq.apps.analytics.signals.get_subscription_properties_by_user', new=MagicMock(return_value={}))
 @patch('corehq.apps.analytics.signals.get_domain_membership_properties', new=MagicMock(return_value={}))
 @es_test

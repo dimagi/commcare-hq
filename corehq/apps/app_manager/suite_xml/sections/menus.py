@@ -37,7 +37,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Menu,
 )
 from corehq.apps.app_manager.util import (
-    is_usercase_in_use,
+    domain_has_usercase_access,
     xpath_references_case,
     xpath_references_usercase,
 )
@@ -235,7 +235,7 @@ class MenuContributor(SuiteContributorByModule):
 
         @memoized
         def domain_uses_usercase():
-            return is_usercase_in_use(self.app.domain)
+            return domain_has_usercase_access(self.app.domain)
 
         for form in module.get_suite_forms():
             if form.unique_id in excluded_form_ids:
