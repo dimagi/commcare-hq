@@ -1572,6 +1572,7 @@ class Subscription(models.Model):
             method=adjustment_method, note=note, web_user=web_user,
         )
 
+    @transaction.atomic
     def renew_subscription(self, note=None, web_user=None,
                            adjustment_method=None,
                            service_type=None, pro_bono_status=None,
