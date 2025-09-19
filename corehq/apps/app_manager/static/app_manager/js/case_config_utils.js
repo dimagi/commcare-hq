@@ -124,7 +124,7 @@ export default {
             const path = caseProperty.path;
             const updateMode = caseProperty.save_only_if_edited ? 'edit' : 'always';
             if (key || path) {
-                if (_(required).contains(key) && caseProperty.isOpenCase) {
+                if (_(required).contains(key)) {
                     extraDict[key] = extraDict[key] || [];
                     extraDict[key].push({question_path: path, update_mode: updateMode});
                 } else {

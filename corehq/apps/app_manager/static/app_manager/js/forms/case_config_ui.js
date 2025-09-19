@@ -75,8 +75,9 @@ $(function () {
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
                 var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
+                const opensCase = self.caseType && (requires === 'none');
                 const updatedActions = Object.assign(
-                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
+                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction, opensCase),
                     {subcases: subcases},
                 );
                 const diff = getDiff(self.baseline, updatedActions);
@@ -678,7 +679,6 @@ $(function () {
                 key: 'name',
                 path: update.question_path,
                 required: false,
-                isOpenCase: true,
                 save_only_if_edited: update.update_mode === 'edit',
             }));
 
@@ -727,9 +727,10 @@ $(function () {
             });
             return x;
         },
-        from_case_transaction: function (caseTransaction) {
+        from_case_transaction: function (caseTransaction, opensCase) {
             var o = ko.mapping.toJS(caseTransaction, caseTransactionMapping(caseTransaction));
-            var x = caseConfigUtils.propertyArrayToMultiDict(['name'], o.case_properties);
+            const openCasePropertyNames = opensCase ? ['name'] : [];
+            var x = caseConfigUtils.propertyArrayToMultiDict(openCasePropertyNames, o.case_properties);
             var caseProperties = x[0],
                 openNameUpdate = x[1].name;
             var casePreload = caseConfigUtils.preloadArrayToDict(o.case_preload);
