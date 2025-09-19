@@ -32,6 +32,20 @@ function EditAddOns(addOns, layout, saveUrl) {
         self.addOns[addOn.slug] = e.currentTarget.checked;
         self.saveButton.fire('change');
     };
+    self.enableAll = function () {
+        _.each(self.sections, function (section) {
+            sectionChanger.expandSection("add-ons", section.slug);
+            _.each(section.add_ons, function (addOn) {
+                var $checkbox = $('#check-' + addOn.slug);
+                if ($checkbox.length) {
+                    $checkbox.prop('checked', true);
+                    self.addOns[addOn.slug] = true;
+                }
+            });
+        });
+
+        self.saveButton.fire('change');
+    };
 }
 
 $(function () {
