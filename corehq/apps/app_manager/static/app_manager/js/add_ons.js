@@ -6,7 +6,10 @@ import hqMain from "hqwebapp/js/bootstrap3/main";
 function EditAddOns(addOns, layout, saveUrl) {
     const self = this;
 
-    self.addOns = addOns;
+    self.addOns = {};
+    Object.entries(addOns).forEach(([slug, enabled]) => {
+        self.addOns[slug] = ko.observable(enabled);
+    });
 
     self.getStorageKey = function (section) {
         return `app-manager-collapse-add-ons-${section}`;
@@ -28,7 +31,9 @@ function EditAddOns(addOns, layout, saveUrl) {
         save: () => {
             // Send server map of slug => enabled
             const data = Object.fromEntries(
-                Object.entries(self.addOns).map(([slug, enabled]) => [slug, enabled ? 'on' : ''])
+                Object.entries(self.addOns).map(
+                    ([slug, observable]) => [slug, observable() ? 'on' : '']
+                )
             );
             self.saveButton.ajax({
                 url: saveUrl,
@@ -41,10 +46,11 @@ function EditAddOns(addOns, layout, saveUrl) {
         },
     });
 
-    self.update = function (addOn, e) {
-        self.addOns[addOn.slug] = e.currentTarget.checked;
-        self.saveButton.fire('change');
-    };
+    Object.values(self.addOns).forEach(observable => {
+        observable.subscribe(() => {
+            self.saveButton.fire('change');
+        });
+    });
 
     self.toggleSection = function (section) {
         const newCollapseState = !section.collapse();
@@ -54,14 +60,12 @@ function EditAddOns(addOns, layout, saveUrl) {
     };
 
     self.enableAll = function () {
-        Object.entries(self.addOns).forEach(([slug]) => {
-            self.addOns[slug] = true;
-            $(`#check-${slug}`).prop('checked', true);
+        Object.entries(self.addOns).forEach(([slug, observable]) => {
+            observable(true);
         });
         self.sections.forEach((section) => {
             section.collapse(false);
         });
-        self.saveButton.fire('change');
     };
 }
 
