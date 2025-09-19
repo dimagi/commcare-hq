@@ -13,6 +13,7 @@ import menusUtils from "cloudcare/js/formplayer/menus/utils";
 import queryView from "cloudcare/js/formplayer/menus/views/query";
 import views from "cloudcare/js/formplayer/menus/views";
 import gtx from "cloudcare/js/gtx";
+import Sentry from "sentry_browser";
 
 
 var selectMenu = function (options) {
@@ -94,6 +95,25 @@ var selectMenu = function (options) {
 
         if (menuResponse.shouldRequestLocation) {
             menusUtils.handleLocationRequest(options);
+        }
+        if (menuResponse.title === "Case List2") {
+            console.log(menuResponse);
+            console.log("capturing event");
+            console.log("menuResponse.shouldRequestLocation", menuResponse.shouldRequestLocation);
+            console.log("menuResponse.shouldWatchLocation", menuResponse.shouldWatchLocation);
+            const predefinedShouldRequestLocation = menuResponse.shouldRequestLocation;
+            Sentry.captureEvent({
+                message: 'WebApps: requesting geolocation',
+                level: 'info',
+                tags: { feature: 'webapps_geolocation' },
+                extra: {
+                    appId: menuResponse.appId,
+                    shouldRequestLocation: menuResponse.shouldRequestLocation,
+                    shouldWatchLocation: menuResponse.shouldWatchLocation,
+                    predefinedShouldRequestLocation: predefinedShouldRequestLocation,
+                    breadcrumbs: menuResponse.breadcrumbs,
+                },
+            });
         }
         menusUtils.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
         promise.resolve(menuResponse);
