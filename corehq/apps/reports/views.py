@@ -767,15 +767,16 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         kwargs = {'initial': initial}
         if self.request.method == "POST":
             args = (self.request.POST, )
-            selected_emails = self.request.POST.getlist('recipient_emails', {})
+            selected_emails = self.request.POST.getlist('recipient_emails', [])
         else:
             args = ()
             selected_emails = kwargs.get('initial', {}).get('recipient_emails', [])
 
-        web_user_emails = list(iter_web_user_emails(self.domain))
-        for email in selected_emails:
-            if email not in web_user_emails:
-                web_user_emails = [email] + web_user_emails
+        selected_emails_set = set(selected_emails)
+        web_user_emails = selected_emails + [
+            e for e in iter_web_user_emails(self.domain)
+            if e not in selected_emails_set
+        ]
 
         from corehq.apps.reports.forms import ScheduledReportForm
         form = ScheduledReportForm(*args, **kwargs)

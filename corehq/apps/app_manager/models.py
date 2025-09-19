@@ -2827,7 +2827,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
         """
-        return any(form.uses_usercase() for form in self.get_forms())
+        return (self.case_type == const.USERCASE_TYPE
+                or any(form.uses_usercase() for form in self.get_forms()))
 
     def grid_display_style(self):
         return self.display_style == 'grid'
@@ -4676,7 +4677,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow_noop, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
-        from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
@@ -4707,8 +4707,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
 
-        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
-
+        _refresh_data_dictionary(self.domain, self.get_id)
         if response_json is not None:
             if 'update' not in response_json:
                 response_json['update'] = {}
@@ -4749,6 +4748,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def commcare_flavor(self):
         return None if self.target_commcare_flavor == "none" else self.target_commcare_flavor
+
+
+def _refresh_data_dictionary(domain, get_id):  # easy patch target
+    from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
+    refresh_data_dictionary_from_app.delay(domain, get_id)
 
 
 def validate_lang(lang):

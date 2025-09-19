@@ -1,6 +1,7 @@
 import warnings
 from datetime import datetime
 from functools import wraps
+from itertools import islice
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -50,15 +51,20 @@ class ProjectReport(GenericReportView):
     @property
     def template_context(self):
         context = super().template_context
-
-        email_form = EmailReportForm()
-        choices = [(e, e) for e in iter_web_user_emails(self.domain)]
-        if len(choices) <= MAX_WEB_USER_EMAILS:
-            email_form.fields['recipient_emails'].choices = choices
-        context.update({
-            'user_types': HQUserType.human_readable,
-            'email_form': email_form
-        })
+        context['user_types'] = HQUserType.human_readable
+        if self.rendered_as == 'view':
+            # Add the email form to the context if it will be rendered
+            email_form = EmailReportForm()
+            if self.domain:
+                # Fetch enough to tell whether there are too many.
+                emails = list(islice(
+                    iter_web_user_emails(self.domain),
+                    MAX_WEB_USER_EMAILS + 1
+                ))
+                if len(emails) <= MAX_WEB_USER_EMAILS:
+                    choices = [(e, e) for e in emails]
+                    email_form.fields['recipient_emails'].choices = choices
+            context['email_form'] = email_form
         return context
 
 

@@ -91,6 +91,7 @@ def _filter_by_hash(configs, ucr_division):
 
 def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
+    configs = list(configs)  # convert generator to list for multiple passes
     domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
     for config in configs:
@@ -290,6 +291,7 @@ class ConfigurableReportTableManager(UcrTableManager):
         for provider in self.data_source_providers:
             configs = provider.get_data_sources_modified_since(timestamp)
             for config in self._filter_configs(configs):
+                pillow_logging.info(f'updating modified data source: {config.domain}: {config._id}')
                 yield (config.domain, config)
 
     def _filter_configs(self, configs):
@@ -330,6 +332,7 @@ class RegistryDataSourceTableManager(UcrTableManager):
     def iter_configs_since(self, timestamp):
         configs = self.data_source_provider.get_data_sources_modified_since(timestamp)
         for config in _filter_invalid_config(configs):
+            pillow_logging.info(f'updating modified registry data source: {config.domain}: {config._id}')
             for domain in config.data_domains:
                 yield domain, config
 

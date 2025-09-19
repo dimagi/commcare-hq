@@ -34,10 +34,6 @@ class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
     placeholder = gettext_lazy('Click to select a group')
 
 
-class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
-    placeholder = gettext_lazy('Click to select groups')
-
-
 class YearFilter(BaseSingleOptionFilter):
     slug = "year"
     label = gettext_lazy("Year")
@@ -141,11 +137,12 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(s.name.upper(), s.label) for s in [
-            State.Success,
+            State.Success,  # Includes Empty
             State.Pending,
             State.Cancelled,
             State.Fail,
-            State.InvalidPayload,
+            State.PayloadRejected,  # Includes ErrorGeneratingPayload
+            # See templates/repeaters/partials/repeater_row.html
         ]]
 
 

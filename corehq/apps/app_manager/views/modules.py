@@ -117,7 +117,7 @@ from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
-    get_all_case_types_for_domain,
+    get_non_system_case_types_for_domain,
     get_case_types_for_domain_es
 )
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
@@ -693,9 +693,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            raise AppMisconfigurationError('"{}" is a reserved case type'.format(USERCASE_TYPE))
-        elif case_type and not is_valid_case_type(case_type, module):
+        if case_type and not is_valid_case_type(case_type):
             raise AppMisconfigurationError("case type is improperly formatted")
         else:
             old_case_type = module["case_type"]
@@ -1728,7 +1726,7 @@ class AllCaseTypesView(LoginAndDomainMixin, View):
     urlname = 'all_case_types'
 
     def get(self, request, domain):
-        existing_case_types = list(get_all_case_types_for_domain(domain))
+        existing_case_types = list(get_non_system_case_types_for_domain(domain))
         existing_case_types.sort(key=str.lower)  # Sort case-insensitively
         return JsonResponse({
             'existing_case_types': existing_case_types,

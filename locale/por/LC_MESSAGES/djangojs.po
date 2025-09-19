@@ -231,6 +231,16 @@ msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "Os tipos de caso só podem incluir os caracteres a-z, 0-9, '-' e '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"This is a reserved case type. Refer to <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">doc</a> before using."
+msgstr ""
+"Este é um tipo de caso reservado. Consulte a <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">documentação</a> antes de usar."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "Este é um tipo de caso reservado. Por favor, escolha outro nome."
 
@@ -738,7 +748,6 @@ msgid "You have unchanged user properties settings"
 msgstr "Você tem configurações de propriedades de usuário não alteradas"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "Propriedade usa prefixo não reconhecido <strong>"
 
@@ -1106,12 +1115,10 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} não é um pai de dados válido"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "Create"
 msgid "createXML"
 msgstr "criarXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "User Data"
 msgid "getData"
 msgstr "obterDados"
 
@@ -1695,7 +1702,6 @@ msgstr "Reatribuído"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Copied!"
 msgid "Copied"
 msgstr "Copiado"
 
@@ -1711,13 +1717,11 @@ msgstr "Hoje"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
 msgstr "Reatribuído <%- count %> casos"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
 msgstr "Copiado <%- count %> casos"
 
@@ -3640,7 +3644,6 @@ msgid "Unavailable"
 msgstr "Indisponível"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
 msgstr "<%- minutes %> minutos restantes"
 
