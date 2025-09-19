@@ -140,6 +140,7 @@ from corehq.toggles import (
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
     USE_LOGO_IN_SYSTEM_EMAILS
 )
+from corehq.util.global_request import get_request
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 
@@ -1623,7 +1624,7 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
-def send_password_reset_email(active_users, request):
+def send_password_reset_email(active_users):
     """
     Generates a one-use only link for resetting password and sends to the
     user.
@@ -1640,6 +1641,7 @@ def send_password_reset_email(active_users, request):
         # a password marked as unusable
         if not user.has_usable_password():
             continue
+        request = get_request()
         current_site = get_current_site(request)
         couch_user = CouchUser.from_django_user(user)
         if not couch_user:
@@ -1707,8 +1709,8 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
 
-    def save(self, active_users, request=None, **kwargs):
-        send_password_reset_email(active_users, request)
+    def save(self, active_users, **kwargs):
+        send_password_reset_email(active_users)
 
 
 class UsernameAwareEmailField(forms.EmailField):

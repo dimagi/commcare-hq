@@ -626,10 +626,10 @@ class SendCommCareUserPasswordResetEmailForm(forms.Form):
         )
         super(SendCommCareUserPasswordResetEmailForm, self).__init__(*args, **kwargs)
 
-    def save(self, request=None, **kwargs):
+    def save(self, **kwargs):
         user_id = self.data.get('user_id')
         django_user = CommCareUser.get(user_id).get_django_user()
-        send_password_reset_email([django_user], request)
+        send_password_reset_email([django_user])
 
 
 class NewMobileWorkerForm(forms.Form):
