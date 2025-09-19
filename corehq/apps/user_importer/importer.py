@@ -333,8 +333,10 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
                                     assigned_location_ids=None, profile=None, tableau_role=None,
                                     tableau_group_ids=None, user_change_logger=None, send_email=True):
     """
-    :param primary_location_id: use None for value to not be set or updated
-    :param assigned_location_ids: use None for value to not be set or updated
+    :param primary_location_id: The primary location will be changed only if
+        a value other than `None` is passed.
+    :param assigned_location_ids: Assigned locations will be changed only if
+        a value other than `None` is passed.
     """
     from corehq.apps.users.views import InviteWebUserView
 
