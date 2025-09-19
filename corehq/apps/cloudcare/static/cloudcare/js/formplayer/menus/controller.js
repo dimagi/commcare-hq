@@ -97,7 +97,11 @@ var selectMenu = function (options) {
             menusUtils.handleLocationRequest(options);
         }
         if (menuResponse.title === "Case List2") {
+            console.log(menuResponse);
             console.log("capturing event");
+            console.log("menuResponse.shouldRequestLocation", menuResponse.shouldRequestLocation);
+            console.log("menuResponse.shouldWatchLocation", menuResponse.shouldWatchLocation);
+            const predefinedShouldRequestLocation = menuResponse.shouldRequestLocation;
             Sentry.captureEvent({
                 message: 'WebApps: requesting geolocation',
                 level: 'info',
@@ -106,6 +110,7 @@ var selectMenu = function (options) {
                     appId: menuResponse.appId,
                     shouldRequestLocation: menuResponse.shouldRequestLocation,
                     shouldWatchLocation: menuResponse.shouldWatchLocation,
+                    predefinedShouldRequestLocation: predefinedShouldRequestLocation,
                     breadcrumbs: menuResponse.breadcrumbs,
                 },
             });
