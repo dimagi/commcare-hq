@@ -1162,3 +1162,8 @@ class AppReleaseModeSetting(models.Model):
     def get_settings(domain):
         domain_obj, created = AppReleaseModeSetting.objects.get_or_create(domain=domain)
         return domain_obj
+
+
+class EnableAllAddOnsSetting(models.Model):
+    domain = models.CharField(max_length=255, primary_key=True)
+    enabled = models.BooleanField(default=False)

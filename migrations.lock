@@ -442,6 +442,7 @@ domain
  0014_appreleasemodesetting
  0015_delete_projectlimit
  0016_rename_superuserprojectentryrecord_domain_username_domain_supe_domain_c3d32e_idx
+ 0017_enablealladdonssetting
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
