@@ -16,6 +16,8 @@ class UnexpectedConfigurationException(Exception):
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
+METHOD_CONNECT_MESSAGE = "connect_message"
+METHOD_CONNECT_SURVEY = "connect_survey"
 METHOD_SMS_SURVEY = "survey"
 METHOD_IVR_SURVEY = "ivr_survey"
 METHOD_EMAIL = "email"
