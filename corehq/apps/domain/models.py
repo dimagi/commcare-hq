@@ -1167,3 +1167,8 @@ class AppReleaseModeSetting(models.Model):
 class EnableAllAddOnsSetting(models.Model):
     domain = models.CharField(max_length=255, primary_key=True)
     enabled = models.BooleanField(default=False)
+
+    @staticmethod
+    def enabled_for_domain(domain):
+        setting = EnableAllAddOnsSetting.objects.filter(domain=domain).first()
+        return bool(setting and setting.enabled)
