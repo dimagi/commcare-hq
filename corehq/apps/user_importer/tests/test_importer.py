@@ -2056,17 +2056,79 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         change_messages.update(UserChangeMessage.primary_location_info(None))
         self.assertDictEqual(user_history.change_messages, change_messages)
 
-    def test_invite_location_add(self):
+    def test_invite_location_add_and_remove(self):
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
-            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc1]])],
+            [self._get_invited_spec(location_code=[self.loc1.site_code, self.loc2.site_code])],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
             True
         )
-        self.assertEqual(getattr(self.user_invite.primary_location, 'location_id', None), self.loc1._id)
+        self.assertEqual(self.user_invite.primary_location, self.loc1)
+        self.assertListEqual(
+            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
+            [self.loc1._id, self.loc2._id]
+        )
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(location_code=[self.loc2.site_code])],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user_invite.primary_location, self.loc2)
+        self.assertListEqual(
+            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
+            [self.loc2._id]
+        )
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(location_code=[])],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assertIsNone(self.user_invite.primary_location)
+        self.assertListEqual(
+            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
+            []
+        )
+
+    def test_invite_location_column_missing(self):
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(location_code=[self.loc1.site_code])],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user_invite.primary_location, self.loc1)
+        self.assertListEqual(
+            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
+            [self.loc1._id]
+        )
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec()],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assertEqual(self.user_invite.primary_location, self.loc1)
+        self.assertListEqual(
+            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
+            [self.loc1._id]
+        )
 
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
