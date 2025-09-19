@@ -52,6 +52,17 @@ function EditAddOns(addOns, layout, saveUrl) {
         const key = self.getStorageKey(section.slug);
         localStorage.setItem(key, newCollapseState.toString());
     };
+
+    self.enableAll = function () {
+        Object.entries(self.addOns).forEach(([slug]) => {
+            self.addOns[slug] = true;
+            $(`#check-${slug}`).prop('checked', true);
+        });
+        self.sections.forEach((section) => {
+            section.collapse(false);
+        });
+        self.saveButton.fire('change');
+    };
 }
 
 $(() => {
