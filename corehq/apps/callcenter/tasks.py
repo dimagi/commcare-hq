@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 
 from celery.schedules import crontab
@@ -56,6 +58,9 @@ def bulk_sync_usercases_if_applicable(domain, user_ids):
 
 def sync_usercases_if_applicable(domain, user, spawn_task):
     domain_obj = Domain.get_by_name(domain) if domain else None
+    if not domain_obj:
+        logging.warning("Domain %s was unexpectedly not found when syncing usercase", domain)
+        return
     if settings.UNIT_TESTING and not domain_obj:
         return
     if (domain_obj.call_center_config.enabled
