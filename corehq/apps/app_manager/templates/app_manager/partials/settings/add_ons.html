@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% if request|toggle_enabled:"ENABLE_ALL_ADD_ONS" %}
+{% if all_add_ons_enabled %}
 
   <div class="alert alert-info">
     {% blocktrans %}
