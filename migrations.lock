@@ -443,6 +443,7 @@ domain
  0015_delete_projectlimit
  0016_rename_superuserprojectentryrecord_domain_username_domain_supe_domain_c3d32e_idx
  0017_enablealladdonssetting
+ 0018_enable_all_add_ons
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
