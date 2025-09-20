@@ -1,5 +1,8 @@
+from functools import wraps
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+
+from gevent.lock import BoundedSemaphore
 
 
 class TTLCache:
@@ -21,10 +24,10 @@ class TTLCache:
     """
     TTL_48_HOURS = 48 * 60 * 60  # in seconds
 
-    def __init__(self, iter_adapters, timeout=TTL_48_HOURS):
+    def __init__(self, iter_adapters, adapter_cache=None, timeout=TTL_48_HOURS):
         self.iter_adapters = iter_adapters
         self.domain_last_seen = {}
-        self.adapters = AdapterCache()
+        self.adapters = adapter_cache or AdapterCache()
         self.timeout = timeout
         self.last_refresh = datetime.now(UTC)
 
@@ -38,7 +41,7 @@ class TTLCache:
         adapters = self.adapters.get(domain)
         return self._load_adapters(domain) if adapters is None else adapters
 
-    def _load_adapters(self, domain):
+    def _load_adapters_(self, domain):
         now = datetime.now(UTC)
         for domain_, adapter in self.iter_adapters(domain):
             if adapter.is_active:
@@ -46,7 +49,20 @@ class TTLCache:
                 self.domain_last_seen[domain_] = now
         return self.adapters[domain]
 
-    def refresh(self):
+    @wraps(_load_adapters_)
+    def _load_adapters(self, domain):
+        # locking decorator for _load_adapters defined above
+        lock = self.adapters.locks[domain]
+        while domain not in self.adapters:
+            if lock.acquire(blocking=False):
+                try:
+                    return self._load_adapters_(domain)
+                finally:
+                    lock.release()
+            lock.wait()  # wait for concurrent load to finish
+        return self.adapters[domain]
+
+    def _refresh(self):
         """Reload changed adapters and prune stale entries from the cache"""
         now = datetime.now(UTC)
         last_refresh, self.last_refresh = self.last_refresh, now
@@ -70,6 +86,16 @@ class TTLCache:
         for config_id, updated_domains in updated.items():
             for domain in self.adapters.entries.keys() - updated_domains:
                 self.adapters.entries[domain].pop(config_id, None)
+
+    @wraps(_refresh)
+    def refresh(self):
+        # locking decorator for refresh defined above
+        lock = self.adapters.refresh_lock
+        if lock.acquire(blocking=False):
+            try:
+                self._refresh()
+            finally:
+                lock.release()
 
     def remove(self, domain, adapter):
         """Remove adapter from domain's cached adapters."""
@@ -116,6 +142,8 @@ class AdapterCache:
 
     def __init__(self):
         self.entries = defaultdict(dict)
+        self.locks = defaultdict(BoundedSemaphore)
+        self.refresh_lock = BoundedSemaphore()
 
     def get(self, domain):
         """Return a list of adapters for domain, None if there are none.
@@ -149,5 +177,6 @@ class AdapterCache:
         """Discard adapter(s) for domain."""
         if adapter is None:
             self.entries.pop(domain, None)
+            self.locks.pop(domain, None)
         else:
             self.entries[domain].pop(adapter.config_id, None)

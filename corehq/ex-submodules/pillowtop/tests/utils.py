@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from corehq.apps.es.transient_util import doc_adapter_from_index_name
 from corehq.util.es.elasticsearch import TransportError
 
@@ -56,3 +58,18 @@ def make_fake_constructed_pillow(pillow_id, checkpoint_id):
         processor=LoggingProcessor(),
     )
     return pillow
+
+
+def _do_not_close_old_connections(self):
+    """Do not close database connections when running tests
+
+    Prevents "connection already closed" errors in tests that process
+    pillow changes.
+    """
+
+
+pillow_connection_cleanup_patch = patch.object(
+    ConstructedPillow,
+    '_close_old_connections',
+    _do_not_close_old_connections
+)

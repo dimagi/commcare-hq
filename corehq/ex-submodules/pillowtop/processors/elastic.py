@@ -160,7 +160,6 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
-        logger.info('Processing chunk of changes in BulkElasticProcessor')
         if self.change_filter_fn:
             changes_chunk = [
                 change for change in changes_chunk
