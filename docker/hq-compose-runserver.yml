@@ -12,7 +12,7 @@ x-commcarehq_base: &commcarehq_base
       condition: service_healthy
     couch:
       condition: service_healthy
-    redis:
+    valkey:
       condition: service_healthy
     elasticsearch6:
       condition: service_healthy
@@ -58,7 +58,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_healthy
     ports:
       - "8080:8080"
@@ -74,10 +74,10 @@ services:
       file: hq-compose-services.yml
       service: couch
 
-  redis:
+  valkey:
     extends:
       file: hq-compose-services.yml
-      service: redis
+      service: valkey
 
   elasticsearch6:
     extends:
