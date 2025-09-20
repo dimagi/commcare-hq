@@ -267,6 +267,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('geospatial.GeoPolygon', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('hqwebapp.Alert', SimpleFilter('created_by_domain')),
     FilteredModelIteratorBuilder('domain.AppReleaseModeSetting', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.EnableAllAddOnsSetting', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.Event', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
