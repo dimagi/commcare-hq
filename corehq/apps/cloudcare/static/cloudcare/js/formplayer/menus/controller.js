@@ -94,7 +94,8 @@ var selectMenu = function (options) {
         }
 
         // Temporarily log to investigate if there is active usage of sessionStorage.locationLat
-        // and sessionStorage.locationLon
+        // and sessionStorage.locationLon. This can be removed after a month and no usage is found or
+        // earlier if a real use case is found from this logging.
         if (menuResponse.shouldRequestLocation || menuResponse.shouldWatchLocation) {
             Sentry.captureEvent({
                 message: 'WebApps: Formplayer requested location',
