@@ -235,3 +235,16 @@ def _properties_to_update_for_revert():
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
         PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
     }
+
+
+def make_payment_status_request(reference_id, config):
+    connection_settings = config.connection_settings
+    requests = connection_settings.get_requests()
+    response = requests.get(
+        f'/disbursement/v1_0/deposit/{reference_id}',
+        headers={
+            'X-Target-Environment': config.environment,
+        }
+    )
+    response.raise_for_status()
+    return response
