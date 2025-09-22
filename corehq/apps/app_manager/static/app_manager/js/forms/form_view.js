@@ -173,11 +173,12 @@ $(function () {
 
 
     var $casePropertyWarning = $('#case-property-warning');
-    const initialWarningData = initialPageData.get('case_property_warning');
-    const warningViewModel = new casePropertyWarningViewModel(initialWarningData.limit);
-    warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count);
-    $casePropertyWarning.koApplyBindings(warningViewModel);
-
+    if ($casePropertyWarning.length > 0) {
+        const initialWarningData = initialPageData.get('case_property_warning');
+        const warningViewModel = new casePropertyWarningViewModel(initialWarningData.limit);
+        warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count);
+        $casePropertyWarning.koApplyBindings(warningViewModel);
+    }
 
     // Advanced > XForm > Upload
     $("#xform_file_input").change(function () {
