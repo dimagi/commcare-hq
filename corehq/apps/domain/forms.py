@@ -1732,7 +1732,7 @@ class UsernameAwareEmailField(forms.EmailField):
 class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
     email = UsernameAwareEmailField(label=gettext_lazy("Email"), max_length=254)
 
-    def save(self, request=None, **kwargs):
+    def save(self, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1745,7 +1745,7 @@ class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form
         # get a password reset email.
         active_users = get_active_users_by_email(email)
 
-        super().save(active_users, request=request, **kwargs)
+        super().save(active_users, **kwargs)
 
 
 class UsernameOrEmailField(forms.CharField):
@@ -1778,7 +1778,7 @@ class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.
         self.cleaned_data["email"] = mobile_username_email
         return super().clean_email()
 
-    def save(self, request=None, **kwargs):
+    def save(self, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1791,7 +1791,7 @@ class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.
         # get a password reset email.
         active_users = get_active_users_by_email(email, self.domain)
 
-        super().save(active_users, request=request, **kwargs)
+        super().save(active_users, **kwargs)
 
 
 class ConfidentialDomainPasswordResetForm(DomainPasswordResetForm):
