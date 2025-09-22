@@ -15,6 +15,7 @@ from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
     PAYMENT_SUBMITTED_DEVICE_ID,
     PAYMENT_SUCCESS_STATUS_CODE,
+    PAYMENT_STATUS_DEVICE_ID,
     PaymentProperties,
     PaymentStatus,
 )
@@ -239,6 +240,28 @@ def _properties_to_update_for_revert():
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
         PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
     }
+
+
+def request_payments_status_for_cases(case_ids, config):
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        status_updates = []
+        for payment_case in CommCareCase.objects.get_cases(case_ids=list(case_ids_chunk)):
+            payment_status_value = payment_case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+            if PaymentStatus.from_value(payment_status_value) != PaymentStatus.SUBMITTED:
+                continue
+
+            try:
+                status_update = request_payment_status(payment_case, config)
+            except PaymentRequestError:
+                # Will retry in next run
+                continue
+
+            status_updates.append(
+                (payment_case.case_id, status_update, False)
+            )
+        bulk_update_cases(
+            config.domain, status_updates, device_id=PAYMENT_STATUS_DEVICE_ID
+        )
 
 
 def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):

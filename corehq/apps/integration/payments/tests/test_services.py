@@ -20,6 +20,7 @@ from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import (
     _request_payment,
     request_payments_for_cases,
+    request_payments_status_for_cases,
     request_payment_status,
     revert_payment_verification,
     verify_payment_cases,
@@ -709,6 +710,225 @@ class TestRequestPaymentStatus(SimpleTestCase):
                 PaymentProperties.PAYMENT_ERROR: 'Account blocked',
             }
             self.assertEqual(result, expected)
+
+
+class TestRequestPaymentsStatusForCases(TestCase):
+
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = CaseFactory(cls.domain)
+
+        cls.connection_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='test-conn-settings-status',
+            username='test-username',
+            password='test-password',
+            url='http://test-url.com',
+        )
+        cls.config = MoMoConfig.objects.create(
+            domain=cls.domain,
+            connection_settings=cls.connection_settings,
+            environment='sandbox',
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.config.delete()
+        cls.connection_settings.delete()
+        super().tearDownClass()
+
+    def _create_payment_case(self, name, properties):
+        case = _create_case(self.factory, name, properties)
+        return case
+
+    @patch('corehq.apps.integration.payments.services.request_payment_status')
+    def test_request_payments_status_for_cases_success(self, mock_request_status):
+        submitted_cases = [
+            self._create_payment_case('case_1', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            }),
+            self._create_payment_case('case_2', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            })
+        ]
+        for case in submitted_cases:
+            self.addCleanup(case.delete)
+
+        mock_request_status.side_effect = [
+            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
+                PaymentProperties.PAYMENT_ERROR: 'DepositPayerFailed',
+            }
+        ]
+
+        case_ids = [case.case_id for case in submitted_cases]
+        request_payments_status_for_cases(case_ids, self.config)
+
+        self.assertEqual(mock_request_status.call_count, 2)
+
+        for case in submitted_cases:
+            case.refresh_from_db()
+            if case.name == 'case_1':
+                self.assertEqual(case.case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.SUCCESSFUL)
+                self.assertNotIn(PaymentProperties.PAYMENT_ERROR, case.case_json)
+            elif case.name == 'case_2':
+                self.assertEqual(case.case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.FAILED)
+                self.assertEqual(case.case_json[PaymentProperties.PAYMENT_ERROR], 'DepositPayerFailed')
+
+    @patch('corehq.apps.integration.payments.services.request_payment_status')
+    def test_request_payments_status_for_cases_filters_non_submitted(self, mock_request_status):
+        cases = [
+            self._create_payment_case('submitted_case', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            }),
+            self._create_payment_case('pending_case', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION
+            }),
+            self._create_payment_case('not_verified_case', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED
+            }),
+            self._create_payment_case('failed_case', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED
+            })
+        ]
+        for case in cases:
+            self.addCleanup(case.delete)
+
+        mock_request_status.return_value = {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL}
+
+        case_ids = [case.case_id for case in cases]
+        request_payments_status_for_cases(case_ids, self.config)
+
+        # Only the submitted case should be processed
+        mock_request_status.assert_called_once()
+        for case in cases:
+            case.refresh_from_db()
+        self.assertEqual(cases[0].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.SUCCESSFUL)
+        self.assertEqual(cases[1].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.PENDING_SUBMISSION)
+        self.assertEqual(cases[2].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.NOT_VERIFIED)
+        self.assertEqual(cases[3].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.REQUEST_FAILED)
+
+    @patch('corehq.apps.integration.payments.services.request_payment_status')
+    def test_request_payments_status_handles_payment_request_errors(self, mock_request_status):
+        submitted_cases = [
+            self._create_payment_case('case_1', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            }),
+            self._create_payment_case('case_2', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            }),
+            self._create_payment_case('case_3', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            })
+        ]
+        for case in submitted_cases:
+            self.addCleanup(case.delete)
+
+        mock_request_status.side_effect = [
+            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            PaymentRequestError("Network timeout"),
+            {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
+                PaymentProperties.PAYMENT_ERROR: 'DepositPayerInvalidCurrency',
+            }
+        ]
+
+        case_ids = [case.case_id for case in submitted_cases]
+        request_payments_status_for_cases(case_ids, self.config)
+
+        # All three cases should be called
+        self.assertEqual(mock_request_status.call_count, 3)
+
+        for case in submitted_cases:
+            case.refresh_from_db()
+        self.assertEqual(submitted_cases[0].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.SUCCESSFUL)
+        # Case 2 should not be updated due to PaymentRequestError
+        self.assertEqual(submitted_cases[1].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.SUBMITTED)
+        self.assertEqual(submitted_cases[2].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.FAILED)
+        self.assertEqual(
+            submitted_cases[2].case_json[PaymentProperties.PAYMENT_ERROR],
+            'DepositPayerInvalidCurrency'
+        )
+
+    @patch('corehq.apps.integration.payments.services.request_payment_status')
+    def test_request_payments_status_for_cases_no_submitted_cases(self, mock_request_status):
+        cases = [
+            self._create_payment_case('pending_case', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION
+            }),
+            self._create_payment_case('not_verified_case', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED
+            })
+        ]
+        for case in cases:
+            self.addCleanup(case.delete)
+
+        case_ids = [case.case_id for case in cases]
+        request_payments_status_for_cases(case_ids, self.config)
+
+        mock_request_status.assert_not_called()
+
+    @patch('corehq.apps.integration.payments.services.request_payment_status')
+    def test_request_payments_status_for_cases_mixed_scenarios(self, mock_request_status):
+        cases = [
+            self._create_payment_case('submitted_success', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            }),
+            self._create_payment_case('submitted_failed', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            }),
+            self._create_payment_case('submitted_error', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+                'transaction_id': str(uuid.uuid4())
+            }),
+            self._create_payment_case('pending', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION
+            }),
+            self._create_payment_case('not_verified', {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED
+            })
+        ]
+        for case in cases:
+            self.addCleanup(case.delete)
+
+        mock_request_status.side_effect = [
+            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            {
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
+                PaymentProperties.PAYMENT_ERROR: 'DepositPayerNotAllowed',
+            },
+            PaymentRequestError("Timeout")
+        ]
+
+        case_ids = [case.case_id for case in cases]
+        request_payments_status_for_cases(case_ids, self.config)
+
+        # Should be called 3 times (only for submitted cases)
+        self.assertEqual(mock_request_status.call_count, 3)
+
+        for case in cases:
+            case.refresh_from_db()
+
+        self.assertEqual(cases[0].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.SUCCESSFUL)
+        self.assertEqual(cases[1].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.FAILED)
+        self.assertEqual(cases[1].case_json[PaymentProperties.PAYMENT_ERROR], 'DepositPayerNotAllowed')
+        # Case with PaymentRequestError should not be updated
+        self.assertEqual(cases[2].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.SUBMITTED)
+        # Non-submitted cases should remain unchanged
+        self.assertEqual(cases[3].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.PENDING_SUBMISSION)
+        self.assertEqual(cases[4].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.NOT_VERIFIED)
 
 
 def _create_case(factory, name, data):

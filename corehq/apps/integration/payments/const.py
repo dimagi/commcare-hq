@@ -28,6 +28,7 @@ class PaymentProperties(str, Enum):
 
 PAYMENT_SUCCESS_STATUS_CODE = 202
 PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
+PAYMENT_STATUS_DEVICE_ID = 'momo_payment_status_service'
 
 
 class PaymentStatus(models.TextChoices):
