@@ -1,10 +1,14 @@
 import uuid
 from dataclasses import asdict
 from datetime import datetime
+from json import JSONDecodeError
 
 from django.utils.translation import gettext as _
 
+import requests
+
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_error, notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
@@ -237,7 +241,50 @@ def _properties_to_update_for_revert():
     }
 
 
-def make_payment_status_request(reference_id, config):
+def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
+    transaction_id = payment_case.get_case_property('transaction_id')
+    if not transaction_id:
+        return _get_status_details(PaymentStatus.ERROR, "MissingTransactionId")
+
+    try:
+        response = _make_payment_status_request(transaction_id, config)
+        response_data = response.json()
+
+        status = response_data.get('status', '').lower()
+        error_code = response_data.get('reason')
+    except requests.exceptions.HTTPError as err:
+        # https://momodeveloper.mtn.com/api-documentation/common-error
+        status_code = err.response.status_code
+        if status_code == 404:
+            return _get_status_details(PaymentStatus.ERROR, "HttpError404")
+
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(err.response.text))
+        notify_error(
+            f"[MoMo Payments] Unexpected HTTP error {status_code} while fetching status.",
+            details=details
+        )
+
+        # Server errors that are likely to be temporary, we should retry in next scheduled run
+        if status_code in (502, 503, 504):
+            raise PaymentRequestError(
+                _("Failed to fetch payment status with code: {}".format(status_code))
+            )
+        # Unexpected HTTP errors, this is considered as an error status
+        error_code = _get_http_error_code(status_code, err.response)
+        return _get_status_details(PaymentStatus.ERROR, error_code)
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+        raise PaymentRequestError(
+            _("Failed to fetch payment status. Unable to connect to server. Please try again later.")
+        )
+    except Exception as e:
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        notify_exception(None, "[MoMo Payments] Unexpected error occurred while fetching status", details=details)
+        return _get_status_details(PaymentStatus.ERROR, "UnexpectedError")
+
+    return _get_status_details(status, error_code)
+
+
+def _make_payment_status_request(reference_id, config):
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
     response = requests.get(
@@ -248,3 +295,41 @@ def make_payment_status_request(reference_id, config):
     )
     response.raise_for_status()
     return response
+
+
+def _get_status_details(status, error_code=None):
+    # Just a future proofing measure in case API returns an unexpected status value
+    if status not in (PaymentStatus.SUCCESSFUL, PaymentStatus.FAILED, PaymentStatus.ERROR):
+        error_code = "UnexpectedStatus-{}".format(status)
+        status = PaymentStatus.ERROR
+
+    if status == PaymentStatus.SUCCESSFUL:
+        # Clear any previous error if payment was successful
+        error_code = ''
+
+    status_update = {
+        PaymentProperties.PAYMENT_STATUS: status,
+    }
+
+    if error_code:
+        status_update.update({
+            PaymentProperties.PAYMENT_ERROR: error_code,
+        })
+    return status_update
+
+
+def _get_http_error_code(code, response):
+    default_error = "HttpError{}".format(code)
+    try:
+        error = response.json()
+    except JSONDecodeError:
+        return default_error
+    return error.get("code", default_error)
+
+
+def _get_notify_error_details(domain, case_id, error):
+    return {
+        'domain': domain,
+        'case_id': case_id,
+        'error': error,
+    }
