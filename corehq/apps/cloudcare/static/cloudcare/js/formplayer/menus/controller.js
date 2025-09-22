@@ -13,6 +13,7 @@ import menusUtils from "cloudcare/js/formplayer/menus/utils";
 import queryView from "cloudcare/js/formplayer/menus/views/query";
 import views from "cloudcare/js/formplayer/menus/views";
 import gtx from "cloudcare/js/gtx";
+import Sentry from "sentry_browser";
 
 
 var selectMenu = function (options) {
@@ -90,6 +91,21 @@ var selectMenu = function (options) {
         // If a search exists in urlObject, make set search bar continues to show search
         if (urlObject.search !== null) {
             $('#searchText').val(urlObject.search);
+        }
+
+        // Temporarily log to investigate if there is active usage of sessionStorage.locationLat
+        // and sessionStorage.locationLon
+        if (menuResponse.shouldRequestLocation || menuResponse.shouldWatchLocation) {
+            Sentry.captureEvent({
+                message: 'WebApps: Formplayer requested location',
+                level: 'info',
+                extra: {
+                    appId: menuResponse.appId,
+                    shouldRequestLocation: menuResponse.shouldRequestLocation,
+                    shouldWatchLocation: menuResponse.shouldWatchLocation,
+                    breadcrumbs: menuResponse.breadcrumbs,
+                },
+            });
         }
 
         if (menuResponse.shouldRequestLocation) {
