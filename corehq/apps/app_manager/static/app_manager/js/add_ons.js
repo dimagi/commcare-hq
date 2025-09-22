@@ -32,8 +32,8 @@ function EditAddOns(addOns, layout, saveUrl) {
             // Send server map of slug => enabled
             const data = Object.fromEntries(
                 Object.entries(self.addOns).map(
-                    ([slug, observable]) => [slug, observable() ? 'on' : '']
-                )
+                    ([slug, observable]) => [slug, observable() ? 'on' : ''],
+                ),
             );
             self.saveButton.ajax({
                 url: saveUrl,
@@ -60,7 +60,7 @@ function EditAddOns(addOns, layout, saveUrl) {
     };
 
     self.enableAll = function () {
-        Object.entries(self.addOns).forEach(([slug, observable]) => {
+        Object.entries(self.addOns).forEach(([_, observable]) => {
             observable(true);
         });
         self.sections.forEach((section) => {
