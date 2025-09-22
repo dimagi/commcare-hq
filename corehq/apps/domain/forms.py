@@ -3,9 +3,9 @@ import io
 import ipaddress
 import json
 import logging
-import uuid
 import re
 import urllib.parse
+import uuid
 
 from django import forms
 from django.conf import settings
@@ -92,9 +92,9 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
+    CredentialApplication,
     LatestEnabledBuildProfiles,
     RemoteApp,
-    CredentialApplication,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -111,12 +111,16 @@ from corehq.apps.domain.models import (
     SUB_AREA_CHOICES,
     AllowedUCRExpressionSettings,
     AppReleaseModeSetting,
+    EnableAllAddOnsSetting,
     OperatorCallLimitSettings,
     SMSAccountConfirmationSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
 )
-from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
+from corehq.apps.hqmedia.models import (
+    CommCareImage,
+    LogoForSystemEmailsReference,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.models import ServerLocation
@@ -138,12 +142,11 @@ from corehq.toggles import (
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
-    USE_LOGO_IN_SYSTEM_EMAILS
+    USE_LOGO_IN_SYSTEM_EMAILS,
 )
 from corehq.util.global_request import get_request
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -560,6 +563,22 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    enable_all_add_ons = BooleanField(
+        label=gettext_lazy("Application Add-Ons"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("Enable All Application Add-Ons"),
+        ),
+        help_text=gettext_lazy(
+            """
+            Enables all add-ons for all CommCare applications. To manage
+            add-ons on a per-application basis, this setting should be
+            disabled, and add-ons can be managed in the "Add-Ons" tab in
+            the application's settings.
+            """
+        ),
+    )
+
     orphan_case_alerts_warning = BooleanField(
         label=gettext_lazy("Orphan Case Alerts"),
         required=False,
@@ -643,6 +662,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
+        self._handle_enable_all_add_ons()
         self._handle_orphan_case_alerts_setting_value()
         self._handle_opt_out_of_data_sharing_setting_value()
 
@@ -660,6 +680,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 'default_timezone',
                 crispy.Div(*self.get_extra_fields()),
                 hqcrispy.CheckboxField('release_mode_visibility'),
+                hqcrispy.CheckboxField('enable_all_add_ons'),
                 hqcrispy.CheckboxField('orphan_case_alerts_warning'),
                 hqcrispy.CheckboxField('opt_out_of_data_sharing'),
             ),
@@ -728,6 +749,14 @@ class DomainGlobalSettingsForm(forms.Form):
     def _handle_release_mode_setting_value(self):
         self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
             domain=self.domain).is_visible
+
+    def _handle_enable_all_add_ons(self):
+        if not domain_has_privilege(self.domain, privileges.SHOW_ENABLE_ALL_ADD_ONS):
+            del self.fields['enable_all_add_ons']
+            return
+        self.fields['enable_all_add_ons'].initial = (
+            EnableAllAddOnsSetting.enabled_for_domain(self.domain)
+        )
 
     def _handle_orphan_case_alerts_setting_value(self):
         self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
@@ -891,6 +920,14 @@ class DomainGlobalSettingsForm(forms.Form):
             setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
             setting_obj.save()
 
+    def _save_enable_all_add_ons_setting(self, domain):
+        value = self.cleaned_data.get("enable_all_add_ons", False)
+        if value != EnableAllAddOnsSetting.enabled_for_domain(self.domain):
+            EnableAllAddOnsSetting.objects.update_or_create(
+                domain=self.domain,
+                defaults={'enabled': value},
+            )
+
     def _save_orphan_case_alerts_setting(self, domain):
         domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
 
@@ -920,6 +957,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_timezone_configuration(domain)
         self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
+        self._save_enable_all_add_ons_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
         self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
