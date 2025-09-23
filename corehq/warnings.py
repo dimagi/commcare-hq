@@ -26,6 +26,7 @@ WHITELIST = [
     ("pkg_resources", "pkg_resources.declare_namespace"),
 
     ("django.conf", "FORMS_URLFIELD_ASSUME_HTTPS", RemovedInDjango60Warning),
+    ("field_audit", "CheckConstraint.check is deprecated", RemovedInDjango60Warning),
 
     # warnings that can be resolved with HQ code changes
     ("", "datetime.datetime.utcnow() is deprecated"),
