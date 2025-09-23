@@ -48,7 +48,9 @@
           </div>
         </div>
         <!-- /ko -->
-        <span class="caption-text webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+        <div class="caption-text">
+          <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+        </div>
       </div>
       <span class="hint-text webapp-markdown-output" data-bind="
               html: ko.utils.unwrapObservable($data.hint),
