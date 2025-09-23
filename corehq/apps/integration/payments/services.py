@@ -345,7 +345,7 @@ def _get_status_details(status, error_code=None):
         PaymentProperties.PAYMENT_STATUS: status,
     }
 
-    if error_code:
+    if error_code is not None:
         status_update.update({
             PaymentProperties.PAYMENT_ERROR: error_code,
         })

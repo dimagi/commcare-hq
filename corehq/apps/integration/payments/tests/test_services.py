@@ -452,6 +452,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             expected = {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
+                PaymentProperties.PAYMENT_ERROR: '',
             }
             self.assertEqual(result, expected)
             mock_request.assert_called_once_with(self.transaction_id, self.mock_config)
@@ -670,6 +671,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             expected = {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
+                PaymentProperties.PAYMENT_ERROR: '',
             }
             self.assertEqual(result, expected)
 
@@ -688,6 +690,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             expected = {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
+                PaymentProperties.PAYMENT_ERROR: '',
             }
             self.assertEqual(result, expected)
 
