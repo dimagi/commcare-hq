@@ -65,15 +65,6 @@ class TestLazyMarkSafe(SimpleTestCase):
 
 
 class TestLazyFormatHTML(SimpleTestCase):
-    @custom_translations({'Translate Me': 'Translated'})
-    def test_no_params(self):
-        translation_promise = format_html_lazy(gettext_lazy('Translate Me'))
-
-        with translation.override(CUSTOM_LANGUAGE):
-            translated = str(translation_promise)
-
-        self.assertEqual(translated, 'Translated')
-
     @custom_translations({'Format {}': 'Translated {} Format'})
     def test_with_params(self):
         translation_promise = format_html_lazy(gettext_lazy('Format {}'), 'Success')

@@ -10,6 +10,7 @@ from django.core.validators import EmailValidator, validate_email
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -534,7 +535,7 @@ class SetUserPasswordForm(SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = format_html_lazy(
+            self.fields['new_password1'].help_text = mark_safe(  # nosec: no user input
                 '<span id="help_text" data-bind="html: passwordHelp, css: color, click: firstSuggestion">')
             initial_password = generate_strong_password()
 

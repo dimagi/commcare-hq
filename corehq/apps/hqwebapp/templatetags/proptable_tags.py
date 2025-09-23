@@ -125,11 +125,12 @@ def _to_html(val, key=None, level=0):
             fmt = USER_DATE_FORMAT
 
         iso = val.isoformat()
-        ret = format_html("<time title='{title}' datetime='{iso}'>{display}</time>".format(
+        ret = format_html(
+            "<time title='{title}' datetime='{iso}'>{display}</time>",
             title=iso,
             iso=iso,
             display=safe_strftime(val, fmt)
-        ))
+        )
     else:
         if val is None:
             val = '---'
