@@ -1,4 +1,5 @@
 from django.forms.utils import flatatt
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
@@ -10,7 +11,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import (
 )
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
-from corehq.apps.integration.payments.const import PaymentStatus
+from corehq.apps.integration.payments.const import PAYMENT_STATUS_ERROR_CODES, PaymentStatus
 
 
 class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
@@ -108,9 +109,26 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
 
     def render_payment_status(self, record, value):
         try:
-            return PaymentStatus.from_value(value).label
+            label = PaymentStatus.from_value(value).label
         except ValueError:
-            return _("Invalid Status")
+            label = _("Invalid Status")
+
+        if value in (PaymentStatus.ERROR, PaymentStatus.FAILED, PaymentStatus.REQUEST_FAILED):
+            badge_class = 'bg-danger'
+        elif value == 'successful':
+            badge_class = 'bg-success'
+        else:
+            badge_class = 'bg-secondary'
+
+        context = {
+            'label': label,
+            'badge_class': badge_class,
+            'error_message': None,
+        }
+        if payment_error := record['payment_error']:
+            context['error_message'] = PAYMENT_STATUS_ERROR_CODES.get(payment_error, payment_error)
+
+        return render_to_string('payments/partials/payments_status.html', context)
 
     def render_kyc_status(self, record, value):
         user_or_case_id = record.record.get('user_or_case_id')
