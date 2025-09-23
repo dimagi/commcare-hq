@@ -322,7 +322,12 @@ def _make_payment_status_request(reference_id, config):
 
 def _get_status_details(status, error_code=None):
     # Just a future proofing measure in case API returns an unexpected status value
-    if status not in (PaymentStatus.SUCCESSFUL, PaymentStatus.FAILED, PaymentStatus.ERROR):
+    if status not in (
+            PaymentStatus.SUCCESSFUL,
+            PaymentStatus.FAILED,
+            PaymentStatus.PENDING_PROVIDER,
+            PaymentStatus.ERROR
+    ):
         error_code = "UnexpectedStatus-{}".format(status)
         status = PaymentStatus.ERROR
 

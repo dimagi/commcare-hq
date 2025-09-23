@@ -40,6 +40,7 @@ class PaymentStatus(models.TextChoices):
     REQUEST_FAILED = 'request_failed', _("Request failed")
     SUCCESSFUL = 'successful', _("Successful")
     FAILED = 'failed', _("Failed")
+    PENDING_PROVIDER = 'pending', _("Pending with Provider")
     ERROR = 'error', _("Error")
 
     @classmethod
@@ -53,6 +54,7 @@ class PaymentStatus(models.TextChoices):
             "request_failed": cls.REQUEST_FAILED,
             "successful": cls.SUCCESSFUL,
             "failed": cls.FAILED,
+            "pending": cls.PENDING_PROVIDER,
             "error": cls.ERROR,
         }
         return value_map[value]
