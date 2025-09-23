@@ -23,7 +23,6 @@ class PaymentProperties(str, Enum):
     ACTIVITY = 'activity'
     FUNDER = 'funder'
     PAYMENT_ERROR = 'payment_error'
-    PAYMENT_ERROR_MESSAGE = 'payment_error_message'
 
 
 PAYMENT_SUCCESS_STATUS_CODE = 202
@@ -107,4 +106,5 @@ PAYMENT_STATUS_ERROR_CODES = {
     "MissingTransactionId": _("Transaction ID not found on the record"),
     "HttpError404": _("Payment transaction not found"),
     "UnexpectedError": _("Unexpected error occurred. Reach out to support if the issue persists."),
+    "PaymentRequestError": _("Error occurred during payment request. Reach out to support if the issue persists."),
 }

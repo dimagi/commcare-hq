@@ -331,7 +331,7 @@ class TestRequestPaymentsForCases(TestCase):
         assert 'transaction_id' not in payment_property_update
         assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
         assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.REQUEST_FAILED
-        assert payment_property_update[PaymentProperties.PAYMENT_ERROR] == 'Invalid payee details'
+        assert payment_property_update[PaymentProperties.PAYMENT_ERROR] == 'PaymentRequestError'
 
 
 class TestRevertPaymentVerification(TestCase):

@@ -70,15 +70,19 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
         })
     except PaymentRequestError as e:
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: str(e),
+            PaymentProperties.PAYMENT_ERROR: 'PaymentRequestError',
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
-    except Exception:
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        notify_error("[MoMo Payments] Request error occurred while making payment", details=details)
+    except Exception as e:
         # We need to know when anything goes wrong
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: _("Something went wrong"),
+            PaymentProperties.PAYMENT_ERROR: 'UnexpectedError',
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        notify_exception(None, "[MoMo Payments] Internal error occurred while making payment", details=details)
 
     return payment_update
 
