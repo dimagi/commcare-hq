@@ -89,10 +89,10 @@ codebase. These guidelines apply in the following circumstances:
 - Tests should be clear and maintainable.
 - Doctests should be tested.
 - Run the tests that cover the changes before considering any changes complete.
-- Tests should be run with the `--reusedb=migrate` parameter to improve speed
-  by avoiding resetting the test database. e.g.
+- Tests should be run with the `--reusedb=1` parameter to improve speed by
+  avoiding resetting the test database. e.g.
   ```shell
-  $ source .venv/bin/activate && pytest --reusedb=migrate path/to/test.py
+  $ source .venv/bin/activate && pytest --reusedb=1 path/to/test.py
   ```
 - Use pytest features and pytest conventions, like Pythonic `assert`
   statements, and parametrized tests for repetitive test cases.
