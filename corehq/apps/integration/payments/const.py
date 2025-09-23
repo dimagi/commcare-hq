@@ -23,11 +23,16 @@ class PaymentProperties(str, Enum):
     ACTIVITY = 'activity'
     FUNDER = 'funder'
     PAYMENT_ERROR = 'payment_error'
+    PAYMENT_ERROR_MESSAGE = 'payment_error_message'
+    # Tracks how many times we attempted to fetch payment status (including first attempt).
+    # Only stored for pending or request error
+    PAYMENT_STATUS_ATTEMPT_COUNT = 'payment_status_attempt_count'
 
 
 PAYMENT_SUCCESS_STATUS_CODE = 202
 PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
 PAYMENT_STATUS_DEVICE_ID = 'momo_payment_status_service'
+PAYMENT_STATUS_RETRY_MAX_ATTEMPTS = 4
 
 
 class PaymentStatus(models.TextChoices):
@@ -107,4 +112,6 @@ PAYMENT_STATUS_ERROR_CODES = {
     "HttpError404": _("Payment transaction not found"),
     "UnexpectedError": _("Unexpected error occurred. Reach out to support if the issue persists."),
     "PaymentRequestError": _("Error occurred during payment request. Reach out to support if the issue persists."),
+    "MaxRetryExceededRequestError": _("Maximum retry attempts exceeded with request error."),
+    "MaxRetryExceededPendingStatus": _("Maximum retry attempts exceeded with pending status."),
 }

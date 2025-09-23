@@ -15,6 +15,7 @@ from corehq.apps.integration.payments.const import (
     PAYMENT_STATUS_ERROR_CODES,
     PaymentProperties,
     PaymentStatus,
+    PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig
@@ -933,6 +934,46 @@ class TestRequestPaymentsStatusForCases(TestCase):
         # Non-submitted cases should remain unchanged
         self.assertEqual(cases[3].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.PENDING_SUBMISSION)
         self.assertEqual(cases[4].case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.NOT_VERIFIED)
+
+    @patch('corehq.apps.integration.payments.services.request_payment_status')
+    def test_pending_payment_exceeds_retry_count(self, mock_request_status):
+        case = self._create_payment_case('pending_exceed', {
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_PROVIDER,
+            'transaction_id': str(uuid.uuid4()),
+            PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_RETRY_MAX_ATTEMPTS + 1,
+        })
+        self.addCleanup(case.delete)
+
+        mock_request_status.return_value = {
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_PROVIDER,
+            PaymentProperties.PAYMENT_ERROR: 'DepositPayerOngoing',
+            PaymentProperties.PAYMENT_ERROR_MESSAGE: PAYMENT_STATUS_ERROR_CODES['DepositPayerOngoing']
+        }
+
+        request_payments_status_for_cases([case.case_id], self.config)
+
+        case.refresh_from_db()
+        self.assertEqual(case.case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.ERROR)
+        self.assertEqual(case.case_json[PaymentProperties.PAYMENT_ERROR], 'MaxRetryExceededPendingStatus')
+
+    @patch('corehq.apps.integration.payments.services.request_payment_status')
+    def test_request_error_exceeds_retry_count(self, mock_request_status):
+        case = self._create_payment_case('request_error_exceed', {
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
+            'transaction_id': str(uuid.uuid4()),
+            PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_RETRY_MAX_ATTEMPTS + 1,
+
+        })
+        self.addCleanup(case.delete)
+
+        mock_request_status.side_effect = PaymentRequestError('Simulated network failure')
+
+        case_ids = [case.case_id]
+        request_payments_status_for_cases(case_ids, self.config)
+
+        case.refresh_from_db()
+        self.assertEqual(case.case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.ERROR)
+        self.assertEqual(case.case_json[PaymentProperties.PAYMENT_ERROR], 'MaxRetryExceededRequestError')
 
 
 def _create_case(factory, name, data):
