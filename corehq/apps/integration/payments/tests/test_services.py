@@ -1,6 +1,6 @@
 import uuid
-from unittest.mock import patch, Mock
 from json import JSONDecodeError
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -12,6 +12,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.integration.payments.const import (
+    PAYMENT_STATUS_ERROR_CODES,
     PaymentProperties,
     PaymentStatus,
 )
@@ -19,9 +20,9 @@ from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import (
     _request_payment,
+    request_payment_status,
     request_payments_for_cases,
     request_payments_status_for_cases,
-    request_payment_status,
     revert_payment_verification,
     verify_payment_cases,
 )

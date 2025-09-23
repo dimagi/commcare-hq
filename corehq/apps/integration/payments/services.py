@@ -13,9 +13,9 @@ from dimagi.utils.logging import notify_error, notify_exception
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
+    PAYMENT_STATUS_DEVICE_ID,
     PAYMENT_SUBMITTED_DEVICE_ID,
     PAYMENT_SUCCESS_STATUS_CODE,
-    PAYMENT_STATUS_DEVICE_ID,
     PaymentProperties,
     PaymentStatus,
 )
