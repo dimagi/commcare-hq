@@ -247,7 +247,9 @@ def request_payments_status_for_cases(case_ids, config):
         status_updates = []
         for payment_case in CommCareCase.objects.get_cases(case_ids=list(case_ids_chunk)):
             payment_status_value = payment_case.get_case_property(PaymentProperties.PAYMENT_STATUS)
-            if PaymentStatus.from_value(payment_status_value) != PaymentStatus.SUBMITTED:
+            if PaymentStatus.from_value(payment_status_value) not in (
+                    PaymentStatus.SUBMITTED, PaymentStatus.PENDING_PROVIDER
+            ):
                 continue
 
             try:

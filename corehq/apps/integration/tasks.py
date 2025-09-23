@@ -141,6 +141,8 @@ def _get_submitted_payment_case_ids_on_domain(domain):
         .domain(domain)
         .case_type(MOMO_PAYMENT_CASE_TYPE)
         .filter(
-            case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.SUBMITTED),
+            case_property_query(
+                PaymentProperties.PAYMENT_STATUS, [PaymentStatus.SUBMITTED, PaymentStatus.PENDING_PROVIDER]
+            )
         )
     ).values_list('_id', flat=True)
