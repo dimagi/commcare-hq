@@ -18,6 +18,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.generic import View
@@ -1327,7 +1328,7 @@ class TriggerRemovedSsoUserAutoDeactivationView(BaseTriggerAccountingTestView):
             auto_deactivate_removed_sso_users()
             messages.success(
                 request,
-                format_html(
+                mark_safe(  # nosec: no user input
                     'Successfully triggered auto deactivation of web users'
                 )
             )
