@@ -62,11 +62,16 @@ input:invalid {
   border-color: #b94a48;
 }
 
+.required .caption .caption-text {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 3px;
+}
+
 .required .caption .caption-text::after {
   content: '*';
   font-weight: bold;
   color: $danger;
-  margin: 0 0 0 3px;
   display: inline;
 }
 
