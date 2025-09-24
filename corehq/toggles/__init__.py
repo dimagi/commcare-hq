@@ -2307,7 +2307,7 @@ CASE_UPDATES_UCR_FILTERS = StaticToggle(
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
