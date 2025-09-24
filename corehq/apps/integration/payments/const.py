@@ -23,7 +23,6 @@ class PaymentProperties(str, Enum):
     ACTIVITY = 'activity'
     FUNDER = 'funder'
     PAYMENT_ERROR = 'payment_error'
-    PAYMENT_ERROR_MESSAGE = 'payment_error_message'
     # Tracks how many times we attempted to fetch payment status (including first attempt).
     # Only stored for pending or request error
     PAYMENT_STATUS_ATTEMPT_COUNT = 'payment_status_attempt_count'
