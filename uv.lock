@@ -1098,16 +1098,16 @@ wheels = [
 
 [[package]]
 name = "django-prbac"
-version = "1.1.1"
+version = "1.1.2.dev20250924115749"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "jsonfield" },
     { name = "simplejson" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7e/2b/9c9eb36255538520b021b55a006f1406d890a6f74a69abc289db2b642f02/django_prbac-1.1.1.tar.gz", hash = "sha256:d920a0765edf2f3c8eae0f9f42e329f64d169bfee99cd88460792fbb214165d7", size = 15300, upload-time = "2025-09-23T17:31:40.507Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/8c/ee03d7075d57c85b09c9512d7fc83ad596a49c3a88bb4ac6c67377204d21/django_prbac-1.1.2.dev20250924115749.tar.gz", hash = "sha256:fdff89b40e81da5ffea9e96cfb8cdfe706e7cc8f81d60a03c54ab055258922ac", size = 15366, upload-time = "2025-09-24T11:58:29.435Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/11/14586e01fe09ec1e925759730cf2d9387368fffa78093685bac29ce696f3/django_prbac-1.1.1-py3-none-any.whl", hash = "sha256:cce30cf88a92d7b058e98bb4ffc2fd05b56afc45506b583aa6c0d648ab06da02", size = 14296, upload-time = "2025-09-23T17:31:38.819Z" },
+    { url = "https://files.pythonhosted.org/packages/43/20/35b2c7cb07486f4798c1d5e1c115b2bacdc72eb86724384c63eddfbbee25/django_prbac-1.1.2.dev20250924115749-py3-none-any.whl", hash = "sha256:da5b7efdf92429f8804f37d3c62d9a7cca9389e640dedde88f741d580ecf0d2b", size = 14533, upload-time = "2025-09-24T11:58:27.915Z" },
 ]
 
 [[package]]
