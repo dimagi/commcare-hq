@@ -1172,3 +1172,13 @@ class EnableAllAddOnsSetting(models.Model):
     def enabled_for_domain(domain):
         setting = EnableAllAddOnsSetting.objects.filter(domain=domain).first()
         return bool(setting and setting.enabled)
+
+
+def enable_all_add_ons_enabled(domain):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq.privileges import SHOW_ENABLE_ALL_ADD_ONS
+
+    return (
+        domain_has_privilege(domain, SHOW_ENABLE_ALL_ADD_ONS)
+        and EnableAllAddOnsSetting.enabled_for_domain(domain)
+    )
