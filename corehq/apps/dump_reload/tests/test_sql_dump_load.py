@@ -1,7 +1,7 @@
 import inspect
 import json
 import uuid
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
@@ -10,6 +10,7 @@ from unittest import mock
 from django.contrib.admin.utils import NestedObjects
 from django.db import transaction, IntegrityError
 from django.db.models.signals import post_delete, post_save
+from django.utils.functional import cached_property
 from django.test import SimpleTestCase, TestCase
 from nose.tools import nottest
 
@@ -137,11 +138,12 @@ class BaseDumpLoadTest(TestCase):
     def _check_signals_handle_raw(self, models):
         """Ensure that any post_save signal handlers have been updated
         to handle 'raw' calls."""
+        from django.dispatch.dispatcher import _make_id
         whitelist_receivers = [
             'django_digest.models._post_save_persist_partial_digests'
         ]
         for model in models:
-            for receiver in post_save._live_receivers(model):
+            for receiver in self._post_save_receivers.get(_make_id(model), []):
                 receiver_path = receiver.__module__ + '.' + receiver.__name__
                 if receiver_path in whitelist_receivers:
                     continue
@@ -150,6 +152,15 @@ class BaseDumpLoadTest(TestCase):
                     receiver, model
                 )
                 self.assertIn('raw', args, message)
+
+    @cached_property
+    def _post_save_receivers(self):
+        receivers = defaultdict(list)
+        for (ignore, model_id), receiver, *ignored in post_save.receivers:
+            receiver = receiver()  # derefence weakref
+            if receiver is not None:
+                receivers[model_id].append(receiver)
+        return receivers
 
 
 @nottest
