@@ -348,13 +348,13 @@ class CommCareImage(CommCareMultimedia):
 
     def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None):
         image = self.get_image_object(data)
-        attachment_id = "%dx%d" % image.size
-        attachment_id = "%s-%s.%s" % (self.file_hash, attachment_id, image.format)
+        width, height = image.size
+        attachment_id = f'{self.file_hash}-{width}x{height}.{image.format}'
         if not media_meta:
             media_meta = {}
         media_meta["size"] = {
-            "width": image.size[0],
-            "height": image.size[1]
+            "width": width,
+            "height": height,
         }
         return super(CommCareImage, self).attach_data(data, original_filename=original_filename, username=username,
                                                       attachment_id=attachment_id, media_meta=media_meta)
