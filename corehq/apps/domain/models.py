@@ -455,6 +455,17 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # name that users see for connect messaging channels tied to this domain
     connect_messaging_channel_name = StringProperty()
 
+    # TODO:
+    #   * Simplify the Domain Couch model by splitting off properties.
+    #   * Group properties by Django app into domain settings SQL models,
+    #     e.g. AppManagerDomainSettings for app-manager-related settings
+    #     that would include/replace:
+    #     + Domain.usercase_enabled
+    #     + AppReleaseModeSetting.is_visible
+    #     + EnableAllAddOnsSetting.enabled
+    #     + etc.
+    # (Norman, 2025-09-24)
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
