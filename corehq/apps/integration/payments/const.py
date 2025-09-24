@@ -92,7 +92,8 @@ PAYMENT_STATUS_ERROR_CODES = {
     "DepositPayerCouldNotPerformTransaction": _("The deposit transaction could not be performed."),
     "PAYEE_NOT_FOUND": _("The specified payee account could not be found."),
     "PAYER_NOT_FOUND": _("The specified payer account could not be found."),
-    "NOT_ALLOWED": _("The operation is not allowed."),
+    # Note: Based on sandbox documentation, this is same as DepositPayerNotAllowed
+    "NOT_ALLOWED": _("The payer is not allowed to perform this deposit transaction."),
     "NOT_ALLOWED_TARGET_ENVIRONMENT": _("The target environment is not allowed."),
     "INVALID_CALLBACK_URL_HOST": _("The callback URL host is invalid."),
     "INVALID_CURRENCY": _("The specified currency is invalid."),
