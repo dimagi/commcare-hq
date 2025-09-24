@@ -37,7 +37,7 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.audit.change_messages import UserChangeMessage, LOCATION_FIELD, ASSIGNED_LOCATIONS_FIELD
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
@@ -2071,6 +2071,15 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
             [self.loc1._id, self.loc2._id]
         )
+        invitation_history = self.user_invite.invitationhistory_set.last()
+        self.assertEqual(
+            invitation_history.changes['assigned_locations'],
+            UserChangeMessage.assigned_locations_info([self.loc1, self.loc2])[ASSIGNED_LOCATIONS_FIELD]
+        )
+        self.assertEqual(
+            invitation_history.changes['location'],
+            UserChangeMessage.primary_location_info(self.loc1)[LOCATION_FIELD]
+        )
 
         import_users_and_groups(
             self.domain.name,
@@ -2085,6 +2094,15 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
             [self.loc2._id]
         )
+        invitation_history = self.user_invite.invitationhistory_set.last()
+        self.assertEqual(
+            invitation_history.changes['assigned_locations'],
+            UserChangeMessage.assigned_locations_info([self.loc2])[ASSIGNED_LOCATIONS_FIELD]
+        )
+        self.assertEqual(
+            invitation_history.changes['location'],
+            UserChangeMessage.primary_location_info(self.loc2)[LOCATION_FIELD]
+        )
 
         import_users_and_groups(
             self.domain.name,
@@ -2098,6 +2116,15 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertListEqual(
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
             []
+        )
+        invitation_history = self.user_invite.invitationhistory_set.last()
+        self.assertEqual(
+            invitation_history.changes['assigned_locations'],
+            UserChangeMessage.assigned_locations_info([])[ASSIGNED_LOCATIONS_FIELD]
+        )
+        self.assertEqual(
+            invitation_history.changes['location'],
+            UserChangeMessage.primary_location_info(None)[LOCATION_FIELD]
         )
 
     def test_invite_location_column_missing(self):
@@ -2115,6 +2142,15 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
             [self.loc1._id]
         )
+        invitation_history = self.user_invite.invitationhistory_set.last()
+        self.assertEqual(
+            invitation_history.changes['assigned_locations'],
+            UserChangeMessage.assigned_locations_info([self.loc1])[ASSIGNED_LOCATIONS_FIELD]
+        )
+        self.assertEqual(
+            invitation_history.changes['location'],
+            UserChangeMessage.primary_location_info(self.loc1)[LOCATION_FIELD]
+        )
 
         import_users_and_groups(
             self.domain.name,
@@ -2129,6 +2165,9 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
             [self.loc1._id]
         )
+        invitation_history = self.user_invite.invitationhistory_set.last()
+        self.assertTrue('assigned_locations' not in invitation_history.changes)
+        self.assertTrue('location' not in invitation_history.changes)
 
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
