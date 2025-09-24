@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 
 from django.conf import settings
+from django.core.signals import request_finished
 from memoized import memoized
 
 from sentry_sdk import Scope
@@ -61,6 +62,7 @@ class ConstructedPillow:
                  change_processed_event_handler=None, processor_chunk_size=0,
                  is_dedicated_migration_process=False):
         self.pillow_id = name
+        self.process_num = process_num
         self.checkpoint = checkpoint
         self.change_feed = change_feed
         self.processor_chunk_size = processor_chunk_size
@@ -104,7 +106,7 @@ class ConstructedPillow:
         """
         Main entry point for running pillows forever.
         """
-        pillow_logging.info("Starting pillow %s" % self.pillow_id)
+        pillow_logging.info("Starting pillow %s %s", self.pillow_id, self.process_num)
         scope = Scope.get_current_scope()
         scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:
@@ -128,6 +130,12 @@ class ConstructedPillow:
             updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         if updated:
             self._record_checkpoint_in_datadog()
+        self._close_old_connections()
+
+    def _close_old_connections(self):
+        # Prevent connection timeout
+        # https://github.com/jneight/django-db-geventpool#using-orm-when-not-serving-requests
+        request_finished.send(sender=self.pillow_id)
 
     @property
     @memoized
@@ -216,6 +224,10 @@ class ConstructedPillow:
             for change in chunk:
                 self.process_with_error_handling(change, processor)
 
+        pillow_logging.info(
+            '[%s %s] Processing %s changes',
+            self.pillow_id, self.process_num, len(changes_chunk),
+        )
         for processor in self.batch_processors:
             if not changes_chunk:
                 return set(), 0
@@ -228,13 +240,9 @@ class ConstructedPillow:
                 except Exception as ex:
                     notify_exception(
                         None,
-                        "{pillow_name} Error in processing changes chunk: {ex}".format(
-                            pillow_name=self.get_name(),
-                            ex=ex
-                        ),
-                        details={
-                            'change_ids': [c.id for c in changes_chunk]
-                        })
+                        f"[{self.pillow_id} {self.process_num}] Error in processing changes chunk: {ex}",
+                        details={'change_ids': [c.id for c in changes_chunk]},
+                    )
                     self._record_batch_exception_in_datadog(processor)
                     # fall back to processing one by one
                     reprocess_serially(changes_chunk, processor)
@@ -266,9 +274,7 @@ class ConstructedPillow:
             try:
                 handle_pillow_error(self, change, ex)
             except Exception as e:
-                notify_exception(None, 'processor error in pillow {} {}'.format(
-                    self.get_name(), e,
-                ))
+                notify_exception(None, f'[{self.pillow_id} {self.process_num}] processor error: {e}')
                 raise
         if is_success:
             self._record_change_success_in_datadog(change)
@@ -443,8 +449,9 @@ class ChangeEventHandler(metaclass=ABCMeta):
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError, path_from_object
 
-    pillow_logging.exception("[%s] Error on change: %s, %s" % (
+    pillow_logging.exception("[%s %s] Error on change: %s, %s" % (
         pillow.get_name(),
+        pillow.process_num,
         change['id'],
         exception,
     ))

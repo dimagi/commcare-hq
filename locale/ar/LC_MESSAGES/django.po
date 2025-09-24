@@ -6105,11 +6105,17 @@ msgstr ""
 "استخدام هذه الميزة."
 
 #: corehq/apps/app_manager/helpers/validators.py
+#, fuzzy
+#| msgid ""
+#| "Your application is using User Properties and your current subscription "
+#| "does not support that. You can remove User Properties functionality by "
+#| "opening the User Properties tab in a form that uses it, and clicking "
+#| "\"Remove User Properties\"."
 msgid ""
-"Your application is using User Properties and your current subscription does "
-"not support that. You can remove User Properties functionality by opening "
-"the User Properties tab in a form that uses it, and clicking \"Remove User "
-"Properties\"."
+"Your application is using User Properties or using `commcare-user` as a "
+"menu's case type, and your current subscription does not support that. You "
+"can remove User Propertiesfunctionality by opening the User Properties tab "
+"in a form that uses it and clicking 'Remove User Properties.'"
 msgstr ""
 "تطبيقك يستخدم خصائص المستخدم واشتراكك الحالي لا يدعم ذلك. يمكنك إزالة وظيفة "
 "خصائص المستخدم بفتح علامة تبويب خصائص المستخدم في النموذج الذي يستخدمها، ثم "
@@ -12959,6 +12965,7 @@ msgstr "تقرير"
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/program.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -32672,6 +32679,12 @@ msgid "User Audit Events"
 msgstr "أحداث تدقيق المستخدم"
 
 #: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Document Type"
+msgid "Doc Type"
+msgstr "نوع المستند"
+
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/reports/filters/simple.py
 msgid "Domain"
@@ -32681,14 +32694,11 @@ msgstr "النطاق"
 msgid "IP Address"
 msgstr "عنوان IP"
 
-#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
-msgid "Request Method"
-msgstr "طريقة الطلب"
-
 #: corehq/apps/hqadmin/reports.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "Request Path"
-msgstr "مسار الطلب"
+#, fuzzy
+#| msgid "Resource Slug"
+msgid "Resource"
+msgstr "Resource Slug"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -34445,6 +34455,10 @@ msgstr "تفاصيل إضافية"
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "HTMX Event Error"
 msgstr "خطأ حدث HTMX"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "Request Path"
+msgstr "مسار الطلب"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/htmx_action_error.html
 #, python-format
@@ -47403,13 +47417,17 @@ msgstr "مستخدمو اختبار تسجيل الدخول الموحد"
 msgid "Danger Zone"
 msgstr "منطقة الخطر"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid "Single Sign-On Request Failed"
 msgstr "فشل طلب تسجيل الدخول الموحد"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
-#: corehq/apps/sso/templates/sso/config_errors.html
-#: corehq/apps/sso/templates/sso/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -47419,7 +47437,8 @@ msgstr ""
 "                تسجيل الدخول الموحد\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                Sorry, but we're having trouble signing you in.\n"
@@ -47429,7 +47448,8 @@ msgstr ""
 "                عذرًا، نواجه مشكلة في تسجيل دخولك.\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  The issue looks like it might be related to the "
@@ -47442,7 +47462,8 @@ msgstr ""
 "وCommCare HQ.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This is the error message we are seeing:\n"
@@ -47452,7 +47473,8 @@ msgstr ""
 "                  هذه هي رسالة الخطأ التي نراها:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47467,7 +47489,8 @@ msgstr ""
 "                  لإعداد تسجيل الدخول الموحد مع %(idp_service_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If the error message and documentation are not helping, "
@@ -47480,7 +47503,8 @@ msgstr ""
 "الدعم الخاصة بك.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This issue might be due to the following reason:\n"
@@ -47490,7 +47514,8 @@ msgstr ""
 "                  قد يكون سبب هذه المشكلة هو التالي:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If this error persists, please contact your project's\n"
@@ -47502,11 +47527,13 @@ msgstr ""
 "الخاص بك للمساعدة.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid "Single Sign-On is misconfigured"
 msgstr "تسجيل الدخول الموحد غير مضبوط بشكل صحيح"
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Your Redirect URL is invalid.\n"
@@ -47516,7 +47543,8 @@ msgstr ""
 "                  عنوان URL لإعادة التوجيه غير صالح.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  The redirect URL you have specified is not valid. Please\n"
@@ -47531,7 +47559,8 @@ msgstr ""
 "التواصل مع الدعم حتى نتمكن من إيجاد حل دائم.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47542,7 +47571,8 @@ msgstr ""
 "                  حدثت مشكلة أثناء تسجيل الدخول باستخدام %(service)s:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47554,7 +47584,8 @@ msgstr ""
 "                  يبدو أن هناك مشكلة في تكوين %(idp_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Please reach out to support, so we can quickly resolve "
@@ -47567,7 +47598,8 @@ msgstr ""
 "شكرًا لك!\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like your setup is not complete.\n"
@@ -47577,7 +47609,8 @@ msgstr ""
 "                    يبدو أن إعدادك غير مكتمل.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47595,7 +47628,8 @@ msgstr ""
 "                    لإعداد تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like we are missing your certificate.\n"
@@ -47605,7 +47639,8 @@ msgstr ""
 "                    يبدو أننا نفتقد شهادتك.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47624,7 +47659,8 @@ msgstr ""
 "                    لإعداد تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    Obtaining User Information Was Not Possible\n"
@@ -47634,7 +47670,8 @@ msgstr ""
 "                    لم يكن من الممكن الحصول على معلومات المستخدم\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47651,7 +47688,8 @@ msgstr ""
 "                    لإعداد تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OpenID Connect Session Unknown\n"
@@ -47661,7 +47699,8 @@ msgstr ""
 "                    جلسة OpenID Connect غير معروفة\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47677,7 +47716,8 @@ msgstr ""
 "تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OIDC Method Not Allowed\n"
@@ -47687,7 +47727,8 @@ msgstr ""
 "                    طريقة OIDC غير مسموحة\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47702,7 +47743,8 @@ msgstr ""
 "تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like there is an issue with your SSO "
@@ -47714,7 +47756,8 @@ msgstr ""
 "بك.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47728,6 +47771,72 @@ msgstr ""
 "                    رمز الخطأ هو \"%(error_code)s\". يرجى التواصل مع جهة "
 "الدعم الخاصة بك بهذه المعلومات حتى نتمكن من المساعدة في حل هذه المشكلة.\n"
 "                  "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "تسجيل الدخول الموحد"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your\n"
+"                project's SSO settings. Please contact your project\n"
+"                administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  انتهت صلاحية رابط الدعوة.\n"
+"                  يرجى التواصل مع مسؤول المشروع لإرسال دعوة جديدة.\n"
+"                "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid "Single Sign-On Request Denied"
+msgstr "تم رفض طلب تسجيل الدخول الموحد"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid ""
+"\n"
+"                Single Sign-On Not Allowed\n"
+"              "
+msgstr ""
+"\n"
+"                تسجيل الدخول الموحد غير مسموح\n"
+"              "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-"
+#| "On.\n"
+#| "                If this is in error, please contact your project's "
+#| "administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"                You do not have permission to sign in with Single Sign-On. "
+"If\n"
+"                this is in error, please contact your project's "
+"administrator.\n"
+"              "
+msgstr ""
+"\n"
+"                ليس لديك إذن لتسجيل الدخول عبر تسجيل الدخول الموحد. إذا كان "
+"هذا خطأ، يرجى التواصل مع مسؤول مشروعك.\n"
+"              "
 
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
@@ -47994,10 +48103,16 @@ msgid "Manage Single Sign-On"
 msgstr "إدارة تسجيل الدخول الموحد"
 
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Configure external Identity Providers associated with your\n"
+#| "      Enterprise Account below.\n"
+#| "    "
 msgid ""
 "\n"
-"      Configure external Identity Providers associated with your\n"
-"      Enterprise Account below.\n"
+"      Configure external Identity Providers associated with your Enterprise\n"
+"      Account below.\n"
 "    "
 msgstr ""
 "\n"
@@ -48044,10 +48159,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>WARNING:</strong> Deleting an Identity Provider "
+#| "is not reversible.\n"
+#| "              "
 msgid ""
 "\n"
 "                <strong>WARNING:</strong> Deleting an Identity Provider is "
-"not reversible.\n"
+"not\n"
+"                reversible.\n"
 "              "
 msgstr ""
 "\n"
@@ -48056,12 +48178,21 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Deletion will immediately affect any client's SSO setup. "
+#| "Please\n"
+#| "                exercise extreme caution. An active Identity Provider\n"
+#| "                will not be deleted.\n"
+#| "              "
 msgid ""
 "\n"
 "                Deletion will immediately affect any client's SSO setup. "
 "Please\n"
-"                exercise extreme caution. An active Identity Provider\n"
-"                will not be deleted.\n"
+"                exercise extreme caution. An active Identity Provider will "
+"not\n"
+"                be deleted.\n"
 "              "
 msgstr ""
 "\n"
@@ -48070,10 +48201,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Users with email addresses ending in these domain names must\n"
+#| "            log in with SSO if the Identity Provider is active.\n"
+#| "          "
 msgid ""
 "\n"
-"            Users with email addresses ending in these domain names must\n"
-"            log in with SSO if the Identity Provider is active.\n"
+"            Users with email addresses ending in these domain names must log "
+"in\n"
+"            with SSO if the Identity Provider is active.\n"
 "          "
 msgstr ""
 "\n"
@@ -48112,10 +48250,18 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            No users are exempt from SSO for this Identity Provider.\n"
+#| "            Please add at least <strong>one enterprise admin</strong>\n"
+#| "            before making this Identity Provider active!\n"
+#| "          "
 msgid ""
 "\n"
-"            No users are exempt from SSO for this Identity Provider.\n"
-"            Please add at least <strong>one enterprise admin</strong>\n"
+"            No users are exempt from SSO for this Identity Provider. Please "
+"add\n"
+"            at least <strong>one enterprise admin</strong>\n"
 "            before making this Identity Provider active!\n"
 "          "
 msgstr ""
@@ -48125,11 +48271,19 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            When the Identity Provider is in \"Test\" mode for Login "
+#| "Enforcement, only\n"
+#| "            the users in this list will be directed to sign in with SSO.\n"
+#| "          "
 msgid ""
 "\n"
 "            When the Identity Provider is in \"Test\" mode for Login "
-"Enforcement, only\n"
-"            the users in this list will be directed to sign in with SSO.\n"
+"Enforcement,\n"
+"            only the users in this list will be directed to sign in with "
+"SSO.\n"
 "          "
 msgstr ""
 "\n"
@@ -48170,59 +48324,6 @@ msgstr ""
 "\n"
 "      يرجى التواصل مع مسؤول المشروع لاستعادة الوصول.\n"
 "    "
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-#, fuzzy
-#| msgid "Single Sign-On"
-msgid "Single Sign-On Error"
-msgstr "تسجيل الدخول الموحد"
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                  Invitation link has expired.\n"
-#| "                  Contact your project administrator to send new invite.\n"
-#| "                "
-msgid ""
-"\n"
-"                This error is likely due to a misconfiguration with your "
-"project's\n"
-"                SSO settings. Please contact your project administrator to "
-"resolve this issue.\n"
-"              "
-msgstr ""
-"\n"
-"                  انتهت صلاحية رابط الدعوة.\n"
-"                  يرجى التواصل مع مسؤول المشروع لإرسال دعوة جديدة.\n"
-"                "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid "Single Sign-On Request Denied"
-msgstr "تم رفض طلب تسجيل الدخول الموحد"
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                Single Sign-On Not Allowed\n"
-"              "
-msgstr ""
-"\n"
-"                تسجيل الدخول الموحد غير مسموح\n"
-"              "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                You do not have permission to sign in with Single Sign-On.\n"
-"                If this is in error, please contact your project's "
-"administrator.\n"
-"              "
-msgstr ""
-"\n"
-"                ليس لديك إذن لتسجيل الدخول عبر تسجيل الدخول الموحد. إذا كان "
-"هذا خطأ، يرجى التواصل مع مسؤول مشروعك.\n"
-"              "
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid "today!"
@@ -59212,8 +59313,14 @@ msgid "Cancelled"
 msgstr "تم الإلغاء"
 
 #: corehq/motech/repeaters/const.py
-msgid "Invalid Payload"
-msgstr "حمولة غير صالحة"
+#, fuzzy
+#| msgid "Rejected"
+msgid "Payload Rejected"
+msgstr "تم الرفض"
+
+#: corehq/motech/repeaters/const.py
+msgid "Error Generating Payload"
+msgstr ""
 
 #: corehq/motech/repeaters/const.py
 msgid "Is enabled"
@@ -59695,8 +59802,16 @@ msgid "Unable to generate url for record"
 msgstr "غير قادر على إنشاء عنوان URL للسجل"
 
 #: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Invalid payload"
-msgstr "حمولة غير صالحة"
+#, fuzzy
+#| msgid "Invitation rejected"
+msgid "Payload rejected"
+msgstr "تم رفض الدعوة"
+
+#: corehq/motech/repeaters/views/repeat_record_display.py
+#, fuzzy
+#| msgid "Errors in upload: {}"
+msgid "Error generating payload"
+msgstr "أخطاء في التحميل: {}"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Remote Service"
@@ -59830,6 +59945,10 @@ msgstr "المدة (مللي ثانية)"
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
 msgstr "لم يتم تسجيل أي طلبات API."
+
+#: corehq/motech/views.py
+msgid "Request Method"
+msgstr "طريقة الطلب"
 
 #: corehq/motech/views.py
 msgid "Request URL"
@@ -61144,6 +61263,12 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Invalid Payload"
+#~ msgstr "حمولة غير صالحة"
+
+#~ msgid "Invalid payload"
+#~ msgstr "حمولة غير صالحة"
 
 #~ msgid ""
 #~ "\n"

@@ -5576,17 +5576,22 @@ msgstr ""
 "fonctions."
 
 #: corehq/apps/app_manager/helpers/validators.py
+#| msgid ""
+#| "Your application is using User Properties and your current subscription does"
+#| " not support that. You can remove User Properties functionality by opening "
+#| "the User Properties tab in a form that uses it, and clicking \"Remove User "
+#| "Properties\"."
 msgid ""
-"Your application is using User Properties and your current subscription does"
-" not support that. You can remove User Properties functionality by opening "
-"the User Properties tab in a form that uses it, and clicking \"Remove User "
-"Properties\"."
+"Your application is using User Properties or using `commcare-user` as a "
+"menu's case type, and your current subscription does not support that. You "
+"can remove User Propertiesfunctionality by opening the User Properties tab "
+"in a form that uses it and clicking 'Remove User Properties.'"
 msgstr ""
-"Votre application utilise les propriétés utilisateur et votre abonnement "
-"actuel ne prend pas en charge cette fonctionnalité. Vous pouvez supprimer "
-"les propriétés utilisateur en ouvrant l'onglet Propriétés utilisateur dans "
-"un formulaire qui les utilise, puis en cliquant sur \"Supprimer les "
-"propriétés utilisateur\"."
+"Votre application utilise des propriétés utilisateur ou utilise `commcare-"
+"user` comme type de dossier de menu, et votre abonnement actuel ne prend pas"
+" en charge cette fonctionnalité. Vous pouvez supprimer les propriétés "
+"utilisateur en ouvrant l’onglet Propriétés utilisateur dans un formulaire "
+"qui les utilise et en cliquant sur « Supprimer les propriétés utilisateur »."
 
 #: corehq/apps/app_manager/helpers/validators.py
 msgid ""
@@ -11879,6 +11884,7 @@ msgstr "Rapport"
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/program.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -17900,7 +17906,6 @@ msgid "Create Case Type"
 msgstr "Créer un type de cas"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#| msgid "data dictionary"
 msgid "Loading data dictionary..."
 msgstr "Chargement du dictionnaire de données..."
 
@@ -17948,7 +17953,6 @@ msgid "FHIR Resource Property Path"
 msgstr "Chemin de propriété de ressource FHIR"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#| msgid "Loading exports..."
 msgid "Loading properties..."
 msgstr "Chargement des propriétés..."
 
@@ -18073,12 +18077,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "              Deprecate\n"
-#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-#| "              Case Type\n"
-#| "            "
 msgid ""
 " Deprecate '<span\n"
 "            data-bind=\"text: $root.activeCaseType()\"\n"
@@ -18092,30 +18090,6 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            <p>\n"
-#| "              There are a total of\n"
-#| "              <strong>\n"
-#| "                <span data-bind=\"text: activeCaseTypeModuleCount()\"></span> application module(s)\n"
-#| "              </strong>\n"
-#| "              that are currently using this case type.\n"
-#| "            </p>\n"
-#| "            <p>\n"
-#| "              Deprecating this case type will have the following effects:\n"
-#| "            </p>\n"
-#| "            <ul>\n"
-#| "              <li>This case type will not be available from the reports filtering menu.</li>\n"
-#| "              <li>All case properties/groups for this case type will be deprecated.</li>\n"
-#| "              <li>New exports cannot be created with this case type.</li>\n"
-#| "              <li>Case imports cannot be done for cases with this case type.</li>\n"
-#| "              <li>New automatic rules cannot be created with this case type.</li>\n"
-#| "            </ul>\n"
-#| "            <p>\n"
-#| "              For more information on deprecated case types, see the\n"
-#| "              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
-#| "            </p>\n"
-#| "          "
 msgid ""
 "\n"
 "        <p>\n"
@@ -18185,10 +18159,6 @@ msgid "Deprecate GPS property"
 msgstr "Rendre la propriété GPS obsolète"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                    This GPS case property is currently being used to store the geolocation for cases.\n"
-#| "                    "
 msgid ""
 "\n"
 "            This GPS case property is currently being used to store the\n"
@@ -18201,15 +18171,6 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Deprecating this case property may result in unintended behaviour, and so\n"
-#| "                    it is advised to first change the selected custom case property in\n"
-#| "                    <a href=\"%(geospatial_settings_url)s\">\n"
-#| "                        geospatial settings\n"
-#| "                    </a>\n"
-#| "                    before deprecating this case property.\n"
-#| "                    "
 msgid ""
 "\n"
 "            Deprecating this case property may result in unintended behaviour,\n"
@@ -18226,10 +18187,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                    Would you like to proceed with deprecating this case property?\n"
-#| "                    "
 msgid ""
 "\n"
 "            Would you like to proceed with deprecating this case property?\n"
@@ -18240,12 +18197,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                        Delete\n"
-#| "                        '<span id=\"delete-case-prop-name\"></span>'\n"
-#| "                        Case Property\n"
-#| "                    "
 msgid ""
 "\n"
 "            Delete '<span id=\"delete-case-prop-name\"></span>' Case Property\n"
@@ -18256,10 +18207,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                        There are currently no cases that store data with this case property, so it is safe to delete.\n"
-#| "                    "
 msgid ""
 "\n"
 "            There are currently no cases that store data with this case\n"
@@ -18271,14 +18218,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                    Please note that if a new form or case was updated to the server recently that makes this property\n"
-#| "                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not\n"
-#| "                    a blocking action and the case property can be created again if needed in the future. Please refer to\n"
-#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the documentation</a>\n"
-#| "                    for additional information about this action.\n"
-#| "                    "
 msgid ""
 "\n"
 "            Please note that if a new form or case was updated to the server\n"
@@ -18305,11 +18244,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                        Would you like to mark this case property as deleted? Once confirmed the case\n"
-#| "                        property will be deleted upon clicking the \"Save\" button.\n"
-#| "                    "
 msgid ""
 "\n"
 "            Would you like to remove this case property from the data\n"
@@ -18322,12 +18256,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "              Deprecate\n"
-#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-#| "              Case Type\n"
-#| "            "
 msgid ""
 "\n"
 "            Delete '<span data-bind=\"text: $root.activeCaseType()\"></span>' Case\n"
@@ -18339,11 +18267,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                    There are no cases that use this case type or store data with any of its case properties.\n"
-#| "                    Therefore, it is safe to delete this case type.\n"
-#| "                    "
 msgid ""
 "\n"
 "            There are no cases that use this case type or store data with any of\n"
@@ -18355,15 +18278,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                    Please note that all case properties for this case type will also be deleted.\n"
-#| "                    Furthermore, if a new form or case was updated to the server recently that makes this case type\n"
-#| "                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not\n"
-#| "                    a blocking action and the case type can be created again if needed in the future. Please refer to\n"
-#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the documentation</a>\n"
-#| "                    for additional information about this action.\n"
-#| "                    "
 msgid ""
 "\n"
 "            Please note that all case properties for this case type will also be\n"
@@ -18391,10 +18305,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#| msgid ""
-#| "\n"
-#| "                    Would you like to proceed with deleting this case type?\n"
-#| "                    "
 msgid ""
 "\n"
 "            Would you like to proceed with deleting this case type?\n"
@@ -20320,15 +20230,10 @@ msgid "Name of the channel created in connect messaging."
 msgstr "Nom du canal créé dans la messagerie connect."
 
 #: corehq/apps/domain/forms.py
-#| msgid "Data and Sharing"
 msgid "Data Sharing"
 msgstr "Partage de données"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "<i class=\"fa fa-info-circle\"></i> See <a "
-#| "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/Report+and+Export+Filters\"target=\"_blank\">"
-#| " Filter Definitions</a>."
 msgid ""
 "Opt Out of <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2386001966/Data+Sharing+Opt-"
@@ -30640,6 +30545,11 @@ msgid "User Audit Events"
 msgstr "Événements d'audit utilisateur"
 
 #: corehq/apps/hqadmin/reports.py
+#| msgid "Document Type"
+msgid "Doc Type"
+msgstr "Type de document"
+
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/reports/filters/simple.py
 msgid "Domain"
@@ -30649,14 +30559,10 @@ msgstr "Domaine"
 msgid "IP Address"
 msgstr "Adresse IP"
 
-#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
-msgid "Request Method"
-msgstr "Méthode de la requête"
-
 #: corehq/apps/hqadmin/reports.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "Request Path"
-msgstr "Chemin de la requête"
+#| msgid "Resource Slug"
+msgid "Resource"
+msgstr "Ressource"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -32379,6 +32285,10 @@ msgstr "Détails supplémentaires"
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "HTMX Event Error"
 msgstr "Erreur d'événement HTMX"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "Request Path"
+msgstr "Chemin de la requête"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/htmx_action_error.html
 #, python-format
@@ -37002,16 +36912,6 @@ msgstr ""
 "                    "
 
 #: corehq/apps/registration/templates/registration/domain_request.html
-#| msgid ""
-#| "\n"
-#| "                    To select a different\n"
-#| "                    <a\n"
-#| "                      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
-#| "                      target=\"_blank\"\n"
-#| "                      ><b>cloud location</b></a\n"
-#| "                    >, log into that location's site before creating your\n"
-#| "                    project:\n"
-#| "                  "
 msgid ""
 "\n"
 "                    To create a project in a different\n"
@@ -40091,7 +39991,6 @@ msgid "same"
 msgstr "pareil"
 
 #: corehq/apps/reports/standard/monitoring.py
-#| msgid "Case Activity"
 msgid "User Activity"
 msgstr "Activité utilisateur"
 
@@ -44961,13 +44860,17 @@ msgstr "Utilisateurs de test SSO"
 msgid "Danger Zone"
 msgstr "Zone de danger"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid "Single Sign-On Request Failed"
 msgstr "Échec de la demande d’authentification unique"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
-#: corehq/apps/sso/templates/sso/config_errors.html
-#: corehq/apps/sso/templates/sso/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -44977,7 +44880,8 @@ msgstr ""
 "                Authentification unique\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                Sorry, but we're having trouble signing you in.\n"
@@ -44987,7 +44891,8 @@ msgstr ""
 "                Désolé, nous rencontrons des difficultés pour vous connecter.\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  The issue looks like it might be related to the configuration\n"
@@ -44999,7 +44904,8 @@ msgstr ""
 "                  avec votre fournisseur d'identité et CommCare HQ.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This is the error message we are seeing:\n"
@@ -45009,7 +44915,8 @@ msgstr ""
 "                  Voici le message d’erreur que nous voyons :\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45022,7 +44929,8 @@ msgstr ""
 "                  pour configurer le SSO avec %(idp_service_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If the error message and documentation are not helping, please\n"
@@ -45034,7 +44942,8 @@ msgstr ""
 "                  contacter votre support.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This issue might be due to the following reason:\n"
@@ -45044,7 +44953,8 @@ msgstr ""
 "                  Ce problème pourrait être dû à la raison suivante :\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If this error persists, please contact your project's\n"
@@ -45056,11 +44966,13 @@ msgstr ""
 "                  pour obtenir de l’aide.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid "Single Sign-On is misconfigured"
 msgstr "L’authentification unique est mal configurée"
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Your Redirect URL is invalid.\n"
@@ -45070,7 +44982,8 @@ msgstr ""
 "                  Votre URL de redirection est invalide.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  The redirect URL you have specified is not valid. Please\n"
@@ -45085,7 +44998,8 @@ msgstr ""
 "                  le support afin que nous puissions trouver une solution permanente.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45096,7 +45010,8 @@ msgstr ""
 "                  Un problème est survenu lors de la connexion avec %(service)s :\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45107,7 +45022,8 @@ msgstr ""
 "                  Il semble qu’il y ait un problème avec la configuration de %(idp_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Please reach out to support, so we can quickly resolve this\n"
@@ -45119,7 +45035,8 @@ msgstr ""
 "                  problème. Merci !\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like your setup is not complete.\n"
@@ -45129,7 +45046,8 @@ msgstr ""
 "                    Il semble que votre configuration ne soit pas complète.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45144,7 +45062,8 @@ msgstr ""
 "                    pour configurer le SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like we are missing your certificate.\n"
@@ -45154,7 +45073,8 @@ msgstr ""
 "                    Il semble que votre certificat soit manquant.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45171,7 +45091,8 @@ msgstr ""
 "                    pour configurer le SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    Obtaining User Information Was Not Possible\n"
@@ -45181,7 +45102,8 @@ msgstr ""
 "                    Impossible d’obtenir les informations utilisateur\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45196,7 +45118,8 @@ msgstr ""
 "                    pour configurer le SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OpenID Connect Session Unknown\n"
@@ -45206,7 +45129,8 @@ msgstr ""
 "                    Session OpenID Connect inconnue\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45219,7 +45143,8 @@ msgstr ""
 "                    Veuillez consulter la <a href=\"%(docs_link)s\">documentation</a> pour configurer l'authentification SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OIDC Method Not Allowed\n"
@@ -45229,7 +45154,8 @@ msgstr ""
 "                    Méthode OIDC non autorisée\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45242,7 +45168,8 @@ msgstr ""
 "                    Veuillez consulter la <a href=\"%(docs_link)s\">documentation</a> pour configurer l'authentification SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like there is an issue with your SSO configuration.\n"
@@ -45252,7 +45179,8 @@ msgstr ""
 "                    Il semble qu'il y ait un problème avec votre configuration SSO.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -45266,6 +45194,65 @@ msgstr ""
 "                    votre support avec cette information afin que nous puissions\n"
 "                    vous aider à résoudre ce problème.\n"
 "                  "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+msgid "Single Sign-On Error"
+msgstr "Erreur d'authentification unique (SSO)"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+#| msgid ""
+#| "\n"
+#| "                This error is likely due to a misconfiguration with your project's\n"
+#| "                SSO settings. Please contact your project administrator to resolve this issue.\n"
+#| "              "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your\n"
+"                project's SSO settings. Please contact your project\n"
+"                administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                Cette erreur est probablement due à une mauvaise configuration des\n"
+"                paramètres SSO de votre projet. Veuillez contacter votre\n"
+"                administrateur de projet pour résoudre ce problème.\n"
+"              "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid "Single Sign-On Request Denied"
+msgstr "Demande d'authentification unique refusée"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid ""
+"\n"
+"                Single Sign-On Not Allowed\n"
+"              "
+msgstr ""
+"\n"
+"                Authentification unique non autorisée\n"
+"              "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-On.\n"
+#| "                If this is in error, please contact your project's administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"                You do not have permission to sign in with Single Sign-On. If\n"
+"                this is in error, please contact your project's administrator.\n"
+"              "
+msgstr ""
+"\n"
+"                Vous n'avez pas l'autorisation de vous connecter avec l'authentification unique (SSO). Si\n"
+"                ceci est une erreur, veuillez contacter l'administrateur de votre projet.\n"
+"              "
 
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
@@ -45456,15 +45443,20 @@ msgid "Manage Single Sign-On"
 msgstr "Gérer l'authentification unique (SSO)"
 
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#| msgid ""
+#| "\n"
+#| "      Configure external Identity Providers associated with your\n"
+#| "      Enterprise Account below.\n"
+#| "    "
 msgid ""
 "\n"
-"      Configure external Identity Providers associated with your\n"
-"      Enterprise Account below.\n"
+"      Configure external Identity Providers associated with your Enterprise\n"
+"      Account below.\n"
 "    "
 msgstr ""
 "\n"
 "      Configurez ci-dessous les fournisseurs d'identité externes associés à votre\n"
-"      compte entreprise.\n"
+"      compte Entreprise.\n"
 "    "
 
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
@@ -45506,39 +45498,56 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#| msgid ""
+#| "\n"
+#| "                <strong>WARNING:</strong> Deleting an Identity Provider is not reversible.\n"
+#| "              "
 msgid ""
 "\n"
-"                <strong>WARNING:</strong> Deleting an Identity Provider is not reversible.\n"
+"                <strong>WARNING:</strong> Deleting an Identity Provider is not\n"
+"                reversible.\n"
 "              "
 msgstr ""
 "\n"
-"                <strong>ATTENTION :</strong> La suppression d'un fournisseur d'identité est irréversible.\n"
+"                <strong>ATTENTION :</strong> La suppression d’un fournisseur d’identité est\n"
+"                irréversible.\n"
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#| msgid ""
+#| "\n"
+#| "                Deletion will immediately affect any client's SSO setup. Please\n"
+#| "                exercise extreme caution. An active Identity Provider\n"
+#| "                will not be deleted.\n"
+#| "              "
 msgid ""
 "\n"
 "                Deletion will immediately affect any client's SSO setup. Please\n"
-"                exercise extreme caution. An active Identity Provider\n"
-"                will not be deleted.\n"
+"                exercise extreme caution. An active Identity Provider will not\n"
+"                be deleted.\n"
 "              "
 msgstr ""
 "\n"
-"                La suppression affectera immédiatement la configuration SSO de tout client. Veuillez\n"
-"                faire preuve d'une extrême prudence. Un fournisseur d'identité actif\n"
-"                ne sera pas supprimé.\n"
+"                La suppression affectera immédiatement toute configuration SSO client. Veuillez\n"
+"                faire preuve d’une extrême prudence. Un fournisseur d’identité actif ne sera pas\n"
+"                supprimé.\n"
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
+#| msgid ""
+#| "\n"
+#| "            Users with email addresses ending in these domain names must\n"
+#| "            log in with SSO if the Identity Provider is active.\n"
+#| "          "
 msgid ""
 "\n"
-"            Users with email addresses ending in these domain names must\n"
-"            log in with SSO if the Identity Provider is active.\n"
+"            Users with email addresses ending in these domain names must log in\n"
+"            with SSO if the Identity Provider is active.\n"
 "          "
 msgstr ""
 "\n"
-"            Les utilisateurs dont l'adresse e-mail se termine par ces noms de domaine doivent\n"
-"            se connecter avec SSO si le fournisseur d'identité est actif.\n"
+"            Les utilisateurs dont l’adresse e-mail se termine par ces noms de domaine doivent se connecter\n"
+"            avec SSO si le fournisseur d’identité est actif.\n"
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
@@ -45570,29 +45579,40 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
+#| msgid ""
+#| "\n"
+#| "            No users are exempt from SSO for this Identity Provider.\n"
+#| "            Please add at least <strong>one enterprise admin</strong>\n"
+#| "            before making this Identity Provider active!\n"
+#| "          "
 msgid ""
 "\n"
-"            No users are exempt from SSO for this Identity Provider.\n"
-"            Please add at least <strong>one enterprise admin</strong>\n"
+"            No users are exempt from SSO for this Identity Provider. Please add\n"
+"            at least <strong>one enterprise admin</strong>\n"
 "            before making this Identity Provider active!\n"
 "          "
 msgstr ""
 "\n"
-"            Aucun utilisateur n'est exempté du SSO pour ce fournisseur d'identité.\n"
-"            Veuillez ajouter au moins <strong>un·e administrateur·rice entreprise</strong>\n"
-"            avant d'activer ce fournisseur d'identité !\n"
+"            Aucun utilisateur n’est exempté du SSO pour ce fournisseur d’identité. Veuillez ajouter\n"
+"            au moins <strong>un administrateur entreprise</strong>\n"
+"            avant d’activer ce fournisseur d’identité !\n"
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+#| msgid ""
+#| "\n"
+#| "            When the Identity Provider is in \"Test\" mode for Login Enforcement, only\n"
+#| "            the users in this list will be directed to sign in with SSO.\n"
+#| "          "
 msgid ""
 "\n"
-"            When the Identity Provider is in \"Test\" mode for Login Enforcement, only\n"
-"            the users in this list will be directed to sign in with SSO.\n"
+"            When the Identity Provider is in \"Test\" mode for Login Enforcement,\n"
+"            only the users in this list will be directed to sign in with SSO.\n"
 "          "
 msgstr ""
 "\n"
-"            Lorsque le fournisseur d'identité est en mode \"Test\" pour l'application de la connexion, seuls\n"
-"            les utilisateurs de cette liste seront dirigés vers la connexion SSO.\n"
+"            Lorsque le fournisseur d’identité est en mode « Test » pour l’application de la connexion,\n"
+"            seuls les utilisateurs de cette liste seront dirigés vers la connexion SSO.\n"
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
@@ -45627,48 +45647,6 @@ msgstr ""
 "\n"
 "      Veuillez contacter un·e administrateur·rice du projet pour rétablir l'accès.\n"
 "    "
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-msgid "Single Sign-On Error"
-msgstr "Erreur d'authentification unique (SSO)"
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-msgid ""
-"\n"
-"                This error is likely due to a misconfiguration with your project's\n"
-"                SSO settings. Please contact your project administrator to resolve this issue.\n"
-"              "
-msgstr ""
-"\n"
-"                Cette erreur est probablement due à une mauvaise configuration des paramètres SSO de votre projet.\n"
-"                Veuillez contacter l'administrateur de votre projet pour résoudre ce problème.\n"
-"              "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid "Single Sign-On Request Denied"
-msgstr "Demande d'authentification unique refusée"
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                Single Sign-On Not Allowed\n"
-"              "
-msgstr ""
-"\n"
-"                Authentification unique non autorisée\n"
-"              "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                You do not have permission to sign in with Single Sign-On.\n"
-"                If this is in error, please contact your project's administrator.\n"
-"              "
-msgstr ""
-"\n"
-"                Vous n'avez pas l'autorisation de vous connecter avec l'authentification unique.\n"
-"                Si c'est une erreur, veuillez contacter l'administrateur·rice de votre projet.\n"
-"              "
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid "today!"
@@ -56338,8 +56316,13 @@ msgid "Cancelled"
 msgstr "Annulé"
 
 #: corehq/motech/repeaters/const.py
-msgid "Invalid Payload"
-msgstr "Charge utile invalide"
+#| msgid "Rejected"
+msgid "Payload Rejected"
+msgstr "Charge utile rejetée"
+
+#: corehq/motech/repeaters/const.py
+msgid "Error Generating Payload"
+msgstr "Erreur lors de la génération de la charge utile"
 
 #: corehq/motech/repeaters/const.py
 msgid "Is enabled"
@@ -56804,8 +56787,14 @@ msgid "Unable to generate url for record"
 msgstr "Impossible de générer un url pour le dossier"
 
 #: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Invalid payload"
-msgstr "Charge utile invalide"
+#| msgid "Invitation rejected"
+msgid "Payload rejected"
+msgstr "Charge utile rejetée"
+
+#: corehq/motech/repeaters/views/repeat_record_display.py
+#| msgid "Errors in upload: {}"
+msgid "Error generating payload"
+msgstr "Erreur lors de la génération de la charge utile"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Remote Service"
@@ -56944,6 +56933,10 @@ msgstr "Durée (ms)"
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
 msgstr "Aucune requête API n'a été enregistrée."
+
+#: corehq/motech/views.py
+msgid "Request Method"
+msgstr "Méthode de la requête"
 
 #: corehq/motech/views.py
 msgid "Request URL"
@@ -58271,6 +58264,12 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Invalid Payload"
+#~ msgstr "Charge utile invalide"
+
+#~ msgid "Invalid payload"
+#~ msgstr "Charge utile invalide"
 
 #~ msgid ""
 #~ "\n"

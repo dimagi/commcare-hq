@@ -17,6 +17,7 @@ from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
     get_mobile_ucr_count,
     get_web_app_ids_available_to_user,
+    get_web_apps_available_to_user,
     should_restrict_web_apps_usage,
 )
 from corehq.apps.domain.shortcuts import create_domain
@@ -314,17 +315,25 @@ class TestGetWebAppsAvailableToUser(TestCase):
 
     def assert_apps(self, expected):
         self.assertItemsEqual(
-            get_web_app_ids_available_to_user(self.domain, self.user),
-            expected,
+            [app['_id'] for app in get_web_apps_available_to_user(self.domain, self.user)],
+            expected
+        )
+        self.assertItemsEqual(
+            [app_id for app_id in get_web_app_ids_available_to_user(self.domain, self.user)],
+            expected
         )
 
-    @patch('corehq.apps.cloudcare.utils.can_user_access_web_app', return_value=True)
-    def test(self, *args):
+    def _make_app(self):
         factory = AppFactory(self.domain, name='foo')
         m0, f0 = factory.new_basic_module("bar", "bar")
         f0.source = get_simple_form(xmlns=f0.unique_id)
         app = factory.app
         app.save()
+        self.addCleanup(app.delete)
+        return app
+
+    def test(self):
+        app = self._make_app()
         self.assert_apps([])
 
         # Doesn't show up after cloudcare enabled 'cause there's no build
@@ -364,4 +373,16 @@ class TestGetWebAppsAvailableToUser(TestCase):
 
         build_3.is_released = True
         build_3.save()
+        self.assert_apps([])
+
+    def test_deleted_app_is_gone(self):
+        app = self._make_app()
+        app.cloudcare_enabled = True
+        app.save()
+        build_1 = app.make_build()
+        build_1.is_released = True
+        build_1.save()
+        self.assert_apps([build_1._id])
+        app.delete_app()
+        app.save()
         self.assert_apps([])

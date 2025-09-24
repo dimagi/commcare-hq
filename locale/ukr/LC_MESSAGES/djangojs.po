@@ -227,6 +227,16 @@ msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "Типи справ можуть містити лише символи a-z, 0-9, '-' та '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"This is a reserved case type. Refer to <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">doc</a> before using."
+msgstr ""
+"Це зарезервований тип кейсу. Перед використанням ознайомтеся з <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">документацією</a>."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "Це зарезервований тип справи. Будь ласка, виберіть іншу назву."
 

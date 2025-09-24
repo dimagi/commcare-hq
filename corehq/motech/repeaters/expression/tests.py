@@ -596,7 +596,7 @@ class ArcGISExpressionRepeaterTest(FormExpressionRepeaterTest):
         ):
             self.repeater.fire_for_record(repeat_record)
 
-        self.assertEqual(repeat_record.state, State.InvalidPayload)
+        self.assertEqual(repeat_record.state, State.PayloadRejected)
 
     def test_error_response_with_message_code(self):
         error_json = {

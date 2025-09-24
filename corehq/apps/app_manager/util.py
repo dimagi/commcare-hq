@@ -18,15 +18,14 @@ from couchdbkit.exceptions import DocTypeError
 
 from dimagi.utils.couch import CriticalSection
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
-    AUTO_SELECT_USERCASE,
     CALCULATED_SORT_FIELD_RX,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
     MOBILE_UCR_V1_ALL_REFERENCES,
     MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
@@ -206,11 +205,10 @@ CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 
-def is_valid_case_type(case_type, module):
+def is_valid_case_type(case_type):
     """
     Returns ``True`` if ``case_type`` is valid for ``module``
 
-    >>> from corehq.apps.app_manager.const import USERCASE_TYPE
     >>> from corehq.apps.app_manager.models import Module, AdvancedModule
     >>> is_valid_case_type('foo', Module())
     True
@@ -222,15 +220,9 @@ def is_valid_case_type(case_type, module):
     False
     >>> is_valid_case_type(None, Module())
     False
-    >>> is_valid_case_type(USERCASE_TYPE, Module())
-    False
-    >>> is_valid_case_type(USERCASE_TYPE, AdvancedModule())
-    True
     """
-    from corehq.apps.app_manager.models import AdvancedModule
     matches_regex = bool(_case_type_regex.match(case_type or ''))
-    prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
-    return matches_regex and prevent_usercase_type
+    return matches_regex
 
 
 def module_case_hierarchy_has_circular_reference(module):
@@ -242,9 +234,8 @@ def module_case_hierarchy_has_circular_reference(module):
         return True
 
 
-def is_usercase_in_use(domain_name):
-    domain_obj = Domain.get_by_name(domain_name) if domain_name else None
-    return domain_obj and domain_obj.usercase_enabled
+def domain_has_usercase_access(domain):
+    return domain_has_privilege(domain, privileges.USERCASE) if domain else False
 
 
 def get_settings_values(app):
@@ -369,19 +360,9 @@ def actions_use_usercase(actions):
             or ('usercase_preload' in actions and actions['usercase_preload'].preload))
 
 
-def advanced_actions_use_usercase(actions):
-    return any(c.auto_select and c.auto_select.mode == AUTO_SELECT_USERCASE for c in actions.load_update_cases)
-
-
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
-        domain_obj = Domain.get_by_name(domain_name, strict=True)
-        if not domain_obj:  # copying domains passes in an id before name is saved
-            domain_obj = Domain.get(domain_name)
-        if not domain_obj.usercase_enabled:
-            domain_obj.usercase_enabled = True
-            domain_obj.save()
-            create_usercases.delay(domain_name)
+        create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):

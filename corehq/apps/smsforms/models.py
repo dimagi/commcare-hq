@@ -104,9 +104,9 @@ class SQLXFormsSession(models.Model):
 
     class Meta(object):
         app_label = 'smsforms'
-        index_together = [
-            ['session_is_open', 'current_action_due'],
-            ['session_is_open', 'connection_id'],
+        indexes = [
+            models.Index(fields=['session_is_open', 'current_action_due']),
+            models.Index(fields=['session_is_open', 'connection_id']),
         ]
 
     def __str__(self):

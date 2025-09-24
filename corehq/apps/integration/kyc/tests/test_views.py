@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import patch
 
 from django.test import RequestFactory, TestCase
@@ -5,17 +6,20 @@ from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
+from corehq.apps.es.users import user_adapter
+from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycVerificationStatus
 from corehq.apps.integration.kyc.views import (
     KycConfigurationView,
     KycVerificationReportView,
     KycVerificationTableView,
 )
-from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.util.test_utils import flag_enabled
 
 
@@ -76,6 +80,7 @@ class TestKycConfigurationView(BaseTestKycView):
         assert response.status_code == 200
 
 
+@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestKycVerificationReportView(BaseTestKycView):
     urlname = KycVerificationReportView.urlname
 
@@ -132,7 +137,7 @@ class TestKycVerificationReportView(BaseTestKycView):
         assert context['domain_has_config'] is True
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestKycVerificationTableView(BaseTestKycView):
     urlname = KycVerificationTableView.urlname
 
@@ -169,12 +174,6 @@ class TestKycVerificationTableView(BaseTestKycView):
             },
             'country': 'country'
         }
-        cls.kyc_config = KycConfig.objects.create(
-            domain=cls.domain,
-            user_data_store=UserDataStore.CUSTOM_USER_DATA,
-            api_field_to_user_data_map=cls.kyc_mapping,
-        )
-        cls.addClassCleanup(cls.kyc_config.delete)
         cls.user1 = CommCareUser.create(
             cls.domain,
             'user1',
@@ -203,6 +202,7 @@ class TestKycVerificationTableView(BaseTestKycView):
             first_name='Jane',
             last_name='Doe',
         )
+        user_adapter.bulk_index([cls.user1, cls.user2], refresh=True)
 
         factory = CaseFactory(cls.domain)
         cls.case_list = [
@@ -236,6 +236,14 @@ class TestKycVerificationTableView(BaseTestKycView):
         cls.user2.delete(None, None)
         super().tearDownClass()
 
+    def setUp(self):
+        self.kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(self.kyc_config.delete)
+
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
         self.assertRedirects(response, f"{self.login_endpoint}?next={self.endpoint}")
@@ -254,13 +262,13 @@ class TestKycVerificationTableView(BaseTestKycView):
         response = self._make_request()
         queryset = response.context['table'].data
         assert len(queryset) == 2
-        for row in queryset:
-            if row['has_invalid_data']:
-                assert row == {
+        for row in queryset.data:
+            if row.serialized_data['has_invalid_data']:
+                assert row.serialized_data == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -268,11 +276,11 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Doe',
                 }
             else:
-                assert row == {
+                assert row.serialized_data == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -301,13 +309,13 @@ class TestKycVerificationTableView(BaseTestKycView):
         response = self._make_request()
         queryset = response.context['table'].data
         assert len(queryset) == 2
-        for row in queryset:
-            if row['has_invalid_data']:
-                assert row == {
+        for row in queryset.data:
+            if row.serialized_data['has_invalid_data']:
+                assert row.serialized_data == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -315,11 +323,11 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Bar',
                 }
             else:
-                assert row == {
+                assert row.serialized_data == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
                     'kyc_verification_status': {
-                        'status': None,
+                        'status': KycVerificationStatus.PENDING,
                         'error_message': None,
                     },
                     'kyc_last_verified_at': None,
@@ -331,10 +339,229 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'post_code': '54321',
                 }
 
+    @flag_enabled('KYC_VERIFICATION')
+    def test_response_data_user_cases(self):
+        self.kyc_config.user_data_store = UserDataStore.USER_CASE
+        self.kyc_config.api_field_to_user_data_map.update({
+            'first_name': {
+                'data_field': 'first_name',
+            },
+            'name': {
+                'data_field': 'name',
+            },
+        })
+        self.kyc_config.save()
 
-def _create_case(factory, name, data):
+        factory = CaseFactory(self.domain)
+        usercase_list = [
+            _create_case(
+                factory,
+                case_type=USERCASE_TYPE,
+                name='Johnny Doe',
+                data={
+                    'first_name': 'Johnny',
+                    'last_name': 'Doe',
+                    'email': 'jdoe@example.org',
+                    'phone_number': '1234567890',
+                    'national_id_number': '1234567890',
+                    'street_address': '123 Main St',
+                    'city': 'Anytown',
+                    'post_code': '12345',
+                    'country': 'Anyplace',
+                    'hq_user_id': uuid.uuid4().hex,
+                }
+            ),
+            _create_case(
+                factory,
+                name='Jane Doe',
+                case_type=USERCASE_TYPE,
+                data={
+                    'first_name': 'Jane',
+                    'last_name': 'Doe',
+                    'hq_user_id': uuid.uuid4().hex,
+                }
+            ),
+        ]
+        case_search_adapter.bulk_index(usercase_list, refresh=True)
+
+        response = self._make_request()
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+        for row in queryset.data:
+            if row.serialized_data['has_invalid_data']:
+                assert row.serialized_data == {
+                    'id': usercase_list[1].get_case_property('hq_user_id'),
+                    'has_invalid_data': True,
+                    'kyc_verification_status': {
+                        'status': KycVerificationStatus.PENDING,
+                        'error_message': None,
+                    },
+                    'kyc_last_verified_at': None,
+                    'name': 'Jane Doe',
+                    'first_name': 'Jane',
+                    'last_name': 'Doe',
+                }
+            else:
+                assert row.serialized_data == {
+                    'id': usercase_list[0].get_case_property('hq_user_id'),
+                    'has_invalid_data': False,
+                    'kyc_verification_status': {
+                        'status': KycVerificationStatus.PENDING,
+                        'error_message': None,
+                    },
+                    'kyc_last_verified_at': None,
+                    'name': 'Johnny Doe',
+                    'first_name': 'Johnny',
+                    'last_name': 'Doe',
+                    'email': 'jdoe@example.org',
+                    'phone_number': PASSWORD_PLACEHOLDER,
+                    'national_id_number': '1234567890',
+                    'post_code': '12345',
+                }
+
+
+@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
+class TestKycVerificationStatusFilter(BaseTestKycView):
+    urlname = KycVerificationTableView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.kyc_mapping = {
+            'first_name': {'data_field': 'first_name'},
+            'phone_number': {'data_field': 'phone_number', 'is_sensitive': True},
+        }
+        # Custom user data store
+        cls.user_verified = CommCareUser.create(
+            cls.domain,
+            'user_verified',
+            'pw',
+            created_by=None,
+            created_via=None,
+            first_name='John',
+            user_data={
+                'first_name': 'John',
+                'phone_number': '123',
+                'kyc_verification_status': KycVerificationStatus.PASSED
+            }
+        )
+        cls.user_pending = CommCareUser.create(
+            cls.domain,
+            'user_pending',
+            'pw',
+            created_by=None,
+            created_via=None,
+            first_name='Jane',
+            user_data={'first_name': 'Jane', 'phone_number': '456'}
+        )
+        user_adapter.bulk_index([cls.user_verified, cls.user_pending], refresh=True)
+        # Other case type
+        factory = CaseFactory(cls.domain)
+        cls.case_verified = _create_case(
+            factory,
+            name='case_verified',
+            data={
+                'first_name': 'Alice',
+                'phone_number': '789',
+                'kyc_verification_status': KycVerificationStatus.PASSED
+            }
+        )
+        cls.case_pending = _create_case(
+            factory,
+            name='case_pending',
+            data={'first_name': 'Bob', 'phone_number': '000'}
+        )
+        # User case
+        cls.usercase_verified = _create_case(
+            factory,
+            name='usercase_verified',
+            case_type=USERCASE_TYPE,
+            data={
+                'first_name': 'Eva',
+                'phone_number': '111',
+                'kyc_verification_status': KycVerificationStatus.PASSED,
+                'hq_user_id': uuid.uuid4().hex,
+            },
+        )
+        cls.usercase_pending = _create_case(
+            factory, name='usercase_pending',
+            case_type=USERCASE_TYPE,
+            data={'first_name': 'Tom', 'phone_number': '222', 'hq_user_id': uuid.uuid4().hex},
+        )
+        case_search_adapter.bulk_index(
+            [cls.case_verified, cls.case_pending, cls.usercase_verified, cls.usercase_pending],
+            refresh=True
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user_verified.delete(None, None)
+        cls.user_pending.delete(None, None)
+        super().tearDownClass()
+
+    def _make_request_with_filter(self, kyc_verification_status=None):
+        self.client.login(username=self.username, password=self.password)
+        query_params = {}
+        if kyc_verification_status:
+            query_params[KycVerificationStatusFilter.slug] = kyc_verification_status
+        return self.client.get(self.endpoint, query_params)
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_custom_user_data_verified(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        response = self._make_request_with_filter(KycVerificationStatus.PASSED)
+
+        assert response.status_code == 200
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        row = table_data.data[0]
+        assert row.serialized_data['id'] == self.user_verified.user_id
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_other_case_type_verified(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other-case',
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        response = self._make_request_with_filter('pending')
+
+        assert response.status_code == 200
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        row = table_data.data[0]
+        assert row.serialized_data['id'] == self.case_pending.case_id
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_user_case_verified(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.USER_CASE,
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        response = self._make_request_with_filter(KycVerificationStatus.PASSED)
+        assert response.status_code == 200
+
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        row = table_data.data[0]
+        assert row.serialized_data['id'] == self.usercase_verified.get_case_property('hq_user_id')
+
+
+def _create_case(factory, name, data, case_type='other-case'):
     return factory.create_case(
         case_name=name,
-        case_type='other-case',
+        case_type=case_type,
         update=data
     )

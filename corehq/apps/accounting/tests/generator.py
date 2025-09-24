@@ -3,12 +3,12 @@ import datetime
 import random
 import uuid
 from decimal import Decimal
+from unittest import mock
 
 from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
 
-from unittest import mock
 from nose.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
@@ -24,11 +24,11 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     Feature,
     FeatureType,
+    Role,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     SoftwareProductRate,
-    Role,
     Subscriber,
     Subscription,
     SubscriptionType,
@@ -153,7 +153,7 @@ def custom_plan_version(name='Custom software plan', edition=SoftwarePlanEdition
 @unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
                                  plan_version=None, service_type=SubscriptionType.NOT_SET,
-                                 is_active=False, do_not_invoice=False):
+                                 is_active=False, do_not_invoice=False, **kwargs):
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
@@ -163,7 +163,8 @@ def generate_domain_subscription(account, domain, date_start, date_end,
         date_end=date_end,
         service_type=service_type,
         is_active=is_active,
-        do_not_invoice=do_not_invoice
+        do_not_invoice=do_not_invoice,
+        **kwargs
     )
     subscription.save()
     return subscription

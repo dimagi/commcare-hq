@@ -273,9 +273,12 @@ class ApplicationValidator(ApplicationBaseValidator):
         if app_uses_usercase(self.app) and not domain_has_privilege(self.domain, privileges.USERCASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Properties and your current subscription does not '
-                             'support that. You can remove User Properties functionality by opening the User '
-                             'Properties tab in a form that uses it, and clicking "Remove User Properties".'),
+                'message': _(
+                    "Your application is using User Properties or using `commcare-user` as a menu's case type, "
+                    "and your current subscription does not support that. You can remove User Properties"
+                    "functionality by opening the User Properties tab in a form that uses it and clicking "
+                    "'Remove User Properties.'"
+                ),
             })
         return errors
 
