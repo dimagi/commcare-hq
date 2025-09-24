@@ -1558,8 +1558,9 @@ class UploadWebUsers(BaseUploadUser):
     @property
     def page_context(self):
         request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
-        from corehq.apps.users.views.mobile import get_user_upload_context
-        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users")
+        from corehq.apps.users.views.mobile import get_user_upload_context, BULK_WEB_HELP_SITE
+        return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users",
+                                       help_site_link=BULK_WEB_HELP_SITE)
 
     def post(self, request, *args, **kwargs):
         track_workflow_noop(request.couch_user.get_email(), 'Bulk upload web users selected')
