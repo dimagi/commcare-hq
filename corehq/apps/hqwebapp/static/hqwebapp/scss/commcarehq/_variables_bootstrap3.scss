@@ -19,26 +19,25 @@ $gray: lighten($gray-base, 33.5%); // #555
 $gray-light: lighten($gray-base, 46.7%); // #777
 $gray-lighter: lighten($gray-base, 93.5%);
 
-$btn-default-color:              $cc-text;
-$btn-default-bg:                 $cc-bg;
-$btn-default-border:             $cc-neutral-hi;
+$btn-default-color: $cc-text;
+$btn-default-bg: $cc-bg;
+$btn-default-border: $cc-neutral-hi;
 
-$btn-footer-color:  #ffffff;
-$btn-footer-bg:     #474747;
+$btn-footer-color: #ffffff;
+$btn-footer-bg: #474747;
 $btn-footer-border: #cccccc;
 
 // Navigation Bar
-$navbar-height:                  60px;
-$navbar-padding-vertical:        calc(($navbar-height - 20px) / 2);
-$navbar-default-bg:              $cc-bg;
+$navbar-height: 60px;
+$navbar-padding-vertical: calc(($navbar-height - 20px) / 2);
+$navbar-default-bg: $cc-bg;
 
-$navbar-footer-height:            40px;
-$navbar-footer-link-color:        mix(darken(#ffffff, 10), $brand-primary, 90%);
-$navbar-footer-link-color-hover:  $gray-lighter;
-$navbar-footer-button-color:      #474747;
+$navbar-footer-height: 40px;
+$navbar-footer-link-color: mix(darken(#ffffff, 10), $brand-primary, 90%);
+$navbar-footer-link-color-hover: $gray-lighter;
+$navbar-footer-button-color: #474747;
 
 $navbar-mobile-height: 40px;
-
 
 // Misc variables originally only refrenced in bootstrap 3 stylesheets
 $grid-float-breakpoint: map-get($grid-breakpoints, "sm");
@@ -52,23 +51,23 @@ $checkbox-default-color: $call-to-action-mid;
 // -------------------------
 // Also see Bootstrap 5's own master list:
 // bootstrap5/scss/_variables.scss
-$zindexDashboardSpinner:              500;
-$zindexAccountingPricingTableHeader:  800;
+$zindexDashboardSpinner: 500;
+$zindexAccountingPricingTableHeader: 800;
 
 // Other Zindecies
-$zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
-$zindex-hq-navigation:               1049;
-$zindex-cloudcare-debugger:          1040;
-$zindex-persistent-menu-nav:         1030;
-$zindex-persistent-menu-nav-arrow:   $zindex-persistent-menu-nav + 1;
-$zindex-navbar:                      1000;
-$zindex-app-preview:                  998;
-$zindex-navbar-cloudcare:             995;
-$zindex-persistent-tile-cloudcare:    993;
-$zindex-formplayer-progress:          990;
-$zindex-report-loading:               100;
-$zindex-formplayer-scroll-to-bottom:    5;
-$zindex-next-error:                     5;  // Above the sticky submit button
-$zindex-formplayer-anchored-submit:     4;
+$zindex-select2-results: 1056; // higher than $zindex-modal so select2s can be used in modals
+$zindex-hq-navigation: 1049;
+$zindex-cloudcare-debugger: 1040;
+$zindex-persistent-menu-nav: 1030;
+$zindex-persistent-menu-nav-arrow: $zindex-persistent-menu-nav + 1;
+$zindex-navbar: 1000;
+$zindex-app-preview: 998;
+$zindex-navbar-cloudcare: 995;
+$zindex-persistent-tile-cloudcare: 993;
+$zindex-formplayer-progress: 990;
+$zindex-report-loading: 100;
+$zindex-formplayer-scroll-to-bottom: 5;
+$zindex-next-error: 5; // Above the sticky submit button
+$zindex-formplayer-anchored-submit: 4;
 
-$cursor-disabled: 'not-allowed';
+$cursor-disabled: "not-allowed";
