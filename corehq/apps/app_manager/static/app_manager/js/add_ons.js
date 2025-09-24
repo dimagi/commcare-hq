@@ -60,7 +60,7 @@ function EditAddOns(addOns, layout, saveUrl) {
     };
 
     self.enableAll = function () {
-        Object.entries(self.addOns).forEach(([_, observable]) => {
+        Object.entries(self.addOns).forEach(([_slug, observable]) => {
             observable(true);
         });
         self.sections.forEach((section) => {
