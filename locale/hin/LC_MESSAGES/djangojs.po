@@ -774,10 +774,6 @@ msgstr "फॉर्म संपादित करें"
 msgid "Form Settings"
 msgstr "फॉर्म सेटिंग्स"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Could not enable user properties, please try again later."
-msgstr "यूज़र प्रॉपर्टीज़ सक्षम नहीं कर सके, कृपया बाद में पुनः प्रयास करें।"
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "This form either no longer exists or has a different case type"
 msgstr "यह फॉर्म या तो अब मौजूद नहीं है या इसका केस प्रकार अलग है"
@@ -4240,6 +4236,9 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr "यूज़र प्रॉपर्टीज़ सक्षम नहीं कर सके, कृपया बाद में पुनः प्रयास करें।"
 
 #~ msgid "Email address is required when users confirm their own accounts."
 #~ msgstr ""
