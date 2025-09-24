@@ -11,7 +11,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import (
 )
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
-from corehq.apps.integration.payments.const import PAYMENT_STATUS_ERROR_CODES, PaymentStatus
+from corehq.apps.integration.payments.const import PaymentStatusErrorCode, PaymentStatus
 
 
 class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
@@ -126,7 +126,10 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
             'error_message': None,
         }
         if payment_error := record['payment_error']:
-            context['error_message'] = PAYMENT_STATUS_ERROR_CODES.get(payment_error, payment_error)
+            if payment_error in PaymentStatusErrorCode.values:
+                context['error_message'] = PaymentStatusErrorCode(payment_error).label
+            else:
+                context['error_message'] = payment_error
 
         return render_to_string('payments/partials/payments_status.html', context)
 

@@ -72,47 +72,75 @@ class PaymentStatus(models.TextChoices):
 
 
 # Error codes from https://momodeveloper.mtn.com/api-documentation/testing
-PAYMENT_STATUS_ERROR_CODES = {
-    "DepositPayerFailed": _("The deposit transaction failed."),
-    "DepositPayerRejected": _("The deposit transaction was rejected by the payer."),
-    "DepositPayerExpired": _("The deposit transaction request expired before completion."),
-    "DepositPayerOngoing": _("The deposit transaction is still in progress."),
-    "DepositPayerDelayed": _("The deposit transaction has been delayed."),
-    "DepositPayerNotFound": _("The deposit transaction was not found."),
-    "DepositPayerPayeeNotAllowedToReceive": _("The payee is not allowed to receive the deposit transaction."),
-    "DepositPayerNotAllowed": _("The payer is not allowed to perform this deposit transaction."),
-    "DepositPayerNotAllowedTargetEnvironment": _("The deposit transaction is not allowed in the target "
-                                                 "environment."),
-    "DepositPayerInvalidCallbackUrlHost": _("The callback URL host provided for the deposit transaction is "
-                                            "invalid."),
-    "DepositPayerInvalidCurrency": _("The currency specified for the deposit transaction is invalid."),
-    "DepositPayerInternalProcessingError": _("An internal processing error occurred during the deposit "
-                                             "transaction."),
-    "DepositPayerServiceUnavailable": _("The deposit transaction service is currently unavailable."),
-    "DepositPayerCouldNotPerformTransaction": _("The deposit transaction could not be performed."),
-    "PAYEE_NOT_FOUND": _("The specified payee account could not be found."),
-    "PAYER_NOT_FOUND": _("The specified payer account could not be found."),
+# and https://momodeveloper.mtn.com/API-collections#api=disbursement&operation=GetDepositStatus
+class PaymentStatusErrorCode(models.TextChoices):
+    # MoMo API Error Codes
+    DEPOSIT_PAYER_FAILED = 'DepositPayerFailed', _("The deposit transaction failed.")
+    DEPOSIT_PAYER_REJECTED = 'DepositPayerRejected', _("The deposit transaction was rejected by the payer.")
+    DEPOSIT_PAYER_EXPIRED = 'DepositPayerExpired', _("The deposit transaction request expired before completion.")
+    DEPOSIT_PAYER_ONGOING = 'DepositPayerOngoing', _("The deposit transaction is still in progress.")
+    DEPOSIT_PAYER_DELAYED = 'DepositPayerDelayed', _("The deposit transaction has been delayed.")
+    DEPOSIT_PAYER_NOT_FOUND = 'DepositPayerNotFound', _("The deposit transaction was not found.")
+    DEPOSIT_PAYER_PAYEE_NOT_ALLOWED_TO_RECEIVE = (
+        "DepositPayerPayeeNotAllowedToReceive",
+        _("The payee is not allowed to receive the deposit transaction.")
+    )
+    DEPOSIT_PAYER_NOT_ALLOWED = (
+        "DepositPayerNotAllowed",
+        _("The payer is not allowed to perform this deposit transaction.")
+    )
+    DEPOSIT_PAYER_NOT_ALLOWED_TARGET_ENVIRONMENT = (
+        "DepositPayerNotAllowedTargetEnvironment",
+        _("The deposit transaction is not allowed in the target environment.")
+    )
+    DEPOSIT_PAYER_INVALID_CALLBACK_URL_HOST = (
+        "DepositPayerInvalidCallbackUrlHost",
+        _("The callback URL host provided for the deposit transaction is invalid.")
+    )
+    DEPOSIT_PAYER_INVALID_CURRENCY = (
+        "DepositPayerInvalidCurrency",
+        _("The currency specified for the deposit transaction is invalid.")
+    )
+    DEPOSIT_PAYER_INTERNAL_PROCESSING_ERROR = (
+        "DepositPayerInternalProcessingError",
+        _("An internal processing error occurred during the deposit transaction.")
+    )
+    DEPOSIT_PAYER_SERVICE_UNAVAILABLE = (
+        "DepositPayerServiceUnavailable",
+        _("The deposit transaction service is currently unavailable.")
+    )
+    DEPOSIT_PAYER_COULD_NOT_PERFORM_TRANSACTION = (
+        "DepositPayerCouldNotPerformTransaction",
+        _("The deposit transaction could not be performed.")
+    )
+
+    # General API Error Codes
+    PAYEE_NOT_FOUND = 'PAYEE_NOT_FOUND', _("The specified payee account could not be found.")
+    PAYER_NOT_FOUND = 'PAYER_NOT_FOUND', _("The specified payer account could not be found.")
     # Note: Based on sandbox documentation, this is same as DepositPayerNotAllowed
-    "NOT_ALLOWED": _("The payer is not allowed to perform this deposit transaction."),
-    "NOT_ALLOWED_TARGET_ENVIRONMENT": _("The target environment is not allowed."),
-    "INVALID_CALLBACK_URL_HOST": _("The callback URL host is invalid."),
-    "INVALID_CURRENCY": _("The specified currency is invalid."),
-    "SERVICE_UNAVAILABLE": _("The service is temporarily unavailable."),
-    "INTERNAL_PROCESSING_ERROR": _("An internal processing error occurred."),
-    "NOT_ENOUGH_FUNDS": _("The payer account does not have enough funds."),
-    "PAYER_LIMIT_REACHED": _("The payer has reached their transaction limit."),
-    "PAYEE_NOT_ALLOWED_TO_RECEIVE": _("The payee is not allowed to receive funds."),
-    "PAYMENT_NOT_APPROVED": _("The payment was not approved by the payer."),
-    "RESOURCE_NOT_FOUND": _("The requested resource was not found."),
-    "APPROVAL_REJECTED": _("The transaction approval was rejected."),
-    "EXPIRED": _("The transaction has expired."),
-    "TRANSACTION_CANCELED": _("The transaction was canceled."),
-    "RESOURCE_ALREADY_EXIST": _("The resource already exists."),
-    # New error codes for custom errors
-    "MissingTransactionId": _("Transaction ID not found on the record"),
-    "HttpError404": _("Payment transaction not found"),
-    "UnexpectedError": _("Unexpected error occurred. Reach out to support if the issue persists."),
-    "PaymentRequestError": _("Error occurred during payment request. Reach out to support if the issue persists."),
-    "MaxRetryExceededRequestError": _("Maximum retry attempts exceeded with request error."),
-    "MaxRetryExceededPendingStatus": _("Maximum retry attempts exceeded with pending status."),
-}
+    NOT_ALLOWED = 'NOT_ALLOWED', _("The payer is not allowed to perform this deposit transaction.")
+    NOT_ALLOWED_TARGET_ENVIRONMENT = 'NOT_ALLOWED_TARGET_ENVIRONMENT', _("The target environment is not allowed.")
+    INVALID_CALLBACK_URL_HOST = 'INVALID_CALLBACK_URL_HOST', _("The callback URL host is invalid.")
+    INVALID_CURRENCY = 'INVALID_CURRENCY', _("The specified currency is invalid.")
+    SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE', _("The service is temporarily unavailable.")
+    INTERNAL_PROCESSING_ERROR = 'INTERNAL_PROCESSING_ERROR', _("An internal processing error occurred.")
+    NOT_ENOUGH_FUNDS = 'NOT_ENOUGH_FUNDS', _("The payer account does not have enough funds.")
+    PAYER_LIMIT_REACHED = 'PAYER_LIMIT_REACHED', _("The payer has reached their transaction limit.")
+    PAYEE_NOT_ALLOWED_TO_RECEIVE = 'PAYEE_NOT_ALLOWED_TO_RECEIVE', _("The payee is not allowed to receive funds.")
+    PAYMENT_NOT_APPROVED = 'PAYMENT_NOT_APPROVED', _("The payment was not approved by the payer.")
+    RESOURCE_NOT_FOUND = 'RESOURCE_NOT_FOUND', _("The requested resource was not found.")
+    APPROVAL_REJECTED = 'APPROVAL_REJECTED', _("The transaction approval was rejected.")
+    EXPIRED = 'EXPIRED', _("The transaction has expired.")
+    TRANSACTION_CANCELED = 'TRANSACTION_CANCELED', _("The transaction was canceled.")
+    RESOURCE_ALREADY_EXIST = 'RESOURCE_ALREADY_EXIST', _("The resource already exists.")
+
+    # Custom Error Codes for internal use
+    MISSING_TRANSACTION_ID = 'MissingTransactionId', _("Transaction ID is missing in the record")
+    HTTP_ERROR_404 = 'HttpError404', _("Payment transaction not found")
+    UNEXPECTED_ERROR = 'UnexpectedError', _("Unexpected error occurred")
+    PAYMENT_REQUEST_ERROR = (
+        'PaymentRequestError',
+        _("Error occurred during payment request. Reach out to support if the issue persists.")
+    )
+    MaxRetryExceededRequestError = _("Maximum retry attempts exceeded with request error.")
+    MaxRetryExceededPendingStatus = _("Maximum retry attempts exceeded with pending status")

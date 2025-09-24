@@ -14,6 +14,7 @@ from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
     PAYMENT_STATUS_DEVICE_ID,
+    PaymentStatusErrorCode,
     PAYMENT_SUBMITTED_DEVICE_ID,
     PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
@@ -71,7 +72,7 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
         })
     except PaymentRequestError as e:
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: 'PaymentRequestError',
+            PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_REQUEST_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
         details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
@@ -79,7 +80,7 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
     except Exception as e:
         # We need to know when anything goes wrong
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: 'UnexpectedError',
+            PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.UNEXPECTED_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
         details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
@@ -285,14 +286,14 @@ def _handle_payment_status_retry(payment_case, status_update=None, request_error
                 payment_case.domain, payment_case.get_case_property('transaction_id'), str(request_error)
             )
             notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
-            return _get_status_details(PaymentStatus.ERROR, "MaxRetryExceededRequestError")
+            return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
         else:
             # We only increment the retry count for request errors. Will retry in the next scheduled run
             # TODO Consider updating status and error so user is aware of the issue
             return {PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
 
     if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
-        return _get_status_details(PaymentStatus.ERROR, "MaxRetryExceededPendingStatus")
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)
     else:
         status_update[PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT] = retry_count + 1
     return status_update
@@ -301,7 +302,7 @@ def _handle_payment_status_retry(payment_case, status_update=None, request_error
 def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
     transaction_id = payment_case.get_case_property('transaction_id')
     if not transaction_id:
-        return _get_status_details(PaymentStatus.ERROR, "MissingTransactionId")
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MISSING_TRANSACTION_ID)
 
     try:
         response = _make_payment_status_request(transaction_id, config)
@@ -313,7 +314,7 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
         # https://momodeveloper.mtn.com/api-documentation/common-error
         status_code = err.response.status_code
         if status_code == 404:
-            return _get_status_details(PaymentStatus.ERROR, "HttpError404")
+            return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.HTTP_ERROR_404)
 
         details = _get_notify_error_details(config.domain, payment_case.case_id, str(err.response.text))
         notify_error(
@@ -336,7 +337,7 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
     except Exception as e:
         details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
         notify_exception(None, "[MoMo Payments] Unexpected error occurred while fetching status", details=details)
-        return _get_status_details(PaymentStatus.ERROR, "UnexpectedError")
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.UNEXPECTED_ERROR)
 
     return _get_status_details(status, error_code)
 

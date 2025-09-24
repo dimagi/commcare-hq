@@ -12,7 +12,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.integration.payments.const import (
-    PAYMENT_STATUS_ERROR_CODES,
+    PaymentStatusErrorCode,
     PaymentProperties,
     PaymentStatus,
     PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
@@ -505,7 +505,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             expected = {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'HttpError404',
+                PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.HTTP_ERROR_404,
             }
             self.assertEqual(result, expected)
 
@@ -946,15 +946,17 @@ class TestRequestPaymentsStatusForCases(TestCase):
 
         mock_request_status.return_value = {
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_PROVIDER,
-            PaymentProperties.PAYMENT_ERROR: 'DepositPayerOngoing',
-            PaymentProperties.PAYMENT_ERROR_MESSAGE: PAYMENT_STATUS_ERROR_CODES['DepositPayerOngoing']
+            PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.DEPOSIT_PAYER_ONGOING,
         }
 
         request_payments_status_for_cases([case.case_id], self.config)
 
         case.refresh_from_db()
         self.assertEqual(case.case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.ERROR)
-        self.assertEqual(case.case_json[PaymentProperties.PAYMENT_ERROR], 'MaxRetryExceededPendingStatus')
+        self.assertEqual(
+            case.case_json[PaymentProperties.PAYMENT_ERROR],
+            PaymentStatusErrorCode.MaxRetryExceededPendingStatus
+        )
 
     @patch('corehq.apps.integration.payments.services.request_payment_status')
     def test_request_error_exceeds_retry_count(self, mock_request_status):
@@ -973,7 +975,10 @@ class TestRequestPaymentsStatusForCases(TestCase):
 
         case.refresh_from_db()
         self.assertEqual(case.case_json[PaymentProperties.PAYMENT_STATUS], PaymentStatus.ERROR)
-        self.assertEqual(case.case_json[PaymentProperties.PAYMENT_ERROR], 'MaxRetryExceededRequestError')
+        self.assertEqual(
+            case.case_json[PaymentProperties.PAYMENT_ERROR],
+            PaymentStatusErrorCode.MaxRetryExceededRequestError
+        )
 
 
 def _create_case(factory, name, data):
