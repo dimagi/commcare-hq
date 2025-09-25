@@ -121,13 +121,7 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     if not case_ids:
         return []
 
-    valid_statuses_for_verification = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
-    if _any_invalid_payment_status(case_ids, domain, valid_statuses_for_verification):
-        raise PaymentRequestError(
-            _("Only payments in '{}' or '{}' state are eligible for verification.".format(
-                PaymentStatus.NOT_VERIFIED.label, PaymentStatus.REQUEST_FAILED.label
-            ))
-        )
+    _validate_payment_cases_for_verification(case_ids, domain)
     payment_properties_update = {
         PaymentProperties.PAYMENT_VERIFIED: 'True',
         PaymentProperties.PAYMENT_VERIFIED_ON_UTC: datetime.utcnow().isoformat(),
@@ -147,12 +141,32 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     return updated_cases
 
 
-def _any_invalid_payment_status(case_ids, domain, valid_statuses):
+def _validate_payment_cases_for_verification(case_ids, domain):
+    valid_statuses = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
     for case in CommCareCase.objects.iter_cases(case_ids, domain):
-        payment_status_value = case.get_case_property(PaymentProperties.PAYMENT_STATUS)
-        if PaymentStatus.from_value(payment_status_value) not in valid_statuses:
-            return True
-    return False
+        _validate_payment_case_status(case, valid_statuses, operation=_("verification"))
+        _validate_final_mobile_validation(case)
+
+
+def _validate_payment_case_status(case, valid_statuses, operation):
+    payment_status = PaymentStatus.from_value(
+        case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+    )
+    if payment_status not in valid_statuses:
+        labels = " or ".join(f"'{status.label}'" for status in valid_statuses)
+        raise PaymentRequestError(
+            _("Only payments in the {} state are eligible for {}.".format(labels, operation))
+        )
+
+
+def _validate_final_mobile_validation(case):
+    final_mobile_validation = case.get_case_property(PaymentProperties.FINAL_MOBILE_VALIDATION)
+    if final_mobile_validation and final_mobile_validation != "true":
+        raise PaymentRequestError(
+            _("Only payments with '{}' set to 'true' are eligible for verification.".format(
+                PaymentProperties.FINAL_MOBILE_VALIDATION.value
+            ))
+        )
 
 
 def _get_cases_updates(case_ids, updates):
@@ -215,14 +229,15 @@ def revert_payment_verification(domain, case_ids: list):
     if not case_ids:
         return []
 
-    if _any_invalid_payment_status(case_ids, domain, [PaymentStatus.PENDING_SUBMISSION]):
-        raise PaymentRequestError(
-            _("Only payments in the '{}' state are eligible for verification reversal.".format(
-                PaymentStatus.PENDING_SUBMISSION.label
-            ))
-        )
+    _validate_payment_cases_for_revert(case_ids, domain)
 
     return _update_payment_properties_for_revert(domain, case_ids)
+
+
+def _validate_payment_cases_for_revert(case_ids, domain):
+    valid_statuses = [PaymentStatus.PENDING_SUBMISSION]
+    for case in CommCareCase.objects.iter_cases(case_ids, domain):
+        _validate_payment_case_status(case, valid_statuses, operation=_("verification reversal"))
 
 
 def _update_payment_properties_for_revert(domain, case_ids: list):
