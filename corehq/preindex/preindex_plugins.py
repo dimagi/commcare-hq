@@ -94,7 +94,7 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
 
     def get_couchapps(self):
         return [d for d in os.listdir(self.dir)
-                if os.path.isdir(os.path.join(self.dir, d)) and d != '__pycache__']
+                if os.path.isdir(os.path.join(self.dir, d)) and d != '__pycache__' and d != 'tests']
 
     def _get_designs(self):
         return [
