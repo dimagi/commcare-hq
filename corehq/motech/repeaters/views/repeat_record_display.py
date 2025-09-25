@@ -56,7 +56,7 @@ class RepeatRecordDisplay:
     @property
     def state(self):
         label_cls, label_text = _get_state_tuple(self.record)
-        return format_html(f'<span class="label label-{label_cls}">{label_text}</span>')
+        return format_html('<span class="label label-{}">{}</span>', label_cls, label_text)
 
     def _format_date(self, date):
         if not date:
