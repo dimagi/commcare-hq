@@ -2,9 +2,9 @@ from django.core.management.base import BaseCommand, CommandError
 
 import csv
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, Domain
+from corehq.apps.domain.models import EnableAllAddOnsSetting
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.toggles import NAMESPACE_DOMAIN
 
@@ -13,7 +13,7 @@ class Command(BaseCommand):
     help = """
     Checks if an add on is enabled or was ever enabled for applications under all domains
     or under a specific domain with domain name if passed
-    Also checks if toggle ENABLE_ALL_ADD_ONS enabled for domains
+    Also checks if EnableAllAddOnsSetting enabled for domains
     Can also enable the domains found for another toggle in case the add-on is meant to
     be switched to a toggle
     Example: ./manage.py applications_with_add_ons custom_icon_badges
@@ -58,7 +58,7 @@ class Command(BaseCommand):
                 for application_id in application_ids:
                     application = Application.get(application_id)
                     if not application.is_remote_app():
-                        all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain_obj.name)
+                        all_add_ons_enabled = EnableAllAddOnsSetting.enabled_for_domain(domain_obj.name)
                         if add_on_name in application.add_ons or all_add_ons_enabled:
                             try:
                                 writer.writerow({
