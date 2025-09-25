@@ -259,7 +259,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         response = self.client.post(
             self.endpoint,
             data={
-                'selected_ids': [case.case_id for case in self.case_list],
+                'selected_ids': [self.case_list[0].case_id, self.case_list[1].case_id],
             },
             headers={'HQ-HX-Action': 'verify_rows'},
         )
@@ -288,7 +288,32 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
 
         assert response.status_code == 400
         assert (
-            b"Only payments in 'Not Verified' or 'Request failed' state are eligible for verification."
+            b"Only payments in the 'Not Verified' or 'Request failed' state are eligible for verification."
+            in response.content
+        )
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_invalid_final_mobile_validation(self):
+        submitted_case = _create_case(
+            self.factory,
+            name='submitted_case',
+            data={
+                PaymentProperties.FINAL_MOBILE_VALIDATION: 'false',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
+            }
+        )
+        self.addCleanup(submitted_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [submitted_case.case_id]},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        assert (
+            b"Only payments with 'commcare_final_mobile_validation' set to 'true' are eligible for verification."
             in response.content
         )
 
