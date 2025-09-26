@@ -166,6 +166,54 @@
     </div>
   {% endif %}
 
+  <div class="alert alert-info" role="alert">
+    <strong>Toggle Status:</strong> {{ toggle.status }}
+    <button
+      class="btn btn-primary pull-right"
+      data-toggle="modal"
+      data-target="#change-toggle-status"
+      {% if not user.is_staff %}disabled{% endif %}
+    >
+      Change
+    </button>
+  </div>
+
+  <div class="modal fade" id="change-toggle-status" tabindex="-1" role="dialog" aria-labelledby="change-toggle-status-label">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="change-toggle-status-label">Change feature flag status</h4>
+        </div>
+        <form class="form" action="{% url 'toggle_status' toggle.slug %}" method="POST">
+          {% csrf_token %}
+          <div class="modal-body">
+            {% for status_option in status_options %}
+            <div class="radio">
+              <label>
+                <input
+                  type="radio"
+                  name="toggle_status"
+                  value="{{ status_option }}"
+                  {% if status_option == toggle.status %}checked{% endif %}
+                >
+                {{ status_option }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <hr />
   <div id="toggle_editing_ko">
     {% if can_edit_toggle %}

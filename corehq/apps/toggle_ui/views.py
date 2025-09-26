@@ -4,7 +4,11 @@ from collections import Counter, defaultdict
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.response import Http404, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -39,7 +43,7 @@ from corehq.toggles import (
     toggles_enabled_for_email_domain,
     toggles_enabled_for_user,
 )
-from corehq.toggles.models import Toggle
+from corehq.toggles.models import Toggle, ToggleStatus
 from corehq.toggles.shortcuts import (
     can_user_edit_tag,
     get_editable_toggle_tags_for_user,
@@ -181,7 +185,8 @@ class ToggleEditView(BasePageView):
             'is_random': self.is_random_editable,
             'is_random_editable': self.is_random_editable,
             'is_feature_release': self.is_feature_release,
-            'allows_items': all(n in ALL_NAMESPACES for n in namespaces)
+            'allows_items': all(n in ALL_NAMESPACES for n in namespaces),
+            'status_options': map(str, ToggleStatus),
         }
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
@@ -416,6 +421,22 @@ def set_toggle(request, toggle_slug):
     _set_toggle(request.user.username, static_toggle, item, namespace, enabled)
 
     return JsonResponse({'success': True})
+
+
+@require_superuser_or_contractor
+@require_POST
+def toggle_status(request, toggle_slug):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Only Django admin users can do that")
+
+    status = request.POST['toggle_status']
+    if status not in ToggleStatus:
+        raise Exception('Invalid toggle status')
+
+    toggle = Toggle.get(toggle_slug)
+    toggle.status = status
+    toggle.save()
+    return HttpResponseRedirect(reverse(ToggleEditView.urlname, args=[toggle_slug]))
 
 
 @require_superuser_or_contractor
