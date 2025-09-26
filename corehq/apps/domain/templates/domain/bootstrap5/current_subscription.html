@@ -107,10 +107,23 @@
               <label class="form-label col-md-2">{% trans 'Date Ending' %}</label>
               <div class="col-md-10">
                 <p class="form-control-text">{{ plan.date_end }}</p>
+                {% if plan.is_auto_renew %}
+                  <div class="alert alert-success">
+                    {% blocktrans %}
+                      Your subscription will automatically renew.
+                    {% endblocktrans %}
+                  </div>
+                {% elif plan.next_subscription.can_renew %}
+                  <div class="alert alert-info">
+                    {% blocktrans with days_left=plan.days_left %}
+                      Your subscription will end in {{ days_left }} days.
+                    {% endblocktrans %}
+                  </div>
+                {% endif %}
                 {% if plan.next_subscription.can_renew %}
                   <a href="{{ plan.next_subscription.renew_url }}"
                      class="btn btn-primary">
-                    {% trans "Renew Plan" %}
+                    {% trans "Renew Now" %}
                   </a>
                 {% endif %}
                 {% if can_set_auto_renew %}
