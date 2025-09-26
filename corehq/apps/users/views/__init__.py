@@ -1437,11 +1437,11 @@ class InviteWebUserView(BaseManageWebUserView):
         program_id = changed_values.pop('program_id', None)
         if program_id:
             changed_values.update(UserChangeMessage.program_change(Program.get(program_id)))
-        assigned_locations = changed_values.pop('assigned_locations', None)
-        if assigned_locations:
+        if 'assigned_locations' in changed_values:
+            assigned_locations = changed_values.pop('assigned_locations')
             changed_values.update(UserChangeMessage.assigned_locations_info(assigned_locations))
-        primary_location = changed_values.pop('primary_location', None)
-        if primary_location:
+        if 'primary_location' in changed_values:
+            primary_location = changed_values.pop('primary_location')
             changed_values.update(UserChangeMessage.primary_location_info(primary_location))
 
         return changed_values
