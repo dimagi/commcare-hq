@@ -94,7 +94,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     track_domain_request,
 )
-from corehq.apps.domain.models import enable_all_add_ons_enabled
+from corehq.apps.domain.models import all_app_manager_add_ons_enabled
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -304,7 +304,7 @@ def get_app_view_context(request, app):
         'is_linked_app': is_linked_app(app),
         'is_remote_app': is_remote_app(app),
 
-        'all_add_ons_enabled': enable_all_add_ons_enabled(app.domain),
+        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
     })
     if isinstance(app, Application):
         context.update({'custom_assertions': [

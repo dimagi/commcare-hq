@@ -7,7 +7,7 @@ from django_prbac.utils import has_privilege as prbac_has_privilege
 from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
-from corehq.apps.domain.models import Domain, enable_all_add_ons_enabled
+from corehq.apps.domain.models import Domain, all_app_manager_add_ons_enabled
 from corehq.privileges import CHILD_CASES, LOOKUP_TABLES
 
 
@@ -222,7 +222,7 @@ def show(slug, request, app, module=None, form=None):
         return False
 
     # Show if setting to enable all add-ons is on
-    if enable_all_add_ons_enabled(app.domain):
+    if all_app_manager_add_ons_enabled(app.domain):
         return True
 
     if _grandfathered(slug, app):

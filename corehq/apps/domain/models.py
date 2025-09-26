@@ -1185,7 +1185,7 @@ class EnableAllAddOnsSetting(models.Model):
         return bool(setting and setting.enabled)
 
 
-def enable_all_add_ons_enabled(domain):
+def all_app_manager_add_ons_enabled(domain):
     from corehq.apps.accounting.utils import domain_has_privilege
     from corehq.privileges import SHOW_ENABLE_ALL_ADD_ONS
 
