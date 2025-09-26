@@ -1,7 +1,6 @@
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-
 {% js_entry_b3 'domain/js/current_subscription' %}
 
 {% block page_content %}
@@ -33,17 +32,24 @@
                   {{ plan.name }}
                 {% endif %}
               </h4>
-              <p><i class="fa fa-info-circle"></i>
+              <p>
+                <i class="fa fa-info-circle"></i>
                 {% if plan.is_paused %}
                   {% blocktrans with date_paused=plan.date_start pe=plan.previous_subscription_edition %}
-                    Your {{ pe }} Edition subscription was paused on {{ date_paused }}. Please subscribe to a plan to gain access to your project again.
+                    Your {{ pe }} Edition subscription was paused on
+                    {{ date_paused }}. Please subscribe to a plan to gain access
+                    to your project again.
                   {% endblocktrans %}
                 {% elif plan.is_trial %}
                   {% blocktrans with pn=plan.name trial_length=plan.trial_length %}
-                    The {{ trial_length }} Day Trial includes all the features present in the
-                    {{ pn }} Software Plan, which is our full set of features.
+                    The {{ trial_length }} Day Trial includes all the features
+                    present in the {{ pn }} Software Plan, which is our full set
+                    of features.
                   {% endblocktrans %}
-                {% else %}{{ plan.description|safe }}{% endif %}</p>
+                {% else %}
+                  {{ plan.description|safe }}
+                {% endif %}
+              </p>
             </div>
             {% if plan.do_not_invoice and not plan.is_paused %}
               <div class="alert alert-info">
@@ -56,13 +62,17 @@
               {% if plan.is_annual_plan and not plan.upgrade_available %}
                 <div style="margin-top: 10px;">
                   {% trans "Questions about your plan?" %}
-                  <a
-                    href="{% url "annual_plan_request_quote" domain %}"
-                  >{% trans "Contact us" %}</a>.
+                  <a href="{% url "annual_plan_request_quote" domain %}"
+                    >{% trans "Contact us" %}</a
+                  >.
                 </div>
               {% else %}
                 <p>
-                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                  <a
+                    class="btn btn-primary"
+                    style="margin-top:10px;"
+                    href="{{ change_plan_url }}"
+                  >
                     {% if plan.is_paused %}
                       {% trans "Subscribe to Plan" %}
                     {% elif plan.is_annual_plan and plan.upgrade_available %}
@@ -96,7 +106,9 @@
         {% if not plan.is_trial and not plan.is_paused %}
           {% if plan.date_start %}
             <div class="form-group">
-              <label class="control-label col-sm-2">{% trans 'Date Started' %}</label>
+              <label class="control-label col-sm-2"
+                >{% trans 'Date Started' %}</label
+              >
               <div class="col-sm-10">
                 <p class="form-control-text">{{ plan.date_start }}</p>
               </div>
@@ -104,7 +116,9 @@
           {% endif %}
           {% if plan.date_end %}
             <div class="form-group">
-              <label class="control-label col-sm-2">{% trans 'Date Ending' %}</label>
+              <label class="control-label col-sm-2"
+                >{% trans 'Date Ending' %}</label
+              >
               <div class="col-sm-10">
                 <p class="form-control-text">{{ plan.date_end }}</p>
                 {% if plan.is_auto_renew %}
@@ -121,8 +135,10 @@
                   </div>
                 {% endif %}
                 {% if plan.next_subscription.can_renew %}
-                  <a href="{{ plan.next_subscription.renew_url }}"
-                     class="btn btn-primary">
+                  <a
+                    href="{{ plan.next_subscription.renew_url }}"
+                    class="btn btn-primary"
+                  >
                     {% trans "Renew Now" %}
                   </a>
                 {% endif %}
@@ -145,10 +161,11 @@
           {% endif %}
           <div data-bind="foreach: products">
             <div class="form-group">
-              <label class="control-label col-sm-2">{% trans 'Current Price' %}</label>
+              <label class="control-label col-sm-2"
+                >{% trans 'Current Price' %}</label
+              >
               <div class="col-sm-10">
-                <p class="form-control-text"
-                   data-bind="text: monthlyFee"></p>
+                <p class="form-control-text" data-bind="text: monthlyFee"></p>
               </div>
             </div>
           </div>
@@ -169,9 +186,7 @@
               {% trans "Next Subscription Plan" %}
             </label>
             <div class="col-sm-10">
-              <p class="form-control-text">
-                {{ plan.next_subscription.name }}
-              </p>
+              <p class="form-control-text">{{ plan.next_subscription.name }}</p>
             </div>
           </div>
           <div class="form-group">
@@ -211,7 +226,9 @@
                 {% endif %}
               </label>
               <div class="col-sm-10">
-                <p class="form-control-text js-general-credit">{{ plan.general_credit.amount }}</p>
+                <p class="form-control-text js-general-credit">
+                  {{ plan.general_credit.amount }}
+                </p>
               </div>
             </div>
           {% endif %}
@@ -219,25 +236,29 @@
             <div class="form-group">
               <div class="col-sm-10 col-sm-offset-2">
                 {% if can_purchase_credits %}
-                  <button type="button"
-                          class="btn btn-primary"
-                          data-toggle="modal"
-                          data-target="#paymentModal"
-                          data-bind="click: function(){triggerPayment($root.paymentHandler.CREDIT_CARD)}">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-toggle="modal"
+                    data-target="#paymentModal"
+                    data-bind="click: function(){triggerPayment($root.paymentHandler.CREDIT_CARD)}"
+                  >
                     {% trans 'Prepay by Credit Card' %}
                   </button>
-                  <button type="button"
-                          class="btn btn-default"
-                          data-toggle="modal"
-                          data-target="#paymentModal"
-                          data-bind="click: function(){triggerPayment($root.paymentHandler.WIRE)}">
+                  <button
+                    type="button"
+                    class="btn btn-default"
+                    data-toggle="modal"
+                    data-target="#paymentModal"
+                    data-bind="click: function(){triggerPayment($root.paymentHandler.WIRE)}"
+                  >
                     {% trans 'Generate Prepayment Invoice' %}
                   </button>
                 {% else %}
                   <span class="label label-default">
-                                        <i class="fa fa-info-circle"></i>
-                                        {% trans "Not Billing Admin, Can't Add Credit" %}
-                                    </span>
+                    <i class="fa fa-info-circle"></i>
+                    {% trans "Not Billing Admin, Can't Add Credit" %}
+                  </span>
                 {% endif %}
               </div>
             </div>
@@ -251,18 +272,23 @@
                 <label class="control-label col-sm-2">
                   {% trans 'Plan Credit' %}
                   <div class="hq-help">
-                    <a href="#"
-                       data-content="This is credit that can be applied to your software plan.
-                                            It's likely that someone from Dimagi added these credits for you."
-                       data-title="Account Plan Credit"
-                       data-original-title=""
-                       title="">
+                    <a
+                      href="#"
+                      data-content="This is credit that can be applied to your software plan.
+                                    It's likely that someone from Dimagi added these credits for you."
+                      data-title="Account Plan Credit"
+                      data-original-title=""
+                      title=""
+                    >
                       <i class="fa fa-question-circle"></i>
                     </a>
                   </div>
                 </label>
                 <div class="col-sm-10">
-                  <p class="form-control-text" data-bind="text: accountAmount"></p>
+                  <p
+                    class="form-control-text"
+                    data-bind="text: accountAmount"
+                  ></p>
                 </div>
               </div>
             </div>
@@ -271,19 +297,23 @@
                 <label class="control-label col-sm-2">
                   {% trans 'General Credit' %}
                   <div class="hq-help">
-                    <a href="#"
-                       data-content="This is credit that can be applied to either your software
-                                            plan or the features below. It's likely that someone from Dimagi added
-                                            these credits for you."
-                       data-title="Account General Credit"
-                       data-original-title=""
-                       title="">
+                    <a
+                      href="#"
+                      data-content="This is credit that can be applied to either your software
+                                    plan or the features below. It's likely that someone from Dimagi added
+                                    these credits for you."
+                      data-title="Account General Credit"
+                      data-original-title=""
+                      title=""
+                    >
                       <i class="fa fa-question-circle"></i>
                     </a>
                   </div>
                 </label>
                 <div class="col-sm-10">
-                  <p class="form-control-text">{{ plan.account_general_credit.amount }}</p>
+                  <p class="form-control-text">
+                    {{ plan.account_general_credit.amount }}
+                  </p>
                 </div>
               </div>
             {% endif %}
@@ -294,49 +324,49 @@
           {% if plan.has_credits_in_non_general_credit_line %}
             <table class="table table-bordered table-striped">
               <thead>
-              <tr>
-                <th>{% trans "Feature" %}</th>
-                <th>{% trans "Current Use" %}</th>
-                <th>{% trans "Remaining" %}</th>
-                <th>{% trans "Credits Available" %}</th>
-                {% if show_account_credits %}
-                  <th>{% trans "Account Credits Available" %}</th>
-                {% endif %}
-              </tr>
+                <tr>
+                  <th>{% trans "Feature" %}</th>
+                  <th>{% trans "Current Use" %}</th>
+                  <th>{% trans "Remaining" %}</th>
+                  <th>{% trans "Credits Available" %}</th>
+                  {% if show_account_credits %}
+                    <th>{% trans "Account Credits Available" %}</th>
+                  {% endif %}
+                </tr>
               </thead>
               <tbody data-bind="foreach: features">
-              <tr>
-                <td data-bind="text: name"></td>
-                <td data-bind="text: usage"></td>
-                <td data-bind="text: remaining"></td>
-                <td data-bind="text: amount"></td>
-                {% if show_account_credits %}
-                  <td data-bind="text: accountAmount"></td>
-                {% endif %}
-              </tr>
+                <tr>
+                  <td data-bind="text: name"></td>
+                  <td data-bind="text: usage"></td>
+                  <td data-bind="text: remaining"></td>
+                  <td data-bind="text: amount"></td>
+                  {% if show_account_credits %}
+                    <td data-bind="text: accountAmount"></td>
+                  {% endif %}
+                </tr>
               </tbody>
             </table>
           {% else %}
             <table class="table table-bordered table-striped">
               <thead>
-              <tr>
-                <th>{% trans "Feature" %}</th>
-                <th>{% trans "Included in Software Plan" %}</th>
-                <th>{% trans "Current Usage" %}</th>
-                {% if show_account_credits %}
-                  <th>{% trans "Account Credits Available" %}</th>
-                {% endif %}
-              </tr>
+                <tr>
+                  <th>{% trans "Feature" %}</th>
+                  <th>{% trans "Included in Software Plan" %}</th>
+                  <th>{% trans "Current Usage" %}</th>
+                  {% if show_account_credits %}
+                    <th>{% trans "Account Credits Available" %}</th>
+                  {% endif %}
+                </tr>
               </thead>
               <tbody data-bind="foreach: features">
-              <tr>
-                <td data-bind="text: name"></td>
-                <td data-bind="text: limit"></td>
-                <td data-bind="text: usage"></td>
-                {% if show_account_credits %}
-                  <td data-bind="text: accountAmount"></td>
-                {% endif %}
-              </tr>
+                <tr>
+                  <td data-bind="text: name"></td>
+                  <td data-bind="text: limit"></td>
+                  <td data-bind="text: usage"></td>
+                  {% if show_account_credits %}
+                    <td data-bind="text: accountAmount"></td>
+                  {% endif %}
+                </tr>
               </tbody>
             </table>
           {% endif %}
@@ -346,10 +376,10 @@
   </div>
 
   {% include 'accounting/partials/stripe_card_ko_template.html' %}
-
 {% endblock %}
 
-{% block modals %}{{ block.super }}
+{% block modals %}
+  {{ block.super }}
   {% include 'domain/partials/bootstrap3/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
   {% if can_set_auto_renew %}
     {% include 'domain/partials/bootstrap3/auto_renew_modal.html' %}
