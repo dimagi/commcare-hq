@@ -275,6 +275,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         if subscription.date_end is not None else "--")
 
             if subscription.date_end is not None:
+                days_left = (subscription.date_end - datetime.date.today()).days
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
@@ -288,7 +289,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     })
 
                 else:
-                    days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
                         'can_renew': days_left <= 90,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
@@ -324,6 +324,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
                            if subscription is not None else None),
             'date_end': date_end,
+            'days_left': days_left if date_end is not None else None,
             'cards': cards,
             'is_auto_renew': subscription.auto_renew,
             'next_subscription': next_subscription,
