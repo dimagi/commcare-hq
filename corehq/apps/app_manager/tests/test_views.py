@@ -688,7 +688,7 @@ class TestViewGeneric(ViewsBase):
         'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'has_mobile_workers',
         'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
         'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'form_submit_history_url', 'btn_style',
-        'chat_widget_config', 'ACCOUNTS_EMAIL',
+        'chat_widget_config', 'ACCOUNTS_EMAIL', 'all_add_ons_enabled',
     }
 
     expected_keys_module = {

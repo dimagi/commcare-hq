@@ -61,6 +61,7 @@ module.exports = {
         "no-regex-spaces": ["error"],
         "no-throw-literal": ["error"],
         "no-unneeded-ternary": ["error"],
+        "no-unused-vars": ["error", {argsIgnorePattern: "^_", varsIgnorePattern: "^_"}],
         "no-whitespace-before-property": ["error"], // match flake8 E201 and E211
         "one-var-declaration-per-line": ["error"],
         "semi": ["error", "always"],
