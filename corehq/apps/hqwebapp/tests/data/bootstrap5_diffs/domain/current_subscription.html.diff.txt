@@ -1,17 +1,16 @@
 --- 
 +++ 
-@@ -1,8 +1,8 @@
+@@ -1,7 +1,7 @@
 -{% extends "hqwebapp/bootstrap3/base_section.html" %}
 +{% extends "hqwebapp/bootstrap5/base_section.html" %}
  {% load hq_shared_tags %}
  {% load i18n %}
- 
 -{% js_entry_b3 'domain/js/current_subscription' %}
 +{% js_entry 'domain/js/current_subscription' %}
  
  {% block page_content %}
    {% initial_page_data "stripe_public_key" stripe_public_key %}
-@@ -15,12 +15,12 @@
+@@ -14,12 +14,12 @@
    {% registerurl "domain_wire_payment" domain %}
  
    <div class="row">
@@ -28,33 +27,39 @@
              <div class="{{ plan.css_class }}">
                <h4>
                  {% if plan.is_paused %}
-@@ -54,7 +54,7 @@
+@@ -59,7 +59,7 @@
              {% endif %}
              {% if can_change_subscription %}
                {% if plan.is_annual_plan and not plan.upgrade_available %}
 -                <div style="margin-top: 10px;">
 +                <div class="mt-3">
                    {% trans "Questions about your plan?" %}
-                   <a
-                     href="{% url "annual_plan_request_quote" domain %}"
-@@ -62,7 +62,7 @@
+                   <a href="{% url "annual_plan_request_quote" domain %}"
+                     >{% trans "Contact us" %}</a
+@@ -67,11 +67,7 @@
                  </div>
                {% else %}
                  <p>
--                  <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+-                  <a
+-                    class="btn btn-primary"
+-                    style="margin-top:10px;"
+-                    href="{{ change_plan_url }}"
+-                  >
 +                  <a class="btn btn-primary mt-3" href="{{ change_plan_url }}">
                      {% if plan.is_paused %}
                        {% trans "Subscribe to Plan" %}
                      {% elif plan.is_annual_plan and plan.upgrade_available %}
-@@ -95,17 +95,17 @@
+@@ -104,21 +100,21 @@
          </div>
          {% if not plan.is_trial and not plan.is_paused %}
            {% if plan.date_start %}
 -            <div class="form-group">
--              <label class="control-label col-sm-2">{% trans 'Date Started' %}</label>
--              <div class="col-sm-10">
+-              <label class="control-label col-sm-2"
 +            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="form-label col-md-2">{% trans 'Date Started' %}</label>
++              <label class="form-label col-md-2"
+                 >{% trans 'Date Started' %}</label
+               >
+-              <div class="col-sm-10">
 +              <div class="col-md-10">
                  <p class="form-control-text">{{ plan.date_start }}</p>
                </div>
@@ -62,28 +67,42 @@
            {% endif %}
            {% if plan.date_end %}
 -            <div class="form-group">
--              <label class="control-label col-sm-2">{% trans 'Date Ending' %}</label>
--              <div class="col-sm-10">
+-              <label class="control-label col-sm-2"
 +            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="form-label col-md-2">{% trans 'Date Ending' %}</label>
++              <label class="form-label col-md-2"
+                 >{% trans 'Date Ending' %}</label
+               >
+-              <div class="col-sm-10">
 +              <div class="col-md-10">
                  <p class="form-control-text">{{ plan.date_end }}</p>
-                 {% if plan.next_subscription.can_renew %}
-                   <a href="{{ plan.next_subscription.renew_url }}"
-@@ -117,9 +117,9 @@
+                 {% if plan.is_auto_renew %}
+                   <div class="alert alert-success">
+@@ -145,8 +141,8 @@
+                   <button
+                     type="button"
+                     class="btn btn-default"
+-                    data-toggle="modal"
+-                    data-target="#auto-renew-modal"
++                    data-bs-toggle="modal"
++                    data-bs-target="#auto-renew-modal"
+                   >
+                     {% if plan.is_auto_renew %}
+                       {% trans "Disable Auto Renewal" %}
+@@ -159,40 +155,40 @@
              </div>
            {% endif %}
            <div data-bind="foreach: products">
 -            <div class="form-group">
--              <label class="control-label col-sm-2">{% trans 'Current Price' %}</label>
--              <div class="col-sm-10">
+-              <label class="control-label col-sm-2"
 +            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="form-label col-md-2">{% trans 'Current Price' %}</label>
++              <label class="form-label col-md-2"
+                 >{% trans 'Current Price' %}</label
+               >
+-              <div class="col-sm-10">
 +              <div class="col-md-10">
-                 <p class="form-control-text"
-                    data-bind="text: monthlyFee"></p>
+                 <p class="form-control-text" data-bind="text: monthlyFee"></p>
                </div>
-@@ -127,31 +127,31 @@
+             </div>
            </div>
          {% endif %}
          {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}
@@ -108,9 +127,7 @@
              </label>
 -            <div class="col-sm-10">
 +            <div class="col-md-10">
-               <p class="form-control-text">
-                 {{ plan.next_subscription.name }}
-               </p>
+               <p class="form-control-text">{{ plan.next_subscription.name }}</p>
              </div>
            </div>
 -          <div class="form-group">
@@ -124,7 +141,7 @@
                <p class="form-control-text">
                  {{ plan.next_subscription.price }}
                </p>
-@@ -164,50 +164,50 @@
+@@ -205,26 +201,26 @@
          <div class="form form-horizontal">
            {% if plan.has_credits_in_non_general_credit_line %}
              <div data-bind="foreach: products">
@@ -154,8 +171,10 @@
                </label>
 -              <div class="col-sm-10">
 +              <div class="col-md-10">
-                 <p class="form-control-text js-general-credit">{{ plan.general_credit.amount }}</p>
-               </div>
+                 <p class="form-control-text js-general-credit">
+                   {{ plan.general_credit.amount }}
+                 </p>
+@@ -232,29 +228,29 @@
              </div>
            {% endif %}
            <div data-bind="with: prepayments">
@@ -164,32 +183,36 @@
 +            <div class="form-group">  {# todo B5: css-form-group #}
 +              <div class="col-md-10 offset-md-2">
                  {% if can_purchase_credits %}
-                   <button type="button"
-                           class="btn btn-primary"
--                          data-toggle="modal"
--                          data-target="#paymentModal"
-+                          data-bs-toggle="modal"
-+                          data-bs-target="#paymentModal"
-                           data-bind="click: function(){triggerPayment($root.paymentHandler.CREDIT_CARD)}">
+                   <button
+                     type="button"
+                     class="btn btn-primary"
+-                    data-toggle="modal"
+-                    data-target="#paymentModal"
++                    data-bs-toggle="modal"
++                    data-bs-target="#paymentModal"
+                     data-bind="click: function(){triggerPayment($root.paymentHandler.CREDIT_CARD)}"
+                   >
                      {% trans 'Prepay by Credit Card' %}
                    </button>
-                   <button type="button"
--                          class="btn btn-default"
--                          data-toggle="modal"
--                          data-target="#paymentModal"
-+                          class="btn btn-outline-primary"
-+                          data-bs-toggle="modal"
-+                          data-bs-target="#paymentModal"
-                           data-bind="click: function(){triggerPayment($root.paymentHandler.WIRE)}">
+                   <button
+                     type="button"
+-                    class="btn btn-default"
+-                    data-toggle="modal"
+-                    data-target="#paymentModal"
++                    class="btn btn-outline-primary"
++                    data-bs-toggle="modal"
++                    data-bs-target="#paymentModal"
+                     data-bind="click: function(){triggerPayment($root.paymentHandler.WIRE)}"
+                   >
                      {% trans 'Generate Prepayment Invoice' %}
                    </button>
                  {% else %}
 -                  <span class="label label-default">
 +                  <span class="badge text-bg-secondary">
-                                         <i class="fa fa-info-circle"></i>
-                                         {% trans "Not Billing Admin, Can't Add Credit" %}
-                                     </span>
-@@ -220,8 +220,8 @@
+                     <i class="fa fa-info-circle"></i>
+                     {% trans "Not Billing Admin, Can't Add Credit" %}
+                   </span>
+@@ -267,8 +263,8 @@
            <legend>{% trans 'Account Credit' %}</legend>
            <div class="form form-horizontal">
              <div data-bind="foreach: products">
@@ -199,15 +222,17 @@
 +                <label class="form-label col-md-2">
                    {% trans 'Plan Credit' %}
                    <div class="hq-help">
-                     <a href="#"
-@@ -234,14 +234,14 @@
+                     <a
+@@ -283,7 +279,7 @@
                      </a>
                    </div>
                  </label>
 -                <div class="col-sm-10">
 +                <div class="col-md-10">
-                   <p class="form-control-text" data-bind="text: accountAmount"></p>
-                 </div>
+                   <p
+                     class="form-control-text"
+                     data-bind="text: accountAmount"
+@@ -292,8 +288,8 @@
                </div>
              </div>
              {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
@@ -217,20 +242,24 @@
 +                <label class="form-label col-md-2">
                    {% trans 'General Credit' %}
                    <div class="hq-help">
-                     <a href="#"
-@@ -255,7 +255,7 @@
+                     <a
+@@ -309,7 +305,7 @@
                      </a>
                    </div>
                  </label>
 -                <div class="col-sm-10">
 +                <div class="col-md-10">
-                   <p class="form-control-text">{{ plan.account_general_credit.amount }}</p>
-                 </div>
-               </div>
-@@ -323,5 +323,5 @@
- {% endblock %}
+                   <p class="form-control-text">
+                     {{ plan.account_general_credit.amount }}
+                   </p>
+@@ -379,8 +375,8 @@
  
- {% block modals %}{{ block.super }}
+ {% block modals %}
+   {{ block.super }}
 -  {% include 'domain/partials/bootstrap3/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
 +  {% include 'domain/partials/bootstrap5/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
+   {% if can_set_auto_renew %}
+-    {% include 'domain/partials/bootstrap3/auto_renew_modal.html' %}
++    {% include 'domain/partials/bootstrap5/auto_renew_modal.html' %}
+   {% endif %}
  {% endblock %}
