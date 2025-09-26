@@ -326,7 +326,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     restrict_superusers = BooleanProperty(default=False)
     allow_domain_requests = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=False)
-    usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
 
