@@ -116,6 +116,7 @@ from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.const import USER_DATE_FORMAT
+from corehq.toggles import SHOW_AUTO_RENEWAL
 
 PAYMENT_ERROR_MESSAGES = {
     400: gettext_lazy('Your request was not formatted properly.'),
@@ -210,6 +211,33 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     def can_purchase_credits(self):
         return self.request.couch_user.can_edit_billing()
+
+    @property
+    def can_set_auto_renew(self):
+        can_access_auto_renewal = (
+            SHOW_AUTO_RENEWAL.enabled(self.request.domain)
+            and self.request.couch_user.can_edit_billing()
+        )
+        subscription_eligible_for_auto_renewal = (
+            self.current_subscription.service_type == SubscriptionType.PRODUCT
+            and self.current_subscription.date_end is not None
+        )
+        subscription_is_auto_renew = self.current_subscription.auto_renew
+        next_subscription = self.current_subscription.next_subscription
+        next_created_by_auto_renew = SubscriptionAdjustment.objects.filter(
+            subscription=next_subscription,
+            method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+            reason=SubscriptionAdjustmentReason.CREATE
+        ).exists() if next_subscription else False
+
+        return (
+            can_access_auto_renewal
+            and subscription_eligible_for_auto_renewal
+            and (
+                next_subscription is None
+                or (subscription_is_auto_renew and next_created_by_auto_renew)
+            )
+        )
 
     @property
     @memoized
@@ -371,6 +399,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
+            'can_set_auto_renew': self.can_set_auto_renew,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
