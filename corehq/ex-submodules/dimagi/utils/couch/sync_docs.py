@@ -42,6 +42,10 @@ def verify_design_doc(db, design_doc_id, max_retries=5, retry_delay_s=1, expect_
     Returns:
         bool: True if verified, raises exception if verification fails after retries
     """
+    # tests design doc does not actually get pushed. So verifying it will cause a bunch of
+    # error logs
+    if design_doc_id == '_design/tests':
+        return True
     for attempt in range(max_retries):
         try:
             doc = db.get(design_doc_id)
