@@ -58,6 +58,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_doc_ids_for_domain_grouped_by_db,
 )
+from corehq.util.models import GetOrNoneManager
 from corehq.util.quickcache import get_session_key, quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -458,11 +459,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # TODO:
     #   * Simplify the Domain Couch model by splitting off properties.
     #   * Group properties by Django app into domain settings SQL models,
-    #     e.g. AppManagerDomainSettings for app-manager-related settings
-    #     that would include/replace:
+    #     e.g. Add more app-manager-related settings to
+    #     AppManagerDomainSettings:
     #     + Domain.usercase_enabled
     #     + AppReleaseModeSetting.is_visible
-    #     + EnableAllAddOnsSetting.enabled
     #     + etc.
     # (Norman, 2025-09-24)
 
@@ -1175,21 +1175,19 @@ class AppReleaseModeSetting(models.Model):
         return domain_obj
 
 
-class EnableAllAddOnsSetting(models.Model):
+class AppManagerDomainSettings(models.Model):
     domain = models.CharField(max_length=255, primary_key=True)
-    enabled = models.BooleanField(default=False)
+    all_add_ons_enabled = models.BooleanField(default=False)
 
-    @staticmethod
-    def enabled_for_domain(domain):
-        setting = EnableAllAddOnsSetting.objects.filter(domain=domain).first()
-        return bool(setting and setting.enabled)
+    objects = GetOrNoneManager()
 
 
 def all_app_manager_add_ons_enabled(domain):
     from corehq.apps.accounting.utils import domain_has_privilege
     from corehq.privileges import SHOW_ENABLE_ALL_ADD_ONS
 
-    return (
-        domain_has_privilege(domain, SHOW_ENABLE_ALL_ADD_ONS)
-        and EnableAllAddOnsSetting.enabled_for_domain(domain)
-    )
+    if not domain_has_privilege(domain, SHOW_ENABLE_ALL_ADD_ONS):
+        return False
+
+    app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=domain)
+    return bool(app_mgr and app_mgr.all_add_ons_enabled)

@@ -9,14 +9,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="EnableAllAddOnsSetting",
+            name="AppManagerDomainSettings",
             fields=[
-                ("domain", models.CharField(
-                    max_length=255,
-                    primary_key=True,
-                    serialize=False,
-                )),
-                ("enabled", models.BooleanField(default=False)),
+                (
+                    "domain",
+                    models.CharField(max_length=255, primary_key=True, serialize=False),
+                ),
+                ("all_add_ons_enabled", models.BooleanField(default=False)),
             ],
         ),
     ]

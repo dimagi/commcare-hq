@@ -110,8 +110,8 @@ from corehq.apps.domain.models import (
     RESTRICTED_UCR_EXPRESSIONS,
     SUB_AREA_CHOICES,
     AllowedUCRExpressionSettings,
+    AppManagerDomainSettings,
     AppReleaseModeSetting,
-    EnableAllAddOnsSetting,
     OperatorCallLimitSettings,
     SMSAccountConfirmationSettings,
     TransferDomainRequest,
@@ -753,9 +753,8 @@ class DomainGlobalSettingsForm(forms.Form):
         if not domain_has_privilege(self.domain, privileges.SHOW_ENABLE_ALL_ADD_ONS):
             del self.fields['enable_all_add_ons']
             return
-        self.fields['enable_all_add_ons'].initial = (
-            EnableAllAddOnsSetting.enabled_for_domain(self.domain)
-        )
+        app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=self.domain)
+        self.fields['enable_all_add_ons'].initial = bool(app_mgr and app_mgr.all_add_ons_enabled)
 
     def _handle_orphan_case_alerts_setting_value(self):
         self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
@@ -921,10 +920,11 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _save_enable_all_add_ons_setting(self, domain):
         value = self.cleaned_data.get("enable_all_add_ons", False)
-        if value != EnableAllAddOnsSetting.enabled_for_domain(self.domain):
-            EnableAllAddOnsSetting.objects.update_or_create(
+        app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=self.domain)
+        if value != bool(app_mgr and app_mgr.all_add_ons_enabled):
+            AppManagerDomainSettings.objects.update_or_create(
                 domain=self.domain,
-                defaults={'enabled': value},
+                defaults={'all_add_ons_enabled': value},
             )
 
     def _save_orphan_case_alerts_setting(self, domain):
