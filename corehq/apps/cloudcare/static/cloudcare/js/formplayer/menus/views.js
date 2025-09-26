@@ -720,7 +720,7 @@ const CaseListConfigView = Marionette.View.extend({
 
     templateContext: function () {
         return {
-            columnNames: this.model.get('columnNames'),
+            columnNames: this.model.get('columnNames').map(columnName => DOMPurify.sanitize(columnName)),
             columnVisibility: this.columnVisibility,
             allColumnsHidden: function () {
                 return this.columnVisibility.every(hidden => hidden === false);
