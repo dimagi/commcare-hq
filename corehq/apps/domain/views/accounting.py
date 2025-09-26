@@ -309,6 +309,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                            if subscription is not None else None),
             'date_end': date_end,
             'cards': cards,
+            'is_auto_renew': subscription.auto_renew,
             'next_subscription': next_subscription,
             'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
             'is_annual_plan': plan_version.plan.is_annual_plan,

@@ -113,6 +113,20 @@
                     {% trans "Renew Plan" %}
                   </a>
                 {% endif %}
+                {% if can_set_auto_renew %}
+                  <button
+                    type="button"
+                    class="btn btn-default"
+                    data-toggle="modal"
+                    data-target="#auto-renew-modal"
+                  >
+                    {% if plan.is_auto_renew %}
+                      {% trans "Disable Auto Renewal" %}
+                    {% else %}
+                      {% trans "Enable Auto Renewal" %}
+                    {% endif %}
+                  </button>
+                {% endif %}
               </div>
             </div>
           {% endif %}
@@ -324,4 +338,7 @@
 
 {% block modals %}{{ block.super }}
   {% include 'domain/partials/bootstrap3/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
+  {% if can_set_auto_renew %}
+    {% include 'domain/partials/bootstrap3/auto_renew_modal.html' %}
+  {% endif %}
 {% endblock %}
