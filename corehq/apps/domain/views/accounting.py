@@ -240,6 +240,22 @@ class DomainSubscriptionView(DomainAccountingSettings):
         )
 
     @property
+    def renewal_plan_preview(self):
+        if not self.can_set_auto_renew or self.current_subscription.auto_renew:
+            # details are only needed if user will see the option to enable auto renew
+            return None
+
+        current_plan = self.current_subscription.plan_version.plan
+        next_version = DefaultProductPlan.get_default_plan_version(
+            current_plan.edition, is_annual_plan=current_plan.is_annual_plan
+        )
+        return {
+            'is_annual_plan': next_version.plan.is_annual_plan,
+            'name': next_version.plan.name,
+            'price': _("USD %s /month") % next_version.product_rate.monthly_fee,
+        }
+
+    @property
     @memoized
     def plan(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
@@ -401,6 +417,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
             'can_set_auto_renew': self.can_set_auto_renew,
+            'renewal_plan_preview': self.renewal_plan_preview,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
