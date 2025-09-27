@@ -298,7 +298,10 @@ def _handle_payment_status_retry(payment_case, status_update=None, request_error
     if request_error:
         if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
             details = _get_notify_error_details(
-                payment_case.domain, payment_case.get_case_property('transaction_id'), str(request_error)
+                payment_case.domain,
+                payment_case.case_id,
+                str(request_error),
+                payment_case.get_case_property('transaction_id')
             )
             notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
             return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
@@ -331,7 +334,12 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
         if status_code == 404:
             return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.HTTP_ERROR_404)
 
-        details = _get_notify_error_details(config.domain, payment_case.case_id, str(err.response.text))
+        details = _get_notify_error_details(
+            config.domain,
+            payment_case.case_id,
+            str(err.response.text),
+            transaction_id
+        )
         notify_error(
             f"[MoMo Payments] Unexpected HTTP error {status_code} while fetching status.",
             details=details
@@ -350,7 +358,7 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
             _("Failed to fetch payment status. Unable to connect to server. Please try again later.")
         )
     except Exception as e:
-        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e), transaction_id)
         notify_exception(None, "[MoMo Payments] Unexpected error occurred while fetching status", details=details)
         return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.UNEXPECTED_ERROR)
 
@@ -405,9 +413,12 @@ def _get_http_error_code(code, response):
     return error.get("code", default_error)
 
 
-def _get_notify_error_details(domain, case_id, error):
-    return {
+def _get_notify_error_details(domain, case_id, error, transaction_id=None):
+    details = {
         'domain': domain,
         'case_id': case_id,
         'error': error,
     }
+    if transaction_id:
+        details['transaction_id'] = transaction_id
+    return details
