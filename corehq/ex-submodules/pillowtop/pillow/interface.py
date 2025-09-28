@@ -165,42 +165,33 @@ class ConstructedPillow:
             at the end of the batch, otherwise is updated for every change.
         """
         context = PillowRuntimeContext(changes_seen=0)
-        min_wait_seconds = 30
-
-        def process_offset_chunk(chunk, context):
-            if not chunk:
-                return
-            self._batch_process_with_error_handling(chunk)
-            self._update_checkpoint(chunk[-1], context)
-
-        # keep track of chunk for batch processors
         changes_chunk = []
-        last_process_time = datetime.utcnow()
 
         for change in self.change_feed.iter_changes(since=since or None, forever=forever):
             context.changes_seen += 1
-            if change:
+            if change or changes_chunk:
                 if self.batch_processors:
                     # Queue and process in chunks for both batch
                     #   and serial processors
-                    changes_chunk.append(change)
+                    if change is not None:
+                        changes_chunk.append(change)
                     chunk_full = len(changes_chunk) == self.processor_chunk_size
-                    time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
-                    if chunk_full or time_elapsed:
-                        last_process_time = datetime.utcnow()
+                    # change is None means consumer timeout -> process partial chunk to avoid lag
+                    if chunk_full or (change is None and changes_chunk):
                         self._batch_process_with_error_handling(changes_chunk)
-                        # update checkpoint for just the latest change
                         self._update_checkpoint(changes_chunk[-1], context)
-                        # reset for next chunk
                         changes_chunk = []
                 else:
                     # process all changes one by one
+                    assert change is not None
                     processing_time = self.process_with_error_handling(change)
                     self._record_change_in_datadog(change, processing_time)
                     self._update_checkpoint(change, context)
             else:
                 self._update_checkpoint(None, None)
-        process_offset_chunk(changes_chunk, context)
+        if changes_chunk:
+            self._batch_process_with_error_handling(changes_chunk)
+            self._update_checkpoint(changes_chunk[-1], context)
 
     def _batch_process_with_error_handling(self, changes_chunk):
         """
