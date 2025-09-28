@@ -201,9 +201,6 @@ class ConstructedPillow:
             else:
                 self._update_checkpoint(None, None)
         process_offset_chunk(changes_chunk, context)
-        if forever:
-            if context.changes_seen and change:
-                self._update_checkpoint(change, context)
 
     def _batch_process_with_error_handling(self, changes_chunk):
         """

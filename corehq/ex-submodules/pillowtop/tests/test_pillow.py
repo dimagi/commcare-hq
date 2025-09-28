@@ -14,11 +14,9 @@ cfg = Config(batch=True, changes=[1], chunk_size=1, forever=True)
     (cfg, [
         "batch [1]",
         "checkpoint 1 seen=1",
-        "checkpoint 1 seen=1",
     ]),
     (cfg(changes=[1, 2], chunk_size=2), [
         "batch [1, 2]",
-        "checkpoint 2 seen=2",
         "checkpoint 2 seen=2",
     ]),
     (cfg(changes=[1, None], chunk_size=2), [
@@ -33,11 +31,9 @@ cfg = Config(batch=True, changes=[1], chunk_size=1, forever=True)
     (cfg(changes=[1], chunk_size=2), [
         "batch [1]",
         "checkpoint 1 seen=1",
-        "checkpoint 1 seen=1",
     ]),
     (cfg(batch=False), [
         "serial 1",
-        "checkpoint 1 seen=1",
         "checkpoint 1 seen=1",
     ]),
     (cfg(batch=False, changes=[None]), [
