@@ -21,7 +21,7 @@ cfg = Config(batch=True, changes=[1], chunk_size=1, forever=True)
     ]),
     (cfg(changes=[1, None], chunk_size=2), [
         "batch [1]",
-        "checkpoint 1 seen=2",
+        "checkpoint 1 seen=1",
     ]),
     (cfg(changes=[None]), [
         "checkpoint None",

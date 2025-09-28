@@ -168,27 +168,27 @@ class ConstructedPillow:
         changes_chunk = []
 
         for change in self.change_feed.iter_changes(since=since or None, forever=forever):
-            context.changes_seen += 1
-            if change or changes_chunk:
-                if self.batch_processors:
-                    # Queue and process in chunks for both batch
-                    #   and serial processors
-                    if change is not None:
-                        changes_chunk.append(change)
-                    chunk_full = len(changes_chunk) == self.processor_chunk_size
-                    # change is None means consumer timeout -> process partial chunk to avoid lag
-                    if chunk_full or (change is None and changes_chunk):
-                        self._batch_process_with_error_handling(changes_chunk)
-                        self._update_checkpoint(changes_chunk[-1], context)
-                        changes_chunk = []
-                else:
-                    # process all changes one by one
-                    assert change is not None
-                    processing_time = self.process_with_error_handling(change)
-                    self._record_change_in_datadog(change, processing_time)
-                    self._update_checkpoint(change, context)
-            else:
+            if change is None and not changes_chunk:
                 self._update_checkpoint(None, None)
+                continue
+            if self.batch_processors:
+                # Queue and process in chunks for both batch and serial processors
+                if change is not None:
+                    context.changes_seen += 1
+                    changes_chunk.append(change)
+                chunk_full = len(changes_chunk) == self.processor_chunk_size
+                # change is None means consumer timeout -> process partial chunk to avoid lag
+                if chunk_full or (change is None and changes_chunk):
+                    self._batch_process_with_error_handling(changes_chunk)
+                    self._update_checkpoint(changes_chunk[-1], context)
+                    changes_chunk = []
+            else:
+                # process all changes one by one
+                assert change is not None
+                context.changes_seen += 1
+                processing_time = self.process_with_error_handling(change)
+                self._record_change_in_datadog(change, processing_time)
+                self._update_checkpoint(change, context)
         if changes_chunk:
             self._batch_process_with_error_handling(changes_chunk)
             self._update_checkpoint(changes_chunk[-1], context)
