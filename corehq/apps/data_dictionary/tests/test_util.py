@@ -10,6 +10,7 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType, CasePrope
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     delete_case_property,
+    fields_to_validate,
     generate_data_dictionary,
     get_case_property_count,
     get_case_property_deprecated_dict,
@@ -416,3 +417,71 @@ class TestGetCasePropertyCount(TestCase):
         for i in range(2):
             CaseProperty.objects.create(name=f'count-dep-{i}', case_type=case_type, deprecated=True)
         assert get_case_property_count(self.domain, case_type.name) == 5
+
+
+class TestFieldsToValidate(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_type = CaseType.objects.create(
+            name='test-case-type',
+            domain=cls.domain,
+        )
+        cls.date_prop = CaseProperty(
+            name='date_property',
+            case_type=cls.case_type,
+            data_type=CaseProperty.DataType.DATE,
+        )
+        cls.select_prop = CaseProperty(
+            name='select_property',
+            case_type=cls.case_type,
+            data_type=CaseProperty.DataType.SELECT,
+        )
+        CaseProperty.objects.bulk_create([
+            cls.date_prop,
+            cls.select_prop,
+            CaseProperty(
+                name='plain_property',
+                case_type=cls.case_type,
+                data_type=CaseProperty.DataType.PLAIN,
+            ),
+            CaseProperty(
+                name='number_property',
+                case_type=cls.case_type,
+                data_type=CaseProperty.DataType.NUMBER,
+            ),
+            CaseProperty(
+                name='barcode_property',
+                case_type=cls.case_type,
+                data_type=CaseProperty.DataType.BARCODE,
+            ),
+            CaseProperty(
+                name='gps_property',
+                case_type=cls.case_type,
+                data_type=CaseProperty.DataType.GPS,
+            ),
+            CaseProperty(
+                name='phone_property',
+                case_type=cls.case_type,
+                data_type=CaseProperty.DataType.PHONE_NUMBER,
+            ),
+            CaseProperty(
+                name='password_property',
+                case_type=cls.case_type,
+                data_type=CaseProperty.DataType.PASSWORD,
+            ),
+            CaseProperty(
+                name='undefined_property',
+                case_type=cls.case_type,
+                data_type=CaseProperty.DataType.UNDEFINED,
+            ),
+        ])
+
+    def test_fields_to_validate_returns_only_date_and_select_properties(self):
+        result = fields_to_validate(self.domain, self.case_type.name)
+        expected_names = {'date_property', 'select_property'}
+        assert set(result.keys()) == expected_names
+        assert result['date_property'] == self.date_prop
+        assert result['select_property'] == self.select_prop
