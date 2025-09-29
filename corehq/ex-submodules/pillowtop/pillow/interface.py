@@ -113,7 +113,10 @@ class ConstructedPillow:
             self._run_migrations_forever()
         else:
             while True:
-                self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+                try:
+                    self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+                except PillowtopCheckpointReset:
+                    pass
 
     def _run_migrations_forever(self):
         for processor in self.processors:
@@ -201,7 +204,7 @@ class ConstructedPillow:
             process_offset_chunk(changes_chunk, context)
         except PillowtopCheckpointReset:
             process_offset_chunk(changes_chunk, context)
-            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
+            raise
         if forever:
             if context.changes_seen and change:
                 self._update_checkpoint(change, context)

@@ -3,6 +3,8 @@ from unittest.mock import Mock, patch
 import pytest
 from testil import Config
 
+from pillowtop.exceptions import PillowtopCheckpointReset
+
 from ..pillow.interface import ConstructedPillow
 
 cfg = Config(batch=True, changes=[1], chunk_size=1, forever=True)
@@ -97,3 +99,29 @@ def test_process_changes(cfg, expected_calls):
     ):
         pillow.process_changes(since=None, forever=cfg.forever)
     assert calls == expected_calls
+
+
+def test_run_should_continue_on_checkpoint_reset():
+    class Stop(Exception):
+        pass
+
+    def exception_generator():
+        yield PillowtopCheckpointReset
+        yield Stop
+
+    def fake_process_changes(*args, **kwargs):
+        raise next(exception)
+
+    exception = exception_generator()
+    pillow = ConstructedPillow(
+        name='TestPillow',
+        checkpoint=Mock(),
+        change_feed=None,
+        processor=None,
+    )
+
+    with (
+        patch.object(pillow, 'process_changes', fake_process_changes),
+        pytest.raises(Stop),
+    ):
+        pillow.run()
