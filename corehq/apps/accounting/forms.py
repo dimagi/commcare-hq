@@ -819,6 +819,7 @@ class SubscriptionForm(forms.Form):
             funding_source=self.cleaned_data['funding_source'],
             skip_auto_downgrade=self.cleaned_data['skip_auto_downgrade'],
             skip_auto_downgrade_reason=self.cleaned_data['skip_auto_downgrade_reason'],
+            auto_renew=self.cleaned_data['auto_renew'],
         )
 
     def clean_active_accounts(self):
