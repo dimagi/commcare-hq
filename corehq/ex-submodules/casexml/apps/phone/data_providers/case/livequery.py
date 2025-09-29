@@ -28,7 +28,6 @@ from itertools import chain, islice
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
-
 from corehq.celery_monitoring.signals import CELERY_STATE_SENT
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.sql_db.routers import read_from_plproxy_standbys
