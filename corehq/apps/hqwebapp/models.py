@@ -148,3 +148,11 @@ class ServerLocation:
     }
 
     SUBDOMAINS = {env: server['subdomain'] for env, server in ENVS.items()}
+
+    @classmethod
+    def get_envs(cls):
+        return cls.ENVS
+
+    @classmethod
+    def get_subdomains(cls):
+        return {env: server['subdomain'] for env, server in cls.get_envs().items()}
