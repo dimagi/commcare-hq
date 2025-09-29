@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 
-from ..models import Alert, UserAccessLog, UserAgent
+from ..models import Alert, UserAccessLog, UserAgent, ServerLocation
 
 
 class TestAlerts(TestCase):
@@ -108,3 +108,56 @@ class TestUserAccessLogManager(TestCase):
 
         self.assertEqual(len(record.user_agent), 255)
         self.assertEqual(record.user_agent, expected_agent)
+
+
+class TestServerLocation(SimpleTestCase):
+    def test_available_prod_environments(self):
+        assert set(ServerLocation.get_envs().keys()) == {'production', 'india', 'eu'}
+
+    def test_get_subdomains(self):
+        assert ServerLocation.get_subdomains() == {
+            'production': 'www',
+            'india': 'india',
+            'eu': 'eu'
+        }
+
+    def test_india_server_configuration(self):
+        india = ServerLocation.get_envs()['india']
+        assert india == {
+            'country_code': 'in',
+            'long_name': 'India',
+            'short_name': 'India',
+            'subdomain': 'india',
+        }
+
+    def test_eu_server_configuration(self):
+        eu = ServerLocation.get_envs()['eu']
+        assert eu == {
+            'country_code': 'eu',
+            'long_name': 'European Union',
+            'short_name': 'EU',
+            'subdomain': 'eu',
+        }
+
+    def test_prod_server_configuration(self):
+        us = ServerLocation.get_envs()['production']
+        assert us == {
+            'country_code': 'us',
+            'long_name': 'United States',
+            'short_name': 'US',
+            'subdomain': 'www',
+        }
+
+    @override_settings(DEBUG=True)
+    def test_staging_configuration_is_present_for_debug_environments(self):
+        staging = ServerLocation.get_envs()['staging']
+        assert staging == {
+            'country_code': 'un',
+            'long_name': 'Staging',
+            'short_name': 'Staging',
+            'subdomain': 'staging',
+        }
+
+    @override_settings(DEBUG=True)
+    def test_staging_subdomain_is_prsent_for_debug_environments(self):
+        assert ServerLocation.get_subdomains()['staging'] == 'staging'
