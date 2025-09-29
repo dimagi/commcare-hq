@@ -578,6 +578,11 @@ class SubscriptionForm(forms.Form):
         max_length=256,
         required=False,
     )
+    auto_renew = forms.BooleanField(
+        label=gettext_lazy("Enable auto renewal"),
+        help_text=gettext_lazy("Applies if subscription has a future end date and is type 'Product'"),
+        required=False,
+    )
     set_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -665,6 +670,7 @@ class SubscriptionForm(forms.Form):
             self.fields['funding_source'].initial = subscription.funding_source
             self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
             self.fields['skip_auto_downgrade_reason'].initial = subscription.skip_auto_downgrade_reason
+            self.fields['auto_renew'].initial = subscription.auto_renew
 
             if (
                 subscription.date_start is not None
@@ -753,6 +759,7 @@ class SubscriptionForm(forms.Form):
                     ),
                     data_bind="visible: skipAutoDowngrade",
                 ),
+                hqcrispy.B3MultiField("Auto Renew", 'auto_renew'),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
