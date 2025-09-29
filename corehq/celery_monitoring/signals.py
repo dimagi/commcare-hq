@@ -3,6 +3,7 @@ import inspect
 import logging
 
 from django.core.cache import cache
+from django.db import close_old_connections
 
 from celery.signals import after_task_publish, before_task_publish, task_postrun, task_prerun
 from celery import current_app
@@ -41,6 +42,8 @@ def update_celery_state(sender=None, headers=None, **kwargs):
 
     """
 
+    # ensure connection to DB is usable
+    close_old_connections()
     task = current_app.tasks.get(sender)
     backend = task.backend if task else current_app.backend
 
