@@ -332,7 +332,10 @@ def fields_to_validate(domain, case_type_name):
     props = CaseProperty.objects.filter(
         case_type__domain=domain,
         case_type__name=case_type_name,
-        data_type__in=('date', 'select'),
+        data_type__in=(
+            CaseProperty.DataType.DATE,
+            CaseProperty.DataType.SELECT,
+        ),
     )
     return {prop.name: prop for prop in props}
 
