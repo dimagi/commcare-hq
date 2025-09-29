@@ -31,6 +31,7 @@ from corehq.apps.app_manager.exceptions import CannotRestoreException
 from corehq.apps.domain.models import Domain
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
+from corehq.celery_monitoring.signals import CELERY_STATE_SENT
 from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.metrics import metrics_counter, metrics_histogram, limit_domains
@@ -58,7 +59,7 @@ from .models import (
     get_properly_wrapped_sync_log,
 )
 from .restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
-from .tasks import ASYNC_RESTORE_SENT, get_async_restore_payload
+from .tasks import get_async_restore_payload
 from .utils import get_cached_items_with_count
 from .xml import (
     get_progress_element,
@@ -679,7 +680,7 @@ class RestoreConfig(object):
         task_id = self.async_restore_task_id_cache.get_value()
         if task_id:
             task = AsyncResult(task_id)
-            task_exists = task.status == ASYNC_RESTORE_SENT
+            task_exists = task.status == CELERY_STATE_SENT
         else:
             task = None
             task_exists = False

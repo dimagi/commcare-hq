@@ -17,7 +17,6 @@ from corehq.util.metrics import metrics_gauge
 log = logging.getLogger(__name__)
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
-ASYNC_RESTORE_SENT = "SENT"
 SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
 
 

@@ -7,12 +7,12 @@ from django.core.cache import cache
 from celery.signals import after_task_publish, before_task_publish, task_postrun, task_prerun
 from celery import current_app
 
-from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
-
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.util.metrics import push_metrics
 from corehq.util.quickcache import quickcache
+
+CELERY_STATE_SENT = "SENT"
 
 
 @before_task_publish.connect
@@ -44,7 +44,7 @@ def update_celery_state(sender=None, headers=None, **kwargs):
     task = current_app.tasks.get(sender)
     backend = task.backend if task else current_app.backend
 
-    backend.store_result(headers['id'], None, ASYNC_RESTORE_SENT)
+    backend.store_result(headers['id'], None, CELERY_STATE_SENT)
 
 
 @task_prerun.connect
