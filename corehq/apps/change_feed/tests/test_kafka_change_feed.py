@@ -1,6 +1,8 @@
 import uuid
 from copy import deepcopy
+from unittest.mock import patch
 
+import pytest
 from django.test import SimpleTestCase, TestCase
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -86,6 +88,44 @@ class KafkaChangeFeedTest(SimpleTestCase):
         partitions = [0, 1, 2, 3, 4, 5]
         result = feed._filter_partitions(partitions)
         assert result == [1, 3, 5], result
+
+    def test_iter_changes_forever(self):
+        class TimeoutConsumer:
+            values = iter(range(1, 10))
+
+            def __iter__(self):
+                for value in self.values:
+                    yield Msg(value)
+                    if value > 4:
+                        raise StopConsuming
+                    if value % 2 == 0:
+                        return  # stop iteration -> simulate timeout
+
+        feed = KafkaChangeFeed(topics=None, client_id='test', strict=True)
+        changes = []
+        with (
+            patch.object(feed, '_init_consumer'),
+            patch.object(feed, '_consumer', TimeoutConsumer()),
+            patch("corehq.apps.change_feed.consumer.feed.change_from_kafka_message", lambda msg: msg.value),
+            pytest.raises(StopConsuming),
+        ):
+            for change in feed.iter_changes(since=None, forever=True):
+                changes.append(change)
+
+        # expect None (timeout) after the consumer completes each iteration
+        assert changes == [1, 2, None, 3, 4, None, 5], changes
+
+
+class Msg:
+    def __init__(self, value):
+        self.value = value
+        self.topic = 'test'
+        self.partition = 0
+        self.offset = 0
+
+
+class StopConsuming(Exception):
+    pass
 
 
 class KafkaCheckpointTest(TestCase):
