@@ -506,10 +506,10 @@ class SubscriptionForm(forms.Form):
         label=gettext_lazy("Billing Account"),
         widget=forms.Select(choices=[]),
     )
-    start_date = forms.DateField(
+    date_start = forms.DateField(
         label=gettext_lazy("Start Date"), widget=forms.DateInput()
     )
-    end_date = forms.DateField(
+    date_end = forms.DateField(
         label=gettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
     plan_edition = forms.ChoiceField(
@@ -600,8 +600,8 @@ class SubscriptionForm(forms.Form):
         self.web_user = web_user
         today = datetime.date.today()
 
-        start_date_field = crispy.Field('start_date', css_class="date-picker")
-        end_date_field = crispy.Field('end_date', css_class="date-picker")
+        date_start_field = crispy.Field('date_start', css_class="date-picker")
+        date_end_field = crispy.Field('date_end', css_class="date-picker")
 
         if is_existing:
             # circular import
@@ -658,8 +658,8 @@ class SubscriptionForm(forms.Form):
                     subscription.subscriber.domain)
             )
 
-            self.fields['start_date'].initial = subscription.date_start.isoformat()
-            self.fields['end_date'].initial = (
+            self.fields['date_start'].initial = subscription.date_start.isoformat()
+            self.fields['date_end'].initial = (
                 subscription.date_end.isoformat()
                 if subscription.date_end is not None else subscription.date_end
             )
@@ -683,9 +683,9 @@ class SubscriptionForm(forms.Form):
                 subscription.date_start is not None
                 and subscription.date_start <= today
             ):
-                self.fields['start_date'].help_text = _('(already started)')
+                self.fields['date_start'].help_text = _('(already started)')
             if has_subscription_already_ended(subscription):
-                self.fields['end_date'].help_text = _('(already ended)')
+                self.fields['date_end'].help_text = _('(already ended)')
 
             self.fields['plan_version'].required = False
             self.fields['domain'].required = False
@@ -731,8 +731,8 @@ class SubscriptionForm(forms.Form):
                 ),
                 account_field,
                 crispy.Div(*transfer_fields),
-                start_date_field,
-                end_date_field,
+                date_start_field,
+                date_end_field,
                 crispy.Div(
                     crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
                             % _("Software Plan"),),
@@ -814,8 +814,8 @@ class SubscriptionForm(forms.Form):
     @property
     def shared_keywords(self):
         return dict(
-            date_start=self.cleaned_data['start_date'],
-            date_end=self.cleaned_data['end_date'],
+            date_start=self.cleaned_data['date_start'],
+            date_end=self.cleaned_data['date_end'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
             do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
@@ -879,16 +879,16 @@ class SubscriptionForm(forms.Form):
                     account=account.name,
                 ))
 
-        start_date = self.cleaned_data.get('start_date')
-        if not start_date:
+        date_start = self.cleaned_data.get('date_start')
+        if not date_start:
             if self.subscription:
-                start_date = self.subscription.date_start
+                date_start = self.subscription.date_start
             else:
                 raise ValidationError(_("You must specify a start date"))
 
-        end_date = self.cleaned_data.get('end_date')
-        if end_date:
-            if start_date > end_date:
+        date_end = self.cleaned_data.get('date_end')
+        if date_end:
+            if date_start > date_end:
                 raise ValidationError(_("End date must be after start date."))
 
         return self.cleaned_data

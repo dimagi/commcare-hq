@@ -267,8 +267,8 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         subscription_form.cleaned_data = {
             'active_accounts': self.customer_account.id,
-            'start_date': datetime.date.today(),
-            'end_date': None,
+            'date_start': datetime.date.today(),
+            'date_end': None,
             'do_not_invoice': None,
             'no_invoice_reason': None,
             'do_not_email_invoice': None,
@@ -299,8 +299,8 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         subscription_form.cleaned_data = {
             'active_accounts': self.account.id,
-            'start_date': datetime.date.today(),
-            'end_date': None,
+            'date_start': datetime.date.today(),
+            'date_end': None,
             'do_not_invoice': None,
             'no_invoice_reason': None,
             'do_not_email_invoice': None,
