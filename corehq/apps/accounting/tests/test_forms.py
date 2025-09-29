@@ -280,7 +280,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             'pro_bono_status': None,
             'funding_source': None,
             'skip_auto_downgrade': None,
-            'skip_auto_downgrade_reason': None
+            'skip_auto_downgrade_reason': None,
+            'auto_renew': None,
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
@@ -311,7 +312,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             'pro_bono_status': None,
             'funding_source': None,
             'skip_auto_downgrade': None,
-            'skip_auto_downgrade_reason': None
+            'skip_auto_downgrade_reason': None,
+            'auto_renew': None,
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
