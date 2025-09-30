@@ -429,19 +429,31 @@ class TestFieldsToValidate(TestCase):
             name='test-case-type',
             domain=cls.domain,
         )
-        cls.date_prop = CaseProperty(
-            name='date_property',
+        cls.date_prop_1 = CaseProperty(
+            name='date_property_1',
             case_type=cls.case_type,
             data_type=CaseProperty.DataType.DATE,
         )
-        cls.select_prop = CaseProperty(
-            name='select_property',
+        cls.date_prop_2 = CaseProperty(
+            name='date_property_2',
+            case_type=cls.case_type,
+            data_type=CaseProperty.DataType.DATE,
+        )
+        cls.select_prop_1 = CaseProperty(
+            name='select_property_1',
+            case_type=cls.case_type,
+            data_type=CaseProperty.DataType.SELECT,
+        )
+        cls.select_prop_2 = CaseProperty(
+            name='select_property_2',
             case_type=cls.case_type,
             data_type=CaseProperty.DataType.SELECT,
         )
         CaseProperty.objects.bulk_create([
-            cls.date_prop,
-            cls.select_prop,
+            cls.date_prop_1,
+            cls.date_prop_2,
+            cls.select_prop_1,
+            cls.select_prop_2,
             CaseProperty(
                 name='plain_property',
                 case_type=cls.case_type,
@@ -481,7 +493,14 @@ class TestFieldsToValidate(TestCase):
 
     def test_fields_to_validate_returns_only_date_and_select_properties(self):
         result = fields_to_validate(self.domain, self.case_type.name)
-        expected_names = {'date_property', 'select_property'}
+        expected_names = {
+            'date_property_1',
+            'date_property_2',
+            'select_property_1',
+            'select_property_2',
+        }
         assert set(result.keys()) == expected_names
-        assert result['date_property'] == self.date_prop
-        assert result['select_property'] == self.select_prop
+        assert result['date_property_1'] == self.date_prop_1
+        assert result['date_property_2'] == self.date_prop_2
+        assert result['select_property_1'] == self.select_prop_1
+        assert result['select_property_2'] == self.select_prop_2
