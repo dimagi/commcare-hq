@@ -17,7 +17,7 @@ from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import validate_offsets
 
 MIN_TIMEOUT = 500
-MAX_TIMEOUT = 1000 * 60 * 60 * 24  # 1 day in ms
+MAX_TIMEOUT = 1000 * 10  # 10 seconds in ms
 
 
 class KafkaChangeFeed(ChangeFeed):
@@ -61,6 +61,10 @@ class KafkaChangeFeed(ChangeFeed):
     ) -> Iterator[Change]:
         """
         ``since`` must be a dictionary of topic partition offsets, or None
+
+        Yields `None` if `forever` is `True` and the consumer times out,
+        at which point the timeout is reset and the consumer continues
+        listening for and yielding changes as they arrive.
         """
         timeout = MAX_TIMEOUT if forever else MIN_TIMEOUT
         start_from_latest = since is None
@@ -89,13 +93,14 @@ class KafkaChangeFeed(ChangeFeed):
             for topic_partition, offset in since.items():
                 self.consumer.seek(TopicPartition(topic_partition[0], topic_partition[1]), int(offset))
 
-        try:
+        while True:
             for message in self.consumer:
                 self._processed_topic_offsets[(message.topic, message.partition)] = message.offset
                 yield change_from_kafka_message(message)
-        except StopIteration:
-            # no need to do anything since this is just telling us we've reached the end of the feed
-            pass
+            # consumer timed out
+            if not forever:
+                break
+            yield None  # avoid excessive lag while waiting for the next change
 
     def get_current_checkpoint_offsets(self):
         # the way kafka works, the checkpoint should increment by 1 because
