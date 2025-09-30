@@ -166,15 +166,18 @@
     </div>
   {% endif %}
 
-  <div class="alert alert-info" role="alert">
-    <strong>Toggle Status:</strong> {{ toggle.status }}
+    <div
+      class="alert {% if toggle.status == 'active' %} alert-info {% else %} alert-warning {% endif %}"
+      role="alert"
+    >
+      Toggle Status: <strong>{{ toggle.status }}</strong>
     <button
       class="btn btn-primary pull-right"
       data-toggle="modal"
       data-target="#change-toggle-status"
       {% if not user.is_staff %}disabled{% endif %}
     >
-      Change
+      See More / Edit
     </button>
   </div>
 
@@ -190,6 +193,22 @@
         <form class="form" action="{% url 'toggle_status' toggle.slug %}" method="POST">
           {% csrf_token %}
           <div class="modal-body">
+            <p>
+              This is a utility to allow us to release or remove feature flags
+              without a code deploy, and with a much easier way to walk back the
+              change. This makes the code changes a lower risk cleanup step that
+              won't affect any users.
+            </p>
+
+            <p>
+              The default state for a feature flag is "active" - where it can be
+              turned on or off for individual users or domains. If we are to
+              remove a feature flag, you can first set it to "disabled" here,
+              which will behave the same as removing everything from the list.
+              Likewise to release a feature flag, set it to "released," and it
+              will behave as if you've enabled the flag for all projects and
+              users.
+            </p>
             {% for status_option in status_options %}
             <div class="radio">
               <label>
@@ -244,12 +263,22 @@
           <h5>
             <i class="fa fa-info-circle"></i> {% trans "Why can't I edit?" %}
           </h5>
-          <p>
-            {% blocktrans %}
-              You do not have permission to modify this flag. Please contact
-              support if any changes are needed.
-            {% endblocktrans %}
-          </p>
+          {% if toggle.status == 'active' %}
+            <p>
+              {% blocktrans %}
+                You do not have permission to modify this flag. Please contact
+                support if any changes are needed.
+              {% endblocktrans %}
+            </p>
+          {% else %}
+            <p>
+              {% blocktrans with status=toggle.status %}
+                This toggle is currently {{ status }} and will soon be removed.
+                This applies to all users and domains, so the individually
+                toggled items are irrelevant.
+              {% endblocktrans %}
+            </p>
+          {% endif %}
         </div>
       {% endif %}
       <table class="table table-condensed" id="feature-flag-items">
