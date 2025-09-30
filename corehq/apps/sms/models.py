@@ -1288,7 +1288,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     def create_subevent_for_content_type(self, recipient_doc_type=None,
             recipient_id=None, case=None, completed=False, content_type=None):
-        obj = MessagingSubEvent.objects.create(
+        subevent = MessagingSubEvent.objects.create(
             parent=self,
             domain=self.domain,
             date=datetime.utcnow(),
@@ -1300,7 +1300,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                     if completed
                     else MessagingEvent.STATUS_IN_PROGRESS),
         )
-        return obj
+        return subevent
 
     @property
     def subevents(self):
