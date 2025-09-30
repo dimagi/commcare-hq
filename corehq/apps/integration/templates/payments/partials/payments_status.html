@@ -1,0 +1,6 @@
+<div class="d-flex flex-column" style="width: 10rem;">
+  <span class="badge {{ badge_class }} align-self-start">{{ label }}</span>
+  {% if error_message %}
+    <span class="text-wrap mt-1">{{ error_message }}</span>
+  {% endif %}
+</div>
