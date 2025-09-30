@@ -230,6 +230,7 @@
               {% trans "Label for Searching" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching" %}"
                     data-content="{% trans_html_attr "This text is for the button to enter case search. It is also the header on the search results screen." %}">
+              </span>
             </label>
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: search_label" %}
@@ -248,6 +249,7 @@
                 {% trans "Label for Searching Again" %}
                 <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
                       data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
+                </span>
               </label>
               <div class="{% css_field_class %}">
                 {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
@@ -266,6 +268,7 @@
               {% trans "Search Screen Title" %}
               <span class="hq-help-template" data-title="{% trans "Search Screen Title Translation" %}"
                     data-content="{% trans_html_attr "Define the title label displayed on the search screen." %}">
+              </span>
             </label>
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: title_label" %}
@@ -276,6 +279,7 @@
               {% trans "Search Screen Subtitle" %}
               <span class="hq-help-template" data-title="{% trans "Search Screen Subtitle" %}"
                     data-content="{% trans_html_attr "Define descriptive text displayed on the search screen. Use text formatting to <strong>bold</strong> and <em>italicize</em> words, use bulleted lists, and <a target='_blank' href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>." %}">
+              </span>
             </label>
             <div class="{% css_field_class %}">
               {% input_trans module.search_config.description langs input_name='description' input_id='description' data_bind="value: description" element_type="textarea" %}
@@ -310,6 +314,7 @@
               {% trans "Search Filter" %}
               <span class="hq-help-template" data-title="{% trans "Search Filter" %}"
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
+              </span>
             </label>
             <div class="{% css_field_class %}">
               <textarea data-bind="
@@ -387,6 +392,7 @@
                   {% trans "Data Registry" %}
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
                         data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
+                  </span>
               </label>
               <div class="{% css_field_class %}">
                   <select class="form-control" id="data-registry" data-bind="value: data_registry">
