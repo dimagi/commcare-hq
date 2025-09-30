@@ -212,7 +212,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def can_purchase_credits(self):
         return self.request.couch_user.can_edit_billing()
 
-    @property
     def can_set_auto_renew(self):
         can_access_auto_renewal = (
             SHOW_AUTO_RENEWAL.enabled(self.request.domain)
@@ -241,7 +240,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def renewal_plan_preview(self):
-        if not self.can_set_auto_renew or self.current_subscription.auto_renew:
+        if not self.can_set_auto_renew() or self.current_subscription.auto_renew:
             # details are only needed if user will see the option to enable auto renew
             return None
 
@@ -418,7 +417,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'can_set_auto_renew': self.can_set_auto_renew,
+            'can_set_auto_renew': self.can_set_auto_renew(),
             'renewal_plan_preview': self.renewal_plan_preview,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
