@@ -32,6 +32,7 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.const import AllowedRenderings
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.dates import SingleDateFilter
@@ -533,7 +534,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             return '---'
         assigned_location_ids = user.get_location_ids(self.domain)
         primary_location_id = user.get_location_id(self.domain)
-        if getattr(self, 'rendered_as', None) == 'export':
+        if self.rendered_as == AllowedRenderings.EXPORT:
             # get text names for Excel export
             return self._get_assigned_location_names(primary_location_id, assigned_location_ids, user_loc_dict)
         else:
