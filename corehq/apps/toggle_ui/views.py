@@ -178,7 +178,7 @@ class ToggleEditView(BasePageView):
         context = {
             'static_toggle': self.static_toggle,
             'toggle': toggle,
-            'can_edit_toggle': self.can_edit_toggle,
+            'can_edit_toggle': self.can_edit_toggle and toggle.status == ToggleStatus.ACTIVE,
             'namespaces': namespaces,
             'usage_info': self.usage_info,
             'server_environment': settings.SERVER_ENVIRONMENT,
