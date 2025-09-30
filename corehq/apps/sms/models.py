@@ -1288,11 +1288,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     def create_subevent_for_content_type(self, recipient_doc_type=None,
             recipient_id=None, case=None, completed=False, content_type=None):
+        recipient_type = MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type)
         subevent = MessagingSubEvent.objects.create(
             parent=self,
             domain=self.domain,
             date=datetime.utcnow(),
-            recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
+            recipient_type=recipient_type,
             recipient_id=recipient_id,
             content_type=content_type or self.content_type,
             case_id=case.case_id if case else None,
