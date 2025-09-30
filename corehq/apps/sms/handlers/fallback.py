@@ -40,6 +40,9 @@ def fallback_handler(verified_number, text, msg):
                                     metadata=outbound_meta)
         outbound_subevent.completed()
     elif is_connect_message:
+        # Connect Messages are not processed in the if statement above.
+        # This check ensures that all connect messages have the correct
+        # metadata saved.
         msg.save()
 
     inbound_subevent.completed()
