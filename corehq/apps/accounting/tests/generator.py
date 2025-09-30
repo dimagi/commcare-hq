@@ -105,10 +105,10 @@ def arbitrary_contact_info(account, web_user_creator):
         email_list=[web_user_creator],
         phone_number="+15555555",
         company_name="Company Name",
-        first_line="585 Mass Ave",
+        first_line="245 Main Street",
         city="Cambridge",
         state_province_region="MA",
-        postal_code="02139",
+        postal_code="02142",
         country="US",
     )
 
