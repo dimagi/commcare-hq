@@ -4299,7 +4299,8 @@ msgstr "Usuários adicionados:"
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
-#: corehq/apps/reminders/views.py corehq/apps/reports/filters/users.py
+#: corehq/apps/reminders/views.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
@@ -4946,6 +4947,7 @@ msgstr "Status:"
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/templates/integration/web_app_integration_err.html
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -5536,11 +5538,6 @@ msgstr ""
 "favor, faça o upgrade da sua assinatura antes de usar este recurso."
 
 #: corehq/apps/app_manager/helpers/validators.py
-#| msgid ""
-#| "Your application is using User Properties and your current subscription does"
-#| " not support that. You can remove User Properties functionality by opening "
-#| "the User Properties tab in a form that uses it, and clicking \"Remove User "
-#| "Properties\"."
 msgid ""
 "Your application is using User Properties or using `commcare-user` as a "
 "menu's case type, and your current subscription does not support that. You "
@@ -9896,60 +9893,79 @@ msgid "Display Condition"
 msgstr "Condição de Exibição"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-msgid ""
-"The form will not appear in the menu unless this condition is met. Read more"
-" on the <a target='_blank' "
-"href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Help"
-" Site</a>."
-msgstr ""
-"O formulário não aparecerá no menu a menos que esta condição seja atendida. "
-"Leia mais no <a target='_blank' "
-"href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Site"
-" de Ajuda</a>."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#| msgid ""
+#| "The form will not appear in the menu unless this condition is met. Read more"
+#| " on the <a target='_blank' "
+#| "href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Help"
+#| " Site</a>."
 msgid ""
 "\n"
-"              To use display conditions which reference a case, <br/>\n"
+"          The form will not appear in the menu unless this condition is met.\n"
+"          Read more on the\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions\"\n"
+"            >Help Site</a\n"
+"          >.\n"
+"        "
+msgstr ""
+"\n"
+"          O formulário não aparecerá no menu a menos que esta condição seja atendida.\n"
+"          Leia mais no\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions\"\n"
+"            >Site de Ajuda</a\n"
+"          >.\n"
+"        "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#| msgid ""
+#| "\n"
+#| "              To use display conditions which reference a case, <br/>\n"
+#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
+#| "              <em>Display menu and then forms</em> <br/>\n"
+#| "              (2) all the forms in the case list must update or close a case, which means registration\n"
+#| "              forms must go in a separate case list, or if your project uses user properties, your\n"
+#| "              display condition may use user properties.\n"
+#| "            "
+msgid ""
+"\n"
+"              To use display conditions which reference a case, <br />\n"
 "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-"              <em>Display menu and then forms</em> <br/>\n"
-"              (2) all the forms in the case list must update or close a case, which means registration\n"
-"              forms must go in a separate case list, or if your project uses user properties, your\n"
-"              display condition may use user properties.\n"
+"              <em>Display menu and then forms</em> <br />\n"
+"              (2) all the forms in the case list must update or close a case,\n"
+"              which means registration forms must go in a separate case list, or\n"
+"              if your project uses user properties, your display condition may\n"
+"              use user properties.\n"
 "            "
 msgstr ""
 "\n"
-"              Para usar condições de exibição que fazem referência a um caso, <br/>\n"
+"              Para usar condições de exibição que fazem referência a um caso, <br />\n"
 "              (1) a configuração <strong>Modo de Menu</strong> deve estar definida como\n"
-"              <em>Exibir menu e depois formulários</em> <br/>\n"
-"              (2) todos os formulários na lista de casos devem atualizar ou fechar um caso, o que significa que formulários de registro devem estar em uma lista de casos separada, ou se seu projeto usar propriedades de usuário, sua condição de exibição pode usar propriedades de usuário.\n"
+"              <em>Exibir menu e depois formulários</em> <br />\n"
+"              (2) todos os formulários na lista de casos devem atualizar ou fechar um caso,\n"
+"              o que significa que formulários de registro devem estar em uma lista de casos separada, ou\n"
+"              se seu projeto usar propriedades de usuário, sua condição de exibição pode\n"
+"              usar propriedades de usuário.\n"
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-msgid ""
-"\n"
-"              To use display conditions which reference a user property, user properties must be\n"
-"              enabled for your project.\n"
-"            "
-msgstr ""
-"\n"
-"              Para usar condições de exibição que fazem referência a uma propriedade de usuário, as propriedades de usuário devem estar habilitadas para seu projeto.\n"
-"            "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-msgid "Enable user properties"
-msgstr "Habilitar propriedades de usuário"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#| msgid ""
+#| "\n"
+#| "          There is something wrong with the logic in the Form Display Condition.\n"
+#| "          Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+#| "        "
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display Condition.\n"
-"          Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+"          Check to make sure your parentheses match and you are referencing case\n"
+"          properties correctly.\n"
 "        "
 msgstr ""
 "\n"
 "          Há algo errado com a lógica na Condição de Exibição do Formulário.\n"
-"          Verifique se os parênteses estão corretos e se você está referenciando as propriedades de caso corretamente.\n"
+"          Verifique se os parênteses estão corretos e se você está referenciando as propriedades do caso corretamente.\n"
 "        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_gps_capture.html
@@ -14554,7 +14570,7 @@ msgid "Success with warnings"
 msgstr "Sucesso com avisos"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/repeaters/const.py
+#: corehq/apps/integration/kyc/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr "Falhou"
@@ -16958,8 +16974,8 @@ msgid "Completed"
 msgstr "Concluído"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#: corehq/apps/registry/models.py corehq/apps/sms/models.py
-#: corehq/motech/repeaters/const.py
+#: corehq/apps/integration/kyc/models.py corehq/apps/registry/models.py
+#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
@@ -20572,6 +20588,7 @@ msgstr ""
 "entre em contato com %(email)s para gerenciar contratos superiores a 5 anos."
 
 #: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "user"
 msgstr "usuário"
 
@@ -24238,16 +24255,6 @@ msgstr "3. Confirmar Conta de Cobrança"
 #: corehq/apps/domain/views/accounting.py
 #, python-format
 msgid ""
-"You do not have permission to change the subscription for this customer-"
-"level account. Please reach out to the %s enterprise admin for help."
-msgstr ""
-"Você não tem permissão para alterar a assinatura desta conta de nível de "
-"cliente. Por favor, entre em contato com o administrador empresarial %s para"
-" obter ajuda."
-
-#: corehq/apps/domain/views/accounting.py
-#, python-format
-msgid ""
 "Thank you for choosing to stay with your %(software_plan_name)s Edition Plan"
 " subscription."
 msgstr ""
@@ -24312,16 +24319,6 @@ msgid "Your subscription was successfully renewed!"
 msgstr "Sua assinatura foi renovada com sucesso!"
 
 #: corehq/apps/domain/views/accounting.py
-#, python-format
-msgid ""
-"You do not have permission to pause the subscription for this customer-level"
-" account. Please reach out to the %s enterprise admin for help."
-msgstr ""
-"Você não tem permissão para pausar a assinatura desta conta de nível de "
-"cliente. Por favor, entre em contato com o administrador empresarial %s para"
-" obter ajuda."
-
-#: corehq/apps/domain/views/accounting.py
 msgid ""
 "Your project's subscription will be paused on {}. We hope to see you again!"
 msgstr ""
@@ -24340,6 +24337,36 @@ msgstr ""
 "Não foi possível pausar sua assinatura neste momento. Por favor, entre em "
 "contato com {} se continuar recebendo este erro. Pedimos desculpas pelo "
 "transtorno."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Auto renewal cannot be enabled for the current subscription."
+msgstr "A renovação automática não pode ser ativada para a assinatura atual."
+
+#: corehq/apps/domain/views/accounting.py
+#| msgid ""
+#| "Congratulations, you've successfully enabled two-factor\n"
+#| "    authentication."
+msgid "Auto renewal successfully enabled for the current subscription."
+msgstr "Renovação automática ativada com sucesso para a assinatura atual."
+
+#: corehq/apps/domain/views/accounting.py
+#| msgid "Multimedia was successfully updated for the linked app."
+msgid "Auto renewal successfully disabled for the current subscription."
+msgstr "Renovação automática desativada com sucesso para a assinatura atual."
+
+#: corehq/apps/domain/views/accounting.py
+#, python-brace-format
+#| msgid ""
+#| "You do not have permission to pause the subscription for this customer-level"
+#| " account. Please reach out to the %s enterprise admin for help."
+msgid ""
+"You do not have permission to modify the subscription for this customer-"
+"level account. Please reach out to the {account_name} enterprise admin for "
+"help."
+msgstr ""
+"Você não tem permissão para modificar a assinatura desta conta em nível de "
+"cliente. Por favor, entre em contato com o administrador empresarial de "
+"{account_name} para obter ajuda."
 
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
@@ -30336,7 +30363,6 @@ msgid "User Audit Events"
 msgstr "Eventos de Auditoria do Usuário"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Document Type"
 msgid "Doc Type"
 msgstr "Tipo de Documento"
 
@@ -30351,7 +30377,6 @@ msgid "IP Address"
 msgstr "Endereço IP"
 
 #: corehq/apps/hqadmin/reports.py
-#| msgid "Resource Slug"
 msgid "Resource"
 msgstr "Recurso"
 
@@ -31498,6 +31523,11 @@ msgstr "Estados Unidos"
 #: corehq/apps/hqwebapp/models.py
 msgid "US"
 msgstr "EUA"
+
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
+#| msgid "user"
+msgid "users"
+msgstr "usuários"
 
 #: corehq/apps/hqwebapp/tables/export.py
 msgid "Unsupported export format: {}. Supported formats are: {}"
@@ -33418,6 +33448,19 @@ msgstr "ID do Projeto"
 msgid "Module ID"
 msgstr "ID do Módulo"
 
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "KYC Status"
+msgstr "Status do KYC"
+
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/factory.py
+msgid "Show all"
+msgstr "Mostrar tudo"
+
 #: corehq/apps/integration/kyc/forms.py
 msgid "Recipient Data Store"
 msgstr "Armazenamento de Dados do Destinatário"
@@ -33465,6 +33508,21 @@ msgstr ""
 "está definido como \"Outro Tipo de Caso\"."
 
 #: corehq/apps/integration/kyc/models.py
+msgid "Unknown error"
+msgstr "Erro desconhecido"
+
+#: corehq/apps/integration/kyc/models.py
+#| msgid "Pass"
+msgid "Passed"
+msgstr "Aprovado"
+
+#: corehq/apps/integration/kyc/models.py
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+msgid "Invalid"
+msgstr "Inválido"
+
+#: corehq/apps/integration/kyc/models.py
 msgid "User information on HQ is not complete or invalid."
 msgstr "As informações do usuário no HQ estão incompletas ou inválidas."
 
@@ -33485,11 +33543,6 @@ msgid "API error occurred. Please reach out to support."
 msgstr "Ocorreu um erro de API. Por favor, entre em contato com o suporte."
 
 #: corehq/apps/integration/kyc/tables.py
-#: corehq/apps/integration/payments/tables.py
-msgid "KYC Status"
-msgstr "Status do KYC"
-
-#: corehq/apps/integration/kyc/tables.py
 msgid "Last Verified"
 msgstr "Última Verificação"
 
@@ -33506,10 +33559,6 @@ msgstr "Verificar"
 #: corehq/apps/integration/kyc/views.py
 msgid "KYC Configuration"
 msgstr "Configuração do KYC"
-
-#: corehq/apps/integration/kyc/views.py
-msgid "Unknown error"
-msgstr "Erro desconhecido"
 
 #: corehq/apps/integration/kyc/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -33535,12 +33584,6 @@ msgstr "Solicitação falhou"
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
 msgstr "Status do pagamento"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/factory.py
-msgid "Show all"
-msgstr "Mostrar tudo"
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Batch number"
@@ -33888,11 +33931,6 @@ msgstr "Aprovado"
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "Fail"
 msgstr "Reprovado"
-
-#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-msgid "Invalid"
-msgstr "Inválido"
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid ""
@@ -44915,11 +44953,6 @@ msgstr "Erro de Login Único (SSO)"
 
 #: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
 #: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
-#| msgid ""
-#| "\n"
-#| "                This error is likely due to a misconfiguration with your project's\n"
-#| "                SSO settings. Please contact your project administrator to resolve this issue.\n"
-#| "              "
 msgid ""
 "\n"
 "                This error is likely due to a misconfiguration with your\n"
@@ -44951,11 +44984,6 @@ msgstr ""
 
 #: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
 #: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
-#| msgid ""
-#| "\n"
-#| "                You do not have permission to sign in with Single Sign-On.\n"
-#| "                If this is in error, please contact your project's administrator.\n"
-#| "              "
 msgid ""
 "\n"
 "                You do not have permission to sign in with Single Sign-On. If\n"
@@ -45156,11 +45184,6 @@ msgid "Manage Single Sign-On"
 msgstr "Gerenciar Single Sign-On"
 
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#| msgid ""
-#| "\n"
-#| "      Configure external Identity Providers associated with your\n"
-#| "      Enterprise Account below.\n"
-#| "    "
 msgid ""
 "\n"
 "      Configure external Identity Providers associated with your Enterprise\n"
@@ -45210,10 +45233,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
-#| msgid ""
-#| "\n"
-#| "                <strong>WARNING:</strong> Deleting an Identity Provider is not reversible.\n"
-#| "              "
 msgid ""
 "\n"
 "                <strong>WARNING:</strong> Deleting an Identity Provider is not\n"
@@ -45226,12 +45245,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
-#| msgid ""
-#| "\n"
-#| "                Deletion will immediately affect any client's SSO setup. Please\n"
-#| "                exercise extreme caution. An active Identity Provider\n"
-#| "                will not be deleted.\n"
-#| "              "
 msgid ""
 "\n"
 "                Deletion will immediately affect any client's SSO setup. Please\n"
@@ -45245,11 +45258,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
-#| msgid ""
-#| "\n"
-#| "            Users with email addresses ending in these domain names must\n"
-#| "            log in with SSO if the Identity Provider is active.\n"
-#| "          "
 msgid ""
 "\n"
 "            Users with email addresses ending in these domain names must log in\n"
@@ -45290,12 +45298,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
-#| msgid ""
-#| "\n"
-#| "            No users are exempt from SSO for this Identity Provider.\n"
-#| "            Please add at least <strong>one enterprise admin</strong>\n"
-#| "            before making this Identity Provider active!\n"
-#| "          "
 msgid ""
 "\n"
 "            No users are exempt from SSO for this Identity Provider. Please add\n"
@@ -45310,11 +45312,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
-#| msgid ""
-#| "\n"
-#| "            When the Identity Provider is in \"Test\" mode for Login Enforcement, only\n"
-#| "            the users in this list will be directed to sign in with SSO.\n"
-#| "          "
 msgid ""
 "\n"
 "            When the Identity Provider is in \"Test\" mode for Login Enforcement,\n"
@@ -55915,7 +55912,6 @@ msgid "Cancelled"
 msgstr "Cancelado"
 
 #: corehq/motech/repeaters/const.py
-#| msgid "Rejected"
 msgid "Payload Rejected"
 msgstr "Payload Rejeitado"
 
@@ -56383,12 +56379,10 @@ msgid "Unable to generate url for record"
 msgstr "Não foi possível gerar a URL para o registro"
 
 #: corehq/motech/repeaters/views/repeat_record_display.py
-#| msgid "Invitation rejected"
 msgid "Payload rejected"
 msgstr "Payload rejeitado"
 
 #: corehq/motech/repeaters/views/repeat_record_display.py
-#| msgid "Errors in upload: {}"
 msgid "Error generating payload"
 msgstr "Erro ao gerar payload"
 
@@ -57858,6 +57852,28 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#~ msgid ""
+#~ "\n"
+#~ "              To use display conditions which reference a user property, user properties must be\n"
+#~ "              enabled for your project.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Para usar condições de exibição que fazem referência a uma propriedade de usuário, as propriedades de usuário devem estar habilitadas para seu projeto.\n"
+#~ "            "
+
+#~ msgid "Enable user properties"
+#~ msgstr "Habilitar propriedades de usuário"
+
+#, python-format
+#~ msgid ""
+#~ "You do not have permission to change the subscription for this customer-"
+#~ "level account. Please reach out to the %s enterprise admin for help."
+#~ msgstr ""
+#~ "Você não tem permissão para alterar a assinatura desta conta de nível de "
+#~ "cliente. Por favor, entre em contato com o administrador empresarial %s para"
+#~ " obter ajuda."
 
 #~ msgid "Invalid Payload"
 #~ msgstr "Payload inválido"

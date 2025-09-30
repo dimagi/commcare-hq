@@ -172,10 +172,11 @@ from corehq.util.workbook_json.excel import (
 from ..utils import log_user_groups_change
 from .custom_data_fields import CommcareUserFieldsView
 
-BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
-                         "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
-                         "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
-                         "ultipleusersatonce")
+BULK_MOBILE_HELP_SITE = ("https://dimagi.atlassian.net/wiki/spaces/commcarepublic"
+                         "/pages/2143955384/Create+and+Manage+CommCare+Mobile+Workers"
+                         "#Use-Bulk-Upload-to-create-multiple-mobile-workers-at-once")
+BULK_WEB_HELP_SITE = ("https://dimagi.atlassian.net/wiki/spaces/commcarepublic"
+                      "/pages/2143958279/Web+Users#Bulk-Upload-to-Create-Multiple-Users-and-Invites-at-Once")
 DEFAULT_USER_LIST_LIMIT = 10
 BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z0-9.+-_]")
 
@@ -1057,11 +1058,11 @@ def paginate_mobile_workers(request, domain):
     })
 
 
-def get_user_upload_context(domain, request_params, download_url, adjective, plural_noun):
+def get_user_upload_context(domain, request_params, download_url, adjective, plural_noun, help_site_link):
     context = {
         'bulk_upload': {
             "help_site": {
-                "address": BULK_MOBILE_HELP_SITE,
+                "address": help_site_link,
                 "name": _("CommCare Help Site"),
             },
             "download_url": reverse(download_url, args=(domain,)),
@@ -1092,7 +1093,7 @@ class UploadCommCareUsers(BaseUploadUser):
     def page_context(self):
         request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
         return get_user_upload_context(self.domain, request_params, "download_commcare_users", "mobile worker",
-                                       "mobile workers")
+                                       "mobile workers", help_site_link=BULK_MOBILE_HELP_SITE)
 
     def post(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).post(request, *args, **kwargs)

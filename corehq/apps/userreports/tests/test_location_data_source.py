@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -10,7 +11,7 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 
 from ..app_manager.helpers import clean_table_name
 from ..models import DataSourceConfiguration
-from ..pillow import get_location_pillow
+from ..pillow import _SHARED_ADAPTER_CACHES, AdapterCache, get_location_pillow
 from ..tasks import rebuild_indicators
 from ..util import get_indicator_adapter
 from ..tests.utils import bootstrap_pillow
@@ -55,7 +56,10 @@ class TestLocationDataSource(TestCase):
         adapter = get_indicator_adapter(self.data_source_config)
         self.addCleanup(adapter.drop_table)
 
-        self.pillow = get_location_pillow()
+        cache = AdapterCache()
+        with patch.dict(_SHARED_ADAPTER_CACHES, {get_location_pillow: cache}):
+            self.pillow = get_location_pillow()
+        assert self.pillow.processors[0].table_manager.cache.adapters is cache
         self.pillow.get_change_feed().get_latest_offsets()
         bootstrap_pillow(self.pillow, self.data_source_config)
 
