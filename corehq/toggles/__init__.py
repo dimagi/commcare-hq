@@ -1801,7 +1801,7 @@ AGGREGATE_UCRS = StaticToggle(
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
     'Allow building report builder reports directly from raw UCR Data Sources',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
