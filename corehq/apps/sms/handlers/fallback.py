@@ -4,13 +4,13 @@ from corehq.apps.sms.api import (
     add_msg_tags,
     send_message_to_verified_number,
 )
-from corehq.apps.sms.models import WORKFLOW_DEFAULT, ConnectMessagingNumber, MessagingEvent
+from corehq.apps.sms.models import WORKFLOW_DEFAULT, MessagingEvent
 
 
 def fallback_handler(verified_number, text, msg):
     domain_obj = Domain.get_by_name(verified_number.domain, strict=True)
 
-    is_connect_message = isinstance(verified_number, ConnectMessagingNumber)
+    is_connect_message = not verified_number.is_sms
     if is_connect_message:
         content_type = MessagingEvent.CONTENT_CONNECT
     else:
