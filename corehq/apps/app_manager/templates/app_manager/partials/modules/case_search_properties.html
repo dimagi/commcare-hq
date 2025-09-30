@@ -195,7 +195,7 @@
             {% endif %}
           </div>
           {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
-          <div class="form-group" data-bind="visible: inlineSearchVisible">
+          <div class="form-group" data-bind="slideVisible: inlineSearchVisible">
             <label class="control-label {% css_label_class %}">
               {% trans "Make search input available after search" %}
               <span class="hq-help-template" data-title="{% trans "Make search input available after search" %}"
