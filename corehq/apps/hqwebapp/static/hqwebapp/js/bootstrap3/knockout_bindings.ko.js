@@ -415,10 +415,16 @@ ko.bindingHandlers.openRemoteModal = {
 };
 
 ko.bindingHandlers.slideVisible = {
+    init: function (element, valueAccessor) {
+        var value = ko.unwrap(valueAccessor());
+        $(element).toggle(value);
+    },
     'update': function (element, valueAccessor) {
+        console.log("calling slidevisible b3");
         var value = ko.utils.unwrapObservable(valueAccessor());
         if (value) {
-            $(element).hide().slideDown();
+            console.log("calling slidevisible slidedown b3");
+            $(element).slideDown();
         } else if (!value) {
             $(element).slideUp();
         }
