@@ -87,6 +87,13 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
         allowed_methods = ['post']
         always_return_data = True
 
+    def dehydrate(self, bundle):
+        bundle = super().dehydrate(bundle)
+        if not toggles.TABLEAU_USER_SYNCING.enabled(bundle.request.domain):
+            bundle.data.pop('tableau_role', None)
+            bundle.data.pop('tableau_groups', None)
+        return bundle
+
     def dehydrate_role(self, bundle):
         return bundle.obj.get_role_name()
 
