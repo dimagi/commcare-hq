@@ -268,21 +268,7 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         subscription_form.cleaned_data = {
             'active_accounts': self.customer_account.id,
-            'date_start': datetime.date.today(),
-            'date_end': None,
-            'do_not_invoice': None,
-            'no_invoice_reason': None,
-            'do_not_email_invoice': None,
-            'do_not_email_reminder': None,
-            'auto_generate_credits': None,
-            'skip_invoicing_if_no_feature_charges': None,
-            'salesforce_contract_id': None,
-            'service_type': None,
-            'pro_bono_status': None,
-            'funding_source': None,
-            'skip_auto_downgrade': None,
-            'skip_auto_downgrade_reason': None,
-            'auto_renew': None,
+            **self.shared_keywords(),
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
@@ -300,21 +286,7 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         subscription_form.cleaned_data = {
             'active_accounts': self.account.id,
-            'date_start': datetime.date.today(),
-            'date_end': None,
-            'do_not_invoice': None,
-            'no_invoice_reason': None,
-            'do_not_email_invoice': None,
-            'do_not_email_reminder': None,
-            'auto_generate_credits': None,
-            'skip_invoicing_if_no_feature_charges': None,
-            'salesforce_contract_id': None,
-            'service_type': None,
-            'pro_bono_status': None,
-            'funding_source': None,
-            'skip_auto_downgrade': None,
-            'skip_auto_downgrade_reason': None,
-            'auto_renew': None,
+            **self.shared_keywords(),
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
