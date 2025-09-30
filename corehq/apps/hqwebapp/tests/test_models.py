@@ -159,5 +159,5 @@ class TestServerLocation(SimpleTestCase):
         }
 
     @override_settings(DEBUG=True)
-    def test_staging_subdomain_is_prsent_for_debug_environments(self):
+    def test_staging_subdomain_is_present_for_debug_environments(self):
         assert ServerLocation.get_subdomains()['staging'] == 'staging'
