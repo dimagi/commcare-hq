@@ -1,7 +1,7 @@
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 
-from .models import Toggle
+from .models import Toggle, ToggleStatus
 
 
 def toggle_enabled(slug, item, namespace=None):
@@ -15,7 +15,13 @@ def toggle_enabled(slug, item, namespace=None):
     item = namespaced_item(item, namespace)
     if not settings.UNIT_TESTING or getattr(settings, 'DB_ENABLED', True):
         toggle = Toggle.cached_get(slug)
-        return item in toggle.enabled_users if toggle else False
+        if not toggle:
+            return False
+        if toggle.status == ToggleStatus.RELEASED:
+            return True
+        if toggle.status == ToggleStatus.DISABLED:
+            return False
+        return item in toggle.enabled_users
 
 
 def set_toggle(slug, item, enabled, namespace=None):
