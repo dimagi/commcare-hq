@@ -1,6 +1,7 @@
 from collections import namedtuple
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
@@ -154,4 +155,22 @@ class ServerLocation:
         },
     }
 
-    SUBDOMAINS = {env: server['subdomain'] for env, server in ENVS.items()}
+    STAGING_CONFIG = {
+        STAGING: {
+            'country_code': 'un',
+            'long_name': _("Staging"),
+            'short_name': _("Staging"),
+            'subdomain': 'staging',
+        }
+    }
+
+    @classmethod
+    def get_envs(cls):
+        if settings.DEBUG:
+            return cls.ENVS | cls.STAGING_CONFIG
+
+        return cls.ENVS
+
+    @classmethod
+    def get_subdomains(cls):
+        return {env: server['subdomain'] for env, server in cls.get_envs().items()}
