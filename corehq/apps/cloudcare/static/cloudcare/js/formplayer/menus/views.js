@@ -1,6 +1,7 @@
 import $ from "jquery";
 import _ from "underscore";
 import Backbone from "backbone";
+import DOMPurify from "dompurify";
 import Marionette from "backbone.marionette";
 import {Popover} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
@@ -719,7 +720,7 @@ const CaseListConfigView = Marionette.View.extend({
 
     templateContext: function () {
         return {
-            columnNames: this.model.get('columnNames'),
+            columnNames: this.model.get('columnNames').map(columnName => DOMPurify.sanitize(columnName)),
             columnVisibility: this.columnVisibility,
             allColumnsHidden: function () {
                 return this.columnVisibility.every(hidden => hidden === false);
@@ -1252,7 +1253,7 @@ const CaseListView = Marionette.CollectionView.extend({
             title: title.trim(),
             description: description === undefined ? "" : markdown.render(description.trim()),
             selectText: this.selectText === undefined ? "" : this.selectText,
-            headers: this.headers,
+            headers: this.headers.map(header => DOMPurify.sanitize(header)),
             columnConfigModel: this.columnConfigModel,
             widthHints: this.options.widthHints,
             actions: this.options.actions,
@@ -1400,7 +1401,7 @@ const CaseTileListView = CaseListView.extend({
             }
             return {
                 index: sortIndex,
-                header: header,
+                header: DOMPurify.sanitize(header),
                 sortOrder: sortOrder,
             };
         });
