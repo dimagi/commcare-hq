@@ -526,7 +526,11 @@ class DataDictionaryView(BaseProjectDataView):
                 CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
                 DEFAULT_CASE_PROPS_PER_CASE_TYPE,
                 domain=self.domain
-            )
+            ),
+            'data_type_validation': domain_has_privilege(
+                self.domain,
+                privileges.DATA_DICT_TYPES,
+            ),
         })
         return main_context
 

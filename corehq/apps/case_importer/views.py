@@ -12,6 +12,8 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
@@ -409,6 +411,7 @@ def excel_fields(request, domain):
         'case_field_specs': case_field_specs,
         'system_fields': get_non_discoverable_system_properties(),
         'domain': domain,
+        'data_type_validation': domain_has_privilege(domain, privileges.DATA_DICT_TYPES),
         'mirroring_enabled': mirroring_enabled,
         'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',
     }
