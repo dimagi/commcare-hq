@@ -53,7 +53,9 @@ Reindex Process
 #. Ensure that the PR containing the design document changes is approved. Do not
    merge it yet.
 #. Announce that you will be beginning the migration
-#. Pull up the couchdb dashboard in datadog
+#. Pull up the couchdb dashboard in datadog to keep an eye out for problems such
+   as memory usage spikes. The "Active Tasks" graph will show the ``index``
+   operation.
 #. Set up a private release and run ``preindex_everything`` to create the
    temporary design document and start reindexing::
 
