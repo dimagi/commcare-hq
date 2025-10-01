@@ -38,10 +38,10 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
 from .const import (
-    LookupErrors,
-    MOMO_REQUIRED_PAYMENT_FIELDS,
     MOMO_NO_EDIT_PAYMENT_FIELDS,
     MOMO_PAYMENT_CASE_TYPE,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
+    LookupErrors,
 )
 from .exceptions import (
     BlankExternalId,

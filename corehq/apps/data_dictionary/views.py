@@ -34,8 +34,8 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     delete_case_property,
     get_data_dict_props_by_case_type,
-    is_case_type_unused,
     is_case_property_unused,
+    is_case_type_unused,
     save_case_property,
     save_case_property_group,
     update_url_query_params,
@@ -53,7 +53,10 @@ from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
-from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.const import (
+    CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
+    DEFAULT_CASE_PROPS_PER_CASE_TYPE,
+)
 from corehq.project_limits.models import SystemLimit
 
 from .bulk import (

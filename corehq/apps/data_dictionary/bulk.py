@@ -1,28 +1,25 @@
 import itertools
 from collections import defaultdict
 
-from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
-from corehq.util.files import file_extention_from_filename
-from corehq.util.workbook_reading import open_any_workbook
 from corehq.motech.fhir.utils import (
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
+from corehq.util.files import file_extention_from_filename
+from corehq.util.workbook_reading import open_any_workbook
 
-from .models import (
-    CaseProperty,
-    CaseType,
-)
+from .models import CaseProperty, CaseType
 from .util import (
-    save_case_property,
     get_column_headings,
-    map_row_values_to_column_names,
     is_case_type_or_prop_name_valid,
+    map_row_values_to_column_names,
+    save_case_property,
 )
 
 FHIR_RESOURCE_TYPE_MAPPING_SHEET = "fhir_mapping"
