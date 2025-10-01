@@ -1,0 +1,38 @@
+{% load i18n %}
+
+<p>
+  {% blocktrans %}
+    Based on currently available software plans, by enabling auto renewal:
+  {% endblocktrans %}
+</p>
+<ul>
+  <li>
+    {% blocktrans with plan_name=plan.name date_end=plan.date_end next_plan_name=renewal_plan.name %}
+      Your <b>{{ plan_name }}</b> subscription will automatically renew to
+      <b>{{ next_plan_name }}</b> on {{ date_end }}.
+    {% endblocktrans %}
+  </li>
+  <li>
+    {% blocktrans with price=renewal_plan.price %}
+      Your new software plan will cost <b>{{ price }}</b>.
+    {% endblocktrans %}
+  </li>
+  {% if renewal_plan.is_annual_plan %}
+    <li>
+      {% blocktrans %}
+        Your new subscription will require upfront payment for 12 months of
+        software plan fees.
+      {% endblocktrans %}
+    </li>
+  {% endif %}
+</ul>
+<p>
+  {% blocktrans %}
+    For more information about CommCare software plans, visit
+    <a
+      href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%26-Feature-Comparisons"
+      target="_blank"
+      >our help site</a
+    >.
+  {% endblocktrans %}
+</p>
