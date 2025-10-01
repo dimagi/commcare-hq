@@ -155,7 +155,8 @@ class KafkaChangeFeed(ChangeFeed):
             for partition in self._consumer.partitions_for_topic(topic):
                 topic_partitions.append(TopicPartition(topic, partition))
 
-        self._consumer.assign(self._filter_partitions(topic_partitions))
+        self.topic_partitions = self._filter_partitions(topic_partitions)
+        self._consumer.assign(self.topic_partitions)
         return self._consumer
 
     def _filter_offsets(self, offsets) -> Optional[Dict[TopicPartition, int]]:

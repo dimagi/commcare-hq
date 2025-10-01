@@ -170,6 +170,7 @@ class ConstructedPillow:
         for change in self.change_feed.iter_changes(since=since or None, forever=forever):
             if change is None and not changes_chunk:
                 self._update_checkpoint(None, None)
+                self._record_timeout_in_datadog()
                 continue
             if self.batch_processors:
                 # Queue and process in chunks for both batch and serial processors
@@ -347,6 +348,15 @@ class ConstructedPillow:
             'commcare.change_feed.changes.count', change,
             processing_time=processing_time, add_case_type_tag=True
         )
+
+    def _record_timeout_in_datadog(self):
+        name = self.pillow_id
+        for tp in self.change_feed.topic_partitions:
+            tags = {'pillow_name': name, 'topic': _topic_for_ddog(tp)}
+            metrics_gauge('commcare.change_feed.change_lag', 0, tags=tags,
+                          multiprocess_mode=MPM_MAX)
+        metrics_gauge('commcare.change_feed.chunked.max_change_lag', 0,
+                      tags={'pillow_name': name}, multiprocess_mode=MPM_MAX)
 
     def _record_batch_exception_in_datadog(self, processor):
         metrics_counter(

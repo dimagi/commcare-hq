@@ -90,6 +90,7 @@ def test_process_changes(cfg, expected_calls):
         patch.object(pillow, '_batch_process_with_error_handling', batch_proc),
         patch.object(pillow, 'process_with_error_handling', serial_proc),
         patch.object(pillow, '_record_change_in_datadog'),
+        patch.object(pillow, '_record_timeout_in_datadog'),
         patch.object(pillow, '_update_checkpoint', checkpoint),
     ):
         pillow.process_changes(since=None, forever=cfg.forever)
