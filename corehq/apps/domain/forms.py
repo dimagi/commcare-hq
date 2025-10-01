@@ -3121,7 +3121,7 @@ class ExtractAppInfoForm(forms.Form):
 
     def _get_source_server(self, parsed_url):
         server_mapping = {subdomain: server for server, subdomain
-                          in ServerLocation.SUBDOMAINS.items()}
+                          in ServerLocation.get_subdomains().items()}
 
         netloc = parsed_url.netloc.split(".")
 
@@ -3205,7 +3205,7 @@ class ImportAppForm(forms.Form):
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
-        server_address = ServerLocation.SUBDOMAINS[source_server]
+        server_address = ServerLocation.get_subdomains()[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
 
 
