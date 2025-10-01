@@ -1,0 +1,3 @@
+
+class KeywordProcessingError(Exception):
+    pass
