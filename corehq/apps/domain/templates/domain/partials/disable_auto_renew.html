@@ -1,0 +1,23 @@
+{% load i18n %}
+
+<p>{% trans "By disabling auto renewal:" %}</p>
+<ul>
+  <li>
+    {% blocktrans with plan_name=plan.name date_end=plan.date_end %}
+      Your subscription to <b>{{ plan_name }}</b> will end on {{ date_end }}.
+    {% endblocktrans %}
+  </li>
+  {% if plan.next_subscription.name %}
+    <li>
+      {% blocktrans with plan_name=plan.next_subscription.name date_start=plan.next_subscription.date_start %}
+        Your upcoming subscription to <b>{{ plan_name }}</b> beginning
+        {{ date_start }} will be canceled.
+      {% endblocktrans %}
+    </li>
+  {% endif %}
+  <li>
+    {% blocktrans %}
+      Your subscription will <strong>not</strong> automatically renew.
+    {% endblocktrans %}
+  </li>
+</ul>
