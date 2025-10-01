@@ -5,11 +5,11 @@ import string
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.tokens import default_token_generator
 from django.core.validators import EmailValidator, validate_email
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -534,7 +534,7 @@ class SetUserPasswordForm(SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = format_html_lazy(
+            self.fields['new_password1'].help_text = mark_safe(  # nosec: no user input
                 '<span id="help_text" data-bind="html: passwordHelp, css: color, click: firstSuggestion">')
             initial_password = generate_strong_password()
 
@@ -627,15 +627,10 @@ class SendCommCareUserPasswordResetEmailForm(forms.Form):
         )
         super(SendCommCareUserPasswordResetEmailForm, self).__init__(*args, **kwargs)
 
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             use_https=False, token_generator=default_token_generator, request=None):
+    def save(self, **kwargs):
         user_id = self.data.get('user_id')
         django_user = CommCareUser.get(user_id).get_django_user()
-
-        send_password_reset_email([django_user], domain_override, subject_template_name,
-                                  email_template_name, use_https, token_generator, request)
+        send_password_reset_email([django_user])
 
 
 class NewMobileWorkerForm(forms.Form):

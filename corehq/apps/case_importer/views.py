@@ -149,7 +149,7 @@ def _process_spreadsheet_columns(spreadsheet, max_columns=None):
             'uence.dimagi.com/display/commcarepublic/Case+Configuration">case '
             'property names</a>. They must start with a letter, and can only '
             'contain letters, numbers and underscores. Please update the '
-            'following: {}.').format(', '.join(invalid_column_names)))
+            'following: {}.'), ', '.join(invalid_column_names))
         raise ImporterRawError(error_message)
 
     if row_count == 0:
