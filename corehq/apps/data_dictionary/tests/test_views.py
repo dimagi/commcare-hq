@@ -12,6 +12,7 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
@@ -29,14 +30,24 @@ class DataDictionaryViewTestBase(TestCase):
         cls.domain_obj = create_domain(cls.domain_name)
         cls.addClassCleanup(cls.domain_obj.delete)
 
-        cls.user = WebUser.create(None, 'username', 'Passw0rd!', None, None)
+        cls.user = WebUser.create(
+            None, 'username', 'Passw0rd!', None, None,
+            email='username@example.com',
+        )
         cls.user.add_domain_membership(cls.domain_name, is_admin=True)
         cls.user.save()
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
 
+        subdomain = create_domain('subdomain')
+        cls.addClassCleanup(subdomain.delete)
+        create_enterprise_permissions(
+            cls.user.email,
+            cls.domain_name,
+            [subdomain.name],
+        )
+
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
-@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 class UpdateCasePropertyViewTest(DataDictionaryViewTestBase):
 
     @classmethod
@@ -635,11 +646,14 @@ class DataDictionaryJsonCasePropertiesTest(DataDictionaryViewTestBase):
             'is_safe_to_delete',
             'label',
             'name',
+            # Data types enabled for Advanced and Enterprise plans
+            'data_type',
+            'allowed_values',
         }
         assert property_response['id'] == self.prop_obj.id
         assert property_response['name'] == self.prop_obj.name
 
-    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
+    @privilege_enabled(privileges.DATA_DICT_TYPES)
     def test_validation_feature_flag(self):
         response = self.client.get(self.case_properties_endpoint())
         property_response = response.json()['groups'][0]['properties'][0]
