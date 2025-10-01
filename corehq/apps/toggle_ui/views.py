@@ -432,6 +432,9 @@ def toggle_status(request, toggle_slug):
     toggle = Toggle.get(toggle_slug)
     toggle.status = status
     toggle.save()
+    for entry in toggle.enabled_users:
+        namespace, entry = parse_toggle(entry)
+        clear_toggle_cache_by_namespace(namespace, entry)
     return HttpResponseRedirect(reverse(ToggleEditView.urlname, args=[toggle_slug]))
 
 
