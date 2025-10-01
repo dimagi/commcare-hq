@@ -26,6 +26,8 @@ class PaymentProperties(str, Enum):
     # Tracks how many times we attempted to fetch payment status (including first attempt).
     # Only stored for pending or request error
     PAYMENT_STATUS_ATTEMPT_COUNT = 'payment_status_attempt_count'
+    # If this property is present, it must be set to 'true' for the payment to appear in report and be processed.
+    FINAL_MOBILE_VALIDATION = 'commcare_final_mobile_validation'
 
 
 PAYMENT_SUCCESS_STATUS_CODE = 202
