@@ -23,7 +23,7 @@
          <h4 class="modal-title">
            {% if plan.is_auto_renew %}
              {% trans "Disable Auto Renewal" %}
-@@ -95,7 +93,11 @@
+@@ -38,7 +36,11 @@
            {% endif %}"
          >
            {% csrf_token %}
