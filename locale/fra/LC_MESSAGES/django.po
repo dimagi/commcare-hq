@@ -342,6 +342,16 @@ msgid "Version"
 msgstr "Version"
 
 #: corehq/apps/accounting/forms.py
+#| msgid "Shadow Module Version"
+msgid "Show Most Recent Version"
+msgstr "Afficher la version la plus récente"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Show All Groups"
+msgid "Show All Versions"
+msgstr "Afficher toutes les versions"
+
+#: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -363,6 +373,16 @@ msgstr "Ne pas facturer"
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Do Not Invoice\""
 msgstr "Justifier pourquoi \"Ne pas facturer\""
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Do Not Invoice"
+msgid "Do Not Email Invoices"
+msgstr "Ne pas envoyer les factures par e-mail"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Next Subscription Begins"
+msgid "Do Not Email Subscription Reminders"
+msgstr "Ne pas envoyer de rappels d'abonnement par e-mail"
 
 #: corehq/apps/accounting/forms.py
 msgid "Auto-generate Plan Credits"
@@ -387,6 +407,141 @@ msgstr "Exclure du processus de mise en pause automatisée"
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Skip Auto Pause\""
 msgstr "Justifiez pourquoi « Ignorer la mise en pause automatique »"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Enable auto select"
+msgid "Enable auto renewal"
+msgstr "Activer le renouvellement automatique"
+
+#: corehq/apps/accounting/forms.py
+msgid "Applies if subscription has a future end date and is type 'Product'"
+msgstr ""
+"S'applique si l'abonnement a une date de fin future et est de type 'Produit'"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Please select version"
+msgid "is most recent version"
+msgstr "est la version la plus récente"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Cannot make new version"
+msgid "not most recent version"
+msgstr "n'est pas la version la plus récente"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Already Paid"
+msgid "(already started)"
+msgstr "(déjà commencé)"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Already in use."
+msgid "(already ended)"
+msgstr "(déjà terminé)"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Billing Account"
+msgid "Search for Billing Account"
+msgstr "Rechercher un compte de facturation"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "From Project Space"
+msgid "Search for Project Space"
+msgstr "Rechercher un espace projet"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "New Software Plan"
+msgid "Search for Software Plan"
+msgstr "Rechercher un plan logiciel"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Select Action"
+msgid "Select Active Account"
+msgstr "Sélectionner un compte actif"
+
+#: corehq/apps/accounting/forms.py
+#, python-format
+#| msgid "Subscription"
+msgid "%s Subscription"
+msgstr "Abonnement %s"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/reports/views.py
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
+#: corehq/apps/users/templates/users/web_users.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/tabs/tabclasses.py
+msgid "Edit"
+msgstr "Modifier"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/accounting_admins.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/tabs/tabclasses.py
+msgid "New"
+msgstr "Nouveau"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Hide Options"
+msgid "Invoice Options"
+msgstr "Options de facture"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Filter Options"
+msgid "Email Options"
+msgstr "Options d'e-mail"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Case Options"
+msgid "Credit Options"
+msgstr "Options de crédit"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Justify why \"Skip Auto Pause\""
+msgid "Skip Auto Pause"
+msgstr "Ignorer la pause automatique"
+
+#: corehq/apps/accounting/forms.py
+msgid "Auto Renew"
+msgstr "Renouvellement automatique"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/models.py
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
+#: corehq/apps/integration/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/users/forms.py corehq/apps/users/models.py
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Update"
+msgstr "Mettre à jour"
+
+#: corehq/apps/accounting/forms.py corehq/apps/case_search/models.py
+#: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Create"
+msgstr "Créer"
 
 #: corehq/apps/accounting/forms.py
 msgid ""
@@ -1250,13 +1405,6 @@ msgid "Remove User"
 msgstr "Supprimer d'utilisateur"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
-#: corehq/tabs/tabclasses.py
-msgid "New"
-msgstr "Nouveau"
-
-#: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 msgid "Removed"
@@ -1282,6 +1430,32 @@ msgstr "Paiement automatique"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Hello %(old_user_name)s,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Your card is no longer being used for autopayment on the account %(billing_account_name)s.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    A card belonging to <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> is being used instead. If this is expected, you do not have to take any further action, and this card will be used to pay monthly invoices and will be charged on the invoice due date. If this change is unexpected, you can view and alter the credit card information at any time by navigating to your <a href=\"%(billing_info_url)s\">Billing Information</a> page.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact\n"
+#| "    <a href=\"mailto:%(invoicing_contact_email)s\">%(invoicing_contact_email)s</a>.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Best Regards,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    The CommCare Team<br/>\n"
+#| "    www.commcarehq.org\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  </p>\n"
+#| "\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -1305,7 +1479,7 @@ msgid ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
 msgstr ""
@@ -1317,7 +1491,7 @@ msgstr ""
 "    Votre carte n'est plus utilisée pour le paiement automatique sur le compte %(billing_account_name)s.\n"
 "  </p>\n"
 "  <p>\n"
-"    Une carte appartenant à <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> est utilisée à la place. Si cela est attendu, aucune action supplémentaire n'est nécessaire, et cette carte sera utilisée pour payer les factures mensuelles et sera débitée à la date d'échéance de la facture. Si ce changement est inattendu, vous pouvez consulter et modifier les informations de carte de crédit à tout moment en accédant à votre page <a href=\"%(billing_info_url)s\">Informations de facturation</a>.\n"
+"    Une carte appartenant à <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> est utilisée à la place. Si cela est attendu, vous n'avez rien à faire, et cette carte sera utilisée pour payer les factures mensuelles et sera débitée à la date d'échéance de la facture. Si ce changement est inattendu, vous pouvez consulter et modifier les informations de carte de crédit à tout moment en accédant à votre page <a href=\"%(billing_info_url)s\">Informations de facturation</a>.\n"
 "  </p>\n"
 "  <p>\n"
 "    Merci d'utiliser CommCare. Si vous avez des questions, n'hésitez pas à contacter\n"
@@ -1331,7 +1505,7 @@ msgstr ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Émis par : CommCare et la société Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Déclaration de : CommCare et la société Dimagi, Inc. 245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
 
@@ -1429,17 +1603,26 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#| msgid ""
+#| "\n"
+#| "    Email From:<br />\n"
+#| "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#| "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
 "    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
-"    Email de :<br />\n"
+"    E-mail de :<br />\n"
 "    CommCare et la société Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
@@ -1491,6 +1674,17 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
 #, python-format
+#| msgid ""
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgid ""
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
@@ -1501,7 +1695,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "Merci d'utiliser CommCare. Si vous avez des questions, n'hésitez pas à\n"
 "contacter %(invoicing_contact_email)s.\n"
@@ -1510,9 +1704,9 @@ msgstr ""
 "L'équipe CommCare\n"
 "www.commcarehq.org\n"
 "\n"
-"Email de :\n"
+"E-mail de :\n"
 "CommCare et la société Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #, python-format
@@ -1523,22 +1717,6 @@ msgid ""
 msgstr ""
 "\n"
 "    Cet email est un reçu pour votre prépaiement de <strong>%(amount)s</strong> pour des crédits sur votre projet %(project)s.\n"
-"  "
-
-#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-msgid ""
-"\n"
-"    Email From:<br />\n"
-"    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-"  "
-msgstr ""
-"\n"
-"    Email de :<br />\n"
-"    CommCare et la société Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
@@ -1578,16 +1756,21 @@ msgstr ""
 "www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
+#| msgid ""
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"Email de :\n"
+"E-mail de :\n"
 "CommCare et la société Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #, python-format
@@ -2090,6 +2273,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2101,7 +2296,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Merci d'utiliser %(plan_name)s. Si vous avez des questions, n'hésitez pas à contacter %(invoicing_contact_email)s.\n"
@@ -2111,9 +2306,9 @@ msgstr ""
 "www.commcarehq.org\n"
 "\n"
 "\n"
-"Émis par :\n"
+"Déclaration de :\n"
 "CommCare et la société Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
@@ -2516,6 +2711,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2527,7 +2734,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Merci d'utiliser %(plan_name)s. Si vous avez des questions, n'hésitez pas à contacter %(invoicing_contact_email)s.\n"
@@ -2537,9 +2744,9 @@ msgstr ""
 "www.commcarehq.org\n"
 "\n"
 "\n"
-"Émis par :\n"
+"Déclaration de :\n"
 "CommCare et la société Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 msgid ""
@@ -2653,17 +2860,23 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
-"    Émis par :\n"
+"    Déclaration de :\n"
 "    CommCare et la société Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -2715,16 +2928,21 @@ msgstr ""
 "    www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"    Émis par :\n"
+"    Déclaration de :\n"
 "    CommCare et la société Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
@@ -2799,6 +3017,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
@@ -2810,7 +3040,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Merci d'utiliser CommCare. Si vous avez des questions, n'hésitez pas à\n"
@@ -2820,9 +3050,9 @@ msgstr ""
 "L'équipe CommCare\n"
 "www.commcarehq.org\n"
 "\n"
-"Email de :\n"
+"E-mail de :\n"
 "CommCare et la société Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
@@ -3410,6 +3640,30 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
+#| "based on actual usage in the following month. If you prefer, you may also prepay for\n"
+#| "expected on-demand usage. Please contact us if you would like to explore this option.\n"
+#| "\n"
+#| "Instructions for Payment\n"
+#| "\n"
+#| "Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.\n"
+#| "If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:\n"
+#| "\n"
+#| "1. Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.\n"
+#| "\n"
+#| "2. Send an email to %(accounts_email)s after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.\n"
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
@@ -3433,21 +3687,21 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"Remarque : Tous frais à la demande pour des utilisateurs ou SMS supplémentaires seront facturés séparément\n"
+"Remarque : Tous les frais à la demande pour les utilisateurs ou SMS supplémentaires seront facturés séparément\n"
 "selon l'utilisation réelle le mois suivant. Si vous le souhaitez, vous pouvez également prépayer\n"
 "l'utilisation à la demande prévue. Veuillez nous contacter si vous souhaitez explorer cette option.\n"
 "\n"
 "Instructions de paiement\n"
 "\n"
-"Dimagi accepte les paiements par ACH, virement bancaire et carte de crédit. Toutes les options de paiement sont indiquées sur la facture jointe.\n"
+"Dimagi accepte les paiements par ACH, virement bancaire et carte de crédit. Toutes les options de paiement sont listées dans la facture jointe.\n"
 "Si vous payez par virement, veuillez suivre ces instructions pour garantir un traitement rapide et l'identification de votre paiement :\n"
 "\n"
-"1. Envoyez le paiement par virement sur le compte bancaire de Dimagi et indiquez l'identifiant de la facture dans les détails du virement. Les coordonnées bancaires de Dimagi et l'identifiant de la facture figurent sur la facture jointe.\n"
+"1. Envoyez le paiement par virement sur le compte bancaire de Dimagi et incluez l'ID de la facture dans les détails du virement. Les coordonnées bancaires de Dimagi et l'ID de la facture se trouvent dans la facture jointe.\n"
 "\n"
-"2. Envoyez un email à %(accounts_email)s après avoir effectué le paiement, en incluant la date du paiement, le montant, le numéro de facture et le nom de l'espace projet.\n"
+"2. Envoyez un e-mail à %(accounts_email)s après avoir effectué le paiement en incluant la date du paiement, le montant, le numéro de la facture et le nom de l'espace projet.\n"
 "\n"
 "Merci d'utiliser CommCare. Si vous avez des questions, n'hésitez pas à contacter %(invoicing_contact_email)s.\n"
 "\n"
@@ -3455,9 +3709,9 @@ msgstr ""
 "L'équipe CommCare\n"
 "www.commcarehq.org\n"
 "\n"
-"Émis par :\n"
+"Déclaration de :\n"
 "CommCare et la société Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2e étage, Cambridge, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #, python-format
@@ -4045,28 +4299,6 @@ msgstr "Date limite de la dernière facture"
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 msgid "\"Do Not Invoice\" Reason"
 msgstr "Raison de \"Non Facturation\""
-
-#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/reports/views.py
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/toggle_ui/templates/toggle/flags.html
-#: corehq/apps/users/templates/users/web_users.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/tabs/tabclasses.py
-msgid "Edit"
-msgstr "Modifier"
 
 #: corehq/apps/accounting/templates/accounting/plans.html
 msgid "Plan Information"
@@ -9953,11 +10185,6 @@ msgid "Display Condition"
 msgstr "Condition d'affichage"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "The form will not appear in the menu unless this condition is met. Read more"
-#| " on the <a target='_blank' "
-#| "href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Help"
-#| " Site</a>."
 msgid ""
 "\n"
 "          The form will not appear in the menu unless this condition is met.\n"
@@ -9980,15 +10207,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "\n"
-#| "              To use display conditions which reference a case, <br/>\n"
-#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-#| "              <em>Display menu and then forms</em> <br/>\n"
-#| "              (2) all the forms in the case list must update or close a case, which means registration\n"
-#| "              forms must go in a separate case list, or if your project uses user properties, your\n"
-#| "              display condition may use user properties.\n"
-#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
@@ -10011,11 +10229,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "\n"
-#| "          There is something wrong with the logic in the Form Display Condition.\n"
-#| "          Check to make sure your parentheses match and you are referencing case properties correctly.\n"
-#| "        "
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display Condition.\n"
@@ -12865,21 +13078,6 @@ msgstr ""
 "volumineuses)"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/case_search/models.py
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
-#: corehq/apps/integration/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/users/forms.py corehq/apps/users/models.py
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Update"
-msgstr "Mettre à jour"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/templates/reports/async/print_report.html
 msgid "Loading ..."
@@ -14950,14 +15148,6 @@ msgstr "{param} doit être une chaîne de caractères"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "Opérateur invalide \"{criteria[\"operator\"]}\". Les valeurs autorisées sont "
-
-#: corehq/apps/case_search/models.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Create"
-msgstr "Créer"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -23852,53 +24042,6 @@ msgstr ""
 msgid "Use Backup Token"
 msgstr "Utilisez les bons sauvegardés"
 
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid "Please set up Two-Factor Authentication"
-msgstr "Veuillez configurer l'authentification à deux facteurs"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      For security purposes, your CommCare administrator has required that all users in your project set up\n"
-"      two-factor authentication.<br>This is an extra layer of protection used to ensure the security of your account\n"
-"      beyond a username and password. \n"
-"    "
-msgstr ""
-"\n"
-"      Pour des raisons de sécurité, votre administrateur CommCare      l'authentification à deux facteurs.<br>Il s'agit d'une couche de protection supplémentaire utilisée pour garantir la sécurité de votre compte\n"
-"      au-delà d'un nom d'utilisateur et d'un mot de passe.    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      To access your account, please enable two-factor authentication below.\n"
-"    "
-msgstr ""
-"\n"
-"      Pour accéder à votre compte, veuillez activer l'authentification à deux facteurs ci-dessous.\n"
-"    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
-msgid "Go back"
-msgstr "Retour"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
-msgid "Enable Two-Factor Authentication"
-msgstr "Activer l'authentification à deux facteurs"
-
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/phone_register.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/phone_register.html
 msgid "Add Backup Phone"
@@ -23922,6 +24065,16 @@ msgid ""
 msgstr ""
 "Nous avons envoyé un jeton à votre numéro de téléphone. Veuillez saisir le "
 "jeton que vous avez reçu."
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
+msgid "Enable Two-Factor Authentication"
+msgstr "Activer l'authentification à deux facteurs"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
@@ -24022,6 +24175,38 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
 msgid "Generate Backup Tokens"
 msgstr "Générer des jetons de secours"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid "Please set up Two-Factor Authentication"
+msgstr "Veuillez configurer l'authentification à deux facteurs"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      For security purposes, your CommCare administrator has required that all users in your project set up\n"
+"      two-factor authentication.<br>This is an extra layer of protection used to ensure the security of your account\n"
+"      beyond a username and password. \n"
+"    "
+msgstr ""
+"\n"
+"      Pour des raisons de sécurité, votre administrateur CommCare      l'authentification à deux facteurs.<br>Il s'agit d'une couche de protection supplémentaire utilisée pour garantir la sécurité de votre compte\n"
+"      au-delà d'un nom d'utilisateur et d'un mot de passe.    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      To access your account, please enable two-factor authentication below.\n"
+"    "
+msgstr ""
+"\n"
+"      Pour accéder à votre compte, veuillez activer l'authentification à deux facteurs ci-dessous.\n"
+"    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
+msgid "Go back"
+msgstr "Retour"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
@@ -24501,24 +24686,17 @@ msgstr ""
 "actuel."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid ""
-#| "Congratulations, you've successfully enabled two-factor\n"
-#| "    authentication."
 msgid "Auto renewal successfully enabled for the current subscription."
 msgstr ""
 "Renouvellement automatique activé avec succès pour l'abonnement actuel."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid "Multimedia was successfully updated for the linked app."
 msgid "Auto renewal successfully disabled for the current subscription."
 msgstr ""
 "Renouvellement automatique désactivé avec succès pour l'abonnement actuel."
 
 #: corehq/apps/domain/views/accounting.py
 #, python-brace-format
-#| msgid ""
-#| "You do not have permission to pause the subscription for this customer-level"
-#| " account. Please reach out to the %s enterprise admin for help."
 msgid ""
 "You do not have permission to modify the subscription for this customer-"
 "level account. Please reach out to the {account_name} enterprise admin for "
@@ -31772,7 +31950,6 @@ msgid "US"
 msgstr "États-Unis"
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
-#| msgid "user"
 msgid "users"
 msgstr "utilisateurs"
 
@@ -33755,7 +33932,6 @@ msgid "Unknown error"
 msgstr "Erreur inconnue"
 
 #: corehq/apps/integration/kyc/models.py
-#| msgid "Pass"
 msgid "Passed"
 msgstr "Réussi"
 
@@ -58262,6 +58438,19 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid ""
+#~ "\n"
+#~ "    Email From:<br />\n"
+#~ "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Email de :<br />\n"
+#~ "    CommCare et la société Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
 
 #~ msgid ""
 #~ "\n"

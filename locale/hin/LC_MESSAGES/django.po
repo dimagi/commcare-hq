@@ -325,6 +325,16 @@ msgid "Version"
 msgstr "संस्करण"
 
 #: corehq/apps/accounting/forms.py
+#| msgid "Shadow Module Version"
+msgid "Show Most Recent Version"
+msgstr "सबसे हाल का संस्करण दिखाएँ"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Show All Groups"
+msgid "Show All Versions"
+msgstr "सभी संस्करण दिखाएँ"
+
+#: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -346,6 +356,16 @@ msgstr "इनवॉइस न करें"
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Do Not Invoice\""
 msgstr "\"इनवॉइस न करें\" का कारण स्पष्ट करें"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Do Not Invoice"
+msgid "Do Not Email Invoices"
+msgstr "चालान ईमेल न करें"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Next Subscription Begins"
+msgid "Do Not Email Subscription Reminders"
+msgstr "सदस्यता अनुस्मारक ईमेल न करें"
 
 #: corehq/apps/accounting/forms.py
 msgid "Auto-generate Plan Credits"
@@ -370,6 +390,141 @@ msgstr "स्वचालित विराम प्रक्रिया स
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Skip Auto Pause\""
 msgstr "\"ऑटो पॉज़ छोड़ें\" का कारण स्पष्ट करें"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Enable auto select"
+msgid "Enable auto renewal"
+msgstr "स्वचालित नवीनीकरण सक्षम करें"
+
+#: corehq/apps/accounting/forms.py
+msgid "Applies if subscription has a future end date and is type 'Product'"
+msgstr ""
+"लागू होता है यदि सदस्यता की भविष्य की समाप्ति तिथि है और प्रकार 'उत्पाद' है"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Please select version"
+msgid "is most recent version"
+msgstr "सबसे हाल का संस्करण है"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Cannot make new version"
+msgid "not most recent version"
+msgstr "सबसे हाल का संस्करण नहीं है"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Already Paid"
+msgid "(already started)"
+msgstr "(पहले ही शुरू हो चुका है)"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Already in use."
+msgid "(already ended)"
+msgstr "(पहले ही समाप्त हो चुका है)"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Billing Account"
+msgid "Search for Billing Account"
+msgstr "बिलिंग खाता खोजें"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "From Project Space"
+msgid "Search for Project Space"
+msgstr "प्रोजेक्ट स्पेस खोजें"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "New Software Plan"
+msgid "Search for Software Plan"
+msgstr "सॉफ्टवेयर प्लान खोजें"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Select Action"
+msgid "Select Active Account"
+msgstr "सक्रिय खाता चुनें"
+
+#: corehq/apps/accounting/forms.py
+#, python-format
+#| msgid "Subscription"
+msgid "%s Subscription"
+msgstr "%s सदस्यता"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/reports/views.py
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
+#: corehq/apps/users/templates/users/web_users.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/tabs/tabclasses.py
+msgid "Edit"
+msgstr "संपादित करें"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/accounting_admins.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/tabs/tabclasses.py
+msgid "New"
+msgstr "नया"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Hide Options"
+msgid "Invoice Options"
+msgstr "चालान विकल्प"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Filter Options"
+msgid "Email Options"
+msgstr "ईमेल विकल्प"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Case Options"
+msgid "Credit Options"
+msgstr "क्रेडिट विकल्प"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Justify why \"Skip Auto Pause\""
+msgid "Skip Auto Pause"
+msgstr "ऑटो पॉज़ छोड़ें"
+
+#: corehq/apps/accounting/forms.py
+msgid "Auto Renew"
+msgstr "ऑटो नवीनीकरण"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/models.py
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
+#: corehq/apps/integration/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/users/forms.py corehq/apps/users/models.py
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Update"
+msgstr "अपडेट करें"
+
+#: corehq/apps/accounting/forms.py corehq/apps/case_search/models.py
+#: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Create"
+msgstr "बनाएँ"
 
 #: corehq/apps/accounting/forms.py
 msgid ""
@@ -1183,13 +1338,6 @@ msgid "Remove User"
 msgstr "उपयोगकर्ता हटाएँ"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
-#: corehq/tabs/tabclasses.py
-msgid "New"
-msgstr "नया"
-
-#: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 msgid "Removed"
@@ -1215,6 +1363,32 @@ msgstr "ऑटोपे"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Hello %(old_user_name)s,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Your card is no longer being used for autopayment on the account %(billing_account_name)s.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    A card belonging to <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> is being used instead. If this is expected, you do not have to take any further action, and this card will be used to pay monthly invoices and will be charged on the invoice due date. If this change is unexpected, you can view and alter the credit card information at any time by navigating to your <a href=\"%(billing_info_url)s\">Billing Information</a> page.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact\n"
+#| "    <a href=\"mailto:%(invoicing_contact_email)s\">%(invoicing_contact_email)s</a>.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Best Regards,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    The CommCare Team<br/>\n"
+#| "    www.commcarehq.org\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  </p>\n"
+#| "\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -1238,7 +1412,7 @@ msgid ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
 msgstr ""
@@ -1247,10 +1421,10 @@ msgstr ""
 "    नमस्ते %(old_user_name)s,\n"
 "  </p>\n"
 "  <p>\n"
-"    आपके खाते %(billing_account_name)s पर अब आपकी कार्ड का उपयोग ऑटोपेमेंट के लिए नहीं किया जा रहा है।\n"
+"    आपका कार्ड अब खाते %(billing_account_name)s पर ऑटोपेमेंट के लिए उपयोग नहीं हो रहा है।\n"
 "  </p>\n"
 "  <p>\n"
-"    इसके बजाय <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> के कार्ड का उपयोग किया जा रहा है। यदि यह अपेक्षित है, तो आपको कोई और कार्रवाई करने की आवश्यकता नहीं है, और इस कार्ड का उपयोग मासिक इनवॉइस का भुगतान करने के लिए किया जाएगा और इनवॉइस की नियत तिथि पर शुल्क लिया जाएगा। यदि यह परिवर्तन अप्रत्याशित है, तो आप कभी भी अपने <a href=\"%(billing_info_url)s\">बिलिंग जानकारी</a> पृष्ठ पर जाकर क्रेडिट कार्ड जानकारी देख और बदल सकते हैं।\n"
+"    इसके बजाय <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> का कार्ड उपयोग हो रहा है। यदि यह अपेक्षित है, तो आपको कोई और कार्रवाई करने की आवश्यकता नहीं है, और इस कार्ड का उपयोग मासिक चालानों का भुगतान करने के लिए किया जाएगा और चालान की नियत तिथि पर शुल्क लिया जाएगा। यदि यह परिवर्तन अप्रत्याशित है, तो आप कभी भी अपने <a href=\"%(billing_info_url)s\">बिलिंग जानकारी</a> पृष्ठ पर जाकर क्रेडिट कार्ड जानकारी देख और बदल सकते हैं।\n"
 "  </p>\n"
 "  <p>\n"
 "    CommCare का उपयोग करने के लिए धन्यवाद। यदि आपके कोई प्रश्न हैं, तो कृपया संपर्क करने में संकोच न करें\n"
@@ -1264,7 +1438,7 @@ msgstr ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    विवरण: CommCare और कंपनी Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    विवरण भेजने वाला: CommCare और कंपनी Dimagi, Inc. 245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 "  </p>\n"
 "\n"
 
@@ -1362,17 +1536,26 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#| msgid ""
+#| "\n"
+#| "    Email From:<br />\n"
+#| "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#| "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
 "    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
-"    ईमेल द्वारा:<br />\n"
+"    ईमेल भेजने वाला:<br />\n"
 "    CommCare और कंपनी Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
@@ -1422,6 +1605,17 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
 #, python-format
+#| msgid ""
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgid ""
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
@@ -1432,7 +1626,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "CommCare का उपयोग करने के लिए धन्यवाद। यदि आपके कोई प्रश्न हैं, तो कृपया\n"
 "%(invoicing_contact_email)s से संपर्क करने में संकोच न करें।\n"
@@ -1441,9 +1635,9 @@ msgstr ""
 "CommCare टीम\n"
 "www.commcarehq.org\n"
 "\n"
-"ईमेल द्वारा:\n"
+"ईमेल भेजने वाला:\n"
 "CommCare और कंपनी Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #, python-format
@@ -1454,22 +1648,6 @@ msgid ""
 msgstr ""
 "\n"
 "    यह ईमेल आपके %(project)s प्रोजेक्ट के लिए क्रेडिट्स हेतु <strong>%(amount)s</strong> की आपकी पूर्व-भुगतान रसीद है।\n"
-"  "
-
-#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-msgid ""
-"\n"
-"    Email From:<br />\n"
-"    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-"  "
-msgstr ""
-"\n"
-"    ईमेल द्वारा:<br />\n"
-"    CommCare और कंपनी Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
@@ -1510,16 +1688,21 @@ msgstr ""
 "www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
+#| msgid ""
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"ईमेल द्वारा:\n"
+"ईमेल भेजने वाला:\n"
 "CommCare और कंपनी Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #, python-format
@@ -2010,6 +2193,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2021,7 +2216,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "%(plan_name)s का उपयोग करने के लिए धन्यवाद। यदि आपके कोई प्रश्न हैं, तो कृपया %(invoicing_contact_email)s से संपर्क करने में संकोच न करें।\n"
@@ -2031,9 +2226,9 @@ msgstr ""
 "www.commcarehq.org\n"
 "\n"
 "\n"
-"विवरण:\n"
+"विवरण भेजने वाला:\n"
 "CommCare और कंपनी Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
@@ -2427,6 +2622,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2438,7 +2645,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "%(plan_name)s का उपयोग करने के लिए धन्यवाद। यदि आपके कोई प्रश्न हैं, तो कृपया %(invoicing_contact_email)s से संपर्क करने में संकोच न करें।\n"
@@ -2448,9 +2655,9 @@ msgstr ""
 "www.commcarehq.org\n"
 "\n"
 "\n"
-"विवरण:\n"
+"विवरण भेजने वाला:\n"
 "CommCare और कंपनी Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 msgid ""
@@ -2562,17 +2769,23 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
-"    विवरण:\n"
+"    विवरण भेजने वाला:\n"
 "    CommCare और कंपनी Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -2624,16 +2837,21 @@ msgstr ""
 "    www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"    विवरण:\n"
+"    विवरण भेजने वाला:\n"
 "    CommCare और कंपनी Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
@@ -2706,6 +2924,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
@@ -2717,7 +2947,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "CommCare का उपयोग करने के लिए धन्यवाद। यदि आपके कोई प्रश्न हैं, तो कृपया\n"
@@ -2727,9 +2957,9 @@ msgstr ""
 "CommCare टीम\n"
 "www.commcarehq.org\n"
 "\n"
-"ईमेल द्वारा:\n"
+"ईमेल भेजने वाला:\n"
 "CommCare और कंपनी Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
@@ -3287,6 +3517,30 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
+#| "based on actual usage in the following month. If you prefer, you may also prepay for\n"
+#| "expected on-demand usage. Please contact us if you would like to explore this option.\n"
+#| "\n"
+#| "Instructions for Payment\n"
+#| "\n"
+#| "Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.\n"
+#| "If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:\n"
+#| "\n"
+#| "1. Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.\n"
+#| "\n"
+#| "2. Send an email to %(accounts_email)s after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.\n"
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
@@ -3310,19 +3564,19 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"नोट: अतिरिक्त उपयोगकर्ता या एसएमएस के लिए किसी भी ऑन-डिमांड शुल्क को अगले महीने की वास्तविक उपयोग के आधार पर अलग से बिल किया जाएगा। यदि आप चाहें, तो आप अपेक्षित ऑन-डिमांड उपयोग के लिए अग्रिम भुगतान भी कर सकते हैं। यदि आप इस विकल्प का पता लगाना चाहते हैं तो कृपया हमसे संपर्क करें।\n"
+"नोट: अतिरिक्त उपयोगकर्ता या एसएमएस के लिए किसी भी ऑन-डिमांड शुल्क को अगले महीने की वास्तविक उपयोगिता के आधार पर अलग से बिल किया जाएगा। यदि आप चाहें, तो आप अपेक्षित ऑन-डिमांड उपयोग के लिए पूर्व-भुगतान भी कर सकते हैं। यदि आप इस विकल्प का पता लगाना चाहते हैं तो कृपया हमसे संपर्क करें।\n"
 "\n"
-"भुगतान के निर्देश\n"
+"भुगतान के लिए निर्देश\n"
 "\n"
-"Dimagi ACH, वायर ट्रांसफर और क्रेडिट कार्ड के माध्यम से भुगतान स्वीकार करता है। सभी भुगतान विकल्प संलग्न इनवॉइस में सूचीबद्ध हैं।\n"
-"यदि आप वायर द्वारा भुगतान कर रहे हैं, तो कृपया समय पर प्रोसेसिंग और आपके भुगतान की पहचान के लिए ये निर्देश पालन करें:\n"
+"Dimagi ACH, वायर ट्रांसफर और क्रेडिट कार्ड के माध्यम से भुगतान स्वीकार करता है। सभी भुगतान विकल्प संलग्न चालान में सूचीबद्ध हैं।\n"
+"यदि आप वायर द्वारा भुगतान कर रहे हैं, तो कृपया समय पर प्रोसेसिंग और आपके भुगतान की पहचान सुनिश्चित करने के लिए ये निर्देश पालन करें:\n"
 "\n"
-"1. Dimagi के बैंक खाते में वायर भुगतान भेजें और वायर भुगतान विवरण में इनवॉइस आईडी शामिल करें। Dimagi के बैंक खाते का विवरण और इनवॉइस आईडी संलग्न इनवॉइस में मिल सकते हैं।\n"
+"1. वायर भुगतान Dimagi के बैंक खाते में भेजें और वायर भुगतान विवरण में चालान आईडी शामिल करें। Dimagi के बैंक खाते का विवरण और चालान आईडी संलग्न चालान में मिल सकते हैं।\n"
 "\n"
-"2. भुगतान करने के बाद %(accounts_email)s पर एक ईमेल भेजें जिसमें भुगतान की तिथि, राशि, इनवॉइस नंबर और प्रोजेक्ट स्पेस का नाम शामिल हो।\n"
+"2. भुगतान करने के बाद %(accounts_email)s पर एक ईमेल भेजें जिसमें भुगतान की तारीख, राशि, चालान नंबर और प्रोजेक्ट स्पेस का नाम शामिल हो।\n"
 "\n"
 "CommCare का उपयोग करने के लिए धन्यवाद। यदि आपके कोई प्रश्न हैं, तो कृपया %(invoicing_contact_email)s से संपर्क करने में संकोच न करें।\n"
 "\n"
@@ -3330,9 +3584,9 @@ msgstr ""
 "CommCare टीम\n"
 "www.commcarehq.org\n"
 "\n"
-"विवरण:\n"
+"विवरण भेजने वाला:\n"
 "CommCare और कंपनी Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #, python-format
@@ -3909,28 +4163,6 @@ msgstr "अंतिम चालान की देय तिथि"
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 msgid "\"Do Not Invoice\" Reason"
 msgstr "\"चालान न बनाएं\" का कारण"
-
-#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/reports/views.py
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/toggle_ui/templates/toggle/flags.html
-#: corehq/apps/users/templates/users/web_users.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/tabs/tabclasses.py
-msgid "Edit"
-msgstr "संपादित करें"
 
 #: corehq/apps/accounting/templates/accounting/plans.html
 msgid "Plan Information"
@@ -9636,11 +9868,6 @@ msgid "Display Condition"
 msgstr "प्रदर्शन शर्त"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "The form will not appear in the menu unless this condition is met. Read more"
-#| " on the <a target='_blank' "
-#| "href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Help"
-#| " Site</a>."
 msgid ""
 "\n"
 "          The form will not appear in the menu unless this condition is met.\n"
@@ -9663,15 +9890,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "\n"
-#| "              To use display conditions which reference a case, <br/>\n"
-#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-#| "              <em>Display menu and then forms</em> <br/>\n"
-#| "              (2) all the forms in the case list must update or close a case, which means registration\n"
-#| "              forms must go in a separate case list, or if your project uses user properties, your\n"
-#| "              display condition may use user properties.\n"
-#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
@@ -9694,11 +9912,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "\n"
-#| "          There is something wrong with the logic in the Form Display Condition.\n"
-#| "          Check to make sure your parentheses match and you are referencing case properties correctly.\n"
-#| "        "
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display Condition.\n"
@@ -12500,21 +12713,6 @@ msgid "Email when finished (recommended for large applications)"
 msgstr "पूरा होने पर ईमेल करें (बड़ी एप्लिकेशन के लिए अनुशंसित)"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/case_search/models.py
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
-#: corehq/apps/integration/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/users/forms.py corehq/apps/users/models.py
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Update"
-msgstr "अपडेट करें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/templates/reports/async/print_report.html
 msgid "Loading ..."
@@ -14523,14 +14721,6 @@ msgstr "{param} एक स्ट्रिंग होना चाहिए"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "अमान्य ऑपरेटर \"{criteria[\"operator\"]}\"। अनुमत मान हैं "
-
-#: corehq/apps/case_search/models.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Create"
-msgstr "बनाएँ"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -23291,53 +23481,6 @@ msgstr ""
 msgid "Use Backup Token"
 msgstr "बैकअप टोकन का उपयोग करें"
 
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid "Please set up Two-Factor Authentication"
-msgstr "कृपया टू-फैक्टर ऑथेंटिकेशन सेटअप करें"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      For security purposes, your CommCare administrator has required that all users in your project set up\n"
-"      two-factor authentication.<br>This is an extra layer of protection used to ensure the security of your account\n"
-"      beyond a username and password. \n"
-"    "
-msgstr ""
-"\n"
-"      सुरक्षा कारणों से, आपके CommCare एडमिनिस्ट्रेटर      टू-फैक्टर ऑथेंटिकेशन सेटअप करना अनिवार्य किया है।<br>यह आपके खाते की सुरक्षा सुनिश्चित करने के लिए उपयोग की जाने वाली अतिरिक्त सुरक्षा परत है,\n"
-"      जो केवल उपयोगकर्ता नाम और पासवर्ड से परे है।    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      To access your account, please enable two-factor authentication below.\n"
-"    "
-msgstr ""
-"\n"
-"      अपने खाते तक पहुँचने के लिए, कृपया नीचे टू-फैक्टर ऑथेंटिकेशन सक्षम करें।\n"
-"    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
-msgid "Go back"
-msgstr "वापस जाएँ"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
-msgid "Enable Two-Factor Authentication"
-msgstr "टू-फैक्टर ऑथेंटिकेशन सक्षम करें"
-
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/phone_register.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/phone_register.html
 msgid "Add Backup Phone"
@@ -23358,6 +23501,16 @@ msgid ""
 "We've sent a token to your phone number. Please enter the token you've "
 "received."
 msgstr "हमने आपके फ़ोन नंबर पर एक टोकन भेजा है। कृपया प्राप्त टोकन दर्ज करें।"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
+msgid "Enable Two-Factor Authentication"
+msgstr "टू-फैक्टर ऑथेंटिकेशन सक्षम करें"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
@@ -23453,6 +23606,38 @@ msgstr "खाता पुनर्प्राप्ति सक्षम क
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
 msgid "Generate Backup Tokens"
 msgstr "बैकअप टोकन जेनरेट करें"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid "Please set up Two-Factor Authentication"
+msgstr "कृपया टू-फैक्टर ऑथेंटिकेशन सेटअप करें"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      For security purposes, your CommCare administrator has required that all users in your project set up\n"
+"      two-factor authentication.<br>This is an extra layer of protection used to ensure the security of your account\n"
+"      beyond a username and password. \n"
+"    "
+msgstr ""
+"\n"
+"      सुरक्षा कारणों से, आपके CommCare एडमिनिस्ट्रेटर      टू-फैक्टर ऑथेंटिकेशन सेटअप करना अनिवार्य किया है।<br>यह आपके खाते की सुरक्षा सुनिश्चित करने के लिए उपयोग की जाने वाली अतिरिक्त सुरक्षा परत है,\n"
+"      जो केवल उपयोगकर्ता नाम और पासवर्ड से परे है।    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      To access your account, please enable two-factor authentication below.\n"
+"    "
+msgstr ""
+"\n"
+"      अपने खाते तक पहुँचने के लिए, कृपया नीचे टू-फैक्टर ऑथेंटिकेशन सक्षम करें।\n"
+"    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
+msgid "Go back"
+msgstr "वापस जाएँ"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
@@ -23921,22 +24106,15 @@ msgid "Auto renewal cannot be enabled for the current subscription."
 msgstr "वर्तमान सब्सक्रिप्शन के लिए ऑटो रिन्यूअल सक्षम नहीं किया जा सकता।"
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid ""
-#| "Congratulations, you've successfully enabled two-factor\n"
-#| "    authentication."
 msgid "Auto renewal successfully enabled for the current subscription."
 msgstr "वर्तमान सब्सक्रिप्शन के लिए ऑटो रिन्यूअल सफलतापूर्वक सक्षम किया गया।"
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid "Multimedia was successfully updated for the linked app."
 msgid "Auto renewal successfully disabled for the current subscription."
 msgstr "वर्तमान सब्सक्रिप्शन के लिए ऑटो रिन्यूअल सफलतापूर्वक अक्षम किया गया।"
 
 #: corehq/apps/domain/views/accounting.py
 #, python-brace-format
-#| msgid ""
-#| "You do not have permission to pause the subscription for this customer-level"
-#| " account. Please reach out to the %s enterprise admin for help."
 msgid ""
 "You do not have permission to modify the subscription for this customer-"
 "level account. Please reach out to the {account_name} enterprise admin for "
@@ -31021,7 +31199,6 @@ msgid "US"
 msgstr "यूएस"
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
-#| msgid "user"
 msgid "users"
 msgstr "उपयोगकर्ता"
 
@@ -32986,7 +33163,6 @@ msgid "Unknown error"
 msgstr "अज्ञात त्रुटि"
 
 #: corehq/apps/integration/kyc/models.py
-#| msgid "Pass"
 msgid "Passed"
 msgstr "उत्तीर्ण"
 
@@ -57023,6 +57199,19 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid ""
+#~ "\n"
+#~ "    Email From:<br />\n"
+#~ "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    ईमेल द्वारा:<br />\n"
+#~ "    CommCare और कंपनी Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
 
 #~ msgid ""
 #~ "\n"
