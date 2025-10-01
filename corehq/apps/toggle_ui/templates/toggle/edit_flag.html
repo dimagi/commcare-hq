@@ -166,20 +166,22 @@
     </div>
   {% endif %}
 
+  {% if not is_random %}
     <div
       class="alert {% if toggle.status == 'active' %} alert-info {% else %} alert-warning {% endif %}"
       role="alert"
     >
       Toggle Status: <strong>{{ toggle.status }}</strong>
-    <button
-      class="btn btn-primary pull-right"
-      data-toggle="modal"
-      data-target="#change-toggle-status"
-      {% if not user.is_staff %}disabled{% endif %}
-    >
-      See More / Edit
-    </button>
-  </div>
+      <button
+        class="btn btn-primary pull-right"
+        data-toggle="modal"
+        data-target="#change-toggle-status"
+        {% if not user.is_staff %}disabled{% endif %}
+      >
+        See More / Edit
+      </button>
+    </div>
+  {% endif %}
 
   <div class="modal fade" id="change-toggle-status" tabindex="-1" role="dialog" aria-labelledby="change-toggle-status-label">
     <div class="modal-dialog" role="document">
