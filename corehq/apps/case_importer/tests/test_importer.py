@@ -14,9 +14,9 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import (
-    _CaseImportRow,
     RowAndCase,
     SubmitCaseBlockHandler,
+    _CaseImportRow,
     do_import,
 )
 from corehq.apps.case_importer.tasks import bulk_import_async

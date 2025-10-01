@@ -23,8 +23,8 @@ from corehq.apps.case_importer.const import (
     ALL_CASE_TYPE_IMPORT,
     MAX_CASE_IMPORTER_COLUMNS,
     MAX_CASE_IMPORTER_ROWS,
-    MOMO_REQUIRED_PAYMENT_FIELDS,
     MOMO_PAYMENT_CASE_TYPE,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
 )
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
@@ -37,8 +37,8 @@ from corehq.apps.case_importer.extension_points import (
     custom_case_upload_file_operations,
 )
 from corehq.apps.case_importer.suggested_fields import (
-    get_suggested_case_fields,
     get_non_discoverable_system_properties,
+    get_suggested_case_fields,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import (
@@ -57,7 +57,10 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, MTN_MOBILE_WORKER_VERIFICATION
+from corehq.toggles import (
+    DOMAIN_PERMISSIONS_MIRROR,
+    MTN_MOBILE_WORKER_VERIFICATION,
+)
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,

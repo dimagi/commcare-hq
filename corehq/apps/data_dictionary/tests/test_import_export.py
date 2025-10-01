@@ -1,19 +1,26 @@
 import io
 import os
 
-from bs4 import BeautifulSoup
-import openpyxl
-
 from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+import openpyxl
+from bs4 import BeautifulSoup
+
+from corehq import privileges
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.apps.data_dictionary.views import (
-    ExportDataDictionaryView, UploadDataDictionaryView, ALLOWED_VALUES_SHEET_SUFFIX)
+    ALLOWED_VALUES_SHEET_SUFFIX,
+    ExportDataDictionaryView,
+    UploadDataDictionaryView,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import TestFileMixin, privilege_enabled
-from corehq import privileges
 
 
 class DataDictionaryImportTest(TestCase, TestFileMixin):
