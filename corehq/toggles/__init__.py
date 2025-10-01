@@ -2340,7 +2340,8 @@ DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
     parent_toggles=[DATA_REGISTRY]
 )
 
-CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
+CASE_IMPORT_DATA_DICTIONARY_VALIDATION = FrozenPrivilegeToggle(
+    privileges.DATA_DICT_TYPES,
     'case_import_data_dictionary_validaton',
     'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,

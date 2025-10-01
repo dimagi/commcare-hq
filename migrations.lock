@@ -130,6 +130,7 @@ accounting
  0108_subscription_auto_renew_and_more
  0109_enable_all_add_ons_priv
  0110_alter_customerinvoicecommunicationhistory_communication_type_and_more
+ 0111_data_dict_types_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
