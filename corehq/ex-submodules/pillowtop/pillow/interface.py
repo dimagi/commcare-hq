@@ -117,6 +117,10 @@ class ConstructedPillow:
                     self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
                 except PillowtopCheckpointReset:
                     pass
+                finally:
+                    # important for gevent where most unhandled errors
+                    # do not cause the process to restart
+                    self._close_old_connections()
 
     def _run_migrations_forever(self):
         for processor in self.processors:
