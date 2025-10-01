@@ -4,7 +4,8 @@ from collections import defaultdict
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
@@ -73,7 +74,7 @@ def _process_multichoice_sheets(domain, workbook, allowed_value_info, prop_row_i
     `allowed_value_info` and `prop_row_info` are passed by reference, and so do not need
     to be returned.
     """
-    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    data_validation_enabled = domain_has_privilege(domain, privileges.DATA_DICT_TYPES)
     errors = []
     warnings = []
     for worksheet in workbook.worksheets:
@@ -131,7 +132,7 @@ def _process_sheets(domain, workbook, allowed_value_info):
     data_type_map = {t.label: t.value for t in CaseProperty.DataType}
     seen_props = defaultdict(set)
     missing_valid_values = set()
-    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    data_validation_enabled = domain_has_privilege(domain, privileges.DATA_DICT_TYPES)
 
     for worksheet in workbook.worksheets:
         if worksheet.title.endswith(ALLOWED_VALUES_SHEET_SUFFIX):

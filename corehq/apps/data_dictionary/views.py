@@ -23,6 +23,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege,
     requires_privilege_with_fallback,
 )
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
@@ -140,7 +141,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         ))
     )
 
-    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    data_validation_enabled = domain_has_privilege(domain, privileges.DATA_DICT_TYPES)
     geo_case_prop = get_geo_case_property(domain)
 
     for group_id, props in itertools.groupby(properties_queryset, key=attrgetter("group_id")):
@@ -280,7 +281,7 @@ def update_case_property(request, domain):
     update_fhir_resources = toggles.FHIR_INTEGRATION.enabled(domain)
     property_list = json.loads(request.POST.get('properties'))
     group_list = json.loads(request.POST.get('groups'))
-    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    data_validation_enabled = domain_has_privilege(domain, privileges.DATA_DICT_TYPES)
 
     if update_fhir_resources:
         errors, fhir_resource_type_obj = _update_fhir_resource_type(request, domain)
@@ -370,7 +371,7 @@ def _export_data_dictionary(domain):
         _('Description'),
         _('Deprecated')
     ]
-    if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+    if domain_has_privilege(domain, privileges.DATA_DICT_TYPES):
         case_prop_headers.append(_('Data Type'))
 
     allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
@@ -398,7 +399,7 @@ def _generate_data_for_export(domain, export_fhir_data):
             _('Description'): case_prop.description,
             _('Deprecated'): case_prop.deprecated
         }
-        if toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain):
+        if domain_has_privilege(domain, privileges.DATA_DICT_TYPES):
             prop_dict[_('Data Type')] = case_prop.get_data_type_display() if case_prop.data_type else ''
             if case_prop.data_type == 'select':
                 prop_dict['allowed_values'] = [
@@ -446,7 +447,7 @@ def _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_
 
 def _get_headers_for_export(export_fhir_data, case_type_headers, case_prop_headers, case_prop_data,
                             allowed_value_headers, domain):
-    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    data_validation_enabled = domain_has_privilege(domain, privileges.DATA_DICT_TYPES)
     header_table = []
     if export_fhir_data:
         header_table.append((FHIR_RESOURCE_TYPE_MAPPING_SHEET, [case_type_headers]))
