@@ -18,7 +18,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
-from corehq.apps.change_feed.topics import get_case_topics, CASE_TOPICS, DEMO_CASE_SQL
+from corehq.apps.change_feed.topics import CASE_TOPICS, DEMO_CASE_SQL
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
@@ -94,8 +94,9 @@ def get_case_pillow(
       - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
     """
     if topics:
-        assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
-    topics = topics or get_case_topics(ignore_demo_topic=ignore_demo_topic)
+        expected_topics = set(CASE_TOPICS + [DEMO_CASE_SQL])  # the demo case sql topic is only used in this pillow
+        assert set(topics).issubset(expected_topics), "This is a pillow to process cases only"
+    topics = topics or CASE_TOPICS
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
         dedicated_migration_process=dedicated_migration_process

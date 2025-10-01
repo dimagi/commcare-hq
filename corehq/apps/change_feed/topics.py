@@ -20,7 +20,7 @@ LOCATION = 'location'
 SYNCLOG_SQL = 'synclog-sql'
 
 
-CASE_TOPICS = (CASE_SQL, DEMO_CASE_SQL)
+CASE_TOPICS = (CASE_SQL, )  # intentionally exclude the demo case sql topic
 FORM_TOPICS = (FORM_SQL, )
 USER_TOPICS = (COMMCARE_USER, WEB_USER)
 ALL = (
@@ -132,9 +132,3 @@ def validate_offsets(expected_offsets):
                     'First available topic offset for {}:{} is {} but needed {}.'
                 ).format(topic, partition, available_offsets[topic_partition], expected_offsets[topic_partition])
                 raise UnavailableKafkaOffset(message)
-
-
-def get_case_topics(ignore_demo_topic=True):
-    if ignore_demo_topic:
-        return [t for t in CASE_TOPICS if t != DEMO_CASE_SQL]
-    return CASE_TOPICS
