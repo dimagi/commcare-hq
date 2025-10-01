@@ -1,18 +1,25 @@
 import uuid
 from dataclasses import asdict
 from datetime import datetime
+from json import JSONDecodeError
 
 from django.utils.translation import gettext as _
 
+import requests
+
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_error, notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
+    PAYMENT_STATUS_DEVICE_ID,
+    PaymentStatusErrorCode,
     PAYMENT_SUBMITTED_DEVICE_ID,
     PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
     PaymentStatus,
+    PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig
@@ -65,15 +72,19 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
         })
     except PaymentRequestError as e:
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: str(e),
+            PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_REQUEST_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
-    except Exception:
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        notify_error("[MoMo Payments] Request error occurred while making payment", details=details)
+    except Exception as e:
         # We need to know when anything goes wrong
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: _("Something went wrong"),
+            PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.UNEXPECTED_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        notify_exception(None, "[MoMo Payments] Internal error occurred while making payment", details=details)
 
     return payment_update
 
@@ -235,3 +246,164 @@ def _properties_to_update_for_revert():
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
         PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
     }
+
+
+def request_payments_status_for_cases(case_ids, config):
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        status_updates = []
+        for payment_case in CommCareCase.objects.get_cases(case_ids=list(case_ids_chunk)):
+            payment_status_value = payment_case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+            if PaymentStatus.from_value(payment_status_value) not in (
+                    PaymentStatus.SUBMITTED, PaymentStatus.PENDING_PROVIDER
+            ):
+                continue
+
+            try:
+                status_update = request_payment_status(payment_case, config)
+                if status_update.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.PENDING_PROVIDER:
+                    # If status is still pending, we need to retry fetching status in future runs
+                    status_update = _handle_payment_status_retry(payment_case, status_update=status_update)
+            except PaymentRequestError as err:
+                status_update = _handle_payment_status_retry(payment_case, request_error=err)
+
+            status_updates.append(
+                (payment_case.case_id, status_update, False)
+            )
+        bulk_update_cases(
+            config.domain, status_updates, device_id=PAYMENT_STATUS_DEVICE_ID
+        )
+
+
+def _handle_payment_status_retry(payment_case, status_update=None, request_error=None):
+    try:
+        retry_count = int(payment_case.case_json.get(PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT, 0))
+    except ValueError:
+        retry_count = 0
+
+    if request_error:
+        if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+            details = _get_notify_error_details(
+                payment_case.domain,
+                payment_case.case_id,
+                str(request_error),
+                payment_case.get_case_property('transaction_id')
+            )
+            notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
+            return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
+        else:
+            # We only increment the retry count for request errors. Will retry in the next scheduled run
+            # TODO Consider updating status and error so user is aware of the issue
+            return {PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
+
+    if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)
+    else:
+        status_update[PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT] = retry_count + 1
+    return status_update
+
+
+def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
+    transaction_id = payment_case.get_case_property('transaction_id')
+    if not transaction_id:
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MISSING_TRANSACTION_ID)
+
+    try:
+        response = _make_payment_status_request(transaction_id, config)
+        response_data = response.json()
+
+        status = response_data.get('status', '').lower()
+        error_code = response_data.get('reason')
+    except requests.exceptions.HTTPError as err:
+        # https://momodeveloper.mtn.com/api-documentation/common-error
+        status_code = err.response.status_code
+        if status_code == 404:
+            return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.HTTP_ERROR_404)
+
+        details = _get_notify_error_details(
+            config.domain,
+            payment_case.case_id,
+            str(err.response.text),
+            transaction_id
+        )
+        notify_error(
+            f"[MoMo Payments] Unexpected HTTP error {status_code} while fetching status.",
+            details=details
+        )
+
+        # Server errors that are likely to be temporary, we should retry in next scheduled run
+        if status_code in (502, 503, 504):
+            raise PaymentRequestError(
+                _("Failed to fetch payment status with code: {}".format(status_code))
+            )
+        # Unexpected HTTP errors, this is considered as an error status
+        error_code = _get_http_error_code(status_code, err.response)
+        return _get_status_details(PaymentStatus.ERROR, error_code)
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+        raise PaymentRequestError(
+            _("Failed to fetch payment status. Unable to connect to server. Please try again later.")
+        )
+    except Exception as e:
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e), transaction_id)
+        notify_exception(None, "[MoMo Payments] Unexpected error occurred while fetching status", details=details)
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.UNEXPECTED_ERROR)
+
+    return _get_status_details(status, error_code)
+
+
+def _make_payment_status_request(reference_id, config):
+    connection_settings = config.connection_settings
+    requests = connection_settings.get_requests()
+    response = requests.get(
+        f'/disbursement/v1_0/deposit/{reference_id}',
+        headers={
+            'X-Target-Environment': config.environment,
+        }
+    )
+    response.raise_for_status()
+    return response
+
+
+def _get_status_details(status, error_code=None):
+    # Just a future proofing measure in case API returns an unexpected status value
+    if status not in (
+            PaymentStatus.SUCCESSFUL,
+            PaymentStatus.FAILED,
+            PaymentStatus.PENDING_PROVIDER,
+            PaymentStatus.ERROR
+    ):
+        error_code = "UnexpectedStatus-{}".format(status)
+        status = PaymentStatus.ERROR
+
+    if status == PaymentStatus.SUCCESSFUL:
+        # Clear any previous error if payment was successful
+        error_code = ''
+
+    status_update = {
+        PaymentProperties.PAYMENT_STATUS: status,
+    }
+
+    if error_code is not None:
+        status_update.update({
+            PaymentProperties.PAYMENT_ERROR: error_code,
+        })
+    return status_update
+
+
+def _get_http_error_code(code, response):
+    default_error = "HttpError{}".format(code)
+    try:
+        error = response.json()
+    except JSONDecodeError:
+        return default_error
+    return error.get("code", default_error)
+
+
+def _get_notify_error_details(domain, case_id, error, transaction_id=None):
+    details = {
+        'domain': domain,
+        'case_id': case_id,
+        'error': error,
+    }
+    if transaction_id:
+        details['transaction_id'] = transaction_id
+    return details
