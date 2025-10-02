@@ -67,8 +67,13 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     )
 
 
-def get_demo_case_pillow(pillow_id='demo-case-pillow'):
-    return get_case_pillow(pillow_id=pillow_id, topics=[DEMO_CASE_SQL])
+def get_demo_case_pillow(pillow_id='demo-case-pillow', **kwargs):
+    return get_case_pillow(
+        pillow_id=pillow_id,
+        topics=[DEMO_CASE_SQL],
+        num_processes=kwargs.get('num_processes', 1),
+        processor_chunk_size=kwargs.get('processor_chunk_size', 1),
+    )
 
 
 def get_case_pillow(
