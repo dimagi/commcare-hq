@@ -1885,10 +1885,9 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             fields.insert(
                 4,
                 crispy.Div(
-                    crispy.Div(css_class='col-md-3 col-lg-2'),
                     crispy.Div(
                         crispy.HTML(', '.join(self.initial.get('email_list'))),
-                        css_class='col-md-9 col-lg-8 col-xl-6',
+                        css_class='offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6',
                     ),
                     css_id='emails-text',
                     css_class='collapse mb-3',
