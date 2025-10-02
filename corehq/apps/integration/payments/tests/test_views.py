@@ -288,7 +288,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
 
         assert response.status_code == 400
         assert (
-            b"Only payments in the 'Not Verified' or 'Request failed' state are eligible for verification."
+            b"Verification: Payment status must be one of the following: 'Not Verified', 'Request failed'"
             in response.content
         )
 
@@ -413,7 +413,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
 
         assert response.status_code == 400
         assert (
-            "Only payments in the '{}' state are eligible for verification reversal.".format(
+            "Verification reversal: Payment status must be one of the following: '{}'".format(
                 PaymentStatus.PENDING_SUBMISSION.label
             )
             in str(response.content)

@@ -111,7 +111,7 @@ class TestVerifyPaymentCases(TestCase):
 
         with pytest.raises(
             PaymentRequestError,
-            match="Only payments in the '{}' or '{}' state are eligible for verification.".format(
+            match="Verification: Payment status must be one of the following: '{}', '{}'".format(
                 PaymentStatus.NOT_VERIFIED.label,
                 PaymentStatus.REQUEST_FAILED.label
             )
@@ -412,7 +412,7 @@ class TestRevertPaymentVerification(TestCase):
 
         with pytest.raises(
             PaymentRequestError,
-            match="Only payments in the '{}' state are eligible for verification reversal.".format(
+            match="Verification reversal: Payment status must be one of the following: '{}'".format(
                 PaymentStatus.PENDING_SUBMISSION.label
             )
         ):
