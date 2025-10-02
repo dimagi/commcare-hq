@@ -98,7 +98,7 @@ def get_case_pillow(
         assert set(topics).issubset(expected_topics), "This is a pillow to process cases only"
     else:
         if include_demo_topic:
-            topics = CASE_TOPICS + [DEMO_CASE_SQL]
+            topics = CASE_TOPICS + (DEMO_CASE_SQL,)
         else:
             topics = CASE_TOPICS
     change_feed = KafkaChangeFeed(
