@@ -1866,71 +1866,76 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         except BillingContactInfo.DoesNotExist:
             pass
 
-        super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
+        super().__init__(data, *args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
         fields = [
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='form-control form-control-lg accounting-email-select2',
-                        data_initial=json.dumps(self.initial.get('email_list'))),
-            'phone_number'
+            crispy.Field(
+                'email_list',
+                css_class='form-control form-control-lg accounting-email-select2',
+                data_initial=json.dumps(self.initial.get('email_list')),
+            ),
+            'phone_number',
         ]
 
         if is_ops_user and self.initial.get('email_list'):
-            fields.insert(4, crispy.Div(
+            fields.insert(
+                4,
                 crispy.Div(
-                    css_class='col-md-3 col-lg-2'
+                    crispy.Div(css_class='col-md-3 col-lg-2'),
+                    crispy.Div(
+                        crispy.HTML(', '.join(self.initial.get('email_list'))),
+                        css_class='col-md-9 col-lg-8 col-xl-6',
+                    ),
+                    css_id='emails-text',
+                    css_class='collapse mb-3',
                 ),
-                crispy.Div(
-                    crispy.HTML(", ".join(self.initial.get('email_list'))),
-                    css_class='col-md-9 col-lg-8 col-xl-6'
-                ),
-                css_id='emails-text',
-                css_class='collapse mb-3'
-            ))
+            )
 
-            fields.insert(5, crispy.Div(
+            fields.insert(
+                5,
                 crispy.Div(
-                    StrictButton(
-                        _('Show contact emails as text'),
-                        type='button',
-                        css_class='btn btn-outline-secondary',
-                        css_id='show_emails',
-                    ),
-                    crispy.HTML(
-                        format_html(
-                            '<p class="help-block">{}</i> ',
-                            _('Useful when you want to copy contact emails')
+                    crispy.Div(
+                        StrictButton(
+                            _('Show contact emails as text'),
+                            type='button',
+                            css_class='btn btn-outline-secondary',
+                            css_id='show_emails',
                         ),
+                        crispy.HTML(
+                            format_html(
+                                '<p class="help-block">{}</i> ', _('Useful when you want to copy contact emails')
+                            ),
+                        ),
+                        css_class='offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6',
                     ),
-                    css_class='offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6',
+                    css_class='mb-3',
                 ),
-                css_class='mb-3',
-            ),
             )
 
         self.helper.layout = crispy.Layout(
+            crispy.Fieldset(_('Basic Information'), *fields),
             crispy.Fieldset(
-                _("Basic Information"),
-                *fields
-            ),
-            crispy.Fieldset(
-                _("Mailing Address"),
+                _('Mailing Address'),
                 'first_line',
                 'second_line',
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="form-control form-control-lg accounting-country-select2",
-                            data_country_code=self.current_country or '',
-                            data_country_name=COUNTRIES.get(self.current_country, '')),
+                crispy.Field(
+                    'country',
+                    css_class='form-control form-control-lg accounting-country-select2',
+                    data_country_code=self.current_country or '',
+                    data_country_name=COUNTRIES.get(self.current_country, ''),
+                ),
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update Billing Information"),
-                    type="submit",
+                    _('Update Billing Information'),
+                    type='submit',
                     css_class='btn btn-primary',
                 ),
             ),
