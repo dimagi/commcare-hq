@@ -111,7 +111,7 @@ class TestVerifyPaymentCases(TestCase):
 
         with pytest.raises(
             PaymentRequestError,
-            match="Only payments in '{}' or '{}' state are eligible for verification.".format(
+            match="Only payments in the '{}' or '{}' state are eligible for verification.".format(
                 PaymentStatus.NOT_VERIFIED.label,
                 PaymentStatus.REQUEST_FAILED.label
             )
