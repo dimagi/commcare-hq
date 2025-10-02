@@ -216,7 +216,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         message = None
         restricted_by_domain = None
         if is_existing:
-            current_env_data = ServerLocation.ENVS.get(settings.SERVER_ENVIRONMENT)
+            current_env_data = ServerLocation.get_envs().get(settings.SERVER_ENVIRONMENT)
             current_location = current_env_data['short_name'] if current_env_data else _("current")
             message = _(
                 'This email is already registered in the {location} cloud location. '
@@ -418,7 +418,7 @@ class RegisterDomainView(TemplateView):
             'env': env,
             'subdomain': server['subdomain'],
             'name': server['long_name'],
-        } for env, server in ServerLocation.ENVS.items() if env != settings.SERVER_ENVIRONMENT]
+        } for env, server in ServerLocation.get_envs().items() if env != settings.SERVER_ENVIRONMENT]
 
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(),
