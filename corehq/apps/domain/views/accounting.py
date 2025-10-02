@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import dateutil
 from couchdbkit import ResourceNotFound
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
@@ -382,8 +383,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap3/update_billing_contact_info.html'
+    template_name = 'domain/bootstrap5/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
     page_title = gettext_lazy("Billing Information")
     async_handlers = [
