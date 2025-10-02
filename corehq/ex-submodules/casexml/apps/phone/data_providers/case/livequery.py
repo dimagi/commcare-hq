@@ -28,8 +28,7 @@ from itertools import chain, islice
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
-from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
-
+from corehq.celery_monitoring.signals import CELERY_STATE_SENT
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
@@ -377,7 +376,7 @@ def init_progress(async_task, total):
 
     def update_progress(done):
         async_task.update_state(
-            state=ASYNC_RESTORE_SENT,
+            state=CELERY_STATE_SENT,
             meta={
                 'done': done,
                 'total': total,
