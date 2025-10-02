@@ -25,6 +25,9 @@
       {% trans "Payment Methods" %}
     </h5>
     <div class="card-body card-with-form">
+      <div class="mb-3">
+        {% include "domain/partials/account_cards.html" %}
+      </div>
       {% include "domain/partials/manage_saved_cards.html" %}
     </div>
   </div>
