@@ -8,8 +8,8 @@
         <div class="modal-header">
           <button
             type="button"
-            class="close"
-            data-dismiss="modal"
+            class="btn-close"  {# todo B5: css-close #}
+            data-bs-dismiss="modal"
             aria-label="Close"
           >
             <span aria-hidden="true">&times;</span>
@@ -40,12 +40,12 @@
           <div class="stripe-card-container"></div>
           {# populated by a card element from Stripe #}
 
-          <div class="form-group">
-            <div class="col-sm-9">
-              <div class="checkbox">
+          <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="col-md-9">
+              <div class="checkbox">  {# todo B5: css-checkbox #}
                 <label>
                   <input
-                    type="checkbox"
+                    type="checkbox"  {# todo B5: css-checkbox #}
                     name="autopay"
                     data-bind="
                       checked: isAutopay,
@@ -69,8 +69,8 @@
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-default"
-            data-dismiss="modal"
+            class="btn btn-outline-primary"
+            data-bs-dismiss="modal"
           >
             {% trans "Cancel" %}
           </button>
