@@ -436,7 +436,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
-    page_title = gettext_lazy("Billing Information")
+    page_title = gettext_lazy('Billing Information')
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -447,16 +447,20 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         is_ops_user = has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
-                self.account, self.domain, self.request.couch_user.username, data=self.request.POST,
-                is_ops_user=is_ops_user
+                self.account,
+                self.domain,
+                self.request.couch_user.username,
+                data=self.request.POST,
+                is_ops_user=is_ops_user,
             )
-        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
-                                          is_ops_user=is_ops_user)
+        return EditBillingAccountInfoForm(
+            self.account, self.domain, self.request.couch_user.username, is_ops_user=is_ops_user
+        )
 
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
-        return super(EditExistingBillingAccountView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -471,14 +475,16 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         card, owner = get_autopay_card_and_owner_for_billing_account(self.account)
         if card is None:
             return []
-        return [{
-            'brand': card.brand,
-            'last4': card.last4,
-            'exp_month': card.exp_month,
-            'exp_year': card.exp_year,
-            'token': card.id,
-            'owner': owner,
-        }]
+        return [
+            {
+                'brand': card.brand,
+                'last4': card.last4,
+                'exp_month': card.exp_month,
+                'exp_year': card.exp_year,
+                'token': card.id,
+                'owner': owner,
+            }
+        ]
 
     def get_saved_cards_for_user(self):
         if not settings.STRIPE_PRIVATE_KEY:
@@ -498,13 +504,15 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
             is_saved = self.billing_info_form.save()
             if not is_saved:
                 messages.error(
-                    request, _("It appears that there was an issue updating your contact information. "
-                               "We've been notified of the issue. Please try submitting again, and if the problem "
-                               "persists, please try in a few hours."))
-            else:
-                messages.success(
-                    request, _("Billing contact information was successfully updated.")
+                    request,
+                    _(
+                        'It appears that there was an issue updating your contact information. '
+                        "We've been notified of the issue. Please try submitting again, and if the problem "
+                        'persists, please try in a few hours.'
+                    ),
                 )
+            else:
+                messages.success(request, _('Billing contact information was successfully updated.'))
                 return HttpResponseRedirect(reverse(EditExistingBillingAccountView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
