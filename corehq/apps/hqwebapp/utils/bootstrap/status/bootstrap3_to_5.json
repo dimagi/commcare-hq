@@ -78,7 +78,8 @@
       "admin/transfer_domain.html",
       "admin/transfer_domain_pending.html",
       "internal_calculations.html",
-      "internal_settings.html"
+      "internal_settings.html",
+      "update_billing_contact_info.html"
     ]
   },
   "dropbox": {

@@ -385,7 +385,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap5/update_billing_contact_info.html'
+    template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
     page_title = gettext_lazy("Billing Information")
     async_handlers = [
