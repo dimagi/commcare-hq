@@ -1887,7 +1887,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 crispy.Div(
                     crispy.Div(
                         crispy.HTML(', '.join(self.initial.get('email_list'))),
-                        css_class='offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6',
+                        css_class='field-control-offset',
                     ),
                     css_id='emails-text',
                     css_class='collapse mb-3',
@@ -1909,7 +1909,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                                 '<p class="help-block">{}</i> ', _('Useful when you want to copy contact emails')
                             ),
                         ),
-                        css_class='offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6',
+                        css_class='field-control-offset',
                     ),
                     css_class='mb-3',
                 ),
