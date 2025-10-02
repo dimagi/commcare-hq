@@ -15,21 +15,21 @@
   </table>
 
   <!-- ko with: newCard -->
-  <button
-    type="button"
-    class="btn btn-primary new-card"
-    data-bs-toggle="modal"
-    href="#card-modal"
-  >
-    <i class="fa fa-plus"></i> {% trans "Add Card" %}
-  </button>
-  <div
-    data-bind="
-      template: {
-        name: 'new-stripe-card-template'
-      }"
-  ></div>
-  {% include "accounting/partials/new_stripe_card_template.html" %}
+    <button
+      type="button"
+      class="btn btn-primary new-card"
+      data-bs-toggle="modal"
+      href="#card-modal"
+    >
+      <i class="fa fa-plus"></i> {% trans "Add Card" %}
+    </button>
+    <div
+      data-bind="
+        template: {
+          name: 'new-stripe-card-template'
+        }"
+    ></div>
+    {% include "accounting/partials/new_stripe_card_template.html" %}
   <!-- /ko -->
 </fieldset>
 
