@@ -5,6 +5,8 @@ import gevent
 
 from dimagi.utils.logging import notify_exception
 
+from corehq.sql_db.connections import cleanup_connections
+
 from pillowtop import get_all_pillow_instances
 from pillowtop.utils import get_pillow_by_name
 
@@ -76,6 +78,7 @@ def run_gevent_worker(pillow_name, *, process_number, **kw):
             run_pillow_by_name(pillow_name, process_number=process_number, **kw)
         except Exception as exc:
             notify_exception(None, f"[{pillow_name} {process_number}] Unexpected gevent pillow exit: {exc}")
+            cleanup_connections(pillow_name)
 
 
 def start_pillows(pillows=None):
