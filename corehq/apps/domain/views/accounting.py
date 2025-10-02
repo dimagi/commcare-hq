@@ -3,6 +3,9 @@ import json
 from collections import namedtuple
 from decimal import Decimal
 
+import dateutil
+from couchdbkit import ResourceNotFound
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -23,13 +26,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-
-import dateutil
-from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
-
-from dimagi.utils.web import json_response
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler

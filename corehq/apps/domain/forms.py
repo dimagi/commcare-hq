@@ -3,10 +3,16 @@ import io
 import ipaddress
 import json
 import logging
-import uuid
 import re
 import urllib.parse
+import uuid
 
+from captcha.fields import ReCaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.layout import Layout, Submit
+from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -37,13 +43,6 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-
-from captcha.fields import ReCaptchaField
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Layout, Submit
-from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
@@ -92,9 +91,9 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
+    CredentialApplication,
     LatestEnabledBuildProfiles,
     RemoteApp,
-    CredentialApplication,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -138,12 +137,11 @@ from corehq.toggles import (
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
-    USE_LOGO_IN_SYSTEM_EMAILS
+    USE_LOGO_IN_SYSTEM_EMAILS,
 )
 from corehq.util.global_request import get_request
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
