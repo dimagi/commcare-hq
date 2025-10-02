@@ -94,7 +94,7 @@ def get_case_pillow(
       - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
     """
     if topics:
-        expected_topics = set(CASE_TOPICS + [DEMO_CASE_SQL])  # the demo case sql topic is only used in this pillow
+        expected_topics = set(CASE_TOPICS + (DEMO_CASE_SQL,))  # the demo case sql topic is only used here
         assert set(topics).issubset(expected_topics), "This is a pillow to process cases only"
     else:
         if include_demo_topic:
