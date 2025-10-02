@@ -2,17 +2,17 @@
 {% load i18n %}
 
 <fieldset>
-  <legend>{% trans 'Saved Credit Cards' %}</legend>
-  <table class='table table-striped'>
+  <legend>{% trans "Saved Credit Cards" %}</legend>
+  <table class="table table-striped">
     <tbody data-bind="template: {name: 'card-row', foreach: cards}"></tbody>
   </table>
 
   <!-- ko with: newCard -->
-    <button type='button' class="btn btn-primary new-card" data-bs-toggle="modal" href="#card-modal">
-      <i class='fa fa-plus'></i> {% trans 'Add Card' %}
+    <button type="button" class="btn btn-primary new-card" data-bs-toggle="modal" href="#card-modal">
+      <i class="fa fa-plus"></i> {% trans "Add Card" %}
     </button>
     <div data-bind="template: {name: 'new-stripe-card-template'}"></div>
-    {% include 'accounting/partials/new_stripe_card_template.html' %}
+    {% include "accounting/partials/new_stripe_card_template.html" %}
   <!-- /ko -->
 </fieldset>
 
@@ -29,8 +29,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button style="" type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">  {# todo B5: inline-style #}
-          {% trans 'Close' %}
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+          {% trans "Close" %}
         </button>
       </div>
     </div>
@@ -54,7 +54,7 @@
                             text: deleteErrorMsg">
         </div>
         {% blocktrans %}
-          Actually remove <strong><span data-bind='text: brand'></span></strong> card
+          Actually remove <strong><span data-bind="text: brand"></span></strong> card
           ************<strong><span data-bind="text: last4"></span></strong>?
         {% endblocktrans %}
       </div>
@@ -78,7 +78,7 @@
       <i class="fa-regular fa-credit-card"></i> <strong><span data-bind="text: brand"></span></strong>
       <span class="badge text-bg-success"
             data-bind="visible: is_autopay">
-                {% trans 'Autopay card' %}
+                {% trans "Autopay card" %}
             </span>
     </td>
     <td>
@@ -89,19 +89,19 @@
       <button data-bind="visible: is_autopay,
                                click: unSetAutopay,
                                enable: $parent.autoPayButtonEnabled"
-              class='btn btn-outline-primary autopay-button'>
-        {% trans 'Remove Autopay' %}
+              class="btn btn-outline-primary autopay-button">
+        {% trans "Remove Autopay" %}
       </button>
       <button data-bind="visible: !is_autopay(),
                                click: setAutopay,
                                enable: $parent.autoPayButtonEnabled"
-              class='btn btn-outline-primary autopay-button'>
-        {% trans 'Set as autopay card' %}
+              class="btn btn-outline-primary autopay-button">
+        {% trans "Set as autopay card" %}
       </button>
     </td>
     <td>
       <button class="btn btn-outline-danger" href="#" data-bind="openModal: 'delete-card-modal'">
-        <i class="fa fa-remove"></i> {% trans 'Delete Card' %}
+        <i class="fa fa-remove"></i> {% trans "Delete Card" %}
       </button>
     </td>
   </tr>
