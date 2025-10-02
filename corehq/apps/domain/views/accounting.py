@@ -461,11 +461,11 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_info_form,
-            'cards': self._get_cards(),
+            'saved_cards_for_user': self.get_saved_cards_for_user(),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
         }
 
-    def _get_cards(self):
+    def get_saved_cards_for_user(self):
         if not settings.STRIPE_PRIVATE_KEY:
             return []
 
