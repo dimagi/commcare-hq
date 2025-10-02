@@ -144,7 +144,7 @@ def submit_credentials(credentials_to_submit, cred_id_groups):
         json={
             'credentials': credentials_to_submit
         },
-        auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
+        auth=(settings.CONNECTID_CREDENTIALS_CLIENT_ID, settings.CONNECTID_CREDENTIALS_CLIENT_SECRET),
     )
     response.raise_for_status()
     mark_credentials_as_issued(response, cred_id_groups)
