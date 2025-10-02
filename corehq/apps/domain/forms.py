@@ -39,6 +39,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -1901,9 +1902,13 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                         css_class='btn btn-default',
                         css_id='show_emails'
                     ),
-                    crispy.HTML('<p class="help-block">%s</p>' %
-                                _('Useful when you want to copy contact emails')),
-                    css_class='col-sm-9 col-md-8 col-lg-6'
+                    crispy.HTML(
+                        format_html(
+                            '<p class="help-block">{}</i> ',
+                            _('Useful when you want to copy contact emails')
+                        ),
+                    ),
+                    css_class='col-sm-9 col-md-8 col-lg-6',
                 ),
                 css_class='form-group'
             ))
