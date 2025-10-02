@@ -4,7 +4,14 @@
 <fieldset>
   <legend>{% trans "Saved Credit Cards" %}</legend>
   <table class="table table-striped">
-    <tbody data-bind="template: {name: 'card-row', foreach: cards}"></tbody>
+    <tbody
+      data-bind="
+        template: {
+          name: 'card-row',
+          foreach: cards
+        }
+      "
+    ></tbody>
   </table>
 
   <!-- ko with: newCard -->
@@ -16,7 +23,12 @@
   >
     <i class="fa fa-plus"></i> {% trans "Add Card" %}
   </button>
-  <div data-bind="template: {name: 'new-stripe-card-template'}"></div>
+  <div
+    data-bind="
+      template: {
+        name: 'new-stripe-card-template'
+      }"
+  ></div>
   {% include "accounting/partials/new_stripe_card_template.html" %}
   <!-- /ko -->
 </fieldset>
@@ -71,18 +83,21 @@
       </div>
       <div class="modal-body">
         <div class="alert alert-success" data-bind="visible: isDeleting">
-          <i class="fa fa-refresh fa-spin"></i> {% trans "Processing your
-          request" %}
+          <i class="fa fa-refresh fa-spin"></i>
+          {% trans "Processing your request" %}
         </div>
         <div
           class="alert alert-danger"
-          data-bind="visible: deleteErrorMsg() != '',
-                            text: deleteErrorMsg"
+          data-bind="
+            visible: deleteErrorMsg() != '',
+            text: deleteErrorMsg
+          "
         ></div>
-        {% blocktrans %} Actually remove
-        <strong><span data-bind="text: brand"></span></strong> card
-        ************<strong><span data-bind="text: last4"></span></strong>? {%
-        endblocktrans %}
+        {% blocktrans %}
+          Actually remove
+          <strong><span data-bind="text: brand"></span></strong> card
+          ************<strong><span data-bind="text: last4"></span></strong>?
+        {% endblocktrans %}
       </div>
       <div class="modal-footer">
         <button
@@ -95,8 +110,10 @@
         <button
           type="button"
           class="btn btn-outline-danger"
-          data-bind="click: deleteCard,
-                               enable: !isDeleting()"
+          data-bind="
+            click: deleteCard,
+            enable: !isDeleting()
+          "
         >
           {% trans 'Delete' %}
         </button>
@@ -124,18 +141,22 @@
     </td>
     <td>
       <button
-        data-bind="visible: is_autopay,
-                               click: unSetAutopay,
-                               enable: $parent.autoPayButtonEnabled"
         class="btn btn-outline-primary autopay-button"
+        data-bind="
+          visible: is_autopay,
+          click: unSetAutopay,
+          enable: $parent.autoPayButtonEnabled
+        "
       >
         {% trans "Remove Autopay" %}
       </button>
       <button
-        data-bind="visible: !is_autopay(),
-                               click: setAutopay,
-                               enable: $parent.autoPayButtonEnabled"
         class="btn btn-outline-primary autopay-button"
+        data-bind="
+          visible: !is_autopay(),
+          click: setAutopay,
+          enable: $parent.autoPayButtonEnabled
+        "
       >
         {% trans "Set as autopay card" %}
       </button>
