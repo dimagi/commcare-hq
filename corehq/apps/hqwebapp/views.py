@@ -1,16 +1,13 @@
 import json
 import logging
 import os
-import pytz
 import re
 import sys
 import traceback
 import uuid
 from datetime import datetime
 from urllib.parse import urlparse
-from oauth2_provider.models import get_application_model
 
-import httpagentparser
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -48,17 +45,29 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
+import httpagentparser
+import pytz
 from memoized import memoized
+from oauth2_provider.models import get_application_model
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
 from two_factor.views import LoginView
 
-from corehq.apps.accounting.decorators import (
-    always_allow_project_access,
-)
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
+from dimagi.utils.django.request import mutable_querydict
+from dimagi.utils.logging import notify_error, notify_exception
+from dimagi.utils.web import get_url_base
+from soil import DownloadBase
+from soil import views as soil_views
+
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics import ab_tests
-from corehq.apps.app_manager.dbaccessors import get_app_cached, get_latest_released_build_id
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_cached,
+    get_latest_released_build_id,
+)
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
@@ -79,7 +88,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -87,14 +96,20 @@ from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
     HQAuthenticationTokenForm,
-    HQBackupTokenForm
+    HQBackupTokenForm,
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
+from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
+from corehq.apps.hqwebapp.utils.bootstrap import (
+    get_bootstrap_version,
+    set_bootstrap_version5,
+)
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
@@ -108,21 +123,13 @@ from corehq.util.metrics import (
     metrics_counter,
     metrics_gauge,
 )
-from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
+from corehq.util.metrics.const import MPM_MAX, TAG_UNKNOWN
 from corehq.util.metrics.utils import sanitize_url
-from corehq.util.public_only_requests.public_only_requests import get_public_only_session
+from corehq.util.public_only_requests.public_only_requests import (
+    get_public_only_session,
+)
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import reverse, set_language_cookie
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
-from dimagi.utils.django.request import mutable_querydict
-from dimagi.utils.logging import notify_exception, notify_error
-from dimagi.utils.web import get_url_base
-from soil import DownloadBase
-from soil import views as soil_views
 
 
 def is_deploy_in_progress():
@@ -211,9 +218,10 @@ def redirect_to_default(req, domain=None):
         return HttpResponseRedirect(url)
 
     if domain and _two_factor_needed(domain, req):
+        set_bootstrap_version5()
         return TemplateResponse(
             request=req,
-            template='two_factor/core/bootstrap3/otp_required.html',
+            template='two_factor/core/bootstrap5/otp_required.html',
             status=403,
         )
 
