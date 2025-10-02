@@ -33,20 +33,20 @@
   <!-- /ko -->
 </fieldset>
 
-<div class="modal fade" id="success-modal">
+<div
+  id="success-modal" class="modal fade"
+  tabindex="-1" aria-labelledby="success-modal-label" aria-hidden="true"
+>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
+        <h4 id="success-modal-label" class="modal-title">
+          {% trans "Credit Card" %}
+        </h4>
         <button
-          type="button"
-          class="btn-close"
+          class="btn-close" type="button" aria-label="Close"
           data-bs-dismiss="modal"
-          aria-label="Close"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
-        {# todo B5: css-close #}
-        <h4 class="modal-title">{% trans "Credit Card" %}</h4>
+        ></button>
       </div>
       <div class="modal-body">
         <div class="alert alert-success">
@@ -70,16 +70,13 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
+        <h4 class="modal-title">
+          {% trans "Delete Card" %}
+        </h4>
         <button
-          type="button"
-          class="btn-close"
+          class="btn-close" type="button" aria-label="Close"
           data-bs-dismiss="modal"
-          aria-label="Close"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
-        {# todo B5: css-close #}
-        <h4 class="modal-title">{% trans "Delete Card" %}</h4>
+        ></button>
       </div>
       <div class="modal-body">
         <div class="alert alert-success" data-bind="visible: isDeleting">
@@ -105,7 +102,7 @@
           class="btn btn-outline-primary"
           data-bs-dismiss="modal"
         >
-          {% trans 'Cancel' %}
+          {% trans "Cancel" %}
         </button>
         <button
           type="button"
@@ -115,7 +112,7 @@
             enable: !isDeleting()
           "
         >
-          {% trans 'Delete' %}
+          {% trans "Delete" %}
         </button>
       </div>
     </div>
