@@ -2,19 +2,20 @@
 {% load i18n %}
 
 <script type="text/html" id="new-stripe-card-template">
-  <div class="modal fade" id="card-modal">
+  <div
+    id="card-modal" class="modal fade"
+    tabindex="-1" aria-labelledby="card-modal-label" aria-hidden="true"
+  >
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
+          <h4 id="card-modal-label" class="modal-title">
+            {% trans "Add New Credit Card" %}
+          </h4>
           <button
-            type="button"
-            class="btn-close"  {# todo B5: css-close #}
+            class="btn-close" type="button" aria-label="Close"
             data-bs-dismiss="modal"
-            aria-label="Close"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">{% trans "Add New Credit Card" %}</h4>
+          ></button>
         </div>
         <div class="modal-body form-horizontal">
           <input
@@ -40,30 +41,30 @@
           <div class="stripe-card-container"></div>
           {# populated by a card element from Stripe #}
 
-          <div class="form-group">  {# todo B5: css-form-group #}
-            <div class="col-md-9">
-              <div class="checkbox">  {# todo B5: css-checkbox #}
-                <label>
-                  <input
-                    type="checkbox"  {# todo B5: css-checkbox #}
-                    name="autopay"
-                    data-bind="
-                      checked: isAutopay,
-                      disable: isProcessing
-                    "
-                  />
-                  {% trans "Use this card to autopay" %}
-                </label>
-              </div>
-              <span class="help-block">
-                <i class="fa fa-info-circle"></i>
-                {% blocktrans %}
-                  We use
-                  <a href="http://www.stripe.com/" target="_blank">Stripe</a>
-                  to process this transaction.
-                {% endblocktrans %}
-              </span>
+          <div class="my-3">
+            <div class="form-check">
+              <input
+                id="add-card-autopay-checkbox"
+                class="form-check-input"
+                type="checkbox"
+                name="autopay"
+                data-bind="
+                  checked: isAutopay,
+                  disable: isProcessing
+                "
+              />
+              <label class="form-check-label" for="add-card-autopay-checkbox">
+                {% trans "Use this card to autopay" %}
+              </label>
             </div>
+            <span class="help-block">
+              <i class="fa fa-info-circle"></i>
+              {% blocktrans %}
+                We use
+                <a href="http://www.stripe.com/" target="_blank">Stripe</a>
+                to process this transaction.
+              {% endblocktrans %}
+            </span>
           </div>
         </div>
         <div class="modal-footer">
