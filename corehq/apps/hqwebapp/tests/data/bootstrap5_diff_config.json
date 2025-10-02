@@ -748,15 +748,6 @@
     },
     {
       "directories": [
-        "admin/bootstrap3",
-        "admin/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "domain/admin",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
         "admin/partials/bootstrap3",
         "admin/partials/bootstrap5"
       ],
@@ -780,15 +771,6 @@
       ],
       "file_type": "template",
       "label": "domain/partials",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "pro_bono/bootstrap3",
-        "pro_bono/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "domain/pro_bono",
       "compare_all_files": true
     }
   ],
