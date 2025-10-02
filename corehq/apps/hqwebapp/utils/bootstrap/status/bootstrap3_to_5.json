@@ -80,6 +80,9 @@
       "internal_calculations.html",
       "internal_settings.html",
       "update_billing_contact_info.html"
+    ],
+    "javascript": [
+      "js/update_billing_contact_info.js"
     ]
   },
   "dropbox": {
