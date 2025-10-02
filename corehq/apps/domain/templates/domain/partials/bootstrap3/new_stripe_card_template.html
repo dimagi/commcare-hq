@@ -17,15 +17,24 @@
           <h4 class="modal-title">{% trans "Add New Credit Card" %}</h4>
         </div>
         <div class="modal-body form-horizontal">
-          <input type="hidden" name="stripeToken" data-bind="value: token" />
-          <div class="alert alert-success" data-bind="visible: isProcessing">
-            <i class="fa fa-refresh fa-spin"></i> {% trans "Processing your
-            request" %}
+          <input
+            type="hidden"
+            name="stripeToken"
+            data-bind="value: token"
+          />
+          <div
+            class="alert alert-success"
+            data-bind="visible: isProcessing"
+          >
+            <i class="fa fa-refresh fa-spin"></i>
+            {% trans "Processing your request" %}
           </div>
           <div
             class="alert alert-danger"
-            data-bind="visible: errorMsg() != '',
-                                    text: errorMsg"
+            data-bind="
+              visible: errorMsg() != '',
+              text: errorMsg
+            "
           ></div>
 
           <div class="stripe-card-container"></div>
@@ -38,35 +47,42 @@
                   <input
                     type="checkbox"
                     name="autopay"
-                    data-bind="checked: isAutopay, disable: isProcessing"
+                    data-bind="
+                      checked: isAutopay,
+                      disable: isProcessing
+                    "
                   />
-                  {% trans 'Use this card to autopay' %}
+                  {% trans "Use this card to autopay" %}
                 </label>
               </div>
               <span class="help-block">
                 <i class="fa fa-info-circle"></i>
-                {% blocktrans %} We use
-                <a href="http://www.stripe.com/" target="_blank">Stripe</a>
-                to process this transaction. {% endblocktrans %}
+                {% blocktrans %}
+                  We use
+                  <a href="http://www.stripe.com/" target="_blank">Stripe</a>
+                  to process this transaction.
+                {% endblocktrans %}
               </span>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button
-            style=""
             type="button"
             class="btn btn-default"
             data-dismiss="modal"
           >
-            {% trans 'Cancel' %}
+            {% trans "Cancel" %}
           </button>
           <button
             type="button"
             class="btn btn-primary"
-            data-bind="click: saveCard, enable: !isProcessing()"
+            data-bind="
+              click: saveCard,
+              enable: !isProcessing()
+            "
           >
-            {% trans 'Save' %}
+            {% trans "Save" %}
           </button>
         </div>
       </div>
