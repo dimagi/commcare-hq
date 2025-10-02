@@ -4,7 +4,7 @@ from corehq.apps.es.transient_util import doc_adapter_from_index_name
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.pillow import interface
 
 
 TEST_ES_MAPPING = {
@@ -43,7 +43,7 @@ def get_index_mapping(es, index, doc_type):
         return {}
 
 
-class FakeConstructedPillow(ConstructedPillow):
+class FakeConstructedPillow(interface.ConstructedPillow):
     pass
 
 
@@ -60,7 +60,7 @@ def make_fake_constructed_pillow(pillow_id, checkpoint_id):
     return pillow
 
 
-def _do_not_close_old_connections(self):
+def _do_not_close_old_connections(sender):
     """Do not close database connections when running tests
 
     Prevents "connection already closed" errors in tests that process
@@ -69,7 +69,7 @@ def _do_not_close_old_connections(self):
 
 
 pillow_connection_cleanup_patch = patch.object(
-    ConstructedPillow,
-    '_close_old_connections',
+    interface,
+    'cleanup_connections',
     _do_not_close_old_connections
 )
