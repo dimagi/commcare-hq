@@ -13,9 +13,9 @@
 
 {% block page_content %}
   <div id="billing-info">
-    {% crispy billing_account_info_form %}  {# todo B5: crispy #}
+    {% crispy billing_account_info_form %}
   </div>
-  <div id="card-manager" style="margin-top:20px;">  {# todo B5: inline-style #}
+  <div id="card-manager" class="mt-5">
     {% include "domain/bootstrap5/stripe_cards.html" %}
   </div>
 {% endblock page_content %}
