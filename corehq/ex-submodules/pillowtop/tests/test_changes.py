@@ -1,10 +1,12 @@
 import uuid
+from unittest.mock import Mock, patch
+
 from django.test import SimpleTestCase
+
 from pillowtop.dao.mock import MockDocumentStore
-from pillowtop.feed.couch import change_from_couch_row
+from pillowtop.feed.couch import CouchChangeFeed, TIMEOUT, change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.feed.mock import RandomChangeFeed, MockChangeFeed
-from six.moves import range
 
 
 class TestCouchChange(SimpleTestCase):
@@ -92,6 +94,32 @@ class TestChangeDocument(SimpleTestCase):
     def test_get_document_not_found(self):
         change = Change(id=uuid.uuid4().hex, sequence_id='', document_store=self.dao)
         self.assertEqual(None, change.get_document())
+
+
+class TestCouchChangeFeed(SimpleTestCase):
+
+    def test_iter_changes_forever(self):
+        def fake_changes_stream(*, heartbeat=None, **options):
+            assert heartbeat == TIMEOUT, options
+            yield {'value': 1}
+            yield {'value': 2}
+            yield None  # simulate heartbeat / timeout
+            yield {'value': 3}
+            yield {'value': 4}
+            yield None  # simulate heartbeat / timeout
+            yield {'value': 5}
+
+        feed = CouchChangeFeed(Mock())
+        changes = []
+        with (
+            patch('pillowtop.feed.couch.ChangesStream', fake_changes_stream),
+            patch("pillowtop.feed.couch.change_from_couch_row", lambda chg, **kw: chg['value']),
+            patch("pillowtop.feed.couch.populate_change_metadata", lambda val, *a: val),
+        ):
+            for change in feed.iter_changes(since=None, forever=True):
+                changes.append(change)
+
+        assert changes == [1, 2, None, 3, 4, None, 5], changes
 
 
 class TestMockChangeFeed(SimpleTestCase):
