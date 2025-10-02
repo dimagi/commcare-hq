@@ -7,24 +7,33 @@
 </p>
 <ul>
   <li>
-    {% blocktrans with plan_name=plan.name date_end=plan.date_end next_plan_name=renewal_plan.name %}
-      Your <b>{{ plan_name }}</b> subscription will automatically renew to
-      <b>{{ next_plan_name }}</b> on {{ date_end }}.
-    {% endblocktrans %}
+    {% if plan.name != renewal_plan.name %}
+      {% blocktrans with plan_name=plan.name date_end=plan.date_end next_plan_name=renewal_plan.name %}
+        Your <b>{{ plan_name }}</b> subscription will automatically change to
+        the latest version of <b>{{ next_plan_name }}</b> on {{ date_end }}.
+        <br />
+        <strong>Note:</strong> This is different from your current software
+        plan.
+      {% endblocktrans %}
+    {% else %}
+      {% blocktrans with plan_name=plan.name date_end=plan.date_end %}
+        Your <b>{{ plan_name }}</b> subscription will automatically renew on
+        {{ date_end }}.
+      {% endblocktrans %}
+    {% endif %}
   </li>
   <li>
-    {% blocktrans with price=renewal_plan.price %}
-      Your new software plan will cost <b>{{ price }}</b>.
-    {% endblocktrans %}
-  </li>
-  {% if renewal_plan.is_annual_plan %}
-    <li>
-      {% blocktrans %}
-        Your new subscription will require upfront payment for 12 months of
-        software plan fees.
+    {% if renewal_plan.is_annual_plan %}
+      {% blocktrans with price=renewal_plan.price %}
+        Your renewed subscription will require upfront payment for 12 months of
+        software plan fees at <b>{{ price }}</b>.
       {% endblocktrans %}
-    </li>
-  {% endif %}
+    {% else %}
+      {% blocktrans with price=renewal_plan.price %}
+        Your subscription will renew at <b>{{ price }}</b>.
+      {% endblocktrans %}
+    {% endif %}
+  </li>
 </ul>
 <p>
   {% blocktrans %}
