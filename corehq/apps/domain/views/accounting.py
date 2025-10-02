@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import dateutil
 from couchdbkit import ResourceNotFound
+from corehq.apps.accounting.utils.autopay import get_autopay_card_and_owner_for_billing_account
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from dimagi.utils.web import json_response
 from django.conf import settings
@@ -461,9 +462,23 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_info_form,
+            'account_cards': self.get_account_cards(),
             'saved_cards_for_user': self.get_saved_cards_for_user(),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
         }
+
+    def get_account_cards(self):
+        card, owner = get_autopay_card_and_owner_for_billing_account(self.account)
+        if card is None:
+            return []
+        return [{
+            'brand': card.brand,
+            'last4': card.last4,
+            'exp_month': card.exp_month,
+            'exp_year': card.exp_year,
+            'token': card.id,
+            'owner': owner,
+        }]
 
     def get_saved_cards_for_user(self):
         if not settings.STRIPE_PRIVATE_KEY:
