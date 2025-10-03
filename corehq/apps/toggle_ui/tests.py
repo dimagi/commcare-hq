@@ -25,7 +25,7 @@ from corehq.toggles import (
 )
 
 from corehq.apps.toggle_ui.migration_helpers import move_toggles
-from corehq.toggles.models import Toggle
+from corehq.toggles.models import Toggle, ToggleStatus
 
 
 class MigrationHelperTest(TestCase):
@@ -312,3 +312,30 @@ class TestSetToggleViewAccess(BaseTestToggleView):
         response = self.client.post(self.endpoint, data=self._sample_request_data())
 
         self.assertEqual(response.status_code, 403)
+
+
+class TestReleaseAndDisableToggle(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.tag = Tag(slug='tag1', name='Tag 1', css_class='success', description='test')
+        self.static_toggle = StaticToggle('toggle1', 'Toggle 1', self.tag)
+        self.static_toggle.set('enabled_user', True)
+
+    def tearDown(self):
+        Toggle.get(self.static_toggle.slug).delete()
+
+    def test(self):
+        self.assertTrue(self.static_toggle.enabled('enabled_user'))
+        self.assertFalse(self.static_toggle.enabled('not_enabled_user'))
+
+        toggle = Toggle.get(self.static_toggle.slug)
+        toggle.status = ToggleStatus.RELEASED
+        toggle.save()
+        self.assertTrue(self.static_toggle.enabled('enabled_user'))
+        self.assertTrue(self.static_toggle.enabled('not_enabled_user'))
+
+        toggle.status = ToggleStatus.DISABLED
+        toggle.save()
+        self.assertFalse(self.static_toggle.enabled('enabled_user'))
+        self.assertFalse(self.static_toggle.enabled('not_enabled_user'))
