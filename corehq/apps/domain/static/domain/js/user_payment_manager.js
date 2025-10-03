@@ -87,7 +87,7 @@ const newUserCard = (data, cardManager) => {
 const savedUserCard = (card, baseUrl, cardManager) => {
     let self = {};
     const mapping = {
-        include: ['brand', 'last4', 'exp_month','exp_year', 'is_autopay'],
+        include: ['brand', 'last4', 'exp_month','exp_year', 'is_autopay', 'other_autopay_domains'],
         copy: ['url', 'token'],
     };
 
