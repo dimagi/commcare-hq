@@ -1,12 +1,12 @@
 import "commcarehq";
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import stripeCardManager from "domain/js/user_payment_manager";
+import userPaymentManager from "domain/js/user_payment_manager";
 import "accounting/js/widgets";
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // openModal
 
 $(function () {
-    var cardManager = stripeCardManager.stripeCardManager({
+    var cardManager = userPaymentManager.userPaymentManager({
         cards: initialPageData.get("cards"),
         url: initialPageData.reverse("cards_view"),
     });

@@ -8,36 +8,36 @@ import ko from "knockout";
 import { createStripeToken, getCardElementPromise } from "accounting/js/stripe";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
-var newStripeCardModel = function (data, cardManager) {
-    var self = {};
+const newUserCard = (data, cardManager) => {
+    let self = {};
 
     // This assumes this model won't be created until the page is loaded,
     // which is reasonable because knockout bindings don't get applied until then.
     self.cardElementMounted = false;
     self.cardElementPromise = getCardElementPromise(initialPageData.get("stripe_public_key"));
-    self.cardElementPromise.then(function (cardElement) {
+    self.cardElementPromise.then((cardElement) => {
         cardElement.mount('.stripe-card-container');
         self.cardElementMounted = true;
     });
 
-    var mapping = {
+    const mapping = {
         observe: ['isAutopay', 'token'],
     };
 
-    self.wrap = function (data) {
+    self.wrap = (data) => {
         ko.mapping.fromJS(data, mapping, self);
     };
-    self.reset = function () {
+    self.reset = () => {
         self.wrap({'isAutopay': false, 'token': ''});
         if (self.cardElementMounted) {
-            self.cardElementPromise.then(function (cardElement) {
+            self.cardElementPromise.then((cardElement) => {
                 cardElement.clear();
             });
         }
     };
     self.reset();
 
-    self.unwrap = function () {
+    self.unwrap = () => {
         return {token: self.token(), autopay: self.isAutopay()};
     };
 
@@ -45,27 +45,27 @@ var newStripeCardModel = function (data, cardManager) {
     self.isProcessing = ko.observable(false);
     self.errorMsg = ko.observable('');
 
-    var submit = function () {
+    const submit = () => {
         // Sends the new card to HQ
         return $.ajax({
             type: "POST",
             url: data.url,
             data: self.unwrap(),
-            success: function (data) {
+            success: (data) => {
                 $("#card-modal").modal('hide');
                 $("#success-modal").modal('show');
                 cardManager.wrap(data);
                 self.reset();
             },
-        }).fail(function (data) {
-            var response = JSON.parse(data.responseText);
+        }).fail((data) => {
+            const response = JSON.parse(data.responseText);
             self.errorMsg(response.error);
-        }).always(function () {
+        }).always(() => {
             self.isProcessing(false);
         });
     };
 
-    var handleStripeResponse = function (response) {
+    const handleStripeResponse = (response) => {
         if (response.error) {
             self.isProcessing(false);
             self.errorMsg(response.error.message);
@@ -76,7 +76,7 @@ var newStripeCardModel = function (data, cardManager) {
         }
     };
 
-    self.saveCard = function () {
+    self.saveCard = () => {
         self.isProcessing(true);
         createStripeToken(handleStripeResponse);
     };
@@ -84,68 +84,68 @@ var newStripeCardModel = function (data, cardManager) {
     return self;
 };
 
-var stripeCardModel = function (card, baseUrl, cardManager) {
-    var self = {};
-    var mapping = {
+const savedUserCard = (card, baseUrl, cardManager) => {
+    let self = {};
+    const mapping = {
         include: ['brand', 'last4', 'exp_month','exp_year', 'is_autopay'],
         copy: ['url', 'token'],
     };
 
-    self.wrap = function (data) {
+    self.wrap = (data) => {
         ko.mapping.fromJS(data, mapping, self);
         self.url = baseUrl + card.token + '/';
     };
     self.wrap(card);
 
-    self.setAutopay = function () {
+    self.setAutopay = () => {
         cardManager.autoPayButtonEnabled(false);
-        self.submit({is_autopay: true}).always(function () {
+        self.submit({is_autopay: true}).always(() => {
             cardManager.autoPayButtonEnabled(true);
         });
     };
 
-    self.unSetAutopay = function () {
+    self.unSetAutopay = () => {
         cardManager.autoPayButtonEnabled(false);
-        self.submit({is_autopay: false}).always(function () {
+        self.submit({is_autopay: false}).always(() => {
             cardManager.autoPayButtonEnabled(true);
         });
     };
 
     self.isDeleting = ko.observable(false);
     self.deleteErrorMsg = ko.observable('');
-    self.deleteCard = function (card, button) {
+    self.deleteCard = (card, button) => {
         self.isDeleting(true);
         self.deleteErrorMsg = ko.observable('');
         cardManager.cards.destroy(card);
         $.ajax({
             type: "DELETE",
             url: self.url,
-            success: function (data) {
+            success: (data) => {
                 cardManager.wrap(data);
                 $(button.currentTarget).closest(".modal").modal('hide');
                 $("#success-modal").modal('show');
             },
-        }).fail(function (data) {
-            var response = JSON.parse(data.responseText);
+        }).fail((data) => {
+            const response = JSON.parse(data.responseText);
             self.deleteErrorMsg(response.error);
             if (response.cards) {
                 cardManager.wrap(response);
             }
-        }).always(function () {
+        }).always(() => {
             self.isDeleting(false);
         });
     };
 
-    self.submit = function (data) {
+    self.submit = (data) => {
         return $.ajax({
             type: "POST",
             url: self.url,
             data: data,
-            success: function (data) {
+            success: (data) => {
                 cardManager.wrap(data);
             },
-        }).fail(function (data) {
-            var response = JSON.parse(data.responseText);
+        }).fail((data) => {
+            const response = JSON.parse(data.responseText);
             alert(response.error);
         });
     };
@@ -154,23 +154,23 @@ var stripeCardModel = function (card, baseUrl, cardManager) {
 };
 
 
-var stripeCardManager = function (data) {
-    var self = {};
-    var mapping = {
+const userPaymentManager = (data) => {
+    let self = {};
+    const mapping = {
         'cards': {
-            create: function (card) {
-                return stripeCardModel(card.data, data.url, self);
+            create: (card) => {
+                return savedUserCard(card.data, data.url, self);
             },
         },
     };
 
-    self.wrap = function (data) {
+    self.wrap = (data) => {
         ko.mapping.fromJS(data, mapping, self);
     };
     self.wrap(data);
 
     self.autoPayButtonEnabled = ko.observable(true);
-    self.newCard = newStripeCardModel({
+    self.newCard = newUserCard({
         url: data.url,
     }, self);
 
@@ -178,5 +178,5 @@ var stripeCardManager = function (data) {
 };
 
 export default {
-    stripeCardManager: stripeCardManager,
+    userPaymentManager: userPaymentManager,
 };
