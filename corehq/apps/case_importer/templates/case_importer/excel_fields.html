@@ -48,10 +48,10 @@
         <th>{% trans "Excel Field" %}</th>
         <th></th>
         <th>{% trans "Case Property" %}</th>
-        <th{% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %} class="col-lg-1"{% endif %}>
+        <th{% if data_type_validation %} class="col-lg-1"{% endif %}>
           {% trans "Create new property" %}
         </th>
-        {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+        {% if data_type_validation %}
           <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
         {% endif %}
         </thead>

@@ -233,7 +233,7 @@ var propertyListItem = function (
 
     self.removeFHIRResourcePropertyPath = ko.observable(prop.removeFHIRResourcePropertyPath || false);
     let subTitle;
-    if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
+    if (initialPageData.get('data_type_validation')) {
         subTitle = gettext("When importing data, CommCare will not save a row if its cells don't match these valid values.");
     } else {
         subTitle = gettext("Help colleagues upload correct data into case properties by listing the valid values here.");

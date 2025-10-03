@@ -1,26 +1,32 @@
 import io
 import os
-import uuid
-
-from bs4 import BeautifulSoup
-import openpyxl
 
 from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+import openpyxl
+from bs4 import BeautifulSoup
+
+from corehq import privileges
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.apps.data_dictionary.views import (
-    ExportDataDictionaryView, UploadDataDictionaryView, ALLOWED_VALUES_SHEET_SUFFIX)
+    ALLOWED_VALUES_SHEET_SUFFIX,
+    ExportDataDictionaryView,
+    UploadDataDictionaryView,
+)
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import TestFileMixin, privilege_enabled
-from corehq import privileges
-from corehq.util.test_utils import flag_enabled
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryImportTest(TestCase, TestFileMixin):
-    domain_name = uuid.uuid4().hex
+    domain_name = 'data-dict-import-test'
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
@@ -28,13 +34,23 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = create_domain(cls.domain_name)
-        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        cls.couch_user = WebUser.create(
+            None, "test", "foobar", None, None,
+            email='test@example.com',
+        )
         cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
         cls.couch_user.save()
+        cls.subdomain = create_domain('subdomain')
+        create_enterprise_permissions(
+            cls.couch_user.email,
+            cls.domain_name,
+            [cls.subdomain.name]
+        )
 
     @classmethod
     def tearDownClass(cls):
         cls.couch_user.delete(cls.domain_name, deleted_by=None)
+        cls.subdomain.delete()
         cls.domain.delete()
         super().tearDownClass()
 
@@ -42,7 +58,6 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         self.url = reverse(UploadDataDictionaryView.urlname, args=[self.domain_name])
         self.client.login(username='test', password='foobar')
 
-    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
     def test_clean_import(self):
         fname = self.get_path('clean_data_dictionary', 'xlsx')
         with open(fname, 'rb') as dd_file:
@@ -67,7 +82,6 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
                             allowed_value=val, description=f'{val} description')
                         self.assertEqual(1, av_qs.count())
 
-    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
     def test_broken_import(self):
         fname = self.get_path('broken_data_dictionary', 'xlsx')
         with open(fname, 'rb') as dd_file:
@@ -98,6 +112,8 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         self.assertEqual(response.status_code, 200)
         messages = list(response.context['messages'])
         self.assertEqual(len(messages), 2)
+        # AssertionError: 1 != 2
+
         soup = BeautifulSoup(str(messages[1]), features="lxml")
         received_warnings = {elem.text for elem in soup.find_all('li')}
         expected_warnings = {
@@ -111,15 +127,20 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryExportTest(TestCase):
-    domain_name = uuid.uuid4().hex
+    domain_name = 'data-dict-export-test'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = create_domain(cls.domain_name)
-        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        cls.couch_user = WebUser.create(
+            None, "test", "foobar", None, None,
+            email='test@example.com',
+        )
         cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
         cls.couch_user.save()
+        cls.subdomain = create_domain('subdomain')
+
         case_types = []
         for i in range(1, 3):
             case_type_obj = CaseType(name=f'caseType{i}', domain=cls.domain_name)
@@ -141,6 +162,7 @@ class DataDictionaryExportTest(TestCase):
         for case_type in cls.case_types:
             case_type.delete()
         cls.couch_user.delete(cls.domain_name, deleted_by=None)
+        cls.subdomain.delete()
         cls.domain.delete()
         super().tearDownClass()
 
@@ -148,7 +170,20 @@ class DataDictionaryExportTest(TestCase):
         self.url = reverse(ExportDataDictionaryView.urlname, args=[self.domain_name])
         self.client.login(username='test', password='foobar')
 
-    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
+
+class DataDictionaryExportTestWithDataTypes(DataDictionaryExportTest):
+    domain_name = 'data-dict-export-test-with-data-types'
+
+    def setUp(self):
+        super().setUpClass()
+        create_enterprise_permissions(  # Enables data types
+            self.couch_user.email,
+            self.domain_name,
+            [self.subdomain.name]
+        )
+        # Error in tearDownClass
+        # corehq.apps.accounting.models.BillingAccount.DoesNotExist: BillingAccount matching query does not exist.
+
     def test_export(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -160,6 +195,10 @@ class DataDictionaryExportTest(TestCase):
             name = self.case_types[i].name
             self.assertEqual(name, workbook.sheetnames[i * 2])
             self.assertEqual(f'{name}{ALLOWED_VALUES_SHEET_SUFFIX}', workbook.sheetnames[i * 2 + 1])
+
+
+class DataDictionaryExportTestWithoutDataTypes(DataDictionaryExportTest):
+    domain_name = 'data-dict-export-test-without-data-types'
 
     def test_export_without_data_type(self):
         response = self.client.get(self.url)

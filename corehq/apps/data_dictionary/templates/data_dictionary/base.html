@@ -184,6 +184,7 @@
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   {% initial_page_data 'casePropertyLimit' case_property_limit %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
+  {% initial_page_data 'data_type_validation' data_type_validation %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
   <h4 id="dd-loading">
     <i class="fa fa-spin fa-spinner"></i>
@@ -304,7 +305,7 @@
             <div class="row-item-small"></div>
             <div class="row-item">{% trans "Case Property" %}</div>
             <div class="row-item">{% trans "Label" %}</div>
-            {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+            {% if data_type_validation %}
               <div class="row-item">{% trans "Data Type" %}</div>
             {% endif %}
             <div class="row-item-big">{% trans "Description" %}</div>
@@ -313,7 +314,7 @@
                 {% trans "FHIR Resource Property Path" %}
               </div>
             {% endif %}
-            {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+            {% if data_type_validation %}
               <div class="row-item">
                 {% include "data_dictionary/partials/valid_values_th_content.html" %}
               </div>
@@ -383,7 +384,7 @@
                   <div class="row-item">
                     &nbsp;{# Empty cell where "Label" is in case property rows #}
                   </div>
-                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                  {% if data_type_validation %}
                     <div class="row-item">
                       {% trans "Case Property Group" %}
                     </div>
@@ -400,7 +401,7 @@
                   {% if fhir_integration_enabled %}
                     <div class="row-item"></div>
                   {% endif %}
-                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                  {% if data_type_validation %}
                     <div class="row-item"></div>
                   {% endif %}
                   {% if not request.is_view_only %}
@@ -455,7 +456,7 @@
                           attr: {'placeholder': 'Click here to add a label'}"
                       />
                     </div>
-                    {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                    {% if data_type_validation %}
                       <div class="row-item main-form">
                         <select
                           class="form-control"
@@ -512,7 +513,7 @@
                       <!-- /ko -->
                     </div>
                   {% endif %}
-                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                  {% if data_type_validation %}
                     <div class="row-item">
                       <div data-bind="visible: canHaveAllowedValues()">
                         <div data-bind="jqueryElement: $allowedValues"></div>

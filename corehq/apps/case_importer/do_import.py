@@ -14,6 +14,8 @@ from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_dictionary.util import fields_to_validate
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -27,7 +29,6 @@ from corehq.apps.users.util import format_username
 from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
 from corehq.toggles import (
     BULK_UPLOAD_DATE_OPENED,
-    CASE_IMPORT_DATA_DICTIONARY_VALIDATION,
     DOMAIN_PERMISSIONS_MIRROR,
     MTN_MOBILE_WORKER_VERIFICATION,
 )
@@ -37,10 +38,10 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
 from .const import (
-    LookupErrors,
-    MOMO_REQUIRED_PAYMENT_FIELDS,
     MOMO_NO_EDIT_PAYMENT_FIELDS,
     MOMO_PAYMENT_CASE_TYPE,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
+    LookupErrors,
 )
 from .exceptions import (
     BlankExternalId,
@@ -132,7 +133,7 @@ class _TimedAndThrottledImporter:
         self.owner_accessor = _OwnerAccessor(domain, self.user)
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
-        if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.DATA_DICT_TYPES):
             self.fields_to_validate = fields_to_validate(domain, config.case_type)
         else:
             self.fields_to_validate = {}

@@ -125,6 +125,7 @@ TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION = 'two_stage_mobile_worker_account_crea
 CASE_DEDUPE = 'case_deduplicate'
 CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 APP_DEPENDENCIES = 'app_dependencies'
+DATA_DICT_TYPES = 'data_dict_types'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -192,6 +193,7 @@ MAX_PRIVILEGES = [
     APP_DEPENDENCIES,
     BULK_DATA_EDITING,
     TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
+    DATA_DICT_TYPES,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -273,4 +275,5 @@ class Titles(object):
             CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
             APP_DEPENDENCIES: _("App Dependencies"),
             TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION: _("Two-stage Mobile Worker Account Creation"),
+            DATA_DICT_TYPES: _("Data Dictionary case properties have data types")
         }.get(privilege, privilege)
