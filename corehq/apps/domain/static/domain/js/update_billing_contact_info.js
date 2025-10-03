@@ -1,18 +1,17 @@
+import "commcarehq";
+import "hqwebapp/js/htmx_base";
+import Alpine from "alpinejs";
+import stripeCardManager from "domain/js/new_stripe_card_manager";
 import $ from "jquery";
-import initialPageData from "hqwebapp/js/initial_page_data";
-import { userPaymentManager } from "domain/js/user_payment_manager";
-import "accounting/js/widgets";
-import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // openModal
+import "accounting/js/widgets";  // for asyncSelect2Handler
 
 $(function () {
-    var userCardManager = userPaymentManager({
-        cards: initialPageData.get("cards"),
-        url: initialPageData.reverse("cards_view"),
-    });
-    $("#user-card-manager").koApplyBindings(userCardManager);
-
     $("#show_emails").click(function () {
         $('#emails-text').show();
         $(this).parent().hide();
     });
 });
+
+Alpine.data('newStripeCardManager', stripeCardManager);
+
+Alpine.start();

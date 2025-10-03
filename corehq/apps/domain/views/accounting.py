@@ -5,8 +5,12 @@ from decimal import Decimal
 
 import dateutil
 from couchdbkit import ResourceNotFound
-from corehq.apps.accounting.utils.autopay import get_autopay_card_and_owner_for_billing_account
+from corehq.apps.accounting.utils.autopay import (
+    get_autopay_card_and_owner_for_billing_account,
+    set_card_as_autopay_for_billing_account,
+)
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
@@ -433,7 +437,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
-class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
+class EditExistingBillingAccountView(HqHtmxActionMixin, DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
     page_title = gettext_lazy('Billing Information')
@@ -466,6 +470,11 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_info_form,
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+        }
+
+    def get_card_context(self):
+        return {
             'account_cards': self.get_account_cards(),
             'saved_cards_for_user': self.get_saved_cards_for_user(),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
@@ -486,15 +495,19 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
             }
         ]
 
+    def get_payment_method_for_user(self):
+        user = self.request.user.username
+        payment_method, _ = StripePaymentMethod.objects.get_or_create(
+            web_user=user,
+            method_type=PaymentMethodType.STRIPE,
+        )
+        return payment_method
+
     def get_saved_cards_for_user(self):
         if not settings.STRIPE_PRIVATE_KEY:
             return []
 
-        user = self.request.user.username
-        payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
-            web_user=user,
-            method_type=PaymentMethodType.STRIPE,
-        )
+        payment_method = self.get_payment_method_for_user()
         return payment_method.all_cards_serialized(self.account)
 
     def post(self, request, *args, **kwargs):
@@ -515,6 +528,53 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
                 messages.success(request, _('Billing contact information was successfully updated.'))
                 return HttpResponseRedirect(reverse(EditExistingBillingAccountView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+    def render_payment_methods(self, request, error=None):
+        return self.render_htmx_partial_response(
+            request,
+            'domain/partials/payment_methods.html',
+            {'payment_method_error': error, **self.get_card_context()},
+        )
+
+    @hq_hx_action('get')
+    def list_payment_methods(self, request, *args, **kwargs):
+        return self.render_payment_methods(request)
+
+    @hq_hx_action('post')
+    def remove_payment_card(self, request, *args, **kwargs):
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        payment_method = self.get_payment_method_for_user()
+        error = None
+        try:
+            payment_method.remove_card(token)
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown removing card. Please contact Support.')
+            )
+        return self.render_payment_methods(request, error=error)
+
+    @hq_hx_action('post')
+    def set_as_autopay(self, request, *args, **kwargs):
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        error = None
+        try:
+            set_card_as_autopay_for_billing_account(
+                self.get_payment_method_for_user(),
+                token,
+                self.account,
+                self.domain,
+            )
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown error setting autopay. Please contact Support.')
+            )
+        return self.render_payment_methods(request, error=error)
 
 
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):

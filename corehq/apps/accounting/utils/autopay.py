@@ -13,3 +13,13 @@ def get_autopay_card_and_owner_for_billing_account(account: BillingAccount) -> t
     # makes API call to Stripe:
     autopay_card = payment_method.get_autopay_card(account)
     return autopay_card, auto_payer
+
+
+def set_card_as_autopay_for_billing_account(
+    payment_method: StripePaymentMethod,
+    card_token: str,
+    account: BillingAccount,
+    domain: str,
+) -> None:
+    card = payment_method.get_card(card_token)
+    payment_method.set_autopay(card, account, domain)

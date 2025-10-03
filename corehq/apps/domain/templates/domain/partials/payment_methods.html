@@ -1,0 +1,149 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if payment_method_error %}
+  <div class="alert alert-danger">
+    {{ payment_method_error }}
+  </div>
+{% endif %}
+
+<fieldset>
+  <legend>{% trans "Account Autopay Card" %}</legend>
+  <table class="table table-striped">
+  </table>
+</fieldset>
+
+<div class="htmx-indicator">
+  <div class="position-relative">
+    <div class="position-absolute top-0 end-0 pt-1 pe-2">
+      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Refreshing, please wait..." %}
+    </div>
+  </div>
+</div>
+
+<fieldset>
+  <legend>{% trans "My Saved Cards" %}</legend>
+  <table
+    class="table table-striped"
+    x-data="{
+      isSubmitting: false,
+    }"
+  >
+    <tbody>
+      {% for card in saved_cards_for_user %}
+        <tr
+          x-data="{
+            isRemoving: false,
+          }"
+        >
+          <td class="align-middle">
+            <i class="fa-regular fa-credit-card"></i>
+            <strong>{{ card.brand }}</strong>
+            {% if card.is_autopay %}
+              <br />
+              <span class="badge text-bg-primary">
+                {% trans "Autopay Card" %}
+              </span>
+            {% endif %}
+            {% if card.other_autopay_domains %}
+              <br />
+              <span class="badge text-bg-secondary">
+                {% trans "Autopay for Other Account" %}
+              </span>
+            {% endif %}
+          </td>
+          <td class="align-middle">************<strong>{{ card.last4 }}</strong></td>
+          <td class="align-middle">{{ card.exp_month }}/{{ card.exp_year }}</td>
+          <td class="align-middle">
+            {% if not card.is_autopay %}
+              <button
+                class="btn btn-outline-primary autopay-button"
+                type="button"
+                :disabled="isSubmitting"
+                @click="isSubmitting = true;"
+                hx-post="{{ request.path_info }}"
+                hq-hx-action="set_as_autopay"
+                hx-target="#manage-payment-methods-container"
+                hx-vals='{
+                  "token": "{{ card.token }}"
+                }'
+              >
+                {% trans "Set as autopay card" %}
+              </button>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            {% if not card.is_autopay and not card.other_autopay_domains %}
+              <button
+                class="btn btn-outline-danger"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#remove-{{ card.token }}-modal"
+                :disabled="isSubmitting"
+                x-show="!isRemoving"
+              >
+                <i class="fa fa-remove"></i> {% trans "Remove Card" %}
+              </button>
+              <div
+                class="text-danger"
+                x-show="isRemoving"
+              >
+                <i class="fa fa-spin fa-spinner"></i> {% trans "Removing card..." %}
+              </div>
+            {% endif %}
+            <div
+              id="remove-{{ card.token }}-modal" class="modal fade"
+              tabindex="-1" aria-labelledby="remove-{{ card.token }}-modal-label" aria-hidden="true"
+            >
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title" id="remove-{{ card.token }}-modal-label">
+                      {% trans "Remove Card" %}
+                    </h4>
+                    <button
+                      class="btn-close" type="button" aria-label="Close"
+                      data-bs-dismiss="modal"
+                    ></button>
+                  </div>
+                  <div class="modal-body">
+                    {% blocktrans with brand=card.brand last4=card.last4 %}
+                      Actually remove <strong>{{ brand }}</strong>
+                      card ************<strong>{{ last4 }}</strong>?
+                    {% endblocktrans %}
+                  </div>
+                  <div class="modal-footer">
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary"
+                      data-bs-dismiss="modal"
+                    >
+                      {% trans "Cancel" %}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger"
+                      data-bs-dismiss="modal"
+                      @click="
+                        isSubmitting = true;
+                        isRemoving = true;
+                      "
+                      hx-post="{{ request.path_info }}"
+                      hq-hx-action="remove_payment_card"
+                      hx-target="#manage-payment-methods-container"
+                      hx-vals='{
+                        "token": "{{ card.token }}"
+                      }'
+                    >
+                      {% trans "Remove" %}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</fieldset>

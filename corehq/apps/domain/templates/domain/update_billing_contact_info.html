@@ -7,8 +7,6 @@
 
 {% block additional_initial_page_data %}{{ block.super }}
   {% initial_page_data "stripe_public_key" stripe_public_key %}
-  {% initial_page_data "account_cards" account_cards %}
-  {% initial_page_data "cards" saved_cards_for_user %}
   {% registerurl "cards_view" domain %}
 {% endblock additional_initial_page_data %}
 
@@ -26,12 +24,17 @@
       {% trans "Payment Methods" %}
     </h5>
     <div class="card-body card-with-form">
-      <div class="mb-3">
-        {% include "domain/partials/account_cards.html" %}
+      <div
+        id="manage-payment-methods-container"
+        hx-get="{{ request.path_info }}"
+        hq-hx-action="list_payment_methods"
+        hx-trigger="load, refreshCards"
+      >
+        <div class="htmx-indicator mb-3 fs-4">
+          <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading payment methods, please wait..." %}
+        </div>
       </div>
-      <div id="user-card-manager">
-        {% include "domain/partials/manage_saved_cards.html" %}
-      </div>
+      {% include "domain/partials/new_stripe_card_alpinejs.html" with card_container_id="manage-payment-methods-container" %}
     </div>
   </div>
 {% endblock page_content %}
