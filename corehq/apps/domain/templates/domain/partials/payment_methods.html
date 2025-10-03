@@ -47,7 +47,11 @@
             {% endif %}
             {% if card.other_autopay_domains %}
               <br />
-              <span class="badge text-bg-secondary">
+              <span
+                class="badge text-bg-secondary"
+                x-tooltip=""
+                data-bs-title="{{ card.other_autopay_domains|join:", " }}"
+              >
                 {% trans "Autopay for Other Account" %}
               </span>
             {% endif %}

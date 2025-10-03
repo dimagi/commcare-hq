@@ -4,6 +4,7 @@ import Alpine from "alpinejs";
 import stripeCardManager from "domain/js/new_stripe_card_manager";
 import $ from "jquery";
 import "accounting/js/widgets";  // for asyncSelect2Handler
+import 'hqwebapp/js/alpinejs/directives/tooltip'; // x-tooltip directive
 
 $(function () {
     $("#show_emails").click(function () {
