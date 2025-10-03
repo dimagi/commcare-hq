@@ -3,10 +3,16 @@ import io
 import ipaddress
 import json
 import logging
-import uuid
 import re
 import urllib.parse
+import uuid
 
+from captcha.fields import ReCaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.layout import Layout, Submit
+from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -33,17 +39,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-
-from captcha.fields import ReCaptchaField
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Layout, Submit
-from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
@@ -92,9 +92,9 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
+    CredentialApplication,
     LatestEnabledBuildProfiles,
     RemoteApp,
-    CredentialApplication,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -138,12 +138,11 @@ from corehq.toggles import (
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
-    USE_LOGO_IN_SYSTEM_EMAILS
+    USE_LOGO_IN_SYSTEM_EMAILS,
 )
 from corehq.util.global_request import get_request
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -1867,69 +1866,75 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         except BillingContactInfo.DoesNotExist:
             pass
 
-        super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
+        super().__init__(data, *args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
         fields = [
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
-                         data_initial=json.dumps(self.initial.get('email_list'))),
-            'phone_number'
+            crispy.Field(
+                'email_list',
+                css_class='form-control form-control-lg accounting-email-select2',
+                data_initial=json.dumps(self.initial.get('email_list')),
+            ),
+            'phone_number',
         ]
 
         if is_ops_user and self.initial.get('email_list'):
-            fields.insert(4, crispy.Div(
+            fields.insert(
+                4,
                 crispy.Div(
-                    css_class='col-sm-3 col-md-2'
-                ),
-                crispy.Div(
-                    crispy.HTML(", ".join(self.initial.get('email_list'))),
-                    css_class='col-sm-9 col-md-8 col-lg-6'
-                ),
-                css_id='emails-text',
-                css_class='collapse form-group'
-            ))
-
-            fields.insert(5, crispy.Div(
-                crispy.Div(
-                    css_class='col-sm-3 col-md-2'
-                ),
-                crispy.Div(
-                    StrictButton(
-                        _("Show contact emails as text"),
-                        type="button",
-                        css_class='btn btn-default',
-                        css_id='show_emails'
+                    crispy.Div(
+                        crispy.HTML(', '.join(self.initial.get('email_list'))),
+                        css_class='offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6',
                     ),
-                    crispy.HTML('<p class="help-block">%s</p>' %
-                                _('Useful when you want to copy contact emails')),
-                    css_class='col-sm-9 col-md-8 col-lg-6'
+                    css_id='emails-text',
+                    css_class='collapse mb-3',
                 ),
-                css_class='form-group'
-            ))
+            )
+
+            fields.insert(
+                5,
+                crispy.Div(
+                    crispy.Div(
+                        StrictButton(
+                            _('Show contact emails as text'),
+                            type='button',
+                            css_class='btn btn-outline-secondary',
+                            css_id='show_emails',
+                        ),
+                        crispy.HTML(
+                            format_html(
+                                '<p class="help-block">{}</i> ', _('Useful when you want to copy contact emails')
+                            ),
+                        ),
+                        css_class='offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6',
+                    ),
+                    css_class='mb-3',
+                ),
+            )
 
         self.helper.layout = crispy.Layout(
+            crispy.Fieldset(_('Basic Information'), *fields),
             crispy.Fieldset(
-                _("Basic Information"),
-                *fields
-            ),
-            crispy.Fieldset(
-                _("Mailing Address"),
+                _('Mailing Address'),
                 'first_line',
                 'second_line',
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_country_code=self.current_country or '',
-                             data_country_name=COUNTRIES.get(self.current_country, '')),
+                crispy.Field(
+                    'country',
+                    css_class='form-control form-control-lg accounting-country-select2',
+                    data_country_code=self.current_country or '',
+                    data_country_name=COUNTRIES.get(self.current_country, ''),
+                ),
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update Billing Information"),
-                    type="submit",
+                    _('Update Billing Information'),
+                    type='submit',
                     css_class='btn btn-primary',
                 ),
             ),
