@@ -163,7 +163,7 @@ const savedUserCard = (card, baseUrl, cardManager) => {
 };
 
 
-const userPaymentManager = (data) => {
+export function userPaymentManager(data) {
     let self = {};
     const mapping = {
         'cards': {
@@ -184,8 +184,4 @@ const userPaymentManager = (data) => {
     }, self);
 
     return self;
-};
-
-export default {
-    userPaymentManager: userPaymentManager,
-};
+}
