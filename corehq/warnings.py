@@ -2,7 +2,7 @@ import os
 import re
 import warnings
 
-from django.utils.deprecation import RemovedInDjango50Warning, RemovedInDjango51Warning
+from django.utils.deprecation import RemovedInDjango60Warning
 
 from sqlalchemy.exc import SAWarning
 
@@ -25,8 +25,8 @@ WHITELIST = [
     ("eulxml", "pkg_resources is deprecated as an API"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
 
-    ("tastypie.compat", "The django.utils.datetime_safe module is deprecated.", RemovedInDjango50Warning),
-    ("django.db.models.options", "'index_together' is deprecated", RemovedInDjango51Warning),
+    ("django.conf", "FORMS_URLFIELD_ASSUME_HTTPS", RemovedInDjango60Warning),
+    ("field_audit", "CheckConstraint.check is deprecated", RemovedInDjango60Warning),
 
     # warnings that can be resolved with HQ code changes
     ("", "datetime.datetime.utcnow() is deprecated"),

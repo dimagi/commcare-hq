@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='rolepermission',
             constraint=models.CheckConstraint(
-                check=models.Q(('allow_all', True), ('allowed_items__len__gt', 0), _negated=True),
+                condition=models.Q(('allow_all', True), ('allowed_items__len__gt', 0), _negated=True),
                 name='users_rolepermission_valid_allow'),
         ),
         migrations.AddField(
