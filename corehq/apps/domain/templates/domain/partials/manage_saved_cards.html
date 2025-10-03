@@ -140,16 +140,6 @@
       <button
         class="btn btn-outline-primary autopay-button"
         data-bind="
-          visible: is_autopay,
-          click: unSetAutopay,
-          enable: $parent.autoPayButtonEnabled
-        "
-      >
-        {% trans "Remove Autopay" %}
-      </button>
-      <button
-        class="btn btn-outline-primary autopay-button"
-        data-bind="
           visible: !is_autopay(),
           click: setAutopay,
           enable: $parent.autoPayButtonEnabled
@@ -162,7 +152,10 @@
       <button
         class="btn btn-outline-danger"
         href="#"
-        data-bind="openModal: 'delete-card-modal'"
+        data-bind="
+          openModal: 'delete-card-modal',
+          visible: !is_autopay()
+        "
       >
         <i class="fa fa-remove"></i> {% trans "Delete Card" %}
       </button>

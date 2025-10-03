@@ -110,16 +110,12 @@ const savedUserCard = (card, baseUrl, cardManager) => {
         });
     };
 
-    self.unSetAutopay = () => {
-        cardManager.autoPayButtonEnabled(false);
-        self.submit({is_autopay: false}).always(() => {
-            cardManager.autoPayButtonEnabled(true);
-        });
-    };
-
     self.isDeleting = ko.observable(false);
     self.deleteErrorMsg = ko.observable('');
     self.deleteCard = (card, button) => {
+        if (card.is_autopay()) {
+            return;
+        }
         self.isDeleting(true);
         self.deleteErrorMsg = ko.observable('');
         cardManager.cards.destroy(card);
