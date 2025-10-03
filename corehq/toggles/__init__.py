@@ -1696,13 +1696,6 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
 
-ENABLE_ALL_ADD_ONS = StaticToggle(
-    'enable_all_add_ons',
-    'Enable all app manager add-ons',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
-)
-
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
