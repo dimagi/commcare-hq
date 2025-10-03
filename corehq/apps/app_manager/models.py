@@ -139,7 +139,7 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
     is_remote_app,
-    is_usercase_in_use,
+    domain_has_usercase_access,
     module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
@@ -2827,7 +2827,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
         """
-        return any(form.uses_usercase() for form in self.get_forms())
+        return (self.case_type == const.USERCASE_TYPE
+                or any(form.uses_usercase() for form in self.get_forms()))
 
     def grid_display_style(self):
         return self.display_style == 'grid'
@@ -4676,7 +4677,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow_noop, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
-        from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
@@ -4707,8 +4707,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
 
-        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
-
+        _refresh_data_dictionary(self.domain, self.get_id)
         if response_json is not None:
             if 'update' not in response_json:
                 response_json['update'] = {}
@@ -4749,6 +4748,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def commcare_flavor(self):
         return None if self.target_commcare_flavor == "none" else self.target_commcare_flavor
+
+
+def _refresh_data_dictionary(domain, get_id):  # easy patch target
+    from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
+    refresh_data_dictionary_from_app.delay(domain, get_id)
 
 
 def validate_lang(lang):
@@ -5510,7 +5514,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def get_case_types(self):
         extra_types = set()
-        if is_usercase_in_use(self.domain):
+        if domain_has_usercase_access(self.domain):
             extra_types.add(const.USERCASE_TYPE)
 
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
@@ -5875,9 +5879,6 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
         messages.warning(request, _("Copying the application succeeded, but the application is missing "
                                     "multimedia file(s)."))
 
-    if not app.is_remote_app():
-        enable_usercase_if_necessary(app)
-
     return app
 
 
@@ -5927,12 +5928,6 @@ def _update_valid_domains_for_media(app, domain_to_add):
             if domain_to_add not in media.valid_domains:
                 media.valid_domains.append(domain_to_add)
                 media.save()
-
-
-def enable_usercase_if_necessary(app):
-    if any(module.uses_usercase() for module in app.get_modules()):
-        from corehq.apps.app_manager.util import enable_usercase
-        enable_usercase(app.domain)
 
 
 class DeleteApplicationRecord(DeleteRecord):

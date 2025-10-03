@@ -1,6 +1,5 @@
 import datetime
 import itertools
-from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -18,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 import stripe
+from dateutil.relativedelta import relativedelta
 from django_prbac.models import Role
 from memoized import memoized
 
@@ -242,6 +242,7 @@ class SubscriptionAdjustmentMethod(object):
     TASK = "TASK"
     TRIAL = "TRIAL"
     AUTOMATIC_DOWNGRADE = 'AUTOMATIC_DOWNGRADE'
+    AUTO_RENEWAL = 'AUTO_RENEWAL'
     DEFAULT_COMMUNITY = 'DEFAULT_COMMUNITY'
     INVOICING = 'INVOICING'
     CHOICES = (
@@ -250,6 +251,7 @@ class SubscriptionAdjustmentMethod(object):
         (TASK, "[Deprecated] Task (Invoicing)"),
         (TRIAL, "30 Day Trial"),
         (AUTOMATIC_DOWNGRADE, "Automatic Downgrade"),
+        (AUTO_RENEWAL, "Automatic Renewal"),
         (DEFAULT_COMMUNITY, 'Default to Community'),
         (INVOICING, 'Invoicing')
     )
@@ -1223,6 +1225,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
     skip_auto_downgrade_reason = models.CharField(blank=True, max_length=256)
+    auto_renew = models.BooleanField(default=False)
 
     visible_objects = VisibleSubscriptionManager()
     visible_and_suppressed_objects = models.Manager()
@@ -1355,7 +1358,7 @@ class Subscription(models.Model):
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
                             skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
-                            skip_auto_downgrade_reason=None):
+                            skip_auto_downgrade_reason=None, auto_renew=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1373,6 +1376,7 @@ class Subscription(models.Model):
             funding_source=funding_source,
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason,
+            auto_renew=auto_renew,
         )
 
         self.save()
@@ -1417,6 +1421,7 @@ class Subscription(models.Model):
             'funding_source',
             'skip_auto_downgrade',
             'skip_auto_downgrade_reason',
+            'auto_renew',
         }
 
         assert property_names >= set(kwargs.keys())
@@ -1447,6 +1452,7 @@ class Subscription(models.Model):
             skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
             skip_auto_downgrade=self.skip_auto_downgrade,
             skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+            auto_renew=self.auto_renew,
         )
 
     @transaction.atomic
@@ -1458,7 +1464,7 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=False):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1506,6 +1512,7 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
+            auto_renew=auto_renew,
         )
 
         new_subscription.save()
@@ -1569,6 +1576,7 @@ class Subscription(models.Model):
             method=adjustment_method, note=note, web_user=web_user,
         )
 
+    @transaction.atomic
     def renew_subscription(self, note=None, web_user=None,
                            adjustment_method=None,
                            service_type=None, pro_bono_status=None,
@@ -1627,12 +1635,26 @@ class Subscription(models.Model):
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
             self, method=adjustment_method, note=note, web_user=web_user,
-            reason=SubscriptionAdjustmentReason.RENEW,
+            reason=SubscriptionAdjustmentReason.RENEW, related_subscription=renewed_subscription
+        )
+        SubscriptionAdjustment.record_adjustment(
+            renewed_subscription, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.CREATE
         )
 
         send_subscription_renewal_alert(self.subscriber.domain, renewed_subscription, self)
 
         return renewed_subscription
+
+    def suppress_subscription(self):
+        if self.is_active:
+            raise SubscriptionAdjustmentError(
+                "Cannot suppress active subscription, id %d"
+                % self.id
+            )
+        else:
+            self.is_hidden_to_ops = True
+            self.save()
 
     def transfer_credits(self, subscription=None):
         """Transfers all credit balances related to an account or subscription

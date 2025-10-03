@@ -9,15 +9,15 @@ from lxml import etree
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.couch import CriticalSection
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import user_location_data
 from corehq.form_processor.models import CommCareCase
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 
 
 class _UserCaseHelper:
@@ -138,8 +138,15 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
 
     if location_id := user.get_location_id(domain):
         fields['commcare_location_id'] = location_id
-        fields['commcare_location_ids'] = user_location_data(user.get_location_ids(domain))
         fields['commcare_primary_case_sharing_id'] = location_id
+    else:
+        fields['commcare_location_id'] = ''
+        fields['commcare_primary_case_sharing_id'] = ''
+
+    if location_ids := user.get_location_ids(domain):
+        fields['commcare_location_ids'] = user_location_data(location_ids)
+    else:
+        fields['commcare_location_ids'] = user_location_data([])
 
     # language or phone_number can be null and will break
     # case submission
@@ -234,12 +241,11 @@ def _call_center_location_owner(user, ancestor_level):
     return owner_id
 
 
-def _iter_sync_usercase_helpers(user, domain_obj):
-    if (domain_obj.usercase_enabled
-            and USH_USERCASES_FOR_WEB_USERS.enabled(domain_obj.name) or not user.is_web_user()):
+def _iter_sync_usercase_helpers(user, domain):
+    if domain_has_privilege(domain, privileges.USERCASE):
         yield _get_sync_usercase_helper(
             user,
-            domain_obj.name,
+            domain,
             USERCASE_TYPE,
             user.get_id
         )
@@ -254,9 +260,16 @@ def sync_usercases(user, domain, sync_call_center=True):
     first time.
     """
     with CriticalSection([f"sync_user_case_for_{user.user_id}_{domain}"]):
-        domain_obj = Domain.get_by_name(domain)
         helpers = list(chain(
-            _iter_sync_usercase_helpers(user, domain_obj),
+            _iter_sync_usercase_helpers(user, domain),
             _iter_call_center_case_helpers(user) if sync_call_center else [],
         ))
         _UserCaseHelper.commit(helpers)
+
+
+# This is temporarily created to backfill usercases
+# and can be deleted after the backfill is done
+def sync_usercases_ignore_web_flag(user, domain):
+    with CriticalSection([f"sync_user_case_for_{user.user_id}_{domain}"]):
+        helper = _get_sync_usercase_helper(user, domain, USERCASE_TYPE, user.get_id, None)
+        _UserCaseHelper.commit([helper])

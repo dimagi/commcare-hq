@@ -1,8 +1,12 @@
+import logging
+
 from django.conf import settings
 
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.callcenter.utils import (
@@ -13,7 +17,6 @@ from corehq.apps.callcenter.utils import (
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 
 logger = get_task_logger(__name__)
 
@@ -45,29 +48,27 @@ def calculate_indicators():
         indicator_set.get_data()
 
 
-def sync_web_user_usercases_if_applicable(user, domain):
-    if not USH_USERCASES_FOR_WEB_USERS.enabled(domain):
-        return
-    domain_obj = Domain.get_by_name(domain)
-    if domain_obj.usercase_enabled:
-        sync_usercases_task.delay(user._id, domain)
-
-
 def bulk_sync_usercases_if_applicable(domain, user_ids):
     domain_obj = Domain.get_by_name(domain)
-    if domain_obj.call_center_config.enabled or domain_obj.usercase_enabled:
+    if (domain_obj.call_center_config.enabled
+            or domain_has_privilege(domain, privileges.USERCASE)):
         for user_id in user_ids:
             sync_usercases_task.delay(user_id, domain_obj.name)
 
 
-def sync_usercases_if_applicable(user, spawn_task):
-    if settings.UNIT_TESTING and not user.project:
+def sync_usercases_if_applicable(domain, user, spawn_task):
+    domain_obj = Domain.get_by_name(domain) if domain else None
+    if not domain_obj:
+        logging.warning("Domain %s was unexpectedly not found when syncing usercase", domain)
         return
-    if (user.project.call_center_config.enabled or user.project.usercase_enabled):
+    if settings.UNIT_TESTING and not domain_obj:
+        return
+    if (domain_obj.call_center_config.enabled
+            or domain_has_privilege(domain, privileges.USERCASE)):
         if spawn_task:
-            sync_usercases_task.delay(user._id, user.domain)
+            sync_usercases_task.delay(user._id, domain)
         else:
-            sync_usercases(user, user.domain)
+            sync_usercases(user, domain)
 
 
 @task(queue='background_queue')

@@ -56,7 +56,7 @@ class RepeatRecordDisplay:
     @property
     def state(self):
         label_cls, label_text = _get_state_tuple(self.record)
-        return format_html(f'<span class="label label-{label_cls}">{label_text}</span>')
+        return format_html('<span class="label label-{}">{}</span>', label_cls, label_text)
 
     def _format_date(self, date):
         if not date:
@@ -71,6 +71,7 @@ def _get_state_tuple(record):
         State.Cancelled: ('danger', _('Cancelled')),
         State.Fail: ('danger', _('Failed')),
         State.Empty: ('success', _('Empty')),
-        State.InvalidPayload: ('danger', _('Invalid payload')),
+        State.PayloadRejected: ('danger', _('Payload rejected')),
+        State.ErrorGeneratingPayload: ('danger', _('Error generating payload')),
     }
     return state_map.get(record.state, ('', ''))

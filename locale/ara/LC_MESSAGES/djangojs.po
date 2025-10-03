@@ -222,6 +222,16 @@ msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "يمكن أن تتضمن أنواع الحالات فقط الأحرف a-z، والأرقام 0-9، و'-' و'_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"This is a reserved case type. Refer to <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">doc</a> before using."
+msgstr ""
+"هذا نوع حالة محجوز. يرجى الرجوع إلى <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">الوثيقة</a> قبل الاستخدام."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "هذا نوع حالة محجوز. يرجى اختيار اسم آخر."
 
@@ -721,7 +731,6 @@ msgid "You have unchanged user properties settings"
 msgstr "لديك إعدادات خصائص المستخدم غير معدلة"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#| msgid "Property uses unrecognized prefix <strong>"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "تستخدم الخاصية بادئة غير معروفة <strong>"
 
@@ -750,10 +759,6 @@ msgstr "تعديل النموذج"
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
 msgid "Form Settings"
 msgstr "إعدادات النموذج"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Could not enable user properties, please try again later."
-msgstr "تعذر تفعيل خصائص المستخدم، يرجى المحاولة مرة أخرى لاحقًا."
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "This form either no longer exists or has a different case type"
@@ -1083,12 +1088,10 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} ليس أصل بيانات صالح"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "Create"
 msgid "createXML"
 msgstr "إنشاءXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "User Data"
 msgid "getData"
 msgstr "الحصول على البيانات"
 
@@ -1646,7 +1649,6 @@ msgstr "تم إعادة التعيين"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Copied!"
 msgid "Copied"
 msgstr "تم النسخ"
 
@@ -1662,13 +1664,11 @@ msgstr "اليوم"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
 msgstr "تم إعادة تعيين <%- count %> حالة"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
 msgstr "تم نسخ <%- count %> حالة"
 
@@ -3544,7 +3544,6 @@ msgid "Unavailable"
 msgstr "غير متوفر"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
 msgstr "متبقي <%- minutes %> دقيقة"
 
@@ -4172,6 +4171,9 @@ msgstr "فشل! الاستجابة هي: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr "تعذر تفعيل خصائص المستخدم، يرجى المحاولة مرة أخرى لاحقًا."
 
 #~ msgid "Email address is required when users confirm their own accounts."
 #~ msgstr "عنوان البريد الإلكتروني مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم."

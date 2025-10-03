@@ -6,6 +6,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.auditcare.models import ACCESS_CHOICES
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import (
@@ -32,10 +33,6 @@ class GroupFilterMixin(object):
 
 class GroupFilter(GroupFilterMixin, BaseSingleOptionFilter):
     placeholder = gettext_lazy('Click to select a group')
-
-
-class MultiGroupFilter(GroupFilterMixin, BaseMultipleOptionFilter):
-    placeholder = gettext_lazy('Click to select groups')
 
 
 class YearFilter(BaseSingleOptionFilter):
@@ -141,11 +138,12 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(s.name.upper(), s.label) for s in [
-            State.Success,
+            State.Success,  # Includes Empty
             State.Pending,
             State.Cancelled,
             State.Fail,
-            State.InvalidPayload,
+            State.PayloadRejected,  # Includes ErrorGeneratingPayload
+            # See templates/repeaters/partials/repeater_row.html
         ]]
 
 
@@ -172,3 +170,14 @@ class FeatureFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [(feature.slug, feature.label) for feature in all_previews()]
+
+
+class UserAuditActionFilter(BaseSingleOptionFilter):
+    slug = "action"
+    label = gettext_lazy("Action")
+    default_text = gettext_lazy("Show All")
+
+    @property
+    def options(self):
+        return [("GET", "GET"), ("POST", "POST"), ("PUT", "PUT"), ("DELETE", "DELETE"),
+                *ACCESS_CHOICES.items()]

@@ -229,6 +229,16 @@ msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "Aina za kesi zinaweza kujumuisha tu herufi a-z, 0-9, '-' na '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"This is a reserved case type. Refer to <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">doc</a> before using."
+msgstr ""
+"Hii ni aina ya kesi iliyohifadhiwa. Tafadhali rejelea <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">hati</a> kabla ya kutumia."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "Hii ni aina ya kesi iliyohifadhiwa. Tafadhali chagua jina lingine."
 
@@ -733,7 +743,6 @@ msgid "You have unchanged user properties settings"
 msgstr "Una mipangilio ya mali za mtumiaji ambayo haijabadilishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#| msgid "Property uses unrecognized prefix"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "Mali inatumia kiambishi kisichotambulika <strong>"
 
@@ -762,11 +771,6 @@ msgstr "Hariri Fomu"
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
 msgid "Form Settings"
 msgstr "Mipangilio ya Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Could not enable user properties, please try again later."
-msgstr ""
-"Imeshindikana kuwezesha mali za mtumiaji, tafadhali jaribu tena baadaye."
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "This form either no longer exists or has a different case type"
@@ -1099,12 +1103,10 @@ msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "Create"
 msgid "createXML"
 msgstr "undaXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-#| msgid "User Data"
 msgid "getData"
 msgstr "pataData"
 
@@ -1678,7 +1680,6 @@ msgstr "Imepangiwa upya"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Copied!"
 msgid "Copied"
 msgstr "Imenakiliwa"
 
@@ -1694,13 +1695,11 @@ msgstr "Leo"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Reassigned <%- count %> cases"
 msgstr "Kesi <%- count %> zimepangiwa upya"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/case_management.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/case_management.js
-#| msgid "Download <%- count %> Locations"
 msgid "Copied <%- count %> cases"
 msgstr "Kesi <%- count %> zimenakiliwa"
 
@@ -3613,7 +3612,6 @@ msgid "Unavailable"
 msgstr "Haipatikani"
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
-#| msgid "<%- days %> days remaining"
 msgid "<%- minutes %> minutes remaining"
 msgstr "Dakika <%- minutes %> zimebaki"
 
@@ -4250,6 +4248,10 @@ msgstr "Imeshindikana! Majibu ni: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr ""
+#~ "Imeshindikana kuwezesha mali za mtumiaji, tafadhali jaribu tena baadaye."
 
 #~ msgid "Email address is required when users confirm their own accounts."
 #~ msgstr ""

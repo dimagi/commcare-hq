@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from unittest.mock import Mock, patch, MagicMock
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 
@@ -197,6 +197,13 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.assertEqual(1, len(form.errors))
         self.assertEqual(['Ensure this value is less than or equal to 1000.'],
                          form.errors.get("operator_call_limit"))
+
+    def test_opt_out_of_data_sharing_will_save_can_use_data_as_false(self):
+        form = self.create_form(domain=self.domain_obj, opt_out_of_data_sharing=True)
+        form.full_clean()
+        form.save(Mock(), self.domain_obj)
+        self.assertTrue('opt_out_of_data_sharing' in form.fields)
+        self.assertEqual(self.domain_obj.internal.can_use_data, False)
 
     def create_form(self, domain=None, **kwargs):
         data = {
@@ -635,20 +642,32 @@ class TestExtractAppInfoForm(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
 
+    def test_staging_is_invalid_for_prod_environments(self):
+        url = 'https://staging.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+    @override_settings(DEBUG=True)
+    def test_staging_is_valid_for_debug_environments(self):
+        url = 'https://staging.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+
     def test_clean_app_url_with_non_commcare_domain(self):
         url = 'https://india.foo.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
 
-    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'production')
+    @override_settings(SERVER_ENVIRONMENT='production')
     def test_clean_app_url_same_server_validation(self):
         url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
         self.assertIn('The source app url matches the current server', str(form.errors['app_url']))
 
-    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'india')
+    @override_settings(SERVER_ENVIRONMENT='india')
     def test_clean_app_url_different_server_validation(self):
         url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})

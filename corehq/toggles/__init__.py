@@ -1461,7 +1461,7 @@ SMS_LOG_CHANGES = StaticToggle(
 EXPORT_DATA_SOURCE_DATA = StaticToggle(
     'export_data_source_data',
     'Add Export Data Source Data page',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description="Add the Export Data Source Data page to the Data tab",
 )
@@ -1651,18 +1651,6 @@ OPEN_SUBMISSION_ENDPOINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
-    'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users or Locations filter',
-    TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
-    description=(
-        "This flag allows you filter the users to display in the same way as the "
-        "other reports - by individual user, group, or location.  Note that this "
-        "will also force the report to always display by user."
-    ),
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
@@ -1813,7 +1801,7 @@ AGGREGATE_UCRS = StaticToggle(
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
     'Allow building report builder reports directly from raw UCR Data Sources',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2060,6 +2048,16 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'Enable Accounting Testing Tools',
     TAG_INTERNAL,
     [NAMESPACE_USER]
+)
+
+SHOW_AUTO_RENEWAL = StaticToggle(
+    'show_auto_renewal',
+    'Show Auto Renewal',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Show options to enable or disable Auto Renewal for a subscription while the feature is in development.
+    """
 )
 
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
@@ -2309,7 +2307,7 @@ CASE_UPDATES_UCR_FILTERS = StaticToggle(
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2577,14 +2575,6 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'
-)
-
-WEB_USERS_IN_REPORTS = StaticToggle(
-    'web_users_in_reports',
-    'Adds web users to to the body of the Worker Activity and Project Health reports',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Adds web users to the body of the Worker Activity and Project Health reports'
 )
 
 CUSTOM_EMAIL_GATEWAY = StaticToggle(

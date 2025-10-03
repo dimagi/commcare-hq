@@ -397,9 +397,9 @@ class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
     class Meta(object):
         db_table = 'sms_lastreadmessage'
         app_label = 'sms'
-        index_together = [
-            ['domain', 'read_by', 'contact_id'],
-            ['domain', 'contact_id'],
+        indexes = [
+            models.Index(fields=['domain', 'read_by', 'contact_id']),
+            models.Index(fields=['domain', 'contact_id']),
         ]
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -461,9 +461,7 @@ class ExpectedCallback(UUIDGeneratorMixin, models.Model):
 
     class Meta(object):
         app_label = 'sms'
-        index_together = [
-            ['domain', 'date'],
-        ]
+        indexes = [models.Index(fields=['domain', 'date'])]
 
     STATUS_CHOICES = (
         (CALLBACK_PENDING, gettext_lazy("Pending")),
@@ -1286,6 +1284,23 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
+    def create_subevent_for_content_type(self, recipient_doc_type=None,
+            recipient_id=None, case=None, completed=False, content_type=None):
+        recipient_type = MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type)
+        subevent = MessagingSubEvent.objects.create(
+            parent=self,
+            domain=self.domain,
+            date=datetime.utcnow(),
+            recipient_type=recipient_type,
+            recipient_id=recipient_id,
+            content_type=content_type or self.content_type,
+            case_id=case.case_id if case else None,
+            status=(MessagingEvent.STATUS_COMPLETED
+                    if completed
+                    else MessagingEvent.STATUS_IN_PROGRESS),
+        )
+        return subevent
+
     @property
     def subevents(self):
         return self.messagingsubevent_set.all()
@@ -1326,9 +1341,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         from corehq.messaging.scheduling.scheduling_partitioned.models import (
             AlertScheduleInstance,
-            TimedScheduleInstance,
             CaseAlertScheduleInstance,
             CaseTimedScheduleInstance,
+            TimedScheduleInstance,
         )
 
         if isinstance(schedule_instance, AlertScheduleInstance):
@@ -1357,13 +1372,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_content_info_from_content_object(cls, domain, content):
         from corehq.messaging.scheduling.models import (
+            ConnectMessageContent,
+            ConnectMessageSurveyContent,
+            CustomContent,
+            EmailContent,
+            FCMNotificationContent,
             SMSContent,
             SMSSurveyContent,
-            EmailContent,
-            CustomContent,
-            FCMNotificationContent,
-            ConnectMessageContent,
-            ConnectMessageSurveyContent
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1387,7 +1402,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_recipient_type_and_id_from_schedule_instance(cls, schedule_instance):
-        from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+        from corehq.messaging.scheduling.scheduling_partitioned.models import (
+            ScheduleInstance,
+        )
 
         if isinstance(schedule_instance.recipient, list):
             recipient_type = cls.RECIPIENT_VARIOUS
@@ -1643,10 +1660,10 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     class Meta(object):
         app_label = 'sms'
-        index_together = (
+        indexes = [
             # used by the messaging-event api
-            ('domain', 'date_last_activity', 'id'),
-        )
+            models.Index(fields=['domain', 'date_last_activity', 'id']),
+        ]
 
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
@@ -2516,9 +2533,7 @@ class Keyword(UUIDGeneratorMixin, models.Model):
     UUIDS_TO_GENERATE = ['couch_id']
 
     class Meta(object):
-        index_together = (
-            ('domain', 'keyword')
-        )
+        indexes = [models.Index(fields=['domain', 'keyword'])]
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
     domain = models.CharField(max_length=126, db_index=True)

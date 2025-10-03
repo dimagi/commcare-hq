@@ -3,6 +3,10 @@ import json
 from collections import namedtuple
 from decimal import Decimal
 
+import dateutil
+from couchdbkit import ResourceNotFound
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -13,8 +17,8 @@ from django.db.models import Sum
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseRedirect,
     HttpResponseForbidden,
+    HttpResponseRedirect,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -23,18 +27,12 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-
-import dateutil
-from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.accounting.utils.unpaid_invoice import can_domain_unpause
-from dimagi.utils.web import json_response
-
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -60,6 +58,9 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
     SubscriptionType,
     WireInvoice,
 )
@@ -80,17 +81,18 @@ from corehq.apps.accounting.user_text import (
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
+    get_paused_plan_context,
     is_downgrade,
     log_accounting_error,
-    quantize_accounting_decimal,
-    get_paused_plan_context,
     pause_current_subscription,
+    quantize_accounting_decimal,
 )
 from corehq.apps.accounting.utils.stripe import get_customer_cards
+from corehq.apps.accounting.utils.unpaid_invoice import can_domain_unpause
 from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
     login_and_domain_required,
     require_superuser,
-    LoginAndDomainMixin,
 )
 from corehq.apps.domain.forms import (
     INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS,
@@ -113,6 +115,7 @@ from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.const import USER_DATE_FORMAT
+from corehq.toggles import SHOW_AUTO_RENEWAL
 
 PAYMENT_ERROR_MESSAGES = {
     400: gettext_lazy('Your request was not formatted properly.'),
@@ -208,12 +211,55 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def can_purchase_credits(self):
         return self.request.couch_user.can_edit_billing()
 
+    def can_set_auto_renew(self):
+        can_access_auto_renewal = (
+            SHOW_AUTO_RENEWAL.enabled(self.request.domain)
+            and self.request.couch_user.can_edit_billing()
+        )
+        subscription_eligible_for_auto_renewal = (
+            self.current_subscription.service_type == SubscriptionType.PRODUCT
+            and self.current_subscription.date_end is not None
+        )
+        subscription_is_auto_renew = self.current_subscription.auto_renew
+        next_subscription = self.current_subscription.next_subscription
+        next_created_by_auto_renew = SubscriptionAdjustment.objects.filter(
+            subscription=next_subscription,
+            method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+            reason=SubscriptionAdjustmentReason.CREATE
+        ).exists() if next_subscription else False
+
+        return (
+            can_access_auto_renewal
+            and subscription_eligible_for_auto_renewal
+            and (
+                next_subscription is None
+                or (subscription_is_auto_renew and next_created_by_auto_renew)
+            )
+        )
+
+    @property
+    def renewal_plan_preview(self):
+        if not self.can_set_auto_renew() or self.current_subscription.auto_renew:
+            # details are only needed if user will see the option to enable auto renew
+            return None
+
+        current_plan = self.current_subscription.plan_version.plan
+        next_version = DefaultProductPlan.get_default_plan_version(
+            current_plan.edition, is_annual_plan=current_plan.is_annual_plan
+        )
+        return {
+            'is_annual_plan': next_version.plan.is_annual_plan,
+            'name': next_version.plan.name,
+            'price': _("USD %s /month") % next_version.product_rate.monthly_fee,
+        }
+
     @property
     @memoized
     def plan(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         date_end = None
+        days_left = None
         next_subscription = {
             'exists': False,
             'can_renew': False,
@@ -228,6 +274,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         if subscription.date_end is not None else "--")
 
             if subscription.date_end is not None:
+                days_left = (subscription.date_end - datetime.date.today()).days
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
@@ -241,7 +288,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     })
 
                 else:
-                    days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
                         'can_renew': days_left <= 90,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
@@ -277,7 +323,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
                            if subscription is not None else None),
             'date_end': date_end,
+            'days_left': days_left,
             'cards': cards,
+            'is_auto_renew': subscription.auto_renew,
             'next_subscription': next_subscription,
             'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
             'is_annual_plan': plan_version.plan.is_annual_plan,
@@ -368,6 +416,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
+            'can_set_auto_renew': self.can_set_auto_renew(),
+            'renewal_plan_preview': self.renewal_plan_preview,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
@@ -381,8 +431,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap3/update_billing_contact_info.html'
+    template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
     page_title = gettext_lazy("Billing Information")
     async_handlers = [
@@ -1518,13 +1569,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
         if self.is_form_post and self.billing_account_info_form.is_valid():
             if not self.current_subscription.user_can_change_subscription(self.request.user):
-                messages.error(
-                    request, _(
-                        "You do not have permission to change the subscription for this customer-level account. "
-                        "Please reach out to the %s enterprise admin for help."
-                    ) % self.account.name
-                )
-                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+                return _cannot_modify_subscription_response(request, self.domain, self.account.name)
             if self.selected_plan_version.plan.edition not in SoftwarePlanEdition.SELF_SERVICE_ORDER:
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
@@ -1888,15 +1933,7 @@ def _get_downgrade_or_pause_note(request, is_pause=False):
 def pause_subscription(request, domain):
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if not current_subscription.user_can_change_subscription(request.user):
-        messages.error(
-            request, _(
-                "You do not have permission to pause the subscription for this customer-level account. "
-                "Please reach out to the %s enterprise admin for help."
-            ) % current_subscription.account.name
-        )
-        return HttpResponseRedirect(
-            reverse(DomainSubscriptionView.urlname, args=[domain])
-        )
+        return _cannot_modify_subscription_response(request, domain, current_subscription.account.name)
 
     try:
         with transaction.atomic():
@@ -1944,6 +1981,71 @@ def pause_subscription(request, domain):
             )
         )
 
+    return HttpResponseRedirect(
+        reverse(DomainSubscriptionView.urlname, args=[domain])
+    )
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(HqPermissions.edit_billing)
+def enable_subscription_auto_renew(request, domain):
+    current_subscription = Subscription.get_active_subscription_by_domain(domain)
+    if not current_subscription.user_can_change_subscription(request.user):
+        return _cannot_modify_subscription_response(request, domain, current_subscription.account.name)
+
+    next_subscription = current_subscription.next_subscription
+    if next_subscription is not None:
+        # the UI should already prevent this interaction, but enforcing from the server to make sure
+        messages.error(
+            request, _("Auto renewal cannot be enabled for the current subscription.")
+        )
+        return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[domain]))
+
+    current_subscription.auto_renew = True
+    current_subscription.save()
+    messages.success(
+        request, _("Auto renewal successfully enabled for the current subscription.")
+    )
+    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[domain]))
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(HqPermissions.edit_billing)
+def disable_subscription_auto_renew(request, domain):
+    current_subscription = Subscription.get_active_subscription_by_domain(domain)
+    if not current_subscription.user_can_change_subscription(request.user):
+        return _cannot_modify_subscription_response(request, domain, current_subscription.account.name)
+
+    with transaction.atomic():
+        next_subscription = current_subscription.next_subscription
+        if next_subscription is not None:
+            # if next subscription was created by auto renewal, suppress that subscription
+            next_created_by_auto_renew = SubscriptionAdjustment.objects.filter(
+                subscription=next_subscription,
+                method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+                reason=SubscriptionAdjustmentReason.CREATE
+            ).exists()
+            if next_created_by_auto_renew:
+                next_subscription.suppress_subscription()
+
+        current_subscription.auto_renew = False
+        current_subscription.save()
+
+    messages.success(
+        request, _("Auto renewal successfully disabled for the current subscription.")
+    )
+    return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[domain]))
+
+
+def _cannot_modify_subscription_response(request, domain, account_name):
+    messages.error(
+        request, _(
+            "You do not have permission to modify the subscription for this customer-level account. "
+            "Please reach out to the {account_name} enterprise admin for help."
+        ).format(account_name=account_name)
+    )
     return HttpResponseRedirect(
         reverse(DomainSubscriptionView.urlname, args=[domain])
     )

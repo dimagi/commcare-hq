@@ -109,7 +109,6 @@ from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.mobile_auth.utils import generate_aes_key
-from corehq.util.soft_assert.api import soft_assert
 
 
 WEB_USER = 'web'
@@ -586,7 +585,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             update_tableau_user(domain=domain, username=self.username, role=tableau_role,
                                 groups=get_tableau_groups_by_ids(tableau_group_ids, domain),
                                 blocking_exception=False)
-        self.save()
+        self.save(domains_to_sync_usercase=[domain])
 
     def delete_domain_membership(self, domain, create_record=False):
         """
@@ -1588,11 +1587,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     bulk_save = save_docs
 
-    def save(self, fire_signals=True, update_django_user=True, fail_hard=False, **params):
+    def save(self, fire_signals=True, update_django_user=True, fail_hard=False,
+            spawn_task=False, domains_to_sync_usercase=None, **params):
         # fail_hard determines whether the save should fail if it cannot obtain the critical section
         # historically, the critical section hasn't been enforced, but enforcing it is a dramatic change
         # for our system. The goal here is to allow the programmer to specify fail_hard on a workflow-by-workflow
         # basis, so we can gradually shift to all saves requiring the critical section.
+
+        # domains_to_sync_usercase defaults to all domains the user is a member of. It can used to specify
+        # domains if the user changes are only relevant to specific domains.
 
         # HEADS UP!
         # When updating this method, please also ensure that your updates also
@@ -1618,6 +1621,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
         if fire_signals:
             self.fire_signals()
+            if not self.to_be_deleted():
+                from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
+                if not domains_to_sync_usercase:
+                    domains_to_sync_usercase = getattr(self, 'domains', [])
+                # We need to sync to domains the user is leaving so that usercase is closed
+                for domain in domains_to_sync_usercase + getattr(self, '_leaving_domains', []):
+                    sync_usercases_if_applicable(domain, self, spawn_task)
+        self._leaving_domains = []
 
     def fire_signals(self):
         from .signals import couch_user_post_save
@@ -1830,18 +1841,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, fire_signals=True, spawn_task=False, **params):
+    def save(self, fire_signals=True, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
         if fire_signals:
-            from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
             from .signals import commcare_user_post_save
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            if not self.to_be_deleted():
-                sync_usercases_if_applicable(self, spawn_task)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -2548,7 +2556,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership = self.get_domain_membership(domain)
         if membership.is_active:
             membership.is_active = False
-            self.save()
+            self.save(domains_to_sync_usercase=[domain])
             log_user_change(by_domain=domain, for_domain=domain, couch_user=self,
                             changed_by_user=changed_by, changed_via=USER_CHANGE_VIA_WEB,
                             fields_changed={'is_active_in_domain': False})
@@ -2560,19 +2568,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership = self.get_domain_membership(domain)
         if not membership.is_active:
             membership.is_active = True
-            self.save()
+            self.save(domains_to_sync_usercase=[domain])
             log_user_change(by_domain=domain, for_domain=domain, couch_user=self,
                             changed_by_user=changed_by, changed_via=USER_CHANGE_VIA_WEB,
                             fields_changed={'is_active_in_domain': True})
-
-    def save(self, fire_signals=True, **params):
-        super().save(fire_signals=fire_signals, **params)
-        if fire_signals and not self.to_be_deleted():
-            from corehq.apps.callcenter.tasks import sync_web_user_usercases_if_applicable
-            # We need to sync to all domains, even those the user is leaving
-            for domain in self.get_domains() + getattr(self, '_leaving_domains', []):
-                sync_web_user_usercases_if_applicable(self, domain)
-        self._leaving_domains = []
 
     def add_to_assigned_locations(self, domain, location):
         membership = self.get_domain_membership(domain)
@@ -2582,7 +2581,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 return
             membership.assigned_location_ids.append(location.location_id)
             self.get_sql_locations.reset_cache(self)
-            self.save()
+            self.save(domains_to_sync_usercase=[domain])
         else:
             self.set_location(domain, location)
 
@@ -2604,7 +2603,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         self.get_sql_location.reset_cache(self)
         self._update_locations_fixture()
         if commit:
-            self.save()
+            self.save(domains_to_sync_usercase=[domain])
 
     def unset_location(self, domain, fall_back_to_next=False, commit=True):
         """
@@ -2622,7 +2621,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.location_id = None
         self.get_sql_location.reset_cache(self)
         if commit:
-            self.save()
+            self.save(domains_to_sync_usercase=[domain])
 
     def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
         """
@@ -2636,7 +2635,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             self._remove_location_from_user(membership, location_id)
             self.get_sql_locations.reset_cache(self)
-            self.save()
+            self.save(domains_to_sync_usercase=[domain])
 
     def _remove_location_from_user(self, membership, location_id):
         membership.assigned_location_ids.remove(location_id)
@@ -2654,7 +2653,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         self.get_sql_locations.reset_cache(self)
         self._update_locations_fixture()
         if commit:
-            self.save()
+            self.save(domains_to_sync_usercase=[domain])
 
     @memoized
     def get_sql_location(self, domain):
@@ -3203,20 +3202,6 @@ class HQApiKey(models.Model):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
-
-    # Remove this after key fields are deleted and verified no errors occur
-    @property
-    def key(self):
-        _soft_assert_api_key = soft_assert(to='jtang@dimagi.com', send_to_ops=False)
-        _soft_assert_api_key(False,
-                             f"Attempted to access api key directly for user {self.user} and name {self.name}")
-        return self.plaintext_key
-
-    @key.setter
-    def key(self, value):
-        _soft_assert_api_key = soft_assert(to='jtang@dimagi.com', send_to_ops=False)
-        _soft_assert_api_key(False, f"Attempted to set api key directly for user {self.user} and name {self.name}")
-        self.plaintext_key = value
 
     @property
     def plaintext_key(self):

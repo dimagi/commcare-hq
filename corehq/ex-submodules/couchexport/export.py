@@ -64,8 +64,8 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
      (("employee", (("1", "cory", "m"),
                     ("2", "christian", "m"),
                     ("3", "amelia", "f"))),
-      ("building", (("1", "dimagi", "585 mass ave."),
-                    ("2", "old dimagi", "529 main st."))))
+      ("building", (("1", "dimagi", "245 main st."),
+                    ("2", "old dimagi", "585 mass ave."))))
 
     """
     context = export_raw_to_writer(headers=headers, data=data, file=file, format=format,

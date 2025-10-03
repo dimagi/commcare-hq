@@ -308,6 +308,18 @@ msgid "Version"
 msgstr "الإصدار"
 
 #: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Shadow Module Version"
+msgid "Show Most Recent Version"
+msgstr "إصدار وحدة الظل"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Show All Groups"
+msgid "Show All Versions"
+msgstr "عرض جميع المجموعات"
+
+#: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -329,6 +341,18 @@ msgstr "عدم إصدار فاتورة"
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Do Not Invoice\""
 msgstr "برر سبب \"عدم إصدار فاتورة\""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Do Not Invoice"
+msgid "Do Not Email Invoices"
+msgstr "عدم إصدار فاتورة"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Next Subscription Begins"
+msgid "Do Not Email Subscription Reminders"
+msgstr "بداية الاشتراك القادم"
 
 #: corehq/apps/accounting/forms.py
 msgid "Auto-generate Plan Credits"
@@ -353,6 +377,153 @@ msgstr "استبعاد من عملية الإيقاف المؤتمتة"
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Skip Auto Pause\""
 msgstr "برر سبب \"تخطي الإيقاف التلقائي\""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Enable auto select"
+msgid "Enable auto renewal"
+msgstr "تفعيل التحديد التلقائي"
+
+#: corehq/apps/accounting/forms.py
+msgid "Applies if subscription has a future end date and is type 'Product'"
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Please select version"
+msgid "is most recent version"
+msgstr "يرجى اختيار الإصدار"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Cannot make new version"
+msgid "not most recent version"
+msgstr "لا يمكن إنشاء إصدار جديد"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Already Paid"
+msgid "(already started)"
+msgstr "تم الدفع بالفعل"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Already in use."
+msgid "(already ended)"
+msgstr "قيد الاستخدام بالفعل."
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Billing Account"
+msgid "Search for Billing Account"
+msgstr "حساب الفوترة"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "From Project Space"
+msgid "Search for Project Space"
+msgstr "من مساحة المشروع"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "New Software Plan"
+msgid "Search for Software Plan"
+msgstr "خطة برنامج جديدة"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Select Action"
+msgid "Select Active Account"
+msgstr "اختر إجراء"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy, python-format
+#| msgid "Subscription"
+msgid "%s Subscription"
+msgstr "الاشتراك"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/reports/views.py
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
+#: corehq/apps/users/templates/users/web_users.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/tabs/tabclasses.py
+msgid "Edit"
+msgstr "تعديل"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/accounting_admins.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/tabs/tabclasses.py
+msgid "New"
+msgstr "جديد"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Hide Options"
+msgid "Invoice Options"
+msgstr "إخفاء الخيارات"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Filter Options"
+msgid "Email Options"
+msgstr "خيارات التصفية"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Case Options"
+msgid "Credit Options"
+msgstr "خيارات الحالة"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Justify why \"Skip Auto Pause\""
+msgid "Skip Auto Pause"
+msgstr "برر سبب \"تخطي الإيقاف التلقائي\""
+
+#: corehq/apps/accounting/forms.py
+msgid "Auto Renew"
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/models.py
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
+#: corehq/apps/integration/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/users/forms.py corehq/apps/users/models.py
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Update"
+msgstr "تحديث"
+
+#: corehq/apps/accounting/forms.py corehq/apps/case_search/models.py
+#: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Create"
+msgstr "إنشاء"
 
 #: corehq/apps/accounting/forms.py
 msgid "Please select an account other than the current account to transfer to."
@@ -1153,13 +1324,6 @@ msgid "Remove User"
 msgstr "إزالة المستخدم"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
-#: corehq/tabs/tabclasses.py
-msgid "New"
-msgstr "جديد"
-
-#: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 msgid "Removed"
@@ -1253,8 +1417,8 @@ msgid ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Statement From: CommCare and the corporation Dimagi, Inc. 585 "
-"Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main "
+"Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
 msgstr ""
@@ -1395,6 +1559,9 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -1406,7 +1573,7 @@ msgid ""
 "\n"
 "    Email From:<br />\n"
 "    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
@@ -1488,7 +1655,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "شكرًا لاستخدامك CommCare. إذا كان لديك أي أسئلة، لا تتردد في التواصل مع "
 "%(invoicing_contact_email)s.\n"
@@ -1512,29 +1679,6 @@ msgstr ""
 "\n"
 "    هذه الرسالة هي إيصال بدفعك المسبق لمبلغ <strong>%(amount)s</strong> "
 "كأرصدة لمشروعك %(project)s.\n"
-"  "
-
-#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    Email From:<br />\n"
-#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
-#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#| "  "
-msgid ""
-"\n"
-"    Email From:<br />\n"
-"    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-"  "
-msgstr ""
-"\n"
-"    البريد الإلكتروني من:<br />\n"
-"    CommCare HQ والشركة Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
@@ -1593,7 +1737,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "البريد الإلكتروني من:\n"
@@ -2174,7 +2318,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "شكرًا لاستخدامك %(plan_name)s. إذا كان لديك أي أسئلة، لا تتردد في التواصل مع "
@@ -2748,7 +2892,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "شكرًا لاستخدامك %(plan_name)s. إذا كان لديك أي أسئلة، لا تتردد في التواصل مع "
@@ -2896,7 +3040,7 @@ msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
@@ -2976,7 +3120,7 @@ msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "    بيان من:\n"
@@ -3080,7 +3224,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "شكرًا لاستخدامك CommCare. إذا كان لديك أي أسئلة، لا تتردد في التواصل مع "
@@ -3898,7 +4042,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "ملاحظة: سيتم احتساب أي رسوم عند الطلب للمستخدمين الزائدين أو الرسائل النصية "
@@ -4608,28 +4752,6 @@ msgstr "تاريخ استحقاق آخر فاتورة"
 msgid "\"Do Not Invoice\" Reason"
 msgstr "سبب \"عدم إصدار فاتورة\""
 
-#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/reports/views.py
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/toggle_ui/templates/toggle/flags.html
-#: corehq/apps/users/templates/users/web_users.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/tabs/tabclasses.py
-msgid "Edit"
-msgstr "تعديل"
-
 #: corehq/apps/accounting/templates/accounting/plans.html
 msgid "Plan Information"
 msgstr "معلومات الخطة"
@@ -4874,7 +4996,8 @@ msgstr "المستخدمون الذين تمت إضافتهم:"
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
-#: corehq/apps/reminders/views.py corehq/apps/reports/filters/users.py
+#: corehq/apps/reminders/views.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
@@ -5528,6 +5651,7 @@ msgstr "الحالة:"
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/templates/integration/web_app_integration_err.html
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -6105,11 +6229,17 @@ msgstr ""
 "استخدام هذه الميزة."
 
 #: corehq/apps/app_manager/helpers/validators.py
+#, fuzzy
+#| msgid ""
+#| "Your application is using User Properties and your current subscription "
+#| "does not support that. You can remove User Properties functionality by "
+#| "opening the User Properties tab in a form that uses it, and clicking "
+#| "\"Remove User Properties\"."
 msgid ""
-"Your application is using User Properties and your current subscription does "
-"not support that. You can remove User Properties functionality by opening "
-"the User Properties tab in a form that uses it, and clicking \"Remove User "
-"Properties\"."
+"Your application is using User Properties or using `commcare-user` as a "
+"menu's case type, and your current subscription does not support that. You "
+"can remove User Propertiesfunctionality by opening the User Properties tab "
+"in a form that uses it and clicking 'Remove User Properties.'"
 msgstr ""
 "تطبيقك يستخدم خصائص المستخدم واشتراكك الحالي لا يدعم ذلك. يمكنك إزالة وظيفة "
 "خصائص المستخدم بفتح علامة تبويب خصائص المستخدم في النموذج الذي يستخدمها، ثم "
@@ -6626,7 +6756,6 @@ msgid "Android app dependencies"
 msgstr "اعتمادات تطبيق أندرويد"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
 msgstr "نشاط العامل"
 
@@ -10983,26 +11112,53 @@ msgid "Display Condition"
 msgstr "شرط العرض"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#, fuzzy
+#| msgid ""
+#| "The form will not appear in the menu unless this condition is met. Read "
+#| "more on the <a target='_blank' href='https://confluence.dimagi.com/"
+#| "display/commcarepublic/Form+Display+Conditions'>Help Site</a>."
 msgid ""
-"The form will not appear in the menu unless this condition is met. Read more "
-"on the <a target='_blank' href='https://confluence.dimagi.com/display/"
-"commcarepublic/Form+Display+Conditions'>Help Site</a>."
+"\n"
+"          The form will not appear in the menu unless this condition is "
+"met.\n"
+"          Read more on the\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Form+Display+Conditions\"\n"
+"            >Help Site</a\n"
+"          >.\n"
+"        "
 msgstr ""
 "لن يظهر النموذج في القائمة إلا إذا تحقق هذا الشرط. اقرأ المزيد على <a "
 "target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/"
 "Form+Display+Conditions'>موقع المساعدة</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              To use display conditions which reference a case, <br/>\n"
+#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
+#| "              <em>Display menu and then forms</em> <br/>\n"
+#| "              (2) all the forms in the case list must update or close a "
+#| "case, which means registration\n"
+#| "              forms must go in a separate case list, or if your project "
+#| "uses user properties, your\n"
+#| "              display condition may use user properties.\n"
+#| "            "
 msgid ""
 "\n"
-"              To use display conditions which reference a case, <br/>\n"
+"              To use display conditions which reference a case, <br />\n"
 "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-"              <em>Display menu and then forms</em> <br/>\n"
+"              <em>Display menu and then forms</em> <br />\n"
 "              (2) all the forms in the case list must update or close a "
-"case, which means registration\n"
-"              forms must go in a separate case list, or if your project uses "
-"user properties, your\n"
-"              display condition may use user properties.\n"
+"case,\n"
+"              which means registration forms must go in a separate case "
+"list, or\n"
+"              if your project uses user properties, your display condition "
+"may\n"
+"              use user properties.\n"
 "            "
 msgstr ""
 "\n"
@@ -11015,29 +11171,21 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-msgid ""
-"\n"
-"              To use display conditions which reference a user property, "
-"user properties must be\n"
-"              enabled for your project.\n"
-"            "
-msgstr ""
-"\n"
-"              لاستخدام شروط العرض التي تشير إلى خاصية مستخدم، يجب تفعيل "
-"خصائص المستخدم لمشروعك.\n"
-"            "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-msgid "Enable user properties"
-msgstr "تفعيل خصائص المستخدم"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          There is something wrong with the logic in the Form Display "
+#| "Condition.\n"
+#| "          Check to make sure your parentheses match and you are "
+#| "referencing case properties correctly.\n"
+#| "        "
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display "
 "Condition.\n"
 "          Check to make sure your parentheses match and you are referencing "
-"case properties correctly.\n"
+"case\n"
+"          properties correctly.\n"
 "        "
 msgstr ""
 "\n"
@@ -12960,6 +13108,7 @@ msgstr "تقرير"
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/program.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -13993,21 +14142,6 @@ msgstr "الإصدار %(v)s"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Email when finished (recommended for large applications)"
 msgstr "إرسال بريد إلكتروني عند الانتهاء (موصى به للتطبيقات الكبيرة)"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/case_search/models.py
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
-#: corehq/apps/integration/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/users/forms.py corehq/apps/users/models.py
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Update"
-msgstr "تحديث"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -15781,7 +15915,7 @@ msgid "Success with warnings"
 msgstr "نجاح مع تحذيرات"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/repeaters/const.py
+#: corehq/apps/integration/kyc/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr "فشل"
@@ -16041,14 +16175,6 @@ msgstr "يجب أن يكون {param} نصًا"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr ""
-
-#: corehq/apps/case_search/models.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Create"
-msgstr "إنشاء"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -16544,8 +16670,7 @@ msgstr "إدارة وصول تطبيقات الويب لكل عامل ميدان
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/reports/filters/select.py
-#: corehq/apps/reports/standard/monitoring.py corehq/motech/fhir/const.py
+#: corehq/apps/reports/filters/select.py corehq/motech/fhir/const.py
 msgid "Group"
 msgstr "المجموعة"
 
@@ -18260,8 +18385,8 @@ msgid "Completed"
 msgstr "مكتمل"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#: corehq/apps/registry/models.py corehq/apps/sms/models.py
-#: corehq/motech/repeaters/const.py
+#: corehq/apps/integration/kyc/models.py corehq/apps/registry/models.py
+#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
@@ -19190,6 +19315,12 @@ msgstr "إنشاء نوع حالة"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #, fuzzy
+#| msgid "data dictionary"
+msgid "Loading data dictionary..."
+msgstr "قاموس البيانات"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
 #| msgid ""
 #| "\n"
 #| "        There was an error processing the request. Please try again.\n"
@@ -19235,6 +19366,12 @@ msgstr "إخفاء المهمل"
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "FHIR Resource Property Path"
 msgstr "مسار خاصية مورد FHIR"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#, fuzzy
+#| msgid "Loading exports..."
+msgid "Loading properties..."
+msgstr "جارٍ تحميل الصادرات..."
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #, fuzzy
@@ -19389,12 +19526,18 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Deprecate\n"
+#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#| "              Case Type\n"
+#| "            "
 msgid ""
-"\n"
-"              Deprecate\n"
-"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-"              Case Type\n"
-"            "
+" Deprecate '<span\n"
+"            data-bind=\"text: $root.activeCaseType()\"\n"
+"          ></span\n"
+"          >' Case Type "
 msgstr ""
 "\n"
 "              إهمال\n"
@@ -19403,38 +19546,78 @@ msgstr ""
 "            "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            <p>\n"
+#| "              There are a total of\n"
+#| "              <strong>\n"
+#| "                <span data-bind=\"text: activeCaseTypeModuleCount()\"></"
+#| "span> application module(s)\n"
+#| "              </strong>\n"
+#| "              that are currently using this case type.\n"
+#| "            </p>\n"
+#| "            <p>\n"
+#| "              Deprecating this case type will have the following "
+#| "effects:\n"
+#| "            </p>\n"
+#| "            <ul>\n"
+#| "              <li>This case type will not be available from the reports "
+#| "filtering menu.</li>\n"
+#| "              <li>All case properties/groups for this case type will be "
+#| "deprecated.</li>\n"
+#| "              <li>New exports cannot be created with this case type.</"
+#| "li>\n"
+#| "              <li>Case imports cannot be done for cases with this case "
+#| "type.</li>\n"
+#| "              <li>New automatic rules cannot be created with this case "
+#| "type.</li>\n"
+#| "            </ul>\n"
+#| "            <p>\n"
+#| "              For more information on deprecated case types, see the\n"
+#| "              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/"
+#| "wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-"
+#| "%%26-Delete-Case-Types-and-Case-Properties\">following documentation</"
+#| "a>.\n"
+#| "            </p>\n"
+#| "          "
 msgid ""
 "\n"
-"            <p>\n"
-"              There are a total of\n"
-"              <strong>\n"
-"                <span data-bind=\"text: activeCaseTypeModuleCount()\"></"
-"span> application module(s)\n"
-"              </strong>\n"
-"              that are currently using this case type.\n"
-"            </p>\n"
-"            <p>\n"
-"              Deprecating this case type will have the following effects:\n"
-"            </p>\n"
-"            <ul>\n"
-"              <li>This case type will not be available from the reports "
-"filtering menu.</li>\n"
-"              <li>All case properties/groups for this case type will be "
-"deprecated.</li>\n"
-"              <li>New exports cannot be created with this case type.</li>\n"
-"              <li>Case imports cannot be done for cases with this case type."
-"</li>\n"
-"              <li>New automatic rules cannot be created with this case type."
-"</li>\n"
-"            </ul>\n"
-"            <p>\n"
-"              For more information on deprecated case types, see the\n"
-"              <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/"
-"spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-"
-"Delete-Case-Types-and-Case-Properties\">following documentation</a>.\n"
-"            </p>\n"
-"          "
+"        <p>\n"
+"          There are a total of\n"
+"          <strong>\n"
+"            <span data-bind=\"text: activeCaseTypeModuleCount()\"></span>\n"
+"            application module(s)\n"
+"          </strong>\n"
+"          that are currently using this case type.\n"
+"        </p>\n"
+"        <p>Deprecating this case type will have the following effects:</p>\n"
+"        <ul>\n"
+"          <li>\n"
+"            This case type will not be available from the reports filtering\n"
+"            menu.\n"
+"          </li>\n"
+"          <li>\n"
+"            All case properties/groups for this case type will be "
+"deprecated.\n"
+"          </li>\n"
+"          <li>New exports cannot be created with this case type.</li>\n"
+"          <li>Case imports cannot be done for cases with this case type.</"
+"li>\n"
+"          <li>New automatic rules cannot be created with this case type.</"
+"li>\n"
+"        </ul>\n"
+"        <p>\n"
+"          For more information on deprecated case types, see the\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-"
+"Properties\"\n"
+"            >following documentation</a\n"
+"          >.\n"
+"        </p>\n"
+"        "
 msgstr ""
 "\n"
 "            <p>\n"
@@ -19471,11 +19654,17 @@ msgid "Deprecate GPS property"
 msgstr "إهمال خاصية GPS"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    This GPS case property is currently being used to "
+#| "store the geolocation for cases.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    This GPS case property is currently being used to store "
-"the geolocation for cases.\n"
-"                    "
+"            This GPS case property is currently being used to store the\n"
+"            geolocation for cases.\n"
+"          "
 msgstr ""
 "\n"
 "                    يتم حالياً استخدام خاصية الحالة GPS هذه لتخزين الموقع "
@@ -19483,18 +19672,28 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Deprecating this case property may result in "
+#| "unintended behaviour, and so\n"
+#| "                    it is advised to first change the selected custom "
+#| "case property in\n"
+#| "                    <a href=\"%(geospatial_settings_url)s\">\n"
+#| "                        geospatial settings\n"
+#| "                    </a>\n"
+#| "                    before deprecating this case property.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Deprecating this case property may result in unintended "
-"behaviour, and so\n"
-"                    it is advised to first change the selected custom case "
-"property in\n"
-"                    <a href=\"%(geospatial_settings_url)s\">\n"
-"                        geospatial settings\n"
-"                    </a>\n"
-"                    before deprecating this case property.\n"
-"                    "
+"            Deprecating this case property may result in unintended "
+"behaviour,\n"
+"            and so it is advised to first change the selected custom case\n"
+"            property in\n"
+"            <a href=\"%(geospatial_settings_url)s\"> geospatial settings </"
+"a>\n"
+"            before deprecating this case property.\n"
+"          "
 msgstr ""
 "\n"
 "                    قد يؤدي إهمال خاصية الحالة هذه إلى سلوك غير مقصود، لذا "
@@ -19506,23 +19705,34 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Would you like to proceed with deprecating this case "
+#| "property?\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Would you like to proceed with deprecating this case "
-"property?\n"
-"                    "
+"            Would you like to proceed with deprecating this case property?\n"
+"          "
 msgstr ""
 "\n"
 "                    هل ترغب في المتابعة بإهمال خاصية الحالة هذه؟\n"
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Delete\n"
+#| "                        '<span id=\"delete-case-prop-name\"></span>'\n"
+#| "                        Case Property\n"
+#| "                    "
 msgid ""
 "\n"
-"                        Delete\n"
-"                        '<span id=\"delete-case-prop-name\"></span>'\n"
-"                        Case Property\n"
-"                    "
+"            Delete '<span id=\"delete-case-prop-name\"></span>' Case "
+"Property\n"
+"          "
 msgstr ""
 "\n"
 "                        حذف\n"
@@ -19531,11 +19741,17 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        There are currently no cases that store data with "
+#| "this case property, so it is safe to delete.\n"
+#| "                    "
 msgid ""
 "\n"
-"                        There are currently no cases that store data with "
-"this case property, so it is safe to delete.\n"
-"                    "
+"            There are currently no cases that store data with this case\n"
+"            property, so it is safe to delete.\n"
+"          "
 msgstr ""
 "\n"
 "                        لا توجد حالياً أي حالات تخزن بيانات باستخدام خاصية "
@@ -19543,19 +19759,38 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Please note that if a new form or case was updated to "
+#| "the server recently that makes this property\n"
+#| "                    unsafe to delete, this will only be reflected in the "
+#| "Data Dictionary after a short while. This is not\n"
+#| "                    a blocking action and the case property can be "
+#| "created again if needed in the future. Please refer to\n"
+#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
+#| "documentation</a>\n"
+#| "                    for additional information about this action.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Please note that if a new form or case was updated to "
-"the server recently that makes this property\n"
-"                    unsafe to delete, this will only be reflected in the "
-"Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case property can be created "
-"again if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
-"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
-"documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that if a new form or case was updated to the "
+"server\n"
+"            recently that makes this property unsafe to delete, this will "
+"only\n"
+"            be reflected in the Data Dictionary after a short while. This is "
+"not\n"
+"            a blocking action and the case property can be created again if\n"
+"            needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 "\n"
 "                    يرجى ملاحظة أنه إذا تم تحديث نموذج أو حالة جديدة إلى "
@@ -19570,13 +19805,21 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                        Would you like to mark this case property as "
+#| "deleted? Once confirmed the case\n"
+#| "                        property will be deleted upon clicking the "
+#| "\"Save\" button.\n"
+#| "                    "
 msgid ""
 "\n"
-"                        Would you like to mark this case property as "
-"deleted? Once confirmed the case\n"
-"                        property will be deleted upon clicking the \"Save\" "
-"button.\n"
-"                    "
+"            Would you like to remove this case property from the data\n"
+"            dictionary? Once confirmed, the case property will be deleted "
+"upon\n"
+"            clicking the \"Save\" button.\n"
+"          "
 msgstr ""
 "\n"
 "                        هل ترغب في وضع علامة على خاصية الحالة هذه كمحذوفة؟ "
@@ -19585,28 +19828,41 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Deprecate\n"
+#| "              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+#| "              Case Type\n"
+#| "            "
 msgid ""
 "\n"
-"                    Delete\n"
-"                    '<span data-bind=\"text: $root.activeCaseType()\"></"
-"span>'\n"
-"                    Case Type\n"
-"                    "
+"            Delete '<span data-bind=\"text: $root.activeCaseType()\"></"
+"span>' Case\n"
+"            Type\n"
+"          "
 msgstr ""
 "\n"
-"                    حذف\n"
-"                    '<span data-bind=\"text: $root.activeCaseType()\"></"
-"span>'\n"
-"                    نوع الحالة\n"
-"                    "
+"              إهمال\n"
+"              '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
+"              نوع الحالة\n"
+"            "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    There are no cases that use this case type or store "
+#| "data with any of its case properties.\n"
+#| "                    Therefore, it is safe to delete this case type.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    There are no cases that use this case type or store data "
-"with any of its case properties.\n"
-"                    Therefore, it is safe to delete this case type.\n"
-"                    "
+"            There are no cases that use this case type or store data with "
+"any of\n"
+"            its case properties. Therefore, it is safe to delete this case "
+"type.\n"
+"          "
 msgstr ""
 "\n"
 "                    لا توجد حالات تستخدم هذا النوع من الحالات أو تخزن بيانات "
@@ -19615,21 +19871,42 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Please note that all case properties for this case "
+#| "type will also be deleted.\n"
+#| "                    Furthermore, if a new form or case was updated to the "
+#| "server recently that makes this case type\n"
+#| "                    unsafe to delete, this will only be reflected in the "
+#| "Data Dictionary after a short while. This is not\n"
+#| "                    a blocking action and the case type can be created "
+#| "again if needed in the future. Please refer to\n"
+#| "                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
+#| "documentation</a>\n"
+#| "                    for additional information about this action.\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Please note that all case properties for this case type "
-"will also be deleted.\n"
-"                    Furthermore, if a new form or case was updated to the "
-"server recently that makes this case type\n"
-"                    unsafe to delete, this will only be reflected in the "
-"Data Dictionary after a short while. This is not\n"
-"                    a blocking action and the case type can be created again "
-"if needed in the future. Please refer to\n"
-"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
-"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
-"documentation</a>\n"
-"                    for additional information about this action.\n"
-"                    "
+"            Please note that all case properties for this case type will "
+"also be\n"
+"            deleted. Furthermore, if a new form or case was updated to the\n"
+"            server recently that makes this case type unsafe to delete, "
+"this\n"
+"            will only be reflected in the Data Dictionary after a short "
+"while.\n"
+"            This is not a blocking action and the case type can be created "
+"again\n"
+"            if needed in the future. Please refer to\n"
+"            <a\n"
+"              href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143944977/Data+Dictionary\"\n"
+"              target=\"_blank\"\n"
+"              >the documentation</a\n"
+"            >\n"
+"            for additional information about this action.\n"
+"          "
 msgstr ""
 "\n"
 "                    يرجى ملاحظة أنه سيتم أيضاً حذف جميع خصائص الحالة لهذا "
@@ -19646,10 +19923,16 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Would you like to proceed with deleting this case "
+#| "type?\n"
+#| "                    "
 msgid ""
 "\n"
-"                    Would you like to proceed with deleting this case type?\n"
-"                    "
+"            Would you like to proceed with deleting this case type?\n"
+"          "
 msgstr ""
 "\n"
 "                    هل ترغب في المتابعة بحذف نوع الحالة هذا؟\n"
@@ -21611,6 +21894,29 @@ msgid "Name of the channel created in connect messaging."
 msgstr "اسم القناة التي تم إنشاؤها في الاتصال عبر Connect."
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Data and Sharing"
+msgid "Data Sharing"
+msgstr "البيانات والمشاركة"
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi."
+#| "atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
+#| "Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
+#| "Filter Definitions</a>."
+msgid ""
+"Opt Out of <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2386001966/Data+Sharing+Opt-Outs+-+CommCare\" target=\"_blank\"> "
+"Aggregate Data Usage</a>"
+msgstr ""
+"<i class=\"fa fa-info-circle\"></i> راجع <a href=\"https://dimagi.atlassian."
+"net/wiki/spaces/commcarepublic/pages/2215051298/"
+"Organization+Data+Management#Search-for-Locations\" "
+"target=\"_blank\">تعريفات التصفية</a>."
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "المنطقة الزمنية الافتراضية"
 
@@ -22071,6 +22377,7 @@ msgstr ""
 "%(email)s لإدارة عقد يزيد عن 5 سنوات."
 
 #: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "user"
 msgstr "مستخدم"
 
@@ -25662,60 +25969,6 @@ msgstr "يرجى التواصل مع مسؤول النطاق إذا كنت بح�
 msgid "Use Backup Token"
 msgstr "استخدم رمز النسخ الاحتياطي"
 
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid "Please set up Two-Factor Authentication"
-msgstr "يرجى إعداد المصادقة الثنائية"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      For security purposes, your CommCare administrator has required that "
-"all users in your project set up\n"
-"      two-factor authentication.<br>This is an extra layer of protection "
-"used to ensure the security of your account\n"
-"      beyond a username and password. \n"
-"    "
-msgstr ""
-"\n"
-"      لأسباب أمنية، طلب مسؤول CommCare الخاص بك من جميع المستخدمين في مشروعك "
-"إعداد\n"
-"      المصادقة الثنائية.<br>هذه طبقة حماية إضافية لضمان أمان حسابك\n"
-"      إلى جانب اسم المستخدم وكلمة المرور.\n"
-"\n"
-"    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      To access your account, please enable two-factor authentication "
-"below.\n"
-"    "
-msgstr ""
-"\n"
-"      للوصول إلى حسابك، يرجى تفعيل المصادقة الثنائية أدناه.\n"
-"    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
-msgid "Go back"
-msgstr "العودة"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
-msgid "Enable Two-Factor Authentication"
-msgstr "تفعيل المصادقة الثنائية"
-
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/phone_register.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/phone_register.html
 msgid "Add Backup Phone"
@@ -25736,6 +25989,16 @@ msgid ""
 "We've sent a token to your phone number. Please enter the token you've "
 "received."
 msgstr "لقد أرسلنا رمزًا إلى رقم هاتفك. يرجى إدخال الرمز الذي استلمته."
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
+msgid "Enable Two-Factor Authentication"
+msgstr "تفعيل المصادقة الثنائية"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
@@ -25824,6 +26087,45 @@ msgstr "لتمكين استعادة الحساب، أنشئ رموز احتيا�
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
 msgid "Generate Backup Tokens"
 msgstr "إنشاء رموز احتياطية"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid "Please set up Two-Factor Authentication"
+msgstr "يرجى إعداد المصادقة الثنائية"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      For security purposes, your CommCare administrator has required that "
+"all users in your project set up\n"
+"      two-factor authentication.<br>This is an extra layer of protection "
+"used to ensure the security of your account\n"
+"      beyond a username and password. \n"
+"    "
+msgstr ""
+"\n"
+"      لأسباب أمنية، طلب مسؤول CommCare الخاص بك من جميع المستخدمين في مشروعك "
+"إعداد\n"
+"      المصادقة الثنائية.<br>هذه طبقة حماية إضافية لضمان أمان حسابك\n"
+"      إلى جانب اسم المستخدم وكلمة المرور.\n"
+"\n"
+"    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      To access your account, please enable two-factor authentication "
+"below.\n"
+"    "
+msgstr ""
+"\n"
+"      للوصول إلى حسابك، يرجى تفعيل المصادقة الثنائية أدناه.\n"
+"    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
+msgid "Go back"
+msgstr "العودة"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
@@ -26205,15 +26507,6 @@ msgstr "3. تأكيد حساب الفوترة"
 #: corehq/apps/domain/views/accounting.py
 #, python-format
 msgid ""
-"You do not have permission to change the subscription for this customer-"
-"level account. Please reach out to the %s enterprise admin for help."
-msgstr ""
-"ليس لديك إذن لتغيير الاشتراك لهذا الحساب على مستوى العميل. يرجى التواصل مع "
-"مسؤول المؤسسة %s للمساعدة."
-
-#: corehq/apps/domain/views/accounting.py
-#, python-format
-msgid ""
 "Thank you for choosing to stay with your %(software_plan_name)s Edition Plan "
 "subscription."
 msgstr "شكراً لاختيارك البقاء مع اشتراك خطة إصدار %(software_plan_name)s."
@@ -26277,15 +26570,6 @@ msgid "Your subscription was successfully renewed!"
 msgstr "تم تجديد اشتراكك بنجاح!"
 
 #: corehq/apps/domain/views/accounting.py
-#, python-format
-msgid ""
-"You do not have permission to pause the subscription for this customer-level "
-"account. Please reach out to the %s enterprise admin for help."
-msgstr ""
-"ليس لديك إذن لإيقاف الاشتراك مؤقتاً لهذا الحساب على مستوى العميل. يرجى "
-"التواصل مع مسؤول المؤسسة %s للمساعدة."
-
-#: corehq/apps/domain/views/accounting.py
 msgid ""
 "Your project's subscription will be paused on {}. We hope to see you again!"
 msgstr "سيتم إيقاف اشتراك مشروعك مؤقتاً في {}. نأمل أن نراك مجدداً!"
@@ -26302,6 +26586,39 @@ msgid ""
 msgstr ""
 "لم نتمكن من إيقاف اشتراكك مؤقتاً في هذا الوقت. يرجى التواصل مع {} إذا استمر "
 "ظهور هذا الخطأ. نعتذر عن الإزعاج."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Auto renewal cannot be enabled for the current subscription."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid ""
+#| "Congratulations, you've successfully enabled two-factor\n"
+#| "    authentication."
+msgid "Auto renewal successfully enabled for the current subscription."
+msgstr ""
+"تهانينا، لقد قمت بتفعيل المصادقة الثنائية بنجاح.\n"
+"    "
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid "Multimedia was successfully updated for the linked app."
+msgid "Auto renewal successfully disabled for the current subscription."
+msgstr "تم تحديث الوسائط المتعددة بنجاح للتطبيق المرتبط."
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "You do not have permission to pause the subscription for this customer-"
+#| "level account. Please reach out to the %s enterprise admin for help."
+msgid ""
+"You do not have permission to modify the subscription for this customer-"
+"level account. Please reach out to the {account_name} enterprise admin for "
+"help."
+msgstr ""
+"ليس لديك إذن لإيقاف الاشتراك مؤقتاً لهذا الحساب على مستوى العميل. يرجى "
+"التواصل مع مسؤول المؤسسة %s للمساعدة."
 
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
@@ -30792,6 +31109,14 @@ msgstr "دفتر العمل لا يحتوي على ورقة باسم types"
 msgid "type {lookup_table_name} is not defined as global"
 msgstr "النوع {lookup_table_name} غير معرف كعالمي"
 
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid ""
+"The table structure of '{tag}' cannot be changed while also modifying its "
+"data. If you need to do both, include all existing rows in the upload or "
+"perform the upload using the 'Replace existing tables' option."
+msgstr ""
+
 #: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown user: '%(name)s'. But the row is successfully added"
@@ -32485,6 +32810,12 @@ msgid "User Audit Events"
 msgstr "أحداث تدقيق المستخدم"
 
 #: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Document Type"
+msgid "Doc Type"
+msgstr "نوع المستند"
+
+#: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/reports/filters/simple.py
 msgid "Domain"
@@ -32494,14 +32825,11 @@ msgstr "النطاق"
 msgid "IP Address"
 msgstr "عنوان IP"
 
-#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
-msgid "Request Method"
-msgstr "طريقة الطلب"
-
 #: corehq/apps/hqadmin/reports.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "Request Path"
-msgstr "مسار الطلب"
+#, fuzzy
+#| msgid "Resource Slug"
+msgid "Resource"
+msgstr "Resource Slug"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -33644,6 +33972,14 @@ msgid "Please enter valid CAPTCHA"
 msgstr "يرجى إدخال رمز CAPTCHA صالح"
 
 #: corehq/apps/hqwebapp/models.py
+msgid "European Union"
+msgstr ""
+
+#: corehq/apps/hqwebapp/models.py
+msgid "EU"
+msgstr ""
+
+#: corehq/apps/hqwebapp/models.py
 #, fuzzy
 #| msgid "Indices"
 msgid "India"
@@ -33658,6 +33994,12 @@ msgstr "تاريخ غير صالح"
 #: corehq/apps/hqwebapp/models.py
 msgid "US"
 msgstr ""
+
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
+#, fuzzy
+#| msgid "user"
+msgid "users"
+msgstr "مستخدم"
 
 #: corehq/apps/hqwebapp/tables/export.py
 msgid "Unsupported export format: {}. Supported formats are: {}"
@@ -34250,6 +34592,10 @@ msgstr "تفاصيل إضافية"
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "HTMX Event Error"
 msgstr "خطأ حدث HTMX"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "Request Path"
+msgstr "مسار الطلب"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/htmx_action_error.html
 #, python-format
@@ -35712,6 +36058,18 @@ msgstr "معرف المشروع"
 msgid "Module ID"
 msgstr "معرف الوحدة"
 
+#: corehq/apps/integration/kyc/filters.py corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "KYC Status"
+msgstr "حالة KYC"
+
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/factory.py
+msgid "Show all"
+msgstr "عرض الكل"
+
 #: corehq/apps/integration/kyc/forms.py
 msgid "Recipient Data Store"
 msgstr "مخزن بيانات المستلم"
@@ -35758,6 +36116,22 @@ msgstr ""
 "هذا الحقل مطلوب عند تعيين \"مخزن بيانات المستلم\" إلى \"نوع حالة أخرى\"."
 
 #: corehq/apps/integration/kyc/models.py
+msgid "Unknown error"
+msgstr "خطأ غير معروف"
+
+#: corehq/apps/integration/kyc/models.py
+#, fuzzy
+#| msgid "Pass"
+msgid "Passed"
+msgstr "نجح"
+
+#: corehq/apps/integration/kyc/models.py
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+msgid "Invalid"
+msgstr "غير صالح"
+
+#: corehq/apps/integration/kyc/models.py
 msgid "User information on HQ is not complete or invalid."
 msgstr "معلومات المستخدم على HQ غير مكتملة أو غير صالحة."
 
@@ -35778,11 +36152,6 @@ msgid "API error occurred. Please reach out to support."
 msgstr "حدث خطأ في واجهة برمجة التطبيقات (API). يرجى التواصل مع الدعم."
 
 #: corehq/apps/integration/kyc/tables.py
-#: corehq/apps/integration/payments/tables.py
-msgid "KYC Status"
-msgstr "حالة KYC"
-
-#: corehq/apps/integration/kyc/tables.py
 msgid "Last Verified"
 msgstr "آخر تحقق"
 
@@ -35799,10 +36168,6 @@ msgstr "تحقق"
 #: corehq/apps/integration/kyc/views.py
 msgid "KYC Configuration"
 msgstr "إعدادات KYC"
-
-#: corehq/apps/integration/kyc/views.py
-msgid "Unknown error"
-msgstr "خطأ غير معروف"
 
 #: corehq/apps/integration/kyc/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -35834,12 +36199,6 @@ msgstr "فشل الطلب"
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
 msgstr "حالة الدفع"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/factory.py
-msgid "Show all"
-msgstr "عرض الكل"
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Batch number"
@@ -36190,11 +36549,6 @@ msgstr "نجح"
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "Fail"
 msgstr "فشل"
-
-#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-msgid "Invalid"
-msgstr "غير صالح"
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "The status has been manually set to an invalid value. Please re-verify."
@@ -39123,14 +39477,15 @@ msgstr ""
 #| "                                 "
 msgid ""
 "\n"
-"                    To select a different\n"
+"                    To create a project in a different\n"
 "                    <a\n"
 "                      href=\"https://dimagi.atlassian.net/wiki/spaces/"
 "commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
 "                      target=\"_blank\"\n"
 "                      ><b>cloud location</b></a\n"
-"                    >, log into that location's site before creating your\n"
-"                    project:\n"
+"                    >, create an account for that cloud location first, "
+"then\n"
+"                    create a project.\n"
 "                  "
 msgstr ""
 "\n"
@@ -39834,8 +40189,15 @@ msgid "Please try again."
 msgstr "يرجى المحاولة مرة أخرى."
 
 #: corehq/apps/registration/views.py
-msgid "There is already a user with this email."
-msgstr "يوجد بالفعل مستخدم بهذا البريد الإلكتروني."
+msgid "current"
+msgstr "الحالي"
+
+#: corehq/apps/registration/views.py
+#, python-brace-format
+msgid ""
+"This email is already registered in the {location} cloud location. Please <a "
+"href=\"{login_link}\">sign in here</a>."
+msgstr ""
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -41147,10 +41509,6 @@ msgid "Click to select a group"
 msgstr "انقر لاختيار مجموعة"
 
 #: corehq/apps/reports/filters/select.py
-msgid "Click to select groups"
-msgstr "انقر لاختيار مجموعات"
-
-#: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap3/quarter_filter.html
 #: corehq/apps/reports_core/templates/reports_core/filters/bootstrap5/quarter_filter.html
 msgid "Year"
@@ -42259,6 +42617,12 @@ msgid "same"
 msgstr "نفسه"
 
 #: corehq/apps/reports/standard/monitoring.py
+#, fuzzy
+#| msgid "Case Activity"
+msgid "User Activity"
+msgstr "نشاط الحالة"
+
+#: corehq/apps/reports/standard/monitoring.py
 msgid "Summary of form and case activity by user or group."
 msgstr "ملخص لنشاط النماذج والحالات حسب المستخدم أو المجموعة."
 
@@ -42298,14 +42662,6 @@ msgid ""
 msgstr ""
 "تاريخ آخر إرسال نموذج في الفترة الزمنية. يعرض الصف الإجمالي نسبة المستخدمين "
 "الذين أرسلوا نماذج في نطاق التواريخ."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "# Active Users"
-msgstr "عدد المستخدمين النشطين"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Proportion of users in group who submitted forms in date range."
-msgstr "نسبة المستخدمين في المجموعة الذين أرسلوا نماذج في نطاق التواريخ."
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "# Cases Created"
@@ -47206,13 +47562,17 @@ msgstr "مستخدمو اختبار تسجيل الدخول الموحد"
 msgid "Danger Zone"
 msgstr "منطقة الخطر"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid "Single Sign-On Request Failed"
 msgstr "فشل طلب تسجيل الدخول الموحد"
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
-#: corehq/apps/sso/templates/sso/config_errors.html
-#: corehq/apps/sso/templates/sso/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
 msgid ""
 "\n"
 "                Single Sign-On\n"
@@ -47222,7 +47582,8 @@ msgstr ""
 "                تسجيل الدخول الموحد\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                Sorry, but we're having trouble signing you in.\n"
@@ -47232,7 +47593,8 @@ msgstr ""
 "                عذرًا، نواجه مشكلة في تسجيل دخولك.\n"
 "              "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  The issue looks like it might be related to the "
@@ -47245,7 +47607,8 @@ msgstr ""
 "وCommCare HQ.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This is the error message we are seeing:\n"
@@ -47255,7 +47618,8 @@ msgstr ""
 "                  هذه هي رسالة الخطأ التي نراها:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47270,7 +47634,8 @@ msgstr ""
 "                  لإعداد تسجيل الدخول الموحد مع %(idp_service_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If the error message and documentation are not helping, "
@@ -47283,7 +47648,8 @@ msgstr ""
 "الدعم الخاصة بك.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  This issue might be due to the following reason:\n"
@@ -47293,7 +47659,8 @@ msgstr ""
 "                  قد يكون سبب هذه المشكلة هو التالي:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/acs_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/acs_errors.html
 msgid ""
 "\n"
 "                  If this error persists, please contact your project's\n"
@@ -47305,11 +47672,13 @@ msgstr ""
 "الخاص بك للمساعدة.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid "Single Sign-On is misconfigured"
 msgstr "تسجيل الدخول الموحد غير مضبوط بشكل صحيح"
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Your Redirect URL is invalid.\n"
@@ -47319,7 +47688,8 @@ msgstr ""
 "                  عنوان URL لإعادة التوجيه غير صالح.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  The redirect URL you have specified is not valid. Please\n"
@@ -47334,7 +47704,8 @@ msgstr ""
 "التواصل مع الدعم حتى نتمكن من إيجاد حل دائم.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47345,7 +47716,8 @@ msgstr ""
 "                  حدثت مشكلة أثناء تسجيل الدخول باستخدام %(service)s:\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47357,7 +47729,8 @@ msgstr ""
 "                  يبدو أن هناك مشكلة في تكوين %(idp_name)s.\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                  Please reach out to support, so we can quickly resolve "
@@ -47370,7 +47743,8 @@ msgstr ""
 "شكرًا لك!\n"
 "                "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like your setup is not complete.\n"
@@ -47380,7 +47754,8 @@ msgstr ""
 "                    يبدو أن إعدادك غير مكتمل.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47398,7 +47773,8 @@ msgstr ""
 "                    لإعداد تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like we are missing your certificate.\n"
@@ -47408,7 +47784,8 @@ msgstr ""
 "                    يبدو أننا نفتقد شهادتك.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47427,7 +47804,8 @@ msgstr ""
 "                    لإعداد تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    Obtaining User Information Was Not Possible\n"
@@ -47437,7 +47815,8 @@ msgstr ""
 "                    لم يكن من الممكن الحصول على معلومات المستخدم\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47454,7 +47833,8 @@ msgstr ""
 "                    لإعداد تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OpenID Connect Session Unknown\n"
@@ -47464,7 +47844,8 @@ msgstr ""
 "                    جلسة OpenID Connect غير معروفة\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47480,7 +47861,8 @@ msgstr ""
 "تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    OIDC Method Not Allowed\n"
@@ -47490,7 +47872,8 @@ msgstr ""
 "                    طريقة OIDC غير مسموحة\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47505,7 +47888,8 @@ msgstr ""
 "تسجيل الدخول الموحد.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 msgid ""
 "\n"
 "                    It looks like there is an issue with your SSO "
@@ -47517,7 +47901,8 @@ msgstr ""
 "بك.\n"
 "                  "
 
-#: corehq/apps/sso/templates/sso/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap3/config_errors.html
+#: corehq/apps/sso/templates/sso/bootstrap5/config_errors.html
 #, python-format
 msgid ""
 "\n"
@@ -47531,6 +47916,72 @@ msgstr ""
 "                    رمز الخطأ هو \"%(error_code)s\". يرجى التواصل مع جهة "
 "الدعم الخاصة بك بهذه المعلومات حتى نتمكن من المساعدة في حل هذه المشكلة.\n"
 "                  "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+#, fuzzy
+#| msgid "Single Sign-On"
+msgid "Single Sign-On Error"
+msgstr "تسجيل الدخول الموحد"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_error.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_error.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  Invitation link has expired.\n"
+#| "                  Contact your project administrator to send new invite.\n"
+#| "                "
+msgid ""
+"\n"
+"                This error is likely due to a misconfiguration with your\n"
+"                project's SSO settings. Please contact your project\n"
+"                administrator to resolve this issue.\n"
+"              "
+msgstr ""
+"\n"
+"                  انتهت صلاحية رابط الدعوة.\n"
+"                  يرجى التواصل مع مسؤول المشروع لإرسال دعوة جديدة.\n"
+"                "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid "Single Sign-On Request Denied"
+msgstr "تم رفض طلب تسجيل الدخول الموحد"
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+msgid ""
+"\n"
+"                Single Sign-On Not Allowed\n"
+"              "
+msgstr ""
+"\n"
+"                تسجيل الدخول الموحد غير مسموح\n"
+"              "
+
+#: corehq/apps/sso/templates/sso/bootstrap3/sso_request_denied.html
+#: corehq/apps/sso/templates/sso/bootstrap5/sso_request_denied.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You do not have permission to sign in with Single Sign-"
+#| "On.\n"
+#| "                If this is in error, please contact your project's "
+#| "administrator.\n"
+#| "              "
+msgid ""
+"\n"
+"                You do not have permission to sign in with Single Sign-On. "
+"If\n"
+"                this is in error, please contact your project's "
+"administrator.\n"
+"              "
+msgstr ""
+"\n"
+"                ليس لديك إذن لتسجيل الدخول عبر تسجيل الدخول الموحد. إذا كان "
+"هذا خطأ، يرجى التواصل مع مسؤول مشروعك.\n"
+"              "
 
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
@@ -47797,10 +48248,16 @@ msgid "Manage Single Sign-On"
 msgstr "إدارة تسجيل الدخول الموحد"
 
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      Configure external Identity Providers associated with your\n"
+#| "      Enterprise Account below.\n"
+#| "    "
 msgid ""
 "\n"
-"      Configure external Identity Providers associated with your\n"
-"      Enterprise Account below.\n"
+"      Configure external Identity Providers associated with your Enterprise\n"
+"      Account below.\n"
 "    "
 msgstr ""
 "\n"
@@ -47847,10 +48304,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                <strong>WARNING:</strong> Deleting an Identity Provider "
+#| "is not reversible.\n"
+#| "              "
 msgid ""
 "\n"
 "                <strong>WARNING:</strong> Deleting an Identity Provider is "
-"not reversible.\n"
+"not\n"
+"                reversible.\n"
 "              "
 msgstr ""
 "\n"
@@ -47859,12 +48323,21 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/admin_danger_zone.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Deletion will immediately affect any client's SSO setup. "
+#| "Please\n"
+#| "                exercise extreme caution. An active Identity Provider\n"
+#| "                will not be deleted.\n"
+#| "              "
 msgid ""
 "\n"
 "                Deletion will immediately affect any client's SSO setup. "
 "Please\n"
-"                exercise extreme caution. An active Identity Provider\n"
-"                will not be deleted.\n"
+"                exercise extreme caution. An active Identity Provider will "
+"not\n"
+"                be deleted.\n"
 "              "
 msgstr ""
 "\n"
@@ -47873,10 +48346,17 @@ msgstr ""
 "              "
 
 #: corehq/apps/sso/templates/sso/partials/manage_authenticated_email_domains.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Users with email addresses ending in these domain names must\n"
+#| "            log in with SSO if the Identity Provider is active.\n"
+#| "          "
 msgid ""
 "\n"
-"            Users with email addresses ending in these domain names must\n"
-"            log in with SSO if the Identity Provider is active.\n"
+"            Users with email addresses ending in these domain names must log "
+"in\n"
+"            with SSO if the Identity Provider is active.\n"
 "          "
 msgstr ""
 "\n"
@@ -47915,10 +48395,18 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_exempt_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            No users are exempt from SSO for this Identity Provider.\n"
+#| "            Please add at least <strong>one enterprise admin</strong>\n"
+#| "            before making this Identity Provider active!\n"
+#| "          "
 msgid ""
 "\n"
-"            No users are exempt from SSO for this Identity Provider.\n"
-"            Please add at least <strong>one enterprise admin</strong>\n"
+"            No users are exempt from SSO for this Identity Provider. Please "
+"add\n"
+"            at least <strong>one enterprise admin</strong>\n"
 "            before making this Identity Provider active!\n"
 "          "
 msgstr ""
@@ -47928,11 +48416,19 @@ msgstr ""
 "          "
 
 #: corehq/apps/sso/templates/sso/partials/manage_sso_test_users.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            When the Identity Provider is in \"Test\" mode for Login "
+#| "Enforcement, only\n"
+#| "            the users in this list will be directed to sign in with SSO.\n"
+#| "          "
 msgid ""
 "\n"
 "            When the Identity Provider is in \"Test\" mode for Login "
-"Enforcement, only\n"
-"            the users in this list will be directed to sign in with SSO.\n"
+"Enforcement,\n"
+"            only the users in this list will be directed to sign in with "
+"SSO.\n"
 "          "
 msgstr ""
 "\n"
@@ -47973,59 +48469,6 @@ msgstr ""
 "\n"
 "      يرجى التواصل مع مسؤول المشروع لاستعادة الوصول.\n"
 "    "
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-#, fuzzy
-#| msgid "Single Sign-On"
-msgid "Single Sign-On Error"
-msgstr "تسجيل الدخول الموحد"
-
-#: corehq/apps/sso/templates/sso/sso_error.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                  Invitation link has expired.\n"
-#| "                  Contact your project administrator to send new invite.\n"
-#| "                "
-msgid ""
-"\n"
-"                This error is likely due to a misconfiguration with your "
-"project's\n"
-"                SSO settings. Please contact your project administrator to "
-"resolve this issue.\n"
-"              "
-msgstr ""
-"\n"
-"                  انتهت صلاحية رابط الدعوة.\n"
-"                  يرجى التواصل مع مسؤول المشروع لإرسال دعوة جديدة.\n"
-"                "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid "Single Sign-On Request Denied"
-msgstr "تم رفض طلب تسجيل الدخول الموحد"
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                Single Sign-On Not Allowed\n"
-"              "
-msgstr ""
-"\n"
-"                تسجيل الدخول الموحد غير مسموح\n"
-"              "
-
-#: corehq/apps/sso/templates/sso/sso_request_denied.html
-msgid ""
-"\n"
-"                You do not have permission to sign in with Single Sign-On.\n"
-"                If this is in error, please contact your project's "
-"administrator.\n"
-"              "
-msgstr ""
-"\n"
-"                ليس لديك إذن لتسجيل الدخول عبر تسجيل الدخول الموحد. إذا كان "
-"هذا خطأ، يرجى التواصل مع مسؤول مشروعك.\n"
-"              "
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid "today!"
@@ -59015,8 +59458,14 @@ msgid "Cancelled"
 msgstr "تم الإلغاء"
 
 #: corehq/motech/repeaters/const.py
-msgid "Invalid Payload"
-msgstr "حمولة غير صالحة"
+#, fuzzy
+#| msgid "Rejected"
+msgid "Payload Rejected"
+msgstr "تم الرفض"
+
+#: corehq/motech/repeaters/const.py
+msgid "Error Generating Payload"
+msgstr ""
 
 #: corehq/motech/repeaters/const.py
 msgid "Is enabled"
@@ -59498,8 +59947,16 @@ msgid "Unable to generate url for record"
 msgstr "غير قادر على إنشاء عنوان URL للسجل"
 
 #: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Invalid payload"
-msgstr "حمولة غير صالحة"
+#, fuzzy
+#| msgid "Invitation rejected"
+msgid "Payload rejected"
+msgstr "تم رفض الدعوة"
+
+#: corehq/motech/repeaters/views/repeat_record_display.py
+#, fuzzy
+#| msgid "Errors in upload: {}"
+msgid "Error generating payload"
+msgstr "أخطاء في التحميل: {}"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Remote Service"
@@ -59633,6 +60090,10 @@ msgstr "المدة (مللي ثانية)"
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
 msgstr "لم يتم تسجيل أي طلبات API."
+
+#: corehq/motech/views.py
+msgid "Request Method"
+msgstr "طريقة الطلب"
 
 #: corehq/motech/views.py
 msgid "Request URL"
@@ -60948,6 +61409,82 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
 
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "    Email From:<br />\n"
+#~| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+#~| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~| "  "
+#~ msgid ""
+#~ "\n"
+#~ "    Email From:<br />\n"
+#~ "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    البريد الإلكتروني من:<br />\n"
+#~ "    CommCare HQ والشركة Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "              To use display conditions which reference a user property, "
+#~ "user properties must be\n"
+#~ "              enabled for your project.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              لاستخدام شروط العرض التي تشير إلى خاصية مستخدم، يجب تفعيل "
+#~ "خصائص المستخدم لمشروعك.\n"
+#~ "            "
+
+#~ msgid "Enable user properties"
+#~ msgstr "تفعيل خصائص المستخدم"
+
+#, python-format
+#~ msgid ""
+#~ "You do not have permission to change the subscription for this customer-"
+#~ "level account. Please reach out to the %s enterprise admin for help."
+#~ msgstr ""
+#~ "ليس لديك إذن لتغيير الاشتراك لهذا الحساب على مستوى العميل. يرجى التواصل "
+#~ "مع مسؤول المؤسسة %s للمساعدة."
+
+#~ msgid "Invalid Payload"
+#~ msgstr "حمولة غير صالحة"
+
+#~ msgid "Invalid payload"
+#~ msgstr "حمولة غير صالحة"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Delete\n"
+#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></"
+#~ "span>'\n"
+#~ "                    Case Type\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                    حذف\n"
+#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></"
+#~ "span>'\n"
+#~ "                    نوع الحالة\n"
+#~ "                    "
+
+#~ msgid "There is already a user with this email."
+#~ msgstr "يوجد بالفعل مستخدم بهذا البريد الإلكتروني."
+
+#~ msgid "Click to select groups"
+#~ msgstr "انقر لاختيار مجموعات"
+
+#~ msgid "# Active Users"
+#~ msgstr "عدد المستخدمين النشطين"
+
+#~ msgid "Proportion of users in group who submitted forms in date range."
+#~ msgstr "نسبة المستخدمين في المجموعة الذين أرسلوا نماذج في نطاق التواريخ."
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -61400,9 +61937,6 @@ msgstr "أدخل JSON صالحًا"
 
 #~ msgid "info"
 #~ msgstr "معلومات"
-
-#~ msgid "current"
-#~ msgstr "الحالي"
 
 #, python-brace-format
 #~ msgid "{num} cases"

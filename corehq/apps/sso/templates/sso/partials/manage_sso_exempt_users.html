@@ -2,10 +2,9 @@
 
 {# requires sso/js/edit_identity_provider #}
 
-<div id="sso-exempt-user-manager"
-     class="form-inline ko-template">
-  <div class="panel panel-modern-gray panel-form-only">
-    <div class="panel-body">
+<div id="sso-exempt-user-manager" class="ko-template">
+  <div class="card card-modern-gray card-form-only mb-3">
+    <div class="card-body">
       <fieldset>
         <legend>{% trans "SSO Exempt Users" %}</legend>
         <p>
@@ -18,46 +17,45 @@
         <p class="alert alert-danger">
           <i class="fa fa-warning"></i>
           {% blocktrans %}
-            No users are exempt from SSO for this Identity Provider.
-            Please add at least <strong>one enterprise admin</strong>
+            No users are exempt from SSO for this Identity Provider. Please add
+            at least <strong>one enterprise admin</strong>
             before making this Identity Provider active!
           {% endblocktrans %}
         </p>
         <!-- /ko -->
         <ul data-bind="foreach: linkedObjects">
           <li>
-            <strong data-bind="text: $data"
-                      style="padding-right: 10px;"></strong>
+            <strong class="pe-2" data-bind="text: $data"></strong>
             (<button type="button"
-                     class="btn-link"
+                     class="btn btn-link"
                      data-bind="click: $parent.removeObject">remove</button>)
           </li>
         </ul>
         <p class="text-danger"
-           style="padding-left: 10px;"
            data-bind="text: asyncHandlerError,
                       visible: asyncHandlerError"></p>
       </fieldset>
     </div>
   </div>
 
-  <div class="panel panel-modern-gray panel-form-only">
-    <div class="panel-body">
-      <input data-bind="textInput: newObject"
-             placeholder="jsmith@example.org"
-             type="email"
-             class="form-control" />
+  <div class="card card-modern-gray card-form-only">
+    <div class="card-body row align-items-center">
+      <div class="col-2">
+        <input
+          data-bind="textInput: newObject"
+          placeholder="jsmith@example.org"
+          type="email"
+          class="form-control"
+        />
+      </div>
       <button type="button"
               data-bind="click: addObject,
-                         css: {
-                           'btn-primary': isNewObjectValid,
-                           'btn-disabled': isAddDisabled
-                         }"
-              class="btn">
+                         enable: isNewObjectValid(),
+                         "
+              class="btn btn-primary col-auto">
         {% trans "Add User" %}
       </button>
-      <span class="text-danger"
-            style="padding-left: 10px;"
+      <span class="text-danger col-auto"
             data-bind="text: addObjectError,
                        visible: addObjectError"></span>
     </div>

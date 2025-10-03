@@ -14,7 +14,7 @@ class SuperuserProjectEntryRecord(models.Model):
     last_login = models.DateTimeField(auto_now=True)
 
     class Meta(object):
-        index_together = ['domain', 'username']
+        indexes = [models.Index(fields=['domain', 'username'])]
 
     @classmethod
     def record_entry(cls, username, domain):

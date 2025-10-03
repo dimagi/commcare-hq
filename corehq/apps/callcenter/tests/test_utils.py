@@ -9,6 +9,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq import privileges
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.callcenter.sync_usercase import sync_usercases
@@ -40,7 +41,7 @@ from corehq.apps.users.util import format_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import privilege_enabled
 
 TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
@@ -218,6 +219,7 @@ class CallCenterUtilsTests(TestCase):
             TEST_DOMAIN, user_id or self.user._id, CASE_TYPE)
 
 
+@privilege_enabled(privileges.USERCASE)
 class CallCenterUtilsUsercaseTests(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -226,8 +228,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = create_domain(TEST_DOMAIN)
-        cls.domain.usercase_enabled = True
-        cls.domain.save()
 
     def setUp(self):
         self.user = CommCareUser.create(TEST_DOMAIN, format_username('user1', TEST_DOMAIN),
@@ -403,7 +403,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_web_user_removed(self):
         self.user.save()
         web_user = self._make_web_user()
@@ -413,7 +412,6 @@ class CallCenterUtilsUsercaseTests(TestCase):
         web_user.save()
         self.assertTrue(self._get_user_case(web_user._id).closed)
 
-    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_web_user_location_fields_sync(self):
         self.user.save()
         web_user = self._make_web_user()

@@ -15,10 +15,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
-from corehq import toggles
-from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.es import UserES
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es.aggregations import (
@@ -26,10 +23,7 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     TermsAggregation,
 )
-from corehq.apps.locations.permissions import (
-    conditionally_location_safe,
-    location_safe,
-)
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
@@ -63,17 +57,14 @@ from corehq.apps.reports.filters.select import CaseTypeFilter
 from corehq.apps.reports.filters.users import \
     ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import (
     DatespanMixin,
     ProjectReport,
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta, DatatablesServerSideParams
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -282,7 +273,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 "cases which are assigned to a Case Sharing Group/Location. To learn "
                 "more about Case Sharing click "
                 "<a href='{}' target='blank'>here</a>."
-            ).format(help_link))
+            ), help_link)
 
     _default_landmarks = [30, 60, 90]
 
@@ -1374,14 +1365,10 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     report_template_path = "reports/async/bootstrap3/basic.html"
 
 
-def _worker_activity_is_location_safe(view, request, *args, **kwargs):
-    return toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(kwargs.get("domain", None))
-
-
-@conditionally_location_safe(_worker_activity_is_location_safe)
+@location_safe
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = gettext_lazy("Worker Activity")
+    name = gettext_lazy("User Activity")
     description = gettext_lazy("Summary of form and case activity by user or group.")
     section_name = gettext_lazy("Project Reports")
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
@@ -1395,15 +1382,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def fields(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            return [
-                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-                'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
-                'corehq.apps.reports.filters.dates.DatespanFilter',
-            ]
         return [
-            'corehq.apps.reports.filters.select.MultiGroupFilter',
-            'corehq.apps.reports.filters.users.UserOrGroupFilter',
+            'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
             'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
             'corehq.apps.reports.filters.dates.DatespanFilter',
         ]
@@ -1417,22 +1397,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return [_f for _f in self.get_request_param('case_type', as_list=True) if _f]
 
     @property
-    @memoized
-    def view_by_groups(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            track_workflow_noop(self.request.couch_user.username,
-                           "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
-            return False
-        view_by_groups = self.get_request_param('view_by', None) == 'groups'
-        track_workflow_noop(self.request.couch_user.username,
-                       "Worker Activity Report: view_by_groups == {}".format(view_by_groups))
-        return view_by_groups
-
-    @property
     def headers(self):
         CASE_TYPE_MSG = "The case type filter doesn't affect this column."
-        by_group = self.view_by_groups
-        columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
+        columns = [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of forms submitted in chosen date range. %s" % CASE_TYPE_MSG)),
@@ -1442,8 +1409,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             DataTablesColumn(_("Last Form Submission"),
                 help_text=_("Date of last form submission in time period.  "
                             "Total row displays proportion of users submitting forms in date range"))
-            if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Proportion of users in group who submitted forms in date range."))
         ))
         columns.append(DataTablesColumnGroup(
             _("Case Data"),
@@ -1472,55 +1437,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     @memoized
-    def users_by_group(self):
-        if not self.group_ids or self.get_request_param('all_groups', 'off') == 'on':
-            groups = Group.get_reporting_groups(self.domain)
-        else:
-            groups = [Group.get(g) for g in self.group_ids]
-
-        user_dict = {}
-        for group in groups:
-            user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
-                group=group,
-                user_filter=tuple(self.default_user_filter),
-                simplified=True
-            )
-
-        return user_dict
-
-    def get_users_by_mobile_workers(self):
-        user_dict = {}
-        for mw in self.mobile_worker_ids:
-            user_dict[mw] = util._report_user(CommCareUser.get_by_user_id(mw))
-
-        return user_dict
-
-    def get_admins_and_demo_users(self):
-        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.get_request_param('ufilter', as_list=True)]
-        return self.get_all_users_by_domain(
-            group=None,
-            user_filter=tuple(HQUserType.use_filter(ufilters)),
-            simplified=True
-        ) if ufilters else []
-
-    @property
-    @memoized
     def users_to_iterate(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            user_query = EMWF.user_es_query(
-                self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
-            )
-            return util.get_simplified_users(user_query)
-        elif not self.group_ids:
-            user_query = UserES().domain(self.domain)
-            if not toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
-                user_query = user_query.mobile_users()
-            return util.get_simplified_users(user_query)
-        else:
-            all_users = flatten_list(list(self.users_by_group.values()))
-            all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
-            all_users.extend([user for user in self.get_admins_and_demo_users()])
-            return list(dict([(user['user_id'], user) for user in all_users]).values())
+        user_query = EMWF.user_es_query(
+            self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
+        )
+        return util.get_simplified_users(user_query)
 
     @property
     def user_ids(self):
@@ -1546,10 +1467,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         returns a cell that is linked to the submission history report
         """
         base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
-        if self.view_by_groups:
-            params = EMWF.for_reporting_group(owner_id)
-        else:
-            params = EMWF.for_user(owner_id)
+        params = EMWF.for_user(owner_id)
 
         start_date, end_date = self._dates_for_linked_reports(self.datespan)
         params.update({
@@ -1651,74 +1569,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self._html_anchor_tag(url, group_name),
             group_name,
         )
-
-    def _rows_by_group(self, report_data):
-        rows = []
-        active_users_by_group = {
-            g: len([u for u in users if report_data.submissions_by_user.get(u['user_id'])])
-            for g, users in self.users_by_group.items()
-        }
-
-        for group, users in self.users_by_group.items():
-            group_name, group_id = tuple(group.split('|'))
-            if group_name == 'no_group':
-                continue
-
-            owner_ids = _get_owner_ids_from_users(users)
-
-            total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
-            active_cases = sum([
-                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
-            ])
-            active_cases_cell = util.numcell(active_cases)
-            pct_active = util.numcell(
-                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
-            )
-
-            active_users = int(active_users_by_group.get(group, 0))
-            total_users = len(self.users_by_group.get(group, []))
-
-            rows.append([
-                # Group Name
-                self._group_cell(group_id, group_name),
-                # Forms Submitted
-                self._submit_history_link(
-                    group_id,
-                    sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
-                ),
-                # Avg forms submitted
-                util.numcell(
-                    sum(
-                        [int(report_data.avg_submissions_by_user.get(user["user_id"], 0))
-                        for user in users]
-                    ) // self.num_avg_intervals
-                ),
-                # Active users
-                util.numcell("%s / %s" % (active_users, total_users),
-                             value=int((float(active_users) / total_users) * 10000) if total_users else -1,
-                             raw="%s / %s" % (active_users, total_users)),
-                # Cases opened
-                util.numcell(
-                    sum(
-                        [int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
-                        for user in users]
-                    )
-                ),
-                # Cases closed
-                util.numcell(
-                    sum(
-                        [int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
-                        for user in users]
-                    )
-                ),
-                # Active cases
-                active_cases_cell,
-                # Total Cases
-                util.numcell(total_cases),
-                # Percent active cases
-                pct_active,
-            ])
-        return rows
 
     def _rows_by_user(self, report_data, users):
         rows = []
@@ -1847,25 +1697,12 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             [int(report_data.total_cases_by_owner.get(id, 0))
              for id in case_owners])
 
-        if self.view_by_groups:
-            active_users = set()
-            all_users = set()
-            for users in self.users_by_group.values():
-                for user in users:
-                    if report_data.submissions_by_user.get(user['user_id'], False):
-                        active_users.add(user['user_id'])
-                    all_users.add(user['user_id'])
-            total_row[3] = {'numerator': len(active_users), 'denominator': len(all_users)}
-        else:
-            total_row[3] = {'numerator': num, 'denominator': len(rows)}
+        total_row[3] = {'numerator': num, 'denominator': len(rows)}
         return total_row
 
     @property
     def get_all_rows(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            return self.user_rows()
-        else:
-            return self.rows
+        return self.user_rows()
 
     def user_rows(self):
         user_es_query = EMWF.user_es_query(
@@ -1876,10 +1713,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         for user_chunk in chunked(user_iterator, chunk_size):
             users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
-            if self.view_by_groups:
-                rows = self._rows_by_group(formatted_data)
-            else:
-                rows = self._rows_by_user(formatted_data, users)
+            rows = self._rows_by_user(formatted_data, users)
             partial_total_row = self._total_row(rows, formatted_data, users)
             self.total_row = self._sum_rows_together(self.total_row, partial_total_row)
             for row in rows:
@@ -1920,10 +1754,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def rows(self):
         report_data = self._report_data(self.users_to_iterate)
 
-        if self.view_by_groups:
-            rows = self._rows_by_group(report_data)
-        else:
-            rows = self._rows_by_user(report_data, self.users_to_iterate)
+        rows = self._rows_by_user(report_data, self.users_to_iterate)
 
         self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
         return rows

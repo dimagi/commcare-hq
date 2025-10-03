@@ -78,7 +78,11 @@
       "admin/transfer_domain.html",
       "admin/transfer_domain_pending.html",
       "internal_calculations.html",
-      "internal_settings.html"
+      "internal_settings.html",
+      "update_billing_contact_info.html"
+    ],
+    "javascript": [
+      "js/update_billing_contact_info.js"
     ]
   },
   "dropbox": {
@@ -176,6 +180,23 @@
       "js/user_api_keys.js"
     ],
     "is_complete": true
+  },
+  "sso": {
+    "in_progress": true,
+    "templates": [
+      "accounting_admin/edit_identity_provider.html",
+      "accounting_admin/new_identity_provider.html",
+      "enterprise_admin/edit_identity_provider.html",
+      "enterprise_admin/manage_sso.html",
+      "partials/admin_danger_zone.html",
+      "partials/manage_authenticated_email_domains.html",
+      "partials/manage_sso_exempt_users.html",
+      "partials/manage_sso_test_users.html",
+      "permissions/untrusted_identity_provider_for_domain.html"
+    ],
+    "javascript": [
+      "js/enterprise_edit_identity_provider.js"
+    ]
   },
   "user_importer": {
     "is_complete": true
