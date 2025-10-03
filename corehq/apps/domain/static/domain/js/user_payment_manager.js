@@ -103,6 +103,14 @@ const savedUserCard = (card, baseUrl, cardManager) => {
     };
     self.wrap(card);
 
+    self.isAutopayForOtherAccount = ko.pureComputed(() => {
+        return self.other_autopay_domains().length > 0;
+    });
+
+    self.canDeleteCard = ko.pureComputed(() => {
+        return !self.is_autopay() && self.other_autopay_domains().length === 0;
+    });
+
     self.setAutopay = () => {
         cardManager.autoPayButtonEnabled(false);
         self.submit({is_autopay: true}).always(() => {

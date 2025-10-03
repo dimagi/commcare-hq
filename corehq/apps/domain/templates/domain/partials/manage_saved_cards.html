@@ -124,8 +124,17 @@
     <td>
       <i class="fa-regular fa-credit-card"></i>
       <strong><span data-bind="text: brand"></span></strong>
-      <span class="badge text-bg-success" data-bind="visible: is_autopay">
-        {% trans "Autopay card" %}
+      <span
+        class="badge text-bg-primary"
+        data-bind="visible: is_autopay"
+      >
+        {% trans "Autopay Card" %}
+      </span>
+      <span
+        class="badge text-bg-secondary"
+        data-bind="visible: isAutopayForOtherAccount"
+      >
+        {% trans "Autopay for Other Account" %}
       </span>
     </td>
     <td>
@@ -154,7 +163,7 @@
         href="#"
         data-bind="
           openModal: 'delete-card-modal',
-          visible: !is_autopay()
+          visible: canDeleteCard
         "
       >
         <i class="fa fa-remove"></i> {% trans "Delete Card" %}
