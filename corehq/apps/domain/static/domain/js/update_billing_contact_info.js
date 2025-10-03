@@ -6,11 +6,11 @@ import "accounting/js/widgets";
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // openModal
 
 $(function () {
-    var cardManager = userPaymentManager.userPaymentManager({
+    var userCardManager = userPaymentManager.userPaymentManager({
         cards: initialPageData.get("cards"),
         url: initialPageData.reverse("cards_view"),
     });
-    $("#card-manager").koApplyBindings(cardManager);
+    $("#user-card-manager").koApplyBindings(userCardManager);
 
     $("#show_emails").click(function () {
         $('#emails-text').show();

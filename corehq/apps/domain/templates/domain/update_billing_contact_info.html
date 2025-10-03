@@ -21,7 +21,7 @@
       {% crispy billing_account_info_form %}
     </div>
   </div>
-  <div id="card-manager" class="mt-3 card">
+  <div class="mt-3 card">
     <h5 class="card-header">
       {% trans "Payment Methods" %}
     </h5>
@@ -29,7 +29,9 @@
       <div class="mb-3">
         {% include "domain/partials/account_cards.html" %}
       </div>
-      {% include "domain/partials/manage_saved_cards.html" %}
+      <div id="user-card-manager">
+        {% include "domain/partials/manage_saved_cards.html" %}
+      </div>
     </div>
   </div>
 {% endblock page_content %}
