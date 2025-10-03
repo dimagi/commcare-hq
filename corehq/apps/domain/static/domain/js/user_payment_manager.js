@@ -5,6 +5,7 @@
  */
 import $ from "jquery";
 import ko from "knockout";
+import { Modal } from 'bootstrap5';
 import { createStripeToken, getCardElementPromise } from "accounting/js/stripe";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
@@ -19,6 +20,8 @@ const newUserCard = (data, cardManager) => {
         cardElement.mount('.stripe-card-container');
         self.cardElementMounted = true;
     });
+    self.cardModalId = 'card-modal';
+    self.successModalId = 'user-card-success-modal';
 
     const mapping = {
         observe: ['isAutopay', 'token'],
@@ -52,8 +55,11 @@ const newUserCard = (data, cardManager) => {
             url: data.url,
             data: self.unwrap(),
             success: (data) => {
-                $("#card-modal").modal('hide');
-                $("#success-modal").modal('show');
+                const cardModal = new Modal(document.getElementById(self.cardModalId));
+                cardModal.hide();
+                const successModal = new Modal(document.getElementById(self.successModalId));
+                successModal.show();
+
                 cardManager.wrap(data);
                 self.reset();
             },
@@ -122,8 +128,11 @@ const savedUserCard = (card, baseUrl, cardManager) => {
             url: self.url,
             success: (data) => {
                 cardManager.wrap(data);
-                $(button.currentTarget).closest(".modal").modal('hide');
-                $("#success-modal").modal('show');
+
+                const closestModal = new Modal(button.currentTarget.closest(".modal"));
+                closestModal.hide();
+                const successModal = new Modal(document.getElementById(self.successModalId));
+                successModal.show();
             },
         }).fail((data) => {
             const response = JSON.parse(data.responseText);
