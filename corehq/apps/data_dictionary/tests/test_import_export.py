@@ -112,6 +112,8 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
         self.assertEqual(response.status_code, 200)
         messages = list(response.context['messages'])
         self.assertEqual(len(messages), 2)
+        # AssertionError: 1 != 2
+
         soup = BeautifulSoup(str(messages[1]), features="lxml")
         received_warnings = {elem.text for elem in soup.find_all('li')}
         expected_warnings = {
@@ -168,12 +170,21 @@ class DataDictionaryExportTest(TestCase):
         self.url = reverse(ExportDataDictionaryView.urlname, args=[self.domain_name])
         self.client.login(username='test', password='foobar')
 
-    def test_export(self):
+
+class DataDictionaryExportTestWithDataTypes(DataDictionaryExportTest):
+    domain_name = 'data-dict-export-test-with-data-types'
+
+    def setUp(self):
+        super().setUpClass()
         create_enterprise_permissions(  # Enables data types
             self.couch_user.email,
             self.domain_name,
             [self.subdomain.name]
         )
+        # Error in tearDownClass
+        # corehq.apps.accounting.models.BillingAccount.DoesNotExist: BillingAccount matching query does not exist.
+
+    def test_export(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['content-type'], 'application/vnd.ms-excel')
@@ -184,6 +195,10 @@ class DataDictionaryExportTest(TestCase):
             name = self.case_types[i].name
             self.assertEqual(name, workbook.sheetnames[i * 2])
             self.assertEqual(f'{name}{ALLOWED_VALUES_SHEET_SUFFIX}', workbook.sheetnames[i * 2 + 1])
+
+
+class DataDictionaryExportTestWithoutDataTypes(DataDictionaryExportTest):
+    domain_name = 'data-dict-export-test-without-data-types'
 
     def test_export_without_data_type(self):
         response = self.client.get(self.url)
