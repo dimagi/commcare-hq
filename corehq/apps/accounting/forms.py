@@ -506,10 +506,10 @@ class SubscriptionForm(forms.Form):
         label=gettext_lazy("Billing Account"),
         widget=forms.Select(choices=[]),
     )
-    start_date = forms.DateField(
+    date_start = forms.DateField(
         label=gettext_lazy("Start Date"), widget=forms.DateInput()
     )
-    end_date = forms.DateField(
+    date_end = forms.DateField(
         label=gettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
     plan_edition = forms.ChoiceField(
@@ -522,7 +522,10 @@ class SubscriptionForm(forms.Form):
     )
     most_recent_version = forms.ChoiceField(
         label=gettext_lazy("Version"), initial="True",
-        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
+        choices=(
+            ("True", gettext_lazy("Show Most Recent Version")),
+            ("False", gettext_lazy("Show All Versions")),
+        )
     )
     plan_version = forms.IntegerField(
         label=gettext_lazy("Software Plan"),
@@ -541,8 +544,12 @@ class SubscriptionForm(forms.Form):
     no_invoice_reason = forms.CharField(
         label=gettext_lazy("Justify why \"Do Not Invoice\""), max_length=256, required=False
     )
-    do_not_email_invoice = forms.BooleanField(label="Do Not Email Invoices", required=False)
-    do_not_email_reminder = forms.BooleanField(label="Do Not Email Subscription Reminders", required=False)
+    do_not_email_invoice = forms.BooleanField(
+        label=gettext_lazy("Do Not Email Invoices"), required=False
+    )
+    do_not_email_reminder = forms.BooleanField(
+        label=gettext_lazy("Do Not Email Subscription Reminders"), required=False
+    )
     auto_generate_credits = forms.BooleanField(
         label=gettext_lazy("Auto-generate Plan Credits"), required=False
     )
@@ -578,6 +585,11 @@ class SubscriptionForm(forms.Form):
         max_length=256,
         required=False,
     )
+    auto_renew = forms.BooleanField(
+        label=gettext_lazy("Enable auto renewal"),
+        help_text=gettext_lazy("Applies if subscription has a future end date and is type 'Product'"),
+        required=False,
+    )
     set_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -588,8 +600,8 @@ class SubscriptionForm(forms.Form):
         self.web_user = web_user
         today = datetime.date.today()
 
-        start_date_field = crispy.Field('start_date', css_class="date-picker")
-        end_date_field = crispy.Field('end_date', css_class="date-picker")
+        date_start_field = crispy.Field('date_start', css_class="date-picker")
+        date_end_field = crispy.Field('date_end', css_class="date-picker")
 
         if is_existing:
             # circular import
@@ -627,8 +639,8 @@ class SubscriptionForm(forms.Form):
                 self.fields['plan_visibility'].initial
             )
             is_most_recent_version = subscription.plan_version.plan.get_version() == subscription.plan_version
-            most_recent_version_text = ("is most recent version" if is_most_recent_version
-                                        else "not most recent version")
+            most_recent_version_text = (_("is most recent version") if is_most_recent_version
+                                        else _("not most recent version"))
             self.fields['most_recent_version'].initial = is_most_recent_version
             most_recent_version_field = hqcrispy.B3TextField(
                 'most_recent_version',
@@ -646,8 +658,8 @@ class SubscriptionForm(forms.Form):
                     subscription.subscriber.domain)
             )
 
-            self.fields['start_date'].initial = subscription.date_start.isoformat()
-            self.fields['end_date'].initial = (
+            self.fields['date_start'].initial = subscription.date_start.isoformat()
+            self.fields['date_end'].initial = (
                 subscription.date_end.isoformat()
                 if subscription.date_end is not None else subscription.date_end
             )
@@ -665,14 +677,15 @@ class SubscriptionForm(forms.Form):
             self.fields['funding_source'].initial = subscription.funding_source
             self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
             self.fields['skip_auto_downgrade_reason'].initial = subscription.skip_auto_downgrade_reason
+            self.fields['auto_renew'].initial = subscription.auto_renew
 
             if (
                 subscription.date_start is not None
                 and subscription.date_start <= today
             ):
-                self.fields['start_date'].help_text = '(already started)'
+                self.fields['date_start'].help_text = _('(already started)')
             if has_subscription_already_ended(subscription):
-                self.fields['end_date'].help_text = '(already ended)'
+                self.fields['date_end'].help_text = _('(already ended)')
 
             self.fields['plan_version'].required = False
             self.fields['domain'].required = False
@@ -680,21 +693,21 @@ class SubscriptionForm(forms.Form):
         else:
             account_field = crispy.Field(
                 'account', css_class="input-xxlarge",
-                placeholder="Search for Billing Account"
+                placeholder=_("Search for Billing Account")
             )
             if account_id is not None:
                 self.fields['account'].initial = account_id
 
             domain_field = crispy.Field(
                 'domain', css_class="input-xxlarge",
-                placeholder="Search for Project Space"
+                placeholder=_("Search for Project Space")
             )
             plan_edition_field = crispy.Field('plan_edition')
             plan_visibility_field = crispy.Field('plan_visibility')
             most_recent_version_field = crispy.Field('most_recent_version')
             plan_version_field = crispy.Field(
                 'plan_version', css_class="input-xxlarge",
-                placeholder="Search for Software Plan"
+                placeholder=_("Search for Software Plan")
             )
 
         self.helper = FormHelper()
@@ -707,17 +720,19 @@ class SubscriptionForm(forms.Form):
                 crispy.Field(
                     'active_accounts',
                     css_class='input-xxlarge accounting-async-select2',
-                    placeholder="Select Active Account",
+                    placeholder=_("Select Active Account"),
                     style="width: 100%;",
                 ),
             ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                '%s Subscription' % ('Edit' if is_existing else 'New'),
+                _('%s Subscription') % (
+                    _('Edit') if is_existing else _('New')
+                ),
                 account_field,
                 crispy.Div(*transfer_fields),
-                start_date_field,
-                end_date_field,
+                date_start_field,
+                date_end_field,
                 crispy.Div(
                     crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
                             % _("Software Plan"),),
@@ -730,7 +745,7 @@ class SubscriptionForm(forms.Form):
                 domain_field,
                 'salesforce_contract_id',
                 hqcrispy.B3MultiField(
-                    "Invoice Options",
+                    _("Invoice Options"),
                     crispy.Field('do_not_invoice', data_bind="checked: noInvoice"),
                     'skip_invoicing_if_no_feature_charges',
                 ),
@@ -738,13 +753,13 @@ class SubscriptionForm(forms.Form):
                     crispy.Field(
                         'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
                     data_bind="visible: noInvoice"),
-                hqcrispy.B3MultiField("Email Options", 'do_not_email_invoice', 'do_not_email_reminder'),
-                hqcrispy.B3MultiField("Credit Options", 'auto_generate_credits'),
+                hqcrispy.B3MultiField(_("Email Options"), 'do_not_email_invoice', 'do_not_email_reminder'),
+                hqcrispy.B3MultiField(_("Credit Options"), 'auto_generate_credits'),
                 'service_type',
                 'pro_bono_status',
                 'funding_source',
                 hqcrispy.B3MultiField(
-                    "Skip Auto Pause",
+                    _("Skip Auto Pause"),
                     crispy.Field('skip_auto_downgrade', data_bind="checked: skipAutoDowngrade")
                 ),
                 crispy.Div(
@@ -753,13 +768,14 @@ class SubscriptionForm(forms.Form):
                     ),
                     data_bind="visible: skipAutoDowngrade",
                 ),
+                hqcrispy.B3MultiField(_("Auto Renew"), 'auto_renew'),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'set_subscription',
-                        '%s Subscription' % ('Update' if is_existing else 'Create'),
+                        _('%s Subscription') % (_('Update') if is_existing else _('Create')),
                         css_class='disable-on-submit',
                     )
                 )
@@ -798,8 +814,8 @@ class SubscriptionForm(forms.Form):
     @property
     def shared_keywords(self):
         return dict(
-            date_start=self.cleaned_data['start_date'],
-            date_end=self.cleaned_data['end_date'],
+            date_start=self.cleaned_data['date_start'],
+            date_end=self.cleaned_data['date_end'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
             do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
@@ -812,6 +828,7 @@ class SubscriptionForm(forms.Form):
             funding_source=self.cleaned_data['funding_source'],
             skip_auto_downgrade=self.cleaned_data['skip_auto_downgrade'],
             skip_auto_downgrade_reason=self.cleaned_data['skip_auto_downgrade_reason'],
+            auto_renew=self.cleaned_data['auto_renew'],
         )
 
     def clean_active_accounts(self):
@@ -862,16 +879,16 @@ class SubscriptionForm(forms.Form):
                     account=account.name,
                 ))
 
-        start_date = self.cleaned_data.get('start_date')
-        if not start_date:
+        date_start = self.cleaned_data.get('date_start')
+        if not date_start:
             if self.subscription:
-                start_date = self.subscription.date_start
+                date_start = self.subscription.date_start
             else:
                 raise ValidationError(_("You must specify a start date"))
 
-        end_date = self.cleaned_data.get('end_date')
-        if end_date:
-            if start_date > end_date:
+        date_end = self.cleaned_data.get('date_end')
+        if date_end:
+            if date_start > date_end:
                 raise ValidationError(_("End date must be after start date."))
 
         return self.cleaned_data

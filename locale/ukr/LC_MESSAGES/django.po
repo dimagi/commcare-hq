@@ -312,6 +312,16 @@ msgid "Version"
 msgstr "Версія"
 
 #: corehq/apps/accounting/forms.py
+#| msgid "Shadow Module Version"
+msgid "Show Most Recent Version"
+msgstr "Показати найновішу версію"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Show All Groups"
+msgid "Show All Versions"
+msgstr "Показати всі версії"
+
+#: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -333,6 +343,16 @@ msgstr "Не виставляти рахунок"
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Do Not Invoice\""
 msgstr "Обґрунтуйте, чому \"Не виставляти рахунок\""
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Do Not Invoice"
+msgid "Do Not Email Invoices"
+msgstr "Не надсилати рахунки електронною поштою"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Next Subscription Begins"
+msgid "Do Not Email Subscription Reminders"
+msgstr "Не надсилати нагадування про підписку електронною поштою"
 
 #: corehq/apps/accounting/forms.py
 msgid "Auto-generate Plan Credits"
@@ -357,6 +377,141 @@ msgstr "Виключити з автоматизованого процесу п
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Skip Auto Pause\""
 msgstr "Обґрунтуйте, чому \"Пропустити автоматичну паузу\""
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Enable auto select"
+msgid "Enable auto renewal"
+msgstr "Увімкнути автоматичне поновлення"
+
+#: corehq/apps/accounting/forms.py
+msgid "Applies if subscription has a future end date and is type 'Product'"
+msgstr ""
+"Застосовується, якщо підписка має майбутню дату завершення та тип 'Продукт'"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Please select version"
+msgid "is most recent version"
+msgstr "є найновішою версією"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Cannot make new version"
+msgid "not most recent version"
+msgstr "не є найновішою версією"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Already Paid"
+msgid "(already started)"
+msgstr "(вже розпочато)"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Already in use."
+msgid "(already ended)"
+msgstr "(вже завершено)"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Billing Account"
+msgid "Search for Billing Account"
+msgstr "Пошук платіжного облікового запису"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "From Project Space"
+msgid "Search for Project Space"
+msgstr "Пошук простору проєкту"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "New Software Plan"
+msgid "Search for Software Plan"
+msgstr "Пошук програмного плану"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Select Action"
+msgid "Select Active Account"
+msgstr "Вибрати активний обліковий запис"
+
+#: corehq/apps/accounting/forms.py
+#, python-format
+#| msgid "Subscription"
+msgid "%s Subscription"
+msgstr "%s Підписка"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/reports/views.py
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
+#: corehq/apps/users/templates/users/web_users.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/tabs/tabclasses.py
+msgid "Edit"
+msgstr "Редагувати"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/accounting_admins.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/tabs/tabclasses.py
+msgid "New"
+msgstr "Новий"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Hide Options"
+msgid "Invoice Options"
+msgstr "Опції рахунку"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Filter Options"
+msgid "Email Options"
+msgstr "Опції електронної пошти"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Case Options"
+msgid "Credit Options"
+msgstr "Опції кредиту"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Justify why \"Skip Auto Pause\""
+msgid "Skip Auto Pause"
+msgstr "Пропустити автоматичну паузу"
+
+#: corehq/apps/accounting/forms.py
+msgid "Auto Renew"
+msgstr "Автоматичне поновлення"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/models.py
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
+#: corehq/apps/integration/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/users/forms.py corehq/apps/users/models.py
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Update"
+msgstr "Оновити"
+
+#: corehq/apps/accounting/forms.py corehq/apps/case_search/models.py
+#: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Create"
+msgstr "Створити"
 
 #: corehq/apps/accounting/forms.py
 msgid ""
@@ -1173,13 +1328,6 @@ msgid "Remove User"
 msgstr "Видалити користувача"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
-#: corehq/tabs/tabclasses.py
-msgid "New"
-msgstr "Новий"
-
-#: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 msgid "Removed"
@@ -1205,6 +1353,32 @@ msgstr "Автоплатіж"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "  <p>\n"
+#| "    Hello %(old_user_name)s,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Your card is no longer being used for autopayment on the account %(billing_account_name)s.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    A card belonging to <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong> is being used instead. If this is expected, you do not have to take any further action, and this card will be used to pay monthly invoices and will be charged on the invoice due date. If this change is unexpected, you can view and alter the credit card information at any time by navigating to your <a href=\"%(billing_info_url)s\">Billing Information</a> page.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact\n"
+#| "    <a href=\"mailto:%(invoicing_contact_email)s\">%(invoicing_contact_email)s</a>.\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Best Regards,\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    The CommCare Team<br/>\n"
+#| "    www.commcarehq.org\n"
+#| "  </p>\n"
+#| "  <p>\n"
+#| "    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  </p>\n"
+#| "\n"
 msgid ""
 "\n"
 "  <p>\n"
@@ -1228,7 +1402,7 @@ msgid ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Statement From: CommCare and the corporation Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
 msgstr ""
@@ -1237,13 +1411,13 @@ msgstr ""
 "    Вітаємо, %(old_user_name)s,\n"
 "  </p>\n"
 "  <p>\n"
-"    Ваша картка більше не використовується для автосплати на рахунку %(billing_account_name)s.\n"
+"    Ваша картка більше не використовується для автоматичної оплати на рахунку %(billing_account_name)s.\n"
 "  </p>\n"
 "  <p>\n"
 "    Замість цього використовується картка, що належить <strong><a href=\"mailto:%(new_user)s\">%(new_user)s</a></strong>. Якщо це очікувано, вам не потрібно нічого робити, і ця картка буде використовуватися для оплати щомісячних рахунків та буде списана у день сплати рахунку. Якщо ця зміна неочікувана, ви можете переглянути та змінити інформацію про кредитну картку у будь-який час, перейшовши на сторінку <a href=\"%(billing_info_url)s\">Платіжна інформація</a>.\n"
 "  </p>\n"
 "  <p>\n"
-"    Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка, не вагайтеся звертатися до\n"
+"    Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка, звертайтеся до\n"
 "    <a href=\"mailto:%(invoicing_contact_email)s\">%(invoicing_contact_email)s</a>.\n"
 "  </p>\n"
 "  <p>\n"
@@ -1254,7 +1428,7 @@ msgstr ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Відправник: CommCare та компанія Dimagi, Inc. 585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Виписка від: CommCare та компанія Dimagi, Inc. 245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 "  </p>\n"
 "\n"
 
@@ -1353,17 +1527,26 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#| msgid ""
+#| "\n"
+#| "    Email From:<br />\n"
+#| "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#| "    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Email From:<br />\n"
 "    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
-"    Відправник:<br />\n"
+"    Лист від:<br />\n"
 "    CommCare та компанія Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
@@ -1415,6 +1598,17 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.txt
 #, python-format
+#| msgid ""
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
 msgid ""
 "Thank you for using CommCare. If you have any questions, please don't\n"
 "hesitate to contact %(invoicing_contact_email)s.\n"
@@ -1425,17 +1619,18 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
-"Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка, не вагайтеся звертатися до %(invoicing_contact_email)s.\n"
+"Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка,\n"
+"звертайтеся до %(invoicing_contact_email)s.\n"
 "\n"
 "З найкращими побажаннями,\n"
 "Команда CommCare\n"
 "www.commcarehq.org\n"
 "\n"
-"Відправник:\n"
+"Лист від:\n"
 "CommCare та компанія Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
 #, python-format
@@ -1446,22 +1641,6 @@ msgid ""
 msgstr ""
 "\n"
 "    Це лист-підтвердження вашої передоплати <strong>%(amount)s</strong> за кредити до вашого проєкту %(project)s.\n"
-"  "
-
-#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-msgid ""
-"\n"
-"    Email From:<br />\n"
-"    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-"  "
-msgstr ""
-"\n"
-"    Відправник:<br />\n"
-"    CommCare та компанія Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
@@ -1502,16 +1681,21 @@ msgstr ""
 "www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
+#| msgid ""
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"Відправник:\n"
+"Лист від:\n"
 "CommCare та компанія Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #, python-format
@@ -2015,6 +2199,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2026,19 +2222,19 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"Дякуємо, що користуєтеся %(plan_name)s. Якщо у вас виникли питання, будь ласка, не вагайтеся звертатися до %(invoicing_contact_email)s.\n"
+"Дякуємо, що користуєтеся %(plan_name)s. Якщо у вас виникли питання, будь ласка, звертайтеся до %(invoicing_contact_email)s.\n"
 "\n"
 "З найкращими побажаннями,\n"
 "Команда CommCare\n"
 "www.commcarehq.org\n"
 "\n"
 "\n"
-"Відправник:\n"
+"Виписка від:\n"
 "CommCare та компанія Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
@@ -2436,6 +2632,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
@@ -2447,19 +2655,19 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"Дякуємо, що користуєтеся %(plan_name)s. Якщо у вас виникли питання, будь ласка, не вагайтеся звертатися до %(invoicing_contact_email)s.\n"
+"Дякуємо, що користуєтеся %(plan_name)s. Якщо у вас виникли питання, будь ласка, звертайтеся до %(invoicing_contact_email)s.\n"
 "\n"
 "З найкращими побажаннями,\n"
 "Команда CommCare\n"
 "www.commcarehq.org\n"
 "\n"
 "\n"
-"Відправник:\n"
+"Виписка від:\n"
 "CommCare та компанія Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 msgid ""
@@ -2573,17 +2781,23 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#| "  "
 msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
-"    Відправник:\n"
+"    Виписка від:\n"
 "    CommCare та компанія Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -2636,16 +2850,21 @@ msgstr ""
 "    www.commcarehq.org\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#| msgid ""
+#| "\n"
+#| "    Statement From:\n"
+#| "    CommCare and the corporation Dimagi, Inc.\n"
+#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"    Відправник:\n"
+"    Виписка від:\n"
 "    CommCare та компанія Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
@@ -2720,6 +2939,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
@@ -2731,18 +2962,19 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
-"Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка, не вагайтеся звертатися до %(invoicing_contact_email)s.\n"
+"Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка,\n"
+"звертайтеся до %(invoicing_contact_email)s.\n"
 "\n"
 "З найкращими побажаннями,\n"
 "Команда CommCare\n"
 "www.commcarehq.org\n"
 "\n"
-"Відправник:\n"
+"Лист від:\n"
 "CommCare та компанія Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
@@ -3318,6 +3550,30 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
+#| "based on actual usage in the following month. If you prefer, you may also prepay for\n"
+#| "expected on-demand usage. Please contact us if you would like to explore this option.\n"
+#| "\n"
+#| "Instructions for Payment\n"
+#| "\n"
+#| "Dimagi accepts payments via ACH, wire transfer, and credit card. All payment options are listed in the attached invoice.\n"
+#| "If paying by wire, please follow these instructions to ensure timely processing and identification of your payment:\n"
+#| "\n"
+#| "1. Send the wire payment to Dimagi’s bank account and include the invoice ID in the wire payment details. Dimagi’s bank account details and the invoice ID can be found in the attached invoice.\n"
+#| "\n"
+#| "2. Send an email to %(accounts_email)s after you have made the payment including the date of the payment, the amount, the invoice number and the project space name.\n"
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Statement From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "Note: Any on-demand charges for excess users or SMS will be billed separately\n"
@@ -3341,7 +3597,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Примітка: Будь-які додаткові платежі за понаднормових користувачів або SMS будуть виставлені окремо\n"
@@ -3350,22 +3606,22 @@ msgstr ""
 "\n"
 "Інструкції щодо оплати\n"
 "\n"
-"Dimagi приймає платежі через ACH, банківський переказ та кредитну картку. Усі варіанти оплати вказані у вкладеному рахунку.\n"
+"Dimagi приймає платежі через ACH, банківський переказ та кредитну картку. Усі варіанти оплати вказані у доданому рахунку.\n"
 "Якщо ви сплачуєте через банківський переказ, будь ласка, дотримуйтесь цих інструкцій для своєчасної обробки та ідентифікації вашого платежу:\n"
 "\n"
-"1. Надішліть платіж на банківський рахунок Dimagi та вкажіть ідентифікатор рахунку у деталях переказу. Банківські реквізити Dimagi та ідентифікатор рахунку можна знайти у вкладеному рахунку.\n"
+"1. Надішліть платіж на банківський рахунок Dimagi та вкажіть ідентифікатор рахунку у деталях переказу. Банківські реквізити Dimagi та ідентифікатор рахунку можна знайти у доданому рахунку.\n"
 "\n"
-"2. Надішліть електронного листа на %(accounts_email)s після здійснення платежу, вказавши дату платежу, суму, номер рахунку та назву простору проєкту.\n"
+"2. Надішліть листа на %(accounts_email)s після здійснення платежу, вказавши дату платежу, суму, номер рахунку та назву простору проєкту.\n"
 "\n"
-"Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка, не вагайтеся звертатися до %(invoicing_contact_email)s.\n"
+"Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка, звертайтеся до %(invoicing_contact_email)s.\n"
 "\n"
 "З найкращими побажаннями,\n"
 "Команда CommCare\n"
 "www.commcarehq.org\n"
 "\n"
-"Відправник:\n"
+"Виписка від:\n"
 "CommCare та компанія Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #, python-format
@@ -3951,28 +4207,6 @@ msgstr "Остання дата сплати рахунку"
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 msgid "\"Do Not Invoice\" Reason"
 msgstr "Причина \"Не виставляти рахунок\""
-
-#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/reports/views.py
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/toggle_ui/templates/toggle/flags.html
-#: corehq/apps/users/templates/users/web_users.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/tabs/tabclasses.py
-msgid "Edit"
-msgstr "Редагувати"
 
 #: corehq/apps/accounting/templates/accounting/plans.html
 msgid "Plan Information"
@@ -9744,11 +9978,6 @@ msgid "Display Condition"
 msgstr "Умова відображення"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "The form will not appear in the menu unless this condition is met. Read more"
-#| " on the <a target='_blank' "
-#| "href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Help"
-#| " Site</a>."
 msgid ""
 "\n"
 "          The form will not appear in the menu unless this condition is met.\n"
@@ -9771,15 +10000,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "\n"
-#| "              To use display conditions which reference a case, <br/>\n"
-#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-#| "              <em>Display menu and then forms</em> <br/>\n"
-#| "              (2) all the forms in the case list must update or close a case, which means registration\n"
-#| "              forms must go in a separate case list, or if your project uses user properties, your\n"
-#| "              display condition may use user properties.\n"
-#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
@@ -9802,11 +10022,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-#| msgid ""
-#| "\n"
-#| "          There is something wrong with the logic in the Form Display Condition.\n"
-#| "          Check to make sure your parentheses match and you are referencing case properties correctly.\n"
-#| "        "
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display Condition.\n"
@@ -12626,21 +12841,6 @@ msgstr ""
 "Надіслати email після завершення (рекомендується для великих застосунків)"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/case_search/models.py
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
-#: corehq/apps/integration/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/users/forms.py corehq/apps/users/models.py
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Update"
-msgstr "Оновити"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/templates/reports/async/print_report.html
 msgid "Loading ..."
@@ -14652,14 +14852,6 @@ msgstr "{param} має бути рядком"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr "Недійсний оператор \"{criteria[\"operator\"]}\". Дозволені значення: "
-
-#: corehq/apps/case_search/models.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Create"
-msgstr "Створити"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -23496,53 +23688,6 @@ msgstr ""
 msgid "Use Backup Token"
 msgstr "Використати резервний токен"
 
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid "Please set up Two-Factor Authentication"
-msgstr "Будь ласка, налаштуйте двофакторну автентифікацію"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      For security purposes, your CommCare administrator has required that all users in your project set up\n"
-"      two-factor authentication.<br>This is an extra layer of protection used to ensure the security of your account\n"
-"      beyond a username and password. \n"
-"    "
-msgstr ""
-"\n"
-"      З міркувань безпеки ваш адміністратор CommCare      двофакторну автентифікацію.<br>Це додатковий рівень захисту, який використовується для забезпечення безпеки вашого облікового запису\n"
-"      понад ім'я користувача та пароль.    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      To access your account, please enable two-factor authentication below.\n"
-"    "
-msgstr ""
-"\n"
-"      Щоб отримати доступ до свого облікового запису, будь ласка, увімкніть двофакторну автентифікацію нижче.\n"
-"    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
-msgid "Go back"
-msgstr "Повернутися назад"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
-msgid "Enable Two-Factor Authentication"
-msgstr "Увімкнути двофакторну автентифікацію"
-
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/phone_register.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/phone_register.html
 msgid "Add Backup Phone"
@@ -23565,6 +23710,16 @@ msgid ""
 msgstr ""
 "Ми надіслали токен на ваш номер телефону. Будь ласка, введіть отриманий "
 "токен."
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
+msgid "Enable Two-Factor Authentication"
+msgstr "Увімкнути двофакторну автентифікацію"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
@@ -23662,6 +23817,38 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
 msgid "Generate Backup Tokens"
 msgstr "Згенерувати резервні токени"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid "Please set up Two-Factor Authentication"
+msgstr "Будь ласка, налаштуйте двофакторну автентифікацію"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      For security purposes, your CommCare administrator has required that all users in your project set up\n"
+"      two-factor authentication.<br>This is an extra layer of protection used to ensure the security of your account\n"
+"      beyond a username and password. \n"
+"    "
+msgstr ""
+"\n"
+"      З міркувань безпеки ваш адміністратор CommCare      двофакторну автентифікацію.<br>Це додатковий рівень захисту, який використовується для забезпечення безпеки вашого облікового запису\n"
+"      понад ім'я користувача та пароль.    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      To access your account, please enable two-factor authentication below.\n"
+"    "
+msgstr ""
+"\n"
+"      Щоб отримати доступ до свого облікового запису, будь ласка, увімкніть двофакторну автентифікацію нижче.\n"
+"    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
+msgid "Go back"
+msgstr "Повернутися назад"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
@@ -24128,22 +24315,15 @@ msgid "Auto renewal cannot be enabled for the current subscription."
 msgstr "Автоматичне поновлення не може бути увімкнено для поточної підписки."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid ""
-#| "Congratulations, you've successfully enabled two-factor\n"
-#| "    authentication."
 msgid "Auto renewal successfully enabled for the current subscription."
 msgstr "Автоматичне поновлення успішно увімкнено для поточної підписки."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid "Multimedia was successfully updated for the linked app."
 msgid "Auto renewal successfully disabled for the current subscription."
 msgstr "Автоматичне поновлення успішно вимкнено для поточної підписки."
 
 #: corehq/apps/domain/views/accounting.py
 #, python-brace-format
-#| msgid ""
-#| "You do not have permission to pause the subscription for this customer-level"
-#| " account. Please reach out to the %s enterprise admin for help."
 msgid ""
 "You do not have permission to modify the subscription for this customer-"
 "level account. Please reach out to the {account_name} enterprise admin for "
@@ -31284,7 +31464,6 @@ msgid "US"
 msgstr "США"
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
-#| msgid "user"
 msgid "users"
 msgstr "користувачі"
 
@@ -33262,7 +33441,6 @@ msgid "Unknown error"
 msgstr "Невідома помилка"
 
 #: corehq/apps/integration/kyc/models.py
-#| msgid "Pass"
 msgid "Passed"
 msgstr "Успішно"
 
@@ -57455,6 +57633,19 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid ""
+#~ "\n"
+#~ "    Email From:<br />\n"
+#~ "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Відправник:<br />\n"
+#~ "    CommCare та компанія Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
 
 #~ msgid ""
 #~ "\n"

@@ -24,6 +24,7 @@ from corehq.apps.accounting.models import (
     FormSubmittingMobileWorkerHistory,
     Invoice,
     SoftwarePlanEdition,
+    SoftwarePlanVersion,
     Subscription,
 )
 from corehq.apps.accounting.tasks import (
@@ -267,20 +268,7 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         subscription_form.cleaned_data = {
             'active_accounts': self.customer_account.id,
-            'start_date': datetime.date.today(),
-            'end_date': None,
-            'do_not_invoice': None,
-            'no_invoice_reason': None,
-            'do_not_email_invoice': None,
-            'do_not_email_reminder': None,
-            'auto_generate_credits': None,
-            'skip_invoicing_if_no_feature_charges': None,
-            'salesforce_contract_id': None,
-            'service_type': None,
-            'pro_bono_status': None,
-            'funding_source': None,
-            'skip_auto_downgrade': None,
-            'skip_auto_downgrade_reason': None
+            **self.shared_keywords(),
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
@@ -298,23 +286,79 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         subscription_form.cleaned_data = {
             'active_accounts': self.account.id,
-            'start_date': datetime.date.today(),
-            'end_date': None,
-            'do_not_invoice': None,
-            'no_invoice_reason': None,
-            'do_not_email_invoice': None,
-            'do_not_email_reminder': None,
-            'auto_generate_credits': None,
-            'skip_invoicing_if_no_feature_charges': None,
-            'salesforce_contract_id': None,
-            'service_type': None,
-            'pro_bono_status': None,
-            'funding_source': None,
-            'skip_auto_downgrade': None,
-            'skip_auto_downgrade_reason': None
+            **self.shared_keywords(),
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+
+    def test_form_data_create_subscription(self):
+        required_args = {
+            'account': self.account.id,
+            'domain': self.domain.name,
+            'plan_version': self.plan.id,
+        }
+        subscription_form = SubscriptionForm(
+            subscription=None,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+
+        with patch('corehq.apps.accounting.forms.Subscription') as subscription_cls:
+            subscription_form.cleaned_data = {**required_args, **self.shared_keywords()}
+            subscription_form.create_subscription()
+            args, kwargs = subscription_cls.new_domain_subscription.call_args
+
+        assert args == (
+            BillingAccount.objects.get(id=self.account.id),
+            self.domain.name,
+            SoftwarePlanVersion.objects.get(id=self.plan.id),
+        )
+        assert kwargs['web_user'] == self.web_user
+        assert kwargs['internal_change']
+        for k, v in self.shared_keywords().items():
+            assert kwargs[k] == v
+
+    def test_form_data_update_subscription(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+
+        with patch.object(subscription, 'update_subscription') as update_subscription:
+            subscription_form.cleaned_data = {**self.shared_keywords()}
+            subscription_form.update_subscription()
+            kwargs = update_subscription.call_args.kwargs
+
+        assert kwargs['web_user'] == self.web_user
+        for k, v in self.shared_keywords().items():
+            assert kwargs[k] == v
+
+    @staticmethod
+    def shared_keywords():
+        # maps to SubscriptionForm.shared_keywords
+        return {
+            'date_start': datetime.date.today(),
+            'date_end': datetime.date.today() + datetime.timedelta(days=7),
+            'do_not_invoice': True,
+            'no_invoice_reason': 'I said so',
+            'do_not_email_invoice': True,
+            'do_not_email_reminder': True,
+            'auto_generate_credits': True,
+            'skip_invoicing_if_no_feature_charges': True,
+            'salesforce_contract_id': 'abc123',
+            'service_type': 'SubscriptionType',
+            'pro_bono_status': 'ProBonoStatus',
+            'funding_source': 'FundingSource',
+            'skip_auto_downgrade': True,
+            'skip_auto_downgrade_reason': 'You said so',
+            'auto_renew': True,
+        }
 
 
 class TestTriggerInvoiceForm(BaseInvoiceTestCase):
