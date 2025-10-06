@@ -7,10 +7,34 @@
   </div>
 {% endif %}
 
-<fieldset>
+<fieldset class="mb-3">
   <legend>{% trans "Account Autopay Card" %}</legend>
-  <table class="table table-striped">
-  </table>
+  {% if account_cards %}
+    <table class="table table-striped">
+      <tbody>
+        {% for card in account_cards %}
+          <td class="align-middle">
+            <i class="fa-regular fa-credit-card"></i>
+            <strong>{{ card.brand }}</strong>
+            <span class="badge text-bg-success">{% trans "Active" %}</span>
+          </td>
+          <td class="align-middle">************<strong>{{ card.last4 }}</strong></td>
+          <td class="align-middle">{{ card.exp_month }}/{{ card.exp_year }}</td>
+          <td class="align-middle">
+            <strong>{% trans "Owner" %}:</strong>
+            {{ card.owner }}
+          </td>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-warning">
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        You don't have an autopay card set for your account.
+      {% endblocktrans %}
+    </div>
+  {% endif %}
 </fieldset>
 
 <div class="htmx-indicator">
