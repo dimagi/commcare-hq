@@ -1,0 +1,63 @@
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
+
+from corehq.apps.accounting.models import StripePaymentMethod
+from corehq.apps.accounting.tests import generator
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils.autopay import (
+    get_autopay_card_and_owner_for_billing_account,
+    set_card_as_autopay_for_billing_account,
+)
+
+
+def mock_fake_card(card_id, *, metadata=None, brand='Visa', last4='4242', exp_month=1, exp_year=2030):
+    return SimpleNamespace(
+        id=card_id,
+        metadata=metadata or {},
+        brand=brand,
+        last4=last4,
+        exp_month=exp_month,
+        exp_year=exp_year,
+        object='card',
+    )
+
+
+class AutoPayUtilsTest(BaseAccountingTest):
+    def setUp(self):
+        super().setUp()
+        self.billing_contact = generator.create_arbitrary_web_user_name()
+        self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
+        self.currency = generator.init_default_currency()
+        self.domain = generator.arbitrary_domain()
+        self.billing_account = generator.billing_account(self.dimagi_user, self.billing_contact)
+        self.billing_account.created_by_domain = self.domain.name
+        self.billing_account.save()
+
+    def test_get_autopay_card_and_owner_for_billing_account_no_autopay(self):
+        card, owner = get_autopay_card_and_owner_for_billing_account(self.billing_account)
+        assert card is None
+        assert owner is None
+
+    @patch('corehq.apps.accounting.models.StripePaymentMethod.objects.get')
+    def test_get_autopay_card_and_owner_for_billing_account_with_autopay(self, get_mock):
+        autopay_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
+        self.billing_account.auto_pay_user = autopay_user.username
+        self.billing_account.save()
+        pm = Mock(spec=StripePaymentMethod)
+        autopay_card = mock_fake_card('card_b')
+        pm.get_autopay_card.return_value = autopay_card
+        get_mock.return_value = pm
+
+        card, owner = get_autopay_card_and_owner_for_billing_account(self.billing_account)
+
+        assert card is autopay_card
+        assert owner is autopay_user.username
+
+    def test_card_as_autopay_for_billing_account_sets_autopay(self):
+        pm = Mock(spec=StripePaymentMethod)
+        card_obj = mock_fake_card('card_tok_123')
+        pm.get_card.return_value = card_obj
+        set_card_as_autopay_for_billing_account(pm, 'card_tok_123', self.billing_account, self.domain.name)
+
+        pm.get_card.assert_called_once_with('card_tok_123')
+        pm.set_autopay.assert_called_once_with(card_obj, self.billing_account, self.domain.name)
