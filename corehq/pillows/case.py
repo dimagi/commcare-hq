@@ -87,7 +87,6 @@ def get_case_pillow(
     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
     topics=None,
     dedicated_migration_process=False,
-    include_demo_topic=False,
     **kwargs,
 ):
     """Return a pillow that processes cases. The processors include, UCR and elastic processors
@@ -102,10 +101,12 @@ def get_case_pillow(
         expected_topics = set(CASE_TOPICS + (DEMO_CASE_SQL,))  # the demo case sql topic is only used here
         assert set(topics).issubset(expected_topics), "This is a pillow to process cases only"
     else:
-        if include_demo_topic:
-            topics = CASE_TOPICS + (DEMO_CASE_SQL,)
-        else:
+        # if running a demo case pillow, no need for the case pillow process to consume changes from the demo topic
+        if settings.RUN_DEMO_CASE_PILLOW:
             topics = CASE_TOPICS
+        else:
+            # drain changes from the demo case sql topic
+            topics = CASE_TOPICS + (DEMO_CASE_SQL,)
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
         dedicated_migration_process=dedicated_migration_process
