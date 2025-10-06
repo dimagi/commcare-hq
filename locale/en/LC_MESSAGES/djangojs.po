@@ -714,10 +714,6 @@ msgstr ""
 msgid "Form Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Could not enable user properties, please try again later."
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "This form either no longer exists or has a different case type"
 msgstr ""

@@ -111,7 +111,7 @@ class TestVerifyPaymentCases(TestCase):
 
         with pytest.raises(
             PaymentRequestError,
-            match="Only payments in the '{}' or '{}' state are eligible for verification.".format(
+            match="Verification: Payment status must be one of the following: '{}', '{}'".format(
                 PaymentStatus.NOT_VERIFIED.label,
                 PaymentStatus.REQUEST_FAILED.label
             )
@@ -278,18 +278,19 @@ class TestRequestPaymentsForCases(TestCase):
             self._create_payment_case('case 1', self._payment_details),
             self._create_payment_case('case 2', self._payment_details),
         ]
+        payment_cases_ids = [case.case_id for case in payment_cases]
         self.case_list.extend(payment_cases)  # for cleanup
-        request_payments_for_cases([_case.case_id for _case in payment_cases], self.config)
+        request_payments_for_cases(payment_cases_ids, self.config)
 
         bulk_update_cases_mock.assert_called_once()
         _, payment_updates = bulk_update_cases_mock.call_args[0]
         assert len(payment_updates) == 2
 
-        case_id, payment_property_update, _ = payment_updates[0]
-        assert case_id == payment_cases[0].case_id
-        assert payment_property_update['transaction_id'] == transaction_id
-        assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.SUBMITTED
-        assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
+        for case_id, payment_property_update, _ in payment_updates:
+            assert case_id in payment_cases_ids
+            assert payment_property_update['transaction_id'] == transaction_id
+            assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.SUBMITTED
+            assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
 
     @patch('corehq.apps.integration.payments.services._make_payment_request')
     @patch('corehq.apps.integration.payments.services.bulk_update_cases')
@@ -310,6 +311,7 @@ class TestRequestPaymentsForCases(TestCase):
                 }
             ),
         ]
+        payment_cases_ids = [case.case_id for case in payment_cases]
         self.case_list.extend(payment_cases)  # for cleanup
 
         for payment_case in payment_cases:
@@ -317,23 +319,23 @@ class TestRequestPaymentsForCases(TestCase):
             assert case_data.get('transaction_id') is None
             assert PaymentProperties.PAYMENT_TIMESTAMP not in case_data
 
-        request_payments_for_cases([_case.case_id for _case in payment_cases], self.config)
+        request_payments_for_cases(payment_cases_ids, self.config)
 
         bulk_update_cases_mock.assert_called_once()
         _, payment_updates = bulk_update_cases_mock.call_args[0]
         assert len(payment_updates) == 2
 
-        case_id, payment_property_update, _ = payment_updates[0]
-        eligible_case = payment_cases[0]
-        assert case_id == eligible_case.case_id
-
-        case_id, payment_property_update, _ = payment_updates[1]
-        non_eligible_case = payment_cases[1]
-        assert case_id == non_eligible_case.case_id
-        assert 'transaction_id' not in payment_property_update
-        assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
-        assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.REQUEST_FAILED
-        assert payment_property_update[PaymentProperties.PAYMENT_ERROR] == 'PaymentRequestError'
+        for case_id, payment_property_update, _ in payment_updates:
+            assert case_id in payment_cases_ids
+            if case_id == payment_cases_ids[1]:
+                assert 'transaction_id' not in payment_property_update
+                assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
+                assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.REQUEST_FAILED
+                assert payment_property_update[PaymentProperties.PAYMENT_ERROR] == 'PaymentRequestError'
+            else:
+                assert payment_property_update['transaction_id'] == transaction_id
+                assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.SUBMITTED
+                assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
 
 
 class TestRevertPaymentVerification(TestCase):
@@ -412,7 +414,7 @@ class TestRevertPaymentVerification(TestCase):
 
         with pytest.raises(
             PaymentRequestError,
-            match="Only payments in the '{}' state are eligible for verification reversal.".format(
+            match="Verification reversal: Payment status must be one of the following: '{}'".format(
                 PaymentStatus.PENDING_SUBMISSION.label
             )
         ):

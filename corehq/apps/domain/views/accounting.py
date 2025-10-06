@@ -3,6 +3,10 @@ import json
 from collections import namedtuple
 from decimal import Decimal
 
+import dateutil
+from couchdbkit import ResourceNotFound
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -23,13 +27,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-
-import dateutil
-from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
-
-from dimagi.utils.web import json_response
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -116,6 +115,7 @@ from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.const import USER_DATE_FORMAT
+from corehq.toggles import SHOW_AUTO_RENEWAL
 
 PAYMENT_ERROR_MESSAGES = {
     400: gettext_lazy('Your request was not formatted properly.'),
@@ -211,12 +211,55 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def can_purchase_credits(self):
         return self.request.couch_user.can_edit_billing()
 
+    def can_set_auto_renew(self):
+        can_access_auto_renewal = (
+            SHOW_AUTO_RENEWAL.enabled(self.request.domain)
+            and self.request.couch_user.can_edit_billing()
+        )
+        subscription_eligible_for_auto_renewal = (
+            self.current_subscription.service_type == SubscriptionType.PRODUCT
+            and self.current_subscription.date_end is not None
+        )
+        subscription_is_auto_renew = self.current_subscription.auto_renew
+        next_subscription = self.current_subscription.next_subscription
+        next_created_by_auto_renew = SubscriptionAdjustment.objects.filter(
+            subscription=next_subscription,
+            method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+            reason=SubscriptionAdjustmentReason.CREATE
+        ).exists() if next_subscription else False
+
+        return (
+            can_access_auto_renewal
+            and subscription_eligible_for_auto_renewal
+            and (
+                next_subscription is None
+                or (subscription_is_auto_renew and next_created_by_auto_renew)
+            )
+        )
+
+    @property
+    def renewal_plan_preview(self):
+        if not self.can_set_auto_renew() or self.current_subscription.auto_renew:
+            # details are only needed if user will see the option to enable auto renew
+            return None
+
+        current_plan = self.current_subscription.plan_version.plan
+        next_version = DefaultProductPlan.get_default_plan_version(
+            current_plan.edition, is_annual_plan=current_plan.is_annual_plan
+        )
+        return {
+            'is_annual_plan': next_version.plan.is_annual_plan,
+            'name': next_version.plan.name,
+            'price': _("USD %s /month") % next_version.product_rate.monthly_fee,
+        }
+
     @property
     @memoized
     def plan(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         date_end = None
+        days_left = None
         next_subscription = {
             'exists': False,
             'can_renew': False,
@@ -231,6 +274,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         if subscription.date_end is not None else "--")
 
             if subscription.date_end is not None:
+                days_left = (subscription.date_end - datetime.date.today()).days
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
@@ -244,7 +288,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     })
 
                 else:
-                    days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
                         'can_renew': days_left <= 90,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
@@ -280,7 +323,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
                            if subscription is not None else None),
             'date_end': date_end,
+            'days_left': days_left,
             'cards': cards,
+            'is_auto_renew': subscription.auto_renew,
             'next_subscription': next_subscription,
             'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
             'is_annual_plan': plan_version.plan.is_annual_plan,
@@ -371,6 +416,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
+            'can_set_auto_renew': self.can_set_auto_renew(),
+            'renewal_plan_preview': self.renewal_plan_preview,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
@@ -384,8 +431,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap3/update_billing_contact_info.html'
+    template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
     page_title = gettext_lazy("Billing Information")
     async_handlers = [

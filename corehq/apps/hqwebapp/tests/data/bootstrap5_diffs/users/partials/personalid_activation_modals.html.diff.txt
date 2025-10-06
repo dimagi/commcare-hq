@@ -1,12 +1,6 @@
 --- 
 +++ 
-@@ -2,16 +2,18 @@
- 
- <div
-   class="modal fade"
--  data-bind="attr: {id: 'activate_personalid_link_' + username()}"
-+  data-bind="attr: {id: 'activate_personalid_link_' + user_id()}"
- >
+@@ -7,11 +7,13 @@
    <div class="modal-dialog">
      <div class="modal-content">
        <div class="modal-header">
@@ -40,13 +34,7 @@
            data-bind="click: function(user) { user.is_personalid_link_active(true); }"
          >
            {% trans "Link" %}
-@@ -49,16 +52,18 @@
- 
- <div
-   class="modal fade"
--  data-bind="attr: {id: 'deactivate_personalid_link_' + username()}"
-+  data-bind="attr: {id: 'deactivate_personalid_link_' + user_id()}"
- >
+@@ -54,11 +57,13 @@
    <div class="modal-dialog">
      <div class="modal-content">
        <div class="modal-header">

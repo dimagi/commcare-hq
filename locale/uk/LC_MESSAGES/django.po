@@ -315,6 +315,18 @@ msgid "Version"
 msgstr "Версія"
 
 #: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Shadow Module Version"
+msgid "Show Most Recent Version"
+msgstr "Версія тіньового модуля"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Show All Groups"
+msgid "Show All Versions"
+msgstr "Показати всі групи"
+
+#: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
@@ -336,6 +348,18 @@ msgstr "Не виставляти рахунок"
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Do Not Invoice\""
 msgstr "Обґрунтуйте, чому \"Не виставляти рахунок\""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Do Not Invoice"
+msgid "Do Not Email Invoices"
+msgstr "Не виставляти рахунок"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Next Subscription Begins"
+msgid "Do Not Email Subscription Reminders"
+msgstr "Початок наступної підписки"
 
 #: corehq/apps/accounting/forms.py
 msgid "Auto-generate Plan Credits"
@@ -360,6 +384,153 @@ msgstr "Виключити з автоматизованого процесу п
 #: corehq/apps/accounting/forms.py
 msgid "Justify why \"Skip Auto Pause\""
 msgstr "Обґрунтуйте, чому \"Пропустити автоматичну паузу\""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Enable auto select"
+msgid "Enable auto renewal"
+msgstr "Увімкнути автоматичний вибір"
+
+#: corehq/apps/accounting/forms.py
+msgid "Applies if subscription has a future end date and is type 'Product'"
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Please select version"
+msgid "is most recent version"
+msgstr "Будь ласка, оберіть версію"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Cannot make new version"
+msgid "not most recent version"
+msgstr "Неможливо створити нову версію"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Already Paid"
+msgid "(already started)"
+msgstr "Вже оплачено"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Already in use."
+msgid "(already ended)"
+msgstr "Вже використовується."
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Billing Account"
+msgid "Search for Billing Account"
+msgstr "Рахунок для виставлення рахунків"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "From Project Space"
+msgid "Search for Project Space"
+msgstr "З простору проєкту"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "New Software Plan"
+msgid "Search for Software Plan"
+msgstr "Новий план програмного забезпечення"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Select Action"
+msgid "Select Active Account"
+msgstr "Виберіть дію"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy, python-format
+#| msgid "Subscription"
+msgid "%s Subscription"
+msgstr "Підписка"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
+#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
+#: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/reports/views.py
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/toggle_ui/templates/toggle/flags.html
+#: corehq/apps/users/templates/users/web_users.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
+#: corehq/tabs/tabclasses.py
+msgid "Edit"
+msgstr "Редагувати"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/accounting_admins.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
+#: corehq/tabs/tabclasses.py
+msgid "New"
+msgstr "Новий"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Hide Options"
+msgid "Invoice Options"
+msgstr "Сховати параметри"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Filter Options"
+msgid "Email Options"
+msgstr "Параметри фільтра"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Case Options"
+msgid "Credit Options"
+msgstr "Параметри кейсу"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Justify why \"Skip Auto Pause\""
+msgid "Skip Auto Pause"
+msgstr "Обґрунтуйте, чому \"Пропустити автоматичну паузу\""
+
+#: corehq/apps/accounting/forms.py
+msgid "Auto Renew"
+msgstr ""
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/case_search/models.py
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
+#: corehq/apps/integration/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
+#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
+#: corehq/apps/users/forms.py corehq/apps/users/models.py
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Update"
+msgstr "Оновити"
+
+#: corehq/apps/accounting/forms.py corehq/apps/case_search/models.py
+#: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Create"
+msgstr "Створити"
 
 #: corehq/apps/accounting/forms.py
 msgid "Please select an account other than the current account to transfer to."
@@ -1172,13 +1343,6 @@ msgid "Remove User"
 msgstr "Видалити користувача"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_case_groups.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_case_groups.html
-#: corehq/tabs/tabclasses.py
-msgid "New"
-msgstr "Новий"
-
-#: corehq/apps/accounting/templates/accounting/accounting_admins.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 msgid "Removed"
@@ -1272,8 +1436,8 @@ msgid ""
 "    www.commcarehq.org\n"
 "  </p>\n"
 "  <p>\n"
-"    Statement From: CommCare and the corporation Dimagi, Inc. 585 "
-"Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main "
+"Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
 msgstr ""
@@ -1418,6 +1582,9 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -1429,7 +1596,7 @@ msgid ""
 "\n"
 "    Email From:<br />\n"
 "    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
@@ -1511,7 +1678,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 3, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "Дякуємо, що користуєєтесь CommCare. Якщо у вас виникли питання, будь ласка, "
 "звертайтесь до %(invoicing_contact_email)s.\n"
@@ -1535,29 +1702,6 @@ msgstr ""
 "\n"
 "    Це лист-підтвердження вашої передоплати <strong>%(amount)s</strong> за "
 "кредити до вашого проєкту %(project)s.\n"
-"  "
-
-#: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    Email From:<br />\n"
-#| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
-#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#| "  "
-msgid ""
-"\n"
-"    Email From:<br />\n"
-"    CommCare and the corporation Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-"  "
-msgstr ""
-"\n"
-"    Лист від:<br />\n"
-"    CommCare HQ та компанії Dimagi, Inc.<br />\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.txt
@@ -1616,7 +1760,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Лист від:\n"
@@ -2225,7 +2369,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Дякуємо, що користуєтеся %(plan_name)s. Якщо у вас виникли питання, будь "
@@ -2816,7 +2960,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Дякуємо, що користуєтеся %(plan_name)s. Якщо у вас виникли питання, будь "
@@ -2969,7 +3113,7 @@ msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 "  "
 msgstr ""
 "\n"
@@ -3052,7 +3196,7 @@ msgid ""
 "\n"
 "    Statement From:\n"
 "    CommCare and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "    Виписано від:\n"
@@ -3156,7 +3300,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Дякуємо, що користуєтеся CommCare. Якщо у вас виникли запитання, будь "
@@ -3999,7 +4143,7 @@ msgid ""
 "\n"
 "Statement From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgstr ""
 "\n"
 "Примітка: Будь-які додаткові нарахування за понаднормових користувачів або "
@@ -4714,28 +4858,6 @@ msgstr "Остання дата сплати рахунку"
 msgid "\"Do Not Invoice\" Reason"
 msgstr "Причина \"Не виставляти рахунок\""
 
-#: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/reports/views.py
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/toggle_ui/templates/toggle/flags.html
-#: corehq/apps/users/templates/users/web_users.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/tabs/tabclasses.py
-msgid "Edit"
-msgstr "Редагувати"
-
 #: corehq/apps/accounting/templates/accounting/plans.html
 msgid "Plan Information"
 msgstr "Інформація про тарифний план"
@@ -4984,7 +5106,8 @@ msgstr "Додані користувачі:"
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
-#: corehq/apps/reminders/views.py corehq/apps/reports/filters/users.py
+#: corehq/apps/reminders/views.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
@@ -5641,6 +5764,7 @@ msgstr "Статус:"
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/templates/integration/web_app_integration_err.html
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -11210,26 +11334,53 @@ msgid "Display Condition"
 msgstr "Умова відображення"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#, fuzzy
+#| msgid ""
+#| "The form will not appear in the menu unless this condition is met. Read "
+#| "more on the <a target='_blank' href='https://confluence.dimagi.com/"
+#| "display/commcarepublic/Form+Display+Conditions'>Help Site</a>."
 msgid ""
-"The form will not appear in the menu unless this condition is met. Read more "
-"on the <a target='_blank' href='https://confluence.dimagi.com/display/"
-"commcarepublic/Form+Display+Conditions'>Help Site</a>."
+"\n"
+"          The form will not appear in the menu unless this condition is "
+"met.\n"
+"          Read more on the\n"
+"          <a\n"
+"            target=\"_blank\"\n"
+"            href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Form+Display+Conditions\"\n"
+"            >Help Site</a\n"
+"          >.\n"
+"        "
 msgstr ""
 "Форма не з'явиться в меню, якщо ця умова не виконана. Детальніше на <a "
 "target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/"
 "Form+Display+Conditions'>сайті довідки</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              To use display conditions which reference a case, <br/>\n"
+#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
+#| "              <em>Display menu and then forms</em> <br/>\n"
+#| "              (2) all the forms in the case list must update or close a "
+#| "case, which means registration\n"
+#| "              forms must go in a separate case list, or if your project "
+#| "uses user properties, your\n"
+#| "              display condition may use user properties.\n"
+#| "            "
 msgid ""
 "\n"
-"              To use display conditions which reference a case, <br/>\n"
+"              To use display conditions which reference a case, <br />\n"
 "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-"              <em>Display menu and then forms</em> <br/>\n"
+"              <em>Display menu and then forms</em> <br />\n"
 "              (2) all the forms in the case list must update or close a "
-"case, which means registration\n"
-"              forms must go in a separate case list, or if your project uses "
-"user properties, your\n"
-"              display condition may use user properties.\n"
+"case,\n"
+"              which means registration forms must go in a separate case "
+"list, or\n"
+"              if your project uses user properties, your display condition "
+"may\n"
+"              use user properties.\n"
 "            "
 msgstr ""
 "\n"
@@ -11247,30 +11398,21 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-msgid ""
-"\n"
-"              To use display conditions which reference a user property, "
-"user properties must be\n"
-"              enabled for your project.\n"
-"            "
-msgstr ""
-"\n"
-"              Щоб використовувати умови відображення, які посилаються на "
-"властивість користувача, властивості користувача мають бути\n"
-"              увімкнені для вашого проєкту.\n"
-"            "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
-msgid "Enable user properties"
-msgstr "Увімкнути властивості користувача"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          There is something wrong with the logic in the Form Display "
+#| "Condition.\n"
+#| "          Check to make sure your parentheses match and you are "
+#| "referencing case properties correctly.\n"
+#| "        "
 msgid ""
 "\n"
 "          There is something wrong with the logic in the Form Display "
 "Condition.\n"
 "          Check to make sure your parentheses match and you are referencing "
-"case properties correctly.\n"
+"case\n"
+"          properties correctly.\n"
 "        "
 msgstr ""
 "\n"
@@ -14284,21 +14426,6 @@ msgstr ""
 "Надіслати email після завершення (рекомендується для великих застосунків)"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/case_search/models.py
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
-#: corehq/apps/integration/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
-#: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/users/forms.py corehq/apps/users/models.py
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Update"
-msgstr "Оновити"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/templates/reports/async/print_report.html
 msgid "Loading ..."
@@ -16114,7 +16241,7 @@ msgid "Success with warnings"
 msgstr "Успішно з попередженнями"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/repeaters/const.py
+#: corehq/apps/integration/kyc/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr "Помилка"
@@ -16383,14 +16510,6 @@ msgstr "{param} має бути рядком"
 #: corehq/apps/case_search/models.py
 msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
 msgstr ""
-
-#: corehq/apps/case_search/models.py
-#: corehq/apps/events/templates/events/event_attendees.html
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Create"
-msgstr "Створити"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -18641,8 +18760,8 @@ msgid "Completed"
 msgstr "Завершено"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#: corehq/apps/registry/models.py corehq/apps/sms/models.py
-#: corehq/motech/repeaters/const.py
+#: corehq/apps/integration/kyc/models.py corehq/apps/registry/models.py
+#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
@@ -22685,6 +22804,7 @@ msgstr ""
 "зверніться до %(email)s для керування контрактом тривалістю понад 5 років."
 
 #: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "user"
 msgstr "користувач"
 
@@ -26332,59 +26452,6 @@ msgstr ""
 msgid "Use Backup Token"
 msgstr "Використати резервний токен"
 
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid "Please set up Two-Factor Authentication"
-msgstr "Будь ласка, налаштуйте двофакторну автентифікацію"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      For security purposes, your CommCare administrator has required that "
-"all users in your project set up\n"
-"      two-factor authentication.<br>This is an extra layer of protection "
-"used to ensure the security of your account\n"
-"      beyond a username and password. \n"
-"    "
-msgstr ""
-"\n"
-"      З міркувань безпеки ваш адміністратор CommCare      двофакторну "
-"автентифікацію.<br>Це додатковий рівень захисту, який використовується для "
-"забезпечення безпеки вашого облікового запису\n"
-"      понад ім'я користувача та пароль.    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-msgid ""
-"\n"
-"      To access your account, please enable two-factor authentication "
-"below.\n"
-"    "
-msgstr ""
-"\n"
-"      Щоб отримати доступ до свого облікового запису, будь ласка, увімкніть "
-"двофакторну автентифікацію нижче.\n"
-"    "
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
-msgid "Go back"
-msgstr "Повернутися назад"
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
-msgid "Enable Two-Factor Authentication"
-msgstr "Увімкнути двофакторну автентифікацію"
-
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/phone_register.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/phone_register.html
 msgid "Add Backup Phone"
@@ -26407,6 +26474,16 @@ msgid ""
 msgstr ""
 "Ми надіслали токен на ваш номер телефону. Будь ласка, введіть отриманий "
 "токен."
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
+msgid "Enable Two-Factor Authentication"
+msgstr "Увімкнути двофакторну автентифікацію"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/setup.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup.html
@@ -26503,6 +26580,44 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/setup_complete.html
 msgid "Generate Backup Tokens"
 msgstr "Згенерувати резервні токени"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid "Please set up Two-Factor Authentication"
+msgstr "Будь ласка, налаштуйте двофакторну автентифікацію"
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      For security purposes, your CommCare administrator has required that "
+"all users in your project set up\n"
+"      two-factor authentication.<br>This is an extra layer of protection "
+"used to ensure the security of your account\n"
+"      beyond a username and password. \n"
+"    "
+msgstr ""
+"\n"
+"      З міркувань безпеки ваш адміністратор CommCare      двофакторну "
+"автентифікацію.<br>Це додатковий рівень захисту, який використовується для "
+"забезпечення безпеки вашого облікового запису\n"
+"      понад ім'я користувача та пароль.    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+msgid ""
+"\n"
+"      To access your account, please enable two-factor authentication "
+"below.\n"
+"    "
+msgstr ""
+"\n"
+"      Щоб отримати доступ до свого облікового запису, будь ласка, увімкніть "
+"двофакторну автентифікацію нижче.\n"
+"    "
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
+msgid "Go back"
+msgstr "Повернутися назад"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
@@ -26892,16 +27007,6 @@ msgstr "3. Підтвердити платіжний акаунт"
 #: corehq/apps/domain/views/accounting.py
 #, python-format
 msgid ""
-"You do not have permission to change the subscription for this customer-"
-"level account. Please reach out to the %s enterprise admin for help."
-msgstr ""
-"У вас немає дозволу змінювати підписку для цього облікового запису на рівні "
-"клієнта. Будь ласка, зверніться до адміністратора підприємства %s для "
-"допомоги."
-
-#: corehq/apps/domain/views/accounting.py
-#, python-format
-msgid ""
 "Thank you for choosing to stay with your %(software_plan_name)s Edition Plan "
 "subscription."
 msgstr ""
@@ -26970,16 +27075,6 @@ msgid "Your subscription was successfully renewed!"
 msgstr "Вашу підписку успішно поновлено!"
 
 #: corehq/apps/domain/views/accounting.py
-#, python-format
-msgid ""
-"You do not have permission to pause the subscription for this customer-level "
-"account. Please reach out to the %s enterprise admin for help."
-msgstr ""
-"У вас немає дозволу призупинити підписку для цього облікового запису на "
-"рівні клієнта. Будь ласка, зверніться до адміністратора підприємства %s для "
-"допомоги."
-
-#: corehq/apps/domain/views/accounting.py
 msgid ""
 "Your project's subscription will be paused on {}. We hope to see you again!"
 msgstr ""
@@ -26997,6 +27092,40 @@ msgid ""
 msgstr ""
 "Нам не вдалося призупинити вашу підписку зараз. Якщо ця помилка "
 "повторюється, будь ласка, зверніться до {}. Вибачте за незручності."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Auto renewal cannot be enabled for the current subscription."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid ""
+#| "Congratulations, you've successfully enabled two-factor\n"
+#| "    authentication."
+msgid "Auto renewal successfully enabled for the current subscription."
+msgstr ""
+"Вітаємо, ви успішно увімкнули двофакторну\n"
+"    автентифікацію."
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid "Multimedia was successfully updated for the linked app."
+msgid "Auto renewal successfully disabled for the current subscription."
+msgstr "Мультимедіа успішно оновлено для пов’язаної програми."
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "You do not have permission to pause the subscription for this customer-"
+#| "level account. Please reach out to the %s enterprise admin for help."
+msgid ""
+"You do not have permission to modify the subscription for this customer-"
+"level account. Please reach out to the {account_name} enterprise admin for "
+"help."
+msgstr ""
+"У вас немає дозволу призупинити підписку для цього облікового запису на "
+"рівні клієнта. Будь ласка, зверніться до адміністратора підприємства %s для "
+"допомоги."
 
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
@@ -34511,6 +34640,12 @@ msgstr "Недійсна дата"
 msgid "US"
 msgstr ""
 
+#: corehq/apps/hqwebapp/tables/elasticsearch/records.py
+#, fuzzy
+#| msgid "user"
+msgid "users"
+msgstr "користувач"
+
 #: corehq/apps/hqwebapp/tables/export.py
 msgid "Unsupported export format: {}. Supported formats are: {}"
 msgstr ""
@@ -36587,6 +36722,18 @@ msgstr "Ідентифікатор проєкту"
 msgid "Module ID"
 msgstr "Ідентифікатор модуля"
 
+#: corehq/apps/integration/kyc/filters.py corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "KYC Status"
+msgstr "Статус KYC"
+
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/factory.py
+msgid "Show all"
+msgstr "Показати всі"
+
 #: corehq/apps/integration/kyc/forms.py
 msgid "Recipient Data Store"
 msgstr "Сховище даних отримувача"
@@ -36634,6 +36781,22 @@ msgstr ""
 "Case Type\"."
 
 #: corehq/apps/integration/kyc/models.py
+msgid "Unknown error"
+msgstr "Невідома помилка"
+
+#: corehq/apps/integration/kyc/models.py
+#, fuzzy
+#| msgid "Pass"
+msgid "Passed"
+msgstr "Пройдено"
+
+#: corehq/apps/integration/kyc/models.py
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+msgid "Invalid"
+msgstr "Недійсний"
+
+#: corehq/apps/integration/kyc/models.py
 msgid "User information on HQ is not complete or invalid."
 msgstr "Інформація про користувача в HQ неповна або недійсна."
 
@@ -36654,11 +36817,6 @@ msgid "API error occurred. Please reach out to support."
 msgstr "Виникла помилка API. Будь ласка, зверніться до служби підтримки."
 
 #: corehq/apps/integration/kyc/tables.py
-#: corehq/apps/integration/payments/tables.py
-msgid "KYC Status"
-msgstr "Статус KYC"
-
-#: corehq/apps/integration/kyc/tables.py
 msgid "Last Verified"
 msgstr "Остання перевірка"
 
@@ -36675,10 +36833,6 @@ msgstr "Перевірити"
 #: corehq/apps/integration/kyc/views.py
 msgid "KYC Configuration"
 msgstr "Конфігурація KYC"
-
-#: corehq/apps/integration/kyc/views.py
-msgid "Unknown error"
-msgstr "Невідома помилка"
 
 #: corehq/apps/integration/kyc/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -36710,12 +36864,6 @@ msgstr "Запит не виконано"
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
 msgstr "Статус платежу"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/factory.py
-msgid "Show all"
-msgstr "Показати всі"
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Batch number"
@@ -37067,11 +37215,6 @@ msgstr "Пройдено"
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "Fail"
 msgstr "Не пройдено"
-
-#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-msgid "Invalid"
-msgstr "Недійсний"
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "The status has been manually set to an invalid value. Please re-verify."
@@ -62448,6 +62591,51 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "    Email From:<br />\n"
+#~| "    CommCare HQ and the corporation Dimagi, Inc.<br />\n"
+#~| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~| "  "
+#~ msgid ""
+#~ "\n"
+#~ "    Email From:<br />\n"
+#~ "    CommCare and the corporation Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Лист від:<br />\n"
+#~ "    CommCare HQ та компанії Dimagi, Inc.<br />\n"
+#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "              To use display conditions which reference a user property, "
+#~ "user properties must be\n"
+#~ "              enabled for your project.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Щоб використовувати умови відображення, які посилаються на "
+#~ "властивість користувача, властивості користувача мають бути\n"
+#~ "              увімкнені для вашого проєкту.\n"
+#~ "            "
+
+#~ msgid "Enable user properties"
+#~ msgstr "Увімкнути властивості користувача"
+
+#, python-format
+#~ msgid ""
+#~ "You do not have permission to change the subscription for this customer-"
+#~ "level account. Please reach out to the %s enterprise admin for help."
+#~ msgstr ""
+#~ "У вас немає дозволу змінювати підписку для цього облікового запису на "
+#~ "рівні клієнта. Будь ласка, зверніться до адміністратора підприємства %s "
+#~ "для допомоги."
 
 #~ msgid "Invalid Payload"
 #~ msgstr "Недійсний вміст"

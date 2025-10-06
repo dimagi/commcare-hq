@@ -775,10 +775,6 @@ msgstr "Modifica modulo"
 msgid "Form Settings"
 msgstr "Impostazioni modulo"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Could not enable user properties, please try again later."
-msgstr "Impossibile abilitare le proprietà utente, riprova più tardi."
-
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "This form either no longer exists or has a different case type"
 msgstr "Questo modulo non esiste più o ha un tipo di caso diverso"
@@ -4265,6 +4261,9 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr "Impossibile abilitare le proprietà utente, riprova più tardi."
 
 #~ msgid "Email address is required when users confirm their own accounts."
 #~ msgstr ""
