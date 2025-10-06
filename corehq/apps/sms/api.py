@@ -581,6 +581,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     domain_scope - set the domain scope for this SMS; see SMSBase.domain_scope for details
     media_urls - list of urls for media download.
     """
+    logging.info("Incoming SMS to process")
     # Log message in message log
     if text is None:
         text = ""
@@ -741,37 +742,63 @@ def _domain_accepts_inbound(msg):
 
 
 def _process_incoming(msg, phone=None):
+    logging.info(
+        "Processing incoming SMS: phone_number=%s, domain=%s, domain_scope=%s, backend_id=%s, text_preview=%s",
+        msg.phone_number, msg.domain, msg.domain_scope, msg.backend_id, msg.text[:50] + "..." if len(msg.text) > 50 else msg.text
+    )
     sms_load_counter("inbound", msg.domain)()
     if phone is None:
+        logging.info("Looking up verified number for phone_number=%s", msg.phone_number)
         verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
     else:
+        logging.info("Using provided phone entry: %s", phone)
         verified_number = phone
         has_domain_two_way_scope = phone.is_two_way
     is_two_way = verified_number is not None and verified_number.is_two_way
+    logging.info(
+        "Phone verification results: verified_number=%s, has_domain_two_way_scope=%s, is_two_way=%s",
+        verified_number.phone_number if verified_number else None,
+        has_domain_two_way_scope,
+        is_two_way
+    )
 
     if verified_number:
+        logging.info("Found verified number for domain=%s, owner_type=%s, owner_id=%s", 
+                     verified_number.domain, verified_number.owner_doc_type, verified_number.owner_id)
         if any_migrations_in_progress(verified_number.domain):
+            logging.info("Delaying processing due to migrations in progress for domain=%s", verified_number.domain)
             raise DelayProcessing()
 
         msg.couch_recipient_doc_type = verified_number.owner_doc_type
         msg.couch_recipient = verified_number.owner_id
         msg.domain = verified_number.domain
         msg.location_id = get_location_id_by_verified_number(verified_number)
+        logging.info("Updated message with verified number info: domain=%s, recipient=%s, location_id=%s", 
+                     msg.domain, msg.couch_recipient, msg.location_id)
         msg.save()
 
     elif msg.domain_scope:
+        logging.info("No verified number found, using domain_scope=%s", msg.domain_scope)
         if any_migrations_in_progress(msg.domain_scope):
+            logging.info("Delaying processing due to migrations in progress for domain_scope=%s", msg.domain_scope)
             raise DelayProcessing()
 
         msg.domain = msg.domain_scope
+        logging.info("Updated message domain to domain_scope=%s", msg.domain)
         msg.save()
+    else:
+        logging.info("No verified number or domain_scope found for message")
 
     opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords = get_opt_keywords(msg)
     domain = verified_number.domain if verified_number else None
     opt_keyword = False
+    logging.info("Checking for opt keywords: opt_in=%s, opt_out=%s, pass_through=%s, domain=%s", 
+                 opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords, domain)
 
     if is_opt_message(msg.text, opt_out_keywords):
+        logging.info("Detected opt-out message from phone_number=%s, domain=%s", msg.phone_number, domain)
         if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
+            logging.info("Successfully opted out phone_number=%s, sending confirmation", msg.phone_number)
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, verified_number, context=(opt_in_keywords[0],))
             if verified_number:
@@ -781,8 +808,12 @@ def _process_incoming(msg, phone=None):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
             opt_keyword = True
+        else:
+            logging.info("Phone number %s was already opted out or opt-out failed", msg.phone_number)
     elif is_opt_message(msg.text, opt_in_keywords):
+        logging.info("Detected opt-in message from phone_number=%s, domain=%s", msg.phone_number, domain)
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
+            logging.info("Successfully opted in phone_number=%s, sending confirmation", msg.phone_number)
             text = get_message(MSG_OPTED_IN, verified_number, context=(opt_out_keywords[0],))
             if verified_number:
                 send_message_to_verified_number(verified_number, text)
@@ -791,24 +822,44 @@ def _process_incoming(msg, phone=None):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
             opt_keyword = True
+        else:
+            logging.info("Phone number %s was already opted in or opt-in failed", msg.phone_number)
     else:
         if is_opt_message(msg.text, pass_through_opt_in_keywords):
+            logging.info("Detected pass-through opt-in keyword, opting in phone_number=%s and continuing processing", msg.phone_number)
             # Opt the phone number in, and then process the message normally
             PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
 
     handled = False
 
     if _domain_accepts_inbound(msg):
+        logging.info("Domain accepts inbound SMS, proceeding with message handling for domain=%s", msg.domain)
         if verified_number and verified_number.pending_verification:
+            logging.info("Phone number pending verification, processing verification for phone_number=%s", 
+                         verified_number.phone_number)
             from . import verify
             handled = verify.process_verification(
                 verified_number, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
+            logging.info("Verification processing result: handled=%s", handled)
 
         if _allow_load_handlers(verified_number, is_two_way, has_domain_two_way_scope):
+            logging.info("Loading SMS handlers for verified_number=%s, is_two_way=%s, has_domain_two_way_scope=%s", 
+                         verified_number.phone_number if verified_number else None, is_two_way, has_domain_two_way_scope)
             handled = load_and_call(settings.SMS_HANDLERS, verified_number, msg.text, msg)
+            logging.info("SMS handlers processing result: handled=%s", handled)
+        else:
+            logging.info("Not loading handlers: conditions not met for verified_number=%s", 
+                         verified_number.phone_number if verified_number else None)
+    else:
+        logging.info("Domain does not accept inbound SMS or domain privilege check failed for domain=%s", msg.domain)
 
     if not handled and not is_two_way and not opt_keyword:
+        logging.info("Message not handled by other processors, attempting SMS registration")
         handled = process_sms_registration(msg)
+        logging.info("SMS registration processing result: handled=%s", handled)
+    else:
+        logging.info("Skipping SMS registration: handled=%s, is_two_way=%s, opt_keyword=%s", 
+                     handled, is_two_way, opt_keyword)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (
@@ -817,7 +868,15 @@ def _process_incoming(msg, phone=None):
         and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
         and not isinstance(msg, ConnectMessage)
     ):
+        logging.info("Creating billable for SMS: domain=%s, phone_number=%s", msg.domain, msg.phone_number)
         create_billable_for_sms(msg)
+    else:
+        logging.info("Skipping billable creation: queue_enabled=%s, domain=%s, has_privilege=%s, is_connect_msg=%s", 
+                     settings.SMS_QUEUE_ENABLED, msg.domain, 
+                     domain_has_privilege(msg.domain, privileges.INBOUND_SMS) if msg.domain else False,
+                     isinstance(msg, ConnectMessage))
+    logging.info("Completed processing incoming SMS: phone_number=%s, domain=%s, handled=%s", 
+                 msg.phone_number, msg.domain, handled)
 
 
 def create_billable_for_sms(msg, delay=True):
