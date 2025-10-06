@@ -3818,6 +3818,7 @@ class StripePaymentMethod(PaymentMethod):
         return stripe.Customer.retrieve(self.customer_id)
 
     @property
+    @memoized
     def all_cards(self):
         try:
             cards = stripe.Customer.list_sources(customer=self.customer.id, object="card")
