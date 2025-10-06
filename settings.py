@@ -821,6 +821,7 @@ RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
 RUN_DEDUPLICATION_PILLOW = True
+RUN_DEMO_CASE_PILLOW = False
 
 # Repeaters in the order in which they should appear in "Data Forwarding"
 REPEATER_CLASSES = [
@@ -1917,6 +1918,11 @@ PILLOWTOPS = {
             'name': 'LedgerToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'demo-case-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_demo_case_pillow',
         },
     ]
 }
