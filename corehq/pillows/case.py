@@ -98,15 +98,8 @@ def get_case_pillow(
       - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
     """
     if topics:
-        expected_topics = set(CASE_TOPICS + (DEMO_CASE_SQL,))  # the demo case sql topic is only used here
-        assert set(topics).issubset(expected_topics), "This is a pillow to process cases only"
-    else:
-        # if running a demo case pillow, no need for the case pillow process to consume changes from the demo topic
-        if settings.RUN_DEMO_CASE_PILLOW:
-            topics = CASE_TOPICS
-        else:
-            # drain changes from the demo case sql topic
-            topics = CASE_TOPICS + (DEMO_CASE_SQL,)
+        assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
+    topics = topics or CASE_TOPICS
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
         dedicated_migration_process=dedicated_migration_process
