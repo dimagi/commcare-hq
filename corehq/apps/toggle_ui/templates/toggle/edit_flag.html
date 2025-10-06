@@ -176,12 +176,11 @@
         class="btn btn-primary pull-right"
         data-toggle="modal"
         data-target="#change-toggle-status"
-        {% if not user.is_staff %}disabled{% endif %}
       >
-        See More / Edit
+        See More {% if user.is_staff %}/ Edit{% endif %}
       </button>
     </div>
-  {% endif %}
+    {% endif %}
 
   <div class="modal fade" id="change-toggle-status" tabindex="-1" role="dialog" aria-labelledby="change-toggle-status-label">
     <div class="modal-dialog" role="document">
@@ -207,9 +206,9 @@
               turned on or off for individual users or domains. If we are to
               remove a feature flag, you can first set it to "disabled" here,
               which will behave the same as removing everything from the list.
-              Likewise to release a feature flag, set it to "released," and it
-              will behave as if you've enabled the flag for all projects and
-              users.
+              Likewise to make a feature flag generally available (GA), set it
+              to "released," and it will behave as if you've enabled the flag
+              for all projects and users.
             </p>
             {% for status_option in status_options %}
             <div class="radio">
@@ -226,7 +225,11 @@
             {% endfor %}
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-danger">
+            <button
+              type="submit"
+              class="btn btn-danger"
+              {% if not user.is_staff %}disabled{% endif %}
+            >
               Save
             </button>
           </div>
