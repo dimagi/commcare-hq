@@ -5,10 +5,10 @@
 
 {% block stylesheets %}{{ block.super }}
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'accounting/less/pricing.less' %}" />
+          href="{% static 'accounting/scss/pricing.scss' %}" />
   {% endcompress %}
 {% endblock stylesheets %}
 
