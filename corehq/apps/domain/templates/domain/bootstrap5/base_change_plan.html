@@ -10,7 +10,7 @@
           media="all"
           href="{% static 'accounting/less/pricing.less' %}" />
   {% endcompress %}
-{% endblock %}
+{% endblock stylesheets %}
 
 {% block page_content %}
   {% block plan_breadcrumbs %}
@@ -22,9 +22,9 @@
     {% endfor %}
   </ol>
   {% endblock %}
+  {% endblock plan_breadcrumbs %}
   <div class="select-plan-header">
     <h2>{{ step_title }}</h2>
   </div>
-  {% block form_content %}
-  {% endblock %}
-{% endblock %}
+  {% block form_content %}{% endblock form_content %}
+{% endblock page_content %}
