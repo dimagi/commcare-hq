@@ -19,13 +19,13 @@
     {% endblocktrans %}
   </p>
 
-  <div class="card card-modern-gray card-form-only" id="billing-info">  {# todo B5: css-panel #}
+  <div class="card card-modern-gray card-form-only mb-3" id="billing-info">
     <div class="card-body">
       {% crispy billing_account_info_form %}  {# todo B5: crispy #}
     </div>
   </div>
 
-  <div class="card card-modern-gray card-form-only" id="card-manager">  {# todo B5: css-panel #}
+  <div class="card card-modern-gray card-form-only" id="card-manager">
     <div class="card-body">
       {% include "domain/bootstrap5/stripe_cards.html" %}
     </div>
