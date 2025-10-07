@@ -3,6 +3,7 @@ import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import stripeCardManager from "accounting/js/stripe_card_manager";
 import "accounting/js/widgets";
+import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // openModal
 
 $('a.breadcrumb-2').click(function (e) {
     e.preventDefault();
