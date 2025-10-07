@@ -1989,6 +1989,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         self.plan_version = plan_version
         self.current_subscription = current_subscription
         super().__init__(account, domain, creating_user, data=data, *args, **kwargs)
+
+        email_list = [email for email in self.initial.get('email_list', []) if email]  # filter out empty strings
+        if not email_list:
+            email_list = [creating_user]
+
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
@@ -2004,7 +2009,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 crispy.Field(
                     'email_list',
                     css_class='form-control form-control-lg accounting-email-select2',
-                    data_initial=json.dumps(self.initial.get('email_list')),
+                    data_initial=json.dumps(email_list),
                 ),
                 'phone_number',
             ),
