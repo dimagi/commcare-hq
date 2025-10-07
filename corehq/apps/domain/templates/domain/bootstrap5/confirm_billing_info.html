@@ -11,6 +11,7 @@
   {% initial_page_data "stripe_public_key" stripe_public_key %}
   {% initial_page_data "downgrade_email_note" downgrade_email_note %}
   {% registerurl "cards_view" domain %}
+
   <p class="lead text-center">
     {% blocktrans with plan.name as p%}
       You are about to subscribe to the <strong>{{ p }} Software Plan</strong>.<br/>
@@ -26,7 +27,7 @@
 
   <div class="card card-modern-gray card-form-only" id="card-manager">  {# todo B5: css-panel #}
     <div class="card-body">
-      {% include 'domain/bootstrap5/stripe_cards.html' %}
+      {% include "domain/bootstrap5/stripe_cards.html" %}
     </div>
   </div>
-{% endblock %}
+{% endblock form_content %}
