@@ -3837,7 +3837,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_year': card.exp_year,
             'token': card.id,
             'is_autopay': self._is_autopay(card, billing_account),
-            'other_autopay_domains': self._get_other_autopay_domains(card, billing_account),
+            'other_autopay_domains': self._get_other_autopay_primary_domains(card, billing_account),
         } for card in self.all_cards]
 
     def get_card(self, card_token):
@@ -3930,19 +3930,21 @@ class StripePaymentMethod(PaymentMethod):
         return card.metadata.get(StripePaymentMethod._auto_pay_card_metadata_key(billing_account)) == 'True'
 
     @staticmethod
-    def _get_other_autopay_domains(card, billing_account):
+    def _get_other_autopay_primary_domains(card, billing_account):
         autopay_meta = {k: v for k, v in card.metadata.items() if k.startswith('auto_pay_') and v == 'True'}
         if len(autopay_meta) <= 1:
             return []
 
         account_key = StripePaymentMethod._auto_pay_card_metadata_key(billing_account)
         if autopay_meta.get(account_key):
+            # we only want other domains if the card is not autopay for the given billing account
             return []
 
         other_autopay_accounts = [v.replace('auto_pay_', '') for v in autopay_meta.keys()]
         return list(
             BillingAccount.objects.filter(id__in=other_autopay_accounts).values_list(
-                'created_by_domain', flat=True
+                'created_by_domain',  # created_by_domain is considered the "primary" domain for a billing account
+                flat=True,
             )
         )
 
