@@ -1490,7 +1490,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap5/confirm_billing_info.html'
+    template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
     step_title = gettext_lazy("Confirm Billing Information")
     is_new = False
