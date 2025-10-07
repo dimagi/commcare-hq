@@ -1993,8 +1993,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'plan_edition',
             'is_annual_plan',
@@ -2005,7 +2003,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'last_name',
                 crispy.Field(
                     'email_list',
-                    css_class='input-xxlarge accounting-email-select2',
+                    css_class='form-control form-control-lg accounting-email-select2',
                     data_initial=json.dumps(self.initial.get('email_list')),
                 ),
                 'phone_number',
@@ -2019,7 +2017,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'postal_code',
                 crispy.Field(
                     'country',
-                    css_class='input-large accounting-country-select2',
+                    css_class='form-control form-control-lg accounting-country-select2',
                     data_country_code=self.current_country or '',
                     data_country_name=COUNTRIES.get(self.current_country, ''),
                 ),
@@ -2028,7 +2026,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 hqcrispy.LinkButton(
                     _('Cancel'),
                     reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    css_class='btn btn-default',
+                    css_class='btn btn-outline-primary',
                 ),
                 StrictButton(
                     _('Subscribe to Plan'),
