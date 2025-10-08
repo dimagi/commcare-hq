@@ -193,9 +193,10 @@ var CreateScheduleViewModel = function (initialValues, select2UserRecipients,
     self.occurrences = ko.observable(initialValues.occurrences);
     self.recipient_types = ko.observableArray(initialValues.recipient_types || []);
     $('#id_schedule-recipient_types').select2();
+    self.content = ko.observable(initialValues.content);
 
     self.user_recipients = new recipientsSelect2Handler(select2UserRecipients,
-        initialValues.user_recipients, 'schedule-user_recipients');
+        initialValues.user_recipients, 'schedule-user_recipients', self);
     self.user_recipients.init();
 
     self.user_group_recipients = new recipientsSelect2Handler(select2UserGroupRecipients,
@@ -223,7 +224,6 @@ var CreateScheduleViewModel = function (initialValues, select2UserRecipients,
 
     self.is_trial_project = initialValues.is_trial_project;
     self.displayed_email_trial_message = false;
-    self.content = ko.observable(initialValues.content);
     self.standalone_content_form = new ContentViewModel(initialValues.standalone_content_form);
     self.custom_events = ko.observableArray();
     self.visit_scheduler_app_and_form_unique_id = new formSelect2Handler(currentVisitSchedulerForm,
@@ -520,7 +520,7 @@ var CreateScheduleViewModel = function (initialValues, select2UserRecipients,
 };
 
 var baseSelect2Handler = select2Handler.baseSelect2Handler,
-    recipientsSelect2Handler = function (initialObjectList, initialCommaSeparatedList, field) {
+    recipientsSelect2Handler = function (initialObjectList, initialCommaSeparatedList, field, viewModel) {
         /*
          * initialObjectList is a list of {id: ..., text: ...} objects representing the initial value
          *
@@ -534,6 +534,14 @@ var baseSelect2Handler = select2Handler.baseSelect2Handler,
 
         self.getHandlerSlug = function () {
             return 'scheduling_select2_helper';
+        };
+
+        self.getExtraData = function () {
+            let data = {};
+            if (viewModel && viewModel.content) {
+                data['content'] = viewModel.content();
+            }
+            return data;
         };
 
         self.getInitialData = function () {
