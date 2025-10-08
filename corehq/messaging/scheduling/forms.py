@@ -2400,32 +2400,33 @@ class ScheduleForm(Form):
         if not data:
             raise ValidationError(_("Please specify the user(s) or deselect users as recipients"))
 
-        content = self.cleaned_data.get('content')
-        is_connect_content = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
-
+        commcare_usernames = []
         for user_id in data:
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if not user or user.is_deleted():
                 raise ValidationError(
                     _("One or more users were unexpectedly not found. Please select user(s) again.")
                 )
-            if is_connect_content:
-                try:
-                    ConnectIDUserLink.objects.get(
-                        commcare_user=user.get_django_user(),
-                        domain=self.domain,
-                        is_active=True
-                    )
-                except ConnectIDUserLink.DoesNotExist:
-                    raise ValidationError(
-                        _("One or more users did not have an active "
-                          "PersonalID link. Please select user(s) again.")
-                    )
+            commcare_usernames.append(user.username)
+
+        content = self.data.get(f'{self.prefix}-content')
+        is_connect_content = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
+        if is_connect_content and len(commcare_usernames):
+            valid_connect_link_count = ConnectIDUserLink.objects.filter(
+                commcare_user__username__in=commcare_usernames,
+                domain=self.domain,
+                is_active=True
+            ).count()
+            if valid_connect_link_count != len(commcare_usernames):
+                raise ValidationError(
+                    _("One or more users did not have an active "
+                      "PersonalID link. Please select user(s) again.")
+                )
 
         return data
 
     def clean_recipient_types(self):
-        content = self.cleaned_data.get('content')
+        content = self.data.get(f'{self.prefix}-content')
         recipient_types = self.cleaned_data.get('recipient_types')
         is_connect_message = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
         if is_connect_message and recipient_types != [ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER]:
