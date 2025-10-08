@@ -56,7 +56,6 @@ export default (stripeApiKey, paymentMethodContainerId, cardContainerSelector, c
                         this.reset();
                         htmx.trigger(document.getElementById(this.paymentMethodContainerId), "refreshCards");
                         setTimeout(() => {
-                            console.log(document.getElementById(this.cardModalId));
                             this.successMsg = '';
                         }, 3000);
                     }
