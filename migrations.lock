@@ -697,6 +697,7 @@ integration
  0010_alter_kycconfig_api_field_to_user_data_map
  0011_remove_kycconfig_connection_settings
  0012_momoconfig
+ 0013_kycconfig_phone_number_field
 ip_access
  0001_initial
 ivr
