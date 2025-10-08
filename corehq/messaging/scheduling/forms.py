@@ -2074,8 +2074,30 @@ class ScheduleForm(Form):
         return [
             crispy.Field(
                 'recipient_types',
-                data_bind="selectedOptions: recipient_types",
+                data_bind=(
+                    "selectedOptions: recipient_types, "
+                    f"enable: content() !== '{self.CONTENT_CONNECT_MESSAGE}' && "
+                    f"content() !== '{self.CONTENT_CONNECT_SURVEY}'"
+                ),
                 style="width: 100%;"
+            ),
+            crispy.Div(
+                crispy.HTML(
+                    """
+                        <p class="help-block alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                            %s
+                        </p>
+                    """
+                    % _(
+                        """
+                            Connect Messages can only be sent to users who have a PersonalID account.
+                        """
+                    )),
+                data_bind=(
+                    f"visible: content() === '{self.CONTENT_CONNECT_MESSAGE}' || "
+                    f"content() === '{self.CONTENT_CONNECT_SURVEY}'"
+                )
             ),
             crispy.Div(
                 crispy.HTML(
