@@ -302,7 +302,7 @@
           >{% trans "Hide Deprecated" %}</button>
           <div id="data-dictionary-table">
             <div class="table-row table-header">
-            <div class="row-item-small"></div>
+            <div class="row-item-tiny"></div>
             <div class="row-item">{% trans "Case Property" %}</div>
             <div class="row-item">{% trans "Label" %}</div>
             {% if data_type_validation %}
@@ -354,7 +354,7 @@
                     css: { 'group-deprecated': toBeDeprecated() },
                     visible: !deprecated || $root.showAll()"
                 >
-                  <div class="row-item-small">
+                  <div class="row-item-tiny">
                     {% if not request.is_view_only %}
                       <i class="sortable-handle fa-solid fa-up-down"></i>
                     {% endif %}
@@ -437,7 +437,7 @@
                     class="table-row"
                     data-bind="visible: expanded() && (!deprecated() || $root.showAll()) && !deleted()"
                   >
-                    <div class="row-item-small">
+                    <div class="row-item-tiny">
                     {% if not request.is_view_only %}
                       <i class="sortable-handle fa-solid fa-up-down"></i>
                     {% endif %}
