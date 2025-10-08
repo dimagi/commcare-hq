@@ -271,6 +271,13 @@ var CreateScheduleViewModel = function (initialValues, select2UserRecipients,
 
     self.send_frequency.subscribe(self.setRepeatOptionText);
 
+    self.content.subscribe(function (newValue) {
+        if (newValue === 'connect_message' || newValue === 'connect_survey') {
+            self.recipient_types(['CommCareUser']);
+            $('#id_schedule-recipient_types').val(['CommCareUser']).trigger('change');
+        }
+    });
+
     self.usesCustomEventDefinitions = ko.computed(function () {
         return self.send_frequency() === 'custom_daily' || self.send_frequency() === 'custom_immediate';
     });
