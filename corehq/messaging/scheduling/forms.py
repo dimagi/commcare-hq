@@ -2081,6 +2081,18 @@ class ScheduleForm(Form):
                 ),
                 style="width: 100%;"
             ),
+            # Hidden fields to submit recipient_types values when the visible field is disabled.
+            crispy.Div(
+                crispy.HTML(
+                    '<!-- ko foreach: recipient_types -->'
+                    f'<input type="hidden" name="{self.prefix}-recipient_types" data-bind="value: $data" />'
+                    '<!-- /ko -->'
+                ),
+                data_bind=(
+                    f"if: content() === '{self.CONTENT_CONNECT_MESSAGE}' || "
+                    f"content() === '{self.CONTENT_CONNECT_SURVEY}'"
+                )
+            ),
             crispy.Div(
                 crispy.HTML(
                     """
