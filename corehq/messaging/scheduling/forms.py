@@ -67,7 +67,7 @@ from corehq.apps.reminders.util import (
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sms.util import get_or_create_sms_translations
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
     ALLOWED_CSS_PROPERTIES,
@@ -2400,14 +2400,37 @@ class ScheduleForm(Form):
         if not data:
             raise ValidationError(_("Please specify the user(s) or deselect users as recipients"))
 
+        content = self.cleaned_data.get('content')
+        is_connect_content = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
+
         for user_id in data:
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if not user or user.is_deleted():
                 raise ValidationError(
                     _("One or more users were unexpectedly not found. Please select user(s) again.")
                 )
+            if is_connect_content:
+                try:
+                    ConnectIDUserLink.objects.get(
+                        commcare_user=user.get_django_user(),
+                        domain=self.domain,
+                        is_active=True
+                    )
+                except ConnectIDUserLink.DoesNotExist:
+                    raise ValidationError(
+                        _("One or more users did not have an active "
+                          "PersonalID link. Please select user(s) again.")
+                    )
 
         return data
+
+    def clean_recipient_types(self):
+        content = self.cleaned_data.get('content')
+        recipient_types = self.cleaned_data.get('recipient_types')
+        is_connect_message = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
+        if is_connect_message and recipient_types != [ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER]:
+            raise ValidationError(_("Connect Messages can only be sent to users."))
+        return recipient_types
 
     def clean_user_group_recipients(self):
         if ScheduleInstance.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
