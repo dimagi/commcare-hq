@@ -366,6 +366,17 @@
       "compare_all_files": true
     }
   ],
+  "apps/hqwebapp/static/accounting": [
+    {
+      "directories": [
+        "less/",
+        "scss/"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets",
+      "compare_all_files": true
+    }
+  ],
   "apps/hqwebapp/static/preview_app": [
     {
       "directories": [

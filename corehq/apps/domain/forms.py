@@ -1983,56 +1983,66 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         widget=forms.HiddenInput,
     )
 
-    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
-                 *args, **kwargs):
+    def __init__(
+        self, account, domain, creating_user, plan_version, current_subscription, data=None, *args, **kwargs
+    ):
         self.plan_version = plan_version
         self.current_subscription = current_subscription
-        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data,
-                                                         *args, **kwargs)
+        super().__init__(account, domain, creating_user, data=data, *args, **kwargs)
+
+        email_list = [email for email in self.initial.get('email_list', []) if email]  # filter out empty strings
+        if not email_list:
+            email_list = [creating_user]
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'plan_edition',
             'is_annual_plan',
             crispy.Fieldset(
-                _("Basic Information"),
+                _('Basic Information'),
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
-                             data_initial=json.dumps(self.initial.get('email_list'))),
+                crispy.Field(
+                    'email_list',
+                    css_class='form-control form-control-lg accounting-email-select2',
+                    data_initial=json.dumps(email_list),
+                ),
                 'phone_number',
             ),
             crispy.Fieldset(
-                _("Mailing Address"),
+                _('Mailing Address'),
                 'first_line',
                 'second_line',
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_country_code=self.current_country or '',
-                             data_country_name=COUNTRIES.get(self.current_country, ''))
+                crispy.Field(
+                    'country',
+                    css_class='form-control form-control-lg accounting-country-select2',
+                    data_country_code=self.current_country or '',
+                    data_country_name=COUNTRIES.get(self.current_country, ''),
+                ),
             ),
             hqcrispy.FormActions(
-                hqcrispy.LinkButton(_("Cancel"),
-                                    reverse(DomainSubscriptionView.urlname,
-                                            args=[self.domain]),
-                                    css_class="btn btn-default"),
-                StrictButton(_("Subscribe to Plan"),
-                             type="submit",
-                             id='btn-subscribe-to-plan',
-                             css_class='btn btn-primary disable-on-submit-no-spinner '
-                                       'add-spinner-on-click'),
+                hqcrispy.LinkButton(
+                    _('Cancel'),
+                    reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    css_class='btn btn-outline-primary',
+                ),
+                StrictButton(
+                    _('Subscribe to Plan'),
+                    type='submit',
+                    id='btn-subscribe-to-plan',
+                    css_class='btn btn-primary disable-on-submit-no-spinner add-spinner-on-click',
+                ),
             ),
-            crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
-            crispy.Hidden(name="old_plan", value=current_subscription.plan_version.plan.edition),
-            crispy.Hidden(name="new_plan", value=plan_version.plan.edition)
+            crispy.Hidden(name='downgrade_email_note', value='', id='downgrade-email-note'),
+            crispy.Hidden(name='old_plan', value=current_subscription.plan_version.plan.edition),
+            crispy.Hidden(name='new_plan', value=plan_version.plan.edition),
         )
 
     def save(self, commit=True):
