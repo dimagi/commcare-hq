@@ -53,7 +53,6 @@ class DataDictionaryImportTest(TestCase, TestFileMixin):
 
 @privilege_enabled(privileges.DATA_DICTIONARY, privileges.DATA_DICT_TYPES)
 class DataDictionaryImportTestWithDataTypes(DataDictionaryImportTest):
-    domain_name = 'data-dict-import-test-with-data-types'
 
     def test_clean_import(self):
         fname = self.get_path('clean_data_dictionary', 'xlsx')
@@ -105,7 +104,6 @@ class DataDictionaryImportTestWithDataTypes(DataDictionaryImportTest):
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryImportTestWithoutDataTypes(DataDictionaryImportTest):
-    domain_name = 'data-dict-import-test-without-data-types'
 
     def test_import_with_warnings(self):
         fname = self.get_path('clean_data_dictionary', 'xlsx')
@@ -127,7 +125,6 @@ class DataDictionaryImportTestWithoutDataTypes(DataDictionaryImportTest):
 
 
 class DataDictionaryExportTest(DataDictionaryImportTest):
-    domain_name = 'data-dict-export-test'
 
     @classmethod
     def setUpClass(cls):
@@ -155,7 +152,6 @@ class DataDictionaryExportTest(DataDictionaryImportTest):
 
 @privilege_enabled(privileges.DATA_DICTIONARY, privileges.DATA_DICT_TYPES)
 class DataDictionaryExportTestWithDataTypes(DataDictionaryExportTest):
-    domain_name = 'data-dict-export-test-with-data-types'
 
     def test_export(self):
         response = self.client.get(self.url)
@@ -172,7 +168,6 @@ class DataDictionaryExportTestWithDataTypes(DataDictionaryExportTest):
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryExportTestWithoutDataTypes(DataDictionaryExportTest):
-    domain_name = 'data-dict-export-test-without-data-types'
 
     def test_export_without_data_type(self):
         response = self.client.get(self.url)
