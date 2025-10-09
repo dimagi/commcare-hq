@@ -14,9 +14,9 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import (
-    _CaseImportRow,
     RowAndCase,
     SubmitCaseBlockHandler,
+    _CaseImportRow,
     do_import,
 )
 from corehq.apps.case_importer.tasks import bulk_import_async
@@ -628,14 +628,15 @@ class ImporterTest(TestCase):
             ['', '2011-44-22', '2021-03-44'],
         ]
 
+        # Validity checking (privileges.DATA_DICT_TYPES) is enabled
+        # because the domain in on Enterprise plan.
         # With validity checking enabled, the two bad dates on row 3
-        # should casue that row to fail to import, and both should be
+        # should cause that row to fail to import, and both should be
         # flagged as invalid dates in the error report. (The blank date
         # on row 2 "passes" validity checking, there is currently not
         # a way to indicate whether a field is required or not so it's
         # assumed not required.)
-        with flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION'):
-            res = self.import_mock_file(file_rows)
+        res = self.import_mock_file(file_rows)
         self.assertEqual(1, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(1, res['failed_count'])
@@ -645,8 +646,10 @@ class ImporterTest(TestCase):
         for col in error_cols:
             self.assertEqual(res['errors'][error_message][col]['rows'], [3])
 
-        # Without the flag enabled, all the rows should be imported.
-        res = self.import_mock_file(file_rows)
+        # Without privileges.DATA_DICT_TYPES enabled, all the rows should be imported.
+        with patch('corehq.apps.case_importer.do_import.domain_has_privilege') as patched:
+            patched.return_value = False
+            res = self.import_mock_file(file_rows)
         self.assertEqual(2, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, res['failed_count'])
@@ -665,8 +668,7 @@ class ImporterTest(TestCase):
         # With validity checking enabled, the bad choice on row 3
         # should case that row to fail to import and should be
         # flagged as invalid. The blank one should be valid.
-        with flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION'):
-            res = self.import_mock_file(file_rows)
+        res = self.import_mock_file(file_rows)
         self.assertEqual(2, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(1, res['failed_count'])
@@ -674,8 +676,10 @@ class ImporterTest(TestCase):
         error_message = exceptions.InvalidSelectValue.title
         self.assertEqual(res['errors'][error_message]['mc']['rows'], [3])
 
-        # Without the flag enabled, all the rows should be imported.
-        res = self.import_mock_file(file_rows)
+        # Without privileges.DATA_DICT_TYPES enabled, all the rows should be imported.
+        with patch('corehq.apps.case_importer.do_import.domain_has_privilege') as patched:
+            patched.return_value = False
+            res = self.import_mock_file(file_rows)
         self.assertEqual(3, res['created_count'])
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, res['failed_count'])
