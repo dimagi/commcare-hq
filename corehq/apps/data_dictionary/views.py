@@ -530,7 +530,7 @@ class DataDictionaryView(BaseProjectDataView):
                 DEFAULT_CASE_PROPS_PER_CASE_TYPE,
                 domain=self.domain
             ),
-            'data_type_validation': domain_has_privilege(
+            'uses_data_type_validation': domain_has_privilege(
                 self.domain,
                 privileges.DATA_DICT_TYPES,
             ),
