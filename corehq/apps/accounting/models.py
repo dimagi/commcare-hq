@@ -403,7 +403,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     dimagi_contact = models.EmailField(blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
-    is_auto_invoiceable = models.BooleanField(default=False)
     date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
     account_type = models.CharField(
         max_length=25,
@@ -426,6 +425,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=EntryPoint.CHOICES,
     )
     auto_pay_user = models.CharField(max_length=80, null=True, blank=True)
+    require_auto_pay = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
