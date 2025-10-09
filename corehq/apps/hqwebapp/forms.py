@@ -30,6 +30,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         captcha = ReCaptchaField(label="")
 
     def __init__(self, *args, **kwargs):
+        self.can_select_server = kwargs.pop('can_select_server', False)
         super().__init__(*args, **kwargs)
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
@@ -62,6 +63,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
+            self.request.session['login_attempts'] = self.request.session.get('login_attempts', 0) + 1
             user = CouchUser.get_by_username(username)
             if user and user.is_locked_out():
                 metrics_counter('commcare.auth.lockouts')
@@ -72,7 +74,23 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         if user and user.is_locked_out():
             metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
+        self.request.session['login_attempts'] = 0
         return cleaned_data
+
+    def get_invalid_login_error(self):
+        if (
+            self.request.session.get('login_attempts', 0) > 2
+            and self.can_select_server
+        ):
+            return ValidationError(
+                mark_safe(_(  # nosec: no user input
+                    "Still having trouble?"
+                    "<div class='spacer'></div>"
+                    "Make sure you have selected the correct Cloud Location from the menu above. "
+                    "Your account and project may be in a different location."
+                )),
+            )
+        return super().get_invalid_login_error()
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
