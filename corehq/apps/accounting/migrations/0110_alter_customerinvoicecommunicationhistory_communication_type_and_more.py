@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0108_subscription_auto_renew_and_more'),
+        ('accounting', '0109_enable_all_add_ons_priv'),
     ]
 
     operations = [

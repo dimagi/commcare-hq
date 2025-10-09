@@ -5,7 +5,12 @@ from decimal import Decimal
 
 import dateutil
 from couchdbkit import ResourceNotFound
+from corehq.apps.accounting.utils.autopay import (
+    get_autopay_card_and_owner_for_billing_account,
+    set_card_as_autopay_for_billing_account,
+)
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
@@ -432,10 +437,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
-class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
+class EditExistingBillingAccountView(HqHtmxActionMixin, DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
-    page_title = gettext_lazy("Billing Information")
+    page_title = gettext_lazy('Billing Information')
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -446,34 +451,63 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         is_ops_user = has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
-                self.account, self.domain, self.request.couch_user.username, data=self.request.POST,
-                is_ops_user=is_ops_user
+                self.account,
+                self.domain,
+                self.request.couch_user.username,
+                data=self.request.POST,
+                is_ops_user=is_ops_user,
             )
-        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
-                                          is_ops_user=is_ops_user)
+        return EditBillingAccountInfoForm(
+            self.account, self.domain, self.request.couch_user.username, is_ops_user=is_ops_user
+        )
 
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
-        return super(EditExistingBillingAccountView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_info_form,
-            'cards': self._get_cards(),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
         }
 
-    def _get_cards(self):
-        if not settings.STRIPE_PRIVATE_KEY:
-            return []
+    def get_card_context(self):
+        return {
+            'account_cards': self.get_account_cards(),
+            'saved_cards_for_user': self.get_saved_cards_for_user(),
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+        }
 
+    def get_account_cards(self):
+        card, owner = get_autopay_card_and_owner_for_billing_account(self.account)
+        if card is None:
+            return []
+        return [
+            {
+                'brand': card.brand,
+                'last4': card.last4,
+                'exp_month': card.exp_month,
+                'exp_year': card.exp_year,
+                'token': card.id,
+                'owner': owner,
+            }
+        ]
+
+    def get_payment_method_for_user(self):
         user = self.request.user.username
-        payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
+        payment_method, _ = StripePaymentMethod.objects.get_or_create(
             web_user=user,
             method_type=PaymentMethodType.STRIPE,
         )
+        return payment_method
+
+    def get_saved_cards_for_user(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
+        payment_method = self.get_payment_method_for_user()
         return payment_method.all_cards_serialized(self.account)
 
     def post(self, request, *args, **kwargs):
@@ -483,15 +517,64 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
             is_saved = self.billing_info_form.save()
             if not is_saved:
                 messages.error(
-                    request, _("It appears that there was an issue updating your contact information. "
-                               "We've been notified of the issue. Please try submitting again, and if the problem "
-                               "persists, please try in a few hours."))
-            else:
-                messages.success(
-                    request, _("Billing contact information was successfully updated.")
+                    request,
+                    _(
+                        'It appears that there was an issue updating your contact information. '
+                        "We've been notified of the issue. Please try submitting again, and if the problem "
+                        'persists, please try in a few hours.'
+                    ),
                 )
+            else:
+                messages.success(request, _('Billing contact information was successfully updated.'))
                 return HttpResponseRedirect(reverse(EditExistingBillingAccountView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+    def render_payment_methods(self, request, error=None):
+        return self.render_htmx_partial_response(
+            request,
+            'domain/partials/payment_methods.html',
+            {'payment_method_error': error, **self.get_card_context()},
+        )
+
+    @hq_hx_action('get')
+    def list_payment_methods(self, request, *args, **kwargs):
+        return self.render_payment_methods(request)
+
+    @hq_hx_action('post')
+    def remove_payment_card(self, request, *args, **kwargs):
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        payment_method = self.get_payment_method_for_user()
+        error = None
+        try:
+            payment_method.remove_card(token)
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown removing card. Please contact Support.')
+            )
+        return self.render_payment_methods(request, error=error)
+
+    @hq_hx_action('post')
+    def set_as_autopay(self, request, *args, **kwargs):
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        error = None
+        try:
+            set_card_as_autopay_for_billing_account(
+                self.get_payment_method_for_user(),
+                token,
+                self.account,
+                self.domain,
+            )
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown error setting autopay. Please contact Support.')
+            )
+        return self.render_payment_methods(request, error=error)
 
 
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
@@ -1488,8 +1571,9 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap3/confirm_billing_info.html'
+    template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
     step_title = gettext_lazy("Confirm Billing Information")
     is_new = False
