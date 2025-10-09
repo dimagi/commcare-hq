@@ -350,11 +350,13 @@ class CommunicationType(object):
     INVOICE_REMINDER = "INVOICE_REMINDER"
     OVERDUE_INVOICE = "OVERDUE_INVOICE"
     DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
+    UPCOMING_MONTHLY_PAYMENT = "UPCOMING_MONTHLY_PAYMENT"
     CHOICES = (
         (OTHER, "other"),
         (INVOICE_REMINDER, "Invoice Reminder"),
         (OVERDUE_INVOICE, "Overdue Invoice"),
         (DOWNGRADE_WARNING, "Subscription Pause Warning"),
+        (UPCOMING_MONTHLY_PAYMENT, "Upcoming Monthly Payment"),
     )
 
 
@@ -4094,6 +4096,10 @@ class CommunicationHistoryBase(models.Model):
 
     class Meta(object):
         abstract = True
+
+
+class AccountCommunicationHistory(CommunicationHistoryBase):
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
 
 
 class InvoiceCommunicationHistory(CommunicationHistoryBase):
