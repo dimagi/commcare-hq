@@ -170,6 +170,21 @@
             </div>
           </div>
         {% endif %}
+        <div class="form-group">
+          <label class="control-label col-sm-2">
+            {% trans "Autopay" %}
+          </label>
+          <div class="col-sm-10">
+            <p class="form-control-text">
+              {% if autopay_enabled %}
+                <span class="label label-success"><i class="fa fa-check"></i> {% trans "ENABLED" %}</span>
+              {% else %}
+                <span class="label label-warning"><i class="fa fa-warning"></i> {% trans "NOT SET" %}</span>
+              {% endif %}
+              (<a href="{{ manage_autopay_url }}">Manage</a>)
+            </p>
+          </div>
+        </div>
         {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}
           <div class="form-group">
             <label class="control-label col-sm-2">
