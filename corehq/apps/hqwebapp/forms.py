@@ -63,7 +63,8 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
-            self.request.session['login_attempts'] = self.request.session.get('login_attempts', 0) + 1
+            if self.request is not None:
+                self.request.session['login_attempts'] = self.request.session.get('login_attempts', 0) + 1
             user = CouchUser.get_by_username(username)
             if user and user.is_locked_out():
                 metrics_counter('commcare.auth.lockouts')
@@ -74,12 +75,15 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         if user and user.is_locked_out():
             metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
-        self.request.session['login_attempts'] = 0
+
+        if self.request is not None:
+            self.request.session['login_attempts'] = 0
         return cleaned_data
 
     def get_invalid_login_error(self):
         if (
-            self.request.session.get('login_attempts', 0) > 2
+            self.request is not None
+            and self.request.session.get('login_attempts', 0) > 2
             and self.can_select_server
         ):
             return ValidationError(
