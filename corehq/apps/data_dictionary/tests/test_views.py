@@ -17,7 +17,11 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
-from corehq.util.test_utils import flag_disabled, flag_enabled, privilege_enabled
+from corehq.util.test_utils import (
+    flag_disabled,
+    flag_enabled,
+    privilege_enabled,
+)
 
 
 class DataDictionaryViewTestBase(TestCase):
@@ -35,8 +39,7 @@ class DataDictionaryViewTestBase(TestCase):
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
 
 
-@privilege_enabled(privileges.DATA_DICTIONARY)
-@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
+@privilege_enabled(privileges.DATA_DICTIONARY, privileges.DATA_DICT_TYPES)
 class UpdateCasePropertyViewTest(DataDictionaryViewTestBase):
 
     @classmethod
@@ -469,7 +472,7 @@ class DataDictionaryJsonCaseTypesTest(DataDictionaryViewTestBase):
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
-@privilege_enabled(privileges.DATA_DICTIONARY)
+@privilege_enabled(privileges.DATA_DICTIONARY, privileges.DATA_DICT_TYPES)
 class DataDictionaryJsonCasePropertiesTest(DataDictionaryViewTestBase):
 
     @classmethod
@@ -635,11 +638,14 @@ class DataDictionaryJsonCasePropertiesTest(DataDictionaryViewTestBase):
             'is_safe_to_delete',
             'label',
             'name',
+            # Data types enabled for Advanced and Enterprise plans
+            'data_type',
+            'allowed_values',
         }
         assert property_response['id'] == self.prop_obj.id
         assert property_response['name'] == self.prop_obj.name
 
-    @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
+    @privilege_enabled(privileges.DATA_DICT_TYPES)
     def test_validation_feature_flag(self):
         response = self.client.get(self.case_properties_endpoint())
         property_response = response.json()['groups'][0]['properties'][0]
