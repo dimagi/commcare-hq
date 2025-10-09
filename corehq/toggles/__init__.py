@@ -1176,7 +1176,7 @@ FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     'saas_formbuilder_save_to_case',
     'Form Builder - Save Questions to Case Properties',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
+    namespaces=[NAMESPACE_DOMAIN],
     description='Allows users to save questions to case properties within the Form Builder'
 )
 
@@ -1694,13 +1694,6 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description='Prevents mobile UCRs from being generated or included in the sync payload',
-)
-
-ENABLE_ALL_ADD_ONS = StaticToggle(
-    'enable_all_add_ons',
-    'Enable all app manager add-ons',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(

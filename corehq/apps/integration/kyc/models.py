@@ -44,6 +44,7 @@ class KycConfig(models.Model):
         choices=KycProviders.choices,
         default=KycProviders.MTN_KYC,
     )
+    phone_number_field = models.CharField(max_length=126, null=True, blank=True)
 
     class Meta:
         constraints = [

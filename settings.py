@@ -625,7 +625,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
-    "repeat_record_queue": 60 * 60,
+    "repeat_record_queue": 15 * 60,
     "saved_exports_queue": 6 * 60 * 60,
     "send_report_throttled": 6 * 60 * 60,
     "sms_queue": 5 * 60,

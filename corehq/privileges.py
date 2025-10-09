@@ -127,6 +127,10 @@ CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 APP_DEPENDENCIES = 'app_dependencies'
 DATA_DICT_TYPES = 'data_dict_types'
 
+# "Enable All Application Add-Ons" in Project Settings > Basic and
+# "Enable All Add-Ons" in Application Settings > "Add-Ons"
+SHOW_ENABLE_ALL_ADD_ONS = 'show_enable_all_add_ons'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -191,6 +195,7 @@ MAX_PRIVILEGES = [
     CASE_DEDUPE,
     CUSTOM_DOMAIN_ALERTS,
     APP_DEPENDENCIES,
+    SHOW_ENABLE_ALL_ADD_ONS,
     BULK_DATA_EDITING,
     TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     DATA_DICT_TYPES,
@@ -274,6 +279,7 @@ class Titles(object):
             CASE_DEDUPE: _("Deduplication Rules"),
             CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
             APP_DEPENDENCIES: _("App Dependencies"),
+            SHOW_ENABLE_ALL_ADD_ONS: _('Show "Enable All Add-Ons" button'),
             TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION: _("Two-stage Mobile Worker Account Creation"),
             DATA_DICT_TYPES: _("Data Dictionary case properties have data types")
         }.get(privilege, privilege)

@@ -33,14 +33,15 @@ from corehq.apps.users.models import CouchUser
 class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
-    if settings.SERVER_ENVIRONMENT in ServerLocation.ENVS:
+    _envs = ServerLocation.get_envs()
+    if settings.SERVER_ENVIRONMENT in _envs:
         server_location = forms.ChoiceField(
             label=_("Cloud Location"),
             required=False,
             widget=forms.RadioSelect,
             choices=[
                 (server['subdomain'], _("{location_name} Cloud").format(location_name=server['long_name']))
-                for __, server in ServerLocation.ENVS.items()
+                for __, server in _envs.items()
             ],
             help_text=_(
                 "*You're creating an account and project space in the chosen cloud location.<br/>"
@@ -111,7 +112,8 @@ class RegisterWebUserForm(forms.Form):
         server_location_field = []
         if self.fields.get('server_location'):
             # safe to access because we only render the field if the current environment is in ServerLocation.ENVS
-            self.fields['server_location'].initial = ServerLocation.ENVS[settings.SERVER_ENVIRONMENT]['subdomain']
+            envs = ServerLocation.get_envs()
+            self.fields['server_location'].initial = envs[settings.SERVER_ENVIRONMENT]['subdomain']
             server_location_field = [
                 hqcrispy.RadioSelect(
                     'server_location',

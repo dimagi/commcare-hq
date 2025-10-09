@@ -2,43 +2,41 @@ from django.core.management import call_command
 from django.db import migrations
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.privileges import DATA_DICT_TYPES
+from corehq.privileges import SHOW_ENABLE_ALL_ADD_ONS
 from corehq.util.django_migrations import skip_on_fresh_install
 
-
-editions_below_adv = ','.join((
+editions_below_pro = ','.join((
     SoftwarePlanEdition.PAUSED,
     SoftwarePlanEdition.FREE,
     SoftwarePlanEdition.STANDARD,
-    SoftwarePlanEdition.PRO,
 ))
 
 
 @skip_on_fresh_install
-def _grandfather_data_dict_types_priv(apps, schema_editor):
+def _add_enable_all_add_ons_to_pro(apps, schema_editor):
     call_command('cchq_prbac_bootstrap')
+
     call_command(
         'cchq_prbac_grandfather_privs',
-        DATA_DICT_TYPES,
-        skip_edition=editions_below_adv,
+        SHOW_ENABLE_ALL_ADD_ONS,
+        skip_edition=editions_below_pro,
         noinput=True,
     )
 
 
-def _revoke_data_dict_types_priv(apps, schema_editor):
-    from corehq.apps.hqadmin.management.commands import cchq_prbac_bootstrap
-
+def _reverse(apps, schema_editor):
     call_command(
         'cchq_prbac_revoke_privs',
-        DATA_DICT_TYPES,
-        skip_edition=editions_below_adv,
+        SHOW_ENABLE_ALL_ADD_ONS,
+        skip_edition=editions_below_pro,
         delete_privs=False,
         check_privs_exist=True,
         noinput=True,
     )
-    command = cchq_prbac_bootstrap.Command()
-    command.OLD_PRIVILEGES.append(DATA_DICT_TYPES)
-    call_command(command)
+
+    from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import Command
+    Command.OLD_PRIVILEGES.append(SHOW_ENABLE_ALL_ADD_ONS)
+    call_command('cchq_prbac_bootstrap')
 
 
 class Migration(migrations.Migration):
@@ -49,7 +47,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            _grandfather_data_dict_types_priv,
-            reverse_code=_revoke_data_dict_types_priv,
+            _add_enable_all_add_ons_to_pro,
+            reverse_code=_reverse,
         ),
     ]
