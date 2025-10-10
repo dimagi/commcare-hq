@@ -47,7 +47,6 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
     SubscriptionAdjustmentError,
     SubscriptionChangeError,
-    SubscriptionReminderError,
     SubscriptionRenewalError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
@@ -1695,10 +1694,6 @@ class Subscription(models.Model):
         Sends a reminder email to the emails specified in the accounting
         contacts that the subscription will end on the specified end date.
         """
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
         if self.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
             # never send a subscription ending email for Paused subscriptions...
             return
@@ -1797,15 +1792,6 @@ class Subscription(models.Model):
         return context
 
     def send_dimagi_ending_reminder_email(self):
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
-        if self.account.dimagi_contact is None:
-            raise SubscriptionReminderError(
-                "This subscription has no Dimagi contact."
-            )
-
         subject = self.dimagi_ending_reminder_subject
         context = self.dimagi_ending_reminder_context
         email_html = render_to_string(self.dimagi_ending_reminder_email_html, context)
