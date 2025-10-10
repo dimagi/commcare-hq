@@ -60,11 +60,12 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             if not self.cleaned_data.get('captcha'):
                 raise ValidationError(_("Please enter valid CAPTCHA"))
 
+        if self.request is not None:
+            self.request.session['login_attempts'] = self.request.session.get('login_attempts', 0) + 1
+
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
-            if self.request is not None:
-                self.request.session['login_attempts'] = self.request.session.get('login_attempts', 0) + 1
             user = CouchUser.get_by_username(username)
             if user and user.is_locked_out():
                 metrics_counter('commcare.auth.lockouts')
