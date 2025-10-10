@@ -423,20 +423,8 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
-def remind_dimagi_contact_subscription_ending_60_days():
-    """
-    Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
-    """
-    send_subscription_reminder_emails_dimagi_contact(60)
-
-
 def send_subscription_reminder_emails(num_days):
-    today = datetime.date.today()
-    date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.visible_objects.filter(
-        date_end=date_in_n_days, do_not_email_reminder=False, is_trial=False
-    )
+    ending_subscriptions = _filter_subscriptions_ending_in_n_days(num_days, is_trial=False)
     for subscription in ending_subscriptions:
         try:
             # only send reminder emails if the subscription isn't renewed
@@ -449,18 +437,31 @@ def send_subscription_reminder_emails(num_days):
             )
 
 
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+def remind_dimagi_contact_subscription_ending_60_days():
+    """
+    Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
+    """
+    send_subscription_reminder_emails_dimagi_contact(60)
+
+
 def send_subscription_reminder_emails_dimagi_contact(num_days):
-    today = datetime.date.today()
-    date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = (Subscription.visible_objects
-                            .filter(is_active=True)
-                            .filter(date_end=date_in_n_days)
-                            .filter(do_not_email_reminder=False)
-                            .exclude(account__dimagi_contact=''))
+    ending_subscriptions = _filter_subscriptions_ending_in_n_days(
+        num_days, is_active=True
+    ).exclude(account__dimagi_contact='')
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
             subscription.send_dimagi_ending_reminder_email()
+
+
+def _filter_subscriptions_ending_in_n_days(num_days, **kwargs):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=num_days)
+    ending_subscriptions = Subscription.visible_objects.filter(
+        date_end=date_in_n_days, do_not_email_reminder=False, **kwargs
+    )
+    return ending_subscriptions
 
 
 @task(ignore_result=True, acks_late=True)
