@@ -46,6 +46,7 @@ from corehq.apps.accounting.models import (
     FeatureType,
     FormSubmittingMobileWorkerHistory,
     InvoicingPlan,
+    SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
@@ -492,6 +493,8 @@ def _filter_subscriptions_for_reminder_emails(num_days, **kwargs):
     date_in_n_days = today + datetime.timedelta(days=num_days)
     ending_subscriptions = Subscription.visible_objects.filter(
         date_end=date_in_n_days, do_not_email_reminder=False, **kwargs
+    ).exclude(
+        plan_version__plan__edition=SoftwarePlanEdition.PAUSED
     )
     return ending_subscriptions
 
