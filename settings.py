@@ -1918,6 +1918,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',
         },
+        {
+            'name': 'demo-case-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_demo_case_pillow',
+        },
     ]
 }
 
