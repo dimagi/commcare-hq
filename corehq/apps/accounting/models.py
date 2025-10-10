@@ -1737,8 +1737,6 @@ class Subscription(models.Model):
     def ending_reminder_email_html(self):
         if self.account.is_customer_billing_account:
             return 'accounting/email/customer_subscription_ending_reminder.html'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.html'
         else:
             return 'accounting/email/subscription_ending_reminder.html'
 
@@ -1746,8 +1744,6 @@ class Subscription(models.Model):
     def ending_reminder_email_text(self):
         if self.account.is_customer_billing_account:
             return 'accounting/email/customer_subscription_ending_reminder.txt'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.txt'
         else:
             return 'accounting/email/subscription_ending_reminder.txt'
 
@@ -1786,12 +1782,6 @@ class Subscription(models.Model):
             ) % {
                 'account_name': self.account.name,
                 'plan_name': plan_name,
-                'ending_on': ending_on,
-            }
-        elif self.is_trial:
-            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s") % {
-                'domain': domain_name,
                 'ending_on': ending_on,
             }
         else:
