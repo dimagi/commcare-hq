@@ -86,6 +86,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
     USER_MONTH_FORMAT,
 )
+from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
@@ -418,9 +419,17 @@ def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
+    # current reminders to be removed once auto-renewal is GA
     send_subscription_reminder_emails(30)
     send_subscription_reminder_emails(10)
     send_subscription_reminder_emails(1)
+
+    # new set of emails replaces existing reminders once auto-renewal is GA
+    send_auto_renew_reminder_emails(90)
+    send_auto_renew_reminder_emails(60)
+    send_subscription_ending_emails(30)
+    send_subscription_ending_emails(10)
+    send_subscription_ending_emails(1)
 
 
 def send_subscription_reminder_emails(num_days):
@@ -430,6 +439,46 @@ def send_subscription_reminder_emails(num_days):
             # only send reminder emails if the subscription isn't renewed
             if not subscription.is_renewed:
                 subscription.send_ending_reminder_email()
+        except Exception as e:
+            log_accounting_error(
+                "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
+                show_stack_trace=True,
+            )
+
+
+def send_auto_renew_reminder_emails(num_days):
+    ending_subscriptions = _filter_subscriptions_ending_in_n_days(
+        num_days, is_trial=False, type=SubscriptionType.PRODUCT
+    )
+    for subscription in ending_subscriptions:
+        try:
+            # only send reminder emails if the subscription isn't renewed
+            if (
+                not subscription.is_renewed
+                and SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain)
+            ):
+                # TODO: send new reminder email
+                pass
+        except Exception as e:
+            log_accounting_error(
+                "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
+                show_stack_trace=True,
+            )
+
+
+def send_subscription_ending_emails(num_days):
+    ending_subscriptions = _filter_subscriptions_ending_in_n_days(
+        num_days, is_trial=False, type=SubscriptionType.PRODUCT, auto_renew=False,
+    )
+    for subscription in ending_subscriptions:
+        try:
+            # only send reminder emails if the subscription isn't renewed
+            if (
+                not subscription.is_renewed
+                and SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain)
+            ):
+                # TODO: send new reminder email
+                pass
         except Exception as e:
             log_accounting_error(
                 "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
