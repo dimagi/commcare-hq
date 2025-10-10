@@ -1684,6 +1684,12 @@ class Subscription(models.Model):
                 related_credit=transferred_credit,
             )
 
+    def send_renewal_reminder_email(self):
+        ...
+
+    def send_subscription_ending_email(self):
+        ...
+
     def send_ending_reminder_email(self):
         """
         Sends a reminder email to the emails specified in the accounting
