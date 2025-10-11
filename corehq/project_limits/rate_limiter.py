@@ -1,5 +1,6 @@
 import random
 import time
+from typing import Callable, Union
 
 import attr
 
@@ -12,8 +13,17 @@ from corehq.project_limits.rate_counter.presets import (
     second_rate_counter,
     week_rate_counter,
 )
+from corehq.project_limits.rate_counter.rate_counter import (
+    SlidingWindowRateCounter,
+)
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
+
+Scope = str
+Limit = Union[int, float, None]
+RateCounterLimitPairs = tuple[SlidingWindowRateCounter, Limit]
+ScopeRateLimits = tuple[Scope, list[RateCounterLimitPairs]]
+GetRateLimitsFunc = Callable[[Scope], list[ScopeRateLimits]]
 
 
 class RateLimiter(object):
@@ -29,7 +39,11 @@ class RateLimiter(object):
     ...     my_feature_rate_limiter.report_usage('my_domain')
 
     """
-    def __init__(self, feature_key, get_rate_limits):
+    def __init__(
+        self,
+        feature_key: str,
+        get_rate_limits: GetRateLimitsFunc,
+    ) -> None:
         self.feature_key = feature_key
         self.get_rate_limits = get_rate_limits
 
@@ -161,7 +175,7 @@ class PerUserRateDefinition(object):
         self.per_user_rate_definition = per_user_rate_definition
         self.constant_rate_definition = constant_rate_definition or RateDefinition()
 
-    def get_rate_limits(self, domain):
+    def get_rate_limits(self, domain: Scope) -> list[ScopeRateLimits]:
         domain_users = get_n_users_in_domain(domain)
         enterprise_users = get_n_users_in_subscription(domain)
         limit_pairs = [
@@ -181,11 +195,11 @@ class PerUserRateDefinition(object):
 
 @attr.s
 class RateDefinition(object):
-    per_week = attr.ib(default=None)
-    per_day = attr.ib(default=None)
-    per_hour = attr.ib(default=None)
-    per_minute = attr.ib(default=None)
-    per_second = attr.ib(default=None)
+    per_week = attr.ib(default=None, type=Limit)
+    per_day = attr.ib(default=None, type=Limit)
+    per_hour = attr.ib(default=None, type=Limit)
+    per_minute = attr.ib(default=None, type=Limit)
+    per_second = attr.ib(default=None, type=Limit)
 
     def times(self, multiplier):
         return self.map(lambda value: value * multiplier if value is not None else value)
@@ -211,7 +225,7 @@ class RateDefinition(object):
                 kwargs[attribute.name] = math_func(value)
         return self.__class__(**kwargs)
 
-    def get_rate_limits(self, scope=''):
+    def get_rate_limits(self, scope: Scope = '') -> list[ScopeRateLimits]:
         return [(scope, [(rate_counter, limit) for limit, rate_counter in (
             # order matters for returning the highest priority window
             (self.per_week, week_rate_counter),
