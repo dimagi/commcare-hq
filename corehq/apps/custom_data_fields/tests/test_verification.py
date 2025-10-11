@@ -48,10 +48,24 @@ class TestCustomDataFieldsVerification(SimpleTestCase):
     def test_no_reserved_words(self):
         self.assertEqual(set(), CustomDataFieldsForm.verify_no_reserved_words(self.fields))
         self.assertEqual(
+            set(),
+            CustomDataFieldsForm.verify_no_reserved_words([{
+                "slug": "external-id",
+                "choices": ["omega_supreme", "astrotrain", "blitzwing"],
+            }])
+        )
+        self.assertEqual(
             {"Key 'type' is a reserved word in Commcare."},
             CustomDataFieldsForm.verify_no_reserved_words([{
                 "slug": "type",
                 "choices": ["autobot", "decepticon", "dinobot"],
+            }])
+        )
+        self.assertEqual(
+            {"Key 'owner_id' is a reserved word in Commcare."},
+            CustomDataFieldsForm.verify_no_reserved_words([{
+                "slug": "owner_id",
+                "choices": ["optimus_prime", "megatron"],
             }])
         )
 
