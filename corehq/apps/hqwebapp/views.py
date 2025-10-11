@@ -391,7 +391,10 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
-        if redirect_to:
+        is_valid = url_has_allowed_host_and_scheme(
+            redirect_to, allowed_hosts=settings.BASE_ADDRESS
+        )
+        if redirect_to and is_valid:
             return HttpResponseRedirect(redirect_to)
         if not domain_name:
             return HttpResponseRedirect(reverse('homepage'))
