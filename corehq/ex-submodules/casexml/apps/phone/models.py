@@ -42,7 +42,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
-from toposort import toposort_flatten
 
 
 def _get_logger():
@@ -555,15 +554,17 @@ def _reverse_index_map(index_map):
 
 class SimplifiedSyncLog(AbstractSyncLog):
     """
-    New, simplified sync log class that is used by ownership cleanliness restore.
+    New, simplified sync log class that is used by ownership cleanliness
+    restore.
 
-    Just maintains a flat list of case IDs on the phone rather than the case/dependent state
-    lists from the SyncLog class.
+    Just maintains a flat list of case IDs on the phone rather than the
+    case/dependent state lists from the SyncLog class.
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty(six.text_type)
-    # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
-    # this allows us to purge it if possible from other actions
+    # this is a subset of case_ids_on_phone used to flag that a case is
+    # only around because it has dependencies this allows us to purge
+    # it if possible from other actions
     dependent_case_ids_on_phone = SetProperty(six.text_type)
     owner_ids_on_phone = SetProperty(six.text_type)
     index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
@@ -603,41 +604,53 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def purge(self, case_id, xform_id=None):
         """
-        This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
-        Definitions:
+        This happens in 3 phases, and recursively tries to purge
+        outgoing indices of purged cases.
+
+        Definitions
         -----------
+
         A case is *relevant* if:
+
         - it is open and owned or,
         - it has a relevant child or,
         - it has a relevant extension or,
         - it is the extension of a relevant case.
 
         A case is *available* if:
+
         - it is open and not an extension case or,
         - it is open and is the extension of an available case.
 
         A case is *live* if:
+
         - it is owned and available or,
         - it has a live child or,
         - it has a live extension or,
         - it is the extension of a live case.
 
-        Algorithm:
-        ----------
-        1. Mark *relevant* cases
-            Mark all open cases owned by the user relevant. Traversing all outgoing child
-            and extension indexes, as well as all incoming extension indexes, mark all
-            touched cases relevant.
+        Algorithm
+        ---------
 
-        2. Mark *available* cases
-            Mark all relevant cases that are open and have no outgoing extension indexes
-            as available. Traverse incoming extension indexes which don't lead to closed
-            cases, mark all touched cases as available.
+        1. Mark *relevant* cases:
 
-        3. Mark *live* cases
-            Mark all relevant, owned, available cases as live. Traverse incoming
-            extension indexes which don't lead to closed cases, mark all touched
-            cases as live.
+           Mark all open cases owned by the user relevant. Traversing
+           all outgoing child and extension indexes, as well as all
+           incoming extension indexes, mark all touched cases
+           relevant.
+
+        2. Mark *available* cases:
+
+           Mark all relevant cases that are open and have no outgoing
+           extension indexes as available. Traverse incoming extension
+           indexes which don't lead to closed cases, mark all touched
+           cases as available.
+
+        3. Mark *live* cases:
+
+           Mark all relevant, owned, available cases as live. Traverse
+           incoming extension indexes which don't lead to closed cases,
+           mark all touched cases as live.
         """
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
@@ -649,9 +662,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _get_relevant_cases(self, case_id):
         """
-        Mark all open cases owned by the user relevant. Traversing all outgoing child
-        and extension indexes, as well as all incoming extension indexes,
-        mark all touched cases relevant.
+        Mark all open cases owned by the user relevant. Traversing all
+        outgoing child and extension indexes, as well as all incoming
+        extension indexes, mark all touched cases relevant.
         """
         relevant = IndexTree.get_all_dependencies(
             case_id,
@@ -663,14 +676,22 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _get_available_cases(self, relevant):
         """
-        Mark all relevant cases that are open and have no outgoing extension indexes
-        as available. Traverse incoming extension indexes which don't lead to closed
-        cases, mark all touched cases as available
+        Mark all relevant cases that are open and have no outgoing
+        extension indexes as available. Traverse incoming extension
+        indexes which don't lead to closed cases, mark all touched
+        cases as available
         """
         incoming_extensions = self.extension_index_tree.reverse_indices
-        available = {case for case in relevant
-                     if case not in self.closed_cases
-                     and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
+        available = {
+            case for case in relevant
+            if (
+                case not in self.closed_cases
+                and (
+                    not self.extension_index_tree.indices.get(case)
+                    or self.index_tree.indices.get(case)
+                )
+            )
+        }
         new_available = set() | available
         while new_available:
             case_to_check = new_available.pop()
@@ -686,9 +707,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _get_live_cases(self, available):
         """
-        Mark all relevant, owned, available cases as live. Traverse incoming
-        extension indexes which don't lead to closed cases, mark all touched
-        cases as available.
+        Mark all relevant, owned, available cases as live. Traverse
+        incoming extension indexes which don't lead to closed cases,
+        mark all touched cases as available.
         """
         primary_case_ids = self.primary_case_ids
         live = available & primary_case_ids
@@ -715,8 +736,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         return live
 
     def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, xform_id):
-        """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
-
+        """
+        Remove all cases marked for removal. Traverse child cases and
+        try to purge those too.
+        """
         _get_logger().debug("cases to to_remove: {}".format(all_to_remove))
         for to_remove in all_to_remove:
             indices = self.index_tree.indices.get(to_remove, {})
@@ -724,11 +747,18 @@ class SimplifiedSyncLog(AbstractSyncLog):
             for referenced_case in indices.values():
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
                 already_primed_for_removal = referenced_case in all_to_remove
-                if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
+                if (
+                    is_dependent_case
+                    and not already_primed_for_removal
+                    and referenced_case != checked_case_id
+                ):
                     self.purge(referenced_case, xform_id)
 
     def _remove_case(self, to_remove, all_to_remove, checked_case_id, xform_id):
-        """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
+        """
+        Removes case from index trees, case_ids_on_phone and
+        dependent_case_ids_on_phone if pertinent
+        """
         _get_logger().debug('removing: {}'.format(to_remove))
 
         deleted_indices = self.index_tree.indices.pop(to_remove, {})
@@ -741,8 +771,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if should_fail_softly:
                 pass
             else:
-                # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
-                # we should convert back to a real Exception when we stop getting any of these
+                # This is only a soft assert for now because of FogBugz
+                # ticket 181443. We should convert back to a real
+                # Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
                 _assert(False, 'case already remove from synclog', {
                     'case_id': to_remove,
@@ -762,7 +793,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _add_index(self, index, case_update):
         _get_logger().debug('adding index {} --<{}>--> {} ({}).'.format(
-            index.case_id, index.relationship, index.referenced_id, index.identifier))
+            index.case_id,
+            index.relationship,
+            index.referenced_id,
+            index.identifier,
+        ))
         if index.relationship == const.CASE_INDEX_EXTENSION:
             self._add_extension_index(index, case_update)
         else:
@@ -770,173 +805,132 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _add_extension_index(self, index, case_update):
         assert index.relationship == const.CASE_INDEX_EXTENSION
-        self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+        self.extension_index_tree.set_index(
+            index.case_id,
+            index.identifier,
+            index.referenced_id,
+        )
 
-        case_child_indices = [idx for idx in case_update.indices_to_add
-                              if idx.relationship == const.CASE_INDEX_CHILD
-                              and idx.referenced_id == index.referenced_id]
+        case_child_indices = [
+            idx for idx in case_update.indices_to_add
+            if idx.relationship == const.CASE_INDEX_CHILD
+            and idx.referenced_id == index.referenced_id
+        ]
         if not case_child_indices and not case_update.is_live:
-            # this case doesn't also have child indices, and it is not owned, so it is dependent
+            # this case doesn't also have child indices, and it is not
+            # owned, so it is dependent
             self.dependent_case_ids_on_phone.add(index.case_id)
 
     def _add_child_index(self, index):
         assert index.relationship == const.CASE_INDEX_CHILD
-        self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+        self.index_tree.set_index(
+            index.case_id,
+            index.identifier,
+            index.referenced_id,
+        )
 
     def _delete_index(self, index):
         self.index_tree.delete_index(index.case_id, index.identifier)
         self.extension_index_tree.delete_index(index.case_id, index.identifier)
 
     def update_phone_lists(self, xform, case_list):
-        # HELPME
-        #
-        # This method has been flagged for refactoring due to its complexity and
-        # frequency of touches in changesets
-        #
-        # If you are writing code that touches this method, your changeset
-        # should leave the method better than you found it.
-        #
-        # Please remove this flag when this method no longer triggers an 'E' or 'F'
-        # classification from the radon code static analysis
+        all_updates = self._initialize_case_updates(case_list, xform)
+        live_updates, non_live_updates = self._process_case_updates(
+            all_updates,
+            xform.form_id,
+        )
+        made_changes = self._apply_case_updates(
+            live_updates,
+            non_live_updates,
+            xform.form_id,
+        )
+        if made_changes or not self.last_submitted:
+            self.last_submitted = datetime.utcnow()
+            self.rev_before_last_submitted = self._rev
+        return made_changes
 
-        made_changes = False
-        _get_logger().debug('updating sync log for {}'.format(self.user_id))
-        _get_logger().debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
-        _get_logger().debug('dependent case ids before update: {}'.format(
-            ', '.join(self.dependent_case_ids_on_phone)))
-        _get_logger().debug('index tree before update: {}'.format(self.index_tree))
-        _get_logger().debug('extension index tree before update: {}'.format(self.extension_index_tree))
-
-        # this is a variable used via closures in the function below
-        owner_id_map = {}
-
-        def get_latest_owner_id(case_id, action=None):
-            # "latest" just means as this forms actions are played through
-            if action is not None:
-                owner_id_from_action = action.updated_known_properties.get("owner_id")
-                if owner_id_from_action is not None:
-                    owner_id_map[case_id] = owner_id_from_action
-            return owner_id_map.get(case_id, None)
-
+    def _initialize_case_updates(self, case_list, xform):
         all_updates = {}
+        owner_id_map = {}
         for case in case_list:
             if case.case_id not in all_updates:
-                _get_logger().debug('initializing update for case {}'.format(case.case_id))
-                all_updates[case.case_id] = CaseUpdate(case_id=case.case_id,
-                                                       owner_ids_on_phone=self.owner_ids_on_phone)
-
+                all_updates[case.case_id] = CaseUpdate(
+                    case_id=case.case_id,
+                    owner_ids_on_phone=self.owner_ids_on_phone,
+                )
             case_update = all_updates[case.case_id]
             case_update.was_live_previously = case.case_id in self.primary_case_ids
             actions = case.get_actions_for_form(xform)
             for action in actions:
-                _get_logger().debug('{}: {}'.format(case.case_id, action.action_type))
-                owner_id = get_latest_owner_id(case.case_id, action)
+                owner_id = get_latest_owner_id(owner_id_map, case.case_id, action)
                 if owner_id is not None:
                     case_update.final_owner_id = owner_id
                 if action.action_type == const.CASE_ACTION_INDEX:
                     for index in action.indices:
                         if index.referenced_id:
-                            case_update.indices_to_add.append(
-                                ShortIndex(case.case_id, index.identifier, index.referenced_id, index.relationship)
-                            )
+                            case_update.indices_to_add.append(ShortIndex(
+                                case.case_id,
+                                index.identifier,
+                                index.referenced_id,
+                                index.relationship,
+                            ))
                         else:
-                            case_update.indices_to_delete.append(
-                                ShortIndex(case.case_id, index.identifier, None, None)
-                            )
+                            case_update.indices_to_delete.append(ShortIndex(
+                                case.case_id,
+                                index.identifier,
+                                None,
+                                None
+                            ))
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     case_update.is_closed = True
+        return all_updates
 
+    def _process_case_updates(self, all_updates, form_id):
+        live_updates = []
         non_live_updates = []
-        for case in case_list:
-            case_update = all_updates[case.case_id]
+        for case_update in all_updates.values():
             if case_update.is_live:
-                _get_logger().debug('case {} is live.'.format(case_update.case_id))
-                if case.case_id not in self.case_ids_on_phone:
-                    self._add_primary_case(case.case_id)
-                    made_changes = True
-                elif case.case_id in self.dependent_case_ids_on_phone:
-                    self.dependent_case_ids_on_phone.remove(case.case_id)
-                    made_changes = True
-
-                for index in case_update.indices_to_add:
-                    self._add_index(index, case_update)
-                    made_changes = True
-                for index in case_update.indices_to_delete:
-                    self._delete_index(index)
-                    made_changes = True
+                live_updates.append(case_update)
             else:
-                # process the non-live updates after all live are already processed
                 non_live_updates.append(case_update)
-                # populate the closed cases list before processing non-live updates
                 if case_update.is_closed:
                     self.closed_cases.add(case_update.case_id)
+        return live_updates, non_live_updates
 
-        # generate list of case IDs ordered topologically by case indices
-        tree = defaultdict(set)
+    def _apply_case_updates(self, live_updates, non_live_updates, form_id):
+        made_changes = False
+        for update in live_updates:
+            made_changes |= self._apply_live_case_update(update)
         for update in non_live_updates:
-            tree[update.case_id]  # prime for case
-            for index in update.indices_to_add:
-                tree[index.referenced_id].add(update.case_id)
-        ordered_case_ids = toposort_flatten(tree)
+            made_changes |= self._apply_non_live_case_update(update, form_id)
+        return made_changes
 
-        non_live_updates_by_case_id = defaultdict(list)
-        for update in non_live_updates:
-            non_live_updates_by_case_id[update.case_id].append(update)
+    def _apply_live_case_update(self, case_update):
+        made_changes = False
+        if case_update.case_id not in self.case_ids_on_phone:
+            self._add_primary_case(case_update.case_id)
+            made_changes = True
+        elif case_update.case_id in self.dependent_case_ids_on_phone:
+            self.dependent_case_ids_on_phone.remove(case_update.case_id)
+            made_changes = True
+        for index in case_update.indices_to_add:
+            self._add_index(index, case_update)
+            made_changes = True
+        for index in case_update.indices_to_delete:
+            self._delete_index(index)
+            made_changes = True
+        return made_changes
 
-        for case_id in ordered_case_ids:
-            if case_id not in non_live_updates_by_case_id:
-                continue
-            _get_logger().debug('case {} is NOT live.'.format(case_id))
-            is_dependent = (
-                self.index_tree.get_cases_that_directly_depend_on_case(case_id)
-                or self.extension_index_tree.get_cases_that_directly_depend_on_case(case_id)
-            )
-            if is_dependent:
-                _get_logger().debug('adding dependent case %s', case_id)
-                self.case_ids_on_phone.add(case_id)
-                self.dependent_case_ids_on_phone.add(case_id)
-
-                for update in non_live_updates_by_case_id[case_id]:
-                    for index in update.indices_to_add:
-                        self._add_index(index, update)
-
+    def _apply_non_live_case_update(self, case_update, form_id):
+        made_changes = False
+        if case_update.case_id in self.case_ids_on_phone:
+            self.purge(case_update.case_id, xform_id=form_id)
+            if case_update.case_id in self.case_ids_on_phone:
+                for index in case_update.indices_to_add:
+                    self._add_index(index, case_update)
+                for index in case_update.indices_to_delete:
+                    self._delete_index(index)
                 made_changes = True
-
-            for update in non_live_updates_by_case_id[case_id]:
-                if update.has_extension_indices_to_add():
-                    # non-live cases with extension indices should be added and processed
-                    self.case_ids_on_phone.add(update.case_id)
-                    for index in update.indices_to_add:
-                        self._add_index(index, update)
-                    made_changes = True
-
-        _get_logger().debug('case ids mid update: {}'.format(', '.join(self.case_ids_on_phone)))
-        _get_logger().debug('dependent case ids mid update: {}'.format(
-            ', '.join(self.dependent_case_ids_on_phone)))
-        _get_logger().debug('index tree mid update: {}'.format(self.index_tree))
-        _get_logger().debug('extension index tree mid update: {}'.format(self.extension_index_tree))
-
-        for update in non_live_updates:
-            if update.case_id in self.case_ids_on_phone:
-                # try purging the case
-                self.purge(update.case_id, xform_id=xform.form_id)
-                if update.case_id in self.case_ids_on_phone:
-                    # if unsuccessful, process the rest of the update
-                    for index in update.indices_to_add:
-                        self._add_index(index, update)
-                    for index in update.indices_to_delete:
-                        self._delete_index(index)
-                made_changes = True
-
-        _get_logger().debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
-        _get_logger().debug('dependent case ids after update: {}'.format(
-            ', '.join(self.dependent_case_ids_on_phone)))
-        _get_logger().debug('index tree after update: {}'.format(self.index_tree))
-        _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
-        if made_changes or not self.last_submitted:
-            _get_logger().debug('made changes')
-            self.last_submitted = datetime.utcnow()
-            self.rev_before_last_submitted = self._rev
         return made_changes
 
 
@@ -1011,3 +1005,12 @@ def properly_wrap_sync_log(doc, synclog_sql=None):
     if synclog_sql:
         synclog._synclog_sql = synclog_sql
     return synclog
+
+
+def get_latest_owner_id(owner_id_map, case_id, action=None):
+    # "latest" just means as this forms actions are played through
+    if action is not None:
+        owner_id_from_action = action.updated_known_properties.get("owner_id")
+        if owner_id_from_action is not None:
+            owner_id_map[case_id] = owner_id_from_action
+    return owner_id_map.get(case_id, None)
