@@ -16,7 +16,7 @@ from soil.progress import TaskProgressManager
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.data_dictionary.util import fields_to_validate
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
@@ -134,9 +134,13 @@ class _TimedAndThrottledImporter:
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
         if domain_has_privilege(self.domain, privileges.DATA_DICT_TYPES):
-            self.fields_to_validate = fields_to_validate(domain, config.case_type)
+            props = CaseProperty.objects.filter(
+                case_type__domain=domain,
+                case_type__name=config.case_type,
+            )
+            self.field_to_case_property = {prop.name: prop for prop in props}
         else:
-            self.fields_to_validate = {}
+            self.field_to_case_property = {}
         self.field_map = self._create_field_map()
 
     def do_import(self, spreadsheet):
@@ -322,8 +326,8 @@ class _TimedAndThrottledImporter:
             elif update_value is not None:
                 update_value = _convert_field_value(update_value)
 
-            if update_field_name in self.fields_to_validate:
-                case_property = self.fields_to_validate[update_field_name]
+            if self.field_to_case_property:
+                case_property = self.field_to_case_property[update_field_name]
                 try:
                     case_property.check_validity(update_value)
                 except CaseRowError as error:
