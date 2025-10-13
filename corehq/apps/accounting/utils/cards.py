@@ -34,3 +34,14 @@ def get_saved_cards_for_user(username, account):
 
     payment_method = get_payment_method_for_user(username)
     return payment_method.all_cards_serialized(account)
+
+
+def serialize_account_card(card, owner):
+    return {
+        'brand': card.brand,
+        'last4': card.last4,
+        'exp_month': card.exp_month,
+        'exp_year': card.exp_year,
+        'token': card.id,
+        'owner': owner,
+    }

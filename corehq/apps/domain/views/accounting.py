@@ -9,6 +9,7 @@ from corehq.apps.accounting.utils.cards import (
     get_autopay_card_and_owner_for_billing_account,
     get_payment_method_for_user,
     get_saved_cards_for_user,
+    serialize_account_card,
     set_card_as_autopay_for_billing_account,
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -488,16 +489,7 @@ class EditExistingBillingAccountView(HqHtmxActionMixin, DomainAccountingSettings
         card, owner = get_autopay_card_and_owner_for_billing_account(self.account)
         if card is None:
             return []
-        return [
-            {
-                'brand': card.brand,
-                'last4': card.last4,
-                'exp_month': card.exp_month,
-                'exp_year': card.exp_year,
-                'token': card.id,
-                'owner': owner,
-            }
-        ]
+        return [serialize_account_card(card, owner)]
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
