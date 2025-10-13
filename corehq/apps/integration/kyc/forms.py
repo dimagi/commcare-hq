@@ -28,6 +28,7 @@ class KycConfigureForm(forms.ModelForm):
             'other_case_type',
             'provider',
             'api_field_to_user_data_map',
+            'phone_number_field',
         ]
 
     user_data_store = forms.ChoiceField(
@@ -54,6 +55,12 @@ class KycConfigureForm(forms.ModelForm):
               '<a href="{}" target="_blank">support documentation</a>.'),
             'https://commcare-hq.readthedocs.io/integrations/kyc.html#api-field-to-recipient-data-map'
         ),
+    )
+    phone_number_field = forms.CharField(
+        label=_('Phone Number Field'),
+        required=False,
+        help_text=_('The case property or user data field that contains the phone number. '
+                    'Leave blank if it’s not used for KYC verification.'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -85,6 +92,9 @@ class KycConfigureForm(forms.ModelForm):
                     'api_field_to_user_data_map',
                     x_init='api_field_to_user_data_map = $el.value',
                     css_id='api-mapping',
+                ),
+                crispy.Div(
+                    'phone_number_field',
                 ),
                 twbscrispy.StrictButton(
                     _('Save'),

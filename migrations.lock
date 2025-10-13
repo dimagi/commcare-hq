@@ -128,6 +128,8 @@ accounting
  0106_alter_billingcontactinfo_company_name
  0107_two_stage_mobile_worker_creation_priv
  0108_subscription_auto_renew_and_more
+ 0109_enable_all_add_ons_priv
+ 0110_alter_customerinvoicecommunicationhistory_communication_type_and_more
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -442,6 +444,8 @@ domain
  0014_appreleasemodesetting
  0015_delete_projectlimit
  0016_rename_superuserprojectentryrecord_domain_username_domain_supe_domain_c3d32e_idx
+ 0017_appmanagerdomainsettings
+ 0018_enable_all_add_ons
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -697,6 +701,7 @@ integration
  0010_alter_kycconfig_api_field_to_user_data_map
  0011_remove_kycconfig_connection_settings
  0012_momoconfig
+ 0013_kycconfig_phone_number_field
 ip_access
  0001_initial
 ivr
