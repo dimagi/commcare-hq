@@ -273,7 +273,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 "cases which are assigned to a Case Sharing Group/Location. To learn "
                 "more about Case Sharing click "
                 "<a href='{}' target='blank'>here</a>."
-            ).format(help_link))
+            ), help_link)
 
     _default_landmarks = [30, 60, 90]
 

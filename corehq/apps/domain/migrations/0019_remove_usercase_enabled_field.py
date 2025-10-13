@@ -24,7 +24,7 @@ def _pop_field(doc):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('domain', '0016_rename_superuserprojectentryrecord_domain_username_domain_supe_domain_c3d32e_idx'),
+        ('domain', '0018_enable_all_add_ons'),
     ]
 
     operations = [

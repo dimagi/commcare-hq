@@ -5,14 +5,16 @@ from functools import reduce
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F
-from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from langcodes import langs as all_langs
 from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -56,17 +58,15 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_doc_ids_for_domain_grouped_by_db,
 )
-from corehq.util.quickcache import quickcache, get_session_key
+from corehq.util.models import GetOrNoneManager
+from corehq.util.quickcache import get_session_key, quickcache
 from corehq.util.soft_assert import soft_assert
-from langcodes import langs as all_langs
 
 from .exceptions import (
     InactiveTransferDomainException,
     NameUnavailableException,
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
-
-from django.core.validators import MaxValueValidator, MinValueValidator
 
 lang_lookup = defaultdict(str)
 
@@ -455,6 +455,16 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # name that users see for connect messaging channels tied to this domain
     connect_messaging_channel_name = StringProperty()
 
+    # TODO:
+    #   * Simplify the Domain Couch model by splitting off properties.
+    #   * Group properties by Django app into domain settings SQL models,
+    #     e.g. Add more app-manager-related settings to
+    #     AppManagerDomainSettings:
+    #     + Domain.usercase_enabled
+    #     + AppReleaseModeSetting.is_visible
+    #     + etc.
+    # (Norman, 2025-09-24)
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -564,8 +574,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return get_brief_apps_in_domain(self.name)
 
     def full_applications(self, include_builds=True):
-        from corehq.apps.app_manager.util import get_correct_app_class
         from corehq.apps.app_manager.models import Application
+        from corehq.apps.app_manager.util import get_correct_app_class
 
         def wrap_application(a):
             return get_correct_app_class(a['doc']).wrap(a['doc'])
@@ -665,8 +675,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         generate a new, unique name. Throws exception if it can't figure out
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
+        from corehq.apps.domain.dbaccessors import (
+            domain_or_deleted_domain_exists,
+        )
         from corehq.apps.domain.utils import get_domain_url_slug
-        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
         name = get_domain_url_slug(hr_name, max_length=max_length)
         if not name:
             raise NameUnavailableException
@@ -732,7 +744,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         )
 
     def save(self, **params):
-        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
+        from corehq.apps.domain.dbaccessors import (
+            domain_or_deleted_domain_exists,
+        )
 
         self.last_modified = datetime.utcnow()
         if not self._rev:
@@ -1158,3 +1172,21 @@ class AppReleaseModeSetting(models.Model):
     def get_settings(domain):
         domain_obj, created = AppReleaseModeSetting.objects.get_or_create(domain=domain)
         return domain_obj
+
+
+class AppManagerDomainSettings(models.Model):
+    domain = models.CharField(max_length=255, primary_key=True)
+    all_add_ons_enabled = models.BooleanField(default=False)
+
+    objects = GetOrNoneManager()
+
+
+def all_app_manager_add_ons_enabled(domain):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq.privileges import SHOW_ENABLE_ALL_ADD_ONS
+
+    if not domain_has_privilege(domain, SHOW_ENABLE_ALL_ADD_ONS):
+        return False
+
+    app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=domain)
+    return bool(app_mgr and app_mgr.all_add_ons_enabled)

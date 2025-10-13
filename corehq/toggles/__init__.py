@@ -1176,7 +1176,7 @@ FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     'saas_formbuilder_save_to_case',
     'Form Builder - Save Questions to Case Properties',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
+    namespaces=[NAMESPACE_DOMAIN],
     description='Allows users to save questions to case properties within the Form Builder'
 )
 
@@ -1696,13 +1696,6 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
 
-ENABLE_ALL_ADD_ONS = StaticToggle(
-    'enable_all_add_ons',
-    'Enable all app manager add-ons',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
-)
-
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1801,7 +1794,7 @@ AGGREGATE_UCRS = StaticToggle(
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
     'Allow building report builder reports directly from raw UCR Data Sources',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2307,7 +2300,7 @@ CASE_UPDATES_UCR_FILTERS = StaticToggle(
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 

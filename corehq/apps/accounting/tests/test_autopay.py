@@ -26,7 +26,6 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCustomerManager,
 )
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
-from django.db import transaction
 from corehq.apps.accounting.tests.utils import mocked_stripe_api
 
 
@@ -134,22 +133,28 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(stripe.Charge, 'create')
     @mocked_stripe_api()
-    def test_double_charge_is_prevented_and_only_one_payment_record_created(self, fake_charge,
-                                                                            fake_customer):
+    def test_double_charge_is_prevented_because_paid_invoice_is_never_included(self, fake_charge, fake_customer):
         self._create_autopay_method(fake_customer)
         self.original_outbox_length = len(mail.outbox)
         fake_charge.return_value = StripeObject(id='transaction_id')
-        self._run_autopay()
-        # Add balance to the same invoice so it gets paid again
+
         invoice = Invoice.objects.get(subscription=self.subscription)
         invoice.balance = Decimal('1000.0000')
         invoice.save()
-        # Run autopay again to test no double charge
-        with transaction.atomic(), self.assertLogs(level='ERROR') as log_cm:
-            self._run_autopay()
-            self.assertIn("[BILLING] [Autopay] Attempt to double charge invoice", "\n".join(log_cm.output))
+
+        autopay_invoices = Invoice.autopayable_invoices(invoice.date_due)
+        self.assertEqual(len(autopay_invoices), 1)
+        self.assertEqual(autopay_invoices[0].id, invoice.id)
+
+        fake_charge.return_value = StripeObject(id='transaction_id')
+        self._run_autopay()
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
-        self.assertEqual(len(mail.outbox), self.original_outbox_length + 1)
+
+        autopay_invoices = Invoice.autopayable_invoices(invoice.date_due)
+        self.assertEqual(len(autopay_invoices), 0)
+
+        self._run_autopay()
+        self.assertEqual(len(PaymentRecord.objects.all()), 1)
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(stripe.Charge, 'create')
