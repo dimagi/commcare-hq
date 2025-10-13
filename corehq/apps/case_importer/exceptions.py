@@ -112,6 +112,28 @@ class InvalidDate(CaseRowError):
     )
 
 
+class InvalidNumber(CaseRowError):
+    title = gettext_noop('Invalid Number')
+    message = gettext_lazy(
+        'The given value is not a number'
+    )
+
+
+class InvalidGPS(CaseRowError):
+    title = gettext_noop('Invalid GPS')
+    message = gettext_lazy(
+        'Required format: "latitude longitude" or '
+        '"latitude longitude altitude precision"'
+    )
+
+
+class InvalidPhoneNumber(CaseRowError):
+    title = gettext_noop('Invalid Phone Number')
+    message = gettext_lazy(
+        'The given value is not a valid phone number'
+    )
+
+
 class InvalidSelectValue(CaseRowError):
     title = gettext_noop('Unexpected multiple choice value')
     message = gettext_lazy(
