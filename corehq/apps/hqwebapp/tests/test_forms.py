@@ -1,9 +1,13 @@
 from unittest.mock import patch, ANY
-from django.test import RequestFactory, SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.core.exceptions import ValidationError
 from corehq.apps.users.models import WebUser
 
-from ..forms import HQAuthenticationTokenForm, HQBackupTokenForm
+from ..forms import (
+    EmailAuthenticationForm,
+    HQAuthenticationTokenForm,
+    HQBackupTokenForm,
+)
 
 
 class HQAuthenticationTokenFormTests(SimpleTestCase):
@@ -78,3 +82,63 @@ class HQBackupTokenFormTests(SimpleTestCase):
         expected_credentials = {'username': user.username}
         mock_signal.send.assert_called_once_with(credentials=expected_credentials, request=request,
             token_failure=True, sender=ANY)
+
+
+class TestEmailAuthenticationFormValidationError(TestCase):
+    def create_form(self, request=None, can_select_server=None):
+        form = EmailAuthenticationForm(
+            request=request,
+            can_select_server=can_select_server,
+            data={
+                'username': 'anyemail@example.com',
+                'password': 'badpassword',
+            },
+        )
+        return form
+
+    def run_form_and_assert(
+        self, request=None, can_select_server=None, expected_message=None, expected_attempts=None
+    ):
+        form = self.create_form(request=request, can_select_server=can_select_server)
+        form.full_clean()
+        assert not form.is_valid()
+        non_field_errors = form.non_field_errors().as_data()
+        assert len(non_field_errors) == 1
+        assert isinstance(non_field_errors[0], ValidationError)
+        assert expected_message in non_field_errors[0].message
+        if request is not None:
+            assert request.session['login_attempts'] == expected_attempts
+
+    def test_cloud_location_message_on_repeated_failures(self):
+        request = RequestFactory().get('/')
+        request.session = {}
+        for i in range(1, 3):
+            if i < 3:
+                message = "Please enter a correct %(username)s and password."
+            else:
+                message = "Still having trouble?"
+            self.run_form_and_assert(
+                request=request,
+                can_select_server=True,
+                expected_message=message,
+                expected_attempts=i,
+            )
+
+    def test_original_message_if_not_can_select_server(self):
+        request = RequestFactory().get('/')
+        request.session = {}
+        for i in range(1, 3):
+            self.run_form_and_assert(
+                request=request,
+                can_select_server=False,
+                expected_message="Please enter a correct %(username)s and password.",
+                expected_attempts=i,
+            )
+
+    def test_original_message_if_no_request_object(self):
+        for _ in range(1, 3):
+            self.run_form_and_assert(
+                request=None,
+                can_select_server=True,
+                expected_message="Please enter a correct %(username)s and password.",
+            )
