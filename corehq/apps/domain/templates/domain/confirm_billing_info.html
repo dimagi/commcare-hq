@@ -9,7 +9,6 @@
   {% initial_page_data "plan" plan %}
   {% initial_page_data "cards" cards %}
   {% initial_page_data "stripe_public_key" stripe_public_key %}
-  {% initial_page_data "downgrade_email_note" downgrade_email_note %}
   {% registerurl "cards_view" domain %}
 
   <p class="lead text-center">
@@ -23,6 +22,9 @@
     <div class="card card-modern-gray card-form-only mb-3" id="billing-info">
       <div class="card-body">
         {% crispy billing_account_info_form %}
+        {% if downgrade_email_note %}
+          <input type="hidden" name="downgrade_email_note" value="{{ downgrade_email_note }}" />
+        {% endif %}
       </div>
     </div>
 

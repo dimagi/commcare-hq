@@ -2069,7 +2069,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     data_country_name=COUNTRIES.get(self.current_country, ''),
                 ),
             ),
-            crispy.Hidden(name='downgrade_email_note', value='', id='downgrade-email-note'),
             crispy.Hidden(name='old_plan', value=current_subscription.plan_version.plan.edition),
             crispy.Hidden(name='new_plan', value=plan_version.plan.edition),
         )

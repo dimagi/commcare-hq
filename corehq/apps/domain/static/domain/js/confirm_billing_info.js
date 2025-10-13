@@ -14,9 +14,6 @@ $('a.breadcrumb-2').click(function (e) {
     $navigateForm.submit();
 });
 
-document.getElementById('btn-subscribe-to-plan').onclick = function () {
-    document.getElementById('downgrade-email-note').value = initialPageData.get("downgrade_email_note");
-};
 
 var cardManager = stripeCardManager.stripeCardManager({
     cards: initialPageData.get("cards"),

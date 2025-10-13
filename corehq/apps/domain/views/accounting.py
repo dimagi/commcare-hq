@@ -1609,7 +1609,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     def downgrade_email_note(self):
         if self.is_downgrade:
-            return _get_downgrade_or_pause_note(self.request)
+            return self.request.POST.get('downgrade_email_note') or _get_downgrade_or_pause_note(self.request)
         else:
             return None
 
@@ -1717,7 +1717,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             domain=self.request.domain,
             old_plan=self.request.POST.get('old_plan', 'unknown'),
             new_plan=self.request.POST.get('new_plan', 'unknown'),
-            note=self.request.POST.get('downgrade_email_note', 'none')
+            note=self.request.POST.get('downgrade_email_note', '')
         )
         send_mail_async.delay(
             '{}Subscription downgrade for {}'.format(
