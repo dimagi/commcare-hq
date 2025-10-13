@@ -1618,11 +1618,20 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def billing_account_info_form(self):
         if self.request.method == 'POST' and self.is_form_post:
             return ConfirmNewSubscriptionForm(
-                self.account, self.domain, self.request.couch_user.username,
-                self.selected_plan_version, self.current_subscription, data=self.request.POST
+                self.account,
+                self.domain,
+                self.request.couch_user.username,
+                self.selected_plan_version,
+                self.current_subscription,
+                data=self.request.POST,
             )
-        return ConfirmNewSubscriptionForm(self.account, self.domain, self.request.couch_user.username,
-                                          self.selected_plan_version, self.current_subscription)
+        return ConfirmNewSubscriptionForm(
+            self.account,
+            self.domain,
+            self.request.couch_user.username,
+            self.selected_plan_version,
+            self.current_subscription,
+        )
 
     @property
     def page_context(self):
