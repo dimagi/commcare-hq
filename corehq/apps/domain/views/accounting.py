@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import dateutil
 from couchdbkit import ResourceNotFound
-from corehq.apps.accounting.utils.autopay import (
+from corehq.apps.accounting.utils.cards import (
     get_autopay_card_and_owner_for_billing_account,
     set_card_as_autopay_for_billing_account,
 )

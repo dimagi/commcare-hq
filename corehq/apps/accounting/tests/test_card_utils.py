@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 from corehq.apps.accounting.models import StripePaymentMethod
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.utils.autopay import (
+from corehq.apps.accounting.utils.cards import (
     get_autopay_card_and_owner_for_billing_account,
     set_card_as_autopay_for_billing_account,
 )
