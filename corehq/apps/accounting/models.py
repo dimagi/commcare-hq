@@ -2378,6 +2378,7 @@ class Invoice(InvoiceBase):
         """ Invoices that can be auto paid on date_due """
         invoices = cls.objects.select_related('subscription__account').filter(
             is_hidden=False,
+            date_paid__isnull=True,
             subscription__account__auto_pay_user__isnull=False,
         )
         # we use Ellipsis because date due can actually be None
@@ -2500,6 +2501,7 @@ class CustomerInvoice(InvoiceBase):
         invoices = cls.objects.select_related('account').filter(
             date_due=date_due,
             is_hidden=False,
+            date_paid__isnull=True,
             account__auto_pay_user__isnull=False
         )
         return invoices
