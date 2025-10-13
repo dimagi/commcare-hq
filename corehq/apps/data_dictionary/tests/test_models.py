@@ -38,6 +38,11 @@ class TestCaseProperty(TestCase):
                 case_property=cls.select_property,
                 allowed_value=choice
             )
+        cls.barcode_property = CaseProperty.objects.create(
+            case_type=cls.case_type,
+            data_type=CaseProperty.DataType.BARCODE,
+            name="patient_code",
+        )
 
     def test_check_valid_date(self):
         # check_validity raises exception on invalid date so just
@@ -65,3 +70,7 @@ class TestCaseProperty(TestCase):
         # and ensure it is not accepted.
         with pytest.raises(exceptions.InvalidSelectValue):
             self.select_property.check_validity(self.valid_choices[0].upper())
+
+    def test_unvalidated_type(self):
+        # Barcodes are not validated
+        self.barcode_property.check_validity('123')

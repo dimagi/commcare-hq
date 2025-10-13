@@ -166,14 +166,32 @@ class CaseProperty(models.Model):
         return super(CaseProperty, self).delete(*args, **kwargs)
 
     def check_validity(self, value):
-        if value and self.data_type == 'date':
-            try:
-                datetime.strptime(value, ISO_DATE_FORMAT)
-            except ValueError:
-                raise exceptions.InvalidDate(sample=value)
-        elif value and self.data_type == 'select' and self.allowed_values.exists():
-            if not self.allowed_values.filter(allowed_value=value).exists():
-                raise exceptions.InvalidSelectValue(sample=value, message=self.valid_values_message)
+        if value is None or value == '':
+            return
+        validation_methods = {
+            self.DataType.DATE.value: self._validate_date,
+            self.DataType.SELECT.value: self._validate_select,
+        }
+        method = validation_methods.get(
+            self.data_type,
+            lambda x: None
+        )
+        return method(value)
+
+    def _validate_date(self, value):
+        try:
+            datetime.strptime(value, ISO_DATE_FORMAT)
+        except ValueError:
+            raise exceptions.InvalidDate(sample=value)
+
+    def _validate_select(self, value):
+        if not self.allowed_values.exists():
+            return
+        if not self.allowed_values.filter(allowed_value=value).exists():
+            raise exceptions.InvalidSelectValue(
+                sample=value,
+                message=self.valid_values_message,
+            )
 
     @property
     def valid_values_message(self):
