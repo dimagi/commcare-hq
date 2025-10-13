@@ -1643,7 +1643,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             'billing_account_info_form': self.billing_account_info_form,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'cards': self.payment_method.all_cards_serialized(self.account),
-            'downgrade_email_note': self.downgrade_email_note
+            'downgrade_email_note': self.downgrade_email_note,
+            'cancel_url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
         }
 
     def post(self, request, *args, **kwargs):

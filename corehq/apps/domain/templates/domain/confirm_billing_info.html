@@ -18,16 +18,35 @@
       Please update your billing information below before continuing.
     {% endblocktrans %}
   </p>
+  <form autocomplete="off" class="form form-horizontal" method="post">
 
-  <div class="card card-modern-gray card-form-only mb-3" id="billing-info">
-    <div class="card-body">
-      {% crispy billing_account_info_form %}  {# todo B5: crispy #}
+    <div class="card card-modern-gray card-form-only mb-3" id="billing-info">
+      <div class="card-body">
+        {% crispy billing_account_info_form %}
+      </div>
     </div>
-  </div>
 
-  <div class="card card-modern-gray card-form-only" id="card-manager">
-    <div class="card-body">
-      {% include "domain/bootstrap5/stripe_cards.html" %}
+    <div class="card card-modern-gray card-form-only mb-3" id="card-manager">
+      <div class="card-body">
+        {% include "domain/bootstrap5/stripe_cards.html" %}
+      </div>
     </div>
-  </div>
+
+    <div class="card card-modern-gray card-form-only">
+      <div class="card-body">
+        <fieldset>
+          <legend>{% trans "Confirmation" %}</legend>
+          <div class="px-2 pt-3">
+            <a href="{{ cancel_url }}" class="btn btn-outline-primary">
+              {% trans "Cancel" %}
+            </a>
+            <button type="submit" class="btn btn-primary">
+              {% trans "Subscribe to Plan" %}
+            </button>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+  </form>
 {% endblock form_content %}

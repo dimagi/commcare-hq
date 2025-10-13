@@ -2036,7 +2036,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
+        self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             'plan_edition',
             'is_annual_plan',
@@ -2064,19 +2064,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     css_class='form-control form-control-lg accounting-country-select2',
                     data_country_code=self.current_country or '',
                     data_country_name=COUNTRIES.get(self.current_country, ''),
-                ),
-            ),
-            hqcrispy.FormActions(
-                hqcrispy.LinkButton(
-                    _('Cancel'),
-                    reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    css_class='btn btn-outline-primary',
-                ),
-                StrictButton(
-                    _('Subscribe to Plan'),
-                    type='submit',
-                    id='btn-subscribe-to-plan',
-                    css_class='btn btn-primary disable-on-submit-no-spinner add-spinner-on-click',
                 ),
             ),
             crispy.Hidden(name='downgrade_email_note', value='', id='downgrade-email-note'),
