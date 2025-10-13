@@ -2036,6 +2036,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
+        for field_name in ['first_name', 'last_name', 'first_line', 'city', 'postal_code', 'country']:
+            self.fields[field_name].required = True
+
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             'plan_edition',
