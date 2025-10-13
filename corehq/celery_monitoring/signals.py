@@ -49,8 +49,6 @@ def update_celery_state(sender=None, headers=None, **kwargs):
     except InterfaceError:
         close_old_connections()
         backend.store_result(headers['id'], None, CELERY_STATE_SENT)
-    finally:
-        close_old_connections()
 
 
 @task_prerun.connect
