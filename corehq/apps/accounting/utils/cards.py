@@ -1,4 +1,6 @@
-from corehq.apps.accounting.models import StripePaymentMethod
+from django.conf import settings
+
+from corehq.apps.accounting.models import PaymentMethodType, StripePaymentMethod
 
 
 def get_autopay_card_and_owner_for_billing_account(account):
@@ -16,3 +18,19 @@ def get_autopay_card_and_owner_for_billing_account(account):
 def set_card_as_autopay_for_billing_account(payment_method, card_token, account, domain):
     card = payment_method.get_card(card_token)
     payment_method.set_autopay(card, account, domain)
+
+
+def get_payment_method_for_user(username):
+    payment_method, _ = StripePaymentMethod.objects.get_or_create(
+        web_user=username,
+        method_type=PaymentMethodType.STRIPE,
+    )
+    return payment_method
+
+
+def get_saved_cards_for_user(username, account):
+    if not settings.STRIPE_PRIVATE_KEY:
+        return []
+
+    payment_method = get_payment_method_for_user(username)
+    return payment_method.all_cards_serialized(account)
