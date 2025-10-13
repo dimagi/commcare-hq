@@ -30,7 +30,17 @@
 
     <div class="card card-modern-gray card-form-only mb-3" id="card-manager">
       <div class="card-body">
-        {% include "domain/bootstrap5/stripe_cards.html" %}
+        <div
+          id="manage-autopay-container"
+          hx-get="{{ request.path_info }}"
+          hq-hx-action="select_autopay_method"
+          hx-trigger="load, refreshCards"
+        >
+          <div class="htmx-indicator mb-3 fs-4">
+            <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading autopay cards, please wait..." %}
+          </div>
+        </div>
+        {% include "domain/partials/new_stripe_card_alpinejs.html" with card_container_id="manage-autopay-container" %}
       </div>
     </div>
 

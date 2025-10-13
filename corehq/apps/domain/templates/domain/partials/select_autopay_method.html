@@ -1,0 +1,79 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if error %}
+  <div class="alert alert-danger">
+    {{ error }}
+  </div>
+{% endif %}
+
+<div class="htmx-indicator">
+  <div class="position-relative">
+    <div class="position-absolute top-0 end-0 pt-1 pe-2">
+      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Refreshing, please wait..." %}
+    </div>
+  </div>
+</div>
+
+<fieldset>
+  <legend>
+    {% trans "Select Autopay Card" %}
+    {% if has_autopay %}<span class="text-success ms-2"><i class="fa fa-check"></i></span>{% endif %}
+  </legend>
+  {% if available_cards %}
+    <table
+      class="table table-striped"
+      x-data="{
+        isSubmitting: false,
+      }"
+    >
+      <tbody>
+        {% for card in available_cards %}
+          <tr>
+            <td class="align-middle">
+              <i class="fa-regular fa-credit-card"></i>
+              <strong>{{ card.brand }}</strong>
+              {% if card.is_autopay %}
+                <br />
+                <span class="badge text-bg-success">
+                  {% trans "Autopay Card" %}
+                </span>
+              {% endif %}
+            </td>
+            <td class="align-middle">************<strong>{{ card.last4 }}</strong></td>
+            <td class="align-middle">{{ card.exp_month }}/{{ card.exp_year }}</td>
+            <td class="align-middle">
+              {% if not card.is_autopay %}
+                <button
+                  class="btn btn-outline-primary autopay-button"
+                  type="button"
+                  :disabled="isSubmitting"
+                  @click="isSubmitting = true;"
+                  hx-post="{{ request.path_info }}"
+                  hq-hx-action="set_as_autopay"
+                  hx-target="#manage-autopay-container"
+                  hx-vals='{
+                    "token": "{{ card.token }}"
+                  }'
+                >
+                  {% trans "Set as autopay card" %}
+                </button>
+              {% endif %}
+            </td>
+            <td class="align-middle">
+              {% if card.owner %}
+                <strong>{% trans "Owner" %}:</strong> {{ card.owner }}
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info mb-1">
+      {% blocktrans %}
+        Please add an autopay card below.
+      {% endblocktrans %}
+    </div>
+  {% endif %}
+</fieldset>

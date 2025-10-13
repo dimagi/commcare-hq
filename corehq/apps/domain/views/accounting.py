@@ -1553,7 +1553,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
-class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
+class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, AsyncHandlerMixin):
     template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
     step_title = gettext_lazy("Confirm Billing Information")
@@ -1717,6 +1717,50 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                 self.request.domain
             ), message, [settings.GROWTH_EMAIL]
         )
+
+    def get_card_context(self):
+        all_cards = get_saved_cards_for_user(self.request.user.username, self.account)
+        autopay_card, owner = get_autopay_card_and_owner_for_billing_account(self.account)
+        if autopay_card and owner != self.request.user.username:
+            card_details = serialize_account_card(autopay_card, owner)
+            card_details['is_autopay'] = True
+            all_cards.insert(0, card_details)
+        return {
+            'has_autopay': autopay_card is not None,
+            'available_cards': all_cards,
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+        }
+
+    def render_select_autopay_method(self, request, error=None):
+        return self.render_htmx_partial_response(
+            request,
+            'domain/partials/select_autopay_method.html',
+            {error: error, **self.get_card_context()},
+        )
+
+    @hq_hx_action('get')
+    def select_autopay_method(self, request, *args, **kwargs):
+        return self.render_select_autopay_method(request)
+
+    @hq_hx_action('post')
+    def set_as_autopay(self, request, *args, **kwargs):
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        error = None
+        try:
+            set_card_as_autopay_for_billing_account(
+                get_payment_method_for_user(request.user.username),
+                token,
+                self.account,
+                self.domain,
+            )
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown error setting autopay method. Please contact Support.')
+            )
+        return self.render_select_autopay_method(request, error=error)
 
 
 class SubscriptionMixin(object):
