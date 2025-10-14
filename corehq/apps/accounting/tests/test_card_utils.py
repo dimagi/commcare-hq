@@ -1,11 +1,13 @@
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from corehq.apps.accounting.models import StripePaymentMethod
+from corehq.apps.accounting.models import PaymentMethodType, StripePaymentMethod
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.utils.cards import (
     get_autopay_card_and_owner_for_billing_account,
+    get_payment_method_for_user,
+    get_saved_cards_for_user,
     set_card_as_autopay_for_billing_account,
 )
 
@@ -22,7 +24,7 @@ def mock_fake_card(card_id, *, metadata=None, brand='Visa', last4='4242', exp_mo
     )
 
 
-class AutoPayUtilsTest(BaseAccountingTest):
+class CardUtilsTest(BaseAccountingTest):
     def setUp(self):
         super().setUp()
         self.billing_contact = generator.create_arbitrary_web_user_name()
@@ -61,3 +63,26 @@ class AutoPayUtilsTest(BaseAccountingTest):
 
         pm.get_card.assert_called_once_with('card_tok_123')
         pm.set_autopay.assert_called_once_with(card_obj, self.billing_account, self.domain.name)
+
+    def test_get_payment_method_for_user_always_returns(self):
+        paying_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
+        payment_method = get_payment_method_for_user(paying_user.username)
+        assert payment_method.web_user == paying_user.username
+        assert payment_method.method_type == PaymentMethodType.STRIPE
+
+    def test_get_saved_cards_for_user_no_stripe_key(self):
+        paying_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
+        with patch('corehq.apps.accounting.utils.cards.settings.STRIPE_PRIVATE_KEY', None):
+            cards = get_saved_cards_for_user(paying_user.username, self.billing_account)
+            assert cards == []
+
+    @patch('corehq.apps.accounting.models.StripePaymentMethod.objects.get_or_create')
+    def test_get_saved_cards_for_user_with_stripe_key(self, get_mock):
+        paying_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
+        pm = Mock(spec=StripePaymentMethod)
+        pm.all_cards_serialized.return_value = [{'token': 'card_b'}]
+        get_mock.return_value = (pm, False)
+        with patch('corehq.apps.accounting.utils.cards.settings.STRIPE_PRIVATE_KEY', 'something'):
+            cards = get_saved_cards_for_user(paying_user.username, self.billing_account)
+            assert len(cards) == 1
+            assert cards[0]['token'] == 'card_b'
