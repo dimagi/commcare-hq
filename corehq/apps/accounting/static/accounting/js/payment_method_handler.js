@@ -507,12 +507,6 @@ var stripeCardModel = function () {
         self.newSavedCard(false);
     };
 
-    self.autopayCard = ko.computed(function () {
-        if (!self.newSavedCard()) {
-            return false;
-        }
-    });
-
     self.showCardData = ko.computed(function () {
         return ! self.isProcessing();
     });
