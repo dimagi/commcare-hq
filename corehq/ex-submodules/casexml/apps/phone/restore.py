@@ -11,29 +11,29 @@ from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.utils.text import slugify
 
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from looseversion import LooseVersion
-from memoized import memoized
-
-from casexml.apps.case.xml import V1, check_version
 from couchforms.openrosa_response import (
     ResponseNature,
     get_response_element,
     get_simple_response_xml,
 )
 from dimagi.utils.logging import notify_error
+from looseversion import LooseVersion
+from memoized import memoized
 
+from casexml.apps.case.xml import V1, check_version
 from corehq.apps.app_manager.exceptions import CannotRestoreException
 from corehq.apps.domain.models import Domain
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
+from corehq.celery_monitoring.signals import CELERY_STATE_SENT
 from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.metrics import metrics_counter, metrics_histogram, limit_domains
+from corehq.util.metrics import limit_domains, metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
 
 from .checksum import CaseStateHash
@@ -58,7 +58,7 @@ from .models import (
     get_properly_wrapped_sync_log,
 )
 from .restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
-from .tasks import ASYNC_RESTORE_SENT, get_async_restore_payload
+from .tasks import get_async_restore_payload
 from .utils import get_cached_items_with_count
 from .xml import (
     get_progress_element,
@@ -605,8 +605,11 @@ class RestoreConfig(object):
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
                                     status=412)  # precondition failed
         except CannotRestoreException as e:
-            response = get_simple_response_xml(str(e), ResponseNature.OTA_RESTORE_ERROR)
-            response = HttpResponse(response, content_type="text/xml; charset=utf-8", status=400)
+            # mobile expects a json response for 406 errors
+            response = JsonResponse({
+                'error': 'restore.failed.error',
+                'default_response': str(e),
+            }, status=406)
 
         if not is_async:
             self._record_timing(response.status_code)
@@ -679,7 +682,7 @@ class RestoreConfig(object):
         task_id = self.async_restore_task_id_cache.get_value()
         if task_id:
             task = AsyncResult(task_id)
-            task_exists = task.status == ASYNC_RESTORE_SENT
+            task_exists = task.status == CELERY_STATE_SENT
         else:
             task = None
             task_exists = False
