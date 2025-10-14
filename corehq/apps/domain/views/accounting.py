@@ -1724,7 +1724,6 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
             'has_autopay': autopay_card is not None,
             'available_cards': all_cards,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-            'is_autopay_required': self.is_autopay_required(),
         }
 
     def render_select_autopay_method(self, request, error=None):
