@@ -3,15 +3,17 @@
 from django.db import migrations, models
 
 TABLE_NAME = 'form_processor_xforminstancesql'
-DOMAIN_STATE_INDEX_NAME = 'form_proces_domain_3bcfdd_idx'
-DOMAIN_USER_INDEX_NAME = 'form_proces_domain_363a82_idx'
 
+DOMAIN_STATE_INDEX_NAME = 'form_proces_domain_3bcfdd_idx'
 CREATE_DOMAIN_STATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({}, {})".format(
-    DOMAIN_STATE_INDEX_NAME, TABLE_NAME, 'domain', 'state')
+    DOMAIN_STATE_INDEX_NAME, TABLE_NAME, 'domain', 'state'
+)
 DROP_DOMAIN_STATE_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(DOMAIN_STATE_INDEX_NAME)
 
+DOMAIN_USER_INDEX_NAME = 'form_proces_domain_363a82_idx'
 CREATE_DOMAIN_USER_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({}, {})".format(
-    DOMAIN_STATE_INDEX_NAME, TABLE_NAME, 'domain', 'user_id')
+    DOMAIN_USER_INDEX_NAME, TABLE_NAME, 'domain', 'user_id'
+)
 DROP_DOMAIN_USER_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(DOMAIN_USER_INDEX_NAME)
 
 
