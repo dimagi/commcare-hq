@@ -39,7 +39,7 @@
             <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading autopay cards, please wait..." %}
           </div>
         </div>
-        {% include "domain/partials/new_stripe_card_alpinejs.html" with card_container_id="manage-autopay-container" %}
+        {% include "domain/partials/new_stripe_card_alpinejs.html" with card_container_id="manage-autopay-container" card_button_class="btn-outline-primary" %}
       </div>
     </div>
 
