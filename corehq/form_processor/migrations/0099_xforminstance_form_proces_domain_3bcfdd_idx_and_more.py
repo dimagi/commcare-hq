@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-TABLE_NAME = 'form_processor_commcarecasesql'
+TABLE_NAME = 'form_processor_xforminstancesql'
 DOMAIN_STATE_INDEX_NAME = 'form_proces_domain_3bcfdd_idx'
 DOMAIN_USER_INDEX_NAME = 'form_proces_domain_363a82_idx'
 
