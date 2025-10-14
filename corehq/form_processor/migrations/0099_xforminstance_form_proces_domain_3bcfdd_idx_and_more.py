@@ -16,6 +16,7 @@ DROP_DOMAIN_USER_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(DOMAI
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('form_processor', '0098_rename_caseattachment_case_name_form_proces_case_id_2fd259_idx_and_more'),
