@@ -26,5 +26,8 @@ def preindex_couch_views():
     for design in get_preindex_designs():
         try:
             index_design_doc(design)
-        except RuntimeError:
-            logger.error(f'Failed to index design doc {design.app_label}')
+        except RuntimeError as e:
+            if 'Failed to verify design document' in str(e):
+                logger.error(f'Failed to index design doc {design.app_label}')
+            else:
+                raise
