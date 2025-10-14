@@ -10,6 +10,10 @@ from uuid import uuid4
 from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.utils.text import slugify
+
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from couchforms.openrosa_response import (
@@ -18,9 +22,6 @@ from couchforms.openrosa_response import (
     get_simple_response_xml,
 )
 from dimagi.utils.logging import notify_error
-from django.conf import settings
-from django.http import HttpResponse, StreamingHttpResponse
-from django.utils.text import slugify
 from looseversion import LooseVersion
 from memoized import memoized
 
@@ -604,8 +605,11 @@ class RestoreConfig(object):
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
                                     status=412)  # precondition failed
         except CannotRestoreException as e:
-            response = get_simple_response_xml(str(e), ResponseNature.OTA_RESTORE_ERROR)
-            response = HttpResponse(response, content_type="text/xml; charset=utf-8", status=400)
+            # mobile expects a json response for 406 errors
+            response = JsonResponse({
+                'error': 'restore.failed.error',
+                'default_response': str(e),
+            }, status=406)
 
         if not is_async:
             self._record_timing(response.status_code)
