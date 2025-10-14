@@ -139,16 +139,23 @@
     </p>
   {% endif %}
 
-  {% if is_monthly_upgrade or is_annual_plan %}
-    <p>
-      <strong>
-        {% blocktrans %}
-          <input type="checkbox" data-bind="checked: oUserAgreementSigned" /> I
-          understand and wish to continue.
-        {% endblocktrans %}
-      </strong>
-    </p>
-  {% endif %}
+  <p>
+    {% blocktrans %}
+      By continuing you agree to Dimagi's
+      <a href="https://www.dimagi.com/terms/latest/tos/" target="_blank">
+        Terms of Service</a
+      >.
+    {% endblocktrans %}
+  </p>
+
+  <p>
+    <strong>
+      {% blocktrans %}
+        <input type="checkbox" data-bind="checked: oUserAgreementSigned" /> I
+        understand and wish to continue.
+      {% endblocktrans %}
+    </strong>
+  </p>
 </div>
 
 {% if downgrade_messages and not is_same_edition %}
