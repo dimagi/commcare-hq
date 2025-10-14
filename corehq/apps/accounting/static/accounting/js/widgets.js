@@ -48,6 +48,10 @@ var asyncSelect2Handler = function (field, multiple, handlerSlug) {
                     },
                 },
                 multiple: self.multiple,
+            }).on('change', function () {
+                $field.get(0).dispatchEvent(new CustomEvent('select2change', {
+                    detail: $(this).val(),
+                }));
             });
         }
     };
@@ -102,6 +106,10 @@ var emailSelect2Handler = function (field) {
                     return self.validEmailText;
                 },
             },
+        }).on('change', function () {
+            $field.get(0).dispatchEvent(new CustomEvent('select2change', {
+                detail: $(this).val(),
+            }));
         });
     };
 
