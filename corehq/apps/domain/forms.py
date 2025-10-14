@@ -2046,27 +2046,56 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
             crispy.Fieldset(
                 _('Basic Information'),
                 'company_name',
-                'first_name',
-                'last_name',
+                crispy.Field(
+                    'first_name',
+                    x_model='firstName',
+                    x_init=f"firstName = '{self.initial.get('first_name') or ''}'",
+                ),
+                crispy.Field(
+                    'last_name',
+                    x_model='lastName',
+                    x_init=f"lastName = '{self.initial.get('last_name') or ''}'",
+                ),
                 crispy.Field(
                     'email_list',
+                    x_model='emailList',
+                    x_init=f"emailList = {json.dumps(email_list)}",
                     css_class='form-control form-control-lg accounting-email-select2',
                     data_initial=json.dumps(email_list),
+                    **{
+                        '@select2Change': 'emailList = $event.detail;',
+                    }
                 ),
                 'phone_number',
             ),
             crispy.Fieldset(
                 _('Mailing Address'),
-                'first_line',
+                crispy.Field(
+                    'first_line',
+                    x_model='firstLine',
+                    x_init=f"firstLine = '{self.initial.get('first_line') or ''}'",
+                ),
                 'second_line',
-                'city',
+                crispy.Field(
+                    'city',
+                    x_model='city',
+                    x_init=f"city = '{self.initial.get('city') or ''}'",
+                ),
                 'state_province_region',
-                'postal_code',
+                crispy.Field(
+                    'postal_code',
+                    x_model='postalCode',
+                    x_init=f"postalCode = '{self.initial.get('postal_code') or ''}'",
+                ),
                 crispy.Field(
                     'country',
                     css_class='form-control form-control-lg accounting-country-select2',
+                    x_model='country',
                     data_country_code=self.current_country or '',
                     data_country_name=COUNTRIES.get(self.current_country, ''),
+                    **{
+                        '@select2Change': 'country = $event.detail;',
+                    }
                 ),
             ),
             crispy.Hidden(name='old_plan', value=current_subscription.plan_version.plan.edition),

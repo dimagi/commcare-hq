@@ -17,4 +17,41 @@ $('a.breadcrumb-2').click(function (e) {
 
 
 Alpine.data('newStripeCardManager', stripeCardManager);
+
+Alpine.data('requiredBillingDetails', (isAutopayRequired) => ({
+    firstName: '',
+    lastName: '',
+    firstLine: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    emailList: [],
+    isAutopayRequired: isAutopayRequired,
+    hasAutopay: false,
+    basicInfoComplete() {
+        return (this.firstName
+            && this.lastName && this.firstLine && this.city
+            && this.postalCode && this.country && this.emailList
+        );
+    },
+    autopayRequirementsMet() {
+        return !this.isAutopayRequired || this.hasAutopay;
+    },
+    showAutopayAndInfoRequiredNotice() {
+        return this.isAutopayRequired && !this.hasAutopay && !this.basicInfoComplete();
+    },
+    showAutopayRequiredNotice() {
+        return this.isAutopayRequired && !this.hasAutopay && this.basicInfoComplete();
+    },
+    showBillingInfoRequiredNotice() {
+        return !this.basicInfoComplete() && this.autopayRequirementsMet();
+    },
+    showAutopayConfirmNotice() {
+        return this.hasAutopay && this.basicInfoComplete();
+    },
+    isSubmitDisabled() {
+        return !this.basicInfoComplete() || !this.autopayRequirementsMet();
+    },
+}));
+
 Alpine.start();

@@ -15,7 +15,9 @@
   </div>
 </div>
 
-<fieldset>
+<fieldset
+  x-init="hasAutopay = {{ has_autopay|BOOL }}"
+>
   <legend>
     {% trans "Select Autopay Card" %}
     {% if has_autopay %}<span class="text-success ms-2"><i class="fa fa-check"></i></span>{% endif %}

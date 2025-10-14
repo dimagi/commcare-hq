@@ -16,7 +16,12 @@
       Please update your billing information below before continuing.
     {% endblocktrans %}
   </p>
-  <form autocomplete="off" class="form form-horizontal" method="post">
+  <form
+    autocomplete="off"
+    class="form form-horizontal"
+    method="post"
+    x-data="requiredBillingDetails({{ is_autopay_required|BOOL }})"
+  >
 
     <div class="card card-modern-gray card-form-only mb-3" id="billing-info">
       <div class="card-body">
@@ -47,11 +52,72 @@
       <div class="card-body">
         <fieldset>
           <legend>{% trans "Confirmation" %}</legend>
-          <div class="px-2 pt-3">
+          <div>
+            <div
+              class="alert alert-warning"
+              x-show="showAutopayAndInfoRequiredNotice"
+              x-cloak=""
+            >
+              <i class="fa fa-warning"></i>
+              {% blocktrans %}
+                Please complete the Basic Information section and select a card
+                for autopay before continuing.
+              {% endblocktrans %}
+            </div>
+
+            <div
+              class="alert alert-warning"
+              x-show="showAutopayRequiredNotice"
+              x-cloak=""
+            >
+              <i class="fa fa-warning"></i>
+              {% blocktrans %}
+                Please provide an autopay card before continuing.
+              {% endblocktrans %}
+            </div>
+
+            <div
+              class="alert alert-warning"
+              x-show="showBillingInfoRequiredNotice"
+              x-cloak=""
+            >
+              <i class="fa fa-warning"></i>
+              {% blocktrans %}
+                Please complete the Basic Information section before continuing.
+              {% endblocktrans %}
+            </div>
+
+            <div
+              class="alert alert-info"
+              x-show="showAutopayConfirmNotice"
+              x-cloak=""
+            >
+              {% if is_annual_plan %}
+                {% blocktrans %}
+                  By subscribing to this <strong>annual subscription</strong>, I acknowledge that
+                  my autopay card will be charged on an annual basis for the annual cost of the subscription.
+                  If this project incurs any on-demand fees (excess users, SMS), my autopay card
+                  will be charged on a <strong>monthly basis</strong> for these fees. Failure to
+                  pay on-demand fees will result in a subscription pause.
+                {% endblocktrans %}
+              {% else %}
+                {% blocktrans %}
+                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.
+                {% endblocktrans %}
+              {% endif %}
+            </div>
+
+          </div>
+
+          <div class="px-2 pt-2">
             <a href="{{ cancel_url }}" class="btn btn-outline-primary">
               {% trans "Cancel" %}
             </a>
-            <button type="submit" class="btn btn-primary">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              :disabled="isSubmitDisabled"
+            >
               {% trans "Subscribe to Plan" %}
             </button>
           </div>
