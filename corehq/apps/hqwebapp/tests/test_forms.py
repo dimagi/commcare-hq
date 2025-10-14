@@ -98,7 +98,7 @@ class TestEmailAuthenticationFormValidationError(TestCase):
         return form
 
     def run_form_and_assert(
-        self, request=None, can_select_server=None, expected_message=None, expected_attempts=None
+        self, request=None, can_select_server=None, expected_message=None
     ):
         form = self.create_form(request=request, can_select_server=can_select_server)
         form.full_clean()
@@ -107,39 +107,40 @@ class TestEmailAuthenticationFormValidationError(TestCase):
         assert len(non_field_errors) == 1
         assert isinstance(non_field_errors[0], ValidationError)
         assert expected_message in non_field_errors[0].message
-        if request is not None:
-            assert request.session['login_attempts'] == expected_attempts
 
-    def test_cloud_location_message_on_repeated_failures(self):
+    def test_cloud_location_message_when_at_attempts_const(self):
         request = RequestFactory().get('/')
-        request.session = {}
-        for i in range(1, LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE + 1):
-            if i < LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE:
-                message = "Please enter a correct %(username)s and password."
-            else:
-                message = "Still having trouble?"
-            self.run_form_and_assert(
-                request=request,
-                can_select_server=True,
-                expected_message=message,
-                expected_attempts=i,
-            )
+        request.session = {'login_attempts': LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE}
+        message = "Still having trouble?"
+        self.run_form_and_assert(
+            request=request,
+            can_select_server=True,
+            expected_message=message,
+        )
+
+    def test_original_message_when_below_attempts_const(self):
+        request = RequestFactory().get('/')
+        request.session = {'login_attempts': LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE - 1}
+        message = "Please enter a correct %(username)s and password."
+        self.run_form_and_assert(
+            request=request,
+            can_select_server=True,
+            expected_message=message,
+        )
 
     def test_original_message_if_not_can_select_server(self):
         request = RequestFactory().get('/')
-        request.session = {}
-        for i in range(1, LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE + 1):
-            self.run_form_and_assert(
-                request=request,
-                can_select_server=False,
-                expected_message="Please enter a correct %(username)s and password.",
-                expected_attempts=i,
-            )
+        request.session = {'login_attempts': LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE}
+        message = "Please enter a correct %(username)s and password."
+        self.run_form_and_assert(
+            request=request,
+            can_select_server=False,
+            expected_message=message,
+        )
 
     def test_original_message_if_no_request_object(self):
-        for _ in range(1, LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE + 1):
-            self.run_form_and_assert(
-                request=None,
-                can_select_server=True,
-                expected_message="Please enter a correct %(username)s and password.",
-            )
+        self.run_form_and_assert(
+            request=None,
+            can_select_server=True,
+            expected_message="Please enter a correct %(username)s and password.",
+        )
