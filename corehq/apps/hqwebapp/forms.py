@@ -20,6 +20,7 @@ LOCKOUT_MESSAGE = mark_safe(_(  # nosec: no user input
     'Sorry - you have attempted to login with an incorrect password too many times. '
     'Please <a href="/accounts/password_reset_email/">click here</a> to reset your password '
     'or contact the domain administrator.'))
+LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE = 3
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -84,7 +85,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     def get_invalid_login_error(self):
         if (
             self.request is not None
-            and self.request.session.get('login_attempts', 0) > 2
+            and self.request.session.get('login_attempts', 0) >= LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE
             and self.can_select_server
         ):
             return ValidationError(

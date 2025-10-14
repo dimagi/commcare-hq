@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.users.models import WebUser
 
 from ..forms import (
+    LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE,
     EmailAuthenticationForm,
     HQAuthenticationTokenForm,
     HQBackupTokenForm,
@@ -112,8 +113,8 @@ class TestEmailAuthenticationFormValidationError(TestCase):
     def test_cloud_location_message_on_repeated_failures(self):
         request = RequestFactory().get('/')
         request.session = {}
-        for i in range(1, 3):
-            if i < 3:
+        for i in range(1, LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE + 1):
+            if i < LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE:
                 message = "Please enter a correct %(username)s and password."
             else:
                 message = "Still having trouble?"
@@ -127,7 +128,7 @@ class TestEmailAuthenticationFormValidationError(TestCase):
     def test_original_message_if_not_can_select_server(self):
         request = RequestFactory().get('/')
         request.session = {}
-        for i in range(1, 3):
+        for i in range(1, LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE + 1):
             self.run_form_and_assert(
                 request=request,
                 can_select_server=False,
@@ -136,7 +137,7 @@ class TestEmailAuthenticationFormValidationError(TestCase):
             )
 
     def test_original_message_if_no_request_object(self):
-        for _ in range(1, 3):
+        for _ in range(1, LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE + 1):
             self.run_form_and_assert(
                 request=None,
                 can_select_server=True,
