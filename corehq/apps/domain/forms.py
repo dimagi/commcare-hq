@@ -2109,6 +2109,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
+                if not self.plan_version.plan.is_annual_plan:
+                    # always require auto-pay for new monthly subscriptions
+                    self.account.require_auto_pay = True
+                    self.account.save(update_fields=['require_auto_pay'])
+
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 new_sub_date_start, new_sub_date_end = self.new_subscription_start_end_dates()
                 if (
