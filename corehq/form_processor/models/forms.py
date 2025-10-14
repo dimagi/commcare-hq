@@ -754,7 +754,8 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
                          name=create_unique_index_name('form_processor',
                                                        'xforminstance',
                                                        ['deleted_on']),
-                         condition=models.Q(deleted_on__isnull=False))
+                         condition=models.Q(deleted_on__isnull=False)),
+            models.Index(fields=['domain', 'state']),
         ]
 
 
