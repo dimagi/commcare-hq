@@ -30,9 +30,9 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = ReCaptchaField(label="")
 
-    def __init__(self, *args, **kwargs):
-        self.can_select_server = kwargs.pop('can_select_server', False)
+    def __init__(self, can_select_server=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.can_select_server = can_select_server
         if settings.ENFORCE_SSO_LOGIN:
             self.fields['username'].widget = forms.TextInput(attrs={
                 'class': 'form-control',
@@ -61,7 +61,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             if not self.cleaned_data.get('captcha'):
                 raise ValidationError(_("Please enter valid CAPTCHA"))
 
-        if self.request is not None:
+        if self.request:
             self.request.session['login_attempts'] = self.request.session.get('login_attempts', 0) + 1
 
         try:
@@ -78,13 +78,13 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             metrics_counter('commcare.auth.lockouts')
             raise ValidationError(LOCKOUT_MESSAGE)
 
-        if self.request is not None:
+        if self.request:
             self.request.session['login_attempts'] = 0
         return cleaned_data
 
     def get_invalid_login_error(self):
         if (
-            self.request is not None
+            self.request
             and self.request.session.get('login_attempts', 0) >= LOGIN_ATTEMPTS_FOR_CLOUD_MESSAGE
             and self.can_select_server
         ):
