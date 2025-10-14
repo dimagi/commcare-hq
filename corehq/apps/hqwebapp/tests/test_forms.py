@@ -144,3 +144,15 @@ class TestEmailAuthenticationFormValidationError(TestCase):
             can_select_server=True,
             expected_message="Please enter a correct %(username)s and password.",
         )
+
+    def test_increments_login_attempts_on_failure(self):
+        request = RequestFactory().get('/')
+        request.session = {}
+        form = self.create_form(request=request)
+        form.full_clean()
+        assert not form.is_valid()
+        assert form.request.session['login_attempts'] == 1
+
+        form.full_clean()
+        assert not form.is_valid()
+        assert form.request.session['login_attempts'] == 2
