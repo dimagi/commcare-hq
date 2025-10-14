@@ -281,7 +281,17 @@ def get_app_view_context(request, app):
             'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
             'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
+        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False),
 
+        'is_linked_app': is_linked_app(app),
+        'is_remote_app': is_remote_app(app),
+
+        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
+    })
+
+    # dependent on bulk_ui_translation_upload and bulk_app_translation_upload
+    # keys existing in context
+    context.update({
         'bulk_ui_translation_form': get_bulk_upload_form(
             context,
             context_key="bulk_ui_translation_upload",
@@ -291,14 +301,8 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
         ),
-
-        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False),
-
-        'is_linked_app': is_linked_app(app),
-        'is_remote_app': is_remote_app(app),
-
-        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
     })
+
     if isinstance(app, Application):
         context.update({'custom_assertions': [
             {'test': assertion.test, 'text': assertion.text.get(lang)}
