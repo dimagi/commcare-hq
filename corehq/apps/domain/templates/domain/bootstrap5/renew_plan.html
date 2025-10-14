@@ -34,6 +34,15 @@
     <input type="hidden" name="plan_edition" value="{{ current_edition }}">
 
     <div class="text-center plan-next">
+      <p>
+        {% blocktrans %}
+          By continuing you agree to Dimagi's
+          <a href="https://www.dimagi.com/terms/latest/tos/" target="_blank">
+            Terms of Service</a
+          >.
+        {% endblocktrans %}
+      </p>
+
       {% if downgrade_messages %}
         <a class="btn btn-outline-primary btn-lg"
           href="{% url 'custom_plan_request_quote' domain %}">
