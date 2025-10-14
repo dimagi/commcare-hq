@@ -37,6 +37,9 @@ Alpine.data('requiredBillingDetails', (isAutopayRequired) => ({
     autopayRequirementsMet() {
         return !this.isAutopayRequired || this.hasAutopay;
     },
+    canRemoveAutopay() {
+        return !this.isAutopayRequired;
+    },
     showAutopayAndInfoRequiredNotice() {
         return this.isAutopayRequired && !this.hasAutopay && !this.basicInfoComplete();
     },

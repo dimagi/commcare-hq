@@ -1738,6 +1738,26 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
         return self.render_select_autopay_method(request)
 
     @hq_hx_action('post')
+    def unset_autopay(self, request, *args, **kwargs):
+        if self.account.require_auto_pay:
+            return HttpResponseForbidden('Cannot unset autopay when it is required.')
+
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        error = None
+        try:
+            payment_method = get_payment_method_for_user(request.user.username)
+            card = payment_method.get_card(token)
+            payment_method.unset_autopay(card, self.account)
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown error unsetting autopay method. Please contact Support.')
+            )
+        return self.render_select_autopay_method(request, error=error)
+
+    @hq_hx_action('post')
     def set_as_autopay(self, request, *args, **kwargs):
         token = request.POST.get('token')
         if not token:

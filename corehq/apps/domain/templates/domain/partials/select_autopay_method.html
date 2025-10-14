@@ -61,6 +61,23 @@
                   {% trans "Set as autopay card" %}
                 </button>
               {% endif %}
+              {% if card.is_autopay and not card.owner %}{# NOTE: card.owner is only populated if it doesn't belong to the current user #}
+                <button
+                  class="btn btn-outline-primary autopay-button"
+                  type="button"
+                  :disabled="isSubmitting"
+                  @click="isSubmitting = true;"
+                  hx-post="{{ request.path_info }}"
+                  hq-hx-action="unset_autopay"
+                  hx-target="#manage-autopay-container"
+                  hx-vals='{
+                    "token": "{{ card.token }}"
+                  }'
+                  x-show="canRemoveAutopay"
+                >
+                  {% trans "Remove autopay method" %}
+                </button>
+              {% endif %}
             </td>
             <td class="align-middle">
               {% if card.owner %}
