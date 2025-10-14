@@ -89,10 +89,26 @@
       </tbody>
     </table>
   {% else %}
-    <div class="alert alert-info mb-1">
-      {% blocktrans %}
-        Please add an autopay card below.
-      {% endblocktrans %}
+    <div>
+      <div
+        class="alert alert-warning mb-1"
+        x-show="isAutopayRequired"
+      >
+        <i class="fa fa-warning"></i>
+        {% blocktrans %}
+          Please add an autopay card before subscribing.
+        {% endblocktrans %}
+      </div>
+      <div
+        class="alert alert-info mb-1"
+        x-show="canRemoveAutopay"
+      >
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of
+          pausing your subscription due to unpaid on-demand fees.
+        {% endblocktrans %}
+      </div>
     </div>
   {% endif %}
 </fieldset>
