@@ -1684,10 +1684,45 @@ class Subscription(models.Model):
             )
 
     def send_renewal_reminder_email(self):
-        ...
+        template = 'accounting/email/subscription_renewal_reminder.html'
+        template_plaintext = 'accounting/email/subscription_renewal_reminder.txt'
+        self._send_ending_reminder_email(template, template_plaintext)
 
     def send_subscription_ending_email(self):
-        ...
+        template = 'accounting/email/subscription_ending.html'
+        template_plaintext = 'accounting/email/subscription_ending.txt'
+        self._send_ending_reminder_email(template, template_plaintext)
+
+    def _send_ending_reminder_email(self, template, template_plaintext):
+        today = datetime.date.today()
+        num_days_left = (self.date_end - today).days
+
+        domain_name = self.subscriber.domain
+        context = self.ending_reminder_context
+        subject = context['subject']
+
+        email_html = render_to_string(template, context)
+        email_plaintext = render_to_string(template_plaintext, context)
+        bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
+        if self.account.dimagi_contact is not None:
+            bcc.append(self.account.dimagi_contact)
+        for email_address in self._reminder_email_contacts(domain_name):
+            # TODO: update this behavior to send a single email
+            # "To" billing account contact, "BCC" Dimagi contact, "CC" other contacts
+            send_html_email_async.delay(
+                subject, email_address, email_html,
+                text_content=email_plaintext,
+                email_from=get_dimagi_from_email(),
+                bcc=bcc,
+            )
+            log_accounting_info(
+                "Sent %(days_left)s-day subscription reminder "
+                "email for %(domain)s to %(email)s." % {
+                    'days_left': num_days_left,
+                    'domain': domain_name,
+                    'email': email_address,
+                }
+            )
 
     def send_ending_reminder_email(self):
         """
@@ -1764,6 +1799,8 @@ class Subscription(models.Model):
             'base_url': get_site_domain(),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'sales_email': settings.SALES_EMAIL,
+            'plan_info_url': ('https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/'
+                              'CommCare+Pricing+Overview#Detailed-Software-Plan-%26-Feature-Comparisons')
         }
 
         if self.account.is_customer_billing_account:
