@@ -33,46 +33,6 @@
               "
             ></select>
           </div>
-          <div class="col-sm-3">
-            <button
-              type="button"
-              class="btn btn-danger"
-              data-bind="
-                event: {
-                  click: confirmRemoveSavedCard
-                }
-              "
-            >
-              <i class="fa fa-remove"></i>
-            </button>
-          </div>
-        </div>
-        <div
-          class="alert alert-warning"
-          style="margin-top:10px;"
-          data-bind="visible: showConfirmRemoveCard"
-        >
-          <p>{% trans "Actually remove this card?" %}</p>
-          <button
-            type="button"
-            class="btn btn-danger"
-            data-bind="event: {click: removeSavedCard}"
-          >
-            <i class="fa fa-remove"></i> {% trans "Yes, Remove" %}
-          </button>
-          <button
-            type="button"
-            class="btn btn-default"
-            data-bind="event: {click: cancelRemoveSavedCard}"
-          >
-            {% trans "Cancel" %}
-          </button>
-        </div>
-        <div
-          class="alert alert-info"
-          data-bind="visible: isRemovingCard"
-        >
-          {% trans "Removing card..." %}
         </div>
         <div class="radio">
           <label>
