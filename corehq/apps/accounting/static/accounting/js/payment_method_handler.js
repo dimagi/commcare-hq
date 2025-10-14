@@ -526,7 +526,7 @@ var stripeCardModel = function () {
 
     self.loadSavedData = function (data) {
         self.number('************' + data.last4);
-        self.cardType(data.type);
+        self.cardType(data.brand);
         self.expMonth(data.exp_month);
         self.expYear(data.exp_year);
         self.token(data.id);
