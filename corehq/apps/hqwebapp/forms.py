@@ -30,7 +30,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     if settings.ADD_CAPTCHA_FIELD_TO_FORMS:
         captcha = ReCaptchaField(label="")
 
-    def __init__(self, can_select_server=False, *args, **kwargs):
+    def __init__(self, *args, can_select_server=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.can_select_server = can_select_server
         if settings.ENFORCE_SSO_LOGIN:
