@@ -671,6 +671,16 @@ class DomainGlobalSettingsForm(forms.Form):
         else:
             self._handle_exports_use_elasticsearch_setting_value()
 
+        checkbox_fields = [
+            hqcrispy.CheckboxField('release_mode_visibility'),
+        ]
+        if 'enable_all_add_ons' in self.fields:
+            checkbox_fields.append(hqcrispy.CheckboxField('enable_all_add_ons'))
+        checkbox_fields.extend([
+            hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+            hqcrispy.CheckboxField('opt_out_of_data_sharing'),
+        ])
+
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -679,10 +689,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 'project_description',
                 'default_timezone',
                 crispy.Div(*self.get_extra_fields()),
-                hqcrispy.CheckboxField('release_mode_visibility'),
-                hqcrispy.CheckboxField('enable_all_add_ons'),
-                hqcrispy.CheckboxField('orphan_case_alerts_warning'),
-                hqcrispy.CheckboxField('opt_out_of_data_sharing'),
+                *checkbox_fields,
             ),
             hqcrispy.FormActions(
                 StrictButton(
