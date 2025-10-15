@@ -1118,14 +1118,6 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
 )
 
-USH_USERCASES_FOR_WEB_USERS = StaticToggle(
-    'usercases_for_web_users',
-    "USH: Enable the creation of usercases for web users.",
-    TAG_CUSTOM,
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     "webapps_sticky_search",
     "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
@@ -1408,7 +1400,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1575,7 +1567,7 @@ EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 

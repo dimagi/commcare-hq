@@ -433,6 +433,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 for feature in self.plan.get('features')
             ),
             'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user),
+            'autopay_enabled': self.account.auto_pay_enabled,
+            'manage_autopay_url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
         }
 
 
