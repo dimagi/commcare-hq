@@ -1408,7 +1408,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
