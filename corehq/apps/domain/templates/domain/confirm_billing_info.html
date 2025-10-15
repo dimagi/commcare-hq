@@ -95,17 +95,41 @@
               {% if is_annual_plan %}
                 {% blocktrans %}
                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that
-                  my autopay card will be charged on an annual basis for the annual cost of the subscription.
-                  If this project incurs any on-demand fees (excess users, SMS), my autopay card
-                  will be charged on a <strong>monthly basis</strong> for these fees. Failure to
-                  pay on-demand fees will result in a subscription pause.
+                  the autopay card above will be charged on a monthly basis for any on-demand fees (excess users, SMS).
                 {% endblocktrans %}
+                <p class="mt-2 mb-0">
+                  {% blocktrans %}
+                    A separate annual invoice for the product cost will be generated and sent to the contact emails above.
+                    This invoice must be paid within {{ days_date_due_annual }} days or the subscription will be paused.
+                    The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.
+                  {% endblocktrans %}
+                </p>
               {% else %}
                 {% blocktrans %}
                   By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.
                 {% endblocktrans %}
               {% endif %}
             </div>
+
+            {% if is_annual_plan %}
+              <div
+                class="alert alert-info"
+                x-show="showAnnualConfirmNotice"
+                x-cloak=""
+              >
+                {% blocktrans %}
+                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that I understand an
+                   annual invoice for the product cost will be generated and sent to the contact emails above.
+                   This invoice must be paid within {{ days_date_due_annual }} days or the subscription will be paused.
+                {% endblocktrans %}
+                <p class="mt-2 mb-0">
+                  {% blocktrans %}
+                    I also acknowledge that by not selecting an autopay card, I must manually pay for any on-demand fees
+                    (excess users, SMS) on a monthly basis or the subscription will be paused.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            {% endif %}
 
           </div>
 

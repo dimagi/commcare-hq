@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import dateutil
 from couchdbkit import ResourceNotFound
+from corehq.apps.accounting.const import SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE
 from corehq.apps.accounting.utils.cards import (
     get_autopay_card_and_owner_for_billing_account,
     get_payment_method_for_user,
@@ -1628,6 +1629,7 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
             'cancel_url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
             'is_autopay_required': self.is_autopay_required(),
             'is_annual_plan': self.is_annual_plan,
+            'days_date_due_annual': SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
         }
 
     def post(self, request, *args, **kwargs):
