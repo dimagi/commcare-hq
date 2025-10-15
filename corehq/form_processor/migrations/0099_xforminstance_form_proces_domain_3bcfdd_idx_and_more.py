@@ -2,20 +2,6 @@
 
 from django.db import migrations, models
 
-TABLE_NAME = 'form_processor_xforminstancesql'
-
-DOMAIN_STATE_INDEX_NAME = 'form_proces_domain_3bcfdd_idx'
-CREATE_DOMAIN_STATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({}, {})".format(
-    DOMAIN_STATE_INDEX_NAME, TABLE_NAME, 'domain', 'state'
-)
-DROP_DOMAIN_STATE_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(DOMAIN_STATE_INDEX_NAME)
-
-DOMAIN_USER_INDEX_NAME = 'form_proces_domain_363a82_idx'
-CREATE_DOMAIN_USER_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({}, {})".format(
-    DOMAIN_USER_INDEX_NAME, TABLE_NAME, 'domain', 'user_id'
-)
-DROP_DOMAIN_USER_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(DOMAIN_USER_INDEX_NAME)
-
 
 class Migration(migrations.Migration):
     atomic = False
@@ -26,23 +12,33 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql=CREATE_DOMAIN_STATE_INDEX_SQL,
-            reverse_sql=DROP_DOMAIN_STATE_INDEX_SQL,
+            sql="""
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS form_proces_domain_3bcfdd_idx
+            ON form_processor_xforminstancesql (domain, state)
+            """,
+            reverse_sql="""
+            DROP INDEX CONCURRENTLY IF EXISTS form_proces_domain_3bcfdd_idx
+            """,
             state_operations=[
                 migrations.AddIndex(
                     model_name='xforminstance',
-                    index=models.Index(fields=['domain', 'state'], name=DOMAIN_STATE_INDEX_NAME),
+                    index=models.Index(fields=['domain', 'state'], name='form_proces_domain_3bcfdd_idx'),
                 ),
-            ]
+            ],
         ),
         migrations.RunSQL(
-            sql=CREATE_DOMAIN_USER_INDEX_SQL,
-            reverse_sql=DROP_DOMAIN_USER_INDEX_SQL,
+            sql="""
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS form_proces_domain_363a82_idx
+            ON form_processor_xforminstancesql (domain, user_id)
+            """,
+            reverse_sql="""
+            DROP INDEX CONCURRENTLY IF EXISTS form_proces_domain_363a82_idx
+            """,
             state_operations=[
                 migrations.AddIndex(
                     model_name='xforminstance',
-                    index=models.Index(fields=['domain', 'user_id'], name=DOMAIN_USER_INDEX_NAME),
+                    index=models.Index(fields=['domain', 'user_id'], name='form_proces_domain_363a82_idx'),
                 ),
-            ]
-        )
+            ],
+        ),
     ]
