@@ -162,10 +162,7 @@ var paymentMethodHandler = function (formId, opts) {
 
     self.handlers = [self];
 
-    self.showConfirmRemoveCard = ko.observable(false);
-    self.isRemovingCard = ko.observable(false);
     self.selectedCard = ko.computed(function () {
-        self.showConfirmRemoveCard(false);
         if (self.isSavedCard()) {
             return self.selectedSavedCard();
         }
@@ -229,45 +226,6 @@ var paymentMethodHandler = function (formId, opts) {
             self.paymentProcessing(true);
             self.submitForm();
         }
-    };
-
-
-    self.confirmRemoveSavedCard = function () {
-        self.showConfirmRemoveCard(true);
-    };
-
-    self.removeSavedCard = function () {
-        self.isRemovingCard(true);
-        self.showConfirmRemoveCard(false);
-        const $form = $('#' + self.formId);
-        let formData = new FormData($form.get(0));
-        formData.set("removeCard", true);
-        $.ajax({
-            url: $form.attr("action"),
-            method: "POST",
-            data: Object.fromEntries(formData),
-            success: function (response) {
-                self.handleProcessingErrors(response);
-                for (var i = 0; i < self.handlers.length; i++) {
-                    var handler = self.handlers[i];
-                    handler.savedCards(_.filter(handler.savedCards(), function (card) {
-                        return card.token() !== response.removedCard;
-                    }));
-                    if (!handler.savedCards().length) {
-                        handler.selectedCardType('new');
-                    }
-                }
-                self.isRemovingCard(false);
-            },
-            error: function () {
-                self.handleGeneralError();
-                self.isRemovingCard(false);
-            },
-        });
-    };
-
-    self.cancelRemoveSavedCard = function () {
-        self.showConfirmRemoveCard(false);
     };
 
     self.handleGeneralError = function (response, textStatus, errorThrown) {
@@ -549,12 +507,6 @@ var stripeCardModel = function () {
         self.newSavedCard(false);
     };
 
-    self.autopayCard = ko.computed(function () {
-        if (!self.newSavedCard()) {
-            return false;
-        }
-    });
-
     self.showCardData = ko.computed(function () {
         return ! self.isProcessing();
     });
@@ -574,7 +526,7 @@ var stripeCardModel = function () {
 
     self.loadSavedData = function (data) {
         self.number('************' + data.last4);
-        self.cardType(data.type);
+        self.cardType(data.brand);
         self.expMonth(data.exp_month);
         self.expYear(data.exp_year);
         self.token(data.id);
