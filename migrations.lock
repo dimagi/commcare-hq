@@ -1240,6 +1240,7 @@ toggle_ui
 toggles
  0001_toggle_edit_permission
  0002_assign_permissions_superusers
+ 0003_delete_web_usercase_toggle
 translations
  0001_initial
  0002_transifexblacklist
