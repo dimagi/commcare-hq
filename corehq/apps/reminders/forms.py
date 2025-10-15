@@ -37,15 +37,15 @@ from .models import (
 
 NO_RESPONSE = "none"
 
-KEYWORD_CONTENT_CHOICES = [
+KEYWORD_CONTENT_CHOICES = (
     (METHOD_SMS, gettext_lazy("SMS")),
     (METHOD_SMS_SURVEY, gettext_lazy("SMS Survey")),
     (NO_RESPONSE, gettext_lazy("No Response")),
-]
-CONNECT_KEYWORD_CONTENT_CHOICES = [
+)
+CONNECT_KEYWORD_CONTENT_CHOICES = (
     (METHOD_CONNECT_MESSAGE, gettext_lazy("Connect Message")),
     (METHOD_CONNECT_SURVEY, gettext_lazy("Connect Survey")),
-]
+)
 
 KEYWORD_RECIPIENT_CHOICES = (
     (RECIPIENT_USER_GROUP, gettext_lazy("Mobile Worker Group")),
@@ -411,9 +411,9 @@ class KeywordForm(Form):
 
     @property
     def content_type_choices(self):
-        choices = KEYWORD_CONTENT_CHOICES
+        choices = list(KEYWORD_CONTENT_CHOICES)
         if COMMCARE_CONNECT.enabled(self.domain):
-            choices += CONNECT_KEYWORD_CONTENT_CHOICES
+            choices += list(CONNECT_KEYWORD_CONTENT_CHOICES)
         return set(choices)
 
     @property
