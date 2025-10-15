@@ -224,6 +224,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         subscription_eligible_for_auto_renewal = (
             self.current_subscription.service_type == SubscriptionType.PRODUCT
             and self.current_subscription.date_end is not None
+            and not self.current_subscription.account.is_customer_billing_account
         )
         subscription_is_auto_renew = self.current_subscription.auto_renew
         next_subscription = self.current_subscription.next_subscription
