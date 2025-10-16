@@ -458,7 +458,7 @@ def resend_confirmation(request):
                                   f'seconds before requesting again.'),
                 'current_page': {'page_name': default_page_name},
             }
-            return render(request, 'registration/confirmation_error.html', context)
+            return render(request, 'registration/bootstrap3/confirmation_error.html', context)
         try:
             dom_req.request_time = datetime.utcnow()
             dom_req.request_ip = get_ip(request)
@@ -510,7 +510,7 @@ def confirm_domain(request, guid=''):
                 'message_body': error,
                 'current_page': {'page_name': 'Account Not Activated'},
             }
-            return render(request, 'registration/confirmation_error.html', context)
+            return render(request, 'registration/bootstrap3/confirmation_error.html', context)
 
         requested_domain = Domain.get_by_name(req.domain)
         view_name = _confirm_domain_redirect()
