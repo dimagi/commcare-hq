@@ -307,7 +307,7 @@ class UserRegistrationView(BasePageView):
 
 class RegisterDomainView(TemplateView):
 
-    template_name = 'registration/domain_request.html'
+    template_name = 'registration/bootstrap3/domain_request.html'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
