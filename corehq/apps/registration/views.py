@@ -485,7 +485,7 @@ def resend_confirmation(request):
         'requested_domain': dom_req.domain,
         'current_page': {'page_name': default_page_name},
     })
-    return render(request, 'registration/confirmation_resend.html', context)
+    return render(request, 'registration/bootstrap3/confirmation_resend.html', context)
 
 
 @transaction.atomic
