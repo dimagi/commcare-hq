@@ -433,33 +433,34 @@ def remind_subscription_ending():
 
 
 def send_subscription_reminder_emails(num_days):
-    ending_subscriptions = _filter_subscriptions_ending_in_n_days(num_days, is_trial=False)
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(num_days, is_trial=False)
     for subscription in ending_subscriptions:
-        _try_send_subscription_email(subscription, subscription.send_ending_reminder_email)
+        _try_send_subscription_email(subscription, 'send_ending_reminder_email')
 
 
 def send_renewal_reminder_emails(num_days):
-    ending_subscriptions = _filter_subscriptions_ending_in_n_days(
-        num_days, is_trial=False, type=SubscriptionType.PRODUCT
-    )
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        num_days, is_trial=False, service_type=SubscriptionType.PRODUCT
+    ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
         if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, subscription.send_renewal_reminder_email)
+            _try_send_subscription_email(subscription, 'send_renewal_reminder_email')
 
 
 def send_subscription_ending_emails(num_days):
-    ending_subscriptions = _filter_subscriptions_ending_in_n_days(
-        num_days, is_trial=False, type=SubscriptionType.PRODUCT, auto_renew=False,
-    )
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        num_days, is_trial=False, service_type=SubscriptionType.PRODUCT, auto_renew=False,
+    ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
         if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, subscription.send_subscription_ending_email)
+            _try_send_subscription_email(subscription, 'send_subscription_ending_email')
 
 
-def _try_send_subscription_email(subscription, send_email_func):
+def _try_send_subscription_email(subscription, method_name):
     try:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
+            send_email_func = getattr(subscription, method_name)
             send_email_func()
     except Exception as e:
         log_accounting_error(
@@ -477,7 +478,7 @@ def remind_dimagi_contact_subscription_ending_60_days():
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):
-    ending_subscriptions = _filter_subscriptions_ending_in_n_days(
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
         num_days, is_active=True
     ).exclude(account__dimagi_contact='')
     for subscription in ending_subscriptions:
@@ -486,7 +487,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-def _filter_subscriptions_ending_in_n_days(num_days, **kwargs):
+def _filter_subscriptions_for_reminder_emails(num_days, **kwargs):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
     ending_subscriptions = Subscription.visible_objects.filter(
