@@ -1703,26 +1703,54 @@ class Subscription(models.Model):
 
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
-        bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
+
+        to, cc, bcc = self._get_reminder_email_contacts(domain_name)
+        send_html_email_async.delay(
+            subject, to, email_html,
+            text_content=email_plaintext,
+            cc=cc,
+            email_from=get_dimagi_from_email(),
+            bcc=bcc,
+        )
+        log_accounting_info(
+            "Sent %(days_left)s-day subscription reminder "
+            "email for %(domain)s to %(email)s." % {
+                'days_left': num_days_left,
+                'domain': domain_name,
+                'email': to,
+            }
+        )
+
+    def _get_reminder_email_contacts(self, domain):
+        billing_contacts = set(
+            self.account.billingcontactinfo.email_list
+            if BillingContactInfo.objects.filter(account=self.account).exists() else []
+        )
+        if not billing_contacts:
+            from corehq.apps.accounting.views import (
+                ManageBillingAccountView,
+            )
+            _soft_assert_contact_emails_missing(
+                False,
+                'Billing Account for project %s is missing client contact emails: %s' % (
+                    domain,
+                    absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id])
+                )
+            )
+        project_admins = {a.get_email() for a in WebUser.get_admins_by_domain(domain)}
+        dimagi_contacts = {e for e in WebUser.get_dimagi_emails_by_domain(domain)}
         if self.account.dimagi_contact is not None:
-            bcc.append(self.account.dimagi_contact)
-        for email_address in self._reminder_email_contacts(domain_name):
-            # TODO: update this behavior to send a single email
-            # "To" billing account contact, "BCC" Dimagi contact, "CC" other contacts
-            send_html_email_async.delay(
-                subject, email_address, email_html,
-                text_content=email_plaintext,
-                email_from=get_dimagi_from_email(),
-                bcc=bcc,
-            )
-            log_accounting_info(
-                "Sent %(days_left)s-day subscription reminder "
-                "email for %(domain)s to %(email)s." % {
-                    'days_left': num_days_left,
-                    'domain': domain_name,
-                    'email': email_address,
-                }
-            )
+            dimagi_contacts.add(self.account.dimagi_contact)
+
+        to = billing_contacts
+        cc = project_admins.difference(billing_contacts)
+        bcc = dimagi_contacts.difference(billing_contacts, project_admins)
+
+        if not to:
+            to = cc
+            cc = None
+
+        return to, cc, bcc
 
     def send_ending_reminder_email(self):
         """
