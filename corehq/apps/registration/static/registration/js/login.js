@@ -1,6 +1,6 @@
 import "commcarehq";
 import $ from "jquery";
-import userLoginForm from "registration/js/user_login_form";
+import userLoginForm from "registration/js/bootstrap3/user_login_form";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "hqwebapp/js/captcha";  // shows captcha
 
