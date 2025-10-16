@@ -24,6 +24,12 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
+from corehq.apps.accounting.emails import (
+    send_dimagi_ending_reminder_email,
+    send_ending_reminder_email,
+    send_renewal_reminder_email,
+    send_subscription_ending_email,
+)
 from corehq.apps.accounting.exceptions import (
     ActiveSubscriptionWithoutDomain,
     CreditLineBalanceMismatchError,
@@ -436,7 +442,7 @@ def remind_subscription_ending():
 def send_subscription_reminder_emails(num_days):
     ending_subscriptions = _filter_subscriptions_for_reminder_emails(num_days, is_trial=False)
     for subscription in ending_subscriptions:
-        _try_send_subscription_email(subscription, 'send_ending_reminder_email')
+        _try_send_subscription_email(subscription, send_ending_reminder_email)
 
 
 def send_renewal_reminder_emails(num_days):
@@ -445,7 +451,7 @@ def send_renewal_reminder_emails(num_days):
     ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
         if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, 'send_renewal_reminder_email')
+            _try_send_subscription_email(subscription, send_renewal_reminder_email)
 
 
 def send_subscription_ending_emails(num_days):
@@ -454,15 +460,14 @@ def send_subscription_ending_emails(num_days):
     ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
         if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, 'send_subscription_ending_email')
+            _try_send_subscription_email(subscription, send_subscription_ending_email)
 
 
-def _try_send_subscription_email(subscription, method_name):
+def _try_send_subscription_email(subscription, send_email_func):
     try:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
-            send_email_func = getattr(subscription, method_name)
-            send_email_func()
+            send_email_func(subscription)
     except Exception as e:
         log_accounting_error(
             "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
@@ -485,7 +490,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
-            subscription.send_dimagi_ending_reminder_email()
+            send_dimagi_ending_reminder_email(subscription)
 
 
 def _filter_subscriptions_for_reminder_emails(num_days, **kwargs):
