@@ -60,9 +60,9 @@
             <select
               class="form-control m-0"
               data-bind="
-                options: savedCards,
-                optionsText: 'cardName',
-                value: selectedSavedCard
+                  options: savedCards,
+                  optionsText: 'cardName',
+                  value: selectedSavedCard
               "
             ></select>
           </div>
@@ -82,29 +82,29 @@
     </div>
     <div
       data-bind="
-        template: {
-          data: autopayCard,
-          name: 'saved-stripe-card-ko-template',
-          if: isAutopayCard,
-        }
+          template: {
+              data: autopayCard,
+              name: 'saved-stripe-card-ko-template',
+              if: isAutopayCard,
+          }
       "
     ></div>
     <div
       data-bind="
-        template: {
-          data: selectedSavedCard,
-          name: 'saved-stripe-card-ko-template',
-          if: isSavedCard,
-        }
+          template: {
+              data: selectedSavedCard,
+              name: 'saved-stripe-card-ko-template',
+              if: isSavedCard,
+          }
       "
     ></div>
     <div
       data-bind="
-        template: {
-          data: newCard,
-          name: 'new-stripe-card-ko-template',
-          if: isNewCard
-        }
+          template: {
+              data: newCard,
+              name: 'new-stripe-card-ko-template',
+              if: isNewCard
+          }
       "
     ></div>
   </fieldset>
@@ -115,10 +115,10 @@
     <legend>{% trans "Card Information" %}</legend>
     <div
       data-bind="
-        template: {
-          data: $data,
-          name: 'new-stripe-card-ko-template',
-        }
+          template: {
+              data: $data,
+              name: 'new-stripe-card-ko-template',
+          }
       "
     ></div>
   </fieldset>
