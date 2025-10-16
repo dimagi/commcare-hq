@@ -1104,14 +1104,6 @@ msgstr[1] ""
 msgid "Payment Received - Thank You!"
 msgstr "Платіж отримано — Дякуємо!"
 
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr ""
-"Платіж за підписку для рахунку CommCare {context['invoice_number']} було "
-"відхилено"
-
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
 msgstr "Керування адміністраторами бухгалтерії"
@@ -1130,6 +1122,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -1173,7 +1166,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
@@ -1207,6 +1199,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/events/edit_attendee.html
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -1333,6 +1327,8 @@ msgid "Credits"
 msgstr "Кредити"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "Автоплатіж"
 
@@ -3943,18 +3939,6 @@ msgid "Use a saved card"
 msgstr "Використати збережену картку"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Actually remove this card?"
-msgstr "Дійсно видалити цю картку?"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Yes, Remove"
-msgstr "Так, видалити"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Removing card..."
-msgstr "Видалення картки..."
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a different card"
 msgstr "Використайте іншу картку"
 
@@ -3977,22 +3961,19 @@ msgid "Save card for later"
 msgstr "Зберегти картку для подальшого використання"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-msgid "Use this card to autopay"
-msgstr "Використовувати цю картку для автосплати"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#| msgid ""
+#| "\n"
+#| "            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+#| "            to process this transaction.\n"
+#| "          "
 msgid ""
-"\n"
-"            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            to process this transaction.\n"
-"          "
+" We use\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          to process this transaction. "
 msgstr ""
-"\n"
-"            Ми використовуємо <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            для обробки цієї транзакції.\n"
-"          "
+" Ми використовуємо\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          для обробки цієї транзакції. "
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Using Stripe's TEST API."
@@ -4619,9 +4600,10 @@ msgstr "'role' є обов'язковою для кожного користув
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' визначено профілем, тому не може бути встановлено напряму"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "Недійсний(і) параметр(и): {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr ", "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -4659,6 +4641,10 @@ msgid "Populate workflow from HAR file"
 msgstr "Заповнити робочий процес з HAR-файлу"
 
 #: corehq/apps/app_execution/forms.py
+msgid "Workflow:"
+msgstr "Робочий процес:"
+
+#: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
@@ -4670,6 +4656,7 @@ msgstr "Заповнити робочий процес з HAR-файлу"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -5230,6 +5217,11 @@ msgstr "Збірка для запрошеної версії не знайде�
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
 msgstr "Будь ласка, увійдіть у додаток, щоб перевірити наявність оновлення."
+
+#: corehq/apps/app_manager/exceptions.py
+#| msgid "Restriction for profile {profile} set successfully."
+msgid "Form Actions Diff failed to be applied successfully"
+msgstr "Не вдалося застосувати різницю дій форми"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -6538,6 +6530,7 @@ msgstr "Ні"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -9930,7 +9923,6 @@ msgstr "Завантажити"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
@@ -11272,13 +11264,19 @@ msgid "Ignore Owners"
 msgstr "Ігнорувати власників"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+#| "                "
 msgid ""
 "\n"
-"                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  Example: instance('commcaresession')/session/context/userid or\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 msgstr ""
 "\n"
-"                  Приклад: instance('commcaresession')/session/context/userid або 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  Приклад: instance('commcaresession')/session/context/userid або\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -11290,18 +11288,27 @@ msgid "Load Additional Data Registry Cases"
 msgstr "Завантажити додаткові справи з реєстру даних"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
+#| "                        The case type of the case must be configured in the registry and in the module via the module's\n"
+#| "                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
+#| "                        "
 msgid ""
 "\n"
-"                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
-"                        The case type of the case must be configured in the registry and in the module via the module's\n"
-"                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
-"                        "
+"                    Load additional cases from the Data Registry into the\n"
+"                    'registry' instance for forms in this module. The case type\n"
+"                    of the case must be configured in the registry and in the\n"
+"                    module via the module's case type or the module's\n"
+"                    'Additional Case List and Case Search Types' configuration.\n"
+"                  "
 msgstr ""
 "\n"
-"                        Завантажте додаткові справи з реєстру даних у екземпляр 'registry' для форм у цьому модулі.\n"
-"                        Тип справи повинен бути налаштований у реєстрі та в модулі через тип справи модуля\n"
-"                        або через налаштування 'Додатковий список справ і типи пошуку справ' модуля.\n"
-"                        "
+"                    Завантажте додаткові кейси з реєстру даних у\n"
+"                    екземпляр 'registry' для форм у цьому модулі. Тип кейсу\n"
+"                    має бути налаштований у реєстрі та в модулі через тип кейсу модуля або\n"
+"                    налаштування 'Додатковий список кейсів і типи пошуку кейсів' модуля.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Case ID XPath"
@@ -11322,22 +11329,36 @@ msgid "Custom Related Case Property"
 msgstr "Власна властивість пов’язаного кейсу"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "                               Enter in the name of a case property that contains the ID of another\n"
+#| "                               case you'd like included in the results instance.  This is to allow\n"
+#| "                               you to configure your case list display to show properties of that\n"
+#| "                               related case. Read more on the\n"
+#| "                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
+#| "                        "
 msgid ""
 "\n"
-"                               Enter in the name of a case property that contains the ID of another\n"
-"                               case you'd like included in the results instance.  This is to allow\n"
-"                               you to configure your case list display to show properties of that\n"
-"                               related case. Read more on the\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
-"                        "
+"                    Enter in the name of a case property that contains the ID of\n"
+"                    another case you'd like included in the results instance.\n"
+"                    This is to allow you to configure your case list display to\n"
+"                    show properties of that related case. Read more on the\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >Help Site</a\n"
+"                    >.\n"
+"                  "
 msgstr ""
 "\n"
-"                               Введіть назву властивості кейсу, яка містить ID іншого\n"
-"                               кейсу, який ви хочете включити до результатів.\n"
-"                               Це дозволяє налаштувати відображення списку кейсів, щоб показувати властивості\n"
-"                               цього пов’язаного кейсу. Детальніше читайте на\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Довідковому сайті</a>.\n"
-"                        "
+"                    Введіть назву властивості кейсу, яка містить ID\n"
+"                    іншого кейсу, який ви хочете включити до результатів екземпляра.\n"
+"                    Це дозволяє налаштувати відображення списку кейсів,\n"
+"                    щоб показувати властивості пов'язаного кейсу. Детальніше читайте на\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >Довідковому сайті</a\n"
+"                    >.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Include all related cases in search results"
@@ -11348,13 +11369,20 @@ msgid "Clearing search terms resets search results"
 msgstr "Очищення пошукових термінів скидає результати пошуку"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+#| "            "
 msgid ""
 "\n"
-"              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+"              This is not a valid xpath expression. Check to make sure your\n"
+"              parentheses match and you are referencing case properties\n"
+"              correctly.\n"
 "            "
 msgstr ""
 "\n"
-"              Це некоректний вираз xpath. Перевірте, чи правильно розставлені дужки та чи правильно ви посилаєтесь на властивості кейсу.\n"
+"              Це некоректний вираз xpath. Перевірте, чи правильно розставлені\n"
+"              дужки та чи правильно ви посилаєтеся на властивості кейсу.\n"
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -12563,16 +12591,18 @@ msgstr "Повернутися"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"      <p>\n"
-"        All add-ons are enabled for this app.\n"
-"      </p>\n"
-"    "
+"        All add-ons have been enabled for this app using the\n"
+"        \"Enable All Application Add-Ons\" project setting.\n"
+"      "
 msgstr ""
 "\n"
-"      <p>\n"
-"        Усі додатки увімкнені для цього застосунку.\n"
-"      </p>\n"
-"    "
+"        Для цього застосунку увімкнено всі додатки за допомогою\n"
+"        налаштування проєкту \"Увімкнути всі додатки застосунку\".\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
+msgid "Enable All Add-Ons"
+msgstr "Увімкнути всі додатки"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
@@ -12998,12 +13028,18 @@ msgid "Not set"
 msgstr "Не встановлено"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
-msgstr "U\\u200BI переклад"
+#| msgid "U\\u200BI translation"
+msgid "U​I translation"
+msgstr ""
+"Переклад U"
+"I"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
-msgstr "U\\u200BI переклади"
+#| msgid "U\\u200BI translations"
+msgid "U​I translations"
+msgstr ""
+"Переклади U"
+"I"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -13448,10 +13484,6 @@ msgstr "Остання версія для профілю {} тепер {}"
 #: corehq/apps/app_manager/views/releases.py
 msgid "Latest release now available for profile {}"
 msgstr "Останній випуск тепер доступний для профілю {}"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "Повернуто до версії {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Please enter either text body or xpath for custom icon"
@@ -13947,11 +13979,6 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Зразок: Клітинка в рядку {row_num} містить \"{sample}\""
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr "Імпорт кейсів може містити максимум {MAX_CASE_IMPORTER_ROWS} рядків. "
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr "Недійсне ім'я власника"
 
@@ -14088,23 +14115,8 @@ msgid "Name Too Long"
 msgstr "Ім'я занадто довге"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Назва кейсу не може бути довшою за {STANDARD_CHARFIELD_LENGTH} символів"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "Зовнішній ідентифікатор занадто довгий"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Зовнішній ідентифікатор не може бути довшим за {STANDARD_CHARFIELD_LENGTH} "
-"символів"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -14699,10 +14711,6 @@ msgstr "Пошуковий запит повинен містити {param}"
 msgid "{param} must be a string"
 msgstr "{param} має бути рядком"
 
-#: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "Недійсний оператор \"{criteria[\"operator\"]}\". Дозволені значення: "
-
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
 msgid ""
@@ -14878,11 +14886,6 @@ msgid "Profile Case Search"
 msgstr "Профіль пошуку справ"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} не підтримується з ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -14901,51 +14904,6 @@ msgid ""
 "surrounded in quotation marks"
 msgstr ""
 "Правий бік порівняння має бути числом або датою. Дати повинні бути в лапках"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} не є коректно відформатованою датою або датою-часом."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} є некоректною датою."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} є некоректною датою-часом."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr "Другий аргумент для '{node.name}' має бути дійсними координатами"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"Третій аргумент для '{node.name}' має бути числом, отримано '{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' не є дійсною одиницею відстані. Очікується одна з {', "
-"'.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' не є коректною датою. Очікується 'YYYY-MM-DD"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr ""
-"Перший аргумент для '{node.name}' має бути дійсною назвою властивості кейсу"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -14981,15 +14939,6 @@ msgstr "'{name}' очікує один або два аргументи"
 #, python-brace-format
 msgid "'{name}' error. Index identifier must be a string"
 msgstr "Помилка у '{name}'. Ідентифікатор індексу має бути рядком"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"Функція '{node.name}' приймає рівно {expected} аргумент(ів), отримано "
-"{actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -16837,6 +16786,7 @@ msgstr "Дозволено лише одну активну сесію для к
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -17429,6 +17379,7 @@ msgstr "Відкрито"
 
 #: corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -19887,6 +19838,32 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
+#| msgid "Application Id"
+msgid "Application Add-Ons"
+msgstr "Додатки застосунку"
+
+#: corehq/apps/domain/forms.py
+#| msgid "Enable Call Center Application"
+msgid "Enable All Application Add-Ons"
+msgstr "Увімкнути всі додатки застосунку"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Enables all add-ons for all CommCare applications. To manage\n"
+"            add-ons on a per-application basis, this setting should be\n"
+"            disabled, and add-ons can be managed in the \"Add-Ons\" tab in\n"
+"            the application's settings.\n"
+"            "
+msgstr ""
+"\n"
+"            Увімкнення всіх додатків для всіх застосунків CommCare. Щоб керувати\n"
+"            додатками для окремого застосунку, це налаштування слід\n"
+"            вимкнути, а додатками можна керувати на вкладці \"Додатки\"\n"
+"            у налаштуваннях застосунку.\n"
+"            "
+
+#: corehq/apps/domain/forms.py
 msgid "Orphan Case Alerts"
 msgstr "Сповіщення про осиротілі кейси"
 
@@ -20204,11 +20181,6 @@ msgstr ""
 "Ліміти правил оновлення кейсів можуть змінювати лише адміністратори Dimagi. "
 "Будь ласка, зверніться до {support_email}, якщо бажаєте змінити це "
 "налаштування."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "Невідомий вираз {expr}"
 
 #: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
@@ -21435,20 +21407,6 @@ msgstr ""
 "      на вашу електронну адресу.\n"
 "    "
 
-#: corehq/apps/domain/templates/domain/bootstrap3/confirm_billing_info.html
-#: corehq/apps/domain/templates/domain/bootstrap5/confirm_billing_info.html
-#, python-format
-msgid ""
-"\n"
-"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
-"      Please update your billing information below before continuing.\n"
-"    "
-msgstr ""
-"\n"
-"      Ви збираєтеся підписатися на <strong>%(p)s тарифний план програмного забезпечення</strong>.<br/>\n"
-"      Будь ласка, оновіть вашу платіжну інформацію нижче перед продовженням.\n"
-"    "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
@@ -21694,10 +21652,6 @@ msgstr " Денна пробна версія"
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your %(pe)s Edition subscription was paused on %(date_paused)s. Please subscribe to a plan to gain access to your project again.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Your %(pe)s Edition subscription was paused on\n"
@@ -21714,11 +21668,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    The %(trial_length)s Day Trial includes all the features present in the\n"
-#| "                    %(pn)s Software Plan, which is our full set of features.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    The %(trial_length)s Day Trial includes all the features\n"
@@ -21799,10 +21748,6 @@ msgstr "Дата завершення"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will automatically renew.\n"
@@ -21815,10 +21760,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will end in %(days_left)s days.\n"
@@ -21830,7 +21771,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid "Send Now"
 msgid "Renew Now"
 msgstr "Поновити зараз"
 
@@ -21838,7 +21778,6 @@ msgstr "Поновити зараз"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Disable Auto Renewal"
 msgstr "Вимкнути автоматичне поновлення"
 
@@ -21846,7 +21785,6 @@ msgstr "Вимкнути автоматичне поновлення"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Enable Auto Renewal"
 msgstr "Увімкнути автоматичне поновлення"
 
@@ -21854,6 +21792,16 @@ msgstr "Увімкнути автоматичне поновлення"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Current Price"
 msgstr "Поточна ціна"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "ENABLED"
+msgstr "УВІМКНЕНО"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "NOT SET"
+msgstr "НЕ ВСТАНОВЛЕНО"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -22071,7 +22019,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
+#: corehq/apps/translations/forms.py corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "Додати"
 
@@ -22349,6 +22297,7 @@ msgstr "Збережені кредитні картки"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add Card"
 msgstr "Додати картку"
 
@@ -22371,6 +22320,7 @@ msgstr "Видалити картку"
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Processing your request"
 msgstr "Обробка вашого запиту"
 
@@ -22398,6 +22348,7 @@ msgstr "Видалити автосплату"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Set as autopay card"
 msgstr "Встановити як картку для автосплати"
 
@@ -22413,11 +22364,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#| msgid ""
-#| "\n"
-#| "          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
-#| "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-#| "        "
 msgid ""
 "\n"
 "          Actually remove\n"
@@ -22430,6 +22376,19 @@ msgstr ""
 "          <strong><span data-bind=\\\"text: brand\\\"></span></strong> картку\n"
 "          ************<strong><span data-bind=\\\"text: last4\\\"></span></strong>?\n"
 "        "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
+"      Please update your billing information below before continuing.\n"
+"    "
+msgstr ""
+"\n"
+"      Ви збираєтеся підписатися на <strong>%(p)s тарифний план програмного забезпечення</strong>.<br/>\n"
+"      Будь ласка, оновіть вашу платіжну інформацію нижче перед продовженням.\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22872,11 +22831,12 @@ msgid "Add New Credit Card"
 msgstr "Додати нову кредитну картку"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Use this card to autopay"
+msgstr "Використовувати цю картку для автосплати"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 msgid ""
 "\n"
 "                  We use\n"
@@ -23007,11 +22967,6 @@ msgid "Please agree to the Privacy Policy."
 msgstr "Будь ласка, погодьтеся з Політикою конфіденційності."
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
 msgid ""
 "\n"
 "                We use\n"
@@ -23066,7 +23021,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#| msgid "Enable auto renewal"
 msgid "By disabling auto renewal:"
 msgstr "Вимкнувши автоматичне поновлення:"
 
@@ -23095,10 +23049,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#| msgid ""
-#| "\n"
-#| "      You are renewing your <strong>%(p)s</strong> subscription.\n"
-#| "    "
 msgid ""
 "\n"
 "      Your subscription will <strong>not</strong> automatically renew.\n"
@@ -23164,10 +23114,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your subscription is currently paused.\n"
-#| "          "
 msgid ""
 "\n"
 "        Your subscription will renew at <b>%(price)s</b>.\n"
@@ -23179,15 +23125,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Learn more about our\n"
-#| "      <a\n"
-#| "        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
-#| "        target=\"_blank\"\n"
-#| "        >cloud environments</a\n"
-#| "      >.\n"
-#| "    "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -23411,6 +23348,126 @@ msgstr "Це не скопіює поля користувача."
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "Це не скопіює таблиці пошуку (також відомі як фікстури)."
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#| msgid "Add New Credit Card"
+msgid "Add New Payment Card"
+msgstr "Додати нову платіжну картку"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#| msgid ""
+#| "\n"
+#| "                We use\n"
+#| "                <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+#| "                to process this transaction.\n"
+#| "              "
+msgid ""
+"\n"
+"              We use\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              to process this transaction.\n"
+"            "
+msgstr ""
+"\n"
+"              Ми використовуємо\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              для обробки цієї транзакції.\n"
+"            "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Autopay card"
+msgid "Account Autopay Card"
+msgstr "Картка для автосплати рахунку"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid ""
+#| "\n"
+#| "                You don't have any groups yet, please create a Group to get started.\n"
+#| "              "
+msgid ""
+"\n"
+"        You don't have an autopay card set for your account.\n"
+"      "
+msgstr ""
+"\n"
+"        У вашому акаунті не встановлено картку для автосплати.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Saved! Reloading, please wait.."
+msgid "Refreshing, please wait..."
+msgstr "Оновлення, зачекайте будь ласка..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "My Saved Reports"
+msgid "My Saved Cards"
+msgstr "Мої збережені картки"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Autopay card"
+msgid "Autopay Card"
+msgstr "Картка для автосплати"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Autopay for Other Account"
+msgstr "Автосплата для іншого акаунту"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Removed"
+msgid "Remove Card"
+msgstr "Видалити картку"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Removing card..."
+msgstr "Видалення картки..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                        Click to copy feeds for linking <strong>Parent</strong>\n"
+#| "                        and <strong>Child Cases</strong>:\n"
+#| "                      "
+msgid ""
+"\n"
+"                        Actually remove <strong>%(brand)s</strong>\n"
+"                        card ************<strong>%(last4)s</strong>?\n"
+"                      "
+msgstr ""
+"\n"
+"                        Дійсно видалити картку <strong>%(brand)s</strong>\n"
+"                        ************<strong>%(last4)s</strong>?\n"
+"                      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid ""
+#| "\n"
+#| "      Configure external Identity Providers associated with your Enterprise\n"
+#| "      Account below.\n"
+#| "    "
+msgid ""
+"\n"
+"        You do not have any saved cards associated with your user account.\n"
+"      "
+msgstr ""
+"\n"
+"        У вашому акаунті користувача немає збережених карток.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+#| msgid "Manage Billing Details"
+msgid "Billing Details"
+msgstr "Платіжні реквізити"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+#| msgid "Last Payment Method"
+msgid "Payment Methods"
+msgstr "Способи оплати"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+#| msgid "Updating Data, please wait..."
+msgid "Loading payment methods, please wait..."
+msgstr "Завантаження способів оплати, зачекайте будь ласка..."
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -24180,6 +24237,19 @@ msgstr ""
 msgid "Billing contact information was successfully updated."
 msgstr "Платіжна контактна інформація успішно оновлена."
 
+#: corehq/apps/domain/views/accounting.py
+#| msgid ""
+#| "No downstream project spaces were selected. Please contact support."
+msgid "Unknown removing card. Please contact Support."
+msgstr ""
+"Невідома помилка при видаленні картки. Зверніться до служби підтримки."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error setting autopay. Please contact Support."
+msgstr ""
+"Невідома помилка при встановленні автосплати. Зверніться до служби "
+"підтримки."
+
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 msgid "statements per page"
 msgstr "виписок на сторінці"
@@ -24460,11 +24530,6 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "Виберіть проект"
-
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "Вас додано до простору проєкту \"{invitation.domain}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -25536,11 +25601,6 @@ msgstr "Відповідальні за фіксацію присутності"
 msgid "Please choose at least one Attendance Taker"
 msgstr ""
 "Будь ласка, оберіть принаймні одного відповідального за фіксацію присутності"
-
-#: corehq/apps/events/forms.py
-#, python-brace-format
-msgid "{self.title_prefix} Attendance Tracking Event"
-msgstr "{self.title_prefix} Відстеження відвідуваності події"
 
 #: corehq/apps/events/forms.py
 msgid "Invalid Start Date"
@@ -30509,8 +30569,16 @@ msgid "UCR rebuild restriction status"
 msgstr "Статус обмеження перебудови UCR"
 
 #: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction required"
+msgstr "Потрібне обмеження на перебудову"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Перебудова обмежена"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction not required"
+msgstr "Обмеження на перебудову не потрібне"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -31567,6 +31635,16 @@ msgstr "Будь ласка, введіть пароль."
 msgid "Please enter valid CAPTCHA"
 msgstr "Будь ласка, введіть правильний CAPTCHA"
 
+#: corehq/apps/hqwebapp/forms.py
+msgid ""
+"Still having trouble?<div class='spacer'></div>Make sure you have selected "
+"the correct Cloud Location from the menu above. Your account and project may"
+" be in a different location."
+msgstr ""
+"Все ще виникають труднощі?<div class='spacer'></div>Переконайтеся, що ви "
+"обрали правильне розташування хмари у меню вище. Ваш обліковий запис і "
+"проєкт можуть бути в іншому розташуванні."
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr "Європейський Союз"
@@ -31588,7 +31666,6 @@ msgid "US"
 msgstr "США"
 
 #: corehq/apps/hqwebapp/models.py
-#| msgid "Messaging"
 msgid "Staging"
 msgstr "Стенд"
 
@@ -33519,6 +33596,14 @@ msgstr "Статус KYC"
 msgid "Show all"
 msgstr "Показати всі"
 
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
+msgstr "Номер телефону"
+
 #: corehq/apps/integration/kyc/forms.py
 msgid "Recipient Data Store"
 msgstr "Сховище даних отримувача"
@@ -33544,6 +33629,19 @@ msgstr ""
 "Відповідає полю API для KYC-постачальника полю, яке використовується для "
 "зберігання відповідних даних. Щоб дізнатися більше, перегляньте нашу <a "
 "href=\"{}\" target=\"_blank\">документацію підтримки</a>."
+
+#: corehq/apps/integration/kyc/forms.py
+#| msgid "Phone Number"
+msgid "Phone Number Field"
+msgstr "Поле номера телефону"
+
+#: corehq/apps/integration/kyc/forms.py
+msgid ""
+"The case property or user data field that contains the phone number. Leave "
+"blank if it’s not used for KYC verification."
+msgstr ""
+"Властивість справи або поле даних користувача, яке містить номер телефону. "
+"Залиште порожнім, якщо не використовується для KYC-перевірки."
 
 #: corehq/apps/integration/kyc/models.py
 msgid "Custom User Data"
@@ -33640,17 +33738,14 @@ msgid "Request failed"
 msgstr "Запит не виконано"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Success"
 msgid "Successful"
 msgstr "Успішно"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Identity Provider"
 msgid "Pending with Provider"
 msgstr "Очікує на провайдера"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The deposit transaction failed."
 msgstr "Транзакція депозиту не вдалася."
 
@@ -33667,12 +33762,10 @@ msgid "The deposit transaction is still in progress."
 msgstr "Транзакція депозиту ще триває."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The recipient has been deactivated."
 msgid "The deposit transaction has been delayed."
 msgstr "Транзакція депозиту затримується."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The domain \"{domain}\" was not found."
 msgid "The deposit transaction was not found."
 msgstr "Транзакцію депозиту не знайдено."
 
@@ -33697,7 +33790,6 @@ msgid "The currency specified for the deposit transaction is invalid."
 msgstr "Вказана валюта для транзакції депозиту є недійсною."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An error occurred during the download."
 msgid "An internal processing error occurred during the deposit transaction."
 msgstr "Під час обробки транзакції депозиту сталася внутрішня помилка."
 
@@ -33706,17 +33798,14 @@ msgid "The deposit transaction service is currently unavailable."
 msgstr "Сервіс транзакцій депозиту наразі недоступний."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The following report configuration could not be found: {}"
 msgid "The deposit transaction could not be performed."
 msgstr "Не вдалося виконати транзакцію депозиту."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payee account could not be found."
 msgstr "Вказаний рахунок одержувача не знайдено."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payer account could not be found."
 msgstr "Вказаний рахунок платника не знайдено."
 
@@ -33733,12 +33822,10 @@ msgid "The specified currency is invalid."
 msgstr "Вказана валюта є недійсною."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Domain Temporarily Unavailable"
 msgid "The service is temporarily unavailable."
 msgstr "Сервіс тимчасово недоступний."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An unknown error occurred."
 msgid "An internal processing error occurred."
 msgstr "Сталася внутрішня помилка обробки."
 
@@ -33747,7 +33834,6 @@ msgid "The payer account does not have enough funds."
 msgstr "На рахунку платника недостатньо коштів."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The gateway can't reach the destination number."
 msgid "The payer has reached their transaction limit."
 msgstr "Платник досяг ліміту транзакцій."
 
@@ -33756,12 +33842,10 @@ msgid "The payee is not allowed to receive funds."
 msgstr "Одержувачу не дозволено отримувати кошти."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The item's ID was not passed to the server."
 msgid "The payment was not approved by the payer."
 msgstr "Платник не схвалив платіж."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The case group was not found."
 msgid "The requested resource was not found."
 msgstr "Запитаний ресурс не знайдено."
 
@@ -33770,17 +33854,14 @@ msgid "The transaction approval was rejected."
 msgstr "Схвалення транзакції було відхилено."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Your session has expired"
 msgid "The transaction has expired."
 msgstr "Термін дії транзакції минув."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The transaction was canceled."
 msgstr "Транзакцію було скасовано."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Keyword already exists."
 msgid "The resource already exists."
 msgstr "Ресурс вже існує."
 
@@ -33789,19 +33870,14 @@ msgid "Transaction ID is missing in the record"
 msgstr "В записі відсутній ідентифікатор транзакції"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "Payment transaction not found"
 msgstr "Платіжну транзакцію не знайдено"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Unexpected error"
 msgid "Unexpected error occurred"
 msgstr "Виникла неочікувана помилка"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid ""
-#| "Network error occurred. Please try again, or reach out to support if the "
-#| "issue persists."
 msgid ""
 "Error occurred during payment request. Reach out to support if the issue "
 "persists."
@@ -33810,12 +33886,10 @@ msgstr ""
 " проблема не зникне."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with request error."
 msgstr "Перевищено максимальну кількість спроб із помилкою запиту."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with pending status"
 msgstr "Перевищено максимальну кількість спроб зі статусом \"очікує\"."
 
@@ -33841,13 +33915,6 @@ msgstr "Активність"
 #: corehq/apps/integration/payments/tables.py
 msgid "Funder"
 msgstr "Фінансування"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr "Номер телефону"
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
@@ -33877,18 +33944,14 @@ msgid "Payment request failed"
 msgstr "Запит на платіж не виконано"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Phone Verification"
 msgid "Verification"
 msgstr "Верифікація"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "format must be one of the following: {}"
 msgid "Payment status must be one of the following:"
 msgstr "Статус платежу має бути одним із наступних:"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Only payments in '{}' or '{}' state are eligible for verification."
 msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 "Тільки платежі, у яких '{}' встановлено як 'true', підлягають верифікації."
@@ -33906,7 +33969,6 @@ msgid "Payment has already been requested"
 msgstr "Платіж вже було запрошено"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Verification Status"
 msgid "Verification reversal"
 msgstr "Скасування верифікації"
 
@@ -33915,8 +33977,6 @@ msgid "Failed to fetch payment status with code: {}"
 msgstr "Не вдалося отримати статус платежу з кодом: {}"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Error fetching multimedia from remote server. Please try again later."
 msgid ""
 "Failed to fetch payment status. Unable to connect to server. Please try "
 "again later."
@@ -35238,13 +35298,8 @@ msgstr ""
 "індексом '{i}' — '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"Не можна видалити тип розташування '{deleted_type.code}'. Він "
-"використовується типом "
+msgid " and try again."
+msgstr " і спробуйте ще раз."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -35403,17 +35458,8 @@ msgstr ""
 "проєкті. Більше інформації доступно <a href=\"{}\">тут</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "Код сайту розташування: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "Не вдалося оновити: не вдалося знайти місце з"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr "У запиті були включені недійсні поля: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -37631,9 +37677,8 @@ msgstr ""
 "хвилин. Якщо проблема не зникне, зверніться до служби підтримки."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "Будь ласка, зачекайте щонайменше {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "секунд до повторного запиту."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -39571,6 +39616,14 @@ msgstr "Кількість ненадісланих форм у телефона
 #: corehq/apps/reports/standard/deployments.py
 msgid "The build profile from the user's last hearbeat request."
 msgstr "Профіль збірки з останнього запиту користувача."
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...See more"
+msgstr "...Детальніше"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...Згорнути"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -41904,11 +41957,6 @@ msgid "Can't archive documents of type %s. How did you get here??"
 msgstr "Не можна архівувати документи типу %s. Як ви сюди потрапили??"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr "Не можна видалити форму {instance_id}, оскільки вона не заархівована."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (цей випадок)"
 
@@ -42470,10 +42518,6 @@ msgstr "Скопіюйте це у безпечне місце. Воно біл�
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Усі IP-адреси"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr "API-ключ з назвою \"{create_form.cleaned_data['name']}\" вже існує."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -45558,11 +45602,6 @@ msgid "today!"
 msgstr "сьогодні!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "на {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -45570,11 +45609,6 @@ msgid ""
 msgstr ""
 "Сповіщення CommCare: Сертифікат для постачальника ідентифікації %(idp_name)s"
 " спливає %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -46975,15 +47009,6 @@ msgid "Missing translations for {} in uploaded sheet"
 msgstr "Відсутні переклади для {} у завантаженому файлі"
 
 #: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"Не вдалося знайти модуль або форму з ID '{module_or_form_id}' у додатку "
-"'{self.app.name}'"
-
-#: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
 msgstr "Не вдалося знайти стовпець(и) '{}'"
 
@@ -47084,11 +47109,6 @@ msgid ""
 msgstr ""
 "Електронна пошта для запрошення цього користувача повернулася: {}. Будь "
 "ласка, спробуйте ще раз з іншим іменем користувача"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "Домен не може бути встановлено як '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -47379,16 +47399,6 @@ msgstr "Перебудувати"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Видалити"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression не дозволено для домену {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} не дозволено для домену {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -49201,19 +49211,8 @@ msgid "UCR Expressions"
 msgstr "Вирази UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr "UCR-вираз із назвою \"{create_form.cleaned_data['name']}\" вже існує."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Редагувати вираз UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "Підтвердіть свій обліковий запис CommCare для {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -52409,13 +52408,9 @@ msgid "is_active"
 msgstr "is_active"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr ""
-"Ви успішно підтвердили обліковий запис {user.raw_username}. Тепер ви можете "
-"увійти"
+#| msgid "You can now log into the mobile app."
+msgid "You can now login"
+msgstr "Тепер ви можете увійти"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -55246,24 +55241,25 @@ msgstr ""
 "квартальний період у форматі yyyyQn (наприклад, \"2004Q1\" для січня-березня"
 " 2004 року), або введіть дійсний стовпець."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">Додати/Редагувати налаштування підключень</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Звіт із налаштуванням користувача"
 
 #: corehq/motech/dhis2/forms.py
+#| msgid ""
+#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
+#| "href=\"https://github.com/dimagi/commcare-"
+#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
-"Карти DataSet зіставляють UCR CommCare з наборами даних DHIS2. <a "
+"DataSet Maps зіставляють CommCare UCR із наборами даних DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
 "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"target=\"_new\">Детальніше</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -55739,12 +55735,8 @@ msgid "There is an error in your data API validations"
 msgstr "У ваших перевірках даних API є помилка"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr ""
-"Не вдалося визначити кінцеві точки API {self.api_auth_settings!r}. Будь "
-"ласка, виберіть відповідні налаштування автентифікації API для "
+msgid "Please select the applicable API auth settings for the "
+msgstr "Будь ласка, виберіть відповідні налаштування автентифікації API для "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -55779,50 +55771,19 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "У Atom feed OpenMRS виявлено синтаксичну помилку XML за адресою "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
-msgstr ""
-"Не знайдено користувачів у розташуванні \"{repeater.location_id}\", які "
-"могли б володіти пацієнтами, доданими з OpenMRS Atom feed."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "пацієнтів додано з Atom feed OpenMRS."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr ""
-"{repeater.domain}: {repeater}: Помилка в налаштуваннях: не вдалося оновити "
+msgid "patients from OpenMRS unless only one case type is specified."
+msgstr "пацієнтів з OpenMRS, якщо не вказано лише один тип випадку."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr "{repeater.domain}: {repeater}: Помилка при отриманні пацієнта "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: Знайдено більше ніж один випадок "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr "{repeater.domain}: {repeater}: Помилка під час отримання Encounter "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain}: {repeater}: Знайдено більше одного випадку, що відповідає"
-" унікальному OpenMRS UUID. зовнішній ідентифікатор case: "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr ""
-"Не вдалося визначити мобільного працівника для володіння новим "
-"\"{case_type}\" "
+#| msgid ""
+#| "{repeater.domain}: {repeater}: More than one case found matching unique "
+#| "OpenMRS UUID. case external_id: "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "відповідний унікальний OpenMRS UUID. зовнішній_ідентифікатор_справи: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -56912,6 +56873,10 @@ msgid "App Dependencies"
 msgstr "Залежності додатків"
 
 #: corehq/privileges.py
+msgid "Show \"Enable All Add-Ons\" button"
+msgstr "Показати кнопку \"Увімкнути всі додатки\""
+
+#: corehq/privileges.py
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "Двоетапне створення облікового запису мобільного працівника"
 
@@ -57966,6 +57931,232 @@ msgstr "Обов'язкові колонки: {column_names}"
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
 
+#~ msgid ""
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
+#~ msgstr ""
+#~ "Платіж за підписку для рахунку CommCare {context['invoice_number']} було "
+#~ "відхилено"
+
+#~ msgid "Actually remove this card?"
+#~ msgstr "Дійсно видалити цю картку?"
+
+#~ msgid "Yes, Remove"
+#~ msgstr "Так, видалити"
+
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "Недійсний(і) параметр(и): {', '.join(invalid_params)}"
+
+#~ msgid ""
+#~ "\n"
+#~ "      <p>\n"
+#~ "        All add-ons are enabled for this app.\n"
+#~ "      </p>\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      <p>\n"
+#~ "        Усі додатки увімкнені для цього застосунку.\n"
+#~ "      </p>\n"
+#~ "    "
+
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "Повернуто до версії {log.info['version']}"
+
+#, python-brace-format
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr "Імпорт кейсів може містити максимум {MAX_CASE_IMPORTER_ROWS} рядків. "
+
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Назва кейсу не може бути довшою за {STANDARD_CHARFIELD_LENGTH} символів"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Зовнішній ідентифікатор не може бути довшим за {STANDARD_CHARFIELD_LENGTH} "
+#~ "символів"
+
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "Недійсний оператор \"{criteria[\"operator\"]}\". Дозволені значення: "
+
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} не підтримується з ancestor-exists"
+
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} не є коректно відформатованою датою або датою-часом."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} є некоректною датою."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} є некоректною датою-часом."
+
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr "Другий аргумент для '{node.name}' має бути дійсними координатами"
+
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "Третій аргумент для '{node.name}' має бути числом, отримано '{distance}'"
+
+#~ msgid ""
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
+#~ msgstr ""
+#~ "'{unit}' не є дійсною одиницею відстані. Очікується одна з {', "
+#~ "'.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' не є коректною датою. Очікується 'YYYY-MM-DD"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr ""
+#~ "Перший аргумент для '{node.name}' має бути дійсною назвою властивості кейсу"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "Функція '{node.name}' приймає рівно {expected} аргумент(ів), отримано "
+#~ "{actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "Невідомий вираз {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "Вас додано до простору проєкту \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid "{self.title_prefix} Attendance Tracking Event"
+#~ msgstr "{self.title_prefix} Відстеження відвідуваності події"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "Не можна видалити тип розташування '{deleted_type.code}'. Він "
+#~ "використовується типом "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "Код сайту розташування: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr "У запиті були включені недійсні поля: {list(data.keys())}."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "Будь ласка, зачекайте щонайменше {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr "Не можна видалити форму {instance_id}, оскільки вона не заархівована."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr "API-ключ з назвою \"{create_form.cleaned_data['name']}\" вже існує."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "на {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "Не вдалося знайти модуль або форму з ID '{module_or_form_id}' у додатку "
+#~ "'{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "Домен не може бути встановлено як '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression не дозволено для домену {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} не дозволено для домену {self.domain}"
+
+#~ msgid ""
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
+#~ msgstr "UCR-вираз із назвою \"{create_form.cleaned_data['name']}\" вже існує."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "Підтвердіть свій обліковий запис CommCare для {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr ""
+#~ "Ви успішно підтвердили обліковий запис {user.raw_username}. Тепер ви можете "
+#~ "увійти"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">Додати/Редагувати налаштування підключень</a>"
+
+#~ msgid ""
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
+#~ msgstr ""
+#~ "Не вдалося визначити кінцеві точки API {self.api_auth_settings!r}. Будь "
+#~ "ласка, виберіть відповідні налаштування автентифікації API для "
+
+#, python-brace-format
+#~ msgid ""
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
+#~ msgstr ""
+#~ "Не знайдено користувачів у розташуванні \"{repeater.location_id}\", які "
+#~ "могли б володіти пацієнтами, доданими з OpenMRS Atom feed."
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: Помилка в налаштуваннях: не вдалося оновити "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr "{repeater.domain}: {repeater}: Помилка при отриманні пацієнта "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: Знайдено більше ніж один випадок "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr "{repeater.domain}: {repeater}: Помилка під час отримання Encounter "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+#~ msgstr ""
+#~ "Не вдалося визначити мобільного працівника для володіння новим "
+#~ "\"{case_type}\" "
+
 #~ msgid "Something went wrong"
 #~ msgstr "Щось пішло не так"
 
@@ -58629,39 +58820,6 @@ msgstr "Введіть коректний JSON"
 #~ "      (дивіться <a href=\"%(url)s\">тут</a> для деталей). Якщо ви перевищите кількість мобільних користувачів,\n"
 #~ "      включених у ваш план, з вас буде стягнута плата згідно з умовами тарифу.\n"
 #~ "    "
-
-#~ msgid ", "
-#~ msgstr ", "
-
-#~ msgid "Workflow:"
-#~ msgstr "Робочий процес:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "Потрібне обмеження на перебудову"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "Обмеження на перебудову не потрібне"
-
-#~ msgid " and try again."
-#~ msgstr " і спробуйте ще раз."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "секунд до повторного запиту."
-
-#~ msgid "...See more"
-#~ msgstr "...Детальніше"
-
-#~ msgid "...Collapse"
-#~ msgstr "...Згорнути"
-
-#~ msgid "Please select the applicable API auth settings for the "
-#~ msgstr "Будь ласка, виберіть відповідні налаштування автентифікації API для "
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "пацієнтів додано з Atom feed OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr "пацієнтів з OpenMRS, якщо не вказано лише один тип випадку."
 
 #~ msgid "Data cleaning action"
 #~ msgstr "Дія з очищення даних"

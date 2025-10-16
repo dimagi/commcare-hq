@@ -1086,12 +1086,6 @@ msgstr[1] ""
 msgid "Payment Received - Thank You!"
 msgstr "تم استلام الدفعة - شكرًا لك!"
 
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr "تم رفض دفع الاشتراك لفاتورة CommCare رقم {context['invoice_number']}"
-
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
 msgstr "إدارة مسؤولي المحاسبة"
@@ -1110,6 +1104,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -1152,7 +1147,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
@@ -1186,6 +1180,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/events/edit_attendee.html
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -1312,6 +1308,8 @@ msgid "Credits"
 msgstr "الأرصدة"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "الدفع التلقائي"
 
@@ -3856,18 +3854,6 @@ msgid "Use a saved card"
 msgstr "استخدم بطاقة محفوظة"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Actually remove this card?"
-msgstr "هل تريد فعلاً إزالة هذه البطاقة؟"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Yes, Remove"
-msgstr "نعم، إزالة"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Removing card..."
-msgstr "جارٍ إزالة البطاقة..."
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a different card"
 msgstr "استخدم بطاقة أخرى"
 
@@ -3890,22 +3876,19 @@ msgid "Save card for later"
 msgstr "حفظ البطاقة للاستخدام لاحقًا"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-msgid "Use this card to autopay"
-msgstr "استخدم هذه البطاقة للدفع التلقائي"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#| msgid ""
+#| "\n"
+#| "            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+#| "            to process this transaction.\n"
+#| "          "
 msgid ""
-"\n"
-"            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            to process this transaction.\n"
-"          "
+" We use\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          to process this transaction. "
 msgstr ""
-"\n"
-"            نستخدم <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            لمعالجة هذه المعاملة.\n"
-"          "
+" نحن نستخدم\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          لمعالجة هذه المعاملة. "
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Using Stripe's TEST API."
@@ -4521,9 +4504,10 @@ msgstr "'role' مطلوب لكل مستخدم"
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' معرف بواسطة الملف الشخصي لذلك لا يمكن تعيينه مباشرة"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "معامل(ات) غير صالحة: {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr "، "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -4560,6 +4544,10 @@ msgid "Populate workflow from HAR file"
 msgstr "تعبئة سير العمل من ملف HAR"
 
 #: corehq/apps/app_execution/forms.py
+msgid "Workflow:"
+msgstr "سير العمل:"
+
+#: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
@@ -4571,6 +4559,7 @@ msgstr "تعبئة سير العمل من ملف HAR"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -5128,6 +5117,11 @@ msgstr "لم يتم العثور على إصدار البناء المطلوب"
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
 msgstr "يرجى تسجيل الدخول إلى التطبيق للتحقق من وجود تحديث."
+
+#: corehq/apps/app_manager/exceptions.py
+#| msgid "Restriction for profile {profile} set successfully."
+msgid "Form Actions Diff failed to be applied successfully"
+msgstr "فشل تطبيق فرق إجراءات النموذج بنجاح"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -6416,6 +6410,7 @@ msgstr "لا"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -9751,7 +9746,6 @@ msgstr "رفع"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
@@ -11075,13 +11069,19 @@ msgid "Ignore Owners"
 msgstr "تجاهل المالكين"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+#| "                "
 msgid ""
 "\n"
-"                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  Example: instance('commcaresession')/session/context/userid or\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 msgstr ""
 "\n"
-"                  مثال: instance('commcaresession')/session/context/userid أو 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  مثال: instance('commcaresession')/session/context/userid أو\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -11093,18 +11093,27 @@ msgid "Load Additional Data Registry Cases"
 msgstr "تحميل حالات إضافية من سجل البيانات"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
+#| "                        The case type of the case must be configured in the registry and in the module via the module's\n"
+#| "                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
+#| "                        "
 msgid ""
 "\n"
-"                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
-"                        The case type of the case must be configured in the registry and in the module via the module's\n"
-"                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
-"                        "
+"                    Load additional cases from the Data Registry into the\n"
+"                    'registry' instance for forms in this module. The case type\n"
+"                    of the case must be configured in the registry and in the\n"
+"                    module via the module's case type or the module's\n"
+"                    'Additional Case List and Case Search Types' configuration.\n"
+"                  "
 msgstr ""
 "\n"
-"                        تحميل حالات إضافية من سجل البيانات إلى مثيل 'registry' للنماذج في هذه الوحدة.\n"
-"                        يجب تكوين نوع الحالة في السجل وفي الوحدة من خلال\n"
-"                        نوع الحالة الخاص بالوحدة أو إعداد 'قائمة الحالات الإضافية وأنواع البحث عن الحالات' في الوحدة.\n"
-"                        "
+"                    تحميل حالات إضافية من سجل البيانات إلى\n"
+"                    مثيل 'registry' للنماذج في هذه الوحدة. يجب تكوين نوع الحالة\n"
+"                    في السجل وفي الوحدة عبر نوع الحالة الخاص بالوحدة أو من خلال\n"
+"                    إعداد 'قائمة الحالات الإضافية وأنواع البحث عن الحالات' للوحدة.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Case ID XPath"
@@ -11123,22 +11132,36 @@ msgid "Custom Related Case Property"
 msgstr "خاصية حالة مرتبطة مخصصة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "                               Enter in the name of a case property that contains the ID of another\n"
+#| "                               case you'd like included in the results instance.  This is to allow\n"
+#| "                               you to configure your case list display to show properties of that\n"
+#| "                               related case. Read more on the\n"
+#| "                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
+#| "                        "
 msgid ""
 "\n"
-"                               Enter in the name of a case property that contains the ID of another\n"
-"                               case you'd like included in the results instance.  This is to allow\n"
-"                               you to configure your case list display to show properties of that\n"
-"                               related case. Read more on the\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
-"                        "
+"                    Enter in the name of a case property that contains the ID of\n"
+"                    another case you'd like included in the results instance.\n"
+"                    This is to allow you to configure your case list display to\n"
+"                    show properties of that related case. Read more on the\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >Help Site</a\n"
+"                    >.\n"
+"                  "
 msgstr ""
 "\n"
-"                               أدخل اسم خاصية الحالة التي تحتوي على معرف حالة أخرى\n"
-"                               ترغب في تضمينها في نتائج المثيل. يتيح لك ذلك\n"
-"                               تكوين عرض قائمة الحالات لعرض خصائص تلك\n"
-"                               الحالة المرتبطة. اقرأ المزيد على\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>موقع المساعدة</a>.\n"
-"                        "
+"                    أدخل اسم خاصية الحالة التي تحتوي على معرف\n"
+"                    حالة أخرى ترغب في تضمينها في نتائج المثيل.\n"
+"                    يتيح لك ذلك تكوين عرض قائمة الحالات\n"
+"                    لإظهار خصائص تلك الحالة المرتبطة. اقرأ المزيد على\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >موقع المساعدة</a\n"
+"                    >.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Include all related cases in search results"
@@ -11149,13 +11172,20 @@ msgid "Clearing search terms resets search results"
 msgstr "إزالة مصطلحات البحث تعيد تعيين نتائج البحث"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#| msgid ""
+#| "\n"
+#| "              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+#| "            "
 msgid ""
 "\n"
-"              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+"              This is not a valid xpath expression. Check to make sure your\n"
+"              parentheses match and you are referencing case properties\n"
+"              correctly.\n"
 "            "
 msgstr ""
 "\n"
-"              هذا ليس تعبير xpath صالحًا. تحقق من تطابق الأقواس وتأكد من أنك تشير إلى خصائص الحالة بشكل صحيح.\n"
+"              هذا ليس تعبير xpath صالحًا. تحقق من تطابق الأقواس\n"
+"              وأنك تشير إلى خصائص الحالة بشكل صحيح.\n"
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -12347,16 +12377,18 @@ msgstr "الرجوع"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"      <p>\n"
-"        All add-ons are enabled for this app.\n"
-"      </p>\n"
-"    "
+"        All add-ons have been enabled for this app using the\n"
+"        \"Enable All Application Add-Ons\" project setting.\n"
+"      "
 msgstr ""
 "\n"
-"      <p>\n"
-"        جميع الإضافات مفعلة لهذا التطبيق.\n"
-"      </p>\n"
-"    "
+"        تم تفعيل جميع الإضافات لهذا التطبيق باستخدام إعداد المشروع\n"
+"        \"تفعيل جميع إضافات التطبيق\".\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
+msgid "Enable All Add-Ons"
+msgstr "تفعيل جميع الإضافات"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
@@ -12775,12 +12807,14 @@ msgid "Not set"
 msgstr "غير محدد"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
-msgstr "ترجمة U\\u200BI"
+#| msgid "U\\u200BI translation"
+msgid "U​I translation"
+msgstr "ترجمة واجهة المستخدم"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
-msgstr "ترجمات U\\u200BI"
+#| msgid "U\\u200BI translations"
+msgid "U​I translations"
+msgstr "ترجمات واجهة المستخدم"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -13210,10 +13244,6 @@ msgstr "أحدث إصدار للملف الشخصي {} هو الآن {}"
 #: corehq/apps/app_manager/views/releases.py
 msgid "Latest release now available for profile {}"
 msgstr "أحدث إصدار متاح الآن للملف الشخصي {}"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "تم الرجوع إلى الإصدار {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Please enter either text body or xpath for custom icon"
@@ -13698,13 +13728,6 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "عينة: الخلية في الصف {row_num} تحتوي على \"{sample}\""
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr ""
-"يمكن أن تحتوي واردات الحالات على حد أقصى قدره {MAX_CASE_IMPORTER_ROWS} صفوف."
-" "
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr "اسم المالك غير صالح"
 
@@ -13838,21 +13861,8 @@ msgid "Name Too Long"
 msgstr "الاسم طويل جداً"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr "لا يمكن أن يكون اسم الحالة أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "المعرّف الخارجي طويل جداً"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"لا يمكن أن يكون المعرف الخارجي أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -14438,10 +14448,6 @@ msgstr "يجب أن يحدد طلب البحث {param}"
 msgid "{param} must be a string"
 msgstr "يجب أن يكون {param} نصًا"
 
-#: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "المشغل غير صالح \"{criteria[\"operator\"]}\". القيم المسموح بها هي "
-
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
 msgid ""
@@ -14616,11 +14622,6 @@ msgid "Profile Case Search"
 msgstr "بحث القضايا حسب الملف الشخصي"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} غير مدعوم مع ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -14640,50 +14641,6 @@ msgid ""
 msgstr ""
 "يجب أن يكون الجانب الأيمن من المقارنة رقمًا أو تاريخًا. يجب أن تكون التواريخ"
 " محاطة بعلامات اقتباس"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} ليس تاريخًا أو وقتًا بتنسيق صحيح."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} تاريخ غير صالح."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} تاريخ ووقت غير صالح."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr "يجب أن تكون الوسيطة الثانية لـ '{node.name}' إحداثيات صالحة"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"يجب أن تكون الوسيطة الثالثة لـ '{node.name}' رقمًا، تم الحصول على "
-"'{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' ليست وحدة مسافة صالحة. المتوقع واحدة من {', '.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' ليس تاريخًا صالحًا. المتوقع 'YYYY-MM-DD"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr "يجب أن تكون الوسيطة الأولى لـ '{node.name}' اسم خاصية حالة صالح"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -14719,15 +14676,6 @@ msgstr "'{name}' يتطلب وسيطًا واحدًا أو وسيطين"
 #, python-brace-format
 msgid "'{name}' error. Index identifier must be a string"
 msgstr "خطأ في '{name}'. يجب أن يكون معرف الفهرس سلسلة نصية"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"تقبل دالة '{node.name}' عددًا محددًا من الوسيطات وهو {expected}، تم الحصول "
-"على {actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -16550,6 +16498,7 @@ msgstr "يُسمح بجلسة نشطة واحدة فقط لكل نوع حالة.
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -17138,6 +17087,7 @@ msgstr "تم الفتح بواسطة"
 
 #: corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -19571,6 +19521,31 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
+#| msgid "Application Id"
+msgid "Application Add-Ons"
+msgstr "إضافات التطبيق"
+
+#: corehq/apps/domain/forms.py
+#| msgid "Enable Call Center Application"
+msgid "Enable All Application Add-Ons"
+msgstr "تفعيل جميع إضافات التطبيق"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Enables all add-ons for all CommCare applications. To manage\n"
+"            add-ons on a per-application basis, this setting should be\n"
+"            disabled, and add-ons can be managed in the \"Add-Ons\" tab in\n"
+"            the application's settings.\n"
+"            "
+msgstr ""
+"\n"
+"            يتيح جميع الإضافات لجميع تطبيقات CommCare. لإدارة\n"
+"            الإضافات لكل تطبيق على حدة، يجب تعطيل هذا الإعداد، ويمكن إدارة الإضافات في علامة التبويب \"الإضافات\"\n"
+"            في إعدادات التطبيق.\n"
+"            "
+
+#: corehq/apps/domain/forms.py
 msgid "Orphan Case Alerts"
 msgstr "تنبيهات الحالات اليتيمة"
 
@@ -19880,11 +19855,6 @@ msgid ""
 msgstr ""
 "حدود قواعد تحديث الحالات لا يمكن تعديلها إلا من قبل مسؤولي Dimagi. يرجى "
 "التواصل مع {support_email} إذا كنت ترغب في تحديث هذا الإعداد."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "تعبير غير معروف {expr}"
 
 #: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
@@ -21094,20 +21064,6 @@ msgstr ""
 "      والتعليمات الخاصة بالدفع البنكي إلى بريدك الإلكتروني الآن.\n"
 "    "
 
-#: corehq/apps/domain/templates/domain/bootstrap3/confirm_billing_info.html
-#: corehq/apps/domain/templates/domain/bootstrap5/confirm_billing_info.html
-#, python-format
-msgid ""
-"\n"
-"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
-"      Please update your billing information below before continuing.\n"
-"    "
-msgstr ""
-"\n"
-"      أنت على وشك الاشتراك في <strong>خطة برامج %(p)s</strong>.<br/>\n"
-"      يرجى تحديث معلومات الفوترة أدناه قبل المتابعة.\n"
-"    "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
@@ -21351,10 +21307,6 @@ msgstr " تجربة لمدة يوم"
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your %(pe)s Edition subscription was paused on %(date_paused)s. Please subscribe to a plan to gain access to your project again.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Your %(pe)s Edition subscription was paused on\n"
@@ -21371,11 +21323,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    The %(trial_length)s Day Trial includes all the features present in the\n"
-#| "                    %(pn)s Software Plan, which is our full set of features.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    The %(trial_length)s Day Trial includes all the features\n"
@@ -21457,10 +21404,6 @@ msgstr "تاريخ الانتهاء"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will automatically renew.\n"
@@ -21473,10 +21416,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will end in %(days_left)s days.\n"
@@ -21488,7 +21427,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid "Send Now"
 msgid "Renew Now"
 msgstr "جدد الآن"
 
@@ -21496,7 +21434,6 @@ msgstr "جدد الآن"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Disable Auto Renewal"
 msgstr "تعطيل التجديد التلقائي"
 
@@ -21504,7 +21441,6 @@ msgstr "تعطيل التجديد التلقائي"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Enable Auto Renewal"
 msgstr "تفعيل التجديد التلقائي"
 
@@ -21512,6 +21448,16 @@ msgstr "تفعيل التجديد التلقائي"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Current Price"
 msgstr "السعر الحالي"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "ENABLED"
+msgstr "مُفَعَّل"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "NOT SET"
+msgstr "غير محدد"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -21727,7 +21673,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
+#: corehq/apps/translations/forms.py corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "إضافة"
 
@@ -22005,6 +21951,7 @@ msgstr "بطاقات الائتمان المحفوظة"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add Card"
 msgstr "إضافة بطاقة"
 
@@ -22027,6 +21974,7 @@ msgstr "حذف البطاقة"
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Processing your request"
 msgstr "جارٍ معالجة طلبك"
 
@@ -22054,6 +22002,7 @@ msgstr "إزالة الدفع التلقائي"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Set as autopay card"
 msgstr "تعيين كبطاقة دفع تلقائي"
 
@@ -22069,11 +22018,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#| msgid ""
-#| "\n"
-#| "          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
-#| "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-#| "        "
 msgid ""
 "\n"
 "          Actually remove\n"
@@ -22086,6 +22030,19 @@ msgstr ""
 "          <strong><span data-bind=\"text: brand\"></span></strong> البطاقة\n"
 "          ************<strong><span data-bind=\"text: last4\"></span></strong>؟\n"
 "        "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
+"      Please update your billing information below before continuing.\n"
+"    "
+msgstr ""
+"\n"
+"      أنت على وشك الاشتراك في <strong>خطة برامج %(p)s</strong>.<br/>\n"
+"      يرجى تحديث معلومات الفوترة أدناه قبل المتابعة.\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22525,11 +22482,12 @@ msgid "Add New Credit Card"
 msgstr "إضافة بطاقة ائتمان جديدة"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Use this card to autopay"
+msgstr "استخدم هذه البطاقة للدفع التلقائي"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 msgid ""
 "\n"
 "                  We use\n"
@@ -22660,11 +22618,6 @@ msgid "Please agree to the Privacy Policy."
 msgstr "يرجى الموافقة على سياسة الخصوصية."
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
 msgid ""
 "\n"
 "                We use\n"
@@ -22719,7 +22672,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#| msgid "Enable auto renewal"
 msgid "By disabling auto renewal:"
 msgstr "بتعطيل التجديد التلقائي:"
 
@@ -22748,7 +22700,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#, fuzzy
 #| msgid ""
 #| "\n"
 #| "      You are renewing your <strong>%(p)s</strong> subscription.\n"
@@ -22759,7 +22710,7 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      أنت تقوم بتجديد اشتراك <strong>%(p)s</strong> الخاص بك.\n"
+"      لن يتم <strong>تجديد</strong> اشتراكك تلقائيًا.\n"
 "    "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
@@ -22818,10 +22769,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your subscription is currently paused.\n"
-#| "          "
 msgid ""
 "\n"
 "        Your subscription will renew at <b>%(price)s</b>.\n"
@@ -22833,15 +22780,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Learn more about our\n"
-#| "      <a\n"
-#| "        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
-#| "        target=\"_blank\"\n"
-#| "        >cloud environments</a\n"
-#| "      >.\n"
-#| "    "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -23065,6 +23003,126 @@ msgstr "لن يتم نسخ حقول المستخدم."
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "لن يتم نسخ جداول البحث (المعروفة أيضًا بالتجهيزات)."
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#| msgid "Add New Credit Card"
+msgid "Add New Payment Card"
+msgstr "إضافة بطاقة دفع جديدة"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#| msgid ""
+#| "\n"
+#| "                We use\n"
+#| "                <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+#| "                to process this transaction.\n"
+#| "              "
+msgid ""
+"\n"
+"              We use\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              to process this transaction.\n"
+"            "
+msgstr ""
+"\n"
+"              نحن نستخدم\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              لمعالجة هذه المعاملة.\n"
+"            "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Autopay card"
+msgid "Account Autopay Card"
+msgstr "بطاقة الدفع التلقائي للحساب"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid ""
+#| "\n"
+#| "                You don't have any groups yet, please create a Group to get started.\n"
+#| "              "
+msgid ""
+"\n"
+"        You don't have an autopay card set for your account.\n"
+"      "
+msgstr ""
+"\n"
+"        ليس لديك بطاقة دفع تلقائي محددة لحسابك.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Saved! Reloading, please wait.."
+msgid "Refreshing, please wait..."
+msgstr "يتم التحديث، يرجى الانتظار..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "My Saved Reports"
+msgid "My Saved Cards"
+msgstr "بطاقاتي المحفوظة"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Autopay card"
+msgid "Autopay Card"
+msgstr "بطاقة الدفع التلقائي"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Autopay for Other Account"
+msgstr "الدفع التلقائي لحساب آخر"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid "Removed"
+msgid "Remove Card"
+msgstr "إزالة البطاقة"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Removing card..."
+msgstr "جارٍ إزالة البطاقة..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                        Click to copy feeds for linking <strong>Parent</strong>\n"
+#| "                        and <strong>Child Cases</strong>:\n"
+#| "                      "
+msgid ""
+"\n"
+"                        Actually remove <strong>%(brand)s</strong>\n"
+"                        card ************<strong>%(last4)s</strong>?\n"
+"                      "
+msgstr ""
+"\n"
+"                        هل تريد فعلاً إزالة بطاقة <strong>%(brand)s</strong>\n"
+"                        ************<strong>%(last4)s</strong>؟\n"
+"                      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#| msgid ""
+#| "\n"
+#| "      Configure external Identity Providers associated with your Enterprise\n"
+#| "      Account below.\n"
+#| "    "
+msgid ""
+"\n"
+"        You do not have any saved cards associated with your user account.\n"
+"      "
+msgstr ""
+"\n"
+"        لا توجد أي بطاقات محفوظة مرتبطة بحساب المستخدم الخاص بك.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+#| msgid "Manage Billing Details"
+msgid "Billing Details"
+msgstr "تفاصيل الفوترة"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+#| msgid "Last Payment Method"
+msgid "Payment Methods"
+msgstr "طرق الدفع"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+#| msgid "Updating Data, please wait..."
+msgid "Loading payment methods, please wait..."
+msgstr "يتم تحميل طرق الدفع، يرجى الانتظار..."
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -23819,6 +23877,16 @@ msgstr ""
 msgid "Billing contact information was successfully updated."
 msgstr "تم تحديث معلومات الاتصال الخاصة بالفوترة بنجاح."
 
+#: corehq/apps/domain/views/accounting.py
+#| msgid ""
+#| "No downstream project spaces were selected. Please contact support."
+msgid "Unknown removing card. Please contact Support."
+msgstr "خطأ غير معروف أثناء إزالة البطاقة. يرجى التواصل مع الدعم."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error setting autopay. Please contact Support."
+msgstr "خطأ غير معروف أثناء إعداد الدفع التلقائي. يرجى التواصل مع الدعم."
+
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 msgid "statements per page"
 msgstr "كشف حساب لكل صفحة"
@@ -24089,11 +24157,6 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "اختر مشروعاً"
-
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "تمت إضافتك إلى مساحة المشروع \"{invitation.domain}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -25149,11 +25212,6 @@ msgstr "مسجلو الحضور"
 #: corehq/apps/events/forms.py
 msgid "Please choose at least one Attendance Taker"
 msgstr "يرجى اختيار مسجل حضور واحد على الأقل"
-
-#: corehq/apps/events/forms.py
-#, python-brace-format
-msgid "{self.title_prefix} Attendance Tracking Event"
-msgstr "{self.title_prefix} حدث تتبع الحضور"
 
 #: corehq/apps/events/forms.py
 msgid "Invalid Start Date"
@@ -30055,8 +30113,16 @@ msgid "UCR rebuild restriction status"
 msgstr "حالة تقييد إعادة بناء UCR"
 
 #: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction required"
+msgstr "مطلوب تقييد إعادة البناء"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "إعادة البناء مقيدة"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction not required"
+msgstr "تقييد إعادة البناء غير مطلوب"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -31081,6 +31147,15 @@ msgstr "يرجى إدخال كلمة مرور."
 msgid "Please enter valid CAPTCHA"
 msgstr "يرجى إدخال رمز CAPTCHA صالح"
 
+#: corehq/apps/hqwebapp/forms.py
+msgid ""
+"Still having trouble?<div class='spacer'></div>Make sure you have selected "
+"the correct Cloud Location from the menu above. Your account and project may"
+" be in a different location."
+msgstr ""
+"ما زلت تواجه مشكلة؟<div class='spacer'></div>تأكد من أنك قد اخترت الموقع "
+"السحابي الصحيح من القائمة أعلاه. قد يكون حسابك ومشروعك في موقع مختلف."
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr "الاتحاد الأوروبي"
@@ -31102,7 +31177,6 @@ msgid "US"
 msgstr "الولايات المتحدة"
 
 #: corehq/apps/hqwebapp/models.py
-#| msgid "Messaging"
 msgid "Staging"
 msgstr "تجريبي"
 
@@ -33024,6 +33098,14 @@ msgstr "حالة KYC"
 msgid "Show all"
 msgstr "عرض الكل"
 
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
+msgstr "رقم الهاتف"
+
 #: corehq/apps/integration/kyc/forms.py
 msgid "Recipient Data Store"
 msgstr "مخزن بيانات المستلم"
@@ -33049,6 +33131,19 @@ msgstr ""
 "يربط حقل API لمزود KYC بالحقل المستخدم لتخزين البيانات ذات الصلة. لمعرفة "
 "المزيد حول ذلك، يرجى الاطلاع على <a href=\"{}\" target=\"_blank\">وثائق "
 "الدعم</a> الخاصة بنا."
+
+#: corehq/apps/integration/kyc/forms.py
+#| msgid "Phone Number"
+msgid "Phone Number Field"
+msgstr "حقل رقم الهاتف"
+
+#: corehq/apps/integration/kyc/forms.py
+msgid ""
+"The case property or user data field that contains the phone number. Leave "
+"blank if it’s not used for KYC verification."
+msgstr ""
+"خاصية الحالة أو حقل بيانات المستخدم الذي يحتوي على رقم الهاتف. اتركه فارغًا "
+"إذا لم يُستخدم للتحقق من الهوية (KYC)."
 
 #: corehq/apps/integration/kyc/models.py
 msgid "Custom User Data"
@@ -33142,17 +33237,14 @@ msgid "Request failed"
 msgstr "فشل الطلب"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Success"
 msgid "Successful"
 msgstr "ناجح"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Identity Provider"
 msgid "Pending with Provider"
 msgstr "قيد الانتظار لدى المزود"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The deposit transaction failed."
 msgstr "فشلت معاملة الإيداع."
 
@@ -33169,12 +33261,10 @@ msgid "The deposit transaction is still in progress."
 msgstr "معاملة الإيداع لا تزال قيد التنفيذ."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The recipient has been deactivated."
 msgid "The deposit transaction has been delayed."
 msgstr "تم تأخير معاملة الإيداع."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The domain \"{domain}\" was not found."
 msgid "The deposit transaction was not found."
 msgstr "لم يتم العثور على معاملة الإيداع."
 
@@ -33199,7 +33289,6 @@ msgid "The currency specified for the deposit transaction is invalid."
 msgstr "العملة المحددة لمعاملة الإيداع غير صالحة."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An error occurred during the download."
 msgid "An internal processing error occurred during the deposit transaction."
 msgstr "حدث خطأ داخلي أثناء معالجة معاملة الإيداع."
 
@@ -33208,17 +33297,14 @@ msgid "The deposit transaction service is currently unavailable."
 msgstr "خدمة معاملة الإيداع غير متوفرة حالياً."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The following report configuration could not be found: {}"
 msgid "The deposit transaction could not be performed."
 msgstr "تعذر تنفيذ معاملة الإيداع."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payee account could not be found."
 msgstr "تعذر العثور على حساب المستفيد المحدد."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payer account could not be found."
 msgstr "تعذر العثور على حساب الدافع المحدد."
 
@@ -33235,12 +33321,10 @@ msgid "The specified currency is invalid."
 msgstr "العملة المحددة غير صالحة."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Domain Temporarily Unavailable"
 msgid "The service is temporarily unavailable."
 msgstr "الخدمة غير متوفرة مؤقتاً."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An unknown error occurred."
 msgid "An internal processing error occurred."
 msgstr "حدث خطأ داخلي أثناء المعالجة."
 
@@ -33249,7 +33333,6 @@ msgid "The payer account does not have enough funds."
 msgstr "حساب الدافع لا يحتوي على رصيد كافٍ."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The gateway can't reach the destination number."
 msgid "The payer has reached their transaction limit."
 msgstr "وصل الدافع إلى حد المعاملات الخاص به."
 
@@ -33258,12 +33341,10 @@ msgid "The payee is not allowed to receive funds."
 msgstr "لا يُسمح للمستفيد باستلام الأموال."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The item's ID was not passed to the server."
 msgid "The payment was not approved by the payer."
 msgstr "لم تتم الموافقة على الدفع من قبل الدافع."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The case group was not found."
 msgid "The requested resource was not found."
 msgstr "المورد المطلوب غير موجود."
 
@@ -33272,17 +33353,14 @@ msgid "The transaction approval was rejected."
 msgstr "تم رفض الموافقة على المعاملة."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Your session has expired"
 msgid "The transaction has expired."
 msgstr "انتهت صلاحية المعاملة."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The transaction was canceled."
 msgstr "تم إلغاء المعاملة."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Keyword already exists."
 msgid "The resource already exists."
 msgstr "المورد موجود بالفعل."
 
@@ -33291,31 +33369,24 @@ msgid "Transaction ID is missing in the record"
 msgstr "معرّف المعاملة مفقود في السجل"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "Payment transaction not found"
 msgstr "لم يتم العثور على معاملة الدفع"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Unexpected error"
 msgid "Unexpected error occurred"
 msgstr "حدث خطأ غير متوقع"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid ""
-#| "Network error occurred. Please try again, or reach out to support if the "
-#| "issue persists."
 msgid ""
 "Error occurred during payment request. Reach out to support if the issue "
 "persists."
 msgstr "حدث خطأ أثناء طلب الدفع. يرجى التواصل مع الدعم إذا استمرت المشكلة."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with request error."
 msgstr "تم تجاوز الحد الأقصى لمحاولات إعادة المحاولة مع وجود خطأ في الطلب."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with pending status"
 msgstr "تم تجاوز الحد الأقصى لمحاولات إعادة المحاولة مع حالة معلقة"
 
@@ -33341,13 +33412,6 @@ msgstr "النشاط"
 #: corehq/apps/integration/payments/tables.py
 msgid "Funder"
 msgstr "الممول"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr "رقم الهاتف"
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
@@ -33377,18 +33441,14 @@ msgid "Payment request failed"
 msgstr "فشل طلب الدفع"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Phone Verification"
 msgid "Verification"
 msgstr "التحقق"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "format must be one of the following: {}"
 msgid "Payment status must be one of the following:"
 msgstr "يجب أن تكون حالة الدفع واحدة مما يلي:"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Only payments in '{}' or '{}' state are eligible for verification."
 msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr "فقط المدفوعات التي تم تعيين '{}' لها إلى 'true' مؤهلة للتحقق."
 
@@ -33405,7 +33465,6 @@ msgid "Payment has already been requested"
 msgstr "تم طلب الدفع مسبقًا"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Verification Status"
 msgid "Verification reversal"
 msgstr "عكس التحقق"
 
@@ -33414,8 +33473,6 @@ msgid "Failed to fetch payment status with code: {}"
 msgstr "فشل في جلب حالة الدفع مع الرمز: {}"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Error fetching multimedia from remote server. Please try again later."
 msgid ""
 "Failed to fetch payment status. Unable to connect to server. Please try "
 "again later."
@@ -34698,12 +34755,8 @@ msgstr ""
 "الفهرس '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"لا يمكن حذف نوع الموقع '{deleted_type.code}'. يتم الإشارة إليه من قبل النوع "
+msgid " and try again."
+msgstr " وحاول مرة أخرى."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -34852,17 +34905,8 @@ msgstr ""
 "href=\"{}\">هنا</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "رمز موقع الموقع: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "تعذر التحديث: لم يتم العثور على الموقع مع"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr "تم تضمين حقول غير صالحة في الطلب: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -37051,9 +37095,8 @@ msgstr ""
 "استمرت المشكلة، يرجى التواصل مع الدعم."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "يرجى الانتظار على الأقل {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "ثوانٍ قبل إعادة الطلب."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -38968,6 +39011,14 @@ msgstr "عدد النماذج غير المرسلة في هواتف المستخ
 #: corehq/apps/reports/standard/deployments.py
 msgid "The build profile from the user's last hearbeat request."
 msgstr "ملف البناء من آخر طلب نبضات للمستخدم."
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...See more"
+msgstr "...عرض المزيد"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...إخفاء"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -41276,11 +41327,6 @@ msgid "Can't archive documents of type %s. How did you get here??"
 msgstr "لا يمكن أرشفة مستندات من النوع %s. كيف وصلت إلى هنا؟؟"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr "لا يمكن حذف النموذج {instance_id} لأنه غير مؤرشف."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (هذه الحالة)"
 
@@ -41832,10 +41878,6 @@ msgstr "انسخ هذا في مكان آمن. لن يتم عرضه مرة أخر
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "جميع عناوين IP"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr "مفتاح API بالاسم \"{create_form.cleaned_data['name']}\" موجود بالفعل."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -44865,22 +44907,12 @@ msgid "today!"
 msgstr "اليوم!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "في {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
 "%(expires_on)s"
 msgstr ""
 "تنبيه CommCare: شهادة موفر الهوية %(idp_name)s تنتهي في %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "حسابات Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -46245,15 +46277,6 @@ msgid "Missing translations for {} in uploaded sheet"
 msgstr "الترجمات مفقودة لـ {} في الورقة المرفوعة"
 
 #: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"تعذر العثور على وحدة أو نموذج بالمعرف '{module_or_form_id}' في التطبيق "
-"'{self.app.name}'"
-
-#: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
 msgstr "تعذر العثور على العمود/الأعمدة '{}'"
 
@@ -46348,11 +46371,6 @@ msgid ""
 msgstr ""
 "تم ارتداد البريد الإلكتروني لدعوة هذا المستخدم: {}. يرجى المحاولة مرة أخرى "
 "باستخدام اسم مستخدم مختلف"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "لا يمكن تعيين النطاق إلى '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -46624,16 +46642,6 @@ msgstr "إعادة بناء"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "حذف"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression غير مسموح به للنطاق {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} غير مسموح به للنطاق {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -48413,19 +48421,8 @@ msgid "UCR Expressions"
 msgstr "تعبيرات UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr "تعبير UCR بالاسم \"{create_form.cleaned_data['name']}\" موجود بالفعل."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "تعديل تعبير UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "أكد حسابك في CommCare للنطاق {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -51576,11 +51573,9 @@ msgid "is_active"
 msgstr "نشط"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr "لقد أكدت بنجاح حساب {user.raw_username}. يمكنك الآن تسجيل الدخول"
+#| msgid "You can now log into the mobile app."
+msgid "You can now login"
+msgstr "يمكنك الآن تسجيل الدخول"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -54353,24 +54348,25 @@ msgstr ""
 "بالصيغة yyyyQn (مثال: \"2004Q1\" من يناير إلى مارس 2004)، أو إدخال عمود "
 "صحيح."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">إضافة/تعديل إعدادات الاتصالات</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "تقرير قابل للتكوين من قبل المستخدم"
 
 #: corehq/motech/dhis2/forms.py
+#| msgid ""
+#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
+#| "href=\"https://github.com/dimagi/commcare-"
+#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
-"تقوم خرائط DataSet بربط UCRs الخاصة بـ CommCare بمجموعات بيانات DHIS2. <a "
-"href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"تقوم خرائط مجموعة البيانات بربط UCRs الخاصة بـ CommCare بمجموعات بيانات "
+"DHIS2. <a href=\"https://github.com/dimagi/commcare-"
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">مزيد"
+" من المعلومات</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -54840,12 +54836,8 @@ msgid "There is an error in your data API validations"
 msgstr "هناك خطأ في عمليات التحقق من بيانات واجهة برمجة التطبيقات الخاصة بك"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr ""
-"تعذر حل نقاط نهاية واجهة برمجة التطبيقات {self.api_auth_settings!r}. يرجى "
-"اختيار إعدادات مصادقة واجهة برمجة التطبيقات المناسبة لـ "
+msgid "Please select the applicable API auth settings for the "
+msgstr "يرجى اختيار إعدادات مصادقة واجهة برمجة التطبيقات (API) المناسبة لـ "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -54879,48 +54871,16 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "هناك خطأ في بناء جملة XML في Atom feed الخاص بـ OpenMRS عند "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
-msgstr ""
-"لم يتم العثور على مستخدمين في الموقع \"{repeater.location_id}\" لامتلاك "
-"المرضى المضافين من موجز OpenMRS Atom."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "تمت إضافة المرضى من Atom feed الخاص بـ OpenMRS."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr ""
-"{repeater.domain}: {repeater}: خطأ في الإعدادات: غير قادر على التحديث "
+msgid "patients from OpenMRS unless only one case type is specified."
+msgstr "المرضى من OpenMRS ما لم يتم تحديد نوع حالة واحد فقط."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب المريض "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: تم العثور على أكثر من حالة واحدة "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب الزيارة "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain}: {repeater}: تم العثور على أكثر من حالة تطابق UUID الخاص "
-"بـ OpenMRS. معرف الحالة الخارجي: "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr "تعذر تحديد العامل الميداني لامتلاك \"{case_type}\" الجديد "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "مطابقة UUID الفريد الخاص بـ OpenMRS. حالة external_id: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -55988,6 +55948,10 @@ msgid "App Dependencies"
 msgstr "اعتمادات التطبيق"
 
 #: corehq/privileges.py
+msgid "Show \"Enable All Add-Ons\" button"
+msgstr "إظهار زر \"تفعيل جميع الإضافات\""
+
+#: corehq/privileges.py
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "إنشاء حساب عامل ميداني على مرحلتين"
 
@@ -57036,6 +57000,232 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
 
+#~ msgid ""
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
+#~ msgstr "تم رفض دفع الاشتراك لفاتورة CommCare رقم {context['invoice_number']}"
+
+#~ msgid "Actually remove this card?"
+#~ msgstr "هل تريد فعلاً إزالة هذه البطاقة؟"
+
+#~ msgid "Yes, Remove"
+#~ msgstr "نعم، إزالة"
+
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "معامل(ات) غير صالحة: {', '.join(invalid_params)}"
+
+#~ msgid ""
+#~ "\n"
+#~ "      <p>\n"
+#~ "        All add-ons are enabled for this app.\n"
+#~ "      </p>\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      <p>\n"
+#~ "        جميع الإضافات مفعلة لهذا التطبيق.\n"
+#~ "      </p>\n"
+#~ "    "
+
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "تم الرجوع إلى الإصدار {log.info['version']}"
+
+#, python-brace-format
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr ""
+#~ "يمكن أن تحتوي واردات الحالات على حد أقصى قدره {MAX_CASE_IMPORTER_ROWS} صفوف."
+#~ " "
+
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr "لا يمكن أن يكون اسم الحالة أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "لا يمكن أن يكون المعرف الخارجي أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
+
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "المشغل غير صالح \"{criteria[\"operator\"]}\". القيم المسموح بها هي "
+
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} غير مدعوم مع ancestor-exists"
+
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} ليس تاريخًا أو وقتًا بتنسيق صحيح."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} تاريخ غير صالح."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} تاريخ ووقت غير صالح."
+
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr "يجب أن تكون الوسيطة الثانية لـ '{node.name}' إحداثيات صالحة"
+
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "يجب أن تكون الوسيطة الثالثة لـ '{node.name}' رقمًا، تم الحصول على "
+#~ "'{distance}'"
+
+#~ msgid ""
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
+#~ msgstr ""
+#~ "'{unit}' ليست وحدة مسافة صالحة. المتوقع واحدة من {', '.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' ليس تاريخًا صالحًا. المتوقع 'YYYY-MM-DD"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr "يجب أن تكون الوسيطة الأولى لـ '{node.name}' اسم خاصية حالة صالح"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "تقبل دالة '{node.name}' عددًا محددًا من الوسيطات وهو {expected}، تم الحصول "
+#~ "على {actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "تعبير غير معروف {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "تمت إضافتك إلى مساحة المشروع \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid "{self.title_prefix} Attendance Tracking Event"
+#~ msgstr "{self.title_prefix} حدث تتبع الحضور"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "لا يمكن حذف نوع الموقع '{deleted_type.code}'. يتم الإشارة إليه من قبل النوع "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "رمز موقع الموقع: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr "تم تضمين حقول غير صالحة في الطلب: {list(data.keys())}."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "يرجى الانتظار على الأقل {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr "لا يمكن حذف النموذج {instance_id} لأنه غير مؤرشف."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr "مفتاح API بالاسم \"{create_form.cleaned_data['name']}\" موجود بالفعل."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "في {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "حسابات Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "تعذر العثور على وحدة أو نموذج بالمعرف '{module_or_form_id}' في التطبيق "
+#~ "'{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "لا يمكن تعيين النطاق إلى '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression غير مسموح به للنطاق {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} غير مسموح به للنطاق {self.domain}"
+
+#~ msgid ""
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
+#~ msgstr "تعبير UCR بالاسم \"{create_form.cleaned_data['name']}\" موجود بالفعل."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "أكد حسابك في CommCare للنطاق {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr "لقد أكدت بنجاح حساب {user.raw_username}. يمكنك الآن تسجيل الدخول"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">إضافة/تعديل إعدادات الاتصالات</a>"
+
+#~ msgid ""
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
+#~ msgstr ""
+#~ "تعذر حل نقاط نهاية واجهة برمجة التطبيقات {self.api_auth_settings!r}. يرجى "
+#~ "اختيار إعدادات مصادقة واجهة برمجة التطبيقات المناسبة لـ "
+
+#, python-brace-format
+#~ msgid ""
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
+#~ msgstr ""
+#~ "لم يتم العثور على مستخدمين في الموقع \"{repeater.location_id}\" لامتلاك "
+#~ "المرضى المضافين من موجز OpenMRS Atom."
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: خطأ في الإعدادات: غير قادر على التحديث "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب المريض "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: تم العثور على أكثر من حالة واحدة "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب الزيارة "
+
+#, python-brace-format
+#~ msgid ""
+#~ "{repeater.domain}: {repeater}: More than one case found matching unique "
+#~ "OpenMRS UUID. case external_id: "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: تم العثور على أكثر من حالة تطابق UUID الخاص "
+#~ "بـ OpenMRS. معرف الحالة الخارجي: "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+#~ msgstr "تعذر تحديد العامل الميداني لامتلاك \"{case_type}\" الجديد "
+
 #~ msgid "Something went wrong"
 #~ msgstr "حدث خطأ ما"
 
@@ -57688,42 +57878,6 @@ msgstr "أدخل JSON صالحًا"
 #~ "      (انظر <a href=\"%(url)s\">هنا</a> للمزيد). إذا تجاوزت عدد مستخدمي الأجهزة المحمولة\n"
 #~ "      المسموح به في خطتك، سيتم فرض رسوم وفقًا لشروط الخطة.\n"
 #~ "    "
-
-#~ msgid ", "
-#~ msgstr "، "
-
-#~ msgid "Workflow:"
-#~ msgstr "سير العمل:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "مطلوب تقييد إعادة البناء"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "تقييد إعادة البناء غير مطلوب"
-
-#~ msgid " and try again."
-#~ msgstr " وحاول مرة أخرى."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "ثوانٍ قبل إعادة الطلب."
-
-#~ msgid "...See more"
-#~ msgstr "...عرض المزيد"
-
-#~ msgid "...Collapse"
-#~ msgstr "...إخفاء"
-
-#~ msgid "Please select the applicable API auth settings for the "
-#~ msgstr "يرجى اختيار إعدادات مصادقة واجهة برمجة التطبيقات (API) المناسبة لـ "
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "تمت إضافة المرضى من Atom feed الخاص بـ OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr "المرضى من OpenMRS ما لم يتم تحديد نوع حالة واحد فقط."
-
-#~ msgid "matching unique OpenMRS UUID. case external_id: "
-#~ msgstr "مطابقة UUID الفريد الخاص بـ OpenMRS. حالة external_id: "
 
 #~ msgid "Data cleaning action"
 #~ msgstr "إجراء تنظيف البيانات"

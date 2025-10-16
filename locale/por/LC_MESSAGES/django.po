@@ -1153,14 +1153,6 @@ msgstr[2] ""
 msgid "Payment Received - Thank You!"
 msgstr "Pagamento recebido - Obrigado!"
 
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr ""
-"O pagamento da assinatura para a Fatura CommCare {context['invoice_number']}"
-" foi recusado"
-
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
 msgstr "Gerir Administradores de Contabilidade"
@@ -1179,6 +1171,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -1221,7 +1214,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
@@ -1255,6 +1247,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/events/edit_attendee.html
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -1381,6 +1375,8 @@ msgid "Credits"
 msgstr "Créditos"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "Pagamento Automático"
 
@@ -4018,18 +4014,6 @@ msgid "Use a saved card"
 msgstr "Usar um cartão guardado"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Actually remove this card?"
-msgstr "Remover este cartão?"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Yes, Remove"
-msgstr "Sim, remove."
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Removing card..."
-msgstr "Removendo cartão..."
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a different card"
 msgstr "Usar um cartão diferente"
 
@@ -4052,22 +4036,14 @@ msgid "Save card for later"
 msgstr "Salvar cartão para depois"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-msgid "Use this card to autopay"
-msgstr "Usar este cartão para pagamento automático"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid ""
-"\n"
-"            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            to process this transaction.\n"
-"          "
+" We use\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          to process this transaction. "
 msgstr ""
-"\n"
-"            Utilizamos o <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            para processar esta transação.\n"
-"          "
+" Utilizamos\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          para processar esta transação. "
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Using Stripe's TEST API."
@@ -4694,9 +4670,10 @@ msgstr "'role' é obrigatório para cada usuário"
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' é definido pelo perfil e não pode ser definido diretamente"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "Parâmetro(s) inválido(s): {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr ", "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -4735,6 +4712,11 @@ msgid "Populate workflow from HAR file"
 msgstr "Preencher fluxo de trabalho a partir do arquivo HAR"
 
 #: corehq/apps/app_execution/forms.py
+#| msgid "Workflow"
+msgid "Workflow:"
+msgstr "Fluxo de Trabalho:"
+
+#: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
@@ -4746,6 +4728,7 @@ msgstr "Preencher fluxo de trabalho a partir do arquivo HAR"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -5308,6 +5291,10 @@ msgstr "Build para a versão solicitada não encontrada"
 msgid "Please log in to the app to check for an update."
 msgstr ""
 "Por favor, faça login no aplicativo para verificar se há uma atualização."
+
+#: corehq/apps/app_manager/exceptions.py
+msgid "Form Actions Diff failed to be applied successfully"
+msgstr "Falha ao aplicar a Diferença de Ações do Formulário com sucesso"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -6634,6 +6621,7 @@ msgstr "Não"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -10078,7 +10066,6 @@ msgstr "Enviar"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
@@ -11431,11 +11418,13 @@ msgstr "Ignorar Proprietários"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  Example: instance('commcaresession')/session/context/userid or\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 msgstr ""
 "\n"
-"                  Exemplo: instance('commcaresession')/session/context/userid ou 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  Exemplo: instance('commcaresession')/session/context/userid ou\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -11449,16 +11438,19 @@ msgstr "Carregar Casos Adicionais do Registro de Dados"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
-"                        The case type of the case must be configured in the registry and in the module via the module's\n"
-"                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
-"                        "
+"                    Load additional cases from the Data Registry into the\n"
+"                    'registry' instance for forms in this module. The case type\n"
+"                    of the case must be configured in the registry and in the\n"
+"                    module via the module's case type or the module's\n"
+"                    'Additional Case List and Case Search Types' configuration.\n"
+"                  "
 msgstr ""
 "\n"
-"                        Carregue casos adicionais do Registro de Dados na instância 'registry' para formulários neste módulo.\n"
-"                        O tipo de caso deve estar configurado no registro e no módulo via o tipo de caso do módulo\n"
-"                        ou pela configuração 'Tipos Adicionais de Lista de Casos e Pesquisa de Casos' do módulo.\n"
-"                        "
+"                    Carregue casos adicionais do Registro de Dados na instância\n"
+"                    'registry' para formulários neste módulo. O tipo de caso\n"
+"                    deve estar configurado no registro e no módulo via o tipo de\n"
+"                    caso do módulo ou na configuração de 'Lista Adicional de Casos e Tipos de Pesquisa de Casos' do módulo.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Case ID XPath"
@@ -11480,20 +11472,26 @@ msgstr "Propriedade Personalizada de Caso Relacionado"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"                               Enter in the name of a case property that contains the ID of another\n"
-"                               case you'd like included in the results instance.  This is to allow\n"
-"                               you to configure your case list display to show properties of that\n"
-"                               related case. Read more on the\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
-"                        "
+"                    Enter in the name of a case property that contains the ID of\n"
+"                    another case you'd like included in the results instance.\n"
+"                    This is to allow you to configure your case list display to\n"
+"                    show properties of that related case. Read more on the\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >Help Site</a\n"
+"                    >.\n"
+"                  "
 msgstr ""
 "\n"
-"                               Insira o nome de uma propriedade do caso que contenha o ID de outro\n"
-"                               caso que você gostaria de incluir na instância de resultados. Isso permite\n"
-"                               configurar a exibição da lista de casos para mostrar propriedades desse\n"
-"                               caso relacionado. Saiba mais no\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Site de Ajuda</a>.\n"
-"                        "
+"                    Insira o nome de uma propriedade de caso que contenha o ID de\n"
+"                    outro caso que você gostaria de incluir na instância de resultados.\n"
+"                    Isso permite configurar a exibição da lista de casos para\n"
+"                    mostrar propriedades desse caso relacionado. Leia mais no\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >Site de Ajuda</a\n"
+"                    >.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Include all related cases in search results"
@@ -11506,11 +11504,15 @@ msgstr "Limpar termos de pesquisa redefine os resultados"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+"              This is not a valid xpath expression. Check to make sure your\n"
+"              parentheses match and you are referencing case properties\n"
+"              correctly.\n"
 "            "
 msgstr ""
 "\n"
-"              Esta não é uma expressão xpath válida. Verifique se os parênteses estão corretos e se as propriedades do caso estão sendo referenciadas corretamente.\n"
+"              Esta não é uma expressão xpath válida. Verifique se os\n"
+"              parênteses estão corretos e se você está referenciando as propriedades do caso\n"
+"              corretamente.\n"
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -12721,16 +12723,18 @@ msgstr "Reverter"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"      <p>\n"
-"        All add-ons are enabled for this app.\n"
-"      </p>\n"
-"    "
+"        All add-ons have been enabled for this app using the\n"
+"        \"Enable All Application Add-Ons\" project setting.\n"
+"      "
 msgstr ""
 "\n"
-"      <p>\n"
-"        Todos os complementos estão habilitados para este aplicativo.\n"
-"      </p>\n"
-"    "
+"        Todos os complementos foram ativados para este aplicativo usando a\n"
+"        configuração de projeto \"Ativar Todos os Complementos de Aplicativo\".\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
+msgid "Enable All Add-Ons"
+msgstr "Ativar Todos os Complementos"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
@@ -13157,12 +13161,18 @@ msgid "Not set"
 msgstr "Não definido"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
-msgstr "Tradução U\\u200BI"
+#| msgid "U\\u200BI translation"
+msgid "U​I translation"
+msgstr ""
+"Tradução da U"
+"I"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
-msgstr "Traduções U\\u200BI"
+#| msgid "U\\u200BI translations"
+msgid "U​I translations"
+msgstr ""
+"Traduções da U"
+"I"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -13615,10 +13625,6 @@ msgstr "A versão mais recente para o perfil {} agora é {}"
 #: corehq/apps/app_manager/views/releases.py
 msgid "Latest release now available for profile {}"
 msgstr "Última versão disponível agora para o perfil {}"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "Revertido para a versão {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Please enter either text body or xpath for custom icon"
@@ -14120,13 +14126,6 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Exemplo: Célula na linha {row_num} contém \"{sample}\""
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr ""
-"As importações de casos podem conter no máximo {MAX_CASE_IMPORTER_ROWS} "
-"linhas. "
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr "Nome de proprietário inválido"
 
@@ -14264,22 +14263,8 @@ msgid "Name Too Long"
 msgstr "Nome muito longo"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"O nome do caso não pode ter mais de {STANDARD_CHARFIELD_LENGTH} caracteres"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "ID externo muito longo"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"O id externo não pode ter mais de {STANDARD_CHARFIELD_LENGTH} caracteres"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -14880,10 +14865,6 @@ msgstr "A solicitação de pesquisa deve especificar {param}"
 msgid "{param} must be a string"
 msgstr "{param} deve ser uma string"
 
-#: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "Operador inválido \"{criteria[\"operator\"]}\". Os valores permitidos são "
-
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
 msgid ""
@@ -15058,11 +15039,6 @@ msgid "Profile Case Search"
 msgstr "Perfil de Pesquisa de Caso"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} não é suportado com ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -15082,53 +15058,6 @@ msgid ""
 msgstr ""
 "O lado direito de uma comparação deve ser um número ou uma data. Datas devem"
 " estar entre aspas"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} não está em um formato correto de data ou data/hora."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} é uma data inválida."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} é uma data e hora inválida."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr "O segundo argumento para '{node.name}' deve ser coordenadas válidas"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"O terceiro argumento para '{node.name}' deve ser um número, recebido "
-"'{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' não é uma unidade de distância válida. Esperado uma das seguintes: "
-"{', '.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' não é uma data válida. Esperado 'AAAA-MM-DD"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr ""
-"O primeiro argumento para '{node.name}' deve ser um nome de propriedade de "
-"caso válido"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -15164,15 +15093,6 @@ msgstr "'{name}' espera um ou dois argumentos"
 #, python-brace-format
 msgid "'{name}' error. Index identifier must be a string"
 msgstr "Erro em '{name}'. O identificador do índice deve ser uma string"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"A função '{node.name}' aceita exatamente {expected} argumentos, recebido "
-"{actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -17032,6 +16952,7 @@ msgstr "Apenas uma sessão ativa por tipo de caso é permitida."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -17625,6 +17546,7 @@ msgstr "Aberto por"
 
 #: corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -20092,6 +20014,30 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
+msgid "Application Add-Ons"
+msgstr "Complementos de Aplicativo"
+
+#: corehq/apps/domain/forms.py
+msgid "Enable All Application Add-Ons"
+msgstr "Ativar Todos os Complementos de Aplicativo"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Enables all add-ons for all CommCare applications. To manage\n"
+"            add-ons on a per-application basis, this setting should be\n"
+"            disabled, and add-ons can be managed in the \"Add-Ons\" tab in\n"
+"            the application's settings.\n"
+"            "
+msgstr ""
+"\n"
+"            Ativa todos os complementos para todos os aplicativos CommCare. Para gerenciar\n"
+"            complementos por aplicativo, esta configuração deve ser\n"
+"            desativada, e os complementos podem ser gerenciados na aba \"Complementos\"\n"
+"            nas configurações do aplicativo.\n"
+"            "
+
+#: corehq/apps/domain/forms.py
 msgid "Orphan Case Alerts"
 msgstr "Alertas de Casos Órfãos"
 
@@ -20412,11 +20358,6 @@ msgstr ""
 "Os limites de regras de atualização de caso só podem ser modificados por "
 "administradores da Dimagi. Entre em contato com {support_email} se desejar "
 "atualizar esta configuração."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "Expressão desconhecida {expr}"
 
 #: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
@@ -21643,20 +21584,6 @@ msgstr ""
 "      para o seu endereço de e-mail.\n"
 "    "
 
-#: corehq/apps/domain/templates/domain/bootstrap3/confirm_billing_info.html
-#: corehq/apps/domain/templates/domain/bootstrap5/confirm_billing_info.html
-#, python-format
-msgid ""
-"\n"
-"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
-"      Please update your billing information below before continuing.\n"
-"    "
-msgstr ""
-"\n"
-"      Você está prestes a assinar o <strong>Plano de Software %(p)s</strong>.<br/>\n"
-"      Por favor, atualize suas informações de cobrança abaixo antes de continuar.\n"
-"    "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
@@ -21901,10 +21828,6 @@ msgstr " Dias de Teste"
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your %(pe)s Edition subscription was paused on %(date_paused)s. Please subscribe to a plan to gain access to your project again.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Your %(pe)s Edition subscription was paused on\n"
@@ -21921,11 +21844,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    The %(trial_length)s Day Trial includes all the features present in the\n"
-#| "                    %(pn)s Software Plan, which is our full set of features.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    The %(trial_length)s Day Trial includes all the features\n"
@@ -22007,10 +21925,6 @@ msgstr "Data de Término"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will automatically renew.\n"
@@ -22023,10 +21937,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will end in %(days_left)s days.\n"
@@ -22038,7 +21948,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid "Send Now"
 msgid "Renew Now"
 msgstr "Renovar Agora"
 
@@ -22046,7 +21955,6 @@ msgstr "Renovar Agora"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Disable Auto Renewal"
 msgstr "Desativar Renovação Automática"
 
@@ -22054,7 +21962,6 @@ msgstr "Desativar Renovação Automática"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Enable Auto Renewal"
 msgstr "Ativar Renovação Automática"
 
@@ -22062,6 +21969,16 @@ msgstr "Ativar Renovação Automática"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Current Price"
 msgstr "Preço Atual"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "ENABLED"
+msgstr "ATIVADO"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "NOT SET"
+msgstr "NÃO DEFINIDO"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -22279,7 +22196,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
+#: corehq/apps/translations/forms.py corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "Adicionar"
 
@@ -22557,6 +22474,7 @@ msgstr "Cartões de Crédito Salvos"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add Card"
 msgstr "Adicionar Cartão"
 
@@ -22579,6 +22497,7 @@ msgstr "Excluir Cartão"
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Processing your request"
 msgstr "Processando sua solicitação"
 
@@ -22606,6 +22525,7 @@ msgstr "Remover Pagamento Automático"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Set as autopay card"
 msgstr "Definir como cartão de pagamento automático"
 
@@ -22621,11 +22541,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#| msgid ""
-#| "\n"
-#| "          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
-#| "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-#| "        "
 msgid ""
 "\n"
 "          Actually remove\n"
@@ -22638,6 +22553,19 @@ msgstr ""
 "          <strong><span data-bind=\"text: brand\"></span></strong> cartão\n"
 "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
 "        "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
+"      Please update your billing information below before continuing.\n"
+"    "
+msgstr ""
+"\n"
+"      Você está prestes a assinar o <strong>Plano de Software %(p)s</strong>.<br/>\n"
+"      Por favor, atualize suas informações de cobrança abaixo antes de continuar.\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -23080,11 +23008,12 @@ msgid "Add New Credit Card"
 msgstr "Adicionar Novo Cartão de Crédito"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Use this card to autopay"
+msgstr "Usar este cartão para pagamento automático"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 msgid ""
 "\n"
 "                  We use\n"
@@ -23215,11 +23144,6 @@ msgid "Please agree to the Privacy Policy."
 msgstr "Por favor, concorde com a Política de Privacidade."
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
 msgid ""
 "\n"
 "                We use\n"
@@ -23274,7 +23198,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#| msgid "Enable auto renewal"
 msgid "By disabling auto renewal:"
 msgstr "Ao desativar a renovação automática:"
 
@@ -23303,10 +23226,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#| msgid ""
-#| "\n"
-#| "      You are renewing your <strong>%(p)s</strong> subscription.\n"
-#| "    "
 msgid ""
 "\n"
 "      Your subscription will <strong>not</strong> automatically renew.\n"
@@ -23372,10 +23291,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your subscription is currently paused.\n"
-#| "          "
 msgid ""
 "\n"
 "        Your subscription will renew at <b>%(price)s</b>.\n"
@@ -23387,15 +23302,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Learn more about our\n"
-#| "      <a\n"
-#| "        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
-#| "        target=\"_blank\"\n"
-#| "        >cloud environments</a\n"
-#| "      >.\n"
-#| "    "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -23620,6 +23526,97 @@ msgstr "Isto não copiará campos de usuário."
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr ""
 "Isto não copiará tabelas de consulta (também conhecidas como fixtures)."
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Add New Payment Card"
+msgstr "Adicionar Novo Cartão de Pagamento"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid ""
+"\n"
+"              We use\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              to process this transaction.\n"
+"            "
+msgstr ""
+"\n"
+"              Utilizamos\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              para processar esta transação.\n"
+"            "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Account Autopay Card"
+msgstr "Cartão de Pagamento Automático da Conta"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid ""
+"\n"
+"        You don't have an autopay card set for your account.\n"
+"      "
+msgstr ""
+"\n"
+"        Você não tem um cartão de pagamento automático definido para sua conta.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Refreshing, please wait..."
+msgstr "Atualizando, por favor aguarde..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "My Saved Cards"
+msgstr "Meus Cartões Salvos"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Autopay Card"
+msgstr "Cartão de Pagamento Automático"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Autopay for Other Account"
+msgstr "Pagamento Automático para Outra Conta"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Remove Card"
+msgstr "Remover Cartão"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Removing card..."
+msgstr "Removendo cartão..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#, python-format
+msgid ""
+"\n"
+"                        Actually remove <strong>%(brand)s</strong>\n"
+"                        card ************<strong>%(last4)s</strong>?\n"
+"                      "
+msgstr ""
+"\n"
+"                        Remover realmente o cartão <strong>%(brand)s</strong>\n"
+"                        ************<strong>%(last4)s</strong>?\n"
+"                      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid ""
+"\n"
+"        You do not have any saved cards associated with your user account.\n"
+"      "
+msgstr ""
+"\n"
+"        Você não tem nenhum cartão salvo associado à sua conta de usuário.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+msgid "Billing Details"
+msgstr "Detalhes de Cobrança"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+msgid "Payment Methods"
+msgstr "Métodos de Pagamento"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+msgid "Loading payment methods, please wait..."
+msgstr "Carregando métodos de pagamento, por favor aguarde..."
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -24391,6 +24388,18 @@ msgstr ""
 msgid "Billing contact information was successfully updated."
 msgstr "As informações de contato de cobrança foram atualizadas com sucesso."
 
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown removing card. Please contact Support."
+msgstr ""
+"Erro desconhecido ao remover cartão. Por favor, entre em contato com o "
+"Suporte."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error setting autopay. Please contact Support."
+msgstr ""
+"Erro desconhecido ao definir pagamento automático. Por favor, entre em "
+"contato com o Suporte."
+
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 msgid "statements per page"
 msgstr "extratos por página"
@@ -24675,11 +24684,6 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "Selecione um Projeto"
-
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "Você foi adicionado ao espaço de projeto \"{invitation.domain}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -25755,11 +25759,6 @@ msgstr "Registradores de Presença"
 #: corehq/apps/events/forms.py
 msgid "Please choose at least one Attendance Taker"
 msgstr "Por favor, escolha pelo menos um Registrador de Presença"
-
-#: corehq/apps/events/forms.py
-#, python-brace-format
-msgid "{self.title_prefix} Attendance Tracking Event"
-msgstr "{self.title_prefix} Evento de Acompanhamento de Presença"
 
 #: corehq/apps/events/forms.py
 msgid "Invalid Start Date"
@@ -30745,8 +30744,18 @@ msgid "UCR rebuild restriction status"
 msgstr "Status de restrição de reconstrução UCR"
 
 #: corehq/apps/hqadmin/reports.py
+#| msgid "No rebuild restriction required"
+msgid "Rebuild restriction required"
+msgstr "Restrição de reconstrução necessária"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Reconstrução restrita"
+
+#: corehq/apps/hqadmin/reports.py
+#| msgid "No rebuild restriction required"
+msgid "Rebuild restriction not required"
+msgstr "Restrição de reconstrução não necessária"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -31808,6 +31817,16 @@ msgstr "Por favor, insira uma senha."
 msgid "Please enter valid CAPTCHA"
 msgstr "Por favor, insira um CAPTCHA válido"
 
+#: corehq/apps/hqwebapp/forms.py
+msgid ""
+"Still having trouble?<div class='spacer'></div>Make sure you have selected "
+"the correct Cloud Location from the menu above. Your account and project may"
+" be in a different location."
+msgstr ""
+"Ainda está com problemas?<div class='spacer'></div>Certifique-se de que "
+"selecionou a Localização na Nuvem correta no menu acima. Sua conta e projeto"
+" podem estar em uma localização diferente."
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr "União Europeia"
@@ -31829,7 +31848,6 @@ msgid "US"
 msgstr "EUA"
 
 #: corehq/apps/hqwebapp/models.py
-#| msgid "Messaging"
 msgid "Staging"
 msgstr "Staging"
 
@@ -33769,6 +33787,14 @@ msgstr "Status do KYC"
 msgid "Show all"
 msgstr "Mostrar tudo"
 
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
+msgstr "Número de telefone"
+
 #: corehq/apps/integration/kyc/forms.py
 msgid "Recipient Data Store"
 msgstr "Armazenamento de Dados do Destinatário"
@@ -33794,6 +33820,18 @@ msgstr ""
 "Mapeia o campo da API para o provedor KYC ao campo usado para armazenar os "
 "dados relevantes. Para saber mais sobre isso, consulte nossa <a href=\"{}\" "
 "target=\"_blank\">documentação de suporte</a>."
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "Phone Number Field"
+msgstr "Campo de Número de Telefone"
+
+#: corehq/apps/integration/kyc/forms.py
+msgid ""
+"The case property or user data field that contains the phone number. Leave "
+"blank if it’s not used for KYC verification."
+msgstr ""
+"A propriedade do caso ou campo de dados do usuário que contém o número de "
+"telefone. Deixe em branco se não for usado para verificação KYC."
 
 #: corehq/apps/integration/kyc/models.py
 msgid "Custom User Data"
@@ -33889,17 +33927,14 @@ msgid "Request failed"
 msgstr "Solicitação falhou"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Success"
 msgid "Successful"
 msgstr "Bem-sucedido"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Identity Provider"
 msgid "Pending with Provider"
 msgstr "Pendente com o Provedor"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The deposit transaction failed."
 msgstr "A transação de depósito falhou."
 
@@ -33916,12 +33951,10 @@ msgid "The deposit transaction is still in progress."
 msgstr "A transação de depósito ainda está em andamento."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The recipient has been deactivated."
 msgid "The deposit transaction has been delayed."
 msgstr "A transação de depósito foi adiada."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The domain \"{domain}\" was not found."
 msgid "The deposit transaction was not found."
 msgstr "A transação de depósito não foi encontrada."
 
@@ -33948,7 +33981,6 @@ msgid "The currency specified for the deposit transaction is invalid."
 msgstr "A moeda especificada para a transação de depósito é inválida."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An error occurred during the download."
 msgid "An internal processing error occurred during the deposit transaction."
 msgstr ""
 "Ocorreu um erro interno de processamento durante a transação de depósito."
@@ -33958,17 +33990,14 @@ msgid "The deposit transaction service is currently unavailable."
 msgstr "O serviço de transação de depósito está indisponível no momento."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The following report configuration could not be found: {}"
 msgid "The deposit transaction could not be performed."
 msgstr "Não foi possível realizar a transação de depósito."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payee account could not be found."
 msgstr "A conta do beneficiário especificada não pôde ser encontrada."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payer account could not be found."
 msgstr "A conta do pagador especificada não pôde ser encontrada."
 
@@ -33985,12 +34014,10 @@ msgid "The specified currency is invalid."
 msgstr "A moeda especificada é inválida."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Domain Temporarily Unavailable"
 msgid "The service is temporarily unavailable."
 msgstr "O serviço está temporariamente indisponível."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An unknown error occurred."
 msgid "An internal processing error occurred."
 msgstr "Ocorreu um erro interno de processamento."
 
@@ -33999,7 +34026,6 @@ msgid "The payer account does not have enough funds."
 msgstr "A conta do pagador não possui saldo suficiente."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The gateway can't reach the destination number."
 msgid "The payer has reached their transaction limit."
 msgstr "O pagador atingiu o limite de transações."
 
@@ -34008,12 +34034,10 @@ msgid "The payee is not allowed to receive funds."
 msgstr "O beneficiário não tem permissão para receber fundos."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The item's ID was not passed to the server."
 msgid "The payment was not approved by the payer."
 msgstr "O pagamento não foi aprovado pelo pagador."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The case group was not found."
 msgid "The requested resource was not found."
 msgstr "O recurso solicitado não foi encontrado."
 
@@ -34022,17 +34046,14 @@ msgid "The transaction approval was rejected."
 msgstr "A aprovação da transação foi rejeitada."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Your session has expired"
 msgid "The transaction has expired."
 msgstr "A transação expirou."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The transaction was canceled."
 msgstr "A transação foi cancelada."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Keyword already exists."
 msgid "The resource already exists."
 msgstr "O recurso já existe."
 
@@ -34041,19 +34062,14 @@ msgid "Transaction ID is missing in the record"
 msgstr "ID da transação ausente no registro"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "Payment transaction not found"
 msgstr "Transação de pagamento não encontrada"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Unexpected error"
 msgid "Unexpected error occurred"
 msgstr "Ocorreu um erro inesperado"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid ""
-#| "Network error occurred. Please try again, or reach out to support if the "
-#| "issue persists."
 msgid ""
 "Error occurred during payment request. Reach out to support if the issue "
 "persists."
@@ -34062,12 +34078,10 @@ msgstr ""
 "suporte se o problema persistir."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with request error."
 msgstr "Número máximo de tentativas excedido devido a erro na solicitação."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with pending status"
 msgstr "Número máximo de tentativas excedido com status pendente"
 
@@ -34093,13 +34107,6 @@ msgstr "Atividade"
 #: corehq/apps/integration/payments/tables.py
 msgid "Funder"
 msgstr "Financiador"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr "Número de telefone"
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
@@ -34129,18 +34136,14 @@ msgid "Payment request failed"
 msgstr "Falha na solicitação de pagamento"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Phone Verification"
 msgid "Verification"
 msgstr "Verificação"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "format must be one of the following: {}"
 msgid "Payment status must be one of the following:"
 msgstr "O status do pagamento deve ser um dos seguintes:"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Only payments in '{}' or '{}' state are eligible for verification."
 msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 "Apenas pagamentos com '{}' definido como 'true' são elegíveis para "
@@ -34159,7 +34162,6 @@ msgid "Payment has already been requested"
 msgstr "O pagamento já foi solicitado"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Verification Status"
 msgid "Verification reversal"
 msgstr "Reversão de verificação"
 
@@ -34168,8 +34170,6 @@ msgid "Failed to fetch payment status with code: {}"
 msgstr "Falha ao buscar status do pagamento com o código: {}"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Error fetching multimedia from remote server. Please try again later."
 msgid ""
 "Failed to fetch payment status. Unable to connect to server. Please try "
 "again later."
@@ -35497,13 +35497,9 @@ msgstr ""
 "'{type}', no índice '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"Não é possível excluir o tipo de local '{deleted_type.code}'. Ele é "
-"referenciado pelo tipo "
+#| msgid "Please try again."
+msgid " and try again."
+msgstr " e tente novamente."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -35658,17 +35654,8 @@ msgstr ""
 "href=\"{}\">aqui</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "Código do local: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "Não foi possível atualizar: não foi possível encontrar o local com"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr "Campos inválidos foram incluídos na solicitação: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -37896,9 +37883,8 @@ msgstr ""
 " alguns minutos. Se o problema persistir, entre em contato com o suporte."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "Por favor, aguarde pelo menos {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "segundos antes de solicitar novamente."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -39862,6 +39848,15 @@ msgstr ""
 #: corehq/apps/reports/standard/deployments.py
 msgid "The build profile from the user's last hearbeat request."
 msgstr "O perfil de build do último pedido de heartbeat do usuário."
+
+#: corehq/apps/reports/standard/deployments.py
+#| msgid "see more"
+msgid "...See more"
+msgstr "...Ver mais"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...Recolher"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -42208,13 +42203,6 @@ msgstr ""
 "Não é possível arquivar documentos do tipo %s. Como você chegou aqui??"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr ""
-"Não é possível excluir o formulário {instance_id} porque ele não está "
-"arquivado."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (este caso)"
 
@@ -42781,12 +42769,6 @@ msgstr "Copie isto em um local seguro. Não será exibido novamente."
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Todos os Endereços IP"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr ""
-"Já existe uma Chave de API com o nome "
-"\"{create_form.cleaned_data['name']}\"."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -45875,11 +45857,6 @@ msgid "today!"
 msgstr "hoje!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "em {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -45887,11 +45864,6 @@ msgid ""
 msgstr ""
 "Alerta do CommCare: O certificado do Provedor de Identidade %(idp_name)s "
 "expira em %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "Contas Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -47306,15 +47278,6 @@ msgid "Missing translations for {} in uploaded sheet"
 msgstr "Traduções ausentes para {} na planilha enviada"
 
 #: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"Não foi possível encontrar um módulo ou formulário com o ID "
-"'{module_or_form_id}' no app '{self.app.name}'"
-
-#: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
 msgstr "Não foi possível encontrar a(s) coluna(s) '{}'"
 
@@ -47415,11 +47378,6 @@ msgid ""
 msgstr ""
 "O e-mail retornou para o convite deste usuário: {}. Por favor, tente "
 "novamente com outro nome de usuário"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "O domínio não pode ser definido como '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -47712,16 +47670,6 @@ msgstr "Reconstruir"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Excluir"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression não é permitido para o domínio {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} não é permitido para o domínio {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -49558,20 +49506,8 @@ msgid "UCR Expressions"
 msgstr "Expressões UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr ""
-"Expressão UCR com o nome \"{create_form.cleaned_data['name']}\" já existe."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Editar Expressão UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "Confirme sua conta CommCare para {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -52781,13 +52717,9 @@ msgid "is_active"
 msgstr "está_ativo"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr ""
-"Você confirmou com sucesso a conta {user.raw_username}. Agora você pode "
-"fazer login"
+#| msgid "You can now log into the mobile app."
+msgid "You can now login"
+msgstr "Agora você pode fazer login"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -55632,24 +55564,25 @@ msgstr ""
 "período de trimestre válido no formato aaaaQn (por exemplo, \"2004Q1\" para "
 "janeiro-março de 2004), ou insira uma coluna válida."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">Adicionar/Editar Configurações de Conexões</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Relatório Configurável pelo Usuário"
 
 #: corehq/motech/dhis2/forms.py
+#| msgid ""
+#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
+#| "href=\"https://github.com/dimagi/commcare-"
+#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
-"Os Mapas de DataSet vinculam UCRs do CommCare a DataSets do DHIS2. <a "
+"Os Mapas de DataSet mapeiam UCRs do CommCare para DataSets do DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">Mais"
+" informações</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -56128,13 +56061,9 @@ msgid "There is an error in your data API validations"
 msgstr "Há um erro nas validações de dados da sua API"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr ""
-"Não foi possível resolver os endpoints da API {self.api_auth_settings!r}. "
-"Por favor, selecione as configurações de autenticação de API aplicáveis para"
-" o "
+#| msgid "Please select the applicable day(s) of the week."
+msgid "Please select the applicable API auth settings for the "
+msgstr "Selecione as configurações de autenticação de API aplicáveis para o "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -56169,51 +56098,20 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "Há um erro de sintaxe XML no feed Atom do OpenMRS em "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "pacientes adicionados do feed Atom do OpenMRS."
+
+#: corehq/motech/openmrs/atom_feed.py
+msgid "patients from OpenMRS unless only one case type is specified."
 msgstr ""
-"Nenhum usuário encontrado na localização \"{repeater.location_id}\" para ser"
-" proprietário dos pacientes adicionados do feed OpenMRS Atom."
+"pacientes do OpenMRS, a menos que apenas um tipo de caso seja especificado."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr ""
-"{repeater.domain}: {repeater}: Erro nas configurações: Não foi possível "
-"atualizar "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr "{repeater.domain}: {repeater}: Erro ao buscar Paciente "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: Mais de um caso encontrado "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr "{repeater.domain}: {repeater}: Erro ao buscar Encontro "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain}: {repeater}: Mais de um caso encontrado com UUID OpenMRS "
-"exclusivo correspondente. case external_id: "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr ""
-"Não foi possível determinar o trabalhador móvel para ser responsável pelo "
-"novo \"{case_type}\" "
+#| msgid ""
+#| "{repeater.domain}: {repeater}: More than one case found matching unique "
+#| "OpenMRS UUID. case external_id: "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "UUID OpenMRS único correspondente. case external_id: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -57305,6 +57203,10 @@ msgid "App Dependencies"
 msgstr "Dependências do App"
 
 #: corehq/privileges.py
+msgid "Show \"Enable All Add-Ons\" button"
+msgstr "Mostrar botão \"Ativar Todos os Complementos\""
+
+#: corehq/privileges.py
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "Criação de Conta de Trabalhador Móvel em Duas Etapas"
 
@@ -58367,737 +58269,222 @@ msgstr "Colunas obrigatórias são {column_names}"
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
 
-#~ msgid "Something went wrong"
-#~ msgstr "Algo deu errado"
-
 #~ msgid ""
-#~ "Only payments in the '{}' state are eligible for verification reversal."
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
 #~ msgstr ""
-#~ "Somente pagamentos no estado '{}' são elegíveis para reversão de "
-#~ "verificação."
+#~ "O pagamento da assinatura para a Fatura CommCare {context['invoice_number']}"
+#~ " foi recusado"
 
-#~ msgid ""
-#~ "\n"
-#~ "    Email From:<br />\n"
-#~ "    CommCare and the corporation Dimagi, Inc.<br />\n"
-#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#~ "  "
-#~ msgstr ""
-#~ "\n"
-#~ "    E-mail de:<br />\n"
-#~ "    CommCare e a empresa Dimagi, Inc.<br />\n"
-#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 EUA\n"
-#~ "  "
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "Parâmetro(s) inválido(s): {', '.join(invalid_params)}"
 
-#~ msgid ""
-#~ "\n"
-#~ "              To use display conditions which reference a user property, user properties must be\n"
-#~ "              enabled for your project.\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Para usar condições de exibição que fazem referência a uma propriedade de usuário, as propriedades de usuário devem estar habilitadas para seu projeto.\n"
-#~ "            "
-
-#~ msgid "Enable user properties"
-#~ msgstr "Habilitar propriedades de usuário"
-
-#, python-format
-#~ msgid ""
-#~ "You do not have permission to change the subscription for this customer-"
-#~ "level account. Please reach out to the %s enterprise admin for help."
-#~ msgstr ""
-#~ "Você não tem permissão para alterar a assinatura desta conta de nível de "
-#~ "cliente. Por favor, entre em contato com o administrador empresarial %s para"
-#~ " obter ajuda."
-
-#~ msgid "Invalid Payload"
-#~ msgstr "Payload inválido"
-
-#~ msgid "Invalid payload"
-#~ msgstr "Payload inválido"
-
-#~ msgid ""
-#~ "\n"
-#~ "                    Delete\n"
-#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-#~ "                    Case Type\n"
-#~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "                    Excluir\n"
-#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-#~ "                    Tipo de Caso\n"
-#~ "                    "
-
-#~ msgid "There is already a user with this email."
-#~ msgstr "Já existe uma pessoa com este e-mail."
-
-#~ msgid "Click to select groups"
-#~ msgstr "Clique para selecionar grupos"
-
-#~ msgid "# Active Users"
-#~ msgstr "# Usuários Ativos"
-
-#~ msgid "Proportion of users in group who submitted forms in date range."
-#~ msgstr ""
-#~ "Proporção de usuários no grupo que enviaram formulários no intervalo de "
-#~ "datas."
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ.\n"
-#~ "    This invitation expires in %(days)s day(s).\n"
-#~ msgstr ""
-#~ "\n"
-#~ "    %(inviter)s convidou você para participar do projeto %(domain)s no CommCare HQ.\n"
-#~ "    Este convite expira em %(days)s dia(s).\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-Equipe do CommCare HQ"
-
-#~ msgid "Thank you for using CommCare HQ."
-#~ msgstr "Obrigado por usar o CommCare HQ."
-
-#~ msgid "Step {} of {}"
-#~ msgstr "Etapa {} de {}"
-
-#~ msgid "Server Location"
-#~ msgstr "Localização do Servidor"
-
-#~ msgid "Revert Verification"
-#~ msgstr "Reverter Verificação"
-
-#~ msgid ""
-#~ "Important: This will be used to create a project URL, and you will not be "
-#~ "able to change it in the future."
-#~ msgstr ""
-#~ "Importante: Isso será usado para criar uma URL do projeto e você não poderá "
-#~ "alterá-la futuramente."
-
-#~ msgid ""
-#~ "\n"
-#~ "              Create a project space below as a separate sandbox for new\n"
-#~ "              applications, users, and form submissions.\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Crie um espaço de projeto abaixo como um ambiente separado para novos\n"
-#~ "              aplicativos, usuários e envios de formulários.\n"
-#~ "            "
-
-#~ msgid ""
-#~ "\n"
-#~ "            Your project space contains all form submissions from your CommCare\n"
-#~ "            mobile applications and tools to help you easily create, deploy, and monitor\n"
-#~ "            your applications and workers.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Seu espaço de projeto contém todos os envios de formulários dos seus aplicativos\n"
-#~ "            móveis CommCare e ferramentas para ajudar você a criar, implantar e monitorar\n"
-#~ "            facilmente seus aplicativos e trabalhadores.\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "                <strong>Atenção:</strong> Este espaço de projeto não fará parte imediatamente das assinaturas existentes.\n"
-#~ "              "
-
-#~ msgid ""
-#~ "\n"
-#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Learn more about CommCare Enterprise</a>\n"
-#~ "                if you would like to link project spaces together under one account.\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Saiba mais sobre o CommCare Enterprise</a>\n"
-#~ "                se você quiser vincular espaços de projeto sob uma única conta.\n"
-#~ "              "
-
-#~ msgid "Estimated annual expenditures on airtime:"
-#~ msgstr "Estimativa anual de gastos com créditos:"
-
-#~ msgid "Estimated annual expenditures on devices:"
-#~ msgstr "Estimativa anual de gastos com dispositivos:"
-
-#~ msgid ""
-#~ "We grant pro-bono subscriptions to match the duration of your project, up to"
-#~ " a maximum of 12 months at a time (at which point you need to reapply)."
-#~ msgstr ""
-#~ "Concedemos assinaturas pro-bono para corresponder à duração do seu projeto, "
-#~ "até um máximo de 12 meses por vez (após esse período, será necessário "
-#~ "reaplicar)."
-
-#~ msgid ""
-#~ "If you have already been in touch with someone from Dimagi, please list "
-#~ "their name."
-#~ msgstr ""
-#~ "Se você já entrou em contato com alguém da Dimagi, por favor, informe o nome"
-#~ " dessa pessoa."
-
-#~ msgid "Number of expected users"
-#~ msgstr "Número de usuários esperados"
-
-#~ msgid "Pro-Bono Application"
-#~ msgstr "Solicitação Pro-Bono"
-
-#~ msgid "Submit Pro-Bono Application"
-#~ msgstr "Enviar Solicitação Pro-Bono"
-
-#~ msgid ""
-#~ "Thank you for your submission.  A representative will be in contact with you"
-#~ " shortly."
-#~ msgstr ""
-#~ "Obrigado pelo seu envio. Um representante entrará em contato com você em "
-#~ "breve."
-
-#~ msgid "Printing"
-#~ msgstr "Impressão"
-
-#~ msgid "Document Template"
-#~ msgstr "Modelo de Documento"
-
-#~ msgid "Opens file in new tab."
-#~ msgstr "Abre o arquivo em uma nova aba."
-
-#~ msgid "Open HTML"
-#~ msgstr "Abrir HTML"
-
-#~ msgid "Upload HTML"
-#~ msgstr "Enviar HTML"
-
-#~ msgid "Replace HTML"
-#~ msgstr "Substituir HTML"
-
-#~ msgid "Printing the case detail is not supported on this version of CommCare"
-#~ msgstr ""
-#~ "A impressão do detalhe do caso não é suportada nesta versão do CommCare"
-
-#~ msgid "Print template"
-#~ msgstr "Modelo de impressão"
-
-#~ msgid "text"
-#~ msgstr "texto"
-
-#~ msgid "New Template Uploaded Successfully"
-#~ msgstr "Novo Modelo Enviado com Sucesso"
-
-#~ msgid "Cookies Required for CSRF"
-#~ msgstr "Cookies Necessários para CSRF"
-
-#~ msgid "Cookies must be enabled to use CommCare"
-#~ msgstr "Os cookies devem estar habilitados para usar o CommCare"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "    <p>\n"
-#~ "      Please try refreshing your browser or clicking the blue \"flower\" icon in the top left hand corner.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      If you believe you received this error as a mistake, please contact <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-#~ "    </p>\n"
-#~ "  "
-#~ msgstr ""
-#~ "\n"
-#~ "    <p>\n"
-#~ "      Por favor, tente atualizar seu navegador ou clique no ícone azul da \"flor\" no canto superior esquerdo.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      Não funcionou? Limpe o cache do seu navegador, feche o navegador e abra novamente.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      Se você acredita que recebeu este erro por engano, entre em contato com <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-#~ "    </p>\n"
-#~ "  "
-
-#~ msgid "Explore Case Data (Preview)"
-#~ msgstr "Explorar Dados do Caso (Prévia)"
-
-#~ msgid ""
-#~ "\n"
-#~ "      This feature allows you to quickly explore your case data for ad-hoc data\n"
-#~ "      queries or to identify unclean data.<br />\n"
-#~ "      This is an Add-On.\n"
-#~ "    "
-#~ msgstr ""
-#~ "\n"
-#~ "      Este recurso permite explorar rapidamente seus dados de caso para consultas ad-hoc\n"
-#~ "      ou para identificar dados inconsistentes.<br />\n"
-#~ "      Este é um Complemento.\n"
-#~ "    "
-
-#~ msgid ""
-#~ "\n"
-#~ "              Preparing your case data for exploration...\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Preparando seus dados de caso para exploração...\n"
-#~ "            "
-
-#~ msgid "Save Filters"
-#~ msgstr "Salvar Filtros"
-
-#~ msgid ""
-#~ "\n"
-#~ "          Loading...\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "          Carregando...\n"
-#~ "        "
-
-#~ msgid ""
-#~ "\n"
-#~ "          Our system is experiencing an unusually large load on resources at the moment,\n"
-#~ "          so data is not being received in a timely fashion. We are working on the problem, but\n"
-#~ "          if you continue to experience this issue, please contact support.\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "          Nosso sistema está enfrentando uma carga de recursos incomumente alta no momento,\n"
-#~ "          por isso os dados não estão sendo recebidos de forma oportuna. Estamos trabalhando no problema, mas\n"
-#~ "          se você continuar enfrentando essa questão, entre em contato com o suporte.\n"
-#~ "        "
-
-#~ msgid ""
-#~ "\n"
-#~ "          There was an issue fetching cases with these filters.\n"
-#~ "          Please check your filters and try again.\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "          Houve um problema ao buscar casos com esses filtros.\n"
-#~ "          Verifique seus filtros e tente novamente.\n"
-#~ "        "
-
-#~ msgid "Edit Column"
-#~ msgstr "Edição da Coluna"
-
-#~ msgid "Filter Data in Column"
-#~ msgstr "Filtrar Dados na Coluna"
-
-#~ msgid ""
-#~ "\n"
-#~ "                      Treat this property as\n"
-#~ "                      <select class=\"form-control filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      and match\n"
-#~ "                      <select data-bind=\"value: $parent.clause,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          all of the\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          any of the\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      following conditions:\n"
-#~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "                      Tratar esta propriedade como\n"
-#~ "                      <select class=\"form-control filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      e corresponder\n"
-#~ "                      <select data-bind=\"value: $parent.clause,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          todas as\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          quaisquer das\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      seguintes condições:\n"
-#~ "                    "
-
-#~ msgid ""
-#~ "\n"
-#~ "              This task is currently not supported, but we are happy to\n"
-#~ "              learn about your interest.\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Esta tarefa atualmente não é suportada, mas ficaremos felizes em\n"
-#~ "              saber do seu interesse.\n"
-#~ "            "
-
-#~ msgid ""
-#~ "\n"
-#~ "                      Treat this property as\n"
-#~ "                      <select class=\"form-select filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      and match\n"
-#~ "                      <select data-bind=\"value: $parent.clause,  \n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          all of the\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          any of the\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      following conditions:\n"
-#~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "                      Tratar esta propriedade como\n"
-#~ "                      <select class=\"form-select filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      e corresponder\n"
-#~ "                      <select data-bind=\"value: $parent.clause,  \n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          todas as\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          quaisquer das\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      seguintes condições:\n"
-#~ "                    "
-
-#~ msgid "Explore Case Data"
-#~ msgstr "Explorar Dados de Casos"
-
-#~ msgid "CommCare HQ looks better on desktop!"
-#~ msgstr "CommCare HQ fica melhor em desktop!"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "            Hi%(\" \" + full_name)s, it looks like you’re on a mobile device.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Olá%(\" \" + full_name)s, parece que você está em um dispositivo móvel.\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "            CommCare HQ is optimized for desktop or laptop browsers.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            O CommCare HQ é otimizado para navegadores em desktop ou laptop.\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "            Send yourself an email with a login link to use when you’re back on a full-size browser:\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Envie um e-mail para você mesmo com um link de acesso para usar quando estiver de volta em um navegador de tela cheia:\n"
-#~ "          "
-
-#~ msgid "Email Link"
-#~ msgstr "Link por e-mail"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Reminder sent!\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Lembrete enviado!\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "            Check out this video to get an introduction to CommCare HQ.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Assista a este vídeo para ter uma introdução ao CommCare HQ.\n"
-#~ "          "
-
-#~ msgid "Requested"
-#~ msgstr "Solicitado"
-
-#~ msgid "Unverified"
-#~ msgstr "Não verificado"
-
-#~ msgid "info"
-#~ msgstr "informação"
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "Revertido para a versão {log.info['version']}"
 
 #, python-brace-format
-#~ msgid "{num} cases"
-#~ msgstr "{num} casos"
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr ""
+#~ "As importações de casos podem conter no máximo {MAX_CASE_IMPORTER_ROWS} "
+#~ "linhas. "
 
-#~ msgid "Text equals"
-#~ msgstr "Texto é igual a"
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "O nome do caso não pode ter mais de {STANDARD_CHARFIELD_LENGTH} caracteres"
 
-#~ msgid "Text does not equal"
-#~ msgstr "Texto não é igual a"
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "O id externo não pode ter mais de {STANDARD_CHARFIELD_LENGTH} caracteres"
 
-#~ msgid "a Number"
-#~ msgstr "um Número"
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "Operador inválido \"{criteria[\"operator\"]}\". Os valores permitidos são "
 
-#~ msgid "Number is equal to"
-#~ msgstr "Número é igual a"
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} não é suportado com ancestor-exists"
 
-#~ msgid "Number is less than"
-#~ msgstr "Número é menor que"
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} não está em um formato correto de data ou data/hora."
 
-#~ msgid "Number is greater than"
-#~ msgstr "Número é maior que"
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} é uma data inválida."
 
-#~ msgid "Number is not equal to"
-#~ msgstr "Número não é igual a"
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} é uma data e hora inválida."
 
-#~ msgid "a Date"
-#~ msgstr "uma Data"
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr "O segundo argumento para '{node.name}' deve ser coordenadas válidas"
 
-#~ msgid "Date is"
-#~ msgstr "Data é"
-
-#~ msgid "Date is before"
-#~ msgstr "Data é anterior a"
-
-#~ msgid "Date is after"
-#~ msgstr "Data é posterior a"
-
-#~ msgid "The report endpoint for {}/{} cannot be found."
-#~ msgstr "O endpoint do relatório para {}/{} não pode ser encontrado."
-
-#~ msgid "Could not find the report filter '{}'"
-#~ msgstr "Não foi possível encontrar o filtro de relatório '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "Dados do Projeto"
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "O terceiro argumento para '{node.name}' deve ser um número, recebido "
+#~ "'{distance}'"
 
 #~ msgid ""
-#~ "Setting a password is disabled. The user will set their own password on "
-#~ "confirming their account email."
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
 #~ msgstr ""
-#~ "A definição de senha está desativada. O usuário definirá sua própria senha "
-#~ "ao confirmar o e-mail da conta."
+#~ "'{unit}' não é uma unidade de distância válida. Esperado uma das seguintes: "
+#~ "{', '.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' não é uma data válida. Esperado 'AAAA-MM-DD"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr ""
+#~ "O primeiro argumento para '{node.name}' deve ser um nome de propriedade de "
+#~ "caso válido"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "A função '{node.name}' aceita exatamente {expected} argumentos, recebido "
+#~ "{actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "Expressão desconhecida {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "Você foi adicionado ao espaço de projeto \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid "{self.title_prefix} Attendance Tracking Event"
+#~ msgstr "{self.title_prefix} Evento de Acompanhamento de Presença"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "Não é possível excluir o tipo de local '{deleted_type.code}'. Ele é "
+#~ "referenciado pelo tipo "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "Código do local: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr "Campos inválidos foram incluídos na solicitação: {list(data.keys())}."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "Por favor, aguarde pelo menos {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr ""
+#~ "Não é possível excluir o formulário {instance_id} porque ele não está "
+#~ "arquivado."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr ""
+#~ "Já existe uma Chave de API com o nome "
+#~ "\"{create_form.cleaned_data['name']}\"."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "em {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "Contas Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "Não foi possível encontrar um módulo ou formulário com o ID "
+#~ "'{module_or_form_id}' no app '{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "O domínio não pode ser definido como '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression não é permitido para o domínio {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} não é permitido para o domínio {self.domain}"
 
 #~ msgid ""
-#~ "Setting a password is disabled. The user will set their own password on "
-#~ "confirming their account phone number."
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
 #~ msgstr ""
-#~ "A definição de senha está desativada. O usuário definirá sua própria senha "
-#~ "ao confirmar o número de telefone da conta."
+#~ "Expressão UCR com o nome \"{create_form.cleaned_data['name']}\" já existe."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "Confirme sua conta CommCare para {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr ""
+#~ "Você confirmou com sucesso a conta {user.raw_username}. Agora você pode "
+#~ "fazer login"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">Adicionar/Editar Configurações de Conexões</a>"
 
 #~ msgid ""
-#~ "This feature allows you to quickly explore your case data for ad-hoc data "
-#~ "queries or to identify unclean data."
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
 #~ msgstr ""
-#~ "Este recurso permite explorar rapidamente seus dados de casos para consultas"
-#~ " ad-hoc ou para identificar dados inconsistentes."
+#~ "Não foi possível resolver os endpoints da API {self.api_auth_settings!r}. "
+#~ "Por favor, selecione as configurações de autenticação de API aplicáveis para"
+#~ " o "
 
-#~ msgid "No, take me back."
-#~ msgstr "Não, quero voltar."
-
-#~ msgid "Yes, import application"
-#~ msgstr "Sim, importa o aplicativo"
-
-#~ msgid "You must submit a name for the application you are importing."
-#~ msgstr ""
-#~ "Você deve submeter um nome para o aplicativo que você está importando."
-
-#~ msgid "You must upload the app source file."
-#~ msgstr "Você deve enviar o arquivo fonte do aplicativo."
-
+#, python-brace-format
 #~ msgid ""
-#~ "The page you requested is currently unavailable due to a\n"
-#~ "    data migration. Please check back later."
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
 #~ msgstr ""
-#~ "A página solicitada está indisponível no momento devido a uma\n"
-#~ "    migração de dados. Por favor, tente novamente mais tarde."
+#~ "Nenhum usuário encontrado na localização \"{repeater.location_id}\" para ser"
+#~ " proprietário dos pacientes adicionados do feed OpenMRS Atom."
 
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "          <p>Import application <strong>%(app_name)s</strong> from domain <strong>%(app_domain)s</strong>?</p>\n"
-#~ "        "
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
 #~ msgstr ""
-#~ "\n"
-#~ "          <p>Importar o aplicativo <strong>%(app_name)s</strong> do domínio <strong>%(app_domain)s</strong>?</p>\n"
-#~ "        "
+#~ "{repeater.domain}: {repeater}: Erro nas configurações: Não foi possível "
+#~ "atualizar "
 
-#~ msgid ""
-#~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
-#~ "Apps and reports (if applicable), but does not affect mobile applications. "
-#~ "Supported languages for reports are en, fra (partial), and hin (partial)."
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr "{repeater.domain}: {repeater}: Erro ao buscar Paciente "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: Mais de um caso encontrado "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr "{repeater.domain}: {repeater}: Erro ao buscar Encontro "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
 #~ msgstr ""
-#~ "<i class=\"fa fa-info-circle\"></i> Torna-se o idioma padrão visto nos "
-#~ "Aplicativos Web e relatórios (se aplicável), mas não afeta aplicativos "
-#~ "móveis. Idiomas suportados para relatórios são en, fra (parcial) e hin "
-#~ "(parcial)."
-
-#~ msgid "Application Status"
-#~ msgstr "Estado da Aplicação"
+#~ "Não foi possível determinar o trabalhador móvel para ser responsável pelo "
+#~ "novo \"{case_type}\" "
 
 #~ msgid "Token generator"
-#~ msgstr "Gerador de Token"
-
-#~ msgid "# Cases Cleaned"
-#~ msgstr "# Casos Limpos"
-
-#~ msgid "Recent Tasks"
-#~ msgstr "Tarefas Recentes"
-
-#~ msgid "Populating your report did not complete successfully."
-#~ msgstr "O preenchimento do seu relatório não foi concluído com sucesso."
-
-#~ msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
-#~ msgstr "Você pode tentar clicar em \"Avançado\" e escolher \"Retomar Construção\"."
-
-#~ msgid "Table \"{}\" has already finished building. Rebuild table to start over."
-#~ msgstr ""
-#~ "A tabela \"{}\" já terminou de ser construída. Reconstrua a tabela para "
-#~ "começar novamente."
-
-#~ msgid ""
-#~ "Table \"{}\" did not finish building but resume information is not "
-#~ "available. Unfortunately, this means you need to rebuild the table."
-#~ msgstr ""
-#~ "A tabela \"{}\" não terminou de ser construída e as informações para retomar"
-#~ " não estão disponíveis. Infelizmente, isso significa que você precisa "
-#~ "reconstruir a tabela."
-
-#~ msgid "Resuming rebuilding table \"{}\"."
-#~ msgstr "Retomando a reconstrução da tabela \"{}\"."
-
-#~ msgid ""
-#~ "You tried to access a session for \"{}\" that was already completed. Please "
-#~ "start a new session."
-#~ msgstr ""
-#~ "Você tentou acessar uma sessão para \"{}\" que já foi concluída. Por favor, "
-#~ "inicie uma nova sessão."
-
-#~ msgid ""
-#~ "You tried to access a session for \"{}\" that is currently applying changes."
-#~ " Please wait for that task to complete, then start a new session."
-#~ msgstr ""
-#~ "Você tentou acessar uma sessão para \"{}\" que está aplicando alterações no "
-#~ "momento. Aguarde a conclusão dessa tarefa e, em seguida, inicie uma nova "
-#~ "sessão."
-
-#~ msgid "Data cleaning session was not found."
-#~ msgstr "Sessão de limpeza de dados não encontrada."
-
-#~ msgid "Starting Data Cleaning Session..."
-#~ msgstr "Iniciando Sessão de Limpeza de Dados..."
-
-#~ msgid "Changes applied. Check the Recent Tasks table for progress."
-#~ msgstr ""
-#~ "Alterações aplicadas. Verifique a tabela de Tarefas Recentes para acompanhar"
-#~ " o progresso."
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "      Please note that you have utilised 90%% of the user limit included in your plan.\n"
-#~ "      Your project currently has %(user_count)s mobile users out of %(plan_limit)s included in your plan.\n"
-#~ "      Your user limit represents all mobile users that are not currently deactivated\n"
-#~ "      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile users\n"
-#~ "      included in your plan, you will be charged as per the terms of plan.\n"
-#~ "    "
-#~ msgstr ""
-#~ "\n"
-#~ "      Atenção: você utilizou 90%% do limite de usuários incluído no seu plano.\n"
-#~ "      Seu projeto atualmente possui %(user_count)s usuários móveis de um total de %(plan_limit)s incluídos no seu plano.\n"
-#~ "      Seu limite de usuários representa todos os usuários móveis que não estão atualmente desativados\n"
-#~ "      (veja <a href=\"%(url)s\">aqui</a> para mais informações). Se você exceder o número de usuários móveis\n"
-#~ "      incluídos no seu plano, será cobrado conforme os termos do plano.\n"
-#~ "    "
-
-#~ msgid ", "
-#~ msgstr ", "
-
-#~ msgid "Workflow:"
-#~ msgstr "Fluxo de trabalho:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "Restrição de reconstrução necessária"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "Restrição de reconstrução não necessária"
-
-#~ msgid " and try again."
-#~ msgstr " e tente novamente."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "segundos antes de solicitar novamente."
-
-#~ msgid "...See more"
-#~ msgstr "...Ver mais"
-
-#~ msgid "...Collapse"
-#~ msgstr "...Recolher"
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "pacientes adicionados do feed Atom do OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr ""
-#~ "pacientes do OpenMRS, a menos que apenas um tipo de caso seja especificado."
-
-#~ msgid "Data cleaning action"
-#~ msgstr "Ação de limpeza de dados"
-
-#~ msgid "Preview Changes"
-#~ msgstr "Visualizar Alterações"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "        %(num_records)s records have been cleaned.\n"
-#~ "      "
-#~ msgstr ""
-#~ "\n"
-#~ "        %(num_records)s registros foram limpos.\n"
-#~ "      "
-
-#~ msgid "Clean Selected Cases"
-#~ msgstr "Limpar casos selecionados"
-
-#~ msgid ""
-#~ "Some records are selected in the session but not currently visible. They "
-#~ "will not be part of cleaning actions until all filters are removed."
-#~ msgstr ""
-#~ "Alguns registros estão selecionados na sessão, mas não estão visíveis no "
-#~ "momento. Eles não farão parte das ações de limpeza até que todos os filtros "
-#~ "sejam removidos."
-
-#~ msgid "Clean Case Type"
-#~ msgstr "Limpar Tipo de Caso"
+#~ msgstr "Google Authenticator"

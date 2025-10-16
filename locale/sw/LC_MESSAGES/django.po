@@ -1102,14 +1102,6 @@ msgstr[1] ""
 msgid "Payment Received - Thank You!"
 msgstr "Malipo Yamepokelewa - Asante!"
 
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr ""
-"Malipo ya Usajili kwa Ankara ya CommCare {context['invoice_number']} "
-"yalikataliwa"
-
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
 msgstr "Simamia Wasimamizi wa Uhasibu"
@@ -1128,6 +1120,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/manage_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/manage_case_groups.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/disable.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -1171,7 +1164,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/app_manager/templates/app_manager/partials/confirm_delete_app.html
@@ -1205,6 +1197,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/events/edit_attendee.html
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -1331,6 +1325,8 @@ msgid "Credits"
 msgstr "Mikopo"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "Malipo ya Moja kwa Moja"
 
@@ -3949,18 +3945,6 @@ msgid "Use a saved card"
 msgstr "Tumia kadi iliyohifadhiwa"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Actually remove this card?"
-msgstr "Kweli uondoe kadi hii?"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Yes, Remove"
-msgstr "Ndiyo, Ondoa"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Removing card..."
-msgstr "Inaondoa kadi..."
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a different card"
 msgstr "Tumia kadi tofauti"
 
@@ -3983,22 +3967,14 @@ msgid "Save card for later"
 msgstr "Hifadhi kadi kwa matumizi ya baadaye"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-msgid "Use this card to autopay"
-msgstr "Tumia kadi hii kulipia moja kwa moja"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid ""
-"\n"
-"            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            to process this transaction.\n"
-"          "
+" We use\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          to process this transaction. "
 msgstr ""
-"\n"
-"            Tunatumia <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-"            kushughulikia muamala huu.\n"
-"          "
+" Tunatumia\n"
+"          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"          kushughulikia muamala huu. "
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Using Stripe's TEST API."
@@ -4620,9 +4596,10 @@ msgstr "'role' inahitajika kwa kila mtumiaji"
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' imetolewa na wasifu hivyo haiwezi kuwekwa moja kwa moja"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "Kigezo batili: {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr ", "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -4661,6 +4638,11 @@ msgid "Populate workflow from HAR file"
 msgstr "Jaza mtiririko wa kazi kutoka faili ya HAR"
 
 #: corehq/apps/app_execution/forms.py
+#| msgid "Workflow"
+msgid "Workflow:"
+msgstr "Mtiririko wa Kazi:"
+
+#: corehq/apps/app_execution/forms.py
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 #: corehq/apps/case_search/templates/case_search/csql_expression_form.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
@@ -4672,6 +4654,7 @@ msgstr "Jaza mtiririko wa kazi kutoka faili ya HAR"
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -5231,6 +5214,10 @@ msgstr "Toleo la kujenga lililoombwa halijapatikana"
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
 msgstr "Tafadhali ingia kwenye programu ili kuangalia kama kuna masasisho."
+
+#: corehq/apps/app_manager/exceptions.py
+msgid "Form Actions Diff failed to be applied successfully"
+msgstr "Tofauti ya Vitendo vya Fomu imeshindwa kutekelezwa kikamilifu"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -6550,6 +6537,7 @@ msgstr "Hapana"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -9939,7 +9927,6 @@ msgstr "Pakia"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
@@ -11288,11 +11275,13 @@ msgstr "Puuza Wamiliki"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  Example: instance('commcaresession')/session/context/userid or\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 msgstr ""
 "\n"
-"                  Mfano: instance('commcaresession')/session/context/userid au 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
+"                  Mfano: instance('commcaresession')/session/context/userid au\n"
+"                  'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
@@ -11306,16 +11295,20 @@ msgstr "Pakia Kesi za Ziada kutoka kwenye Rekodi ya Data"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
-"                        The case type of the case must be configured in the registry and in the module via the module's\n"
-"                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
-"                        "
+"                    Load additional cases from the Data Registry into the\n"
+"                    'registry' instance for forms in this module. The case type\n"
+"                    of the case must be configured in the registry and in the\n"
+"                    module via the module's case type or the module's\n"
+"                    'Additional Case List and Case Search Types' configuration.\n"
+"                  "
 msgstr ""
 "\n"
-"                        Pakia kesi za ziada kutoka kwenye Rekodi ya Data kwenye mfano wa 'registry' kwa fomu katika moduli hii.\n"
-"                        Aina ya kesi lazima iwe imesanidiwa kwenye rekodi na kwenye moduli kupitia\n"
-"                        aina ya kesi ya moduli au usanidi wa moduli wa 'Orodha ya Kesi ya Ziada na Aina za Utafutaji wa Kesi'.\n"
-"                        "
+"                    Pakia kesi za ziada kutoka kwenye Rejista ya Data kwenye\n"
+"                    mfano wa 'registry' kwa fomu katika moduli hii. Aina ya kesi\n"
+"                    lazima iwe imesanidiwa kwenye rejista na kwenye moduli kupitia\n"
+"                    aina ya kesi ya moduli au usanidi wa moduli wa\n"
+"                    'Aina za Orodha ya Kesi za Ziada na Utafutaji wa Kesi'.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Case ID XPath"
@@ -11338,20 +11331,26 @@ msgstr "Sifa Maalum ya Kesi Inayohusiana"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"                               Enter in the name of a case property that contains the ID of another\n"
-"                               case you'd like included in the results instance.  This is to allow\n"
-"                               you to configure your case list display to show properties of that\n"
-"                               related case. Read more on the\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
-"                        "
+"                    Enter in the name of a case property that contains the ID of\n"
+"                    another case you'd like included in the results instance.\n"
+"                    This is to allow you to configure your case list display to\n"
+"                    show properties of that related case. Read more on the\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >Help Site</a\n"
+"                    >.\n"
+"                  "
 msgstr ""
 "\n"
-"                               Weka jina la sifa ya kesi inayobeba kitambulisho cha kesi nyingine\n"
-"                               unayotaka ijumuishwe kwenye matokeo. Hii inakuwezesha\n"
-"                               kusanidi onyesho la orodha ya kesi yako kuonyesha sifa za hiyo\n"
-"                               kesi inayohusiana. Soma zaidi kwenye\n"
-"                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Tovuti ya Msaada</a>.\n"
-"                        "
+"                    Weka jina la sifa ya kesi inayobeba kitambulisho cha\n"
+"                    kesi nyingine unayotaka ijumuishwe kwenye matokeo ya mfano.\n"
+"                    Hii ni kukuwezesha kusanidi onyesho la orodha ya kesi yako ili\n"
+"                    kuonyesha sifa za kesi hiyo inayohusiana. Soma zaidi kwenye\n"
+"                    <a\n"
+"                      href=\"https://confluence.dimagi.com/display/USH/Case+Search+Configuration\"\n"
+"                      >Tovuti ya Msaada</a\n"
+"                    >.\n"
+"                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Include all related cases in search results"
@@ -11364,11 +11363,14 @@ msgstr "Kufuta maneno ya utafutaji kunaanza upya matokeo ya utafutaji"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid ""
 "\n"
-"              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
+"              This is not a valid xpath expression. Check to make sure your\n"
+"              parentheses match and you are referencing case properties\n"
+"              correctly.\n"
 "            "
 msgstr ""
 "\n"
-"              Hii si usemi halali wa xpath. Hakikisha mabano yako yanalingana na unarejelea sifa za kesi ipasavyo.\n"
+"              Hii si usemi halali wa xpath. Hakikisha mabano yako yanalingana na\n"
+"              unarejelea sifa za kesi kwa usahihi.\n"
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -12579,16 +12581,18 @@ msgstr "Rudisha"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"      <p>\n"
-"        All add-ons are enabled for this app.\n"
-"      </p>\n"
-"    "
+"        All add-ons have been enabled for this app using the\n"
+"        \"Enable All Application Add-Ons\" project setting.\n"
+"      "
 msgstr ""
 "\n"
-"      <p>\n"
-"        Viongezeo vyote vimewezeshwa kwa programu hii.\n"
-"      </p>\n"
-"    "
+"        Viongezeo vyote vimewezeshwa kwa programu hii kwa kutumia\n"
+"        mpangilio wa mradi wa \"Wezesha Viongezeo Vyote vya Programu\".\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
+msgid "Enable All Add-Ons"
+msgstr "Wezesha Viongezeo Vyote"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
@@ -13013,12 +13017,18 @@ msgid "Not set"
 msgstr "Haijawekwa"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
-msgstr "Tafsiri ya U\\u200BI"
+#| msgid "U\\u200BI translation"
+msgid "U​I translation"
+msgstr ""
+"Tafsiri ya U"
+"I"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
-msgstr "Tafsiri za U\\u200BI"
+#| msgid "U\\u200BI translations"
+msgid "U​I translations"
+msgstr ""
+"Tafsiri za U"
+"I"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -13466,10 +13476,6 @@ msgstr "Toleo jipya zaidi kwa wasifu {} sasa ni {}"
 #: corehq/apps/app_manager/views/releases.py
 msgid "Latest release now available for profile {}"
 msgstr "Toleo jipya sasa linapatikana kwa wasifu {}"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "Imerejeshwa kwenye toleo {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Please enter either text body or xpath for custom icon"
@@ -13966,13 +13972,6 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Mfano: Seli katika safu {row_num} ina \"{sample}\""
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr ""
-"Uingizaji wa kesi unaweza kuwa na safu nyingi zaidi ya "
-"{MAX_CASE_IMPORTER_ROWS}. "
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr "Jina la Mmiliki Batili"
 
@@ -14109,23 +14108,8 @@ msgid "Name Too Long"
 msgstr "Jina Refu Kupita Kiasi"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Jina la kesi haliwezi kuwa na herufi zaidi ya {STANDARD_CHARFIELD_LENGTH}"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "Kitambulisho cha Nje Kirefu Kupita Kiasi"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Kitambulisho cha nje hakiwezi kuwa na herufi zaidi ya "
-"{STANDARD_CHARFIELD_LENGTH}"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -14724,10 +14708,6 @@ msgstr "Ombi la utafutaji lazima lionyeshe {param}"
 msgid "{param} must be a string"
 msgstr "{param} lazima iwe mfuatano wa herufi"
 
-#: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "Operator batili \"{criteria[\"operator\"]}\". Thamani zinazokubalika ni "
-
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
 msgid ""
@@ -14902,11 +14882,6 @@ msgid "Profile Case Search"
 msgstr "Utafutaji wa Kesi wa Wasifu"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} haiungwa mkono na ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -14925,51 +14900,6 @@ msgid ""
 msgstr ""
 "Upande wa kulia wa kulinganisha lazima uwe nambari au tarehe. Tarehe lazima "
 "ziwekwe kwenye alama za nukuu"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} si tarehe au muda uliowekwa kwa usahihi."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} si tarehe halali."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} si tarehe na muda halali."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr "Hoja ya pili kwa '{node.name}' lazima iwe kuratibu sahihi"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"Hoja ya tatu kwa '{node.name}' lazima iwe nambari, imepokelewa '{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' si kipimo halali cha umbali. Inatarajiwa mojawapo ya {', "
-"'.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' si tarehe halali. Inayotarajiwa 'YYYY-MM-DD"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr ""
-"Hoja ya kwanza kwa '{node.name}' lazima iwe jina halali la sifa ya kesi"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -15006,14 +14936,6 @@ msgstr "'{name}' inatarajia hoja moja au mbili"
 msgid "'{name}' error. Index identifier must be a string"
 msgstr ""
 "'{name}' kosa. Kitambulisho cha faharasa lazima kiwe mfuatano wa herufi"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"Kazi ya '{node.name}' inakubali hoja {expected} tu, imepokelewa {actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -16859,6 +16781,7 @@ msgstr "Kikao kimoja tu kinachoruhusiwa kwa kila aina ya kesi."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -17448,6 +17371,7 @@ msgstr "Iliyofunguliwa Na"
 
 #: corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -19916,6 +19840,29 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
+msgid "Application Add-Ons"
+msgstr "Viongezeo vya Programu"
+
+#: corehq/apps/domain/forms.py
+msgid "Enable All Application Add-Ons"
+msgstr "Wezesha Viongezeo Vyote vya Programu"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Enables all add-ons for all CommCare applications. To manage\n"
+"            add-ons on a per-application basis, this setting should be\n"
+"            disabled, and add-ons can be managed in the \"Add-Ons\" tab in\n"
+"            the application's settings.\n"
+"            "
+msgstr ""
+"\n"
+"            Inawezesha viongezeo vyote kwa programu zote za CommCare. Ili kudhibiti\n"
+"            viongezeo kwa kila programu, mpangilio huu unapaswa kuzimwa, na viongezeo vinaweza kudhibitiwa kwenye kichupo cha \"Viongezeo\" katika\n"
+"            mipangilio ya programu.\n"
+"            "
+
+#: corehq/apps/domain/forms.py
 msgid "Orphan Case Alerts"
 msgstr "Arifa za Kesi Yatima"
 
@@ -20233,11 +20180,6 @@ msgstr ""
 "Vikomo vya kanuni za masasisho ya kesi vinaweza kubadilishwa na wasimamizi "
 "wa Dimagi pekee. Tafadhali wasiliana na {support_email} ikiwa ungependa "
 "kusasisha mpangilio huu."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "Kielezi kisichojulikana {expr}"
 
 #: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
@@ -21445,20 +21387,6 @@ msgstr ""
 "      kwenye anwani yako ya barua pepe.\n"
 "    "
 
-#: corehq/apps/domain/templates/domain/bootstrap3/confirm_billing_info.html
-#: corehq/apps/domain/templates/domain/bootstrap5/confirm_billing_info.html
-#, python-format
-msgid ""
-"\n"
-"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
-"      Please update your billing information below before continuing.\n"
-"    "
-msgstr ""
-"\n"
-"      Unakaribia kujisajili kwenye <strong>Mpango wa Programu wa %(p)s</strong>.<br/>\n"
-"      Tafadhali sasisha taarifa zako za malipo hapa chini kabla ya kuendelea.\n"
-"    "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 msgid ""
@@ -21704,10 +21632,6 @@ msgstr " Jaribio la Siku"
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your %(pe)s Edition subscription was paused on %(date_paused)s. Please subscribe to a plan to gain access to your project again.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    Your %(pe)s Edition subscription was paused on\n"
@@ -21724,11 +21648,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    The %(trial_length)s Day Trial includes all the features present in the\n"
-#| "                    %(pn)s Software Plan, which is our full set of features.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    The %(trial_length)s Day Trial includes all the features\n"
@@ -21810,10 +21729,6 @@ msgstr "Tarehe ya Kuisha"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will automatically renew.\n"
@@ -21826,10 +21741,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    Your Subscription is Paused\n"
-#| "                  "
 msgid ""
 "\n"
 "                      Your subscription will end in %(days_left)s days.\n"
@@ -21841,7 +21752,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#| msgid "Send Now"
 msgid "Renew Now"
 msgstr "Sasisha Sasa"
 
@@ -21849,7 +21759,6 @@ msgstr "Sasisha Sasa"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Disable Auto Renewal"
 msgstr "Zima Upya Otomatiki"
 
@@ -21857,7 +21766,6 @@ msgstr "Zima Upya Otomatiki"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
-#| msgid "Enable auto renewal"
 msgid "Enable Auto Renewal"
 msgstr "Washa Upya Otomatiki"
 
@@ -21865,6 +21773,16 @@ msgstr "Washa Upya Otomatiki"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Current Price"
 msgstr "Bei ya Sasa"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "ENABLED"
+msgstr "IMEWEZESHWA"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+msgid "NOT SET"
+msgstr "HAIJASANIDIWA"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -22082,7 +22000,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
-#: corehq/apps/translations/forms.py
+#: corehq/apps/translations/forms.py corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "Ongeza"
 
@@ -22360,6 +22278,7 @@ msgstr "Kadi za Mkopo Zilizohifadhiwa"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add Card"
 msgstr "Ongeza Kadi"
 
@@ -22382,6 +22301,7 @@ msgstr "Futa Kadi"
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Processing your request"
 msgstr "Inachakata ombi lako"
 
@@ -22409,6 +22329,7 @@ msgstr "Ondoa Malipo ya Moja kwa Moja"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Set as autopay card"
 msgstr "Weka kama kadi ya malipo ya moja kwa moja"
 
@@ -22424,11 +22345,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#| msgid ""
-#| "\n"
-#| "          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
-#| "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-#| "        "
 msgid ""
 "\n"
 "          Actually remove\n"
@@ -22441,6 +22357,19 @@ msgstr ""
 "          <strong><span data-bind=\"text: brand\"></span></strong> kadi\n"
 "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
 "        "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
+"      Please update your billing information below before continuing.\n"
+"    "
+msgstr ""
+"\n"
+"      Unakaribia kujisajili kwenye <strong>Mpango wa Programu wa %(p)s</strong>.<br/>\n"
+"      Tafadhali sasisha taarifa zako za malipo hapa chini kabla ya kuendelea.\n"
+"    "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22883,11 +22812,12 @@ msgid "Add New Credit Card"
 msgstr "Ongeza Kadi Mpya ya Mkopo"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Use this card to autopay"
+msgstr "Tumia kadi hii kulipia moja kwa moja"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 msgid ""
 "\n"
 "                  We use\n"
@@ -23018,11 +22948,6 @@ msgid "Please agree to the Privacy Policy."
 msgstr "Tafadhali kubali Sera ya Faragha."
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#| msgid ""
-#| "\n"
-#| "                  We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                  to process this transaction.\n"
-#| "                "
 msgid ""
 "\n"
 "                We use\n"
@@ -23077,7 +23002,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#| msgid "Enable auto renewal"
 msgid "By disabling auto renewal:"
 msgstr "Kwa kuzima upya otomatiki:"
 
@@ -23106,10 +23030,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
-#| msgid ""
-#| "\n"
-#| "      You are renewing your <strong>%(p)s</strong> subscription.\n"
-#| "    "
 msgid ""
 "\n"
 "      Your subscription will <strong>not</strong> automatically renew.\n"
@@ -23175,10 +23095,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your subscription is currently paused.\n"
-#| "          "
 msgid ""
 "\n"
 "        Your subscription will renew at <b>%(price)s</b>.\n"
@@ -23190,15 +23106,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Learn more about our\n"
-#| "      <a\n"
-#| "        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
-#| "        target=\"_blank\"\n"
-#| "        >cloud environments</a\n"
-#| "      >.\n"
-#| "    "
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
@@ -23422,6 +23329,97 @@ msgstr "Hii haitanakili sehemu za mtumiaji."
 #: corehq/apps/domain/templates/domain/partials/how_to_start_with_import_app_feature.html
 msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "Hii haitanakili jedwali za lookup (pia zinajulikana kama fixtures)."
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Add New Payment Card"
+msgstr "Ongeza Kadi Mpya ya Malipo"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid ""
+"\n"
+"              We use\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              to process this transaction.\n"
+"            "
+msgstr ""
+"\n"
+"              Tunatumia\n"
+"              <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
+"              kushughulikia muamala huu.\n"
+"            "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Account Autopay Card"
+msgstr "Kadi ya Malipo ya Moja kwa Moja ya Akaunti"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid ""
+"\n"
+"        You don't have an autopay card set for your account.\n"
+"      "
+msgstr ""
+"\n"
+"        Huna kadi ya malipo ya moja kwa moja iliyowekwa kwenye akaunti yako.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Refreshing, please wait..."
+msgstr "Inafanywa upya, tafadhali subiri..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "My Saved Cards"
+msgstr "Kadi Zangu Zilizohifadhiwa"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Autopay Card"
+msgstr "Kadi ya Malipo ya Moja kwa Moja"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Autopay for Other Account"
+msgstr "Malipo ya Moja kwa Moja kwa Akaunti Nyingine"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Remove Card"
+msgstr "Ondoa Kadi"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid "Removing card..."
+msgstr "Inaondoa kadi..."
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#, python-format
+msgid ""
+"\n"
+"                        Actually remove <strong>%(brand)s</strong>\n"
+"                        card ************<strong>%(last4)s</strong>?\n"
+"                      "
+msgstr ""
+"\n"
+"                        Kweli uondoe kadi ya <strong>%(brand)s</strong>\n"
+"                        ************<strong>%(last4)s</strong>?\n"
+"                      "
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+msgid ""
+"\n"
+"        You do not have any saved cards associated with your user account.\n"
+"      "
+msgstr ""
+"\n"
+"        Huna kadi yoyote iliyohifadhiwa inayohusishwa na akaunti yako ya mtumiaji.\n"
+"      "
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+msgid "Billing Details"
+msgstr "Maelezo ya Bili"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+msgid "Payment Methods"
+msgstr "Njia za Malipo"
+
+#: corehq/apps/domain/templates/domain/update_billing_contact_info.html
+msgid "Loading payment methods, please wait..."
+msgstr "Inapakia njia za malipo, tafadhali subiri..."
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -24182,6 +24180,16 @@ msgstr ""
 msgid "Billing contact information was successfully updated."
 msgstr "Taarifa za mawasiliano ya malipo zimesasishwa kwa mafanikio."
 
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown removing card. Please contact Support."
+msgstr "Haijulikani kuondoa kadi. Tafadhali wasiliana na Msaada."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error setting autopay. Please contact Support."
+msgstr ""
+"Hitilafu isiyojulikana kuweka malipo ya moja kwa moja. Tafadhali wasiliana "
+"na Msaada."
+
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 msgid "statements per page"
 msgstr "taarifa kwa kila ukurasa"
@@ -24465,11 +24473,6 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "Chagua Mradi"
-
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "Umeongezwa kwenye nafasi ya mradi ya \"{invitation.domain}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -25540,11 +25543,6 @@ msgstr "Wachukua Mahudhurio"
 #: corehq/apps/events/forms.py
 msgid "Please choose at least one Attendance Taker"
 msgstr "Tafadhali chagua angalau Mchukua Mahudhurio mmoja"
-
-#: corehq/apps/events/forms.py
-#, python-brace-format
-msgid "{self.title_prefix} Attendance Tracking Event"
-msgstr "{self.title_prefix} Tukio la Ufuatiliaji wa Mahudhurio"
 
 #: corehq/apps/events/forms.py
 msgid "Invalid Start Date"
@@ -30522,8 +30520,18 @@ msgid "UCR rebuild restriction status"
 msgstr "Hali ya kizuizi cha ujenzi upya wa UCR"
 
 #: corehq/apps/hqadmin/reports.py
+#| msgid "No rebuild restriction required"
+msgid "Rebuild restriction required"
+msgstr "Kizuizi cha kujenga upya kinahitajika"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Ujenzi upya umepigwa marufuku"
+
+#: corehq/apps/hqadmin/reports.py
+#| msgid "No rebuild restriction required"
+msgid "Rebuild restriction not required"
+msgstr "Kizuizi cha kujenga upya hakihitajiki"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -31587,6 +31595,16 @@ msgstr "Tafadhali weka nywila."
 msgid "Please enter valid CAPTCHA"
 msgstr "Tafadhali weka CAPTCHA sahihi"
 
+#: corehq/apps/hqwebapp/forms.py
+msgid ""
+"Still having trouble?<div class='spacer'></div>Make sure you have selected "
+"the correct Cloud Location from the menu above. Your account and project may"
+" be in a different location."
+msgstr ""
+"Bado unapata shida?<div class='spacer'></div>Hakikisha umechagua Eneo Sahihi"
+" la Wingu kutoka kwenye menyu hapo juu. Akaunti na mradi wako vinaweza kuwa "
+"kwenye eneo tofauti."
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr "Umoja wa Ulaya"
@@ -31608,7 +31626,6 @@ msgid "US"
 msgstr "US"
 
 #: corehq/apps/hqwebapp/models.py
-#| msgid "Messaging"
 msgid "Staging"
 msgstr "Staging"
 
@@ -33538,6 +33555,14 @@ msgstr "Hali ya KYC"
 msgid "Show all"
 msgstr "Onyesha zote"
 
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
+#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
+#: corehq/apps/users/forms.py
+msgid "Phone number"
+msgstr "Nambari ya simu"
+
 #: corehq/apps/integration/kyc/forms.py
 msgid "Recipient Data Store"
 msgstr "Hifadhi ya Data ya Mpokeaji"
@@ -33563,6 +33588,18 @@ msgstr ""
 "Inalinganisha sehemu ya API ya mtoa huduma wa KYC na sehemu inayotumika "
 "kuhifadhi data husika. Ili kujifunza zaidi kuhusu hili, tafadhali angalia <a"
 " href=\"{}\" target=\"_blank\">nyaraka zetu za msaada</a>."
+
+#: corehq/apps/integration/kyc/forms.py
+msgid "Phone Number Field"
+msgstr "Sehemu ya Nambari ya Simu"
+
+#: corehq/apps/integration/kyc/forms.py
+msgid ""
+"The case property or user data field that contains the phone number. Leave "
+"blank if it’s not used for KYC verification."
+msgstr ""
+"Sifa ya kesi au sehemu ya data ya mtumiaji inayobeba nambari ya simu. Acha "
+"wazi ikiwa haitumiki kwa uthibitishaji wa KYC."
 
 #: corehq/apps/integration/kyc/models.py
 msgid "Custom User Data"
@@ -33658,17 +33695,14 @@ msgid "Request failed"
 msgstr "Ombi limefeli"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Success"
 msgid "Successful"
 msgstr "Imefanikiwa"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Identity Provider"
 msgid "Pending with Provider"
 msgstr "Inasubiri kwa Mtoa Huduma"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The deposit transaction failed."
 msgstr "Muamala wa amana umeshindikana."
 
@@ -33685,12 +33719,10 @@ msgid "The deposit transaction is still in progress."
 msgstr "Muamala wa amana bado unaendelea."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The recipient has been deactivated."
 msgid "The deposit transaction has been delayed."
 msgstr "Muamala wa amana umecheleweshwa."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The domain \"{domain}\" was not found."
 msgid "The deposit transaction was not found."
 msgstr "Muamala wa amana haukupatikana."
 
@@ -33715,7 +33747,6 @@ msgid "The currency specified for the deposit transaction is invalid."
 msgstr "Sarafu iliyobainishwa kwa muamala wa amana si sahihi."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An error occurred during the download."
 msgid "An internal processing error occurred during the deposit transaction."
 msgstr "Hitilafu ya ndani ya uchakataji imetokea wakati wa muamala wa amana."
 
@@ -33724,17 +33755,14 @@ msgid "The deposit transaction service is currently unavailable."
 msgstr "Huduma ya muamala wa amana haipatikani kwa sasa."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The following report configuration could not be found: {}"
 msgid "The deposit transaction could not be performed."
 msgstr "Muamala wa amana haukuweza kufanyika."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payee account could not be found."
 msgstr "Akaunti ya mpokeaji iliyobainishwa haikupatikana."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Linked Expression could not be found"
 msgid "The specified payer account could not be found."
 msgstr "Akaunti ya mlipaji iliyobainishwa haikupatikana."
 
@@ -33751,12 +33779,10 @@ msgid "The specified currency is invalid."
 msgstr "Sarafu iliyobainishwa si sahihi."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Domain Temporarily Unavailable"
 msgid "The service is temporarily unavailable."
 msgstr "Huduma haipatikani kwa muda."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "An unknown error occurred."
 msgid "An internal processing error occurred."
 msgstr "Hitilafu ya ndani ya uchakataji imetokea."
 
@@ -33765,7 +33791,6 @@ msgid "The payer account does not have enough funds."
 msgstr "Akaunti ya mlipaji haina fedha za kutosha."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The gateway can't reach the destination number."
 msgid "The payer has reached their transaction limit."
 msgstr "Mlipaji amefikia kikomo cha miamala yake."
 
@@ -33774,12 +33799,10 @@ msgid "The payee is not allowed to receive funds."
 msgstr "Mpokeaji haruhusiwi kupokea fedha."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The item's ID was not passed to the server."
 msgid "The payment was not approved by the payer."
 msgstr "Malipo hayajaidhinishwa na mlipaji."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "The case group was not found."
 msgid "The requested resource was not found."
 msgstr "Rasilimali iliyoombwa haikupatikana."
 
@@ -33788,17 +33811,14 @@ msgid "The transaction approval was rejected."
 msgstr "Uthibitisho wa muamala umekataliwa."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Your session has expired"
 msgid "The transaction has expired."
 msgstr "Muamala umeisha muda wake."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "The transaction was canceled."
 msgstr "Muamala umefutwa."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Keyword already exists."
 msgid "The resource already exists."
 msgstr "Rasilimali tayari ipo."
 
@@ -33807,19 +33827,14 @@ msgid "Transaction ID is missing in the record"
 msgstr "Kitambulisho cha muamala hakipo kwenye rekodi"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "No transaction found"
 msgid "Payment transaction not found"
 msgstr "Muamala wa malipo haukupatikana"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Unexpected error"
 msgid "Unexpected error occurred"
 msgstr "Hitilafu isiyotarajiwa imetokea"
 
 #: corehq/apps/integration/payments/const.py
-#| msgid ""
-#| "Network error occurred. Please try again, or reach out to support if the "
-#| "issue persists."
 msgid ""
 "Error occurred during payment request. Reach out to support if the issue "
 "persists."
@@ -33828,13 +33843,11 @@ msgstr ""
 " litaendelea."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with request error."
 msgstr ""
 "Idadi ya juu ya majaribio ya kurudia imezidi na kuna hitilafu ya ombi."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with pending status"
 msgstr "Idadi ya juu ya majaribio ya kurudia imezidi na hali bado inasubiri"
 
@@ -33860,13 +33873,6 @@ msgstr "Shughuli"
 #: corehq/apps/integration/payments/tables.py
 msgid "Funder"
 msgstr "Mfadhili"
-
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
-#: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
-#: corehq/apps/users/forms.py
-msgid "Phone number"
-msgstr "Nambari ya simu"
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
@@ -33896,18 +33902,14 @@ msgid "Payment request failed"
 msgstr "Ombi la malipo limekosa kufanikiwa"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Phone Verification"
 msgid "Verification"
 msgstr "Uthibitishaji"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "format must be one of the following: {}"
 msgid "Payment status must be one of the following:"
 msgstr "Hali ya malipo lazima iwe mojawapo ya zifuatazo:"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Only payments in '{}' or '{}' state are eligible for verification."
 msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 "Ni malipo tu yenye '{}' imewekwa kuwa 'true' ndiyo yanayostahili "
@@ -33926,7 +33928,6 @@ msgid "Payment has already been requested"
 msgstr "Malipo tayari yameombwa"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Verification Status"
 msgid "Verification reversal"
 msgstr "Ugeuzaji wa uthibitishaji"
 
@@ -33935,8 +33936,6 @@ msgid "Failed to fetch payment status with code: {}"
 msgstr "Imeshindwa kupata hali ya malipo kwa msimbo: {}"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Error fetching multimedia from remote server. Please try again later."
 msgid ""
 "Failed to fetch payment status. Unable to connect to server. Please try "
 "again later."
@@ -35259,12 +35258,9 @@ msgstr ""
 "faharasa '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"Haiwezi kufuta aina ya eneo '{deleted_type.code}'. Inarejelewa na aina "
+#| msgid "Please try again."
+msgid " and try again."
+msgstr " na jaribu tena."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -35418,17 +35414,8 @@ msgstr ""
 "katika mradi huu. Maelezo zaidi yanapatikana <a href=\"{}\">hapa</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "Nambari ya tovuti ya eneo: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "Imeshindikana kusasisha: haikuweza kupata eneo lenye"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr "Sehemu batili zimejumuishwa kwenye ombi: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -37650,9 +37637,8 @@ msgstr ""
 "dakika chache. Ikiwa tatizo litaendelea, tafadhali wasiliana na msaada."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "Tafadhali subiri angalau sekunde {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "sekunde kabla ya kuomba tena."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -39592,6 +39578,15 @@ msgstr ""
 #: corehq/apps/reports/standard/deployments.py
 msgid "The build profile from the user's last hearbeat request."
 msgstr "Profaili ya ujenzi kutoka ombi la mwisho la heartbeat la mtumiaji."
+
+#: corehq/apps/reports/standard/deployments.py
+#| msgid "see more"
+msgid "...See more"
+msgstr "...Ona zaidi"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...Fupisha"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -41927,13 +41922,6 @@ msgstr ""
 "Haiwezi kuhifadhi kwenye kumbukumbu nyaraka za aina %s. Umefikaje hapa??"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr ""
-"Haiwezi kufuta fomu {instance_id} kwa sababu haijahifadhiwa kwenye "
-"kumbukumbu."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (kesi hii)"
 
@@ -42498,11 +42486,6 @@ msgstr "Nakili hii mahali salama. Haitaonyeshwa tena."
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Anwani Zote za IP"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr ""
-"Ufunguo wa Api wenye jina \"{create_form.cleaned_data['name']}\" tayari upo."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -45573,11 +45556,6 @@ msgid "today!"
 msgstr "leo!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "mnamo {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -45585,11 +45563,6 @@ msgid ""
 msgstr ""
 "Arifa ya CommCare: Cheti cha Mtoa Utambulisho %(idp_name)s kitakwisha muda "
 "wake %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "Akaunti za Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -46992,15 +46965,6 @@ msgid "Missing translations for {} in uploaded sheet"
 msgstr "Tafsiri zinazokosekana kwa {} kwenye karatasi iliyopakiwa"
 
 #: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"Haikuweza kupata moduli au fomu yenye ID '{module_or_form_id}' kwenye "
-"programu '{self.app.name}'"
-
-#: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
 msgstr "Haikuweza kupata safu wima '{}'"
 
@@ -47099,11 +47063,6 @@ msgid ""
 msgstr ""
 "Barua pepe imerudishwa kwa mwaliko wa mtumiaji huyu: {}. Tafadhali jaribu "
 "tena kwa jina la mtumiaji tofauti"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "Domeni haiwezi kuwekwa kuwa '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -47398,16 +47357,6 @@ msgstr "Jenga upya"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Ondoa"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression hairuhusiwi kwa domeni {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} hairuhusiwi kwa domain {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -49231,21 +49180,8 @@ msgid "UCR Expressions"
 msgstr "Ufafanuzi wa UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr ""
-"Ufafanuzi wa UCR wenye jina \"{create_form.cleaned_data['name']}\" tayari "
-"upo."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Hariri Ufafanuzi wa UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "Thibitisha akaunti yako ya CommCare kwa {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -52449,13 +52385,9 @@ msgid "is_active"
 msgstr "ni_aktif"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr ""
-"Umefanikiwa kuthibitisha akaunti ya {user.raw_username}. Sasa unaweza "
-"kuingia"
+#| msgid "You can now log into the mobile app."
+msgid "You can now login"
+msgstr "Sasa unaweza kuingia"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -55283,24 +55215,25 @@ msgstr ""
 "robo kwa muundo yyyyQn (mf. \"2004Q1\" kwa Januari-Machi 2004), au weka safu"
 " halali."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">Ongeza/Hariri Mipangilio ya Muunganisho</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Ripoti Inayoweza Kusanidiwa na Mtumiaji"
 
 #: corehq/motech/dhis2/forms.py
+#| msgid ""
+#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
+#| "href=\"https://github.com/dimagi/commcare-"
+#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
 "Ramani za DataSet zinaunganisha UCR za CommCare na DataSet za DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
 "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"target=\"_new\">Maelezo zaidi</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -55778,12 +55711,9 @@ msgid "There is an error in your data API validations"
 msgstr "Kuna hitilafu kwenye uthibitishaji wa data ya API yako"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr ""
-"Imeshindikana kutatua viambatisho vya API {self.api_auth_settings!r}. "
-"Tafadhali chagua mipangilio sahihi ya uthibitisho wa API kwa "
+#| msgid "Please select the applicable day(s) of the week."
+msgid "Please select the applicable API auth settings for the "
+msgstr "Tafadhali chagua mipangilio inayofaa ya uthibitishaji wa API kwa "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -55818,50 +55748,19 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "Kuna hitilafu ya sintaksia ya XML kwenye Atom feed ya OpenMRS katika "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
-msgstr ""
-"Hakuna watumiaji waliopatikana katika eneo \"{repeater.location_id}\" "
-"kumiliki wagonjwa waliowekwa kutoka OpenMRS Atom feed."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "wagonjwa wameongezwa kutoka kwenye OpenMRS Atom feed."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr ""
-"{repeater.domain}: {repeater}: Hitilafu kwenye mipangilio: Imeshindikana "
-"kusasisha "
+msgid "patients from OpenMRS unless only one case type is specified."
+msgstr "wagonjwa kutoka OpenMRS isipokuwa aina moja tu ya kesi imeainishwa."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Mgonjwa "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: Kesi zaidi ya moja imepatikana "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Tukio "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain}: {repeater}: Kesi zaidi ya moja imepatikana inayolingana "
-"na OpenMRS UUID ya kipekee. case external_id: "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr ""
-"Imeshindikana kubaini mfanyakazi wa simu wa kumiliki \"{case_type}\" mpya "
+#| msgid ""
+#| "{repeater.domain}: {repeater}: More than one case found matching unique "
+#| "OpenMRS UUID. case external_id: "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "UUID ya kipekee ya OpenMRS inayolingana. case external_id: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -56948,6 +56847,10 @@ msgid "App Dependencies"
 msgstr "Mategemeo ya Programu"
 
 #: corehq/privileges.py
+msgid "Show \"Enable All Add-Ons\" button"
+msgstr "Onyesha kitufe cha \"Washa Viongezeo Vyote\""
+
+#: corehq/privileges.py
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "Uundaji wa Akaunti ya Mfanyakazi wa Simu kwa Hatua Mbili"
 
@@ -58001,728 +57904,217 @@ msgstr "Safu zinazohitajika ni {column_names}"
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
 
-#~ msgid "Something went wrong"
-#~ msgstr "Kuna tatizo limetokea"
-
 #~ msgid ""
-#~ "Only payments in the '{}' state are eligible for verification reversal."
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
 #~ msgstr ""
-#~ "Malipo tu yaliyo katika hali ya '{}' ndiyo yanayostahili kubatilishwa "
-#~ "uthibitisho wake."
+#~ "Malipo ya Usajili kwa Ankara ya CommCare {context['invoice_number']} "
+#~ "yalikataliwa"
 
-#~ msgid ""
-#~ "\n"
-#~ "    Email From:<br />\n"
-#~ "    CommCare and the corporation Dimagi, Inc.<br />\n"
-#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#~ "  "
-#~ msgstr ""
-#~ "\n"
-#~ "    Barua Pepe Kutoka:<br />\n"
-#~ "    CommCare na kampuni ya Dimagi, Inc.<br />\n"
-#~ "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
-#~ "  "
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "Kigezo batili: {', '.join(invalid_params)}"
 
-#~ msgid ""
-#~ "\n"
-#~ "              To use display conditions which reference a user property, user properties must be\n"
-#~ "              enabled for your project.\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Ili kutumia masharti ya kuonyesha yanayorejelea sifa ya mtumiaji, sifa za watumiaji lazima ziwezeshwe kwenye mradi wako.\n"
-#~ "            "
-
-#~ msgid "Enable user properties"
-#~ msgstr "Wezesha sifa za watumiaji"
-
-#, python-format
-#~ msgid ""
-#~ "You do not have permission to change the subscription for this customer-"
-#~ "level account. Please reach out to the %s enterprise admin for help."
-#~ msgstr ""
-#~ "Huna ruhusa ya kubadilisha usajili wa akaunti hii ya kiwango cha mteja. "
-#~ "Tafadhali wasiliana na msimamizi wa biashara wa %s kwa msaada."
-
-#~ msgid "Invalid Payload"
-#~ msgstr "Payload Batili"
-
-#~ msgid "Invalid payload"
-#~ msgstr "Mzigo batili"
-
-#~ msgid ""
-#~ "\n"
-#~ "                    Delete\n"
-#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-#~ "                    Case Type\n"
-#~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "                    Futa\n"
-#~ "                    '<span data-bind=\"text: $root.activeCaseType()\"></span>'\n"
-#~ "                    Aina ya Kesi\n"
-#~ "                    "
-
-#~ msgid "There is already a user with this email."
-#~ msgstr "Tayari kuna mtumiaji mwenye barua pepe hii."
-
-#~ msgid "Click to select groups"
-#~ msgstr "Bofya kuchagua vikundi"
-
-#~ msgid "# Active Users"
-#~ msgstr "# Watumiaji Hai"
-
-#~ msgid "Proportion of users in group who submitted forms in date range."
-#~ msgstr ""
-#~ "Uwiano wa watumiaji katika kikundi waliowasilisha fomu katika kipindi cha "
-#~ "tarehe."
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "    %(inviter)s has invited you to join the %(domain)s project at CommCare HQ.\n"
-#~ "    This invitation expires in %(days)s day(s).\n"
-#~ msgstr ""
-#~ "\n"
-#~ "    %(inviter)s amekualika kujiunga na mradi wa %(domain)s kwenye CommCare HQ.\n"
-#~ "    Mwaliko huu unaisha baada ya siku %(days)s.\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-Timu ya CommCare HQ"
-
-#~ msgid "Thank you for using CommCare HQ."
-#~ msgstr "Asante kwa kutumia CommCare HQ."
-
-#~ msgid "Step {} of {}"
-#~ msgstr "Hatua {} ya {}"
-
-#~ msgid "Server Location"
-#~ msgstr "Mahali pa Seva"
-
-#~ msgid "Revert Verification"
-#~ msgstr "Rudisha Uthibitisho"
-
-#~ msgid ""
-#~ "Important: This will be used to create a project URL, and you will not be "
-#~ "able to change it in the future."
-#~ msgstr ""
-#~ "Muhimu: Hii itatumika kuunda URL ya mradi, na hutoweza kubadilisha baadaye."
-
-#~ msgid ""
-#~ "\n"
-#~ "              Create a project space below as a separate sandbox for new\n"
-#~ "              applications, users, and form submissions.\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Unda nafasi ya mradi hapa chini kama sehemu tofauti ya majaribio kwa\n"
-#~ "              programu mpya, watumiaji, na uwasilishaji wa fomu.\n"
-#~ "            "
-
-#~ msgid ""
-#~ "\n"
-#~ "            Your project space contains all form submissions from your CommCare\n"
-#~ "            mobile applications and tools to help you easily create, deploy, and monitor\n"
-#~ "            your applications and workers.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Nafasi yako ya mradi inajumuisha mawasilisho yote ya fomu kutoka kwa programu zako za simu za CommCare\n"
-#~ "            na zana za kukusaidia kuunda, kuweka, na kufuatilia\n"
-#~ "            programu na wafanyakazi wako kwa urahisi.\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "                <strong>Please note:</strong> This project space will not immediately become a part of existing subscriptions.\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "                <strong>Tafadhali kumbuka:</strong> Nafasi hii ya mradi haitakuwa sehemu ya usajili uliopo mara moja.\n"
-#~ "              "
-
-#~ msgid ""
-#~ "\n"
-#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Learn more about CommCare Enterprise</a>\n"
-#~ "                if you would like to link project spaces together under one account.\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "                <a href=\"https://dimagi.com/commcare/enterprise/\" target=\"_blank\">Jifunze zaidi kuhusu CommCare Enterprise</a>\n"
-#~ "                ikiwa ungependa kuunganisha nafasi za miradi chini ya akaunti moja.\n"
-#~ "              "
-
-#~ msgid "Estimated annual expenditures on airtime:"
-#~ msgstr "Makadirio ya matumizi ya kila mwaka kwenye muda wa maongezi:"
-
-#~ msgid "Estimated annual expenditures on devices:"
-#~ msgstr "Makadirio ya matumizi ya kila mwaka kwenye vifaa:"
-
-#~ msgid ""
-#~ "We grant pro-bono subscriptions to match the duration of your project, up to"
-#~ " a maximum of 12 months at a time (at which point you need to reapply)."
-#~ msgstr ""
-#~ "Tunatoa usajili wa bure kulingana na muda wa mradi wako, hadi miezi 12 kwa "
-#~ "wakati mmoja (baada ya hapo utahitaji kuomba tena)."
-
-#~ msgid ""
-#~ "If you have already been in touch with someone from Dimagi, please list "
-#~ "their name."
-#~ msgstr ""
-#~ "Ikiwa tayari umezungumza na mtu kutoka Dimagi, tafadhali orodhesha jina lao."
-
-#~ msgid "Number of expected users"
-#~ msgstr "Idadi ya watumiaji unaotarajia"
-
-#~ msgid "Pro-Bono Application"
-#~ msgstr "Maombi ya Pro-Bono"
-
-#~ msgid "Submit Pro-Bono Application"
-#~ msgstr "Tuma Maombi ya Pro-Bono"
-
-#~ msgid ""
-#~ "Thank you for your submission.  A representative will be in contact with you"
-#~ " shortly."
-#~ msgstr ""
-#~ "Asante kwa mawasilisho yako. Mwakilishi atawasiliana nawe hivi karibuni."
-
-#~ msgid "Printing"
-#~ msgstr "Uchapishaji"
-
-#~ msgid "Document Template"
-#~ msgstr "Kiolezo cha Hati"
-
-#~ msgid "Opens file in new tab."
-#~ msgstr "Fungua faili kwenye tab mpya."
-
-#~ msgid "Open HTML"
-#~ msgstr "Fungua HTML"
-
-#~ msgid "Upload HTML"
-#~ msgstr "Pakia HTML"
-
-#~ msgid "Replace HTML"
-#~ msgstr "Badilisha HTML"
-
-#~ msgid "Printing the case detail is not supported on this version of CommCare"
-#~ msgstr ""
-#~ "Uchapishaji wa maelezo ya kesi hauungwa mkono kwenye toleo hili la CommCare"
-
-#~ msgid "Print template"
-#~ msgstr "Kiolezo cha kuchapisha"
-
-#~ msgid "text"
-#~ msgstr "maandishi"
-
-#~ msgid "New Template Uploaded Successfully"
-#~ msgstr "Kigezo Kipya Kimefanikiwa Kupakiwa"
-
-#~ msgid "Cookies Required for CSRF"
-#~ msgstr "Vidakuzi Vinahitajika kwa CSRF"
-
-#~ msgid "Cookies must be enabled to use CommCare"
-#~ msgstr "Lazima kuwezesha vidakuzi ili kutumia CommCare"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "    <p>\n"
-#~ "      Please try refreshing your browser or clicking the blue \"flower\" icon in the top left hand corner.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      If you believe you received this error as a mistake, please contact <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-#~ "    </p>\n"
-#~ "  "
-#~ msgstr ""
-#~ "\n"
-#~ "    <p>\n"
-#~ "      Tafadhali jaribu kuburudisha kivinjari chako au bonyeza ikoni ya \"ua la buluu\" kwenye kona ya juu kushoto.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      Haijafanikiwa? Tafadhali futa akiba ya kivinjari chako, funga kivinjari, na ufungue tena kivinjari chako.\n"
-#~ "    </p>\n"
-#~ "    <p>\n"
-#~ "      Ikiwa unaamini umepokea hitilafu hii kimakosa, tafadhali wasiliana na <a href=\"mailto:%(SUPPORT_EMAIL)s\">%(SUPPORT_EMAIL)s</a>.\n"
-#~ "    </p>\n"
-#~ "  "
-
-#~ msgid "Explore Case Data (Preview)"
-#~ msgstr "Chunguza Data ya Kesi (Hakikisho)"
-
-#~ msgid ""
-#~ "\n"
-#~ "      This feature allows you to quickly explore your case data for ad-hoc data\n"
-#~ "      queries or to identify unclean data.<br />\n"
-#~ "      This is an Add-On.\n"
-#~ "    "
-#~ msgstr ""
-#~ "\n"
-#~ "      Kipengele hiki kinakuruhusu kuchunguza haraka data ya kesi zako kwa maswali ya data ya papo hapo\n"
-#~ "      au kutambua data isiyo safi.<br />\n"
-#~ "      Hii ni Ongezeko.\n"
-#~ "    "
-
-#~ msgid ""
-#~ "\n"
-#~ "              Preparing your case data for exploration...\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Inaandaa data ya kesi yako kwa uchunguzi...\n"
-#~ "            "
-
-#~ msgid "Save Filters"
-#~ msgstr "Hifadhi Vichujio"
-
-#~ msgid ""
-#~ "\n"
-#~ "          Loading...\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "          Inapakia...\n"
-#~ "        "
-
-#~ msgid ""
-#~ "\n"
-#~ "          Our system is experiencing an unusually large load on resources at the moment,\n"
-#~ "          so data is not being received in a timely fashion. We are working on the problem, but\n"
-#~ "          if you continue to experience this issue, please contact support.\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "          Mfumo wetu unakabiliwa na mzigo mkubwa wa rasilimali kwa sasa,\n"
-#~ "          hivyo data haipokelewi kwa wakati. Tunashughulikia tatizo hili, lakini\n"
-#~ "          kama utaendelea kukutana na tatizo hili, tafadhali wasiliana na msaada.\n"
-#~ "        "
-
-#~ msgid ""
-#~ "\n"
-#~ "          There was an issue fetching cases with these filters.\n"
-#~ "          Please check your filters and try again.\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "          Kulikuwa na tatizo katika kupata kesi kwa vichujio hivi.\n"
-#~ "          Tafadhali angalia vichujio vyako na jaribu tena.\n"
-#~ "        "
-
-#~ msgid "Edit Column"
-#~ msgstr "Hariri Safu"
-
-#~ msgid "Filter Data in Column"
-#~ msgstr "Chuja Data kwenye Safu"
-
-#~ msgid ""
-#~ "\n"
-#~ "                      Treat this property as\n"
-#~ "                      <select class=\"form-control filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      and match\n"
-#~ "                      <select data-bind=\"value: $parent.clause,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          all of the\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          any of the\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      following conditions:\n"
-#~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "                      Chukulia sifa hii kama\n"
-#~ "                      <select class=\"form-control filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      na linganisha\n"
-#~ "                      <select data-bind=\"value: $parent.clause,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          zote kati ya\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          yoyote kati ya\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      masharti yafuatayo:\n"
-#~ "                    "
-
-#~ msgid ""
-#~ "\n"
-#~ "              This task is currently not supported, but we are happy to\n"
-#~ "              learn about your interest.\n"
-#~ "            "
-#~ msgstr ""
-#~ "\n"
-#~ "              Kazi hii kwa sasa haiungwi mkono, lakini tunafurahi\n"
-#~ "              kujifunza kuhusu nia yako.\n"
-#~ "            "
-
-#~ msgid ""
-#~ "\n"
-#~ "                      Treat this property as\n"
-#~ "                      <select class=\"form-select filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      and match\n"
-#~ "                      <select data-bind=\"value: $parent.clause,  \n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          all of the\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          any of the\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      following conditions:\n"
-#~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "                      Chukulia sifa hii kama\n"
-#~ "                      <select class=\"form-select filter-type\"\n"
-#~ "                              data-bind=\"options: $root.editColumnController.availableFilterNames,\n"
-#~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root.editColumnController.filterTitleByName[val];\n"
-#~ "                                         },\n"
-#~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root.editColumnController.updateFilterName }\"></select>\n"
-#~ "                      na linganisha\n"
-#~ "                      <select data-bind=\"value: $parent.clause,  \n"
-#~ "                                         event: { change: $root.editColumnController.updateFilter }\"\n"
-#~ "                              class=\"form-control filter-clause\">\n"
-#~ "                        <option value=\"all\">\n"
-#~ "                          zote kati ya\n"
-#~ "                        </option>\n"
-#~ "                        <option value=\"any\">\n"
-#~ "                          yoyote kati ya\n"
-#~ "                        </option>\n"
-#~ "                      </select>\n"
-#~ "                      masharti yafuatayo:\n"
-#~ "                    "
-
-#~ msgid "Explore Case Data"
-#~ msgstr "Chunguza Data za Kesi"
-
-#~ msgid "CommCare HQ looks better on desktop!"
-#~ msgstr "CommCare HQ inaonekana vizuri zaidi kwenye kompyuta ya mezani!"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "            Hi%(\" \" + full_name)s, it looks like you’re on a mobile device.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Hi%(\" \" + full_name)s, inaonekana uko kwenye kifaa cha mkononi.\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "            CommCare HQ is optimized for desktop or laptop browsers.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            CommCare HQ imeboreshwa kwa vivinjari vya kompyuta ya mezani au laptop.\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "            Send yourself an email with a login link to use when you’re back on a full-size browser:\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Jitumia barua pepe yenye kiungo cha kuingia utakapokuwa kwenye kivinjari cha ukubwa kamili:\n"
-#~ "          "
-
-#~ msgid "Email Link"
-#~ msgstr "Kiungo cha Barua Pepe"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Reminder sent!\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Ukumbusho umetumwa!\n"
-#~ "          "
-
-#~ msgid ""
-#~ "\n"
-#~ "            Check out this video to get an introduction to CommCare HQ.\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "            Tazama video hii ili kupata utangulizi wa CommCare HQ.\n"
-#~ "          "
-
-#~ msgid "Requested"
-#~ msgstr "Iliyoombwa"
-
-#~ msgid "Unverified"
-#~ msgstr "Haijathibitishwa"
-
-#~ msgid "info"
-#~ msgstr "taarifa"
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "Imerejeshwa kwenye toleo {log.info['version']}"
 
 #, python-brace-format
-#~ msgid "{num} cases"
-#~ msgstr "{num} kesi"
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr ""
+#~ "Uingizaji wa kesi unaweza kuwa na safu nyingi zaidi ya "
+#~ "{MAX_CASE_IMPORTER_ROWS}. "
 
-#~ msgid "Text equals"
-#~ msgstr "Maandishi yanalingana"
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Jina la kesi haliwezi kuwa na herufi zaidi ya {STANDARD_CHARFIELD_LENGTH}"
 
-#~ msgid "Text does not equal"
-#~ msgstr "Maandishi hayalingani"
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Kitambulisho cha nje hakiwezi kuwa na herufi zaidi ya "
+#~ "{STANDARD_CHARFIELD_LENGTH}"
 
-#~ msgid "a Number"
-#~ msgstr "Nambari"
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "Operator batili \"{criteria[\"operator\"]}\". Thamani zinazokubalika ni "
 
-#~ msgid "Number is equal to"
-#~ msgstr "Nambari ni sawa na"
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} haiungwa mkono na ancestor-exists"
 
-#~ msgid "Number is less than"
-#~ msgstr "Nambari ni chini ya"
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} si tarehe au muda uliowekwa kwa usahihi."
 
-#~ msgid "Number is greater than"
-#~ msgstr "Nambari ni kubwa kuliko"
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} si tarehe halali."
 
-#~ msgid "Number is not equal to"
-#~ msgstr "Nambari si sawa na"
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} si tarehe na muda halali."
 
-#~ msgid "a Date"
-#~ msgstr "Tarehe"
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr "Hoja ya pili kwa '{node.name}' lazima iwe kuratibu sahihi"
 
-#~ msgid "Date is"
-#~ msgstr "Tarehe ni"
-
-#~ msgid "Date is before"
-#~ msgstr "Tarehe iko kabla"
-
-#~ msgid "Date is after"
-#~ msgstr "Tarehe iko baada"
-
-#~ msgid "The report endpoint for {}/{} cannot be found."
-#~ msgstr "Sehemu ya ripoti ya {}/{} haikupatikana."
-
-#~ msgid "Could not find the report filter '{}'"
-#~ msgstr "Haikuweza kupata kichujio cha ripoti '{}'"
-
-#~ msgid "Project Data"
-#~ msgstr "Taarifa za Mradi"
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "Hoja ya tatu kwa '{node.name}' lazima iwe nambari, imepokelewa '{distance}'"
 
 #~ msgid ""
-#~ "Setting a password is disabled. The user will set their own password on "
-#~ "confirming their account email."
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
 #~ msgstr ""
-#~ "Kuweka nenosiri kumezimwa. Mtumiaji ataweka nenosiri lake mwenyewe baada ya "
-#~ "kuthibitisha barua pepe ya akaunti yao."
+#~ "'{unit}' si kipimo halali cha umbali. Inatarajiwa mojawapo ya {', "
+#~ "'.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' si tarehe halali. Inayotarajiwa 'YYYY-MM-DD"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr ""
+#~ "Hoja ya kwanza kwa '{node.name}' lazima iwe jina halali la sifa ya kesi"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "Kazi ya '{node.name}' inakubali hoja {expected} tu, imepokelewa {actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "Kielezi kisichojulikana {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "Umeongezwa kwenye nafasi ya mradi ya \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid "{self.title_prefix} Attendance Tracking Event"
+#~ msgstr "{self.title_prefix} Tukio la Ufuatiliaji wa Mahudhurio"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "Haiwezi kufuta aina ya eneo '{deleted_type.code}'. Inarejelewa na aina "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "Nambari ya tovuti ya eneo: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr "Sehemu batili zimejumuishwa kwenye ombi: {list(data.keys())}."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "Tafadhali subiri angalau sekunde {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr ""
+#~ "Haiwezi kufuta fomu {instance_id} kwa sababu haijahifadhiwa kwenye "
+#~ "kumbukumbu."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr ""
+#~ "Ufunguo wa Api wenye jina \"{create_form.cleaned_data['name']}\" tayari upo."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "mnamo {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "Akaunti za Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "Haikuweza kupata moduli au fomu yenye ID '{module_or_form_id}' kwenye "
+#~ "programu '{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "Domeni haiwezi kuwekwa kuwa '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression hairuhusiwi kwa domeni {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} hairuhusiwi kwa domain {self.domain}"
 
 #~ msgid ""
-#~ "Setting a password is disabled. The user will set their own password on "
-#~ "confirming their account phone number."
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
 #~ msgstr ""
-#~ "Kuweka nenosiri kumezimwa. Mtumiaji ataweka nenosiri lake mwenyewe baada ya "
-#~ "kuthibitisha nambari ya simu ya akaunti yao."
+#~ "Ufafanuzi wa UCR wenye jina \"{create_form.cleaned_data['name']}\" tayari "
+#~ "upo."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "Thibitisha akaunti yako ya CommCare kwa {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr ""
+#~ "Umefanikiwa kuthibitisha akaunti ya {user.raw_username}. Sasa unaweza "
+#~ "kuingia"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">Ongeza/Hariri Mipangilio ya Muunganisho</a>"
 
 #~ msgid ""
-#~ "This feature allows you to quickly explore your case data for ad-hoc data "
-#~ "queries or to identify unclean data."
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
 #~ msgstr ""
-#~ "Kipengele hiki kinakuruhusu kuchunguza haraka data yako ya kesi kwa maswali "
-#~ "ya data ya papo hapo au kubaini data isiyo safi."
+#~ "Imeshindikana kutatua viambatisho vya API {self.api_auth_settings!r}. "
+#~ "Tafadhali chagua mipangilio sahihi ya uthibitisho wa API kwa "
 
-#~ msgid "No, take me back."
-#~ msgstr "Hapana, nirudishe nyuma."
-
-#~ msgid "Yes, import application"
-#~ msgstr "Ndiyo, ingiza programu"
-
-#~ msgid "You must submit a name for the application you are importing."
-#~ msgstr "Lazima uwasilishe jina la programu unayoingiza."
-
-#~ msgid "You must upload the app source file."
-#~ msgstr "Lazima upakie faili ya chanzo cha programu."
-
+#, python-brace-format
 #~ msgid ""
-#~ "The page you requested is currently unavailable due to a\n"
-#~ "    data migration. Please check back later."
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
 #~ msgstr ""
-#~ "Ukurasa uliouomba kwa sasa haupatikani kutokana na\n"
-#~ "    uhamishaji wa data. Tafadhali jaribu tena baadaye."
+#~ "Hakuna watumiaji waliopatikana katika eneo \"{repeater.location_id}\" "
+#~ "kumiliki wagonjwa waliowekwa kutoka OpenMRS Atom feed."
 
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "          <p>Import application <strong>%(app_name)s</strong> from domain <strong>%(app_domain)s</strong>?</p>\n"
-#~ "        "
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
 #~ msgstr ""
-#~ "\n"
-#~ "          <p>Ingiza programu <strong>%(app_name)s</strong> kutoka kwenye domain <strong>%(app_domain)s</strong>?</p>\n"
-#~ "        "
+#~ "{repeater.domain}: {repeater}: Hitilafu kwenye mipangilio: Imeshindikana "
+#~ "kusasisha "
 
-#~ msgid ""
-#~ "<i class=\"fa fa-info-circle\"></i> Becomes default language seen in Web "
-#~ "Apps and reports (if applicable), but does not affect mobile applications. "
-#~ "Supported languages for reports are en, fra (partial), and hin (partial)."
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Mgonjwa "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: Kesi zaidi ya moja imepatikana "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Tukio "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
 #~ msgstr ""
-#~ "<i class=\"fa fa-info-circle\"></i> Inakuwa lugha chaguo-msingi inayoonekana"
-#~ " kwenye Programu za Wavuti na ripoti (ikihitajika), lakini haiathiri "
-#~ "programu za simu. Lugha zinazoungwa mkono kwa ripoti ni en, fra (sehemu), na"
-#~ " hin (sehemu)."
-
-#~ msgid "Application Status"
-#~ msgstr "Hali ya Maombi"
+#~ "Imeshindikana kubaini mfanyakazi wa simu wa kumiliki \"{case_type}\" mpya "
 
 #~ msgid "Token generator"
-#~ msgstr "Kizalishaji cha tokeni"
-
-#~ msgid "# Cases Cleaned"
-#~ msgstr "# Kesi Zilizofutwa"
-
-#~ msgid "Recent Tasks"
-#~ msgstr "Kazi za Hivi Karibuni"
-
-#~ msgid "Populating your report did not complete successfully."
-#~ msgstr "Kujaza ripoti yako hakukukamilika kwa mafanikio."
-
-#~ msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
-#~ msgstr "Unaweza kujaribu kubofya \"Advanced\" na kuchagua \"Resume Build\"."
-
-#~ msgid "Table \"{}\" has already finished building. Rebuild table to start over."
-#~ msgstr ""
-#~ "Jedwali \"{}\" tayari limekamilisha kujengwa. Jenga upya jedwali ili kuanza "
-#~ "tena."
-
-#~ msgid ""
-#~ "Table \"{}\" did not finish building but resume information is not "
-#~ "available. Unfortunately, this means you need to rebuild the table."
-#~ msgstr ""
-#~ "Jedwali \"{}\" halijakamilisha kujengwa lakini taarifa ya kuendelea "
-#~ "haipatikani. Kwa bahati mbaya, hii inamaanisha unahitaji kujenga upya "
-#~ "jedwali."
-
-#~ msgid "Resuming rebuilding table \"{}\"."
-#~ msgstr "Kunaendelea kujenga upya jedwali \"{}\"."
-
-#~ msgid ""
-#~ "You tried to access a session for \"{}\" that was already completed. Please "
-#~ "start a new session."
-#~ msgstr ""
-#~ "Umejaribu kufikia kikao cha \"{}\" ambacho tayari kimekamilika. Tafadhali "
-#~ "anza kikao kipya."
-
-#~ msgid ""
-#~ "You tried to access a session for \"{}\" that is currently applying changes."
-#~ " Please wait for that task to complete, then start a new session."
-#~ msgstr ""
-#~ "Umejaribu kufikia kikao cha \"{}\" ambacho kwa sasa kinatumia mabadiliko. "
-#~ "Tafadhali subiri kazi hiyo ikamilike, kisha anza kikao kipya."
-
-#~ msgid "Data cleaning session was not found."
-#~ msgstr "Kikao cha kusafisha data hakikupatikana."
-
-#~ msgid "Starting Data Cleaning Session..."
-#~ msgstr "Kuanza Kikao cha Kusafisha Data..."
-
-#~ msgid "Changes applied. Check the Recent Tasks table for progress."
-#~ msgstr ""
-#~ "Mabadiliko yametumika. Angalia jedwali la Kazi za Hivi Karibuni kwa "
-#~ "maendeleo."
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "      Please note that you have utilised 90%% of the user limit included in your plan.\n"
-#~ "      Your project currently has %(user_count)s mobile users out of %(plan_limit)s included in your plan.\n"
-#~ "      Your user limit represents all mobile users that are not currently deactivated\n"
-#~ "      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number of mobile users\n"
-#~ "      included in your plan, you will be charged as per the terms of plan.\n"
-#~ "    "
-#~ msgstr ""
-#~ "\n"
-#~ "      Tafadhali kumbuka kuwa umetumia 90%% ya kikomo cha watumiaji kilichojumuishwa kwenye mpango wako.\n"
-#~ "      Mradi wako kwa sasa una watumiaji wa simu %(user_count)s kati ya %(plan_limit)s waliopo kwenye mpango wako.\n"
-#~ "      Kikomo chako cha watumiaji kinajumuisha watumiaji wote wa simu ambao hawajazuiwa kwa sasa\n"
-#~ "      (tazama <a href=\"%(url)s\">hapa</a> kwa maelezo zaidi). Ukizidi idadi ya watumiaji wa simu\n"
-#~ "      waliopo kwenye mpango wako, utatozwa kulingana na masharti ya mpango.\n"
-#~ "    "
-
-#~ msgid ", "
-#~ msgstr ", "
-
-#~ msgid "Workflow:"
-#~ msgstr "Mtiririko wa kazi:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "Kizuizi cha ujenzi upya kinahitajika"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "Kizuizi cha ujenzi upya hakihitajiki"
-
-#~ msgid " and try again."
-#~ msgstr " na jaribu tena."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "sekunde kabla ya kuomba tena."
-
-#~ msgid "...See more"
-#~ msgstr "...Tazama zaidi"
-
-#~ msgid "...Collapse"
-#~ msgstr "...Fupisha"
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "wagonjwa wameongezwa kutoka kwenye Atom feed ya OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr "wagonjwa kutoka OpenMRS isipokuwa aina moja tu ya kesi imeainishwa."
-
-#~ msgid "Data cleaning action"
-#~ msgstr "Hatua ya kusafisha data"
-
-#~ msgid "Preview Changes"
-#~ msgstr "Angalia Mabadiliko"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "        %(num_records)s records have been cleaned.\n"
-#~ "      "
-#~ msgstr ""
-#~ "\n"
-#~ "        Rekodi %(num_records)s zimesafishwa.\n"
-#~ "      "
-
-#~ msgid "Clean Selected Cases"
-#~ msgstr "Safisha Kesi Ulizochagua"
-
-#~ msgid ""
-#~ "Some records are selected in the session but not currently visible. They "
-#~ "will not be part of cleaning actions until all filters are removed."
-#~ msgstr ""
-#~ "Baadhi ya rekodi zimechaguliwa kwenye kikao lakini hazionekani kwa sasa. "
-#~ "Hazitahusishwa kwenye vitendo vya usafishaji hadi vichujio vyote viondolewe."
-
-#~ msgid "Clean Case Type"
-#~ msgstr "Safisha Aina ya Kesi"
+#~ msgstr "Google Authenticator"
