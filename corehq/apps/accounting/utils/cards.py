@@ -44,4 +44,5 @@ def serialize_account_card(card, owner):
         'exp_year': card.exp_year,
         'token': card.id,
         'owner': owner,
+        'id': card.id,
     }

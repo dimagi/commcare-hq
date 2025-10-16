@@ -68,10 +68,14 @@ class BaseStripePaymentHandler(object):
 
     def process_request(self, request):
         customer = None
+        payment_method = None
         amount = self.get_charge_amount(request)
         card = request.POST.get('stripeToken')
+
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
+        is_autopay_card = request.POST.get('selectedCardType') == 'autopay'
         new_saved_card = request.POST.get('saveCard') and not is_saved_card
+
         billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {
             'error': {
@@ -84,14 +88,28 @@ class BaseStripePaymentHandler(object):
         }
         try:
             with transaction.atomic():
+                if new_saved_card or is_saved_card:
+                    payment_method = self.payment_method
+                elif is_autopay_card:
+                    payment_method = StripePaymentMethod.objects.get(
+                        web_user=billing_account.auto_pay_user
+                    )
+
+                if payment_method is None:
+                    return {
+                        'error': {
+                            'message': _(
+                                'No payment method was found. Please '
+                                'contact support.'
+                            ),
+                        },
+                    }
+
+                customer = payment_method.customer
                 if new_saved_card:
                     card = self.payment_method.create_card(card, billing_account, self.domain)
-                if new_saved_card or is_saved_card:
-                    customer = self.payment_method.customer
-
-                payment_record = PaymentRecord.create_record(self.payment_method, 'temp', amount)
+                payment_record = PaymentRecord.create_record(payment_method, 'temp', amount)
                 self.update_credits(payment_record)
-
                 charge = self.create_charge(amount, card=card, customer=customer)
 
             payment_record.transaction_id = charge.id

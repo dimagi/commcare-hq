@@ -32,6 +32,7 @@ var bulkPaymentHandler = paymentMethodHandler(
         submitBtnText: gettext("Submit Payment"),
         errorMessages: initialPageData.get("payment_error_messages"),
         submitURL: initialPageData.get("payment_urls").process_bulk_payment_url,
+        autopayCard: initialPageData.get("autopay_card"),
     },
 );
 
@@ -51,6 +52,7 @@ var paymentHandler = paymentMethodHandler(
         submitBtnText: gettext("Submit Payment"),
         errorMessages: initialPageData.get("payment_error_messages"),
         submitURL: initialPageData.get("payment_urls").process_invoice_payment_url,
+        autopayCard: initialPageData.get("autopay_card"),
     },
 );
 
