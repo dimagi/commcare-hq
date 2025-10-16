@@ -67,7 +67,7 @@ from corehq.apps.reminders.util import (
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sms.util import get_or_create_sms_translations
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.const import (
     ALLOWED_CSS_PROPERTIES,
@@ -2074,8 +2074,42 @@ class ScheduleForm(Form):
         return [
             crispy.Field(
                 'recipient_types',
-                data_bind="selectedOptions: recipient_types",
+                data_bind=(
+                    "selectedOptions: recipient_types, "
+                    f"enable: content() !== '{self.CONTENT_CONNECT_MESSAGE}' && "
+                    f"content() !== '{self.CONTENT_CONNECT_SURVEY}'"
+                ),
                 style="width: 100%;"
+            ),
+            # Hidden fields to submit recipient_types values when the visible field is disabled.
+            crispy.Div(
+                crispy.HTML(
+                    '<!-- ko foreach: recipient_types -->'
+                    f'<input type="hidden" name="{self.prefix}-recipient_types" data-bind="value: $data" />'
+                    '<!-- /ko -->'
+                ),
+                data_bind=(
+                    f"if: content() === '{self.CONTENT_CONNECT_MESSAGE}' || "
+                    f"content() === '{self.CONTENT_CONNECT_SURVEY}'"
+                )
+            ),
+            crispy.Div(
+                crispy.HTML(
+                    """
+                        <p class="help-block alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                            %s
+                        </p>
+                    """
+                    % _(
+                        """
+                            Connect Messages can only be sent to users who have a PersonalID account.
+                        """
+                    )),
+                data_bind=(
+                    f"visible: content() === '{self.CONTENT_CONNECT_MESSAGE}' || "
+                    f"content() === '{self.CONTENT_CONNECT_SURVEY}'"
+                )
             ),
             crispy.Div(
                 crispy.HTML(
@@ -2366,14 +2400,38 @@ class ScheduleForm(Form):
         if not data:
             raise ValidationError(_("Please specify the user(s) or deselect users as recipients"))
 
+        commcare_usernames = []
         for user_id in data:
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if not user or user.is_deleted():
                 raise ValidationError(
                     _("One or more users were unexpectedly not found. Please select user(s) again.")
                 )
+            commcare_usernames.append(user.username)
+
+        content = self.data.get(f'{self.prefix}-content')
+        is_connect_content = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
+        if is_connect_content and len(commcare_usernames):
+            valid_connect_link_count = ConnectIDUserLink.objects.filter(
+                commcare_user__username__in=commcare_usernames,
+                domain=self.domain,
+                is_active=True
+            ).count()
+            if valid_connect_link_count != len(commcare_usernames):
+                raise ValidationError(
+                    _("One or more users did not have an active "
+                      "PersonalID link. Please select user(s) again.")
+                )
 
         return data
+
+    def clean_recipient_types(self):
+        content = self.data.get(f'{self.prefix}-content')
+        recipient_types = self.cleaned_data.get('recipient_types')
+        is_connect_message = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
+        if is_connect_message and recipient_types != [ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER]:
+            raise ValidationError(_("Connect Messages can only be sent to users."))
+        return recipient_types
 
     def clean_user_group_recipients(self):
         if ScheduleInstance.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
