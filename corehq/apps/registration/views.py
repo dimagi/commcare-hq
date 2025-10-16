@@ -322,7 +322,7 @@ class RegisterDomainView(TemplateView):
                     'requested_domain': pending_domains[0],
                     'current_page': {'page_name': _('Confirm Account')},
                 })
-                return render(request, 'registration/confirmation_waiting.html', context)
+                return render(request, 'registration/bootstrap3/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
     @property
