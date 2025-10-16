@@ -539,7 +539,7 @@ class HQLoginView(LoginView):
         is_domain_login = self.extra_context.get('domain')
         # also check the next param, because domain or other server-specific ids can exist there
         has_next_url = self.request.GET.get('next')
-        return (env in ServerLocation.ENVS
+        return (env in ServerLocation.get_envs()
                 and not is_domain_login
                 and not has_next_url)
 
@@ -547,6 +547,8 @@ class HQLoginView(LoginView):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
         kwargs.setdefault('request', self.request)
+        if step == self.AUTH_STEP:
+            kwargs['can_select_server'] = self.can_select_server()
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -560,7 +562,7 @@ class HQLoginView(LoginView):
         context['can_select_server'] = self.can_select_server()
         if self.can_select_server():
             context['server_choices'] = [
-                server for env, server in ServerLocation.ENVS.items()
+                server for env, server in ServerLocation.get_envs().items()
                 if env != settings.SERVER_ENVIRONMENT
             ]
         if domain and not is_domain_using_sso(domain):

@@ -12,6 +12,11 @@
   flex-shrink: initial;
 }
 
+.field-control-offset {
+  @extend .offset-sm-4, .offset-md-3, .offset-lg-2, .col-12, .col-sm-8, .col-md-9, .col-lg-10;
+  padding-left: ($grid-gutter-width - $spacer) / 2;
+}
+
 .row > div > .form-check:first-child,
 .row > div > .input-group > .form-check:first-child {
   padding-top: add($input-padding-y, $input-border-width);

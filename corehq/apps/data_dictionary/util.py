@@ -323,12 +323,20 @@ def get_data_dict_deprecated_case_types(domain):
 
 
 def fields_to_validate(domain, case_type_name):
-    filter_kwargs = {
-        'case_type__domain': domain,
-        'case_type__name': case_type_name,
-        'data_type__in': ['date', 'select'],
-    }
-    props = CaseProperty.objects.filter(**filter_kwargs)
+    """
+    Returns a dictionary {case_property_name: CaseProperty} of case
+    properties whose data type is "date" or "select" (multiple choice).
+
+    (Only date and multiple choice case properties are validated.)
+    """
+    props = CaseProperty.objects.filter(
+        case_type__domain=domain,
+        case_type__name=case_type_name,
+        data_type__in=(
+            CaseProperty.DataType.DATE,
+            CaseProperty.DataType.SELECT,
+        ),
+    )
     return {prop.name: prop for prop in props}
 
 

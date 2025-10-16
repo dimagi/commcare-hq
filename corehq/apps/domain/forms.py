@@ -3,10 +3,16 @@ import io
 import ipaddress
 import json
 import logging
-import uuid
 import re
 import urllib.parse
+import uuid
 
+from captcha.fields import ReCaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.layout import Layout, Submit
+from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -33,17 +39,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-
-from captcha.fields import ReCaptchaField
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Layout, Submit
-from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
@@ -92,9 +92,9 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
+    CredentialApplication,
     LatestEnabledBuildProfiles,
     RemoteApp,
-    CredentialApplication,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -110,13 +110,17 @@ from corehq.apps.domain.models import (
     RESTRICTED_UCR_EXPRESSIONS,
     SUB_AREA_CHOICES,
     AllowedUCRExpressionSettings,
+    AppManagerDomainSettings,
     AppReleaseModeSetting,
     OperatorCallLimitSettings,
     SMSAccountConfirmationSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
 )
-from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
+from corehq.apps.hqmedia.models import (
+    CommCareImage,
+    LogoForSystemEmailsReference,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.models import ServerLocation
@@ -138,12 +142,11 @@ from corehq.toggles import (
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
-    USE_LOGO_IN_SYSTEM_EMAILS
+    USE_LOGO_IN_SYSTEM_EMAILS,
 )
 from corehq.util.global_request import get_request
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -560,6 +563,22 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    enable_all_add_ons = BooleanField(
+        label=gettext_lazy("Application Add-Ons"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("Enable All Application Add-Ons"),
+        ),
+        help_text=gettext_lazy(
+            """
+            Enables all add-ons for all CommCare applications. To manage
+            add-ons on a per-application basis, this setting should be
+            disabled, and add-ons can be managed in the "Add-Ons" tab in
+            the application's settings.
+            """
+        ),
+    )
+
     orphan_case_alerts_warning = BooleanField(
         label=gettext_lazy("Orphan Case Alerts"),
         required=False,
@@ -643,6 +662,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
+        self._handle_enable_all_add_ons()
         self._handle_orphan_case_alerts_setting_value()
         self._handle_opt_out_of_data_sharing_setting_value()
 
@@ -650,6 +670,16 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['exports_use_elasticsearch']
         else:
             self._handle_exports_use_elasticsearch_setting_value()
+
+        checkbox_fields = [
+            hqcrispy.CheckboxField('release_mode_visibility'),
+        ]
+        if 'enable_all_add_ons' in self.fields:
+            checkbox_fields.append(hqcrispy.CheckboxField('enable_all_add_ons'))
+        checkbox_fields.extend([
+            hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+            hqcrispy.CheckboxField('opt_out_of_data_sharing'),
+        ])
 
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.layout = crispy.Layout(
@@ -659,9 +689,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 'project_description',
                 'default_timezone',
                 crispy.Div(*self.get_extra_fields()),
-                hqcrispy.CheckboxField('release_mode_visibility'),
-                hqcrispy.CheckboxField('orphan_case_alerts_warning'),
-                hqcrispy.CheckboxField('opt_out_of_data_sharing'),
+                *checkbox_fields,
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -728,6 +756,13 @@ class DomainGlobalSettingsForm(forms.Form):
     def _handle_release_mode_setting_value(self):
         self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
             domain=self.domain).is_visible
+
+    def _handle_enable_all_add_ons(self):
+        if not domain_has_privilege(self.domain, privileges.SHOW_ENABLE_ALL_ADD_ONS):
+            del self.fields['enable_all_add_ons']
+            return
+        app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=self.domain)
+        self.fields['enable_all_add_ons'].initial = bool(app_mgr and app_mgr.all_add_ons_enabled)
 
     def _handle_orphan_case_alerts_setting_value(self):
         self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
@@ -891,6 +926,15 @@ class DomainGlobalSettingsForm(forms.Form):
             setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
             setting_obj.save()
 
+    def _save_enable_all_add_ons_setting(self, domain):
+        value = self.cleaned_data.get("enable_all_add_ons", False)
+        app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=self.domain)
+        if value != bool(app_mgr and app_mgr.all_add_ons_enabled):
+            AppManagerDomainSettings.objects.update_or_create(
+                domain=self.domain,
+                defaults={'all_add_ons_enabled': value},
+            )
+
     def _save_orphan_case_alerts_setting(self, domain):
         domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
 
@@ -920,6 +964,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_timezone_configuration(domain)
         self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
+        self._save_enable_all_add_ons_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
         self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
@@ -1867,69 +1912,75 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         except BillingContactInfo.DoesNotExist:
             pass
 
-        super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
+        super().__init__(data, *args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
         fields = [
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
-                         data_initial=json.dumps(self.initial.get('email_list'))),
-            'phone_number'
+            crispy.Field(
+                'email_list',
+                css_class='form-control form-control-lg accounting-email-select2',
+                data_initial=json.dumps(self.initial.get('email_list')),
+            ),
+            'phone_number',
         ]
 
         if is_ops_user and self.initial.get('email_list'):
-            fields.insert(4, crispy.Div(
+            fields.insert(
+                4,
                 crispy.Div(
-                    css_class='col-sm-3 col-md-2'
-                ),
-                crispy.Div(
-                    crispy.HTML(", ".join(self.initial.get('email_list'))),
-                    css_class='col-sm-9 col-md-8 col-lg-6'
-                ),
-                css_id='emails-text',
-                css_class='collapse form-group'
-            ))
-
-            fields.insert(5, crispy.Div(
-                crispy.Div(
-                    css_class='col-sm-3 col-md-2'
-                ),
-                crispy.Div(
-                    StrictButton(
-                        _("Show contact emails as text"),
-                        type="button",
-                        css_class='btn btn-default',
-                        css_id='show_emails'
+                    crispy.Div(
+                        crispy.HTML(', '.join(self.initial.get('email_list'))),
+                        css_class='field-control-offset',
                     ),
-                    crispy.HTML('<p class="help-block">%s</p>' %
-                                _('Useful when you want to copy contact emails')),
-                    css_class='col-sm-9 col-md-8 col-lg-6'
+                    css_id='emails-text',
+                    css_class='collapse mb-3',
                 ),
-                css_class='form-group'
-            ))
+            )
+
+            fields.insert(
+                5,
+                crispy.Div(
+                    crispy.Div(
+                        StrictButton(
+                            _('Show contact emails as text'),
+                            type='button',
+                            css_class='btn btn-outline-secondary',
+                            css_id='show_emails',
+                        ),
+                        crispy.HTML(
+                            format_html(
+                                '<p class="help-block">{}</i> ', _('Useful when you want to copy contact emails')
+                            ),
+                        ),
+                        css_class='field-control-offset',
+                    ),
+                    css_class='mb-3',
+                ),
+            )
 
         self.helper.layout = crispy.Layout(
+            crispy.Fieldset(_('Basic Information'), *fields),
             crispy.Fieldset(
-                _("Basic Information"),
-                *fields
-            ),
-            crispy.Fieldset(
-                _("Mailing Address"),
+                _('Mailing Address'),
                 'first_line',
                 'second_line',
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_country_code=self.current_country or '',
-                             data_country_name=COUNTRIES.get(self.current_country, '')),
+                crispy.Field(
+                    'country',
+                    css_class='form-control form-control-lg accounting-country-select2',
+                    data_country_code=self.current_country or '',
+                    data_country_name=COUNTRIES.get(self.current_country, ''),
+                ),
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update Billing Information"),
-                    type="submit",
+                    _('Update Billing Information'),
+                    type='submit',
                     css_class='btn btn-primary',
                 ),
             ),
@@ -1978,56 +2029,66 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         widget=forms.HiddenInput,
     )
 
-    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
-                 *args, **kwargs):
+    def __init__(
+        self, account, domain, creating_user, plan_version, current_subscription, data=None, *args, **kwargs
+    ):
         self.plan_version = plan_version
         self.current_subscription = current_subscription
-        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data,
-                                                         *args, **kwargs)
+        super().__init__(account, domain, creating_user, data=data, *args, **kwargs)
+
+        email_list = [email for email in self.initial.get('email_list', []) if email]  # filter out empty strings
+        if not email_list:
+            email_list = [creating_user]
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'plan_edition',
             'is_annual_plan',
             crispy.Fieldset(
-                _("Basic Information"),
+                _('Basic Information'),
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
-                             data_initial=json.dumps(self.initial.get('email_list'))),
+                crispy.Field(
+                    'email_list',
+                    css_class='form-control form-control-lg accounting-email-select2',
+                    data_initial=json.dumps(email_list),
+                ),
                 'phone_number',
             ),
             crispy.Fieldset(
-                _("Mailing Address"),
+                _('Mailing Address'),
                 'first_line',
                 'second_line',
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_country_code=self.current_country or '',
-                             data_country_name=COUNTRIES.get(self.current_country, ''))
+                crispy.Field(
+                    'country',
+                    css_class='form-control form-control-lg accounting-country-select2',
+                    data_country_code=self.current_country or '',
+                    data_country_name=COUNTRIES.get(self.current_country, ''),
+                ),
             ),
             hqcrispy.FormActions(
-                hqcrispy.LinkButton(_("Cancel"),
-                                    reverse(DomainSubscriptionView.urlname,
-                                            args=[self.domain]),
-                                    css_class="btn btn-default"),
-                StrictButton(_("Subscribe to Plan"),
-                             type="submit",
-                             id='btn-subscribe-to-plan',
-                             css_class='btn btn-primary disable-on-submit-no-spinner '
-                                       'add-spinner-on-click'),
+                hqcrispy.LinkButton(
+                    _('Cancel'),
+                    reverse(DomainSubscriptionView.urlname, args=[self.domain]),
+                    css_class='btn btn-outline-primary',
+                ),
+                StrictButton(
+                    _('Subscribe to Plan'),
+                    type='submit',
+                    id='btn-subscribe-to-plan',
+                    css_class='btn btn-primary disable-on-submit-no-spinner add-spinner-on-click',
+                ),
             ),
-            crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
-            crispy.Hidden(name="old_plan", value=current_subscription.plan_version.plan.edition),
-            crispy.Hidden(name="new_plan", value=plan_version.plan.edition)
+            crispy.Hidden(name='downgrade_email_note', value='', id='downgrade-email-note'),
+            crispy.Hidden(name='old_plan', value=current_subscription.plan_version.plan.edition),
+            crispy.Hidden(name='new_plan', value=plan_version.plan.edition),
         )
 
     def save(self, commit=True):
@@ -3083,7 +3144,7 @@ class ExtractAppInfoForm(forms.Form):
 
     def _get_source_server(self, parsed_url):
         server_mapping = {subdomain: server for server, subdomain
-                          in ServerLocation.SUBDOMAINS.items()}
+                          in ServerLocation.get_subdomains().items()}
 
         netloc = parsed_url.netloc.split(".")
 
@@ -3167,7 +3228,7 @@ class ImportAppForm(forms.Form):
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
-        server_address = ServerLocation.SUBDOMAINS[source_server]
+        server_address = ServerLocation.get_subdomains()[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
 
 

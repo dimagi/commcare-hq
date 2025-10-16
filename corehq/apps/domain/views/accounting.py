@@ -3,6 +3,15 @@ import json
 from collections import namedtuple
 from decimal import Decimal
 
+import dateutil
+from couchdbkit import ResourceNotFound
+from corehq.apps.accounting.utils.autopay import (
+    get_autopay_card_and_owner_for_billing_account,
+    set_card_as_autopay_for_billing_account,
+)
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -23,13 +32,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-
-import dateutil
-from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
-
-from dimagi.utils.web import json_response
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -116,6 +120,7 @@ from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.const import USER_DATE_FORMAT
+from corehq.toggles import SHOW_AUTO_RENEWAL
 
 PAYMENT_ERROR_MESSAGES = {
     400: gettext_lazy('Your request was not formatted properly.'),
@@ -211,12 +216,56 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def can_purchase_credits(self):
         return self.request.couch_user.can_edit_billing()
 
+    def can_set_auto_renew(self):
+        can_access_auto_renewal = (
+            SHOW_AUTO_RENEWAL.enabled(self.request.domain)
+            and self.request.couch_user.can_edit_billing()
+        )
+        subscription_eligible_for_auto_renewal = (
+            self.current_subscription.service_type == SubscriptionType.PRODUCT
+            and self.current_subscription.date_end is not None
+            and not self.current_subscription.account.is_customer_billing_account
+        )
+        subscription_is_auto_renew = self.current_subscription.auto_renew
+        next_subscription = self.current_subscription.next_subscription
+        next_created_by_auto_renew = SubscriptionAdjustment.objects.filter(
+            subscription=next_subscription,
+            method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+            reason=SubscriptionAdjustmentReason.CREATE
+        ).exists() if next_subscription else False
+
+        return (
+            can_access_auto_renewal
+            and subscription_eligible_for_auto_renewal
+            and (
+                next_subscription is None
+                or (subscription_is_auto_renew and next_created_by_auto_renew)
+            )
+        )
+
+    @property
+    def renewal_plan_preview(self):
+        if not self.can_set_auto_renew() or self.current_subscription.auto_renew:
+            # details are only needed if user will see the option to enable auto renew
+            return None
+
+        current_plan = self.current_subscription.plan_version.plan
+        next_version = DefaultProductPlan.get_default_plan_version(
+            current_plan.edition, is_annual_plan=current_plan.is_annual_plan
+        )
+        return {
+            'is_annual_plan': next_version.plan.is_annual_plan,
+            'name': next_version.plan.name,
+            'price': _("USD %s /month") % next_version.product_rate.monthly_fee,
+        }
+
     @property
     @memoized
     def plan(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         date_end = None
+        days_left = None
         next_subscription = {
             'exists': False,
             'can_renew': False,
@@ -231,6 +280,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         if subscription.date_end is not None else "--")
 
             if subscription.date_end is not None:
+                days_left = (subscription.date_end - datetime.date.today()).days
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
@@ -244,7 +294,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     })
 
                 else:
-                    days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
                         'can_renew': days_left <= 90,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
@@ -280,7 +329,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
                            if subscription is not None else None),
             'date_end': date_end,
+            'days_left': days_left,
             'cards': cards,
+            'is_auto_renew': subscription.auto_renew,
             'next_subscription': next_subscription,
             'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
             'is_annual_plan': plan_version.plan.is_annual_plan,
@@ -371,6 +422,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
+            'can_set_auto_renew': self.can_set_auto_renew(),
+            'renewal_plan_preview': self.renewal_plan_preview,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
@@ -381,13 +434,16 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 for feature in self.plan.get('features')
             ),
             'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user),
+            'autopay_enabled': self.account.auto_pay_enabled,
+            'manage_autopay_url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
         }
 
 
-class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap3/update_billing_contact_info.html'
+@method_decorator(use_bootstrap5, name='dispatch')
+class EditExistingBillingAccountView(HqHtmxActionMixin, DomainAccountingSettings, AsyncHandlerMixin):
+    template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
-    page_title = gettext_lazy("Billing Information")
+    page_title = gettext_lazy('Billing Information')
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -398,34 +454,63 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         is_ops_user = has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
-                self.account, self.domain, self.request.couch_user.username, data=self.request.POST,
-                is_ops_user=is_ops_user
+                self.account,
+                self.domain,
+                self.request.couch_user.username,
+                data=self.request.POST,
+                is_ops_user=is_ops_user,
             )
-        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
-                                          is_ops_user=is_ops_user)
+        return EditBillingAccountInfoForm(
+            self.account, self.domain, self.request.couch_user.username, is_ops_user=is_ops_user
+        )
 
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
-        return super(EditExistingBillingAccountView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
         return {
             'billing_account_info_form': self.billing_info_form,
-            'cards': self._get_cards(),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
         }
 
-    def _get_cards(self):
-        if not settings.STRIPE_PRIVATE_KEY:
-            return []
+    def get_card_context(self):
+        return {
+            'account_cards': self.get_account_cards(),
+            'saved_cards_for_user': self.get_saved_cards_for_user(),
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+        }
 
+    def get_account_cards(self):
+        card, owner = get_autopay_card_and_owner_for_billing_account(self.account)
+        if card is None:
+            return []
+        return [
+            {
+                'brand': card.brand,
+                'last4': card.last4,
+                'exp_month': card.exp_month,
+                'exp_year': card.exp_year,
+                'token': card.id,
+                'owner': owner,
+            }
+        ]
+
+    def get_payment_method_for_user(self):
         user = self.request.user.username
-        payment_method, new_payment_method = StripePaymentMethod.objects.get_or_create(
+        payment_method, _ = StripePaymentMethod.objects.get_or_create(
             web_user=user,
             method_type=PaymentMethodType.STRIPE,
         )
+        return payment_method
+
+    def get_saved_cards_for_user(self):
+        if not settings.STRIPE_PRIVATE_KEY:
+            return []
+
+        payment_method = self.get_payment_method_for_user()
         return payment_method.all_cards_serialized(self.account)
 
     def post(self, request, *args, **kwargs):
@@ -435,15 +520,64 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
             is_saved = self.billing_info_form.save()
             if not is_saved:
                 messages.error(
-                    request, _("It appears that there was an issue updating your contact information. "
-                               "We've been notified of the issue. Please try submitting again, and if the problem "
-                               "persists, please try in a few hours."))
-            else:
-                messages.success(
-                    request, _("Billing contact information was successfully updated.")
+                    request,
+                    _(
+                        'It appears that there was an issue updating your contact information. '
+                        "We've been notified of the issue. Please try submitting again, and if the problem "
+                        'persists, please try in a few hours.'
+                    ),
                 )
+            else:
+                messages.success(request, _('Billing contact information was successfully updated.'))
                 return HttpResponseRedirect(reverse(EditExistingBillingAccountView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+    def render_payment_methods(self, request, error=None):
+        return self.render_htmx_partial_response(
+            request,
+            'domain/partials/payment_methods.html',
+            {'payment_method_error': error, **self.get_card_context()},
+        )
+
+    @hq_hx_action('get')
+    def list_payment_methods(self, request, *args, **kwargs):
+        return self.render_payment_methods(request)
+
+    @hq_hx_action('post')
+    def remove_payment_card(self, request, *args, **kwargs):
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        payment_method = self.get_payment_method_for_user()
+        error = None
+        try:
+            payment_method.remove_card(token)
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown removing card. Please contact Support.')
+            )
+        return self.render_payment_methods(request, error=error)
+
+    @hq_hx_action('post')
+    def set_as_autopay(self, request, *args, **kwargs):
+        token = request.POST.get('token')
+        if not token:
+            return HttpResponseForbidden("Missing required parameter: 'token'")
+
+        error = None
+        try:
+            set_card_as_autopay_for_billing_account(
+                self.get_payment_method_for_user(),
+                token,
+                self.account,
+                self.domain,
+            )
+        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
+            error = e.json_body.get('error', {}).get(
+                'message', _('Unknown error setting autopay. Please contact Support.')
+            )
+        return self.render_payment_methods(request, error=error)
 
 
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
@@ -1440,8 +1574,9 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
-    template_name = 'domain/bootstrap3/confirm_billing_info.html'
+    template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
     step_title = gettext_lazy("Confirm Billing Information")
     is_new = False

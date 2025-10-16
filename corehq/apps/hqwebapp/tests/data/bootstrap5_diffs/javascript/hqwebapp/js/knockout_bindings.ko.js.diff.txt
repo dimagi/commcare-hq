@@ -93,7 +93,7 @@
                  };
                  return clickAction;
              };
-@@ -638,7 +644,7 @@
+@@ -642,7 +648,7 @@
              options.sanitize = false;
          }
          if (options.title || options.content) { // don't show empty popovers
@@ -102,7 +102,7 @@
          }
      },
  };
-@@ -710,5 +716,3 @@
+@@ -714,5 +720,3 @@
          });
      },
  };
