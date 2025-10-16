@@ -1,0 +1,21 @@
+{% extends "login_and_password/bootstrap5/login.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="reg-form-container">
+          <div class="form-bubble form-bubble-lg">
+            {% block registration-content %}{% endblock %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+
