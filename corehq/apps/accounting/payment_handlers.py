@@ -70,10 +70,8 @@ class BaseStripePaymentHandler(object):
         customer = None
         amount = self.get_charge_amount(request)
         card = request.POST.get('stripeToken')
-        remove_card = request.POST.get('removeCard')
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
-        save_card = request.POST.get('saveCard') and not is_saved_card
-        autopay = request.POST.get('autopayCard')
+        new_saved_card = request.POST.get('saveCard') and not is_saved_card
         billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {
             'error': {
@@ -86,15 +84,9 @@ class BaseStripePaymentHandler(object):
         }
         try:
             with transaction.atomic():
-                if remove_card:
-                    self.payment_method.remove_card(card)
-                    return {
-                        'success': True,
-                        'removedCard': card,
-                    }
-                if save_card:
-                    card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
-                if save_card or is_saved_card:
+                if new_saved_card:
+                    card = self.payment_method.create_card(card, billing_account, self.domain)
+                if new_saved_card or is_saved_card:
                     customer = self.payment_method.customer
 
                 payment_record = PaymentRecord.create_record(self.payment_method, 'temp', amount)
@@ -144,7 +136,7 @@ class BaseStripePaymentHandler(object):
         return {
             'success': True,
             'card': card,
-            'wasSaved': save_card,
+            'wasSaved': new_saved_card,
             'changedBalance': amount,
         }
 
