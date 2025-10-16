@@ -277,7 +277,7 @@ def project_logo_emails_context(domain, couch_user=None):
         try:
             image_reference = LogoForSystemEmailsReference.objects.get(domain=domain)
             return {
-                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
+                "base_container_template": "registration/email/base_templates/bootstrap3/_base_container_project_logo.html",
                 "link_to_logo": image_reference.full_url_to_image()
             }
         except LogoForSystemEmailsReference.DoesNotExist:
