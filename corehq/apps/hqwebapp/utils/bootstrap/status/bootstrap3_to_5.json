@@ -157,6 +157,9 @@
   "programs": {
     "is_complete": true
   },
+  "registration": {
+    "in_progress": true
+  },
   "registry": {
     "is_complete": true
   },

@@ -2,7 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import newUser from "registration/js/new_user.ko";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import "registration/js/login";
+import "registration/js/bootstrap5/login";
 
 newUser.setOnModuleLoad(function () {
     $('.loading-form-step').fadeOut(500, function () {

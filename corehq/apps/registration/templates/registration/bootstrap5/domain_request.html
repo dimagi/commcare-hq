@@ -1,0 +1,200 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load i18n %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+    <link
+      type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/register-domain.less' %}"
+    />
+  {% endcompress %}
+{% endblock stylesheets %}
+
+{% block title %}New Project Space{% endblock title %}
+
+{% block content %}
+  <div class="container">
+    <div class="page-header">  {# todo B5: css-page-header #}
+      {% if is_new_user %}
+        <h1>
+          {% blocktrans %}
+            Welcome to CommCare HQ, {{ name }}!
+          {% endblocktrans %}
+        </h1>
+        <p class="lead">
+          {% if invitation_links %}
+            {% blocktrans %}
+              Please accept an invitation or create your own project space to start using CommCare.
+            {% endblocktrans %}
+          {% else %}
+            {% blocktrans %}
+              Before you can view any of your own data from CommCare, you will need
+              to create a project space.
+            {% endblocktrans %}
+          {% endif %}
+        </p>
+      {% else %}
+        <h1>
+          {% blocktrans %}
+            Let's add a new project, {{ name }}!
+          {% endblocktrans %}
+        </h1>
+        <p class="lead">
+          {% if invitation_links %}
+            {% blocktrans %}
+              Please accept an invitation or create your own project space.
+            {% endblocktrans %}
+          {% endif %}
+        </p>
+      {% endif %}
+    </div>
+
+    {% if invitation_links %}
+      <div class="card card-modern-gray">  {# todo B5: css-panel #}
+        <div class="card-header">
+          <h4 class="card-title card-title-nolink">
+            {% trans "My Invitations" %}
+          </h4>
+        </div>
+        <div class="card-body">
+          {% if show_multiple_invites %}
+            <p>
+              <a class="btn btn-primary"
+                 href="{% url "accept_all_invitations" %}">
+                <i class="fa fa-envelope"></i>
+                {% trans 'Accept All Invitations' %}
+              </a>
+            </p>
+            <div class="spacer"></div>
+            <p>
+              {% blocktrans %}
+                You have been invited to the following project spaces:
+              {% endblocktrans %}
+            </p>
+          {% endif %}
+          <ul class="list-invitations">
+            {% for invitation in invitation_links %}
+              <li>
+                <a href="{{ invitation.url }}"
+                   class="btn btn-outline-primary btn-sm">
+                  <i class='fa fa-envelope'>
+                  </i>
+                  {% trans "Accept" %}
+                </a>
+                {{ invitation.domain }}
+              </li>
+            {% endfor %}
+          </ul>
+
+        </div>
+      </div>
+    {% endif %}
+    <div class="card card-modern-gray">  {# todo B5: css-panel #}
+      <div class="card-body">
+        <h4>{% trans "Your New Project Space" %}</h4>
+        <p>
+          {% blocktrans %}
+            A
+            <a
+              href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2932637701/Project+Space+Overview"
+              target="_blank"
+              ><b>project space</b></a
+            >
+            is your top-level environment in CommCare. It's where you build
+            applications, manage users, track data, and configure settings.
+          {% endblocktrans %}
+        </p>
+
+        <div class="spacer"></div>
+
+        {% if not is_new_user %}
+          <div class="alert alert-info">
+            <div class="row icon-row">
+              <div class="col-sm-1 text-center">
+                {% include 'registration/partials/icon_stack.html' with icon_class='fa fa-briefcase' %}
+              </div>
+              <div class="col-sm-11">
+                <h5><b>{% trans "Subscription" %}</b></h5>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-11 col-xs-push-1">
+                <p>
+                  {% blocktrans %}
+                    All new projects start on CommCare's free edition. Once you
+                    create a new project, you can
+                    <a href="{{ pricing_page_url }}" target="_blank"
+                      ><b>upgrade</b></a
+                    >
+                    your subscription.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
+
+            <div class="row icon-row">
+              <div class="col-sm-1 text-center">
+                {% include 'registration/partials/icon_stack.html' with icon_class='fcc fcc-globe' %}
+              </div>
+              <div class="col-sm-11">
+                <h5><b>{% trans "Cloud Location" %}</b></h5>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-11 col-xs-push-1">
+                <p>
+                  {% if server_display %}
+                    {% blocktrans with server_display.hr_name as server_location %}
+                      This project will be hosted on the
+                      <strong>{{ server_location }} cloud</strong>.
+                    {% endblocktrans %}
+                  {% else %}
+                    {% blocktrans %}
+                      This project will be hosted on a private cloud.
+                    {% endblocktrans %}
+                  {% endif %}
+                  {% blocktrans %}
+                    To create a project in a different
+                    <a
+                      href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations"
+                      target="_blank"
+                      ><b>cloud location</b></a
+                    >, create an account for that cloud location first, then
+                    create a project.
+                  {% endblocktrans %}
+                </p>
+                <ul>
+                  {% for server in server_locations %}
+                    <li>
+                      <a
+                        href="https://{{ server.subdomain }}.commcarehq.org{{ request.path }}"
+                        >{% trans server.name %}</a
+                      >
+                    </li>
+                  {% endfor %}
+                </ul>
+                <p>
+                  {% blocktrans %}
+                    Please note: Projects <strong>cannot</strong> be transferred
+                    between cloud locations after creation.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="spacer"></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card card-modern-gray">  {# todo B5: css-panel #}
+      <div class="card-body">{% crispy form %}</div>  {# todo B5: crispy #}
+    </div>
+  </div>
+{% endblock %}

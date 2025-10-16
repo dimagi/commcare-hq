@@ -1,0 +1,104 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_navigation.html" %}
++{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+ {% load i18n %}
+ {% load compress %}
+ {% load hq_shared_tags %}
+@@ -19,7 +19,7 @@
+ 
+ {% block content %}
+   <div class="container">
+-    <div class="page-header">
++    <div class="page-header">  {# todo B5: css-page-header #}
+       {% if is_new_user %}
+         <h1>
+           {% blocktrans %}
+@@ -55,13 +55,13 @@
+     </div>
+ 
+     {% if invitation_links %}
+-      <div class="panel panel-modern-gray">
+-        <div class="panel-heading">
+-          <h4 class="panel-title panel-title-nolink">
++      <div class="card card-modern-gray">  {# todo B5: css-panel #}
++        <div class="card-header">
++          <h4 class="card-title card-title-nolink">
+             {% trans "My Invitations" %}
+           </h4>
+         </div>
+-        <div class="panel-body">
++        <div class="card-body">
+           {% if show_multiple_invites %}
+             <p>
+               <a class="btn btn-primary"
+@@ -81,7 +81,7 @@
+             {% for invitation in invitation_links %}
+               <li>
+                 <a href="{{ invitation.url }}"
+-                   class="btn btn-default btn-xs">
++                   class="btn btn-outline-primary btn-sm">
+                   <i class='fa fa-envelope'>
+                   </i>
+                   {% trans "Accept" %}
+@@ -94,8 +94,8 @@
+         </div>
+       </div>
+     {% endif %}
+-    <div class="panel panel-modern-gray">
+-      <div class="panel-body">
++    <div class="card card-modern-gray">  {# todo B5: css-panel #}
++      <div class="card-body">
+         <h4>{% trans "Your New Project Space" %}</h4>
+         <p>
+           {% blocktrans %}
+@@ -115,15 +115,15 @@
+         {% if not is_new_user %}
+           <div class="alert alert-info">
+             <div class="row icon-row">
+-              <div class="col-xs-1 text-center">
++              <div class="col-sm-1 text-center">
+                 {% include 'registration/partials/icon_stack.html' with icon_class='fa fa-briefcase' %}
+               </div>
+-              <div class="col-xs-11">
++              <div class="col-sm-11">
+                 <h5><b>{% trans "Subscription" %}</b></h5>
+               </div>
+             </div>
+             <div class="row">
+-              <div class="col-xs-11 col-xs-push-1">
++              <div class="col-sm-11 col-xs-push-1">
+                 <p>
+                   {% blocktrans %}
+                     All new projects start on CommCare's free edition. Once you
+@@ -138,15 +138,15 @@
+             </div>
+ 
+             <div class="row icon-row">
+-              <div class="col-xs-1 text-center">
++              <div class="col-sm-1 text-center">
+                 {% include 'registration/partials/icon_stack.html' with icon_class='fcc fcc-globe' %}
+               </div>
+-              <div class="col-xs-11">
++              <div class="col-sm-11">
+                 <h5><b>{% trans "Cloud Location" %}</b></h5>
+               </div>
+             </div>
+             <div class="row">
+-              <div class="col-xs-11 col-xs-push-1">
++              <div class="col-sm-11 col-xs-push-1">
+                 <p>
+                   {% if server_display %}
+                     {% blocktrans with server_display.hr_name as server_location %}
+@@ -193,8 +193,8 @@
+       </div>
+     </div>
+ 
+-    <div class="panel panel-modern-gray">
+-      <div class="panel-body">{% crispy form %}</div>
++    <div class="card card-modern-gray">  {# todo B5: css-panel #}
++      <div class="card-body">{% crispy form %}</div>  {# todo B5: crispy #}
+     </div>
+   </div>
+ {% endblock %}

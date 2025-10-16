@@ -1676,7 +1676,7 @@ def send_password_reset_email(active_users):
     """
     if settings.IS_SAAS_ENVIRONMENT:
         subject_template_name = 'registration/email/password_reset_subject_hq.txt'
-        email_template_name = 'registration/email/password_reset_email_hq.html'
+        email_template_name = 'registration/email/bootstrap3/password_reset_email_hq.html'
     else:
         subject_template_name = 'registration/password_reset_subject.txt',
         email_template_name = 'registration/password_reset_email.html',

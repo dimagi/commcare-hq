@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import assertProperties from "hqwebapp/js/assert_properties";
+ import emailUtils from "hqwebapp/js/utils/email";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
+ 
+ var loginController = function (options) {
+     assertProperties.assertRequired(options, [
