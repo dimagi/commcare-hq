@@ -47,5 +47,5 @@ class Command(BaseCommand):
             active_subs = acc.subscription_set.filter(is_active=True)
             self.stdout.write(
                 f'{acc.id}\t{acc.name}\t{emails}\t{acc.entry_point}'
-                f'\t{active_subs.count()}\n{acc.created_by_domain}'
+                f'\t{active_subs.count()}\t{acc.created_by_domain}'
             )
