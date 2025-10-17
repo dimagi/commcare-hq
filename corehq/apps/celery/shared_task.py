@@ -2,6 +2,7 @@ from celery import shared_task
 from django.conf import settings
 
 from corehq.apps.celery.periodic import PeriodicTask
+from corehq.apps.celery.durable import DurableTask
 
 
 def task(*args, **kwargs):
@@ -31,6 +32,7 @@ def task(*args, **kwargs):
     kwargs.setdefault('serializer', 'json')
     kwargs.setdefault('queue', default_queue)
     kwargs.setdefault('options', {})
+    kwargs.setdefault('base', DurableTask)
 
     if kwargs.get('base') == PeriodicTask:
         kwargs['options']['queue'] = kwargs.get('queue')
