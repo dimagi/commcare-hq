@@ -289,27 +289,13 @@ def _ending_reminder_context(subscription):
 def send_dimagi_ending_reminder_email(subscription):
     subject = _dimagi_ending_reminder_subject(subscription)
     context = _dimagi_ending_reminder_context(subscription)
-    email_html = render_to_string(_dimagi_ending_reminder_email_html(subscription), context)
-    email_plaintext = render_to_string(_dimagi_ending_reminder_email_text(subscription), context)
+    email_html = render_to_string('accounting/email/subscription_ending_reminder_dimagi.html', context)
+    email_plaintext = render_to_string('accounting/email/subscription_ending_reminder_dimagi.txt', context)
     send_html_email_async.delay(
         subject, subscription.account.dimagi_contact, email_html,
         text_content=email_plaintext,
         email_from=settings.DEFAULT_FROM_EMAIL,
     )
-
-
-def _dimagi_ending_reminder_email_html(subscription):
-    if subscription.account.is_customer_billing_account:
-        return 'accounting/email/customer_subscription_ending_reminder_dimagi.html'
-    else:
-        return 'accounting/email/subscription_ending_reminder_dimagi.html'
-
-
-def _dimagi_ending_reminder_email_text(subscription):
-    if subscription.account.is_customer_billing_account:
-        return 'accounting/email/customer_subscription_ending_reminder_dimagi.txt'
-    else:
-        return 'accounting/email/subscription_ending_reminder_dimagi.txt'
 
 
 def _dimagi_ending_reminder_subject(subscription):
@@ -326,29 +312,28 @@ def _dimagi_ending_reminder_subject(subscription):
 def _dimagi_ending_reminder_context(subscription):
     end_date = subscription.date_end.strftime(USER_DATE_FORMAT)
     email = subscription.account.dimagi_contact
+    domain = subscription.subscriber.domain
+    plan = subscription.plan_version.plan.edition
+    context = {
+        'plan': plan,
+        'end_date': end_date,
+        'client_reminder_email_date': (subscription.date_end - datetime.timedelta(days=30)).strftime(
+            USER_DATE_FORMAT),
+        'contacts': ', '.join(_reminder_email_contacts(subscription, subscription.subscriber.domain)),
+        'dimagi_contact': email,
+        'accounts_email': settings.ACCOUNTS_EMAIL
+    }
     if subscription.account.is_customer_billing_account:
         account = subscription.account.name
-        plan = subscription.plan_version.plan.edition
-        context = {
-            'account': account,
-            'plan': plan,
-            'end_date': end_date,
-            'client_reminder_email_date': (subscription.date_end - datetime.timedelta(days=30)).strftime(
-                USER_DATE_FORMAT),
-            'contacts': ', '.join(_reminder_email_contacts(subscription, subscription.subscriber.domain)),
-            'dimagi_contact': email,
-            'accounts_email': settings.ACCOUNTS_EMAIL
-        }
+        context.update({
+            'account_or_domain': account,
+            'is_customer_account': True,
+        })
     else:
-        domain = subscription.subscriber.domain
-        context = {
-            'domain': domain,
-            'end_date': end_date,
-            'client_reminder_email_date': (subscription.date_end - datetime.timedelta(days=30)).strftime(
-                USER_DATE_FORMAT),
-            'contacts': ', '.join(_reminder_email_contacts(subscription, domain)),
-            'dimagi_contact': email,
-        }
+        context.update({
+            'account_or_domain': domain,
+            'is_customer_account': False,
+        })
     return context
 
 

@@ -2,18 +2,20 @@
   Dear {{ dimagi_contact }}
 </p>
 <p>
-  You have been identified as the dimagi point of contact for the project space {{ domain }}.
+  You have been identified as the dimagi point of contact for
+  {{ account_or_domain }}.
 </p>
 
 <p>
-  This project has a subscription that is ending on {{ end_date }}. After that date, the subscription will automatically pause and this space will lose access to all features until it is re-subscribed to a new paid plan.
+  {% if is_customer_account %}
+    This account has a {{ plan }} subscription that is ending on {{ end_date }}.
+  {% else %}
+    This project space has a {{ plan }} subscription that is ending on {{ end_date }}.
+  {% endif %}
+  After that date, the subscription will automatically pause and this space will
+  lose access to all features until it is re-subscribed to a new paid plan.
 </p>
+
 <p>
-  If you haven't already, can you follow up with the partner to confirm they are aware of this? If relevant, you can use the subscription with an upcoming end date email <a href="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2146603514/CommCare+Subscriptions+-+Account+Support+-+Email+templates">template</a> to follow up.
-</p>
-<p>
-  Please note that the partner’s contacts ({{ contacts }}) will also receive a reminder on {{ client_reminder_email_date }} (30 days before their subscription end date, 30 days from today).
-</p>
-<p>
-  If you have any questions on this, please reach out to <a href="mailto:accounts@dimagi.com">accounts@dimagi.com</a>
+  If you have any questions on this, please reach out to {{ accounts_email }}.
 </p>
