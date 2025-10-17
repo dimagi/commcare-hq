@@ -44,8 +44,8 @@ class Command(BaseCommand):
             values_list('_id', flat=True)
         )
 
-        next_household_id = CaseSearchES().domain(DOMAIN).case_type(HOUSEHOLD_CASE_TYPE).count() + 1
-        next_client_id = CaseSearchES().domain(DOMAIN).case_type(CLIENT_CASE_TYPE).count() + 1
+        next_household_id = len(CommCareCase.objects.get_case_ids_in_domain(DOMAIN, HOUSEHOLD_CASE_TYPE)) + 1
+        next_client_id = len(CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLIENT_CASE_TYPE)) + 1
 
         for case_id in with_progress_bar(household_case_ids):
             to_save = []
@@ -63,6 +63,7 @@ class Command(BaseCommand):
                 pass
                 # print([b.as_text() for b in CaseFactory(domain=DOMAIN).get_case_blocks(to_save)])
 
+
 def _duplicate_household_and_all_child_cases(household_case, next_household_id, next_client_id):
     new_case_structures = []
     household_case_case_structure = _duplicate_household_case(household_case, next_household_id)
@@ -76,11 +77,14 @@ def _duplicate_household_and_all_child_cases(household_case, next_household_id, 
         next_client_id += 1
 
         for client_child_case in client_case.get_subcases():
-            client_child_case_case_structure = _duplicate_client_child_case(client_child_case, client_case_case_structure)
+            client_child_case_case_structure = _duplicate_client_child_case(client_child_case,
+                                                                            client_case_case_structure)
             new_case_structures.append(client_child_case_case_structure)
 
             for client_child_child_case in client_child_case.get_subcases():
-                client_child_child_case_case_structure = _duplicate_client_child_child_case(client_child_child_case, client_child_case_case_structure)
+                client_child_child_case_case_structure = _duplicate_client_child_child_case(
+                    client_child_child_case, client_child_case_case_structure
+                )
                 new_case_structures.append(client_child_child_case_case_structure)
 
     return new_case_structures, next_household_id, next_client_id
