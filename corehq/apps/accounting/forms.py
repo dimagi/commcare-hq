@@ -167,6 +167,12 @@ class BillingAccountBasicForm(forms.Form):
         initial=False,
         help_text="Include Web Users in invoice (requires a subscription with Web User Feature)"
     )
+    require_auto_pay = forms.BooleanField(
+        label="Require Autopay",
+        required=False,
+        initial=False,
+        help_text="Require this account to have an autopay card on file"
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -189,6 +195,7 @@ class BillingAccountBasicForm(forms.Form):
                 'pre_or_post_pay': account.pre_or_post_pay,
                 'block_hubspot_data_for_all_users': account.block_hubspot_data_for_all_users,
                 'bill_web_user': account.bill_web_user,
+                'require_auto_pay': account.require_auto_pay,
             }
         else:
             kwargs['initial'] = {
@@ -274,6 +281,10 @@ class BillingAccountBasicForm(forms.Form):
                 hqcrispy.B3MultiField(
                     "Bill Web Users",
                     hqcrispy.MultiInlineField('bill_web_user'),
+                ),
+                hqcrispy.B3MultiField(
+                    "Require Auto Pay",
+                    hqcrispy.MultiInlineField('require_auto_pay'),
                 ),
             ])
         self.helper.layout = crispy.Layout(
@@ -416,6 +427,7 @@ class BillingAccountBasicForm(forms.Form):
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
         account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
         account.bill_web_user = self.cleaned_data['bill_web_user']
+        account.require_auto_pay = self.cleaned_data['require_auto_pay']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
