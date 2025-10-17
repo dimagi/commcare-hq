@@ -213,19 +213,15 @@ def save_xform(app, form, xml):
 
     form.source = source_xml.decode('utf-8')
 
-    from corehq.apps.app_manager.models import ConditionalCaseUpdate
     if form.is_registration_form():
         # For registration forms, assume that the first question is the
         # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
-        if hasattr(form.actions, 'open_case'):
-            path = getattr(form.actions.open_case.name_update, 'question_path', None)
-            if path:
-                name_questions = [q for q in questions if q['value'] == path]
-                if not len(name_questions):
-                    path = None
-            if not path and len(questions):
-                form.actions.open_case.name_update = ConditionalCaseUpdate(question_path=questions[0]['value'])
+        if questions and hasattr(form.actions, 'open_case'):
+            names = form.actions.open_case.get_assigned_names()
+            assigns_name = any(q for q in questions if q['value'] in names)
+            if not assigns_name:
+                form.actions.open_case.assign_name_update(questions[0]['value'])
 
     return xml
 

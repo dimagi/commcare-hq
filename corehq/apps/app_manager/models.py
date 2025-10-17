@@ -655,6 +655,20 @@ class OpenCaseAction(FormAction):
     def _update_has_name(self, update):
         return bool(update.question_path)
 
+    def get_assigned_names(self):
+        questions = []
+        if self.name_update_multi:
+            questions.extend(self.name_update_multi)
+
+        if self.name_update:
+            questions.append(self.name_update)
+
+        return [question.question_path for question in questions if question.question_path]
+
+    def assign_name_update(self, question_path):
+        self.name_update = ConditionalCaseUpdate(question_path=question_path)
+        self.name_update_multi = []
+
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
