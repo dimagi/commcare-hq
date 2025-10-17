@@ -300,11 +300,11 @@ def send_dimagi_ending_reminder_email(subscription):
 
 def _dimagi_ending_reminder_subject(subscription):
     if subscription.account.is_customer_billing_account:
-        return "Alert: {account}'s subscriptions are ending on {end_date}".format(
+        return "CommCare Alert: {account}'s subscriptions are ending on {end_date}".format(
             account=subscription.account.name,
             end_date=subscription.date_end.strftime(USER_DATE_FORMAT))
     else:
-        return "Alert: {domain}'s subscription is ending on {end_date}".format(
+        return "CommCare Alert: {domain}'s subscription is ending on {end_date}".format(
             domain=subscription.subscriber.domain,
             end_date=subscription.date_end.strftime(USER_DATE_FORMAT))
 
@@ -317,11 +317,9 @@ def _dimagi_ending_reminder_context(subscription):
     context = {
         'plan': plan,
         'end_date': end_date,
-        'client_reminder_email_date': (subscription.date_end - datetime.timedelta(days=30)).strftime(
-            USER_DATE_FORMAT),
-        'contacts': ', '.join(_reminder_email_contacts(subscription, subscription.subscriber.domain)),
         'dimagi_contact': email,
-        'accounts_email': settings.ACCOUNTS_EMAIL
+        'accounts_email': settings.ACCOUNTS_EMAIL,
+        'base_url': get_site_domain(),
     }
     if subscription.account.is_customer_billing_account:
         account = subscription.account.name
