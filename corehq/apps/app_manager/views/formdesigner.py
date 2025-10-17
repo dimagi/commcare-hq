@@ -20,6 +20,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
 )
 from corehq.apps.app_manager import add_ons
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
 from corehq.apps.app_manager.app_schemas.session_schema import (
     get_session_schema,
@@ -234,7 +235,7 @@ def _get_base_vellum_options(request, domain, form, displayLang):
     :param displayLang: --> derived from the base context
     """
     app = form.get_app()
-    return {
+    options = {
         'intents': {
             'templates': next(app_callout_templates),
         },
@@ -254,18 +255,31 @@ def _get_base_vellum_options(request, domain, form, displayLang):
         },
     }
 
+    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+
+    case_type = form.get_module().case_type
+    if case_type and has_vellum_case_mapping:
+        case_properties = get_all_case_properties_for_case_type(domain, case_type)
+        options['caseManagement'] = {
+            'properties': case_properties,
+            'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
+        }
+
+    return options
+
 
 def _get_vellum_core_context(request, domain, app, module, form, lang):
     """
     Returns the core context that will be passed into vellum when it is
     initialized.
     """
+    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     core = {
         'dataSourcesEndpoint': reverse('get_form_data_schema',
                                        kwargs={'domain': domain,
                                                'app_id': app.id,
                                                'form_unique_id': form.get_unique_id()}),
-        'form': form.source,
+        'form': form.get_source_with_mappings() if has_vellum_case_mapping else form.source,
         'formId': form.get_unique_id(),
         'formName': translate(form.name, app.langs[0], app.langs),
         'saveType': 'patch',

@@ -304,7 +304,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         return attribute in request.POST
 
     if 'sha1' in request.POST and (should_edit("xform") or "xform" in request.FILES):
-        conflict = _get_xform_conflict_response(form, request.POST['sha1'])
+        conflict = _get_xform_conflict_response(form.source, request.POST['sha1'])
         if conflict is not None:
             return conflict
 
@@ -523,12 +523,16 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
+    uses_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    existing_xml = form.get_source_with_mappings() if uses_vellum_case_mapping else form.source
 
-    conflict = _get_xform_conflict_response(form, sha1_checksum)
+    conflict = _get_xform_conflict_response(existing_xml, sha1_checksum)
     if conflict is not None:
         return conflict
 
-    xml = apply_patch(patch, form.source)
+    xml = apply_patch(patch, existing_xml)
+
+    # TODO: Mirror this handling somewhere in _edit_form_attr
 
     try:
         xml = save_xform(app, form, xml.encode('utf-8'))
@@ -551,8 +555,7 @@ def apply_patch(patch, text):
     return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
 
 
-def _get_xform_conflict_response(form, sha1_checksum):
-    form_xml = form.source
+def _get_xform_conflict_response(form_xml, sha1_checksum):
     if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
         return json_response({'status': 'conflict', 'xform': form_xml})
     return None
