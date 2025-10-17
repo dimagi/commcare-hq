@@ -1726,6 +1726,9 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         """
         return self.get_case_updates().get(case_type, [])
 
+    def get_source_with_mappings(self):
+        return self.source
+
 
 class JRResourceProperty(StringProperty):
 
@@ -2112,6 +2115,14 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
                 case_relationships_by_child_type[child_case_type].add(
                     (parent_case_type, subcase.reference_id or 'parent'))
         return case_relationships_by_child_type
+
+    def get_source_with_mappings(self):
+        if not self._parent.case_type:
+            return self.source
+
+        xform = XForm(self.source)
+        xform.add_case_mappings(self)
+        return xform.render_pretty().decode('utf-8')
 
 
 class GraphAnnotations(IndexedSchema):

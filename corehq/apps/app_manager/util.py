@@ -152,25 +152,45 @@ def generate_xmlns():
 
 
 def save_xform(app, form, xml):
+    from corehq.apps.app_manager.models import FormActions
 
-    def change_xmlns(xform, old_xmlns, new_xmlns):
+    def update_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render().decode('utf-8')
         data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
-        return xform.render()
+
+    source_xml = xml
 
     try:
         xform = XForm(xml, domain=app.domain)
     except XFormException:
         pass
     else:
+        changed = False
+        # TODO: Clean this up
+        form_actions_dict = xform.get_form_actions(for_registration_form=form.is_registration_form())
+        if form_actions_dict:
+            actions = FormActions(form_actions_dict)
+            if actions.update_case.update_multi:
+                form.actions.update_case.update = {}
+                form.actions.update_case.update_multi = actions.update_case.update_multi
+                form.actions.update_case.normalize_update()
+
+            if actions.open_case.name_update_multi:
+                form.actions.open_case.name_update = None
+                form.actions.open_case.name_update_multi = actions.open_case.name_update_multi
+                form.actions.open_case.normalize_name_update()
+
+            changed = True
+
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
         uid = generate_xmlns()
         tag_xmlns = xform.data_node.tag_xmlns
         new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
-            xml = change_xmlns(xform, GENERIC_XMLNS, new_xmlns)
+            update_xmlns(xform, GENERIC_XMLNS, new_xmlns)
+            changed = True
         else:
             forms = [form_
                 for form_ in app.get_xmlns_map().get(tag_xmlns, [])
@@ -180,9 +200,18 @@ def save_xform(app, form, xml):
                     new_xmlns = "http://openrosa.org/formdesigner/%s" % uid
                 # form most likely created by app.copy_form(...)
                 # or form is being updated with source copied from other form
-                xml = change_xmlns(xform, tag_xmlns, new_xmlns)
+                update_xmlns(xform, tag_xmlns, new_xmlns)
+                changed = True
 
-    form.source = xml.decode('utf-8')
+        if changed:
+            # form.source needs to persist the XML without case mappings (because the mappings
+            #  are persisted in FormActions, instead),
+            # but keep a separate copy of the xml with mapping data for SHA comparisons
+            xml = xform.render_pretty()
+            xform.remove_case_mappings()
+            source_xml = xform.render_pretty()
+
+    form.source = source_xml.decode('utf-8')
 
     from corehq.apps.app_manager.models import ConditionalCaseUpdate
     if form.is_registration_form():

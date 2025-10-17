@@ -2147,12 +2147,17 @@ class XForm(WrappedNode):
             raise Exception('Scheduler case updates have not yet been populated')
         return self._scheduler_case_updates
 
+    @property
+    def case_mappings_xml_node(self):
+        path = '{f}case_mappings'.format(**self.namespaces)
+        return self.xml.find(path)
+
     def _add_scheduler_case_update(self, case_type, case_property):
         self._scheduler_case_updates[case_type].add(case_property)
 
     def add_case_mappings(self, form):
         mapping_element = self.create_case_mappings(form)
-        existing_mappings = self.xml.find('case_mappings')
+        existing_mappings = self.case_mappings_xml_node
         if existing_mappings is None:
             self.xml.append(mapping_element)
         else:
@@ -2160,12 +2165,12 @@ class XForm(WrappedNode):
 
     @classmethod
     def create_case_mappings(cls, form):
-        root = ET.Element('case_mappings')
+        root = _make_elem('{f}case_mappings')
 
         # TODO: add non-mutating functionality to form actions to grab
         # the multi version without mutating the base object
         form.actions.open_case.make_multi()
-        name_mapping = ET.Element('mapping', property='name')
+        name_mapping = _make_elem('{f}mapping', {'property': 'name'})
         for question in form.actions.open_case.name_update_multi:
             if question.question_path:
                 name_mapping.append(cls._get_update_xml(question))
@@ -2177,17 +2182,84 @@ class XForm(WrappedNode):
             if case_property == 'name' and len(name_mapping):
                 # skip name mappings if already provided by open_case
                 continue
-            mapping = ET.SubElement(root, 'mapping', property=case_property)
+            mapping = _make_elem('{f}mapping', {'property': case_property})
+            root.append(mapping)
             for question in questions:
                 mapping.append(cls._get_update_xml(question))
 
         return root
 
+    def get_form_actions(self, for_registration_form=False):
+        root = self.case_mappings_xml_node
+        if root is None:
+            return {}
+
+        name_update_multi = []
+        update_case_mappings = {}
+
+        for mapping_node in root:
+            prop = mapping_node.attrib['property']
+            questions = []
+
+            for question_node in mapping_node:
+                question = question_node.attrib
+                question_dict = dict(question.items())
+                questions.append(question_dict)
+
+            if prop == 'name' and for_registration_form:
+                name_update_multi = questions
+            else:
+                update_case_mappings[prop] = questions
+
+        actions = {}
+        if name_update_multi:
+            actions['open_case'] = {
+                'name_update_multi': name_update_multi
+            }
+
+        if update_case_mappings:
+            actions['update_case'] = {
+                'update_multi': update_case_mappings
+            }
+
+        return actions
+
+    def remove_case_mappings(self):
+        '''
+        Removes the case mappings node and returns a boolean indicating whether
+        the tree was changed
+        '''
+        mappings_node = self.case_mappings_xml_node
+        if mappings_node is not None:
+            self.xml.remove(mappings_node)
+            return True
+
+        return False
+
     @classmethod
     def _get_update_xml(cls, update):
         EXCLUDED_PROPERTIES = ['doc_type']
         properties = {k: v for (k, v) in update.items() if k not in EXCLUDED_PROPERTIES}
-        return ET.Element('question', **properties)
+        # return ET.Element('question', **properties)
+        return _make_elem('{f}question', properties)
+
+    def render_pretty(self):
+        '''
+        This returns a tab-indented version of the xml as a string.
+        This is mostly a hackish method of creating a string that exactly mimics
+        Vellum's formatting. If the Vellum formatting were to change, this would
+        also need to change.
+        '''
+        ET.indent(self.xml, space='\t')
+        encoding = "UTF-8"
+        output = ET.tostring(self.xml, encoding=encoding).decode(encoding)
+
+        # Vellum uses an additional space after self-closing elements
+        output = re.sub(r'(?<!\s)/>', ' />', output)
+
+        xml_declaration = f'<?xml version="1.0" encoding="{encoding}" ?>'
+
+        return (xml_declaration + '\n' + output).encode(encoding)
 
 
 VELLUM_TYPES = {
