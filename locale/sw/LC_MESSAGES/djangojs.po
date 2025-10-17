@@ -1853,6 +1853,10 @@ msgstr ""
 " huu kupitia Shirika pekee. Lazima uongezwe kwenye mradi huu kama mshiriki "
 "ili uweze kubadilisha eneo lako la saa."
 
+#: corehq/apps/domain/static/domain/js/new_stripe_card_manager.js
+msgid "Card added successfully! Refreshing cards list..."
+msgstr "Kadi imeongezwa kwa mafanikio! Inaboresha orodha ya kadi..."
+
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
 "Do not allow new users to sign up on commcarehq.org. This may take up to an "
@@ -2838,6 +2842,11 @@ msgstr ""
 msgid "Good Job! Your password is strong!"
 msgstr "Kazi nzuri! Nenosiri lako ni imara!"
 
+#: corehq/apps/registration/static/registration/js/bootstrap3/user_login_form.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/user_login_form.js
+msgid "Continue"
+msgstr "Endelea"
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr "Tafadhali ingiza jina lako."
@@ -2868,10 +2877,6 @@ msgstr "Tafadhali weka maelezo."
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
 msgstr "Tafadhali orodhesha jina la shirika au kampuni yako."
-
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "Endelea"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."

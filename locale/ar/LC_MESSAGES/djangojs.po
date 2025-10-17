@@ -1824,6 +1824,10 @@ msgstr ""
 "لا يمكنك تجاوز المنطقة الزمنية لمساحة المشروع هذه لأن وصولك إليها فقط من "
 "خلال مؤسسة. يجب إضافتك كعضو في مساحة المشروع لتتمكن من تجاوز منطقتك الزمنية."
 
+#: corehq/apps/domain/static/domain/js/new_stripe_card_manager.js
+msgid "Card added successfully! Refreshing cards list..."
+msgstr ""
+
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
 "Do not allow new users to sign up on commcarehq.org. This may take up to an "
@@ -2795,6 +2799,11 @@ msgstr "كلمة المرور الخاصة بك شبه قوية! حاول إضا
 msgid "Good Job! Your password is strong!"
 msgstr "عمل رائع! كلمة المرور الخاصة بك قوية!"
 
+#: corehq/apps/registration/static/registration/js/bootstrap3/user_login_form.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/user_login_form.js
+msgid "Continue"
+msgstr "متابعة"
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr "يرجى إدخال اسمك."
@@ -2825,10 +2834,6 @@ msgstr "يرجى التحديد."
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
 msgstr "يرجى ذكر اسم المنظمة أو الشركة الخاصة بك."
-
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "متابعة"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
