@@ -12,6 +12,16 @@ class TaskRecordState(models.TextChoices):
     REVOKED = "REVOKED", "Revoked"
     SUCCESS = "SUCCESS", "Success"
 
+    @staticmethod
+    def from_celery(value):
+        if not value:
+            raise ValueError("Missing Celery state")
+
+        try:
+            return TaskRecordState[value.upper()]
+        except KeyError:
+            raise ValueError(f"Invalid Celery state: {value}")
+
 
 class TaskRecord(models.Model):
     task_id = models.UUIDField(null=True)
