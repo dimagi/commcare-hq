@@ -145,10 +145,9 @@ def _send_subscription_ending_reminder_email(subscription, template, template_pl
     )
     log_accounting_info(
         "Sent %(days_left)s-day subscription reminder "
-        "email for %(domain)s to %(email)s." % {
+        "email for %(domain)s" % {
             'days_left': num_days_left,
             'domain': domain_name,
-            'email': to,
         }
     )
 
@@ -213,10 +212,9 @@ def send_ending_reminder_email(subscription):
         )
         log_accounting_info(
             "Sent %(days_left)s-day subscription reminder "
-            "email for %(domain)s to %(email)s." % {
+            "email for %(domain)s" % {
                 'days_left': num_days_left,
                 'domain': domain_name,
-                'email': email,
             }
         )
 
