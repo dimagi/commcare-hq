@@ -1,21 +1,51 @@
+{% load i18n %}
+
 <p>
-  Dear {{ dimagi_contact }}
+  {% blocktrans %}
+    Dear {{ dimagi_contact }},
+  {% endblocktrans %}
 </p>
 <p>
-  You have been identified as the dimagi point of contact for
-  {{ account_or_domain }}.
+  {% blocktrans %}
+    You have been identified as the Dimagi point of contact for
+    {{ account_or_domain }}.
+  {% endblocktrans %}
 </p>
 
 <p>
   {% if is_customer_account %}
-    This account has a {{ plan }} subscription that is ending on {{ end_date }}.
+    {% blocktrans %}
+      This account has a {{ plan }} subscription that is ending on
+      {{ end_date }}.
+    {% endblocktrans %}
   {% else %}
-    This project space has a {{ plan }} subscription that is ending on {{ end_date }}.
+    {% blocktrans %}
+      This project space has a {{ plan }} subscription that is ending on
+      {{ end_date }}.
+    {% endblocktrans %}
   {% endif %}
-  After that date, the subscription will automatically pause and this space will
-  lose access to all features until it is re-subscribed to a new paid plan.
+  {% blocktrans %}
+    After that date, the subscription will automatically pause and this space
+    will lose access to all features until it is re-subscribed to a new paid
+    plan.
+  {% endblocktrans %}
 </p>
 
 <p>
-  If you have any questions on this, please reach out to {{ accounts_email }}.
+  {% blocktrans %}
+    In case you would like to extend this subscription or have any questions,
+    please reach out to {{ accounts_email }}.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Best regards,
+  {% endblocktrans %}
+</p>
+<p>
+  {% blocktrans %}
+    The CommCare Team<br />
+  {% endblocktrans %}
+  {{ base_url }}
 </p>
