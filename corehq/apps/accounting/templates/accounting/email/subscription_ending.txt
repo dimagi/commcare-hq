@@ -3,7 +3,7 @@
 {% blocktrans %}
   Dear {{ domain }} administrator,
 
-  Your subscription will pause on {{ ending_on }}. In case you would like to
+  Your subscription will pause {{ ending_on }} In case you would like to
   renew, please select auto-renewal here: {{ subscription_url }}
 
   Please reach out to {{ invoicing_contact_email }} if you have any questions.
