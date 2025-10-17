@@ -32,8 +32,8 @@ class Command(BaseCommand):
         We iterate over household case IDs
         - then duplicate it and all its child cases
         - update certain case properties & setup new indices
-        - save the cases (one form at a time)
         - we repeat this X times for each household, X is the multiplier set
+        - save all cases at once
         """
         # get household case ids to duplicate
         is_real_run = options['real_run']
