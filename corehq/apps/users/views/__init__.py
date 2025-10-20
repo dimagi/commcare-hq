@@ -1244,6 +1244,7 @@ class InviteWebUserView(BaseManageWebUserView):
         custom_data = CustomDataEditor(
             field_view=WebUserFieldsView,
             domain=self.domain,
+            existing_custom_data=self.invitation.custom_user_data,
             post_dict=post_dict,
             ko_model="custom_fields",
             request_user=self.request.couch_user
