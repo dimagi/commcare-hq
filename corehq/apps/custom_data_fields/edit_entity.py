@@ -322,12 +322,13 @@ class CustomDataEditor(object):
             self.field_view.urlname, args=[self.domain]
         ))
 
-        return Fieldset(
+        return FieldsetAccordionGroup(
             _("Unrecognized Information"),
             Div(
                 HTML(msg),
                 css_class="alert alert-warning",
                 css_id="js-unrecognized-data",
             ),
-            *help_div
+            *help_div,
+            active=True
         ) if len(help_div) else HTML('')
