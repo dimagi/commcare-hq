@@ -3,7 +3,7 @@
 
 <button
   type="button"
-  class="btn btn-primary new-card"
+  class="btn {% if card_button_class %}{{ card_button_class }}{% else %}btn-primary{% endif %}"
   data-bs-toggle="modal"
   href="#new-stripe-card-modal"
 >
