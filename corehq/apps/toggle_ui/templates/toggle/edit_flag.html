@@ -168,12 +168,12 @@
 
   {% if not is_random %}
     <div
-      class="alert {% if toggle.status == 'active' %} alert-info {% else %} alert-warning {% endif %}"
+      class="alert d-flex justify-content-between {% if toggle.status == 'active' %} alert-info {% else %} alert-warning {% endif %}"
       role="alert"
     >
-      Toggle Status: <strong>{{ toggle.status }}</strong>
+      <div>Toggle Status: <strong>{{ toggle.status }}</strong></div>
       <button
-        class="btn btn-primary pull-right"
+        class="btn btn-default"
         data-toggle="modal"
         data-target="#change-toggle-status"
       >
@@ -218,6 +218,7 @@
                   name="toggle_status"
                   value="{{ status_option }}"
                   {% if status_option == toggle.status %}checked{% endif %}
+                  {% if not user.is_staff %}disabled{% endif %}
                 >
                 {{ status_option }}
               </label>
@@ -225,6 +226,9 @@
             {% endfor %}
           </div>
           <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">
+              Close
+            </button>
             <button
               type="submit"
               class="btn btn-danger"
@@ -278,9 +282,9 @@
           {% else %}
             <p>
               {% blocktrans with status=toggle.status %}
-                This toggle is currently {{ status }} and will soon be removed.
-                This applies to all users and domains, so the individually
-                toggled items are irrelevant.
+                This feature is {{ status }} for all users and domains, so the
+                individually toggled items are irrelevant. The toggle will soon
+                be removed.
               {% endblocktrans %}
             </p>
           {% endif %}
