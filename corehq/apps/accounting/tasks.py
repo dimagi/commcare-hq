@@ -48,6 +48,7 @@ from corehq.apps.accounting.models import (
     BillingAccountWebUserHistory,
     CreditLine,
     Currency,
+    DefaultProductPlan,
     DomainUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
@@ -419,6 +420,42 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
             'month': first_of_month.strftime(USER_MONTH_FORMAT),
             'emails': ", ".join(emails)
         })
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+def auto_renew_subscriptions():
+    """
+    Automatically renew eligible subscriptions 30 or fewer days from their end date.
+    """
+    ending_subscriptions = _get_auto_renewable_subscriptions()
+    for subscription in ending_subscriptions:
+        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain) and not subscription.is_renewed:
+            auto_renew_subscription(subscription)
+
+
+def _get_auto_renewable_subscriptions():
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=30)
+    return Subscription.visible_objects.filter(
+        date_end__gte=today,
+        date_end__lte=date_in_n_days,
+        service_type=SubscriptionType.PRODUCT,
+        auto_renew=True,
+    ).exclude(
+        account__is_customer_billing_account=True,
+    )
+
+
+def auto_renew_subscription(subscription):
+    new_plan_version = DefaultProductPlan.get_default_plan_version(
+        edition=subscription.plan_version.plan.edition,
+        is_annual_plan=subscription.plan_version.plan.is_annual_plan,
+    )
+    subscription.renew_subscription(
+        adjustment_method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+        new_version=new_plan_version,
+    )
+    # TODO: send_subscription_renewed_email(subscription)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
