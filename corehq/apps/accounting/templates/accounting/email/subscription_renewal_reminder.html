@@ -1,0 +1,64 @@
+{% load i18n %}
+
+<p>
+  {% blocktrans %}
+    Dear {{ domain }} administrator,
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    This is a reminder that your {{ plan_name }} subscription for {{ domain }}
+    ends soon!
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Renewal: If you would like to renew, just ensure that you have auto-renewal
+    selected <a href="{{ subscription_url }}">here</a>.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    30 days prior to the renewal date, you will receive an invoice for the new
+    subscription term to renew you to the latest version of your current plan as
+    <a href="{{ plan_info_url }}">described here</a>. If you'd like to renew
+    sooner, you can self-renew <a href="{{ subscription_url }}">here</a>.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Cancellation: In case you decide you will not be renewing your subscription,
+    you can simply turn off auto-renew at any point during your subscription
+    term.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    In case you have any questions about your renewal, please don't hesitate to
+    contact {{ invoicing_contact_email }}.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Thank you for your use and support of CommCare.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Best regards,
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    The CommCare Team
+  {% endblocktrans %}<br />
+  {{ base_url }}
+</p>
