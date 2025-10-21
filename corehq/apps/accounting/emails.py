@@ -170,7 +170,7 @@ def _get_reminder_email_contacts(subscription, domain):
         )
     project_admins = {a.get_email() for a in WebUser.get_admins_by_domain(domain)}
     dimagi_contacts = {e for e in WebUser.get_dimagi_emails_by_domain(domain)}
-    if subscription.account.dimagi_contact is not None:
+    if subscription.account.dimagi_contact:
         dimagi_contacts.add(subscription.account.dimagi_contact)
 
     to = billing_contacts
