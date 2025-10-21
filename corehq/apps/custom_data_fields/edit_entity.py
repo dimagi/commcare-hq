@@ -172,14 +172,14 @@ class CustomDataEditor(object):
         if profile_names:
             form_fieldsets.append(Fieldset(
                 _("Profile"),
-                *profile_names,
-                css_class="custom-data-fieldset"
+                *profile_names
             ))
         if field_names:
             form_fieldsets.append(FieldsetAccordionGroup(
                 _("Additional Information"),
                 *field_names,
-                active=True
+                active=True,
+                css_class="custom-data-fieldset"
             ))
         if not is_post:
             form_fieldsets.append(self.uncategorized_form)
