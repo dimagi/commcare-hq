@@ -262,24 +262,19 @@ def _ending_reminder_context(subscription):
                           'CommCare+Pricing+Overview#Detailed-Software-Plan-%26-Feature-Comparisons')
     }
 
-    if subscription.account.is_customer_billing_account:
-        subject = _(
-            "CommCare Alert: %(account_name)s's subscription to "
-            "%(plan_name)s ends %(ending_on)s"
-        ) % {
-            'account_name': subscription.account.name,
-            'plan_name': plan_name,
-            'ending_on': ending_on,
-        }
-    else:
-        subject = _(
-            "CommCare Alert: %(domain)s's subscription to "
-            "%(plan_name)s ends %(ending_on)s"
-        ) % {
-            'plan_name': plan_name,
-            'domain': domain_name,
-            'ending_on': ending_on,
-        }
+    subject = _(
+        "CommCare Alert: %(domain_or_account)s's subscription to "
+        "%(plan_name)s ends %(ending_on)s"
+    ) % {
+        'domain_or_account': (
+            subscription.account.name
+            if subscription.account.is_customer_billing_account
+            else domain_name
+        ),
+        'plan_name': plan_name,
+        'ending_on': ending_on,
+    }
+
     context.update({'subject': subject})
     return context
 
