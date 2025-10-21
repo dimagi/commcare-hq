@@ -35,8 +35,7 @@ In particular consider how existing data may be impacted by this change.
 ### Migrations
 <!-- Delete this section if the PR does not contain any migrations -->
 <!-- https://commcare-hq.readthedocs.io/migrations_in_practice.html -->
-- [ ] The migrations in this code can be safely applied first independently of the code
-- [ ] High risk operations like `RemoveField`, `RenameField`, `RemoveConstraint`, and [others described here](https://github.com/3YOURMIND/django-migration-linter/blob/main/docs/incompatibilities.md) are planned carefully, often with a prior migration using `SeparateDatabaseAndState`.
+- [ ] The migrations in this code can be safely applied first independently of the code. Pay particular attention to _backward incompatible_ operations like `RemoveField`, `RenameField`, `RemoveConstraint`, and [others described here](https://github.com/3YOURMIND/django-migration-linter/blob/main/docs/incompatibilities.md) that can cause errors when migrations are applied to a live database.
 
 <!-- Please link to any past code changes that are coordinated with this migration -->
 
