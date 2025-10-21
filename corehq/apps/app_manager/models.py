@@ -655,6 +655,20 @@ class OpenCaseAction(FormAction):
     def _update_has_name(self, update):
         return bool(update.question_path)
 
+    def get_assigned_names(self):
+        questions = []
+        if self.name_update_multi:
+            questions.extend(self.name_update_multi)
+
+        if self.name_update:
+            questions.append(self.name_update)
+
+        return [question.question_path for question in questions if question.question_path]
+
+    def assign_name_update(self, question_path):
+        self.name_update = ConditionalCaseUpdate(question_path=question_path)
+        self.name_update_multi = []
+
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
@@ -1726,6 +1740,9 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         """
         return self.get_case_updates().get(case_type, [])
 
+    def get_source_with_mappings(self):
+        return self.source
+
 
 class JRResourceProperty(StringProperty):
 
@@ -2112,6 +2129,14 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
                 case_relationships_by_child_type[child_case_type].add(
                     (parent_case_type, subcase.reference_id or 'parent'))
         return case_relationships_by_child_type
+
+    def get_source_with_mappings(self):
+        if not self._parent.case_type:
+            return self.source
+
+        xform = XForm(self.source)
+        xform.add_case_mappings(self)
+        return xform.render_pretty().decode('utf-8')
 
 
 class GraphAnnotations(IndexedSchema):
