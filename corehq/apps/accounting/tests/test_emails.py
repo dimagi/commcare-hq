@@ -1,10 +1,19 @@
+import datetime
 from unittest.mock import patch
 
+from time_machine import travel
+
+from dimagi.utils.web import get_site_domain
+
 from corehq.apps.accounting.emails import (
+    _ending_reminder_context,
     _get_reminder_email_contacts,
 )
 from corehq.apps.accounting.models import WebUser
 from corehq.apps.accounting.tests.base_tests import BaseInvoiceTestCase
+from corehq.apps.domain.views.accounting import DomainSubscriptionView
+from corehq.const import USER_DATE_FORMAT
+from corehq.util.view_utils import absolute_reverse
 
 
 class TestGetReminderEmailContacts(BaseInvoiceTestCase):
@@ -76,3 +85,48 @@ class TestGetReminderEmailContacts(BaseInvoiceTestCase):
             assert to == set(project_admins)
             assert cc is None
             assert bcc == set(dimagi_users + [dimagi_account_contact])
+
+
+class TestEndingReminderContext(BaseInvoiceTestCase):
+
+    @travel('2025-10-01', tick=False)
+    def test_ending_reminder_context(self):
+        self.subscription.date_end = datetime.date(2025, 10, 31)
+        self.subscription.save()
+
+        user_formatted_date = self.subscription.date_end.strftime(USER_DATE_FORMAT)
+        context = _ending_reminder_context(self.subscription)
+        assert context['domain'] == self.domain.name
+        assert context['plan_name'] == self.subscription.plan_version.plan.name
+        assert context['account'] == self.account.name
+        assert context['ending_on'] == f"on {user_formatted_date}."
+        assert context['subscription_url'] == absolute_reverse(
+            DomainSubscriptionView.urlname, args=[self.domain.name]
+        )
+        assert context['base_url'] == get_site_domain()
+        assert context['subject'] == (
+            f"CommCare Alert: {self.domain.name}'s subscription to {self.subscription.plan_version.plan.name} "
+            f"ends on {user_formatted_date}."
+        )
+
+    @travel('2025-10-01', tick=False)
+    def test_ending_on_tomorrow_if_one_day_left(self):
+        self.subscription.date_end = datetime.date(2025, 10, 2)
+        self.subscription.save()
+
+        context = _ending_reminder_context(self.subscription)
+        assert context['ending_on'] == "tomorrow!"
+
+    @travel('2025-10-01', tick=False)
+    def test_subject_uses_account_if_customer_billing_account(self):
+        self.subscription.account.is_customer_billing_account = True
+        self.subscription.account.save()
+        self.subscription.date_end = datetime.date(2025, 10, 31)
+        self.subscription.save()
+
+        user_formatted_date = self.subscription.date_end.strftime(USER_DATE_FORMAT)
+        context = _ending_reminder_context(self.subscription)
+        assert context['subject'] == (
+            f"CommCare Alert: {self.account.name}'s subscription to {self.subscription.plan_version.plan.name} "
+            f"ends on {user_formatted_date}."
+        )
