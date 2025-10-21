@@ -79,6 +79,7 @@ class CardUtilsTest(BaseAccountingTest):
         assert cards == []
 
     @override_settings(STRIPE_PRIVATE_KEY='something')
+    @patch('corehq.apps.accounting.models.StripePaymentMethod.objects.get_or_create')
     def test_get_saved_cards_for_user_with_stripe_key(self, get_mock):
         paying_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
         pm = Mock(spec=StripePaymentMethod)
