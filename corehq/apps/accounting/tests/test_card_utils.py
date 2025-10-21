@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+from django.test import override_settings
+
 from corehq.apps.accounting.models import PaymentMethodType, StripePaymentMethod
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -70,19 +72,18 @@ class CardUtilsTest(BaseAccountingTest):
         assert payment_method.web_user == paying_user.username
         assert payment_method.method_type == PaymentMethodType.STRIPE
 
+    @override_settings(STRIPE_PRIVATE_KEY=None)
     def test_get_saved_cards_for_user_no_stripe_key(self):
         paying_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
-        with patch('corehq.apps.accounting.utils.cards.settings.STRIPE_PRIVATE_KEY', None):
-            cards = get_saved_cards_for_user(paying_user.username, self.billing_account)
-            assert cards == []
+        cards = get_saved_cards_for_user(paying_user.username, self.billing_account)
+        assert cards == []
 
-    @patch('corehq.apps.accounting.models.StripePaymentMethod.objects.get_or_create')
+    @override_settings(STRIPE_PRIVATE_KEY='something')
     def test_get_saved_cards_for_user_with_stripe_key(self, get_mock):
         paying_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
         pm = Mock(spec=StripePaymentMethod)
         pm.all_cards_serialized.return_value = [{'token': 'card_b'}]
         get_mock.return_value = (pm, False)
-        with patch('corehq.apps.accounting.utils.cards.settings.STRIPE_PRIVATE_KEY', 'something'):
-            cards = get_saved_cards_for_user(paying_user.username, self.billing_account)
-            assert len(cards) == 1
-            assert cards[0]['token'] == 'card_b'
+        cards = get_saved_cards_for_user(paying_user.username, self.billing_account)
+        assert len(cards) == 1
+        assert cards[0]['token'] == 'card_b'
