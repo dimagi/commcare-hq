@@ -1,9 +1,14 @@
 import datetime
+from unittest.mock import patch
 
+from corehq import toggles
 from corehq.apps.accounting import tasks
-from corehq.apps.accounting.models import FormSubmittingMobileWorkerHistory
+from corehq.apps.accounting.models import (
+    FormSubmittingMobileWorkerHistory,
+    SubscriptionType,
+)
 from corehq.apps.accounting.tests import generator
-from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from corehq.apps.accounting.tests.base_tests import BaseInvoiceTestCase
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -51,3 +56,111 @@ class TestCalculateFormSubmittingMobileWorkers(BaseInvoiceTestCase):
         self.assertEqual(worker_history.domain, self.domain.name)
         self.assertEqual(worker_history.num_users, self.num_form_submitting_workers)
         self.assertEqual(worker_history.record_date, self.one_day_ago)
+
+
+class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
+    def setUp(self):
+        super().setUp()
+        toggles.SHOW_AUTO_RENEWAL.set(self.domain.name, True, namespace=toggles.NAMESPACE_DOMAIN)
+
+    def test_sends_renewal_reminder_email(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.service_type = SubscriptionType.PRODUCT
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_renewal_reminder_email') as mock_send:
+            tasks.send_renewal_reminder_emails(60)
+            mock_send.assert_called_once_with(self.subscription)
+
+    def test_no_renewal_reminder_if_service_type_not_product(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_renewal_reminder_email') as mock_send:
+            tasks.send_renewal_reminder_emails(60)
+            assert not mock_send.called
+
+    def test_no_renewal_reminder_if_is_trial(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.is_trial = True
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_renewal_reminder_email') as mock_send:
+            tasks.send_renewal_reminder_emails(60)
+            assert not mock_send.called
+
+    def test_no_renewal_reminder_if_customer_billing_account(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.account.is_customer_billing_account = True
+        self.subscription.account.save()
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_renewal_reminder_email') as mock_send:
+            tasks.send_renewal_reminder_emails(60)
+            assert not mock_send.called
+
+    def test_no_renewal_reminder_if_is_renewed(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=59)
+        self.subscription.renew_subscription()
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_renewal_reminder_email') as mock_send:
+            tasks.send_renewal_reminder_emails(60)
+            assert not mock_send.called
+
+    def test_sends_subscription_ending_email(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.service_type = SubscriptionType.PRODUCT
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
+            tasks.send_subscription_ending_emails(60)
+            mock_send.assert_called_once_with(self.subscription)
+
+    def test_no_subscription_ending_email_if_auto_renew_enabled(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.service_type = SubscriptionType.PRODUCT
+        self.subscription.auto_renew = True
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
+            tasks.send_subscription_ending_emails(60)
+            assert not mock_send.called
+
+    def test_no_subscription_ending_email_if_service_type_not_product(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
+            tasks.send_subscription_ending_emails(60)
+            assert not mock_send.called
+
+    def test_no_subscription_ending_email_if_is_trial(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.is_trial = True
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
+            tasks.send_subscription_ending_emails(60)
+            assert not mock_send.called
+
+    def test_no_subscription_ending_email_if_customer_billing_account(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.account.is_customer_billing_account = True
+        self.subscription.account.save()
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
+            tasks.send_subscription_ending_emails(60)
+            assert not mock_send.called
+
+    def test_no_subscription_ending_email_if_is_renewed(self):
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
+        self.subscription.renew_subscription()
+        self.subscription.save()
+
+        with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
+            tasks.send_subscription_ending_emails(60)
+            assert not mock_send.called
