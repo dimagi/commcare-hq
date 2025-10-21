@@ -1,3 +1,4 @@
+// x-cloak is used by Alpine.js to hide elements until they are fully loaded (recommended approach)
 [x-cloak] {
   display: none !important;
 }
