@@ -2091,6 +2091,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     'country',
                     css_class='form-control form-control-lg accounting-country-select2',
                     x_model='country',
+                    x_init=f"country = '{self.initial.get('country') or ''}'",
                     data_country_code=self.current_country or '',
                     data_country_name=COUNTRIES.get(self.current_country, ''),
                     **{
