@@ -82,6 +82,7 @@ from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
@@ -1466,7 +1467,7 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=False):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1514,8 +1515,8 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
-            auto_renew=auto_renew,
         )
+        new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
         new_subscription.save()
         new_subscription.raise_conflicting_dates(new_subscription.date_start, new_subscription.date_end)
@@ -1632,6 +1633,7 @@ class Subscription(models.Model):
             renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
+        renewed_subscription.auto_renew = renewed_subscription.can_auto_renew
         renewed_subscription.save()
 
         # record renewal from old subscription
@@ -2086,6 +2088,15 @@ class Subscription(models.Model):
             return True
         else:
             return False
+
+    @property
+    def can_auto_renew(self):
+        return (
+            SHOW_AUTO_RENEWAL.enabled(self.subscriber.domain)
+            and self.service_type == SubscriptionType.PRODUCT
+            and self.date_end is not None
+            and not self.account.is_customer_billing_account
+        )
 
     def user_can_change_subscription(self, user):
         if user.is_superuser:
