@@ -1,20 +1,20 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
- <fieldset>
-     <legend>
-         <a class="accordion-toggle{% if not div.active %} collapsed{% endif %}"
--           data-toggle="collapse"
-+           data-bs-toggle="collapse"
-            {% if div.data_parent %}
-            data-parent="#{{ div.data_parent }}"
-            {% endif %}
-@@ -10,7 +10,7 @@
-             {{ div.name }}
-         </a>
-     </legend>
--    <div id="{{ div.css_id }}" class="panel-body collapse{% if div.active %} in{% endif %}" >
-+    <div id="{{ div.css_id }}" class="card-body collapse{% if div.active %} in{% endif %}" >
-         <div>
-             {{ fields|safe }}
-         </div>
+@@ -2,7 +2,7 @@
+   <legend>
+     <a
+       class="accordion-toggle{% if not div.active %}collapsed{% endif %}"
+-      data-toggle="collapse"
++      data-bs-toggle="collapse"
+       {% if div.data_parent %}
+         data-parent="#{{ div.data_parent }}"
+       {% endif %}
+@@ -14,7 +14,7 @@
+   </legend>
+   <div
+     id="{{ div.css_id }}"
+-    class="panel-body collapse{% if div.active %}in{% endif %}"
++    class="card-body collapse{% if div.active %}in{% endif %}"
+   >
+     <div>{{ fields|safe }}</div>
+   </div>
