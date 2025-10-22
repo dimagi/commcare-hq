@@ -3785,10 +3785,10 @@ class StripePaymentMethod(PaymentMethod):
         proxy = True
         app_label = 'accounting'
 
-    STRIPE_GENERIC_ERROR = (stripe.error.AuthenticationError,
-                            stripe.error.InvalidRequestError,
-                            stripe.error.APIConnectionError,
-                            stripe.error.StripeError,)
+    STRIPE_GENERIC_ERROR = (stripe.AuthenticationError,
+                            stripe.InvalidRequestError,
+                            stripe.APIConnectionError,
+                            stripe.StripeError,)
 
     @property
     def customer(self):
@@ -3799,7 +3799,7 @@ class StripePaymentMethod(PaymentMethod):
         if self.customer_id is not None:
             try:
                 customer = self._get_stripe_customer()
-            except stripe.error.InvalidRequestError:
+            except stripe.InvalidRequestError:
                 pass
         if customer is None:
             customer = self._create_stripe_customer()
@@ -3822,7 +3822,7 @@ class StripePaymentMethod(PaymentMethod):
         try:
             cards = stripe.Customer.list_sources(customer=self.customer.id, object="card")
             return [card for card in cards.data if card is not None]
-        except stripe.error.AuthenticationError:
+        except stripe.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
                 return []

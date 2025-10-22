@@ -104,14 +104,14 @@ class BaseStripePaymentHandler(object):
             payment_record.transaction_id = charge.id
             payment_record.save()
             self.update_payment_information(billing_account)
-        except stripe.error.CardError as e:
+        except stripe.CardError as e:
             # card was declined
             return e.json_body
         except (
-            stripe.error.AuthenticationError,
-            stripe.error.InvalidRequestError,
-            stripe.error.APIConnectionError,
-            stripe.error.StripeError,
+            stripe.AuthenticationError,
+            stripe.InvalidRequestError,
+            stripe.APIConnectionError,
+            stripe.StripeError,
         ) as e:
             log_accounting_error(
                 "A payment for %(cost_item)s failed due "
@@ -403,7 +403,7 @@ class AutoPayInvoicePaymentHandler(object):
                 description='Auto-payment for Invoice %s' % invoice.invoice_number,
                 idempotency_key=f"{invoice.invoice_number}_{amount}"
             )
-        except stripe.error.CardError as e:
+        except stripe.CardError as e:
             self._handle_card_declined(invoice, e)
         except payment_method.STRIPE_GENERIC_ERROR as e:
             self._handle_card_errors(invoice, e)

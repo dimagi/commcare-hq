@@ -22,7 +22,7 @@ def get_customer_cards(username):
         return dict(cards)
     except StripePaymentMethod.DoesNotExist:
         pass
-    except stripe.error.AuthenticationError:
+    except stripe.AuthenticationError:
         if not settings.STRIPE_PRIVATE_KEY:
             log_accounting_info("Private key is not defined in settings")
         else:
