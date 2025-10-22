@@ -29,6 +29,7 @@ from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
     get_usercase_properties,
@@ -122,6 +123,13 @@ from corehq.apps.users.models import HqPermissions
 from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
+
+
+METRICS_UPDATE_CASE_PROPERTIES = 'update_case_properties'
+UPDATE_CASE_SOURCE_FORM_BUILDER = 'formbuilder'
+UPDATE_CASE_SOURCE_CASE_MANAGEMENT = 'casemanagement'
+UPDATE_CASE_SOURCE_API = 'api'
+UPDATE_CASE_SOURCE_UNKNOWN = 'unknown'
 
 
 @no_conflict_require_POST
@@ -228,6 +236,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     old_load_from_form = form.actions.load_from_form
 
     allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    actions_pre_save = get_actions_state(form)
     try:
         form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
     except FormActionsDiffException as e:
@@ -243,6 +252,16 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     response_json = {}
     app.save(response_json)
+
+    actions_post_save = get_actions_state(form)
+
+    if actions_pre_save != actions_post_save:
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES,
+            request.couch_user,
+            {'source': UPDATE_CASE_SOURCE_CASE_MANAGEMENT}
+        )
+
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
@@ -258,19 +277,19 @@ def _get_updates(existing_actions, data, allow_conflicts):
 @csrf_exempt
 @api_domain_view
 def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
-    return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
+    return _edit_form_attr(request, domain, app_id, form_unique_id, attr, source=UPDATE_CASE_SOURCE_API)
 
 
 @waf_allow('XSS_BODY')
 @login_or_digest
 def edit_form_attr(request, domain, app_id, form_unique_id, attr):
-    return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
+    return _edit_form_attr(request, domain, app_id, form_unique_id, attr, source=UPDATE_CASE_SOURCE_FORM_BUILDER)
 
 
 @no_conflict_require_POST
 @require_permission(HqPermissions.edit_apps, login_decorator=None)
 @capture_user_errors
-def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
+def _edit_form_attr(request, domain, app_id, form_unique_id, attr, source=UPDATE_CASE_SOURCE_UNKNOWN):
     """
     Called to edit any (supported) form attribute, given by attr
 
@@ -298,6 +317,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         else:
             messages.error(request, _("There was an error saving, please try again!"))
             return back_to_main(request, domain, app_id=app_id)
+
+    actions_pre_save = get_actions_state(form)
     lang = request.COOKIES.get('lang', app.langs[0])
 
     def should_edit(attribute):
@@ -451,6 +472,15 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
+
+    actions_post_save = get_actions_state(form)
+    if actions_pre_save != actions_post_save:
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES,
+            request.couch_user,
+            {'source': source}
+        )
+
     if ajax:
         return JsonResponse(resp)
     else:
@@ -530,6 +560,8 @@ def patch_xform(request, domain, app_id, form_unique_id):
     if conflict is not None:
         return conflict
 
+    actions_pre_save = get_actions_state(form)
+
     xml = apply_patch(patch, existing_xml)
 
     # TODO: Mirror this handling somewhere in _edit_form_attr
@@ -547,7 +579,35 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
+
+    actions_post_save = get_actions_state(form)
+
+    if actions_pre_save != actions_post_save:
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES,
+            request.couch_user,
+            {'source': UPDATE_CASE_SOURCE_FORM_BUILDER}
+        )
+
     return JsonResponse(response_json)
+
+
+def get_actions_state(form):
+    open_json = ''
+    update_json = ''
+
+    if hasattr(form.actions, 'open_case'):
+        form.actions.open_case.make_multi()
+        open_json = form.actions.open_case.to_json()
+
+    if hasattr(form.actions, 'update_case'):
+        form.actions.update_case.make_multi()
+        update_json = form.actions.update_case.to_json()
+
+    return {
+        'open': open_json,
+        'update': update_json
+    }
 
 
 def apply_patch(patch, text):
