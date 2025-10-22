@@ -160,6 +160,28 @@ class OpenCaseActionTests(SimpleTestCase):
 
         self.assertFalse(action.has_name_update())
 
+    def test_get_assigned_names_spans_update_and_update_multi(self):
+        action = OpenCaseAction({
+            'name_update': {'question_path': 'one'},
+            'name_update_multi': [{'question_path': 'two'}]
+        })
+
+        self.assertEqual(set(action.get_assigned_names()), {'one', 'two'})
+
+    def test_assign_name_update_sets_name_update(self):
+        action = OpenCaseAction()
+        action.assign_name_update('name_question')
+
+        self.assertEqual(action.name_update.question_path, 'name_question')
+
+    def test_assign_name_update_removes_update_multi(self):
+        action = OpenCaseAction({
+            'name_update_multi': [{'question_path': 'one'}, {'question_path': 'two'}]
+        })
+        action.assign_name_update('three')
+
+        self.assertEqual(action.name_update_multi, [])
+
 
 class OpenCaseAction_ApplyUpdates_Tests(SimpleTestCase):
     def test_no_changes(self):
