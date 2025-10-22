@@ -1,0 +1,78 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+-{% extends "registration/bootstrap3/base.html" %}
++{% extends "registration/bootstrap5/base.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ {% load crispy_forms_tags %}
+ 
+-{% js_entry_b3 'registration/js/bootstrap3/register_new_user' %}
++{% js_entry 'registration/js/bootstrap5/register_new_user' %}
+ 
+ {% block title %}{% trans "Create an Account" %}{% endblock title %}
+ 
+@@ -22,7 +22,7 @@
+       fbq('init', '301081893674207');
+       fbq('track', 'PageView');
+     </script>
+-    <noscript><img height="1" width="1" style="display:none"
++    <noscript><img height="1" width="1" style="display:none"  {# todo B5: inline-style #}
+                    src="https://www.facebook.com/tr?id=301081893674207&ev=PageView&noscript=1"
+     /></noscript>
+     <!-- DO NOT MODIFY -->
+@@ -46,11 +46,11 @@
+     </script>
+     <script src="//www.googleadservices.com/pagead/conversion.js"></script>
+     <noscript>
+-      <div style="display:inline;">
++      <div style="display:inline;">  {# todo B5: inline-style #}
+         <img
+           height="1"
+           width="1"
+-          style="border-style:none;"
++          style="border-style:none;"  {# todo B5: inline-style #}
+           alt=""
+           src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"
+         />
+@@ -71,7 +71,7 @@
+       <img
+         height="1"
+         width="1"
+-        style="display:none;"
++        style="display:none;"  {# todo B5: inline-style #}
+         alt=""
+         src="https://dc.ads.linkedin.com/collect/?pid=63907&fmt=gif"
+       />
+@@ -87,7 +87,7 @@
+ 
+   <div class="container">
+     <div class="row">
+-      <div class="col-xs-12">
++      <div class="col-sm-12">
+         <div id="registration-form-container" class="reg-form-container">
+           <ul class="form-step-progress">
+             <li class="active">{% trans "Create Account" %}</li>
+@@ -107,10 +107,10 @@
+                 <i class="fcc fcc-flower fa-spin"></i>
+               </p>
+             </div>
+-            {% crispy reg_form %}
++            {% crispy reg_form %}  {# todo B5: crispy #}
+             <div
+               class="form-bubble form-step final-step"
+-              style="display: none;"
++              style="display: none;"  {# todo B5: inline-style #}
+             >
+               {% include "registration/partials/register_new_user/submit_info.html" %}
+               {% include "registration/partials/register_new_user/submit_errors.html" %}
+@@ -127,7 +127,7 @@
+               &nbsp;&nbsp;&nbsp;
+               <a
+                 href="#cta-form-get-demo"
+-                data-toggle="modal"
++                data-bs-toggle="modal"
+                 id="cta-form-get-demo-button-body"
+                 class="btn btn-purple "
+                 >{% trans 'Schedule a Demo' %}</a

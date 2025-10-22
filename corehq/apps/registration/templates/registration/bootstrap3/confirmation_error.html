@@ -1,0 +1,8 @@
+{% extends "registration/bootstrap3/base.html" %}
+
+{% block title %}Error Confirming Account{% endblock title %}
+
+{% block registration-content %}
+  {% if message_body %}<p>{{ message_body }}</p>{% endif %}
+  <p>You may try <a href="{% url "registration_resend_domain_confirmation" %}">resending the confirmation email</a>.</p>
+{% endblock %}

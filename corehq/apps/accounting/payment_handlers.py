@@ -411,7 +411,7 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 payment_record = PaymentRecord.create_record(payment_method, transaction_id, amount)
             except IntegrityError:
-                log_accounting_error("[Autopay] Attempt to double charge invoice {}".format(invoice.id))
+                log_accounting_error(f"[Autopay] Invoice was double charged {invoice.id}")
             else:
                 invoice.pay_invoice(payment_record)
                 invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO

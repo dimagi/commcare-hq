@@ -1206,7 +1206,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
@@ -1235,7 +1234,11 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/events/templates/events/edit_attendee.html
@@ -4687,78 +4690,6 @@ msgstr "Перейти на сторінку всіх рахунків для ц
 msgid "Export to Excel"
 msgstr "Експортувати в Excel"
 
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-msgid "Add New Credit Card"
-msgstr "Додати нову кредитну картку"
-
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Processing your request"
-msgstr "Обробка вашого запиту"
-
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Use this card to autopay"
-msgstr "Використовувати цю картку для автосплати"
-
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-msgid ""
-"\n"
-"                  We use <a href=\"http://www.stripe.com/\" "
-"target=\"_blank\">Stripe</a>\n"
-"                  to process this transaction.\n"
-"                "
-msgstr ""
-"\n"
-"                  Ми використовуємо <a href=\"http://www.stripe.com/\" "
-"target=\"_blank\">Stripe</a>\n"
-"                  для обробки цієї транзакції.\n"
-"                "
-
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-#: corehq/apps/app_execution/forms.py
-#: corehq/apps/app_manager/templates/app_manager/form_designer.html
-#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
-#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/forms.py
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
-#: corehq/apps/integration/kyc/forms.py
-#: corehq/apps/integration/payments/forms.py
-#: corehq/apps/locations/templates/locations/location_types.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/sms/forms.py corehq/apps/styleguide/example_forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
-#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
-#: corehq/apps/userreports/forms.py
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/ui/forms.py
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
-#: corehq/motech/dhis2/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/forms.py
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-msgid "Save"
-msgstr "Зберегти"
-
 #: corehq/apps/accounting/templates/accounting/partials/renew_plan_selection.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
@@ -4827,6 +4758,12 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Save card for later"
 msgstr "Зберегти картку для подальшого використання"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+msgid "Use this card to autopay"
+msgstr "Використовувати цю картку для автосплати"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid ""
@@ -5516,6 +5453,50 @@ msgid "Populate workflow from HAR file"
 msgstr "Заповнити робочий процес з HAR-файлу"
 
 #: corehq/apps/app_execution/forms.py
+#: corehq/apps/app_manager/templates/app_manager/form_designer.html
+#: corehq/apps/case_search/templates/case_search/csql_expression_form.html
+#: corehq/apps/case_search/templates/case_search/csql_modal_form.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/geospatial/forms.py
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
+#: corehq/apps/integration/kyc/forms.py
+#: corehq/apps/integration/payments/forms.py
+#: corehq/apps/locations/templates/locations/location_types.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reminders/forms.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/sms/forms.py corehq/apps/styleguide/example_forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
+#: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
+#: corehq/apps/userreports/forms.py
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/userreports/ui/forms.py
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
+#: corehq/motech/dhis2/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/forms.py
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+msgid "Save"
+msgstr "Зберегти"
+
+#: corehq/apps/app_execution/forms.py
 msgid "User not found"
 msgstr "Користувача не знайдено"
 
@@ -5765,6 +5746,7 @@ msgstr "Статус:"
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
 #: corehq/apps/integration/kyc/models.py
+#: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/integration/web_app_integration_err.html
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
@@ -8722,7 +8704,9 @@ msgstr "Встановити CommCare"
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 #: corehq/apps/events/templates/events/event_attendees.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
@@ -16241,7 +16225,8 @@ msgid "Success with warnings"
 msgstr "Успішно з попередженнями"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/integration/kyc/models.py corehq/motech/repeaters/const.py
+#: corehq/apps/integration/kyc/models.py
+#: corehq/apps/integration/payments/const.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Failed"
 msgstr "Помилка"
@@ -22676,10 +22661,7 @@ msgstr ""
 msgid "Subscribe to Plan"
 msgstr "Підписатися на тарифний план"
 
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/domain/views/accounting.py
+#: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
 msgstr "Поновити тарифний план"
 
@@ -24249,12 +24231,19 @@ msgstr " Денна пробна версія"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Your %(pe)s Edition subscription was paused on "
+#| "%(date_paused)s. Please subscribe to a plan to gain access to your "
+#| "project again.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your %(pe)s Edition subscription was paused on "
-"%(date_paused)s. Please subscribe to a plan to gain access to your project "
-"again.\n"
+"                    Your %(pe)s Edition subscription was paused on\n"
+"                    %(date_paused)s. Please subscribe to a plan to gain "
+"access\n"
+"                    to your project again.\n"
 "                  "
 msgstr ""
 "\n"
@@ -24265,13 +24254,21 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    The %(trial_length)s Day Trial includes all the "
+#| "features present in the\n"
+#| "                    %(pn)s Software Plan, which is our full set of "
+#| "features.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    The %(trial_length)s Day Trial includes all the features "
-"present in the\n"
-"                    %(pn)s Software Plan, which is our full set of "
-"features.\n"
+"                    The %(trial_length)s Day Trial includes all the "
+"features\n"
+"                    present in the %(pn)s Software Plan, which is our full "
+"set\n"
+"                    of features.\n"
 "                  "
 msgstr ""
 "\n"
@@ -24355,6 +24352,63 @@ msgstr "Дата початку"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Date Ending"
 msgstr "Дата завершення"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Your Subscription is Paused\n"
+#| "                  "
+msgid ""
+"\n"
+"                      Your subscription will automatically renew.\n"
+"                    "
+msgstr ""
+"\n"
+"                    Ваша підписка призупинена\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Your Subscription is Paused\n"
+#| "                  "
+msgid ""
+"\n"
+"                      Your subscription will end in %(days_left)s days.\n"
+"                    "
+msgstr ""
+"\n"
+"                    Ваша підписка призупинена\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy
+#| msgid "Send Now"
+msgid "Renew Now"
+msgstr "Надіслати зараз"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
+#, fuzzy
+#| msgid "Enable auto select"
+msgid "Disable Auto Renewal"
+msgstr "Увімкнути автоматичний вибір"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
+#, fuzzy
+#| msgid "Enable auto select"
+msgid "Enable Auto Renewal"
+msgstr "Увімкнути автоматичний вибір"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
@@ -24921,6 +24975,12 @@ msgstr "Видалити картку"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+msgid "Processing your request"
+msgstr "Обробка вашого запиту"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 msgid ""
 "\n"
 "          Actually remove <strong><span data-bind='text: brand'></span></"
@@ -24961,6 +25021,30 @@ msgstr ""
 "\n"
 "        Заощаджуйте майже 20%%, сплачуючи щорічно.  \n"
 "      "
+
+#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Actually remove <strong><span data-bind='text: brand'></span></"
+#| "strong> card\n"
+#| "          ************<strong><span data-bind=\"text: last4\"></span></"
+#| "strong>?\n"
+#| "        "
+msgid ""
+"\n"
+"          Actually remove\n"
+"          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
+"          ************<strong><span data-bind=\"text: last4\"></span></"
+"strong>?\n"
+"        "
+msgstr ""
+"\n"
+"          Дійсно видалити картку <strong><span data-bind='text: brand'></"
+"span></strong>\n"
+"          ************<strong><span data-bind=\"text: last4\"></span></"
+"strong>?\n"
+"        "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -25600,6 +25684,33 @@ msgstr "Використовуйте сайт Creative Commons"
 msgid "to choose a Creative Commons license."
 msgstr "щоб обрати ліцензію Creative Commons."
 
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+msgid "Add New Credit Card"
+msgstr "Додати нову кредитну картку"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  We use <a href=\"http://www.stripe.com/\" "
+#| "target=\"_blank\">Stripe</a>\n"
+#| "                  to process this transaction.\n"
+#| "                "
+msgid ""
+"\n"
+"                  We use\n"
+"                  <a href=\"http://www.stripe.com/\" "
+"target=\"_blank\">Stripe</a>\n"
+"                  to process this transaction.\n"
+"                "
+msgstr ""
+"\n"
+"                  Ми використовуємо <a href=\"http://www.stripe.com/\" "
+"target=\"_blank\">Stripe</a>\n"
+"                  для обробки цієї транзакції.\n"
+"                "
+
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid "Prepayment Amount"
@@ -25738,6 +25849,28 @@ msgstr "Додаткові одержувачі"
 msgid "Please agree to the Privacy Policy."
 msgstr "Будь ласка, погодьтеся з Політикою конфіденційності."
 
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                  We use <a href=\"http://www.stripe.com/\" "
+#| "target=\"_blank\">Stripe</a>\n"
+#| "                  to process this transaction.\n"
+#| "                "
+msgid ""
+"\n"
+"                We use\n"
+"                <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</"
+"a>\n"
+"                to process this transaction.\n"
+"              "
+msgstr ""
+"\n"
+"                  Ми використовуємо <a href=\"http://www.stripe.com/\" "
+"target=\"_blank\">Stripe</a>\n"
+"                  для обробки цієї транзакції.\n"
+"                "
+
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/restrictive_license.html
 msgid ""
 "\n"
@@ -25782,6 +25915,125 @@ msgstr ""
 "мультимедіа,\n"
 "            або обрати одну з наступних ліцензій:\n"
 "          "
+
+#: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
+#, fuzzy
+#| msgid "Enable auto select"
+msgid "By disabling auto renewal:"
+msgstr "Увімкнути автоматичний вибір"
+
+#: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
+#, python-format
+msgid ""
+"\n"
+"      Your subscription to <b>%(plan_name)s</b> will end on %(date_end)s.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
+#, python-format
+msgid ""
+"\n"
+"        Your upcoming subscription to <b>%(plan_name)s</b> beginning\n"
+"        %(date_start)s will be canceled.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/disable_auto_renew.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      You are renewing your <strong>%(p)s</strong> subscription.\n"
+#| "    "
+msgid ""
+"\n"
+"      Your subscription will <strong>not</strong> automatically renew.\n"
+"    "
+msgstr ""
+"\n"
+"      Ви поновлюєте свою підписку <strong>%(p)s</strong>.\n"
+"    "
+
+#: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
+msgid ""
+"\n"
+"    Based on currently available software plans, by enabling auto renewal:\n"
+"  "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
+#, python-format
+msgid ""
+"\n"
+"        Your <b>%(plan_name)s</b> subscription will automatically change to\n"
+"        the latest version of <b>%(next_plan_name)s</b> on %(date_end)s.\n"
+"        <br />\n"
+"        <strong>Note:</strong> This is different from your current software\n"
+"        plan.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
+#, python-format
+msgid ""
+"\n"
+"        Your <b>%(plan_name)s</b> subscription will automatically renew on\n"
+"        %(date_end)s.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
+#, python-format
+msgid ""
+"\n"
+"        Your renewed subscription will require upfront payment for 12 months "
+"of\n"
+"        software plan fees at <b>%(price)s</b>.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            Your subscription is currently paused.\n"
+#| "          "
+msgid ""
+"\n"
+"        Your subscription will renew at <b>%(price)s</b>.\n"
+"      "
+msgstr ""
+"\n"
+"            Ваша підписка наразі призупинена.\n"
+"          "
+
+#: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"    For more information about CommCare software plans, visit\n"
+"    <a\n"
+"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-"
+"Feature-Comparisons\"\n"
+"      target=\"_blank\"\n"
+"      >our help site</a\n"
+"    >.\n"
+"  "
+msgstr ""
+"\n"
+"                Дізнайтеся більше про експорти на нашому <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">Довідковому сайті</a>.\n"
+"            "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
 #, fuzzy
@@ -34640,6 +34892,12 @@ msgstr "Недійсна дата"
 msgid "US"
 msgstr ""
 
+#: corehq/apps/hqwebapp/models.py
+#, fuzzy
+#| msgid "Messaging"
+msgid "Staging"
+msgstr "Обмін повідомленнями"
+
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 #, fuzzy
 #| msgid "user"
@@ -36861,6 +37119,208 @@ msgstr "Відправлено [UTC]"
 msgid "Request failed"
 msgstr "Запит не виконано"
 
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Success"
+msgid "Successful"
+msgstr "Успішно"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Identity Provider"
+msgid "Pending with Provider"
+msgstr "Постачальник ідентифікації"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "No transaction found"
+msgid "The deposit transaction failed."
+msgstr "Транзакцій не знайдено"
+
+#: corehq/apps/integration/payments/const.py
+msgid "The deposit transaction was rejected by the payer."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The deposit transaction request expired before completion."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The deposit transaction is still in progress."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "The recipient has been deactivated."
+msgid "The deposit transaction has been delayed."
+msgstr "Одержувача деактивовано."
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "The domain \"{domain}\" was not found."
+msgid "The deposit transaction was not found."
+msgstr "Домен \"{domain}\" не знайдено."
+
+#: corehq/apps/integration/payments/const.py
+msgid "The payee is not allowed to receive the deposit transaction."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The payer is not allowed to perform this deposit transaction."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The deposit transaction is not allowed in the target environment."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The callback URL host provided for the deposit transaction is invalid."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The currency specified for the deposit transaction is invalid."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "An error occurred during the download."
+msgid "An internal processing error occurred during the deposit transaction."
+msgstr "Під час завантаження сталася помилка."
+
+#: corehq/apps/integration/payments/const.py
+msgid "The deposit transaction service is currently unavailable."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "The following report configuration could not be found: {}"
+msgid "The deposit transaction could not be performed."
+msgstr "Наступну конфігурацію звіту не знайдено: {}"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Linked Expression could not be found"
+msgid "The specified payee account could not be found."
+msgstr "Пов’язаний вираз не знайдено"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Linked Expression could not be found"
+msgid "The specified payer account could not be found."
+msgstr "Пов’язаний вираз не знайдено"
+
+#: corehq/apps/integration/payments/const.py
+msgid "The target environment is not allowed."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The callback URL host is invalid."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "The specified currency is invalid."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Domain Temporarily Unavailable"
+msgid "The service is temporarily unavailable."
+msgstr "Домен тимчасово недоступний"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "An unknown error occurred."
+msgid "An internal processing error occurred."
+msgstr "Виникла невідома помилка."
+
+#: corehq/apps/integration/payments/const.py
+msgid "The payer account does not have enough funds."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "The gateway can't reach the destination number."
+msgid "The payer has reached their transaction limit."
+msgstr "Шлюз не може зв'язатися з номером призначення."
+
+#: corehq/apps/integration/payments/const.py
+msgid "The payee is not allowed to receive funds."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "The item's ID was not passed to the server."
+msgid "The payment was not approved by the payer."
+msgstr "Ідентифікатор елемента не було передано на сервер."
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "The case group was not found."
+msgid "The requested resource was not found."
+msgstr "Групу справ не знайдено."
+
+#: corehq/apps/integration/payments/const.py
+msgid "The transaction approval was rejected."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Your session has expired"
+msgid "The transaction has expired."
+msgstr "Ваш сеанс завершено"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "No transaction found"
+msgid "The transaction was canceled."
+msgstr "Транзакцій не знайдено"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Keyword already exists."
+msgid "The resource already exists."
+msgstr "Ключове слово вже існує."
+
+#: corehq/apps/integration/payments/const.py
+msgid "Transaction ID is missing in the record"
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "No transaction found"
+msgid "Payment transaction not found"
+msgstr "Транзакцій не знайдено"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "Unexpected error"
+msgid "Unexpected error occurred"
+msgstr "Неочікувана помилка"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid ""
+#| "Network error occurred. Please try again, or reach out to support if the "
+#| "issue persists."
+msgid ""
+"Error occurred during payment request. Reach out to support if the issue "
+"persists."
+msgstr ""
+"Виникла помилка мережі. Будь ласка, спробуйте ще раз або зверніться до "
+"служби підтримки, якщо проблема не зникає."
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "maximum password attempts exceeded"
+msgid "Maximum retry attempts exceeded with request error."
+msgstr "Перевищено максимальну кількість спроб введення пароля"
+
+#: corehq/apps/integration/payments/const.py
+#, fuzzy
+#| msgid "maximum password attempts exceeded"
+msgid "Maximum retry attempts exceeded with pending status"
+msgstr "Перевищено максимальну кількість спроб введення пароля"
+
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
 msgstr "Статус платежу"
@@ -36919,15 +37379,23 @@ msgid "Live"
 msgstr "Робоче середовище"
 
 #: corehq/apps/integration/payments/services.py
-msgid "Something went wrong"
-msgstr "Щось пішло не так"
-
-#: corehq/apps/integration/payments/services.py
 msgid "Payment request failed"
 msgstr "Запит на платіж не виконано"
 
 #: corehq/apps/integration/payments/services.py
-msgid "Only payments in '{}' or '{}' state are eligible for verification."
+#, fuzzy
+#| msgid "Phone Verification"
+msgid "Verification"
+msgstr "Підтвердження телефону"
+
+#: corehq/apps/integration/payments/services.py
+#, fuzzy
+#| msgid "format must be one of the following: {}"
+msgid "Payment status must be one of the following:"
+msgstr "формат має бути одним із наступних: {}"
+
+#: corehq/apps/integration/payments/services.py
+msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 
 #: corehq/apps/integration/payments/services.py
@@ -36943,8 +37411,25 @@ msgid "Payment has already been requested"
 msgstr "Платіж вже було запрошено"
 
 #: corehq/apps/integration/payments/services.py
-msgid "Only payments in the '{}' state are eligible for verification reversal."
+#, fuzzy
+#| msgid "Verification Status"
+msgid "Verification reversal"
+msgstr "Статус перевірки"
+
+#: corehq/apps/integration/payments/services.py
+msgid "Failed to fetch payment status with code: {}"
 msgstr ""
+
+#: corehq/apps/integration/payments/services.py
+#, fuzzy
+#| msgid ""
+#| "Error fetching multimedia from remote server. Please try again later."
+msgid ""
+"Failed to fetch payment status. Unable to connect to server. Please try "
+"again later."
+msgstr ""
+"Помилка отримання мультимедіа з віддаленого сервера. Будь ласка, спробуйте "
+"пізніше."
 
 #: corehq/apps/integration/payments/tables.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -62592,6 +63077,9 @@ msgstr "Обов'язкові колонки: {column_names}"
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
 
+#~ msgid "Something went wrong"
+#~ msgstr "Щось пішло не так"
+
 #, fuzzy
 #~| msgid ""
 #~| "\n"
@@ -63212,9 +63700,6 @@ msgstr "Введіть коректний JSON"
 
 #~ msgid "You must upload the app source file."
 #~ msgstr "Ви повинні завантажити вихідний файл додатку."
-
-#~ msgid "Domain Temporarily Unavailable"
-#~ msgstr "Домен тимчасово недоступний"
 
 #~ msgid ""
 #~ "The page you requested is currently unavailable due to a\n"

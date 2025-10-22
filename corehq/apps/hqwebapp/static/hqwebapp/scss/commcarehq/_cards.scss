@@ -83,3 +83,23 @@
 .card-group .card-modern-gray {
   border-radius: 0;
 }
+
+.card-with-form {
+  legend {
+    font-size: $font-size-base * 1.5;
+  }
+
+  .form-actions {
+    margin-bottom: 0;
+  }
+
+  .field-control-offset {
+    @extend .offset-sm-4, .offset-md-3, .offset-lg-2, .col-12, .col-sm-8, .col-md-9, .col-lg-10;
+    padding-left: $grid-gutter-width / 2;
+  }
+
+  .form-actions .field-control:first-child {
+    padding-left: $grid-gutter-width / 2;
+  }
+
+}

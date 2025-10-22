@@ -747,8 +747,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         indexes = [
             models.Index(fields=['domain', 'state']),
             models.Index(fields=['domain', 'user_id']),
-        ]
-        indexes = [
             models.Index(fields=['xmlns']),
             models.Index(fields=['deleted_on'],
                          name=create_unique_index_name('form_processor',

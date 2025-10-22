@@ -62,7 +62,7 @@ class TestConfirmDomainView(TestCase):
 
     def test_no_guid(self):
         response = self.client.get(self.url())
-        self.assertTemplateUsed(response, 'registration/confirmation_error.html')
+        self.assertTemplateUsed(response, 'registration/bootstrap3/confirmation_error.html')
 
         expected_message = 'An account activation key was not provided.'
         self.assertIn(expected_message, response.content.decode())
@@ -70,7 +70,7 @@ class TestConfirmDomainView(TestCase):
     def test_bad_guid(self):
         bad_guid = 'bad456'
         response = self.client.get(self.url(bad_guid))
-        self.assertTemplateUsed(response, 'registration/confirmation_error.html')
+        self.assertTemplateUsed(response, 'registration/bootstrap3/confirmation_error.html')
 
         expected_message = escape(f'The account activation key "{bad_guid}" provided is invalid.')
         self.assertIn(expected_message, response.content.decode())

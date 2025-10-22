@@ -366,6 +366,17 @@
       "compare_all_files": true
     }
   ],
+  "apps/hqwebapp/static/accounting": [
+    {
+      "directories": [
+        "less/",
+        "scss/"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets",
+      "compare_all_files": true
+    }
+  ],
   "apps/hqwebapp/static/preview_app": [
     {
       "directories": [
@@ -933,6 +944,53 @@
       ],
       "file_type": "template",
       "label": "sso",
+      "compare_all_files": true
+    }
+  ],
+  "apps/registration/templates/registration": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "registration",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "email/bootstrap3",
+        "email/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "registration/email",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "email/base_templates/bootstrap3",
+        "email/base_templates/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "registration/email/base_templates",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "registration/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "spec/bootstrap3",
+        "spec/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "registration/spec",
       "compare_all_files": true
     }
   ]

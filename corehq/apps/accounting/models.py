@@ -82,6 +82,7 @@ from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
@@ -350,11 +351,13 @@ class CommunicationType(object):
     INVOICE_REMINDER = "INVOICE_REMINDER"
     OVERDUE_INVOICE = "OVERDUE_INVOICE"
     DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
+    UPCOMING_MONTHLY_PAYMENT = "UPCOMING_MONTHLY_PAYMENT"
     CHOICES = (
         (OTHER, "other"),
         (INVOICE_REMINDER, "Invoice Reminder"),
         (OVERDUE_INVOICE, "Overdue Invoice"),
         (DOWNGRADE_WARNING, "Subscription Pause Warning"),
+        (UPCOMING_MONTHLY_PAYMENT, "Upcoming Monthly Payment"),
     )
 
 
@@ -401,7 +404,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     dimagi_contact = models.EmailField(blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
-    is_auto_invoiceable = models.BooleanField(default=False)
     date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
     account_type = models.CharField(
         max_length=25,
@@ -424,6 +426,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=EntryPoint.CHOICES,
     )
     auto_pay_user = models.CharField(max_length=80, null=True, blank=True)
+    require_auto_pay = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
@@ -1464,7 +1467,7 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=False):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1512,8 +1515,8 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
-            auto_renew=auto_renew,
         )
+        new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
         new_subscription.save()
         new_subscription.raise_conflicting_dates(new_subscription.date_start, new_subscription.date_end)
@@ -1630,6 +1633,7 @@ class Subscription(models.Model):
             renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
+        renewed_subscription.auto_renew = renewed_subscription.can_auto_renew
         renewed_subscription.save()
 
         # record renewal from old subscription
@@ -2085,6 +2089,15 @@ class Subscription(models.Model):
         else:
             return False
 
+    @property
+    def can_auto_renew(self):
+        return (
+            SHOW_AUTO_RENEWAL.enabled(self.subscriber.domain)
+            and self.service_type == SubscriptionType.PRODUCT
+            and self.date_end is not None
+            and not self.account.is_customer_billing_account
+        )
+
     def user_can_change_subscription(self, user):
         if user.is_superuser:
             return True
@@ -2376,6 +2389,7 @@ class Invoice(InvoiceBase):
         """ Invoices that can be auto paid on date_due """
         invoices = cls.objects.select_related('subscription__account').filter(
             is_hidden=False,
+            date_paid__isnull=True,
             subscription__account__auto_pay_user__isnull=False,
         )
         # we use Ellipsis because date due can actually be None
@@ -2498,6 +2512,7 @@ class CustomerInvoice(InvoiceBase):
         invoices = cls.objects.select_related('account').filter(
             date_due=date_due,
             is_hidden=False,
+            date_paid__isnull=True,
             account__auto_pay_user__isnull=False
         )
         return invoices
@@ -3837,6 +3852,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_year': card.exp_year,
             'token': card.id,
             'is_autopay': self._is_autopay(card, billing_account),
+            'other_autopay_domains': self._get_other_autopay_primary_domains(card, billing_account),
         } for card in self.all_cards]
 
     def get_card(self, card_token):
@@ -3927,6 +3943,25 @@ class StripePaymentMethod(PaymentMethod):
     @staticmethod
     def _is_autopay(card, billing_account):
         return card.metadata.get(StripePaymentMethod._auto_pay_card_metadata_key(billing_account)) == 'True'
+
+    @staticmethod
+    def _get_other_autopay_primary_domains(card, billing_account):
+        autopay_meta = {k: v for k, v in card.metadata.items() if k.startswith('auto_pay_') and v == 'True'}
+        if len(autopay_meta) <= 1:
+            return []
+
+        account_key = StripePaymentMethod._auto_pay_card_metadata_key(billing_account)
+        if autopay_meta.get(account_key):
+            # we only want other domains if the card is not autopay for the given billing account
+            return []
+
+        other_autopay_accounts = [v.replace('auto_pay_', '') for v in autopay_meta.keys()]
+        return list(
+            BillingAccount.objects.filter(id__in=other_autopay_accounts).values_list(
+                'created_by_domain',  # created_by_domain is considered the "primary" domain for a billing account
+                flat=True,
+            )
+        )
 
     @staticmethod
     def _auto_pay_card_metadata_key(billing_account):
@@ -4074,6 +4109,10 @@ class CommunicationHistoryBase(models.Model):
 
     class Meta(object):
         abstract = True
+
+
+class AccountCommunicationHistory(CommunicationHistoryBase):
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
 
 
 class InvoiceCommunicationHistory(CommunicationHistoryBase):

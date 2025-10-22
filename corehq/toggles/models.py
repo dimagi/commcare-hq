@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 
 from couchdbkit import ResourceNotFound
 
@@ -11,6 +12,12 @@ from corehq.util.quickcache import quickcache
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
 
 
+class ToggleStatus(StrEnum):
+    ACTIVE = 'active'  # default state, controlled per-item
+    RELEASED = 'released'  # always enabled, ignores individual items
+    DISABLED = 'disabled'  # always disabled, ignores individual items
+
+
 class Toggle(Document):
     """
     A very simple implementation of a feature toggle. Just a list of items
@@ -19,6 +26,7 @@ class Toggle(Document):
     slug = StringProperty()
     enabled_users = ListProperty()
     last_modified = DateTimeProperty()
+    status = StringProperty(choices=list(map(str, ToggleStatus)), default=ToggleStatus.ACTIVE)
 
     class Meta(object):
         app_label = 'toggle'

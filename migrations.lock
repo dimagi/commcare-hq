@@ -128,6 +128,9 @@ accounting
  0106_alter_billingcontactinfo_company_name
  0107_two_stage_mobile_worker_creation_priv
  0108_subscription_auto_renew_and_more
+ 0109_enable_all_add_ons_priv
+ 0110_alter_customerinvoicecommunicationhistory_communication_type_and_more
+ 0111_rename_is_auto_invoiceable_billingaccount_require_auto_pay
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -442,6 +445,9 @@ domain
  0014_appreleasemodesetting
  0015_delete_projectlimit
  0016_rename_superuserprojectentryrecord_domain_username_domain_supe_domain_c3d32e_idx
+ 0017_appmanagerdomainsettings
+ 0018_enable_all_add_ons
+ 0019_remove_usercase_enabled_field
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -630,6 +636,7 @@ form_processor
  0096_add_partial_index_cases
  0097_case_domain_type_id_index
  0098_rename_caseattachment_case_name_form_proces_case_id_2fd259_idx_and_more
+ 0099_xforminstance_form_proces_domain_3bcfdd_idx_and_more
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -697,6 +704,7 @@ integration
  0010_alter_kycconfig_api_field_to_user_data_map
  0011_remove_kycconfig_connection_settings
  0012_momoconfig
+ 0013_kycconfig_phone_number_field
 ip_access
  0001_initial
 ivr
@@ -1233,6 +1241,7 @@ toggle_ui
 toggles
  0001_toggle_edit_permission
  0002_assign_permissions_superusers
+ 0003_delete_web_usercase_toggle
 translations
  0001_initial
  0002_transifexblacklist
