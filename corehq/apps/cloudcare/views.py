@@ -549,7 +549,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         if not build_id:
             return _fail(_("No corresponding application found in this project."))
 
-    state = {"appId": build_id, "forceLoginAs": False}
+    state = {"appId": build_id}
     if endpoint_id is not None:
         state.update({
             "endpointId": endpoint_id,
