@@ -1,6 +1,8 @@
 import json
 
 from celery import Task
+from celery import states as celery_states
+from celery.signals import task_postrun
 
 
 class DurableTask(Task):
@@ -30,3 +32,21 @@ class DurableTask(Task):
             raise
         finally:
             record.save()
+
+
+@task_postrun.connect
+def update_task_record(**kwargs):
+    from corehq.apps.celery.models import TaskRecord
+
+    task = kwargs.get('task')
+    try:
+        headers = task.request.headers
+    except (NameError, AttributeError):
+        # if there are no headers, it isn't a durable task
+        return
+
+    if headers.get('durable', False):
+        state = kwargs.get('state')
+        if state in celery_states.READY_STATES:
+            record = TaskRecord.objects.get(task_id=task.request.id)
+            record.delete()
