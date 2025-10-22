@@ -11,6 +11,7 @@ from celery.exceptions import OperationalError
 from django.test import TestCase
 
 from corehq.apps.celery import task
+from corehq.apps.celery.durable import update_task_record
 from corehq.apps.celery.models import TaskRecord, TaskRecordState
 
 
@@ -115,3 +116,46 @@ class TestDurableTask(TestCase):
         durable_task.delay()
         args, kwargs = self.mock_apply_async.call_args
         assert kwargs['headers']['durable']
+
+
+@attr.s(auto_attribs=True)
+class MockRequest:
+    id: str
+    headers: dict
+
+
+@attr.s(auto_attribs=True)
+class MockTask:
+    request: MockRequest
+
+
+class TestUpdateTaskRecord(TestCase):
+    """
+    TODO: This updates the task record, but I wonder if it would be better to just remove the
+    task record from the table once successful
+    """
+    def test_empty_task_does_not_raise_error(self):
+        update_task_record(task={})
+
+    def test_task_without_durable_flag(self):
+        task = MockTask(request=MockRequest(id=uuid.uuid4()), state=celery_states.SUCCESS, headers={})
+        update_task_record(task=task)
+
+    def test_task_with_durable_flag_updates_record(self):
+        task_id = uuid.uuid4()
+        TaskRecord.objects.create(
+            task_id=task_id, name='test-task', state=TaskRecordState.SENT, args={}, kwargs={}
+        )
+        task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
+        update_task_record(task=task, state=celery_states.SUCCESS)
+        record = TaskRecord.objects.get(task_id=task_id)
+        assert record.state == TaskRecordState.SUCCESS
+
+    def test_missing_state_raises_error(self):
+        task_id = uuid.uuid4()
+        TaskRecord.objects.create(
+            task_id=task_id, name='test-task', state=TaskRecordState.SENT, args={}, kwargs={}
+        )
+        task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
+        with pytest.raises(ValueError):
+            update_task_record(task=task)
