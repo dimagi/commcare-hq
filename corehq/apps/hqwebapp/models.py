@@ -147,6 +147,12 @@ class ServerLocation:
             'short_name': _("US"),
             'subdomain': 'www',
         },
+        STAGING: {
+            'country_code': 'un',
+            'long_name': _("[Test] Staging"),
+            'short_name': _("Staging"),
+            'subdomain': 'staging',
+        },
     }
 
     STAGING_CONFIG = {
