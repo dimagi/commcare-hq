@@ -25,7 +25,7 @@ from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from corehq.apps.accounting.emails import (
-    send_dimagi_ending_reminder_email,
+    send_dimagi_contact_ending_reminder_email,
     send_ending_reminder_email,
     send_renewal_reminder_email,
     send_subscription_ending_email,
@@ -476,21 +476,24 @@ def _try_send_subscription_email(subscription, days_left, send_email_func):
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
-def remind_dimagi_contact_subscription_ending_60_days():
+def remind_dimagi_contact_subscription_ending():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
     """
     send_subscription_reminder_emails_dimagi_contact(60)
+    send_subscription_reminder_emails_dimagi_contact(30)
+    send_subscription_reminder_emails_dimagi_contact(10)
+    send_subscription_reminder_emails_dimagi_contact(1)
 
 
 def send_subscription_reminder_emails_dimagi_contact(days_left):
     ending_subscriptions = _filter_subscriptions_for_reminder_emails(
-        days_left, is_active=True
+        days_left, is_active=True, service_type=SubscriptionType.IMPLEMENTATION
     ).exclude(account__dimagi_contact='')
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
-            send_dimagi_ending_reminder_email(subscription)
+            send_dimagi_contact_ending_reminder_email(subscription)
 
 
 def _filter_subscriptions_for_reminder_emails(days_left, **kwargs):

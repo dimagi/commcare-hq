@@ -266,7 +266,7 @@ def _ending_reminder_context(subscription, days_left):
     return context
 
 
-def send_dimagi_ending_reminder_email(subscription):
+def send_dimagi_contact_ending_reminder_email(subscription):
     subject = _dimagi_ending_reminder_subject(subscription)
     context = _dimagi_ending_reminder_context(subscription)
     email_html = render_to_string('accounting/email/subscription_ending_reminder_dimagi.html', context)
