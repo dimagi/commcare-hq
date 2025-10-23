@@ -168,8 +168,8 @@ def _get_reminder_email_contacts(subscription, domain):
                 absolute_reverse(ManageBillingAccountView.urlname, args=[subscription.account.id])
             )
         )
-    project_admins = {a.get_email() for a in WebUser.get_admins_by_domain(domain)}
-    dimagi_contacts = {e for e in WebUser.get_dimagi_emails_by_domain(domain)}
+    project_admins = {admin.get_email() for admin in WebUser.get_admins_by_domain(domain)}
+    dimagi_contacts = {email for email in WebUser.get_dimagi_emails_by_domain(domain)}
     if subscription.account.dimagi_contact:
         dimagi_contacts.add(subscription.account.dimagi_contact)
 
@@ -201,7 +201,7 @@ def send_ending_reminder_email(subscription):
     email_html = render_to_string(template, context)
     email_plaintext = render_to_string(template_plaintext, context)
     bcc = [settings.ACCOUNTS_EMAIL] if not subscription.is_trial else []
-    if subscription.account.dimagi_contact is not None:
+    if subscription.account.dimagi_contact:
         bcc.append(subscription.account.dimagi_contact)
     for email in _reminder_email_contacts(subscription, domain_name):
         send_html_email_async.delay(
@@ -331,8 +331,8 @@ def _dimagi_ending_reminder_context(subscription):
 def _reminder_email_contacts(subscription, domain_name):
     from corehq.apps.accounting.models import BillingContactInfo, WebUser
 
-    emails = {a.get_email() for a in WebUser.get_admins_by_domain(domain_name)}
-    emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
+    emails = {admin.get_email() for admin in WebUser.get_admins_by_domain(domain_name)}
+    emails |= {email for email in WebUser.get_dimagi_emails_by_domain(domain_name)}
     if not subscription.is_trial:
         billing_contact_emails = (
             subscription.account.billingcontactinfo.email_list
