@@ -70,7 +70,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
 
         with patch('corehq.apps.accounting.tasks.send_renewal_reminder_email') as mock_send:
             tasks.send_renewal_reminder_emails(60)
-            mock_send.assert_called_once_with(self.subscription)
+            mock_send.assert_called_once_with(self.subscription, 60)
 
     @travel('2025-10-01', tick=False)
     def test_no_renewal_reminder_if_service_type_not_product(self):
@@ -121,7 +121,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
 
         with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
             tasks.send_subscription_ending_emails(60)
-            mock_send.assert_called_once_with(self.subscription)
+            mock_send.assert_called_once_with(self.subscription, 60)
 
     @travel('2025-10-01', tick=False)
     def test_no_subscription_ending_email_if_auto_renew_enabled(self):

@@ -95,7 +95,7 @@ class TestEndingReminderContext(BaseInvoiceTestCase):
         self.subscription.save()
 
         user_formatted_date = self.subscription.date_end.strftime(USER_DATE_FORMAT)
-        context = _ending_reminder_context(self.subscription)
+        context = _ending_reminder_context(self.subscription, 30)
         assert context['domain'] == self.domain.name
         assert context['plan_name'] == self.subscription.plan_version.plan.name
         assert context['account'] == self.account.name
@@ -114,7 +114,7 @@ class TestEndingReminderContext(BaseInvoiceTestCase):
         self.subscription.date_end = datetime.date(2025, 10, 2)
         self.subscription.save()
 
-        context = _ending_reminder_context(self.subscription)
+        context = _ending_reminder_context(self.subscription, 1)
         assert context['ending_on'] == "tomorrow!"
 
     @travel('2025-10-01', tick=False)
@@ -125,7 +125,7 @@ class TestEndingReminderContext(BaseInvoiceTestCase):
         self.subscription.save()
 
         user_formatted_date = self.subscription.date_end.strftime(USER_DATE_FORMAT)
-        context = _ending_reminder_context(self.subscription)
+        context = _ending_reminder_context(self.subscription, 30)
         assert context['subject'] == (
             f"CommCare Alert: {self.account.name}'s subscription to {self.subscription.plan_version.plan.name} "
             f"ends on {user_formatted_date}."

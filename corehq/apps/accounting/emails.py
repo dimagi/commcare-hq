@@ -1,5 +1,3 @@
-import datetime
-
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
@@ -112,24 +110,21 @@ def send_flagged_pay_annually_subscription_alert(subscription, current_invoice, 
     )
 
 
-def send_renewal_reminder_email(subscription):
+def send_renewal_reminder_email(subscription, days_left):
     template = 'accounting/email/subscription_renewal_reminder.html'
     template_plaintext = 'accounting/email/subscription_renewal_reminder.txt'
-    _send_subscription_ending_reminder_email(subscription, template, template_plaintext)
+    _send_subscription_ending_reminder_email(subscription, days_left, template, template_plaintext)
 
 
-def send_subscription_ending_email(subscription):
+def send_subscription_ending_email(subscription, days_left):
     template = 'accounting/email/subscription_ending.html'
     template_plaintext = 'accounting/email/subscription_ending.txt'
-    _send_subscription_ending_reminder_email(subscription, template, template_plaintext)
+    _send_subscription_ending_reminder_email(subscription, days_left, template, template_plaintext)
 
 
-def _send_subscription_ending_reminder_email(subscription, template, template_plaintext):
-    today = datetime.date.today()
-    num_days_left = (subscription.date_end - today).days
-
+def _send_subscription_ending_reminder_email(subscription, days_left, template, template_plaintext):
     domain_name = subscription.subscriber.domain
-    context = _ending_reminder_context(subscription)
+    context = _ending_reminder_context(subscription, days_left)
     subject = context['subject']
 
     email_html = render_to_string(template, context)
@@ -146,7 +141,7 @@ def _send_subscription_ending_reminder_email(subscription, template, template_pl
     log_accounting_info(
         "Sent %(days_left)s-day subscription reminder "
         "email for %(domain)s" % {
-            'days_left': num_days_left,
+            'days_left': days_left,
             'domain': domain_name,
         }
     )
@@ -184,16 +179,13 @@ def _get_reminder_email_contacts(subscription, domain):
     return to, cc, bcc
 
 
-def send_ending_reminder_email(subscription):
+def send_ending_reminder_email(subscription, days_left):
     """
     Sends a reminder email to the emails specified in the accounting
     contacts that the subscription will end on the specified end date.
     """
-    today = datetime.date.today()
-    num_days_left = (subscription.date_end - today).days
-
     domain_name = subscription.subscriber.domain
-    context = _ending_reminder_context(subscription)
+    context = _ending_reminder_context(subscription, days_left)
     subject = context['subject']
 
     template = _ending_reminder_email_html(subscription)
@@ -213,7 +205,7 @@ def send_ending_reminder_email(subscription):
         log_accounting_info(
             "Sent %(days_left)s-day subscription reminder "
             "email for %(domain)s" % {
-                'days_left': num_days_left,
+                'days_left': days_left,
                 'domain': domain_name,
             }
         )
@@ -233,12 +225,10 @@ def _ending_reminder_email_text(subscription):
         return 'accounting/email/subscription_ending_reminder.txt'
 
 
-def _ending_reminder_context(subscription):
+def _ending_reminder_context(subscription, days_left):
     from corehq.apps.domain.views.accounting import DomainSubscriptionView
 
-    today = datetime.date.today()
-    num_days_left = (subscription.date_end - today).days
-    if num_days_left == 1:
+    if days_left == 1:
         ending_on = _("tomorrow!")
     else:
         ending_on = _("on %s." % subscription.date_end.strftime(USER_DATE_FORMAT))
