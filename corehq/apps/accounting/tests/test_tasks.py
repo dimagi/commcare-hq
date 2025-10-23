@@ -1,7 +1,8 @@
 import datetime
 from unittest.mock import patch
 
-from corehq import toggles
+from time_machine import travel
+
 from corehq.apps.accounting import tasks
 from corehq.apps.accounting.models import (
     FormSubmittingMobileWorkerHistory,
@@ -14,7 +15,7 @@ from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.utils.xform import TestFormMetadata
-from corehq.util.test_utils import make_es_ready_form
+from corehq.util.test_utils import flag_enabled, make_es_ready_form
 
 
 @es_test(requires=[form_adapter], setup_class=True)
@@ -58,11 +59,10 @@ class TestCalculateFormSubmittingMobileWorkers(BaseInvoiceTestCase):
         self.assertEqual(worker_history.record_date, self.one_day_ago)
 
 
+@flag_enabled('SHOW_AUTO_RENEWAL')
 class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
-    def setUp(self):
-        super().setUp()
-        toggles.SHOW_AUTO_RENEWAL.set(self.domain.name, True, namespace=toggles.NAMESPACE_DOMAIN)
 
+    @travel('2025-10-01', tick=False)
     def test_sends_renewal_reminder_email(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.service_type = SubscriptionType.PRODUCT
@@ -72,6 +72,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_renewal_reminder_emails(60)
             mock_send.assert_called_once_with(self.subscription)
 
+    @travel('2025-10-01', tick=False)
     def test_no_renewal_reminder_if_service_type_not_product(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.service_type = SubscriptionType.IMPLEMENTATION
@@ -81,6 +82,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_renewal_reminder_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_no_renewal_reminder_if_is_trial(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.is_trial = True
@@ -90,6 +92,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_renewal_reminder_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_no_renewal_reminder_if_customer_billing_account(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.account.is_customer_billing_account = True
@@ -100,6 +103,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_renewal_reminder_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_no_renewal_reminder_if_is_renewed(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=59)
         self.subscription.renew_subscription()
@@ -109,6 +113,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_renewal_reminder_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_sends_subscription_ending_email(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.service_type = SubscriptionType.PRODUCT
@@ -118,6 +123,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_subscription_ending_emails(60)
             mock_send.assert_called_once_with(self.subscription)
 
+    @travel('2025-10-01', tick=False)
     def test_no_subscription_ending_email_if_auto_renew_enabled(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.service_type = SubscriptionType.PRODUCT
@@ -128,6 +134,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_subscription_ending_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_no_subscription_ending_email_if_service_type_not_product(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.service_type = SubscriptionType.IMPLEMENTATION
@@ -137,6 +144,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_subscription_ending_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_no_subscription_ending_email_if_is_trial(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.is_trial = True
@@ -146,6 +154,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_subscription_ending_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_no_subscription_ending_email_if_customer_billing_account(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.account.is_customer_billing_account = True
@@ -156,6 +165,7 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
             tasks.send_subscription_ending_emails(60)
             assert not mock_send.called
 
+    @travel('2025-10-01', tick=False)
     def test_no_subscription_ending_email_if_is_renewed(self):
         self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=60)
         self.subscription.renew_subscription()
