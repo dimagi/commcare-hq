@@ -233,18 +233,15 @@ def _ending_reminder_context(subscription, days_left):
     else:
         ending_on = _("on %s." % subscription.date_end.strftime(USER_DATE_FORMAT))
 
-    user_desc = subscription.plan_version.user_facing_description
-    plan_name = user_desc['name']
-
     domain_name = subscription.subscriber.domain
-
+    plan_name = subscription.plan_version.plan.name
     context = {
         'domain': domain_name,
         'plan_name': plan_name,
         'account': subscription.account.name,
         'ending_on': ending_on,
         'subscription_url': absolute_reverse(
-            DomainSubscriptionView.urlname, args=[subscription.subscriber.domain]),
+            DomainSubscriptionView.urlname, args=[domain_name]),
         'base_url': get_site_domain(),
         'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         'sales_email': settings.SALES_EMAIL,
