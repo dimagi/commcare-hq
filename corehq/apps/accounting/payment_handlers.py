@@ -384,23 +384,33 @@ class AutoPayInvoicePaymentHandler(object):
                 log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e))
 
     def _pay_invoice(self, invoice):
-        log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
+        invoice_label = "customer invoice" if invoice.is_customer_invoice else "invoice"
+        log_accounting_info(
+            "[Autopay] Autopaying {invoice_label} {invoice_id}".format(
+                invoice_label=invoice_label, invoice_id=invoice.id
+            )
+        )
         amount = invoice.balance.quantize(Decimal(10) ** -2)
         if not amount:
             return
 
-        auto_payer = invoice.subscription.account.auto_pay_user
+        account = invoice.account
+        auto_payer = account.auto_pay_user
         payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
-        autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
+        autopay_card = payment_method.get_autopay_card(account)
         if autopay_card is None:
             return
 
         try:
-            log_accounting_info("[Autopay] Attempt to charge autopay invoice {} through Stripe".format(invoice.id))
+            log_accounting_info(
+                "[Autopay] Attempt to charge autopay {invoice_label} {invoice_id} through Stripe".format(
+                    invoice_label=invoice_label, invoice_id=invoice.id
+                )
+            )
             transaction_id = payment_method.create_charge(
                 autopay_card,
                 amount_in_dollars=amount,
-                description='Auto-payment for Invoice %s' % invoice.invoice_number,
+                description=f"Auto-payment for {invoice_label.title()} {invoice.invoice_number}",
                 idempotency_key=f"{invoice.invoice_number}_{amount}"
             )
         except stripe.error.CardError as e:
@@ -411,11 +421,11 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 payment_record = PaymentRecord.create_record(payment_method, transaction_id, amount)
             except IntegrityError:
-                log_accounting_error(f"[Autopay] Invoice was double charged {invoice.id}")
+                log_accounting_error(f"[Autopay] {invoice_label.title()} was double charged {invoice.id}")
             else:
                 invoice.pay_invoice(payment_record)
-                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
-                invoice.account.save()
+                account.last_payment_method = LastPayment.CC_AUTO
+                account.save()
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
