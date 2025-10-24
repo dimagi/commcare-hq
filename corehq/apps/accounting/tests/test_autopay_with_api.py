@@ -7,6 +7,7 @@ from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.models import (
+    CustomerInvoice,
     Invoice,
     PaymentRecord,
     SoftwarePlan,
@@ -25,7 +26,7 @@ from unittest.mock import patch
 import uuid
 
 
-class TestBillingAutoPay(BaseInvoiceTestCase):
+class BaseTestBillingAutoPay(BaseInvoiceTestCase):
 
     def setUp(self):
         # Dependabot-created PRs do not have access to secrets.
@@ -86,6 +87,12 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
             date_end=add_months_to_date(self.subscription.date_start, self.subscription_length),
         )
 
+    def _run_autopay(self):
+        raise NotImplementedError
+
+
+class TestBillingAutoPayInvoices(BaseTestBillingAutoPay):
+
     def test_get_autopayable_invoices(self):
         """
         Invoice.autopayable_invoices() should return invoices that can be automatically paid
@@ -141,3 +148,73 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
         date_due = autopayable_invoice.first().date_due
         AutoPayInvoicePaymentHandler().pay_autopayable_invoices(date_due)
+
+
+class TestBillingAutoPayCustomerInvoices(BaseTestBillingAutoPay):
+
+    def _generate_autopayable_entities(self):
+        super()._generate_autopayable_entities()
+        self.autopay_account.is_customer_billing_account = True
+        self.autopay_account.save()
+
+    def _generate_non_autopayable_entities(self):
+        super()._generate_non_autopayable_entities()
+        self.non_autopay_account.is_customer_billing_account = True
+        self.non_autopay_account.save()
+
+    def test_get_autopayable_invoices(self):
+        """
+        CustomerInvoice.autopayable_invoices() should return invoices that can be automatically paid
+        """
+        autopayable_invoice = CustomerInvoice.objects.filter(account=self.autopay_account)
+        date_due = autopayable_invoice.first().date_due
+
+        autopayable_invoices = CustomerInvoice.autopayable_invoices(date_due)
+
+        self.assertCountEqual(autopayable_invoices, autopayable_invoice)
+
+    def test_get_autopayable_invoices_returns_nothing(self):
+        """
+        CustomerInvoice.autopayable_invoices() should not return invoices if
+        the customer does not have an autopay method
+        """
+        not_autopayable_invoice = CustomerInvoice.objects.filter(account=self.non_autopay_account)
+        date_due = not_autopayable_invoice.first().date_due
+        autopayable_invoices = CustomerInvoice.autopayable_invoices(date_due)
+        self.assertCountEqual(autopayable_invoices, [])
+
+    # Keys for idempotent requests can only be used with the same parameters they were first used with.
+    # So introduce randomness in idempotency key to avoid clashes
+    @patch('corehq.apps.accounting.models.CustomerInvoice.invoice_number', str(uuid.uuid4()))
+    def test_pay_autopayable_invoices(self):
+        original_outbox_length = len(mail.outbox)
+        autopayable_invoice = CustomerInvoice.objects.filter(account=self.autopay_account).first()
+        date_due = autopayable_invoice.date_due
+
+        AutoPayInvoicePaymentHandler().pay_autopayable_customer_invoices(date_due)
+
+        self.assertAlmostEqual(autopayable_invoice.get_total(), 0)
+        self.assertEqual(len(PaymentRecord.objects.all()), 1)
+        self.assertEqual(len(mail.outbox), original_outbox_length + 1)
+
+    # Keys for idempotent requests can only be used with the same parameters they were first used with.
+    # So introduce randomness in idempotency key to avoid clashes
+    @patch('corehq.apps.accounting.models.CustomerInvoice.invoice_number', str(uuid.uuid4()))
+    def test_double_charge_is_prevented_and_only_one_payment_record_created(self):
+        self.original_outbox_length = len(mail.outbox)
+        invoice = CustomerInvoice.objects.get(account=self.autopay_account)
+        balance = invoice.balance
+        self._run_autopay()
+        # Add balance to the same invoice so it gets paid again
+        invoice = CustomerInvoice.objects.get(account=self.autopay_account)
+        invoice.balance = balance
+        invoice.save()
+        # Run autopay again to test no double charge
+        self._run_autopay()
+        self.assertEqual(len(PaymentRecord.objects.all()), 1)
+        self.assertEqual(len(mail.outbox), self.original_outbox_length + 1)
+
+    def _run_autopay(self):
+        autopayable_invoice = CustomerInvoice.objects.filter(account=self.autopay_account)
+        date_due = autopayable_invoice.first().date_due
+        AutoPayInvoicePaymentHandler().pay_autopayable_customer_invoices(date_due)
