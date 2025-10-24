@@ -519,8 +519,12 @@ def create_wire_credits_invoice(domain_name,
 
 
 @task(ignore_result=True, acks_late=True)
-def send_purchase_receipt(payment_record_id, domain, template_html, template_plaintext, additional_context):
-    context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+def send_purchase_receipt(
+    payment_record_id, domain_name, account_name, template_html, template_plaintext, additional_context
+):
+    context = get_context_to_send_purchase_receipt(
+        payment_record_id, domain_name, account_name, additional_context
+    )
 
     email_html = render_to_string(template_html, context['template_context'])
     email_plaintext = render_to_string(template_plaintext, context['template_context'])
@@ -535,8 +539,8 @@ def send_purchase_receipt(payment_record_id, domain, template_html, template_pla
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice_id):
-    context = get_context_to_send_autopay_failed_email(invoice_id)
+def send_autopay_failed(invoice_id, is_customer_invoice=False):
+    context = get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=is_customer_invoice)
 
     template_html = 'accounting/email/autopay_failed.html'
     html_content = render_to_string(template_html, context['template_context'])

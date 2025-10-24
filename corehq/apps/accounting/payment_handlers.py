@@ -160,7 +160,7 @@ class BaseStripePaymentHandler(object):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
-            payment_record.id, self.domain, self.receipt_email_template,
+            payment_record.id, self.domain, self.account.name, self.receipt_email_template,
             self.receipt_email_template_plaintext, additional_context
         )
 
@@ -433,16 +433,21 @@ class AutoPayInvoicePaymentHandler(object):
         receipt_email_template = 'accounting/email/invoice_receipt.html'
         receipt_email_template_plaintext = 'accounting/email/invoice_receipt.txt'
         try:
-            domain = invoice.subscription.subscriber.domain
             context = {
                 'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
                 'balance': fmt_dollar_amount(invoice.balance),
                 'is_paid': invoice.is_paid,
                 'date_due': invoice.date_due.strftime(USER_DATE_FORMAT) if invoice.date_due else 'None',
                 'invoice_num': invoice.invoice_number,
+                'is_customer_invoice': invoice.is_customer_invoice,
             }
             send_purchase_receipt.delay(
-                payment_record.id, domain, receipt_email_template, receipt_email_template_plaintext, context,
+                payment_record.id,
+                invoice.get_domain(),
+                invoice.account.name,
+                receipt_email_template,
+                receipt_email_template_plaintext,
+                context,
             )
         except Exception:
             self._handle_email_failure(payment_record.id)
@@ -456,17 +461,19 @@ class AutoPayInvoicePaymentHandler(object):
         err = body.get('error', {})
 
         log_accounting_error(
-            f"[Autopay] An automatic payment failed for invoice: {invoice.id} ({invoice.get_domain()})"
+            "[Autopay] An automatic payment failed for invoice: "
+            f"{invoice.id} ({invoice.get_domain() or invoice.account.name})"
             "because the card was declined. This invoice will not be automatically paid. "
             "Not necessarily actionable, but be aware that this happened. "
             f"error = {err}"
         )
-        send_autopay_failed.delay(invoice.id)
+        send_autopay_failed.delay(invoice.id, is_customer_invoice=invoice.is_customer_invoice)
 
     @staticmethod
     def _handle_card_errors(invoice, error):
         log_accounting_error(
-            f"[Autopay] An automatic payment failed for invoice: {invoice.id} ({invoice.get_domain()})"
+            "[Autopay] An automatic payment failed for invoice: "
+            f"{invoice.id} ({invoice.get_domain() or invoice.account.name})"
             f"because the of {error}. This invoice will not be automatically paid."
         )
 
