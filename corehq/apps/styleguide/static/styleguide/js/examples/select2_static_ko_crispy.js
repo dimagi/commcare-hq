@@ -1,5 +1,8 @@
 import $ from 'jquery';
 
 $(function () {
-    $("#ko-menu-generator").koApplyBindings();
+    const $el = $("#ko-menu-generator");
+    if ($el.length) {
+        $el.koApplyBindings();
+    }
 });

@@ -1,5 +1,8 @@
 import $ from 'jquery';
 
 $(function () {
-    $("#js-ko-model-static").koApplyBindings();
+    const $el = $("#js-ko-model-static");
+    if ($el.length) {
+        $el.koApplyBindings();
+    }
 });

@@ -18,7 +18,9 @@ $(function () {
     ace.config.set('basePath', initialPageData.get('ace_base_path'));
     _.each(["python", "html", "js", "django"], function (lang) {
         $('pre[data-lang="' + lang + '"]').each(function () {
-            let editor = ace.edit($(this).get(0), {
+            const preEl = $(this).get(0);
+            const codeText = $(this).text();
+            let editor = ace.edit(preEl, {
                     showPrintMargin: false,
                     maxLines: 20,
                     minLines: 1,
@@ -30,6 +32,8 @@ $(function () {
                     highlightActiveLine: false,
                 }),
                 aceLang = (lang === "js") ? "javascript" : lang;
+            // Explicitly set value to ensure content appears in iframe contexts
+            editor.setValue(codeText, -1);
             editor.setReadOnly(true);
             editor.session.setMode('ace/mode/' + aceLang);
         });
