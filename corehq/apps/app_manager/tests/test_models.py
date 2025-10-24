@@ -168,6 +168,13 @@ class OpenCaseActionTests(SimpleTestCase):
 
         self.assertEqual(set(action.get_assigned_names()), {'one', 'two'})
 
+    def test_get_assigned_names_ignores_empty_values(self):
+        action = OpenCaseAction({
+            'name_update': {'question_path': None}
+        })
+
+        self.assertEqual(set(action.get_assigned_names()), set())
+
     def test_assign_name_update_sets_name_update(self):
         action = OpenCaseAction()
         action.assign_name_update('name_question')
