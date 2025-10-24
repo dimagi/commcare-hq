@@ -546,6 +546,21 @@ class UpdateCaseAction(FormAction):
         if all_missing_mappings:
             raise MissingPropertyMapException(*all_missing_mappings)
 
+    def get_mappings(self):
+        mappings = {}
+        self.make_multi()
+
+        for (case_property, updates) in self.update_multi.items():
+            mappings[case_property] = [self.update_to_json(update) for update in updates]
+
+        return mappings
+
+    def update_to_json(self, update):
+        json = update.to_json()
+        if 'doc_type' in json:
+            del json['doc_type']
+        return json
+
 
 class PreloadAction(FormAction):
 
@@ -669,6 +684,20 @@ class OpenCaseAction(FormAction):
         self.name_update = ConditionalCaseUpdate(question_path=question_path)
         self.name_update_multi = []
 
+    def get_mappings(self):
+        mappings = {}
+        self.make_multi()
+
+        mappings['name'] = [self.update_to_json(update) for update in self.name_update_multi]
+
+        return mappings
+
+    def update_to_json(self, update):
+        json = update.to_json()
+        if 'doc_type' in json:
+            del json['doc_type']
+        return json
+
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
@@ -780,6 +809,17 @@ class FormActions(UpdateableDocument):
                 self.update_case.normalize_update()
             else:
                 self.update_case.make_single()
+
+    def get_mappings(self):
+        mappings = {}
+
+        if self.open_case:
+            mappings.update(self.open_case.get_mappings())
+
+        if self.update_case:
+            mappings.update(self.update_case.get_mappings())
+
+        return mappings
 
 
 class CaseIndex(DocumentSchema):

@@ -182,6 +182,19 @@ class OpenCaseActionTests(SimpleTestCase):
 
         self.assertEqual(action.name_update_multi, [])
 
+    def test_get_mappings_serializes_name_updates(self):
+        action = OpenCaseAction({
+            'name_update_multi': [{'question_path': 'one'}, {'question_path': 'two'}]
+        })
+
+        json = action.get_mappings()
+        self.assertEqual(json, {
+            'name': [
+                {'question_path': 'one', 'update_mode': 'always'},
+                {'question_path': 'two', 'update_mode': 'always'}
+            ]
+        })
+
 
 class OpenCaseAction_ApplyUpdates_Tests(SimpleTestCase):
     def test_no_changes(self):
@@ -412,6 +425,37 @@ class UpdateCaseActionTests(SimpleTestCase):
         })
 
         self.assertEqual(action.get_property_names(), {'one'})
+
+    def test_get_mappings_serializes_updates(self):
+        action = UpdateCaseAction({
+            'update_multi': {
+                'one': [{'question_path': '/A/'}, {'question_path': '/B/'}],
+                'two': [{'question_path': '/C/'}],
+            }
+        })
+
+        json = action.get_mappings()
+
+        self.assertEqual(json, {
+            'one': [
+                {'question_path': '/A/', 'update_mode': 'always'},
+                {'question_path': '/B/', 'update_mode': 'always'}
+            ],
+            'two': [{'question_path': '/C/', 'update_mode': 'always'}]
+        })
+
+    def test_get_mappings_removes_doc_type(self):
+        action = UpdateCaseAction({
+            'update': {
+                'one': {'question_path': '/A/', 'update_mode': 'edit', 'doc_type': 'TestDoc'},
+            }
+        })
+
+        json = action.get_mappings()
+
+        self.assertEqual(json, {
+            'one': [{'question_path': '/A/', 'update_mode': 'edit'}]
+        })
 
 
 class UpdateCaseAction_ApplyUpdates_Tests(SimpleTestCase):

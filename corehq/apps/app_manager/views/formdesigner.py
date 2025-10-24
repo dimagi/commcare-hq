@@ -260,7 +260,9 @@ def _get_base_vellum_options(request, domain, form, displayLang):
     case_type = form.get_module().case_type
     if case_type and has_vellum_case_mapping:
         case_properties = get_all_case_properties_for_case_type(domain, case_type)
+        mappings = form.actions.get_mappings()
         options['caseManagement'] = {
+            'mappings': mappings,
             'properties': case_properties,
             'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
         }
