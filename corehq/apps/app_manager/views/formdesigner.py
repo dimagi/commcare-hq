@@ -228,7 +228,7 @@ def _get_base_vellum_options(request, domain, form, displayLang):
     :param displayLang: --> derived from the base context
     """
     app = form.get_app()
-    return {
+    options = {
         'intents': {
             'templates': next(app_callout_templates),
         },
@@ -247,6 +247,19 @@ def _get_base_vellum_options(request, domain, form, displayLang):
             'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
         },
     }
+
+    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    case_type = form.get_module().case_type
+    if case_type and has_vellum_case_mapping:
+        # TODO get case properties from Data Dictionary
+        from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
+        options['caseManagement'] = {
+            'mappings': form.actions.get_mappings(),
+            'properties': get_all_case_properties_for_case_type(domain, case_type),
+            'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
+        }
+
+    return options
 
 
 def _get_vellum_core_context(request, domain, app, module, form, lang):
