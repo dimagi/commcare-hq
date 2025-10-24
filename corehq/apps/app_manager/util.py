@@ -151,9 +151,7 @@ def generate_xmlns():
     return str(uuid.uuid4()).upper()
 
 
-def save_xform(app, form, xml):
-    from corehq.apps.app_manager.models import FormActions
-
+def save_xform(app, form, xml, mapping_diff=None):
     def update_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render().decode('utf-8')
         data = data.replace(old_xmlns, new_xmlns, 1)
@@ -168,20 +166,8 @@ def save_xform(app, form, xml):
         pass
     else:
         changed = False
-        # TODO: Clean this up
-        form_actions_dict = xform.get_form_actions(for_registration_form=form.is_registration_form())
-        if form_actions_dict:
-            actions = FormActions(form_actions_dict)
-            if actions.update_case.update_multi:
-                form.actions.update_case.update = {}
-                form.actions.update_case.update_multi = actions.update_case.update_multi
-                form.actions.update_case.normalize_update()
-
-            if actions.open_case.name_update_multi:
-                form.actions.open_case.name_update = None
-                form.actions.open_case.name_update_multi = actions.open_case.name_update_multi
-                form.actions.open_case.normalize_name_update()
-
+        if mapping_diff:
+            form.actions = form.actions.with_updates({}, mapping_diff)
             changed = True
 
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"

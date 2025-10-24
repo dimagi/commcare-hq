@@ -832,6 +832,54 @@ class FormActionsDiffTests(SimpleTestCase):
         assert diff.open_case.add[0].question_path == 'one'
         assert diff.update_case.delete['case_two'][0].question_path == 'two'
 
+    def test_parse_universal_diff_creates_diff_object(self):
+        universal_json = {
+            'add': {
+                'prop1': [{'question_path': 'one'}]
+            },
+            'update': {
+                'prop2': [{'question_path': 'two'}]
+            },
+            'delete': {
+                'prop3': [{'question_path': 'three'}]
+            }
+        }
+
+        diff = FormActionsDiff.parse_universal_diff(universal_json)
+
+        assert len(diff.update_case.add['prop1']) == 1
+        assert diff.update_case.add['prop1'][0].question_path == 'one'
+
+        assert len(diff.update_case.update['prop2']) == 1
+        assert diff.update_case.update['prop2'][0].question_path == 'two'
+
+        assert len(diff.update_case.delete['prop3']) == 1
+        assert diff.update_case.delete['prop3'][0].question_path == 'three'
+
+    def test_parse_universal_diff_non_registration_name_stays_in_update(self):
+        universal_json = {
+            'add': {
+                'name': [{'question_path': 'one'}]
+            }
+        }
+
+        diff = FormActionsDiff.parse_universal_diff(universal_json)
+
+        assert diff.update_case.add['name'][0].question_path == 'one'
+        assert 'name' not in diff.open_case.add
+
+    def test_parse_universal_diff_registration_name_is_in_open_case(self):
+        universal_json = {
+            'add': {
+                'name': [{'question_path': 'one'}]
+            }
+        }
+
+        diff = FormActionsDiff.parse_universal_diff(universal_json, is_registration=True)
+
+        assert diff.open_case.add[0].question_path == 'one'
+        assert 'name' not in diff.update_case.add
+
 
 class FormActionTests(SimpleTestCase):
     def test_get_action_properties_for_name_update(self):

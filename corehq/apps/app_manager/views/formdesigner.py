@@ -275,13 +275,12 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
     Returns the core context that will be passed into vellum when it is
     initialized.
     """
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     core = {
         'dataSourcesEndpoint': reverse('get_form_data_schema',
                                        kwargs={'domain': domain,
                                                'app_id': app.id,
                                                'form_unique_id': form.get_unique_id()}),
-        'form': form.get_source_with_mappings() if has_vellum_case_mapping else form.source,
+        'form': form.source,
         'formId': form.get_unique_id(),
         'formName': translate(form.name, app.langs[0], app.langs),
         'saveType': 'patch',

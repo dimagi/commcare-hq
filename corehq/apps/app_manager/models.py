@@ -740,6 +740,33 @@ class FormActionsDiff(DocumentSchema):
     open_case = SchemaProperty(OpenCaseDiff)
     update_case = SchemaProperty(UpdateCaseDiff)
 
+    @classmethod
+    def parse_universal_diff(cls, universal_diff_json, is_registration=False):
+        open_diff = OpenCaseDiff()
+        update_diff = UpdateCaseDiff(universal_diff_json)
+
+        if is_registration:
+            if 'name' in update_diff.add:
+                name_additions = update_diff.add['name']
+                open_diff.add = name_additions
+                del update_diff.add['name']
+
+            if 'name' in update_diff.update:
+                name_updates = update_diff.update['name']
+                open_diff.update = name_updates
+                del update_diff.update['name']
+
+            if 'name' in update_diff.delete:
+                name_deletions = update_diff.delete['name']
+                open_diff.delete = name_deletions
+                del update_diff.delete['name']
+
+        diff = FormActionsDiff()
+        diff.open_case = open_diff
+        diff.update_case = update_diff
+
+        return diff
+
 
 class FormActions(UpdateableDocument):
     open_case = SchemaProperty(OpenCaseAction)

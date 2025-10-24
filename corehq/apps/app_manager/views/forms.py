@@ -336,7 +336,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                save_xform(app, form, xform)
+
+                case_update_diff = _get_case_update_diff(request, form)
+                save_xform(app, form, xform, case_update_diff)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -523,8 +525,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
-    uses_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    existing_xml = form.get_source_with_mappings() if uses_vellum_case_mapping else form.source
+    existing_xml = form.source
 
     conflict = _get_xform_conflict_response(existing_xml, sha1_checksum)
     if conflict is not None:
@@ -532,10 +533,10 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     xml = apply_patch(patch, existing_xml)
 
-    # TODO: Mirror this handling somewhere in _edit_form_attr
+    case_update_diff = _get_case_update_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'))
+        xml = save_xform(app, form, xml.encode('utf-8'), case_update_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
@@ -553,6 +554,18 @@ def patch_xform(request, domain, app_id, form_unique_id):
 def apply_patch(patch, text):
     dmp = diff_match_patch()
     return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
+
+
+def _get_case_update_diff(request, form):
+    update_diff = None
+
+    uses_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    if uses_vellum_case_mapping and 'mapping_diff' in request.POST:
+        diff_json = json.loads(request.POST['mapping_diff'])
+        is_registration_form = form.is_registration_form()
+        update_diff = FormActionsDiff.parse_universal_diff(diff_json, is_registration=is_registration_form)
+
+    return update_diff
 
 
 def _get_xform_conflict_response(form_xml, sha1_checksum):
