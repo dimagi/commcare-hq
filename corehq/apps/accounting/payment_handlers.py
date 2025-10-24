@@ -383,6 +383,21 @@ class AutoPayInvoicePaymentHandler(object):
             except Exception as e:
                 log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e))
 
+    def pay_autopayable_customer_invoices(self, date_due=Ellipsis, account=None):
+        """
+        Pays the full balance of all autopayable customer invoices on date_due
+        Note: we use Ellipsis as the default value for date_due because date_due
+        can actually be None in the db.
+        """
+        autopayable_invoices = CustomerInvoice.autopayable_invoices(date_due)
+        if account is not None:
+            autopayable_invoices = autopayable_invoices.filter(account__name=account)
+        for invoice in autopayable_invoices:
+            try:
+                self._pay_invoice(invoice)
+            except Exception as e:
+                log_accounting_error("Error autopaying customer invoice %d: %s" % (invoice.id, e))
+
     def _pay_invoice(self, invoice):
         invoice_label = "customer invoice" if invoice.is_customer_invoice else "invoice"
         log_accounting_info(

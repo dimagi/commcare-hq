@@ -656,7 +656,9 @@ def weekly_digest():
 @periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
-    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
+    today = datetime.datetime.today()
+    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(today)
+    AutoPayInvoicePaymentHandler().pay_autopayable_customer_invoices(today)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
