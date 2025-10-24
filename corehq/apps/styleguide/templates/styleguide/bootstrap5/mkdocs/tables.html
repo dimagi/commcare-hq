@@ -1,0 +1,19 @@
+{% extends 'styleguide/bootstrap5/base_mkdocs_full.html' %}
+{% load hq_shared_tags %}
+
+{% js_entry "styleguide/js/tables" %}
+
+{% block stylesheets %}
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'datatables.net-bs5/css/dataTables.bootstrap5.min.css' %}" />
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css' %}" />
+{% endblock stylesheets %}
+
+{% block content %}
+
+{% endblock content %}
