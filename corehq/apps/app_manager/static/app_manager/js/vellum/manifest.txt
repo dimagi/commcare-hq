@@ -875,6 +875,7 @@
 │  ├─ ajv-keywords@^3.5.2
 │  └─ ajv@^6.12.5
 ├─ secure-compare@3.0.1
+├─ select2@4.1.0-rc.0
 ├─ semver@7.7.1
 ├─ serialize-javascript@6.0.2
 │  └─ randombytes@^2.1.0
@@ -1085,4 +1086,4 @@
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.33s.
+Done in 0.08s.
