@@ -272,18 +272,6 @@ FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
     });
     FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
-    var user = UsersModels.getCurrentUser();
-    if (options.forceLoginAs && !user.restoreAs) {
-        // Workflow requires a mobile user, likely because we're trying to access
-        // a session endpoint as a web user. If user isn't logged in as, send them
-        // to Log In As and save the current request options for when that's done.
-        FormplayerFrontend.trigger("setLoginAsNextOptions", options);
-        FormplayerFrontend.trigger("restore_as:list");
-
-        // Caller expects a menu response, return a fake one
-        return {abort: true};
-    }
-
     // If an endpoint is provided, first claim any cases it references, then navigate
     return API.queryFormplayer(options, "get_endpoint");
 });
