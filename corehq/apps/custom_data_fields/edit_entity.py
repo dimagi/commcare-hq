@@ -169,18 +169,22 @@ class CustomDataEditor(object):
             profile_names = []
 
         form_fieldsets = []
-        if profile_names:
-            form_fieldsets.append(Fieldset(
-                _("Profile"),
-                *profile_names
-            ))
-        if field_names:
-            form_fieldsets.append(FieldsetAccordionGroup(
-                _("Additional Information"),
-                *field_names,
-                active=True,
+        if profile_names or field_names:
+            user_data_div = Div(
                 css_class="custom-data-fieldset"
-            ))
+            )
+            form_fieldsets.append(user_data_div)
+            if profile_names:
+                user_data_div.append(Fieldset(
+                    _("Profile"),
+                    *profile_names
+                ))
+            if field_names:
+                user_data_div.append(FieldsetAccordionGroup(
+                    _("Additional Information"),
+                    *field_names,
+                    active=True
+                ))
         if not is_post:
             form_fieldsets.append(self.uncategorized_form)
         return form_fieldsets
