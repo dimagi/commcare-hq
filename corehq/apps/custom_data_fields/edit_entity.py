@@ -172,7 +172,8 @@ class CustomDataEditor(object):
         if profile_names:
             form_fieldsets.append(Fieldset(
                 _("Profile"),
-                *profile_names
+                *profile_names,
+                css_class="custom-data-fieldset"
             ))
         if field_names:
             form_fieldsets.append(FieldsetAccordionGroup(
