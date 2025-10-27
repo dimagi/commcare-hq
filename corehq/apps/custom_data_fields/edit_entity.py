@@ -253,6 +253,8 @@ class CustomDataEditor(object):
         else:
             CustomDataForm.helper = HQFormHelper()
         CustomDataForm.helper.form_tag = False
+        CustomDataForm.helper.label_class = 'col-sm-3 col-md-2'
+        CustomDataForm.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         form_fieldsets = self.make_fieldsets(form_fields, post_dict is not None)
 
