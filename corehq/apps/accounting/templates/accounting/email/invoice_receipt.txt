@@ -1,15 +1,31 @@
-{% load i18n %}{% blocktrans %}Dear {{ name }},
+{% load i18n %}
+{% blocktrans %}
+Dear {{ name }},
+{% endblocktrans%}
 
+{% if is_customer_invoice %}
+{% blocktrans %}
 This email is a receipt for your payment of {{ amount }} toward Invoice No.
-{{ invoice_num }} for your project {{ project }}.
+{{ invoice_num }} for your billing account {{ domain_or_account }}.
 {% endblocktrans %}
+{% else %}
+{% blocktrans %}
+This email is a receipt for your payment of {{ amount }} toward Invoice No.
+{{ invoice_num }} for your project {{ domain_or_account }}.
+{% endblocktrans %}
+{% endif %}
+
 {% if is_paid %}
+{% blocktrans %}
 This invoice is now marked as paid as of {{ date_paid }}.
 
 Invoice No.: {{ invoice_num }}
 Amount Paid: {{ amount }}
 Payment Date: {{ date_paid }}
-Transaction No.: {{ transaction_id }}{% else %}{% blocktrans %}
+Transaction No.: {{ transaction_id }}
+{% endblocktrans %}
+{% else %}
+{% blocktrans %}
 Please note that there is still a remaining balance on this Invoice.
 
 Invoice No.: {{ invoice_num }}
@@ -17,7 +33,9 @@ Amount Paid: {{ amount }}
 Payment Date: {{ date_paid }}
 Transaction No.: {{ transaction_id }}
 Remaining Balance: {{ balance }}
-Date Due: {{ date_due }}{% endblocktrans %}{% endif %}
+Date Due: {{ date_due }}
+{% endblocktrans %}
+{% endif %}
 
 {% blocktrans %}
 Thank you for using CommCare. If you have any questions, please don't

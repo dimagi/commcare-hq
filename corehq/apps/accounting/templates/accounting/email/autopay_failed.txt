@@ -1,17 +1,46 @@
+{% load i18n %}
+{% blocktrans %}
 Hello,
+{% endblocktrans %}
 
+{% if is_customer_invoice %}
+{% blocktrans %}
 This is a notice to inform you that your credit card payment for your CommCare
-subscription for project space {{ domain }} was declined. Please check to see
-if your billing information correctly matches your credit card.
+subscription for billing account {{ domain_or_account }} was declined. Please
+check to see if your billing information correctly matches your credit card.
+{% endblocktrans %}
+{% else %}
+{% blocktrans %}
+This is a notice to inform you that your credit card payment for your CommCare
+subscription for project space {{ domain_or_account }} was declined. Please
+check to see if your billing information correctly matches your credit card.
+{% endblocktrans %}
+{% endif %}
 
+{% blocktrans with brand=autopay_card.brand last4=autopay_card.last4 exp_month=autopay_card.exp_month exp_year=autopay_card.exp_year %}
 Here are the details of your declined payment:
-Billed To: {{ autopay_card.brand }} card with last four digits {{ autopay_card.last4 }} expiring {{ autopay_card.exp_month }}/{{ autopay_card.exp_year }}
-Subscription plan: {{ subscription_plan }}
-Billing date: {{ billing_date }}
-Invoice #: {{ invoice_number }}
+Billed To: {{ brand }} card with last four digits {{ last4 }} expiring {{ exp_month }}/{{ exp_year }}
+{% endblocktrans %}
+{% if subscription_plan %}
+{% trans "Subscription plan" %}: {{ subscription_plan }}
+{% endif %}
+{% trans "Billing date" %}: {{ billing_date }}
+{% trans "Invoice #" %}: {{ invoice_number }}
 
+{% if is_customer_invoice %}
+{% blocktrans %}
+Please update your billing information to prevent disruption to your CommCare
+subscription.
+{% endblocktrans %}
+{% else %}
+{% blocktrans %}
 Please update your billing information at {{ billing_info_url }}
-to prevent disruption to your CommCare subscription. You'll need to pay the
+to prevent disruption to your CommCare subscription.
+{% endblocktrans %}
+{% endif %}
+
+{% blocktrans %}
+You'll need to pay the
 prior invoice whose payment method was declined, but future invoices will be
 paid via the updated billing information.
 
@@ -19,3 +48,4 @@ If you have any questions, please contact {{ support_email }}.
 
 Thanks,
 -Dimagi
+{% endblocktrans %}

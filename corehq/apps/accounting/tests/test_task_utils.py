@@ -23,8 +23,17 @@ class TestGetContextToSendAutopayFailedEmail(SimpleTestCase):
         expected_keys = {'template_context', 'invoice_number', 'email_to', 'email_from'}
         self.assertEqual(set(context.keys()), expected_keys)
 
-        expected_template_keys = {'domain', 'subscription_plan', 'billing_date', 'invoice_number', 'autopay_card',
-                                  'domain_url', 'billing_info_url', 'support_email'}
+        expected_template_keys = {
+            'domain_or_account',
+            'subscription_plan',
+            'billing_date',
+            'invoice_number',
+            'is_customer_invoice',
+            'autopay_card',
+            'domain_url',
+            'billing_info_url',
+            'support_email'
+        }
         self.assertEqual(set(context['template_context'].keys()), expected_template_keys)
 
     def test_recipient_is_autopay_email_if_no_web_user_exists(self):
@@ -80,10 +89,10 @@ class MockAutopayFailedInfo:
         mock_invoice.invoice_number = self.invoice_number
         mock_subscription = MagicMock()
         mock_subscription.plan_version.plan.name = self.subscription_name
-        mock_subscription.account.auto_pay_user = self.auto_payer
         mock_invoice.subscription = mock_subscription
         mock_account = MagicMock()
         mock_invoice.account = mock_account
+        mock_invoice.account.auto_pay_user = self.auto_payer
         mock_invoice.get_domain.return_value = self.domain
 
         self.invoice_patcher = patch(
@@ -134,44 +143,58 @@ class TestGetContextToSendPurchaseReceipt(SimpleTestCase):
 
     def test_context_has_expected_keys(self):
         payment_record_id = 1
-        domain = 'test'
+        domain_name = 'test'
+        account_name = 'Test Account'
         additional_context = {}
 
         with MockPurchaseReceiptInfo('username'):
-            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+            context = get_context_to_send_purchase_receipt(
+                payment_record_id, domain_name, account_name, additional_context
+            )
 
         expected_keys = {'template_context', 'email_to', 'email_from'}
         self.assertEqual(set(context.keys()), expected_keys)
 
     def test_template_context_has_expected_keys(self):
         payment_record_id = 1
-        domain = 'test'
+        domain_name = 'test'
+        account_name = 'Test Account'
         additional_context = {}
 
         with MockPurchaseReceiptInfo('username'):
-            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+            context = get_context_to_send_purchase_receipt(
+                payment_record_id, domain_name, account_name, additional_context
+            )
 
-        expected_template_keys = {'name', 'amount', 'project', 'date_paid', 'transaction_id'}
+        expected_template_keys = {'name', 'amount', 'domain_or_account', 'date_paid', 'transaction_id'}
         self.assertEqual(set(context['template_context'].keys()), expected_template_keys)
 
     def test_template_context_has_additional_keys_if_supplied(self):
         payment_record_id = 1
-        domain = 'test'
+        domain_name = 'test'
+        account_name = 'Test Account'
         additional_context = {'extra_key': 'extra_value'}
 
         with MockPurchaseReceiptInfo('username'):
-            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+            context = get_context_to_send_purchase_receipt(
+                payment_record_id, domain_name, account_name, additional_context
+            )
 
-        expected_template_keys = {'name', 'amount', 'project', 'date_paid', 'transaction_id', 'extra_key'}
+        expected_template_keys = {
+            'name', 'amount', 'domain_or_account', 'date_paid', 'transaction_id', 'extra_key'
+        }
         self.assertEqual(set(context['template_context'].keys()), expected_template_keys)
 
     def test_recipient_is_web_user_if_web_user_exists(self):
         payment_record_id = 1
-        domain = 'test'
+        domain_name = 'test'
+        account_name = 'Test Account'
         additional_context = {}
 
         with MockPurchaseReceiptInfo('username', web_user_email='web-user@dimagi.com'):
-            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+            context = get_context_to_send_purchase_receipt(
+                payment_record_id, domain_name, account_name, additional_context
+            )
 
         template_context = context['template_context']
         self.assertTrue(context['email_to'], 'web-user@dimagi.com')
@@ -179,11 +202,14 @@ class TestGetContextToSendPurchaseReceipt(SimpleTestCase):
 
     def test_recipient_is_username_if_web_user_does_not_exist(self):
         payment_record_id = 1
-        domain = 'test'
+        domain_name = 'test'
+        account_name = 'Test Account'
         additional_context = {}
 
         with MockPurchaseReceiptInfo('username'):
-            context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+            context = get_context_to_send_purchase_receipt(
+                payment_record_id, domain_name, account_name, additional_context
+            )
 
         template_context = context['template_context']
         self.assertTrue(context['email_to'], 'username')
@@ -191,14 +217,15 @@ class TestGetContextToSendPurchaseReceipt(SimpleTestCase):
 
     def test_exception_is_logged_if_web_user_does_not_exist(self):
         payment_record_id = 1
-        domain = 'test'
+        domain_name = 'test'
+        account_name = 'Test Account'
         additional_context = {}
 
         patcher = patch('corehq.apps.accounting.task_utils.raise_except_and_log_accounting_comms_error')
         mock_log_method = patcher.start()
 
         with MockPurchaseReceiptInfo('username'):
-            get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+            get_context_to_send_purchase_receipt(payment_record_id, domain_name, account_name, additional_context)
 
         mock_log_method.assert_called()
         patcher.stop()
@@ -206,9 +233,10 @@ class TestGetContextToSendPurchaseReceipt(SimpleTestCase):
 
 class MockPurchaseReceiptInfo:
 
-    def __init__(self, username, web_user_email=None, date_paid=None, amount_paid=100):
+    def __init__(self, username, web_user_email=None, billing_account_name=None, date_paid=None, amount_paid=100):
         self.username = username
         self.web_user_email = web_user_email
+        self.billing_account_name = billing_account_name
         self.date_paid = date_paid or datetime.date(2020, 1, 1)
         self.amount_paid = amount_paid
         self.transaction_id = 1
@@ -236,6 +264,17 @@ class MockPurchaseReceiptInfo:
         )
         self.web_user_patcher.start()
 
+        mock_billing_account = None
+        if self.billing_account_name:
+            mock_billing_account = MagicMock()
+            mock_billing_account.name.return_value = self.billing_account_name
+        self.billing_account_patcher = patch(
+            'corehq.apps.accounting.task_utils.BillingAccount.objects.get',
+            return_value=mock_billing_account
+        )
+        self.billing_account_patcher.start()
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.payment_record_patcher.stop()
         self.web_user_patcher.stop()
+        self.billing_account_patcher.stop()

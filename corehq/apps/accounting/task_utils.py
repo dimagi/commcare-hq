@@ -3,6 +3,8 @@ from datetime import date
 import settings
 from corehq.apps.accounting.exceptions import AccountingCommunicationError
 from corehq.apps.accounting.models import (
+    BillingAccount,
+    CustomerInvoice,
     Invoice,
     PaymentRecord,
     StripePaymentMethod,
@@ -17,27 +19,37 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
 
 
-def get_context_to_send_autopay_failed_email(invoice_id):
-    invoice = Invoice.objects.get(id=invoice_id)
-    subscription = invoice.subscription
-    auto_payer = subscription.account.auto_pay_user
+def get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=False):
+    if is_customer_invoice:
+        invoice = CustomerInvoice.objects.get(id=invoice_id)
+        subscription_plan = None
+    else:
+        invoice = Invoice.objects.get(id=invoice_id)
+        subscription_plan = invoice.subscription.plan_version.plan.name
+
+    account = invoice.account
+    auto_payer = account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
-    autopay_card = payment_method.get_autopay_card(subscription.account)
-    domain = invoice.get_domain()
+    autopay_card = payment_method.get_autopay_card(account)
+    domain_name = invoice.get_domain()
     web_user = WebUser.get_by_username(auto_payer)
     if web_user:
-        recipient = web_user.get_email() if web_user.is_active_in_domain(domain) else invoice.get_contact_emails()
+        if _user_active_in_domains(web_user, domain_name, account.name):
+            recipient = web_user.get_email()
+        else:
+            recipient = invoice.get_contact_emails()
     else:
         recipient = auto_payer
 
     template_context = {
-        'domain': domain,
-        'subscription_plan': subscription.plan_version.plan.name,
+        'domain_or_account': domain_name or account.name,
         'billing_date': date.today(),
         'invoice_number': invoice.invoice_number,
         'autopay_card': autopay_card,
-        'domain_url': absolute_reverse('dashboard_default', args=[domain]),
-        'billing_info_url': absolute_reverse('domain_update_billing_info', args=[domain]),
+        'is_customer_invoice': is_customer_invoice,
+        'subscription_plan': subscription_plan,
+        'domain_url': absolute_reverse('dashboard_default', args=[domain_name]),
+        'billing_info_url': absolute_reverse('domain_update_billing_info', args=[domain_name]),
         'support_email': settings.INVOICING_CONTACT_EMAIL,
     }
 
@@ -49,11 +61,11 @@ def get_context_to_send_autopay_failed_email(invoice_id):
     }
 
 
-def get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context):
+def get_context_to_send_purchase_receipt(payment_record_id, domain_name, account_name, additional_context):
     payment_record = PaymentRecord.objects.get(id=payment_record_id)
     username = payment_record.payment_method.web_user
     web_user = WebUser.get_by_username(username)
-    if web_user and web_user.is_active_in_domain(domain):
+    if web_user and _user_active_in_domains(web_user, domain_name, account_name):
         email = web_user.get_email()
         name = web_user.first_name
     else:
@@ -63,7 +75,7 @@ def get_context_to_send_purchase_receipt(payment_record_id, domain, additional_c
     template_context = {
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
-        'project': domain,
+        'domain_or_account': domain_name or account_name,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'transaction_id': payment_record.public_transaction_id,
     }
@@ -74,6 +86,14 @@ def get_context_to_send_purchase_receipt(payment_record_id, domain, additional_c
         'email_to': email,
         'email_from': get_dimagi_from_email()
     }
+
+
+def _user_active_in_domains(web_user, domain_name, account_name):
+    if domain_name:
+        return web_user and web_user.is_active_in_domain(domain_name)
+    else:
+        account = BillingAccount.objects.get(name=account_name)
+        return any(web_user.is_active_in_domain(domain) for domain in account.get_domains())
 
 
 def raise_except_and_log_accounting_comms_error(username):
