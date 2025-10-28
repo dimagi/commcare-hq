@@ -31,7 +31,7 @@ def get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=Fal
     auto_payer = account.auto_pay_user
     payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
     autopay_card = payment_method.get_autopay_card(account)
-    domain_name = invoice.get_domain()
+    domain_name = invoice.get_domain()  # returns None for CustomerInvoices
     web_user = WebUser.get_by_username(auto_payer)
     if web_user:
         if _user_active_in_domains(web_user, domain_name, account):
@@ -48,8 +48,10 @@ def get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=Fal
         'autopay_card': autopay_card,
         'is_customer_invoice': is_customer_invoice,
         'subscription_plan': subscription_plan,
-        'domain_url': absolute_reverse('dashboard_default', args=[domain_name]),
-        'billing_info_url': absolute_reverse('domain_update_billing_info', args=[domain_name]),
+        'domain_url': absolute_reverse('dashboard_default', args=[domain_name]) if domain_name else None,
+        'billing_info_url': (
+            absolute_reverse('domain_update_billing_info', args=[domain_name]) if domain_name else None
+        ),
         'support_email': settings.INVOICING_CONTACT_EMAIL,
     }
 
