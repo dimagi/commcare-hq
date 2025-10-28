@@ -520,10 +520,10 @@ def create_wire_credits_invoice(domain_name,
 
 @task(ignore_result=True, acks_late=True)
 def send_purchase_receipt(
-    payment_record_id, domain_name, account_name, template_html, template_plaintext, additional_context
+    payment_record_id, domain_name, account_id, template_html, template_plaintext, additional_context
 ):
     context = get_context_to_send_purchase_receipt(
-        payment_record_id, domain_name, account_name, additional_context
+        payment_record_id, domain_name, account_id, additional_context
     )
 
     email_html = render_to_string(template_html, context['template_context'])

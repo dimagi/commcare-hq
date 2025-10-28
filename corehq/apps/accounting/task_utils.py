@@ -34,7 +34,7 @@ def get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=Fal
     domain_name = invoice.get_domain()
     web_user = WebUser.get_by_username(auto_payer)
     if web_user:
-        if _user_active_in_domains(web_user, domain_name, account.name):
+        if _user_active_in_domains(web_user, domain_name, account):
             recipient = web_user.get_email()
         else:
             recipient = invoice.get_contact_emails()
@@ -61,11 +61,12 @@ def get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=Fal
     }
 
 
-def get_context_to_send_purchase_receipt(payment_record_id, domain_name, account_name, additional_context):
+def get_context_to_send_purchase_receipt(payment_record_id, domain_name, account_id, additional_context):
+    account = BillingAccount.objects.get(pk=account_id)
     payment_record = PaymentRecord.objects.get(id=payment_record_id)
     username = payment_record.payment_method.web_user
     web_user = WebUser.get_by_username(username)
-    if web_user and _user_active_in_domains(web_user, domain_name, account_name):
+    if web_user and _user_active_in_domains(web_user, domain_name, account):
         email = web_user.get_email()
         name = web_user.first_name
     else:
@@ -75,7 +76,7 @@ def get_context_to_send_purchase_receipt(payment_record_id, domain_name, account
     template_context = {
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
-        'domain_or_account': domain_name or account_name,
+        'domain_or_account': domain_name or account.name,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'transaction_id': payment_record.public_transaction_id,
     }
@@ -88,11 +89,10 @@ def get_context_to_send_purchase_receipt(payment_record_id, domain_name, account
     }
 
 
-def _user_active_in_domains(web_user, domain_name, account_name):
+def _user_active_in_domains(web_user, domain_name, account):
     if domain_name:
         return web_user and web_user.is_active_in_domain(domain_name)
     else:
-        account = BillingAccount.objects.get(name=account_name)
         return any(web_user.is_active_in_domain(domain) for domain in account.get_domains())
 
 

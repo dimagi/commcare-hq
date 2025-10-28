@@ -160,7 +160,7 @@ class BaseStripePaymentHandler(object):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
-            payment_record.id, self.domain, self.account.name, self.receipt_email_template,
+            payment_record.id, self.domain, self.account.id, self.receipt_email_template,
             self.receipt_email_template_plaintext, additional_context
         )
 
@@ -459,7 +459,7 @@ class AutoPayInvoicePaymentHandler(object):
             send_purchase_receipt.delay(
                 payment_record.id,
                 invoice.get_domain(),
-                invoice.account.name,
+                invoice.account.id,
                 receipt_email_template,
                 receipt_email_template_plaintext,
                 context,
