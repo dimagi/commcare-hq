@@ -97,6 +97,7 @@ class BaseTestBillingAutoPay(BaseInvoiceTestCase):
     def _assert_no_side_effects(self):
         self.assertEqual(PaymentRecord.objects.count(), 0)
         self.assertEqual(len(mail.outbox), self.original_outbox_length)
+        self.assertEqual(self.invoice.get_total(), self.original_invoice_total)
 
 
 class TestBillingAutoPayInvoices(BaseTestBillingAutoPay):
@@ -137,7 +138,7 @@ class TestBillingAutoPayInvoices(BaseTestBillingAutoPay):
         date_due = autopayable_invoice.first().date_due
 
         AutoPayInvoicePaymentHandler().pay_autopayable_invoices(date_due)
-        self.assertAlmostEqual(autopayable_invoice.first().get_total(), 0)
+        self.assertEqual(autopayable_invoice.first().get_total(), Decimal('0.00'))
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), original_outbox_length + 1)
 
@@ -170,11 +171,14 @@ class TestBillingAutoPayInvoices(BaseTestBillingAutoPay):
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(stripe.Charge, 'create')
     @mocked_stripe_api()
-    def test_when_stripe_fails_no_payment_record_exists(self, fake_create, fake_customer):
+    def test_when_stripe_fails_no_side_effects_occur(self, fake_create, fake_customer):
         fake_create.side_effect = Exception
         self._create_autopay_method(fake_customer)
 
+        self.invoice = Invoice.objects.get(subscription=self.subscription)
+        self.original_invoice_total = self.invoice.get_total()
         self.original_outbox_length = len(mail.outbox)
+
         self._run_autopay()
         self._assert_no_side_effects()
 
@@ -232,7 +236,7 @@ class TestBillingAutoPayCustomerInvoices(BaseTestBillingAutoPay):
         date_due = autopayable_invoice.first().date_due
 
         AutoPayInvoicePaymentHandler().pay_autopayable_customer_invoices(date_due)
-        self.assertAlmostEqual(autopayable_invoice.first().get_total(), 0)
+        self.assertEqual(autopayable_invoice.first().get_total(), Decimal('0.00'))
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), original_outbox_length + 1)
 
@@ -265,11 +269,14 @@ class TestBillingAutoPayCustomerInvoices(BaseTestBillingAutoPay):
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(stripe.Charge, 'create')
     @mocked_stripe_api()
-    def test_when_stripe_fails_no_payment_record_exists(self, fake_create, fake_customer):
+    def test_when_stripe_fails_no_side_effects_occur(self, fake_create, fake_customer):
         fake_create.side_effect = Exception
         self._create_autopay_method(fake_customer)
 
+        self.invoice = CustomerInvoice.objects.get(account=self.autopay_account)
+        self.original_invoice_total = self.invoice.get_total()
         self.original_outbox_length = len(mail.outbox)
+
         self._run_autopay()
         self._assert_no_side_effects()
 
