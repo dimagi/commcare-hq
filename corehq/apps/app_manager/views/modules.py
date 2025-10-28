@@ -650,7 +650,6 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "excl_form_ids": None,
         "form_session_endpoints": None,
         "display_style": None,
-        "custom_icon_form": None,
         "custom_icon_text_body": None,
         "custom_icon_xpath": None,
         "use_default_image_for_all": None,
@@ -687,6 +686,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
+    # ToDo: Adapt save logic on view for new HTML setup
     if should_edit("custom_icon_form"):
         handle_custom_icon_edits(request, module, lang)
     if should_edit("no_items_text"):

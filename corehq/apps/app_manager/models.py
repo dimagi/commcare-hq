@@ -1743,7 +1743,8 @@ class CustomIcon(DocumentSchema):
     One can set either a simple text to display or
     an xpath expression to be evaluated for example count of cases within.
     """
-    form = StringProperty()
+
+    form = "badge"  # form is always badge
     text = DictProperty(str)
     xpath = StringProperty()
 
