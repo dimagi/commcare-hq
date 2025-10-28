@@ -95,7 +95,9 @@ class BaseStripePaymentHandler(object):
                 else:
                     payment_method = self.payment_method
 
-                customer = payment_method.customer
+                if hasattr(payment_method, 'customer'):
+                    customer = payment_method.customer
+
                 if new_saved_card:
                     card = self.payment_method.create_card(card, billing_account, self.domain)
                 payment_record = PaymentRecord.create_record(payment_method, 'temp', amount)
