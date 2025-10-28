@@ -206,7 +206,7 @@ var paymentMethodHandler = function (formId, opts) {
         return self.paymentIsNotComplete() && self.savedCards().length > 0;
     });
     self.canSelectAutopayCard = ko.computed(function () {
-        return self.paymentIsNotComplete() && !! self.autopayCard();
+        return self.paymentIsNotComplete() && !!self.autopayCard();
     });
 
     self.isSubmitDisabled = ko.computed(function () {
