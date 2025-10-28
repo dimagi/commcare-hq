@@ -3,7 +3,19 @@
 
 <div>
   <div class="form-group">
-    <label class="control-label col-sm-2">{% trans "Custom Icon" %}</label>
+    <label class="control-label col-sm-2">{% trans "Custom Icon" %}
+      <span
+        class="hq-help-template"
+        data-title="{% trans 'Custom Icon' %}"
+        data-content="{% blocktrans %}
+          Please add text body or xpath function. Text or the result of the
+          xpath function will appear as a badge next to the case list icon.
+          When using text body, please add text separately for all languages of the app.
+          When using xpath, be mindful of the performance impact for long case lists.
+        {% endblocktrans %}"
+      >
+      </span>
+    </label>
     <div class="col-sm-10">
       <label>
         <span> {% trans "Form" %} </span>
