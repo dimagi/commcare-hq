@@ -22,25 +22,21 @@
         <option value="xpath">{% trans "XPath Function" %}</option>
       </select>
     </div>
-    <div class="col-sm-10">
-      <label>
-        <span> {% trans "Text Body" %} </span>
-        <input
-          class="form-control"
-          name="custom_icon_text_body"
-          id="custom_icon_text_body"
-          value="{{ custom_icon.text|trans:langs }}"
-        />
-      </label>
-      <label>
-        <span> {% trans "XPath Function" %} </span>
-        <input
-          class="form-control"
-          name="custom_icon_xpath"
-          id="custom_icon_xpath"
-          value="{% if custom_icon.xpath %}{{ custom_icon.xpath }}{% endif %}"
-        />
-      </label>
+    <div class="col-sm-4">
+      <input
+        class="form-control"
+        name="custom_icon_text_body"
+        id="custom_icon_text_body"
+        value="{{ custom_icon.text|trans:langs }}"
+        placeholder="{% trans 'Text Body' %}"
+      />
+      <input
+        class="form-control"
+        name="custom_icon_xpath"
+        id="custom_icon_xpath"
+        value="{% if custom_icon.xpath %}{{ custom_icon.xpath }}{% endif %}"
+        placeholder="{% trans 'XPath Function' %}"
+      />
     </div>
   </div>
 </div>
