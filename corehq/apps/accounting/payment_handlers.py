@@ -68,37 +68,40 @@ class BaseStripePaymentHandler(object):
 
     def process_request(self, request):
         customer = None
+        payment_method = None
         amount = self.get_charge_amount(request)
         card = request.POST.get('stripeToken')
-        remove_card = request.POST.get('removeCard')
+
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
-        save_card = request.POST.get('saveCard') and not is_saved_card
-        autopay = request.POST.get('autopayCard')
+        is_autopay_card = request.POST.get('selectedCardType') == 'autopay'
+        new_saved_card = request.POST.get('saveCard') and not is_saved_card
+
         billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {
             'error': {
                 'message': _(
-                    "Something went wrong while processing your payment. "
+                    'Something went wrong while processing your payment. '
                     "We're working quickly to resolve the issue. No charges "
-                    "were issued. Please try again in a few hours."
+                    'were issued. Please try again in a few hours.'
                 ),
             },
         }
         try:
             with transaction.atomic():
-                if remove_card:
-                    self.payment_method.remove_card(card)
-                    return {'success': True, 'removedCard': card, }
-                if save_card:
-                    card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
-                if save_card or is_saved_card:
-                    customer = self.payment_method.customer
+                if is_autopay_card:
+                    payment_method = StripePaymentMethod.objects.get(
+                        web_user=billing_account.auto_pay_user
+                    )
+                else:
+                    payment_method = self.payment_method
 
-                payment_record = PaymentRecord.create_record(
-                    self.payment_method, 'temp', amount
-                )
+                if hasattr(payment_method, 'customer'):
+                    customer = payment_method.customer
+
+                if new_saved_card:
+                    card = self.payment_method.create_card(card, billing_account, self.domain)
+                payment_record = PaymentRecord.create_record(payment_method, 'temp', amount)
                 self.update_credits(payment_record)
-
                 charge = self.create_charge(amount, card=card, customer=customer)
 
             payment_record.transaction_id = charge.id
@@ -114,21 +117,18 @@ class BaseStripePaymentHandler(object):
             stripe.error.StripeError,
         ) as e:
             log_accounting_error(
-                "A payment for %(cost_item)s failed due "
-                "to a Stripe %(error_class)s: %(error_msg)s" % {
-                    'error_class': e.__class__.__name__,
-                    'cost_item': self.cost_item_name,
-                    'error_msg': e.json_body['error']
-                },
+                'A payment for {cost_item} failed due '
+                'to a Stripe {error_class}: {error_msg}'.format(
+                    error_class=e.__class__.__name__,
+                    cost_item=self.cost_item_name,
+                    error_msg=e.json_body['error'],
+                ),
                 show_stack_trace=True,
             )
             return generic_error
         except Exception as e:
             log_accounting_error(
-                "A payment for %(cost_item)s failed due to: %(error_msg)s" % {
-                    'cost_item': self.cost_item_name,
-                    'error_msg': e,
-                },
+                f'A payment for {self.cost_item_name} failed due to: {e}',
                 show_stack_trace=True,
             )
             return generic_error
@@ -137,17 +137,16 @@ class BaseStripePaymentHandler(object):
             self.send_email(payment_record)
         except Exception:
             log_accounting_error(
-                "Failed to send out an email receipt for "
-                "payment related to PaymentRecord No. %s. "
-                "Everything else succeeded."
-                % payment_record.id,
+                'Failed to send out an email receipt for '
+                f'payment related to PaymentRecord No. {payment_record.id}. '
+                'Everything else succeeded.',
                 show_stack_trace=True,
             )
 
         return {
             'success': True,
             'card': card,
-            'wasSaved': save_card,
+            'wasSaved': new_saved_card,
             'changedBalance': amount,
         }
 

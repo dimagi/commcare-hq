@@ -13,6 +13,7 @@ $(function () {
             credit_card_url: initialPageData.reverse("domain_credits_payment"),
             wire_url: initialPageData.reverse("domain_wire_payment"),
             wire_email: initialPageData.get("user_email"),
+            autopayCard: initialPageData.get("autopay_card"),
         },
     );
     var plan = initialPageData.get("plan");

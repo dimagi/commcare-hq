@@ -422,6 +422,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def page_context(self):
         from corehq.apps.domain.views.sms import SMSRatesView
         subs = self.current_subscription
+        autopay_card, autopay_owner = get_autopay_card_and_owner_for_billing_account(self.account)
         return {
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
@@ -440,6 +441,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user),
             'autopay_enabled': self.account.auto_pay_enabled,
             'manage_autopay_url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
+            'autopay_card': serialize_account_card(autopay_card, autopay_owner) if autopay_card else None,
         }
 
 
@@ -632,6 +634,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     @property
     def page_context(self):
         pagination_context = self.pagination_context
+        autopay_card, autopay_owner = get_autopay_card_and_owner_for_billing_account(self.account)
         pagination_context.update({
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'stripe_cards': self.stripe_cards,
@@ -654,6 +657,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
             'show_plan': True,
             'show_overdue_invoice_modal': False,
             'can_pay_by_wire': self.can_pay_by_wire,
+            'autopay_card': serialize_account_card(autopay_card, autopay_owner) if autopay_card else None,
         })
         return pagination_context
 
