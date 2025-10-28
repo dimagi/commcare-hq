@@ -88,22 +88,12 @@ class BaseStripePaymentHandler(object):
         }
         try:
             with transaction.atomic():
-                if new_saved_card or is_saved_card:
-                    payment_method = self.payment_method
-                elif is_autopay_card:
+                if is_autopay_card:
                     payment_method = StripePaymentMethod.objects.get(
                         web_user=billing_account.auto_pay_user
                     )
-
-                if payment_method is None:
-                    return {
-                        'error': {
-                            'message': _(
-                                'No payment method was found. Please '
-                                'contact support.'
-                            ),
-                        },
-                    }
+                else:
+                    payment_method = self.payment_method
 
                 customer = payment_method.customer
                 if new_saved_card:
