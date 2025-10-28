@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 
 from dimagi.utils.web import get_site_domain
 
+from corehq.apps.accounting.exceptions import SubscriptionReminderError
 from corehq.apps.accounting.utils import (
     get_default_domain_url,
     get_dimagi_from_email,
@@ -267,6 +268,11 @@ def _ending_reminder_context(subscription, days_left):
 
 
 def send_dimagi_contact_ending_reminder_email(subscription):
+    if not subscription.account.dimagi_contact:
+        raise SubscriptionReminderError(
+            "This subscription has no Dimagi contact."
+        )
+
     subject = _dimagi_ending_reminder_subject(subscription)
     context = _dimagi_ending_reminder_context(subscription)
     email_html = render_to_string('accounting/email/subscription_ending_reminder_dimagi.html', context)
