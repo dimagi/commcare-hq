@@ -1209,8 +1209,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -3901,6 +3900,27 @@ msgid "Card"
 msgstr "कार्ड"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#| msgid "Account Autopay Card"
+msgid "Use account autopay card"
+msgstr "खाता ऑटोपे कार्ड का उपयोग करें"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Owner"
+msgstr "मालिक"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a saved card"
 msgstr "सहेजे गए कार्ड का उपयोग करें"
 
@@ -3927,11 +3947,6 @@ msgid "Save card for later"
 msgstr "बाद के लिए कार्ड सहेजें"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#| msgid ""
-#| "\n"
-#| "            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "            to process this transaction.\n"
-#| "          "
 msgid ""
 " We use\n"
 "          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
@@ -4814,8 +4829,6 @@ msgstr "अंतिम 10 रन"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -5173,7 +5186,6 @@ msgid "Please log in to the app to check for an update."
 msgstr "कृपया अपडेट जांचने के लिए ऐप में लॉग इन करें।"
 
 #: corehq/apps/app_manager/exceptions.py
-#| msgid "Restriction for profile {profile} set successfully."
 msgid "Form Actions Diff failed to be applied successfully"
 msgstr "फॉर्म एक्शन डिफ़ सफलतापूर्वक लागू नहीं हो सका"
 
@@ -7801,10 +7813,8 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
@@ -11152,10 +11162,6 @@ msgid "Ignore Owners"
 msgstr "मालिकों को अनदेखा करें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
-#| "                "
 msgid ""
 "\n"
 "                  Example: instance('commcaresession')/session/context/userid or\n"
@@ -11176,12 +11182,6 @@ msgid "Load Additional Data Registry Cases"
 msgstr "अतिरिक्त डेटा रजिस्ट्री केस लोड करें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
-#| "                        The case type of the case must be configured in the registry and in the module via the module's\n"
-#| "                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    Load additional cases from the Data Registry into the\n"
@@ -11215,14 +11215,6 @@ msgid "Custom Related Case Property"
 msgstr "कस्टम संबंधित केस गुणधर्म"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                               Enter in the name of a case property that contains the ID of another\n"
-#| "                               case you'd like included in the results instance.  This is to allow\n"
-#| "                               you to configure your case list display to show properties of that\n"
-#| "                               related case. Read more on the\n"
-#| "                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    Enter in the name of a case property that contains the ID of\n"
@@ -11255,10 +11247,6 @@ msgid "Clearing search terms resets search results"
 msgstr "खोज शब्द हटाने से खोज परिणाम रीसेट हो जाते हैं"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
-#| "            "
 msgid ""
 "\n"
 "              This is not a valid xpath expression. Check to make sure your\n"
@@ -17308,20 +17296,6 @@ msgid "Opened By"
 msgstr "द्वारा खोला गया"
 
 #: corehq/apps/data_cleaning/utils/cases.py
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Owner"
-msgstr "मालिक"
-
-#: corehq/apps/data_cleaning/utils/cases.py
 msgid "Closed By User ID"
 msgstr "यूज़र आईडी द्वारा बंद किया गया"
 
@@ -19758,12 +19732,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-#| msgid "Application Id"
 msgid "Application Add-Ons"
 msgstr "एप्लिकेशन ऐड-ऑन"
 
 #: corehq/apps/domain/forms.py
-#| msgid "Enable Call Center Application"
 msgid "Enable All Application Add-Ons"
 msgstr "सभी एप्लिकेशन ऐड-ऑन सक्षम करें"
 
@@ -20171,15 +20143,6 @@ msgstr "बिलिंग जानकारी अपडेट करें"
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr "ऐसा लगता है कि यह फ़ोन नंबर अमान्य है। क्या आपने देश कोड भूल गए हैं?"
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Subscribe to Plan"
-msgstr "प्लान सब्सक्राइब करें"
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -21592,6 +21555,15 @@ msgstr "हमसे संपर्क करें"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Subscribe to Plan"
+msgstr "प्लान सब्सक्राइब करें"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Upgrade Plan"
 msgstr "प्लान अपग्रेड करें"
 
@@ -22177,68 +22149,6 @@ msgstr "हमारी टीम से बात करें"
 msgid "Dismiss"
 msgstr "खारिज करें"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Saved Credit Cards"
-msgstr "सहेजे गए क्रेडिट कार्ड"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Add Card"
-msgstr "कार्ड जोड़ें"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Credit Card"
-msgstr "क्रेडिट कार्ड"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Your request was successful!"
-msgstr "आपका अनुरोध सफल रहा!"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Delete Card"
-msgstr "कार्ड हटाएं"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Processing your request"
-msgstr "आपका अनुरोध प्रोसेस किया जा रहा है"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          क्या आप वाकई <strong><span data-bind='text: brand'></span></strong> कार्ड\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong> को हटाना चाहते हैं?\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Autopay card"
-msgstr "ऑटोपे कार्ड"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Remove Autopay"
-msgstr "ऑटोपे हटाएं"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-msgid "Set as autopay card"
-msgstr "ऑटोपे कार्ड के रूप में सेट करें"
-
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 #, python-format
 msgid ""
@@ -22249,18 +22159,6 @@ msgstr ""
 "\n"
 "        जब आप वार्षिक भुगतान करते हैं तो लगभग 20%% बचत करें।  \n"
 "      "
-
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove\n"
-"          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          क्या आप वाकई <strong><span data-bind=\\\"text: brand\\\"></span></strong> कार्ड ************<strong><span data-bind=\\\"text: last4\\\"></span></strong> को हटाना चाहते हैं?\n"
-"        "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #, python-format
@@ -22274,6 +22172,130 @@ msgstr ""
 "      आप <strong>%(p)s सॉफ़्टवेयर प्लान</strong> की सदस्यता लेने जा रहे हैं।<br/>\n"
 "      कृपया आगे बढ़ने से पहले नीचे अपनी बिलिंग जानकारी अपडेट करें।\n"
 "    "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#| msgid "Loading payment methods, please wait..."
+msgid "Loading autopay cards, please wait..."
+msgstr "ऑटोपे कार्ड लोड हो रहे हैं, कृपया प्रतीक्षा करें..."
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Confirmation"
+msgstr "पुष्टिकरण"
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#| msgid ""
+#| "\n"
+#| "              Please note that this may take several minutes.\n"
+#| "              Thank you for your patience!\n"
+#| "            "
+msgid ""
+"\n"
+"                Please complete the Basic Information section and select a card\n"
+"                for autopay before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                कृपया बेसिक जानकारी अनुभाग पूरा करें और ऑटोपे के लिए एक कार्ड चुनें\n"
+"                आगे बढ़ने से पहले।\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#| msgid ""
+#| "\n"
+#| "                Want to learn more before signing up?\n"
+#| "              "
+msgid ""
+"\n"
+"                Please provide an autopay card before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                कृपया आगे बढ़ने से पहले एक ऑटोपे कार्ड प्रदान करें।\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#| msgid ""
+#| "\n"
+#| "                Want to learn more before signing up?\n"
+#| "              "
+msgid ""
+"\n"
+"                Please complete the Basic Information section before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                कृपया आगे बढ़ने से पहले बेसिक जानकारी अनुभाग पूरा करें।\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this <strong>annual subscription</strong>, I acknowledge that\n"
+"                  the autopay card above will be charged on a monthly basis for any on-demand fees (excess users, SMS).\n"
+"                "
+msgstr ""
+"\n"
+"                  इस <strong>वार्षिक सब्सक्रिप्शन</strong> को सब्सक्राइब करके, मैं स्वीकार करता/करती/करता हूँ कि\n"
+"                  ऊपर दिया गया ऑटोपे कार्ड किसी भी ऑन-डिमांड शुल्क (अतिरिक्त उपयोगकर्ता, एसएमएस) के लिए मासिक रूप से चार्ज किया जाएगा।\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                    A separate annual invoice for the product cost will be generated and sent to the contact emails above.\n"
+"                    This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
+"                    The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.\n"
+"                  "
+msgstr ""
+"\n"
+"                    उत्पाद लागत के लिए एक अलग वार्षिक इनवॉइस तैयार की जाएगी और ऊपर दिए गए संपर्क ईमेल पर भेजी जाएगी।\n"
+"                    इस इनवॉइस का भुगतान %(days_date_due_annual)s दिनों के भीतर करना होगा, अन्यथा सब्सक्रिप्शन रोक दी जाएगी।\n"
+"                    चयनित ऑटोपे कार्ड से इस इनवॉइस का भुगतान स्वचालित रूप से नहीं किया जाएगा—इसे सीधे भुगतान करना होगा।\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#| msgid ""
+#| "\n"
+#| "                    This subscription will be paused on %(next_date)s.\n"
+#| "                  "
+msgid ""
+"\n"
+"                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.\n"
+"                "
+msgstr ""
+"\n"
+"                  इस मासिक सब्सक्रिप्शन को सब्सक्राइब करके, मैं स्वीकार करता/करती/करता हूँ कि मेरा ऑटोपे कार्ड मासिक रूप से चार्ज किया जाएगा।\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that I understand an\n"
+"                   annual invoice for the product cost will be generated and sent to the contact emails above.\n"
+"                   This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
+"                "
+msgstr ""
+"\n"
+"                   इस <strong>वार्षिक सब्सक्रिप्शन</strong> को सब्सक्राइब करके, मैं स्वीकार करता/करती/करता हूँ कि\n"
+"                   उत्पाद लागत के लिए एक वार्षिक इनवॉइस तैयार की जाएगी और ऊपर दिए गए संपर्क ईमेल पर भेजी जाएगी।\n"
+"                   इस इनवॉइस का भुगतान %(days_date_due_annual)s दिनों के भीतर करना होगा, अन्यथा सब्सक्रिप्शन रोक दी जाएगी।\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                    I also acknowledge that by not selecting an autopay card, I must manually pay for any on-demand fees\n"
+"                    (excess users, SMS) on a monthly basis or the subscription will be paused.\n"
+"                  "
+msgstr ""
+"\n"
+"                    मैं यह भी स्वीकार करता/करती/करता हूँ कि ऑटोपे कार्ड न चुनने पर मुझे किसी भी ऑन-डिमांड शुल्क\n"
+"                    (अतिरिक्त उपयोगकर्ता, एसएमएस) का भुगतान मासिक रूप से मैन्युअली करना होगा, अन्यथा सब्सक्रिप्शन रोक दी जाएगी।\n"
+"                  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22712,6 +22734,12 @@ msgstr "क्रिएटिव कॉमन्स लाइसेंस चु
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 msgid "Add New Credit Card"
 msgstr "नया क्रेडिट कार्ड जोड़ें"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Processing your request"
+msgstr "आपका अनुरोध प्रोसेस किया जा रहा है"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -23215,17 +23243,14 @@ msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "यह लुकअप टेबल्स (जिसे फिक्स्चर भी कहते हैं) की कॉपी नहीं करेगा।"
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#| msgid "Add New Credit Card"
+msgid "Add Card"
+msgstr "कार्ड जोड़ें"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add New Payment Card"
 msgstr "नई भुगतान कार्ड जोड़ें"
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#| msgid ""
-#| "\n"
-#| "                We use\n"
-#| "                <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                to process this transaction.\n"
-#| "              "
 msgid ""
 "\n"
 "              We use\n"
@@ -23240,15 +23265,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Autopay card"
 msgid "Account Autopay Card"
 msgstr "खाता ऑटोपे कार्ड"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid ""
-#| "\n"
-#| "                You don't have any groups yet, please create a Group to get started.\n"
-#| "              "
 msgid ""
 "\n"
 "        You don't have an autopay card set for your account.\n"
@@ -23259,17 +23279,16 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Saved! Reloading, please wait.."
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Refreshing, please wait..."
 msgstr "रीफ़्रेश हो रहा है, कृपया प्रतीक्षा करें..."
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "My Saved Reports"
 msgid "My Saved Cards"
 msgstr "मेरे सेव किए गए कार्ड"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Autopay card"
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Autopay Card"
 msgstr "ऑटोपे कार्ड"
 
@@ -23278,7 +23297,11 @@ msgid "Autopay for Other Account"
 msgstr "अन्य खाते के लिए ऑटोपे"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Removed"
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Set as autopay card"
+msgstr "ऑटोपे कार्ड के रूप में सेट करें"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Remove Card"
 msgstr "कार्ड हटाएँ"
 
@@ -23288,11 +23311,6 @@ msgstr "कार्ड हटाया जा रहा है..."
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                        Click to copy feeds for linking <strong>Parent</strong>\n"
-#| "                        and <strong>Child Cases</strong>:\n"
-#| "                      "
 msgid ""
 "\n"
 "                        Actually remove <strong>%(brand)s</strong>\n"
@@ -23305,11 +23323,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid ""
-#| "\n"
-#| "      Configure external Identity Providers associated with your Enterprise\n"
-#| "      Account below.\n"
-#| "    "
 msgid ""
 "\n"
 "        You do not have any saved cards associated with your user account.\n"
@@ -23319,18 +23332,51 @@ msgstr ""
 "        आपके उपयोगकर्ता खाते से कोई सेव किया गया कार्ड संबद्ध नहीं है।\n"
 "      "
 
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#| msgid "Autopay Card"
+msgid "Select Autopay Card"
+msgstr "ऑटोपे कार्ड चुनें"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#| msgid "Remove Autopay"
+msgid "Remove autopay method"
+msgstr "ऑटोपे विधि हटाएं"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#| msgid ""
+#| "\n"
+#| "        You don't have an autopay card set for your account.\n"
+#| "      "
+msgid ""
+"\n"
+"          Please add an autopay card before subscribing.\n"
+"        "
+msgstr ""
+"\n"
+"          कृपया सब्सक्राइब करने से पहले एक ऑटोपे कार्ड जोड़ें।\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
+"          pausing your subscription due to unpaid on-demand fees.\n"
+"        "
+msgstr ""
+"\n"
+"          वार्षिक खातों के लिए इस समय ऑटोपे आवश्यक नहीं है, लेकिन ऑटोपे सक्षम होने से\n"
+"          बिना भुगतान किए गए ऑन-डिमांड शुल्क के कारण आपकी सब्सक्रिप्शन रोकने का जोखिम कम हो जाता है।\n"
+"        "
+
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Manage Billing Details"
 msgid "Billing Details"
 msgstr "बिलिंग विवरण"
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Last Payment Method"
 msgid "Payment Methods"
 msgstr "भुगतान विधियाँ"
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Updating Data, please wait..."
 msgid "Loading payment methods, please wait..."
 msgstr "भुगतान विधियाँ लोड हो रही हैं, कृपया प्रतीक्षा करें..."
 
@@ -24099,8 +24145,6 @@ msgid "Billing contact information was successfully updated."
 msgstr "बिलिंग संपर्क जानकारी सफलतापूर्वक अपडेट कर दी गई है।"
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid ""
-#| "No downstream project spaces were selected. Please contact support."
 msgid "Unknown removing card. Please contact Support."
 msgstr "कार्ड हटाने में अज्ञात समस्या। कृपया सहायता से संपर्क करें।"
 
@@ -24312,6 +24356,16 @@ msgstr ""
 "आपने पहले ही %(downgrade_date)s को %(software_plan_name)s सॉफ़्टवेयर योजना "
 "में डाउनग्रेड शेड्यूल कर दिया है। यदि यह गलती है, तो कृपया %(contact_email)s"
 " पर संपर्क करें।"
+
+#: corehq/apps/domain/views/accounting.py
+#| msgid "Unknown error setting autopay. Please contact Support."
+msgid "Unknown error unsetting autopay method. Please contact Support."
+msgstr "ऑटोपे विधि हटाने में अज्ञात त्रुटि। कृपया सहायता से संपर्क करें।"
+
+#: corehq/apps/domain/views/accounting.py
+#| msgid "Unknown error setting autopay. Please contact Support."
+msgid "Unknown error setting autopay method. Please contact Support."
+msgstr "ऑटोपे विधि सेट करने में अज्ञात त्रुटि। कृपया सहायता से संपर्क करें।"
 
 #: corehq/apps/domain/views/accounting.py
 #, python-brace-format
@@ -33427,7 +33481,6 @@ msgstr ""
 "देखें।"
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Phone Number"
 msgid "Phone Number Field"
 msgstr "फोन नंबर फ़ील्ड"
 
@@ -36860,11 +36913,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap5/_base.html
-#| msgid ""
-#| "\n"
-#| "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>\n"
-#| "            with your email address.\n"
-#| "          "
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
@@ -38119,6 +38167,16 @@ msgstr "एसएमएस सर्वेक्षण"
 #: corehq/apps/reminders/forms.py
 msgid "No Response"
 msgstr "कोई उत्तर नहीं"
+
+#: corehq/apps/reminders/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+#: corehq/messaging/scheduling/forms.py
+msgid "Connect Message"
+msgstr "कनेक्ट संदेश"
+
+#: corehq/apps/reminders/forms.py corehq/messaging/scheduling/forms.py
+msgid "Connect Survey"
+msgstr "सर्वेक्षण कनेक्ट करें"
 
 #: corehq/apps/reminders/forms.py
 msgid "Mobile Worker Group"
@@ -40055,11 +40113,6 @@ msgstr "दिए गए संदेश इवेंट के लिए वि
 #: corehq/apps/reports/standard/sms.py
 msgid "ConnectID"
 msgstr "कनेक्टआईडी"
-
-#: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
-msgid "Connect Message"
-msgstr "कनेक्ट संदेश"
 
 #: corehq/apps/reports/standard/sms.py
 msgid "Survey Detail"
@@ -46111,15 +46164,35 @@ msgid "Why can't I edit?"
 msgstr "मैं संपादन क्यों नहीं कर सकता?"
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#| msgid ""
+#| "\n"
+#| "              You do not have permission to modify this flag. Please contact\n"
+#| "              support if any changes are needed.\n"
+#| "            "
 msgid ""
 "\n"
-"              You do not have permission to modify this flag. Please contact\n"
-"              support if any changes are needed.\n"
-"            "
+"                You do not have permission to modify this flag. Please contact\n"
+"                support if any changes are needed.\n"
+"              "
 msgstr ""
 "\n"
-"              आपको इस फ्लैग को संशोधित करने की अनुमति नहीं है। यदि कोई बदलाव आवश्यक है तो कृपया समर्थन से संपर्क करें।\n"
-"            "
+"                आपको इस फ्लैग को संशोधित करने की अनुमति नहीं है। यदि कोई परिवर्तन आवश्यक है,\n"
+"                तो कृपया सहायता से संपर्क करें।\n"
+"              "
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, python-format
+msgid ""
+"\n"
+"                This feature is %(status)s for all users and domains, so the\n"
+"                individually toggled items are irrelevant. The toggle will soon\n"
+"                be removed.\n"
+"              "
+msgstr ""
+"\n"
+"                यह सुविधा सभी उपयोगकर्ताओं और डोमेन के लिए %(status)s है, इसलिए\n"
+"                व्यक्तिगत रूप से टॉगल किए गए आइटम अप्रासंगिक हैं। टॉगल जल्द ही हटा दिया जाएगा।\n"
+"              "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "Enabled toggle items"
@@ -52995,10 +53068,6 @@ msgid "Form not found in latest released app build"
 msgstr "नवीनतम रिलीज़ ऐप बिल्ड में फॉर्म नहीं मिला"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Survey"
-msgstr "सर्वेक्षण कनेक्ट करें"
-
-#: corehq/messaging/scheduling/forms.py
 #: corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "JSON"
@@ -53053,10 +53122,6 @@ msgid "Date of final occurrence:"
 msgstr "अंतिम घटना की तिथि:"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "\n"
-#| "                          Please upload any files relevant to your suggestion.\n"
-#| "                        "
 msgid ""
 "\n"
 "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
@@ -53122,8 +53187,6 @@ msgstr ""
 "उपयोगकर्ता(ओं) का पुनः चयन करें।"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "One or more users were unexpectedly not found. Please select user(s) again."
 msgid ""
 "One or more users did not have an active PersonalID link. Please select "
 "user(s) again."
@@ -53132,7 +53195,6 @@ msgstr ""
 "उपयोगकर्ता(ओं) को फिर से चुनें।"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid "Connect Messaging Users"
 msgid "Connect Messages can only be sent to users."
 msgstr "कनेक्ट संदेश केवल उपयोगकर्ताओं को भेजे जा सकते हैं।"
 
@@ -56112,11 +56174,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "Confirmation"
-msgstr "पुष्टिकरण"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Are you sure?"
 msgstr "क्या आप सुनिश्चित हैं?"
 
@@ -57748,6 +57805,43 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "Saved Credit Cards"
+#~ msgstr "सहेजे गए क्रेडिट कार्ड"
+
+#~ msgid "Credit Card"
+#~ msgstr "क्रेडिट कार्ड"
+
+#~ msgid "Your request was successful!"
+#~ msgstr "आपका अनुरोध सफल रहा!"
+
+#~ msgid "Delete Card"
+#~ msgstr "कार्ड हटाएं"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          क्या आप वाकई <strong><span data-bind='text: brand'></span></strong> कार्ड\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong> को हटाना चाहते हैं?\n"
+#~ "        "
+
+#~ msgid "Autopay card"
+#~ msgstr "ऑटोपे कार्ड"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove\n"
+#~ "          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          क्या आप वाकई <strong><span data-bind=\\\"text: brand\\\"></span></strong> कार्ड ************<strong><span data-bind=\\\"text: last4\\\"></span></strong> को हटाना चाहते हैं?\n"
+#~ "        "
 
 #~ msgid "Actually remove this card?"
 #~ msgstr "वास्तव में इस कार्ड को हटाएँ?"

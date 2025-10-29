@@ -1131,8 +1131,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -3278,6 +3277,26 @@ msgid "Card"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+msgid "Use account autopay card"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Owner"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a saved card"
 msgstr ""
 
@@ -4146,8 +4165,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -6842,10 +6859,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
@@ -15243,20 +15258,6 @@ msgid "Opened By"
 msgstr ""
 
 #: corehq/apps/data_cleaning/utils/cases.py
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Owner"
-msgstr ""
-
-#: corehq/apps/data_cleaning/utils/cases.py
 msgid "Closed By User ID"
 msgstr ""
 
@@ -17814,15 +17815,6 @@ msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr ""
 
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Subscribe to Plan"
-msgstr ""
-
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
 msgstr ""
@@ -19019,6 +19011,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Subscribe to Plan"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Upgrade Plan"
 msgstr ""
 
@@ -19511,82 +19512,12 @@ msgstr ""
 msgid "Dismiss"
 msgstr ""
 
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Saved Credit Cards"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Add Card"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Credit Card"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Your request was successful!"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Delete Card"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Processing your request"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove <strong><span data-bind='text: brand'></span></"
-"strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></"
-"strong>?\n"
-"        "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Autopay card"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Remove Autopay"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-msgid "Set as autopay card"
-msgstr ""
-
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 #, python-format
 msgid ""
 "\n"
 "        Save close to 20%% when you pay annually.  \n"
 "      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove\n"
-"          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></"
-"strong>?\n"
-"        "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -19597,6 +19528,94 @@ msgid ""
 "<br/>\n"
 "      Please update your billing information below before continuing.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid "Loading autopay cards, please wait..."
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Confirmation"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please complete the Basic Information section and select a "
+"card\n"
+"                for autopay before continuing.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please provide an autopay card before continuing.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please complete the Basic Information section before "
+"continuing.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this <strong>annual subscription</"
+"strong>, I acknowledge that\n"
+"                  the autopay card above will be charged on a monthly basis "
+"for any on-demand fees (excess users, SMS).\n"
+"                "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                    A separate annual invoice for the product cost will be "
+"generated and sent to the contact emails above.\n"
+"                    This invoice must be paid within "
+"%(days_date_due_annual)s days or the subscription will be paused.\n"
+"                    The selected autopay card will not be automatically "
+"charged to pay this invoice&mdash;it must be paid directly.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this monthly subscription, I acknowledge "
+"that my autopay card will be charged on a monthly basis.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                   By subscribing to this <strong>annual subscription</"
+"strong>, I acknowledge that I understand an\n"
+"                   annual invoice for the product cost will be generated and "
+"sent to the contact emails above.\n"
+"                   This invoice must be paid within %(days_date_due_annual)s "
+"days or the subscription will be paused.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                    I also acknowledge that by not selecting an autopay "
+"card, I must manually pay for any on-demand fees\n"
+"                    (excess users, SMS) on a monthly basis or the "
+"subscription will be paused.\n"
+"                  "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
@@ -19959,6 +19978,12 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 msgid "Add New Credit Card"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Processing your request"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
@@ -20365,6 +20390,10 @@ msgid "This will not copy lookup tables (aka fixtures)."
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Add Card"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add New Payment Card"
 msgstr ""
 
@@ -20390,6 +20419,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Refreshing, please wait..."
 msgstr ""
 
@@ -20398,11 +20428,17 @@ msgid "My Saved Cards"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Autopay Card"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Autopay for Other Account"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Set as autopay card"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
@@ -20427,6 +20463,30 @@ msgid ""
 "\n"
 "        You do not have any saved cards associated with your user account.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Select Autopay Card"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Remove autopay method"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Please add an autopay card before subscribing.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Autopay is not required for annual accounts at this time, but "
+"having autopay enabled reduces the risk of\n"
+"          pausing your subscription due to unpaid on-demand fees.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
@@ -21281,6 +21341,14 @@ msgid ""
 "You have already scheduled a downgrade to the %(software_plan_name)s "
 "Software Plan on %(downgrade_date)s. If this is a mistake, please reach out "
 "to %(contact_email)s."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error unsetting autopay method. Please contact Support."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error setting autopay method. Please contact Support."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
@@ -33526,6 +33594,16 @@ msgstr ""
 msgid "No Response"
 msgstr ""
 
+#: corehq/apps/reminders/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+#: corehq/messaging/scheduling/forms.py
+msgid "Connect Message"
+msgstr ""
+
+#: corehq/apps/reminders/forms.py corehq/messaging/scheduling/forms.py
+msgid "Connect Survey"
+msgstr ""
+
 #: corehq/apps/reminders/forms.py
 msgid "Mobile Worker Group"
 msgstr ""
@@ -35337,11 +35415,6 @@ msgstr ""
 
 #: corehq/apps/reports/standard/sms.py
 msgid "ConnectID"
-msgstr ""
-
-#: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
-msgid "Connect Message"
 msgstr ""
 
 #: corehq/apps/reports/standard/sms.py
@@ -40782,10 +40855,22 @@ msgstr ""
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid ""
 "\n"
-"              You do not have permission to modify this flag. Please "
+"                You do not have permission to modify this flag. Please "
 "contact\n"
-"              support if any changes are needed.\n"
-"            "
+"                support if any changes are needed.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, python-format
+msgid ""
+"\n"
+"                This feature is %(status)s for all users and domains, so "
+"the\n"
+"                individually toggled items are irrelevant. The toggle will "
+"soon\n"
+"                be removed.\n"
+"              "
 msgstr ""
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
@@ -46761,10 +46846,6 @@ msgstr ""
 msgid "Form not found in latest released app build"
 msgstr ""
 
-#: corehq/messaging/scheduling/forms.py
-msgid "Connect Survey"
-msgstr ""
-
 #: corehq/messaging/scheduling/forms.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "JSON"
@@ -49579,11 +49660,6 @@ msgid ""
 "        Clear selection\n"
 "      </button>\n"
 "    "
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "Confirmation"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
