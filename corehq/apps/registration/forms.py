@@ -23,6 +23,7 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.models import ServerLocation
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
@@ -88,17 +89,22 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe(_(
-            """I have read and agree to Dimagi's
-            <a href="http://www.dimagi.com/terms/latest/privacy/"
-               target="_blank">Privacy Policy</a>,
-            <a href="http://www.dimagi.com/terms/latest/tos/"
-               target="_blank">Terms of Service</a>,
-            <a href="http://www.dimagi.com/terms/latest/ba/"
-               target="_blank">Business Agreement</a>, and
-            <a href="http://www.dimagi.com/terms/latest/aup/"
-               target="_blank">Acceptable Use Policy</a>.
-            """)))
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(_(
+                """I have read and agree to Dimagi's
+                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                target="_blank">Privacy Policy</a>,
+                <a href="http://www.dimagi.com/terms/latest/tos/"
+                target="_blank">Terms of Service</a>,
+                <a href="http://www.dimagi.com/terms/latest/ba/"
+                target="_blank">Business Agreement</a>, and
+                <a href="http://www.dimagi.com/terms/latest/aup/"
+                target="_blank">Acceptable Use Policy</a>.
+                """)
+            ),
+        ),
+        label="",
+    )
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
