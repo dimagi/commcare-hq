@@ -333,6 +333,17 @@
       "compare_all_files": true
     }
   ],
+  "apps/analytics/templates/analytics/js/analytix": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/analytics/js",
+      "compare_all_files": true
+    }
+  ],
   "apps/hqwebapp/static/hqwebapp/spec": [
     {
       "directories": [
