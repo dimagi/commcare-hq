@@ -17,6 +17,7 @@ from django.views.generic.base import TemplateView, View
 
 from memoized import memoized
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -251,9 +252,10 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         return response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class UserRegistrationView(BasePageView):
     urlname = 'register_user'
-    template_name = 'registration/bootstrap3/register_new_user.html'
+    template_name = 'registration/bootstrap5/register_new_user.html'
 
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
