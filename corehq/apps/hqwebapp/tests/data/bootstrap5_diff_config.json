@@ -325,8 +325,8 @@
   "apps/analytics/templates/analytics": [
     {
       "directories": [
-        "forms/bootstrap3/",
-        "forms/bootstrap5/"
+        "forms/bootstrap3",
+        "forms/bootstrap5"
       ],
       "file_type": "template",
       "label": "analytics/forms",
