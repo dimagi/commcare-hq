@@ -164,6 +164,9 @@
     "in_progress": true,
     "templates": [
       "register_new_user.html"
+    ],
+    "javascript": [
+      "js/register_new_user.js"
     ]
   },
   "registry": {
