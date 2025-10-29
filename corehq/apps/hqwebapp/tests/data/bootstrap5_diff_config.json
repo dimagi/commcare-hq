@@ -84,6 +84,22 @@
       "compare_all_files": true
     }
   ],
+  "apps/hqwebapp/static/registration": [
+    {
+      "directories": [
+        "scss/",
+        "less/"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets",
+      "files": [
+        [
+          "registration.scss",
+          "registration.scss"
+        ]
+      ]
+    }
+  ],
   "apps/hqwebapp/static/hqwebapp": [
     {
       "directories": [
