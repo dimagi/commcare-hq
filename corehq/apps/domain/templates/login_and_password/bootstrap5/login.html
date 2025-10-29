@@ -13,7 +13,7 @@
          data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
     <div class="bg-overlay"></div>
   </div>
-{% endblock %}
+{% endblock background_content %}
 
 {% block stylesheets %}
   <link type="text/css"
@@ -35,11 +35,13 @@
   {% registerurl 'check_sso_login_status' %}
   {% registerurl 'iframe_sso_login_pending' %}
   {% block login-content %}
-    <div {% if enforce_sso_login %}
-         id="user-login-form"
-         class="ko-template"
-         {% endif %}>
+    <div
+      {% if enforce_sso_login %}
+        id="user-login-form"
+        class="ko-template"
+      {% endif %}
+    >
       {% include "login_and_password/partials/bootstrap5/login_full.html" %}
     </div>
-  {% endblock %}
+  {% endblock login-content %}
 {% endblock content %}
