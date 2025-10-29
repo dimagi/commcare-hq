@@ -254,7 +254,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 @method_decorator(use_bootstrap5, name='dispatch')
 class UserRegistrationView(BasePageView):
     urlname = 'register_user'
-    template_name = 'registration/bootstrap5/register_new_user.html'
+    template_name = 'registration/register_new_user.html'
 
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):

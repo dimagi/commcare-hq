@@ -161,7 +161,10 @@
     "is_complete": true
   },
   "registration": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "register_new_user.html"
+    ]
   },
   "registry": {
     "is_complete": true
