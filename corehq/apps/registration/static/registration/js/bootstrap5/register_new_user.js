@@ -22,28 +22,7 @@ var regForm = newUser.formViewModel(
 $('#registration-form-container').koApplyBindings(regForm);
 
 // Email validation feedback
-newUser.setResetEmailFeedbackFn(function (isValidating) {
-    var $email = $('#div_id_email');
-    if (isValidating) {
-        $email
-            .removeClass('has-error has-success')
-            .addClass('has-warning');
-        $email
-            .find('.form-control-feedback')
-            .removeClass('fa-check fa-remove')
-            .addClass('fa-spinner fa-spin');
-    } else {
-        var inputClass = 'has-error',
-            iconClass = 'fa-remove';
-        if (regForm.emailDelayed.isValid() && regForm.email.isValid()) {
-            inputClass = 'has-success';
-            iconClass = 'fa-check';
-        }
-        $email.removeClass('has-warning').addClass(inputClass);
-        $email
-            .find('.form-control-feedback')
-            .removeClass('fa-spinner fa-spin')
-            .addClass(iconClass);
-    }
+newUser.setResetEmailFeedbackFn(function () {
+    // noop, bootstrap 5 styles handle this automatically
 });
 newUser.setPhoneNumberInput('#id_phone_number');

@@ -199,7 +199,6 @@ class RegisterWebUserForm(forms.Form):
                         crispy.HTML('<p class="validation-message-block" '
                                     'data-bind="visible: isEmailValidating, '
                                     'text: validatingEmailMsg">&nbsp;</p>'),
-                        hqcrispy.ValidationMessage('emailDelayed'),
                         data_bind="validationOptions: { allowHtmlMessages: 1 }",
                     ),
                     crispy.Div(
@@ -214,7 +213,6 @@ class RegisterWebUserForm(forms.Form):
                                       "   delayedValidator: passwordDelayed "
                                       "}",
                         ),
-                        hqcrispy.ValidationMessage('passwordDelayed'),
                         data_bind="visible: showPasswordField"
                     ),
                     hqcrispy.InlineField(
