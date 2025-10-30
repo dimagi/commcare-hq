@@ -31,10 +31,15 @@
     <div class="alert alert-warning">
       <i class="fa fa-warning"></i>
       {% blocktrans %}
-        You don't have an autopay card set for your account.
+        You don't have an autopay card set for your account. By electronically
+        providing your payment information and selecting "Set as Autopay" or
+        "Use this card to autopay", you are completing the Autopay enrollment process
+        and giving your affirmative consent to these recurring payment terms.
+        Please read them carefully.
       {% endblocktrans %}
     </div>
-  {% endif %}
+    {% endif %}
+  {% include "domain/partials/autopay_terms.html" %}
 </fieldset>
 
 <div class="htmx-indicator">
