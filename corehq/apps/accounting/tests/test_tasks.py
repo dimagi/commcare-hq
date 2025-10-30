@@ -181,9 +181,7 @@ class TestAutoRenewableSubscriptions(BaseInvoiceTestCase):
         assert self.subscription in subscriptions
 
     def test_includes_subscription_less_than_30_days_left(self):
-        self._set_auto_renew_properties(
-            date_end=datetime.date.today() + datetime.timedelta(days=1)
-        )
+        self._set_auto_renew_properties(date_end=datetime.date.today())
         subscriptions = tasks._get_auto_renewable_subscriptions()
         assert self.subscription in subscriptions
 
