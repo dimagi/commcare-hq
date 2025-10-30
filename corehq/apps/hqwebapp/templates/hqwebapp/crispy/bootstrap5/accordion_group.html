@@ -1,4 +1,4 @@
-<fieldset>
+<fieldset class="{{ div.css_class }}">
     <legend>
         <a class="accordion-toggle{% if not div.active %} collapsed{% endif %}"
            data-bs-toggle="collapse"
@@ -10,7 +10,7 @@
             {{ div.name }}
         </a>
     </legend>
-    <div id="{{ div.css_id }}" class="card-body collapse{% if div.active %} in{% endif %}" >
+    <div id="{{ div.css_id }}" class="card-body collapse{% if div.active %} show{% endif %}" >
         <div>
             {{ fields|safe }}
         </div>
