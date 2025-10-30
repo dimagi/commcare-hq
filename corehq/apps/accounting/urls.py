@@ -16,21 +16,21 @@ from corehq.apps.accounting.views import (
     NewSoftwarePlanView,
     NewSubscriptionView,
     NewSubscriptionViewNoDefaultDomain,
+    SoftwarePlanVersionView,
     TestRenewalEmailView,
+    TriggerAutopaymentsView,
+    TriggerAutoRenewalView,
     TriggerBookkeeperEmailView,
     TriggerCustomerInvoiceView,
+    TriggerDowngradeView,
     TriggerInvoiceView,
-    SoftwarePlanVersionView,
     TriggerRemovedSsoUserAutoDeactivationView,
     WireInvoiceSummaryView,
     accounting_default,
-    TriggerDowngradeView,
-    TriggerAutopaymentsView,
-    TriggerAutoRenewalView,
 )
 from corehq.apps.sso.views.accounting_admin import (
-    NewIdentityProviderAdminView,
     EditIdentityProviderAdminView,
+    NewIdentityProviderAdminView,
 )
 
 urlpatterns = [

@@ -26,13 +26,14 @@ from corehq.apps.accounting.views import (
     TriggerDowngradeView,
     TriggerRemovedSsoUserAutoDeactivationView,
 )
-from corehq.apps.app_manager.dbaccessors import (
-    get_brief_apps_in_domain,
-)
-from corehq.apps.app_manager.util import is_remote_app, is_linked_app
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.case_search.views import CSQLFixtureExpressionView
+from corehq.apps.data_cleaning.decorators import (
+    bulk_data_cleaning_enabled_for_request,
+)
 from corehq.apps.data_dictionary.views import DataDictionaryView
-from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
@@ -50,19 +51,20 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
-from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
-    FeaturePreviewStatusReport,
     FeaturePreviewAuditReport,
+    FeaturePreviewStatusReport,
+    UCRDataLoadReport,
     UserAuditReport,
     UserListReport,
-    UCRDataLoadReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.integration.kyc.views import KycConfigurationView
 from corehq.apps.integration.payments.views import PaymentConfigurationView
 from corehq.apps.integration.views import (
     DialerSettingsView,
@@ -96,10 +98,11 @@ from corehq.apps.translations.integrations.transifex.utils import (
 )
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
+    can_access_payments_report,
     can_download_data_files,
     can_view_sms_exports,
-    can_access_payments_report,
 )
 from corehq.messaging.scheduling.views import \
     BroadcastListView as NewBroadcastListView
@@ -118,12 +121,6 @@ from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
-from corehq.apps.users.models import HqPermissions
-from corehq.apps.geospatial.views import (
-    GeospatialConfigPage,
-    GPSCaptureView,
-)
-from corehq.apps.integration.kyc.views import KycConfigurationView
 
 
 class ProjectReportsTab(UITab):
@@ -688,10 +685,10 @@ class ProjectDataTab(UITab):
         export_data_views = []
         if self.can_only_see_deid_exports:
             from corehq.apps.export.views.list import (
+                DeIdCaseExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
                 DeIdFormExportListView,
-                DeIdCaseExportListView,
                 ODataFeedListView,
             )
             export_data_views.append({
@@ -723,9 +720,9 @@ class ProjectDataTab(UITab):
             from corehq.apps.export.views.download import (
                 BulkDownloadNewFormExportView,
                 DownloadNewCaseExportView,
+                DownloadNewDatasourceExportView,
                 DownloadNewFormExportView,
                 DownloadNewSmsExportView,
-                DownloadNewDatasourceExportView,
             )
             from corehq.apps.export.views.edit import (
                 EditCaseDailySavedExportView,
@@ -2183,9 +2180,9 @@ class ProjectSettingsTab(UITab):
 def _get_administration_section(domain):
     from corehq.apps.domain.views.internal import TransferDomainView
     from corehq.apps.domain.views.settings import (
+        CredentialsApplicationSettingsView,
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
-        CredentialsApplicationSettingsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
