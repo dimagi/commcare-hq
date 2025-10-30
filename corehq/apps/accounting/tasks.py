@@ -29,6 +29,7 @@ from corehq.apps.accounting.emails import (
     send_ending_reminder_email,
     send_renewal_reminder_email,
     send_subscription_ending_email,
+    send_subscription_renewed_email,
 )
 from corehq.apps.accounting.exceptions import (
     ActiveSubscriptionWithoutDomain,
@@ -451,11 +452,11 @@ def auto_renew_subscription(subscription):
         edition=subscription.plan_version.plan.edition,
         is_annual_plan=subscription.plan_version.plan.is_annual_plan,
     )
-    subscription.renew_subscription(
+    next_subscription = subscription.renew_subscription(
         adjustment_method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
         new_version=new_plan_version,
     )
-    # TODO: send_subscription_renewed_email(subscription)
+    send_subscription_renewed_email(next_subscription)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
