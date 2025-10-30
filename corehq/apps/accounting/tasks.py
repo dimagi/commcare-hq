@@ -451,6 +451,7 @@ def _get_auto_renewable_subscriptions(domain_name=None):
     return auto_renewable_subscriptions
 
 
+@transaction.atomic
 def auto_renew_subscription(subscription):
     new_plan_version = DefaultProductPlan.get_default_plan_version(
         edition=subscription.plan_version.plan.edition,
