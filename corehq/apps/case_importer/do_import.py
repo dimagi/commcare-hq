@@ -326,7 +326,7 @@ class _TimedAndThrottledImporter:
             elif update_value is not None:
                 update_value = _convert_field_value(update_value)
 
-            if self.field_to_case_property:
+            if update_field_name in self.field_to_case_property:
                 case_property = self.field_to_case_property[update_field_name]
                 try:
                     case_property.check_validity(update_value)
