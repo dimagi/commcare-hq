@@ -10,7 +10,7 @@
             {{ div.name }}
         </a>
     </legend>
-    <div id="{{ div.css_id }}" class="card-body collapse{% if div.active %} in{% endif %}" >
+    <div id="{{ div.css_id }}" class="card-body collapse{% if div.active %} show{% endif %}" >
         <div>
             {{ fields|safe }}
         </div>

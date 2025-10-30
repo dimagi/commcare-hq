@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+
 from django.forms.widgets import DateTimeInput
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -8,8 +9,7 @@ from crispy_forms.bootstrap import AccordionGroup
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Field
-from crispy_forms.layout import LayoutObject
+from crispy_forms.layout import Field, LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
 CSS_LABEL_CLASS = 'field-label'
@@ -24,7 +24,10 @@ class HQFormHelper(FormHelper):
 
     def __init__(self, *args, **kwargs):
         super(HQFormHelper, self).__init__(*args, **kwargs)
-        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        from corehq.apps.hqwebapp.utils.bootstrap import (
+            BOOTSTRAP_5,
+            get_bootstrap_version,
+        )
         self.use_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
 
         if 'autocomplete' not in self.attrs:
@@ -336,6 +339,35 @@ class B3TextField(Field):
 
 class FieldsetAccordionGroup(AccordionGroup):
     template = "hqwebapp/crispy/accordion_group.html"
+
+    def render(self, form, context, template_pack=None, **kwargs):
+        from corehq.apps.hqwebapp.utils.bootstrap import (
+            BOOTSTRAP_5,
+            get_bootstrap_version,
+        )
+        template_pack = template_pack or get_template_pack()
+
+        # Handle active class like parent AccordionGroup does
+        if self.active:
+            if "active" not in self.css_class:
+                self.css_class += " active"
+        else:
+            self.css_class = self.css_class.replace("active", "")
+
+        # Get rendered fields from parent Container class
+        fields = self.get_rendered_fields(form, context, template_pack, **kwargs)
+
+        # Get the template
+        template = self.get_template_name(template_pack)
+
+        # Inject use_bootstrap5 into the template context
+        template_context = {
+            "div": self,
+            "fields": fields,
+            "use_bootstrap5": get_bootstrap_version() == BOOTSTRAP_5,
+        }
+
+        return render_to_string(template, template_context)
 
 
 class RadioSelect(Field):
