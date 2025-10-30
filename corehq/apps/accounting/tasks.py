@@ -424,7 +424,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0))
 def auto_renew_subscriptions(domain_name=None):
     """
     Automatically renew eligible subscriptions 30 or fewer days from their end date.
