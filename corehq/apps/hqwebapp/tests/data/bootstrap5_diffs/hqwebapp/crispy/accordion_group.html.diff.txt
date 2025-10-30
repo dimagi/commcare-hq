@@ -1,20 +1,40 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
- <fieldset>
-     <legend>
-         <a class="accordion-toggle{% if not div.active %} collapsed{% endif %}"
--           data-toggle="collapse"
+@@ -1,21 +1,18 @@
+ <fieldset class="{{ div.css_class }}">
+-  <legend>
+-    <a
+-      class="accordion-toggle{% if not div.active %} collapsed{% endif %}"
+-      data-toggle="collapse"
+-      {% if div.data_parent %}
+-        data-parent="#{{ div.data_parent }}"
+-      {% endif %}
+-      href="#{{ div.css_id }}"
+-    >
+-      <i class="fa fa-angle-double-down"></i>
+-      {{ div.name }}
+-    </a>
+-  </legend>
+-  <div
+-    id="{{ div.css_id }}"
+-    class="panel-body collapse{% if div.active %} in{% endif %}"
+-  >
+-    <div>{{ fields|safe }}</div>
+-  </div>
++    <legend>
++        <a class="accordion-toggle{% if not div.active %} collapsed{% endif %}"
 +           data-bs-toggle="collapse"
-            {% if div.data_parent %}
-            data-parent="#{{ div.data_parent }}"
-            {% endif %}
-@@ -10,7 +10,7 @@
-             {{ div.name }}
-         </a>
-     </legend>
--    <div id="{{ div.css_id }}" class="panel-body collapse{% if div.active %} in{% endif %}" >
++           {% if div.data_parent %}
++           data-parent="#{{ div.data_parent }}"
++           {% endif %}
++           href="#{{ div.css_id }}">
++            <i class="fa fa-angle-double-down"></i>
++            {{ div.name }}
++        </a>
++    </legend>
 +    <div id="{{ div.css_id }}" class="card-body collapse{% if div.active %} show{% endif %}" >
-         <div>
-             {{ fields|safe }}
-         </div>
++        <div>
++            {{ fields|safe }}
++        </div>
++    </div>
+ </fieldset>
