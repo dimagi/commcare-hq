@@ -164,3 +164,78 @@ class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
         with patch('corehq.apps.accounting.tasks.send_subscription_ending_email') as mock_send:
             tasks.send_subscription_ending_emails(60)
             assert not mock_send.called
+
+
+@travel('2025-10-01', tick=False)
+class TestAutoRenewableSubscriptions(BaseInvoiceTestCase):
+
+    def test_includes_subscription_exactly_30_days_left(self):
+        self._set_auto_renew_properties(
+            date_end=datetime.date.today() + datetime.timedelta(days=30)
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions()
+        assert self.subscription in subscriptions
+
+    def test_includes_subscription_less_than_30_days_left(self):
+        self._set_auto_renew_properties(
+            date_end=datetime.date.today() + datetime.timedelta(days=1)
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions()
+        assert self.subscription in subscriptions
+
+    def test_excludes_subscription_more_than_30_days_left(self):
+        self._set_auto_renew_properties(
+            date_end=datetime.date.today() + datetime.timedelta(days=31)
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions()
+        assert self.subscription not in subscriptions
+
+    def test_excludes_subscription_end_date_in_past(self):
+        self._set_auto_renew_properties(
+            date_end=datetime.date.today() - datetime.timedelta(days=1)
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions()
+        assert self.subscription not in subscriptions
+
+    def test_excludes_auto_renew_false(self):
+        self._set_auto_renew_properties(
+            auto_renew=False,
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions()
+        assert self.subscription not in subscriptions
+
+    def test_excludes_service_type_not_product(self):
+        self._set_auto_renew_properties(
+            service_type=SubscriptionType.IMPLEMENTATION,
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions()
+        assert self.subscription not in subscriptions
+
+    def test_excludes_customer_billing_account(self):
+        self._set_auto_renew_properties(
+            is_customer_billing_account=True,
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions()
+        assert self.subscription not in subscriptions
+
+    def test_auto_renew_ignores_already_renewed(self):
+        self._set_auto_renew_properties()
+        self.subscription.renew_subscription()
+        with patch('corehq.apps.accounting.tasks.auto_renew_subscription') as mock_renew:
+            tasks.auto_renew_subscriptions()
+            assert not mock_renew.called
+
+    def _set_auto_renew_properties(
+        self,
+        date_end=datetime.date.today() + datetime.timedelta(days=30),
+        service_type=SubscriptionType.PRODUCT,
+        auto_renew=True,
+        is_customer_billing_account=False,
+    ):
+        self.subscription.date_end = date_end
+        self.subscription.service_type = service_type
+        self.subscription.auto_renew = auto_renew
+        self.subscription.save()
+
+        self.account.is_customer_billing_account = is_customer_billing_account
+        self.account.save()
