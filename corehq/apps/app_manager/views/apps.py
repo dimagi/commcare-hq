@@ -3,6 +3,9 @@ import json
 import os
 from collections import defaultdict
 
+import urllib3
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 from django.contrib import messages
 from django.http import (
     HttpResponse,
@@ -14,12 +17,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
-
-import urllib3
 from django_prbac.utils import has_privilege
-
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request, json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -63,14 +61,12 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     app_template_dir,
+    load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
-from corehq.apps.app_manager.util import app_doc_types
-from corehq.apps.app_manager.util import \
-    enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.util import (
+    app_doc_types,
     get_and_assert_practice_user_in_domain,
     get_latest_enabled_versions_per_profile,
     get_settings_values,
@@ -281,7 +277,17 @@ def get_app_view_context(request, app):
             'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
             'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
+        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False),
 
+        'is_linked_app': is_linked_app(app),
+        'is_remote_app': is_remote_app(app),
+
+        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
+    })
+
+    # dependent on bulk_ui_translation_upload and bulk_app_translation_upload
+    # keys existing in context
+    context.update({
         'bulk_ui_translation_form': get_bulk_upload_form(
             context,
             context_key="bulk_ui_translation_upload",
@@ -291,14 +297,8 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
         ),
-
-        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False),
-
-        'is_linked_app': is_linked_app(app),
-        'is_remote_app': is_remote_app(app),
-
-        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
     })
+
     if isinstance(app, Application):
         context.update({'custom_assertions': [
             {'test': assertion.test, 'text': assertion.text.get(lang)}

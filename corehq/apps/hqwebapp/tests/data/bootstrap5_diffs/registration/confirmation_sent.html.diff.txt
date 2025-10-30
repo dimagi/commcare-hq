@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "registration/bootstrap3/base.html" %}
++{% extends "registration/bootstrap5/base.html" %}
+ {% load i18n %}
+ 
+ {% block title %}{% trans "Confirmation Email Sent" %}{% endblock title %}

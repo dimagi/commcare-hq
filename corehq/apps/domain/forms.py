@@ -671,6 +671,16 @@ class DomainGlobalSettingsForm(forms.Form):
         else:
             self._handle_exports_use_elasticsearch_setting_value()
 
+        checkbox_fields = [
+            hqcrispy.CheckboxField('release_mode_visibility'),
+        ]
+        if 'enable_all_add_ons' in self.fields:
+            checkbox_fields.append(hqcrispy.CheckboxField('enable_all_add_ons'))
+        checkbox_fields.extend([
+            hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+            hqcrispy.CheckboxField('opt_out_of_data_sharing'),
+        ])
+
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -679,10 +689,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 'project_description',
                 'default_timezone',
                 crispy.Div(*self.get_extra_fields()),
-                hqcrispy.CheckboxField('release_mode_visibility'),
-                hqcrispy.CheckboxField('enable_all_add_ons'),
-                hqcrispy.CheckboxField('orphan_case_alerts_warning'),
-                hqcrispy.CheckboxField('opt_out_of_data_sharing'),
+                *checkbox_fields,
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1669,7 +1676,7 @@ def send_password_reset_email(active_users):
     """
     if settings.IS_SAAS_ENVIRONMENT:
         subject_template_name = 'registration/email/password_reset_subject_hq.txt'
-        email_template_name = 'registration/email/password_reset_email_hq.html'
+        email_template_name = 'registration/email/bootstrap3/password_reset_email_hq.html'
     else:
         subject_template_name = 'registration/password_reset_subject.txt',
         email_template_name = 'registration/password_reset_email.html',
@@ -2036,50 +2043,69 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
+        for field_name in ['first_name', 'last_name', 'first_line', 'city', 'postal_code', 'country']:
+            self.fields[field_name].required = True
+
+        self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             'plan_edition',
             'is_annual_plan',
             crispy.Fieldset(
                 _('Basic Information'),
                 'company_name',
-                'first_name',
-                'last_name',
+                crispy.Field(
+                    'first_name',
+                    x_model='firstName',
+                    x_init=f"firstName = '{self.initial.get('first_name') or ''}'",
+                ),
+                crispy.Field(
+                    'last_name',
+                    x_model='lastName',
+                    x_init=f"lastName = '{self.initial.get('last_name') or ''}'",
+                ),
                 crispy.Field(
                     'email_list',
+                    x_model='emailList',
+                    x_init=f"emailList = {json.dumps(email_list)}",
                     css_class='form-control form-control-lg accounting-email-select2',
                     data_initial=json.dumps(email_list),
+                    **{
+                        '@select2Change': 'emailList = $event.detail;',
+                    }
                 ),
                 'phone_number',
             ),
             crispy.Fieldset(
                 _('Mailing Address'),
-                'first_line',
+                crispy.Field(
+                    'first_line',
+                    x_model='firstLine',
+                    x_init=f"firstLine = '{self.initial.get('first_line') or ''}'",
+                ),
                 'second_line',
-                'city',
+                crispy.Field(
+                    'city',
+                    x_model='city',
+                    x_init=f"city = '{self.initial.get('city') or ''}'",
+                ),
                 'state_province_region',
-                'postal_code',
+                crispy.Field(
+                    'postal_code',
+                    x_model='postalCode',
+                    x_init=f"postalCode = '{self.initial.get('postal_code') or ''}'",
+                ),
                 crispy.Field(
                     'country',
                     css_class='form-control form-control-lg accounting-country-select2',
+                    x_model='country',
+                    x_init=f"country = '{self.initial.get('country') or ''}'",
                     data_country_code=self.current_country or '',
                     data_country_name=COUNTRIES.get(self.current_country, ''),
+                    **{
+                        '@select2Change': 'country = $event.detail;',
+                    }
                 ),
             ),
-            hqcrispy.FormActions(
-                hqcrispy.LinkButton(
-                    _('Cancel'),
-                    reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-                    css_class='btn btn-outline-primary',
-                ),
-                StrictButton(
-                    _('Subscribe to Plan'),
-                    type='submit',
-                    id='btn-subscribe-to-plan',
-                    css_class='btn btn-primary disable-on-submit-no-spinner add-spinner-on-click',
-                ),
-            ),
-            crispy.Hidden(name='downgrade_email_note', value='', id='downgrade-email-note'),
             crispy.Hidden(name='old_plan', value=current_subscription.plan_version.plan.edition),
             crispy.Hidden(name='new_plan', value=plan_version.plan.edition),
         )
@@ -2090,6 +2116,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 account_save_success = super(ConfirmNewSubscriptionForm, self).save()
                 if not account_save_success:
                     return False
+
+                if not self.plan_version.plan.is_annual_plan:
+                    # always require auto-pay for new monthly subscriptions
+                    self.account.require_auto_pay = True
+                    self.account.save(update_fields=['require_auto_pay'])
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 new_sub_date_start, new_sub_date_end = self.new_subscription_start_end_dates()

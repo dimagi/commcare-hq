@@ -8,7 +8,7 @@ import "hqwebapp/js/bootstrap3/main";
 import "hqwebapp/js/bootstrap3/inactivity";
 import "notifications/js/bootstrap3/notifications_service_main";
 import "analytix/js/google";
-import "analytix/js/hubspot";
+import "analytix/js/bootstrap3/hubspot";
 import "analytix/js/noopMetrics";
 import "analytix/js/gtx";
 

@@ -1,0 +1,39 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "registration/bootstrap3/base.html" %}
++{% extends "registration/bootstrap5/base.html" %}
+ {% load i18n %}
+ 
+ {% block title %}{% trans "Resend Confirmation Email" %}{% endblock title %}
+@@ -10,8 +10,8 @@
+       {% trans "Resend Confirmation" %}
+     </h2>
+ 
+-    <div class="form-group">
+-      <label class="control-label has-feedback">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="form-label has-feedback">
+         {% trans "Email" %}
+       </label>
+       <div>
+@@ -19,8 +19,8 @@
+       </div>
+     </div>
+ 
+-    <div class="form-group">
+-      <label class="control-label has-feedback">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="form-label has-feedback">
+         {% trans "Pending Project Name" %}
+       </label>
+       <div>
+@@ -29,7 +29,7 @@
+     </div>
+ 
+     <div class="form-bubble-actions">
+-      <button type="submit" class="btn btn-lg btn-default">
++      <button type="submit" class="btn btn-lg btn-outline-primary">
+         {% trans "Resend Confirmation" %}
+       </button>
+     </div>

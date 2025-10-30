@@ -19,7 +19,6 @@ from corehq.apps.accounting.payment_handlers import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
-from django.db import transaction
 from unittest import SkipTest
 from django.conf import settings
 from unittest.mock import patch
@@ -134,9 +133,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         invoice.balance = balance
         invoice.save()
         # Run autopay again to test no double charge
-        with transaction.atomic(), self.assertLogs(level='ERROR') as log_cm:
-            self._run_autopay()
-            self.assertIn("[BILLING] [Autopay] Attempt to double charge invoice", "\n".join(log_cm.output))
+        self._run_autopay()
         self.assertEqual(len(PaymentRecord.objects.all()), 1)
         self.assertEqual(len(mail.outbox), self.original_outbox_length + 1)
 

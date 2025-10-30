@@ -1870,6 +1870,10 @@ msgstr ""
 "Debe ser agregado al espacio de proyecto como miembro para poder "
 "sobrescribir su zona horaria."
 
+#: corehq/apps/domain/static/domain/js/new_stripe_card_manager.js
+msgid "Card added successfully! Refreshing cards list..."
+msgstr "¡Tarjeta agregada exitosamente! Actualizando la lista de tarjetas..."
+
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
 "Do not allow new users to sign up on commcarehq.org. This may take up to an "
@@ -2865,6 +2869,11 @@ msgstr ""
 msgid "Good Job! Your password is strong!"
 msgstr "¡Bien Hecho! ¡Su contraseña es segura!"
 
+#: corehq/apps/registration/static/registration/js/bootstrap3/user_login_form.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/user_login_form.js
+msgid "Continue"
+msgstr "Continuar"
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr "Por favor ingrese su nombre."
@@ -2895,10 +2904,6 @@ msgstr "Por favor, especifica."
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
 msgstr "Por favor, indica el nombre de tu organización o empresa."
-
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "Continuar"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."

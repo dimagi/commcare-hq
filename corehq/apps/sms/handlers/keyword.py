@@ -44,6 +44,7 @@ from corehq.apps.sms.util import (
     get_formplayer_exception,
     touchforms_error_is_config_error,
 )
+from corehq.apps.sms.handlers.exceptions import KeywordProcessingError
 from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
@@ -51,7 +52,12 @@ from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
+from corehq.messaging.scheduling.models import (
+    SMSContent,
+    SMSSurveyContent,
+    ConnectMessageContent,
+    ConnectMessageSurveyContent,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     ScheduleInstance,
 )
@@ -498,7 +504,11 @@ def is_form_complete(current_question):
 
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
-        if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
+        if action.action in [
+            KeywordAction.ACTION_SMS_SURVEY,
+            KeywordAction.ACTION_STRUCTURED_SMS,
+            KeywordAction.ACTION_CONNECT_SURVEY,
+        ]:
             if toggles.SMS_USE_LATEST_DEV_APP.enabled(survey_keyword.domain, toggles.NAMESPACE_DOMAIN):
                 app = get_app(survey_keyword.domain, action.app_id)
             else:
@@ -569,15 +579,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
     case = None
     args = split_args(text, survey_keyword)
 
-    logged_event = MessagingEvent.create_from_keyword(survey_keyword, sender)
-
-    # Log a messaging subevent for the incoming message
-    subevent = logged_event.create_subevent_for_single_sms(
-        msg.couch_recipient_doc_type,
-        msg.couch_recipient,
-        completed=True
-    )
-    add_msg_tags(msg, MessageMetadata(messaging_subevent_id=subevent.pk))
+    logged_event, subevent = _setup_messaging_event(survey_keyword, sender, msg)
 
     # Close any open sessions even if it's just an sms that we're
     # responding with.
@@ -587,25 +589,10 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         case = sender
         args = args[1:]
     elif isinstance(sender, CommCareUser):
-        if keyword_uses_form_that_requires_case(survey_keyword):
-            if len(args) > 1:
-                external_id = args[1]
-                case, matches = get_case_by_external_id(verified_number.domain, external_id, sender)
-                if matches == 0:
-                    send_keyword_response(verified_number, MSG_CASE_NOT_FOUND, logged_event)
-                    logged_event.error(MessagingEvent.ERROR_CASE_EXTERNAL_ID_NOT_FOUND)
-                    return
-                elif matches > 1:
-                    send_keyword_response(verified_number, MSG_MULTIPLE_CASES_FOUND, logged_event)
-                    logged_event.error(MessagingEvent.ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND)
-                    return
-            else:
-                send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID, logged_event)
-                logged_event.error(MessagingEvent.ERROR_NO_EXTERNAL_ID_GIVEN)
-                return
-            args = args[2:]
-        else:
-            args = args[1:]
+        try:
+            case, args = _resolve_case_for_user(sender, survey_keyword, args, verified_number, logged_event)
+        except KeywordProcessingError:
+            return
 
     def cmp_fcn(a1, a2):
         a1_ss = (a1.action == KeywordAction.ACTION_STRUCTURED_SMS)
@@ -626,57 +613,19 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
     # Process structured sms actions first
     actions = sorted(survey_keyword.keywordaction_set.all(), key=cmp_to_key(cmp_fcn))
     for survey_keyword_action in actions:
-        if survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER:
-            contact = sender
-        elif survey_keyword_action.recipient == KeywordAction.RECIPIENT_OWNER:
-            if is_commcarecase(sender):
-                contact = get_wrapped_owner(get_owner_id(sender))
-            else:
-                contact = None
-        elif survey_keyword_action.recipient == KeywordAction.RECIPIENT_USER_GROUP:
-            try:
-                contact = Group.get(survey_keyword_action.recipient_id)
-                assert contact.doc_type == "Group"
-                assert contact.domain == verified_number.domain
-            except Exception:
-                contact = None
-        else:
-            contact = None
-
+        contact = _resolve_action_contact(survey_keyword_action, sender, verified_number)
         if contact is None:
             continue
 
         # contact can be either a user, case, group, or location
-        if survey_keyword_action.action in (KeywordAction.ACTION_SMS, KeywordAction.ACTION_SMS_SURVEY):
-            if isinstance(contact, Group):
-                recipients = list(ScheduleInstance.expand_group(contact))
-            elif isinstance(contact, SQLLocation):
-                recipients = list(ScheduleInstance.expand_location_ids(contact.domain, [contact.location_id]))
-            else:
-                recipients = [contact]
-
-            recipient_is_sender = survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER
-
-            if survey_keyword_action.action == KeywordAction.ACTION_SMS:
-                content = SMSContent(message={'*': survey_keyword_action.message_content})
-                content.set_context(case=case)
-            elif survey_keyword_action.action == KeywordAction.ACTION_SMS_SURVEY:
-                content = SMSSurveyContent(
-                    app_id=survey_keyword_action.app_id,
-                    form_unique_id=survey_keyword_action.form_unique_id,
-                    expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
-                )
-                content.set_context(
-                    case=case,
-                    critical_section_already_acquired=recipient_is_sender,
-                )
-            else:
-                raise ValueError("Unexpected action %s" % survey_keyword_action.action)
-
-            for recipient in recipients:
-                phone_entry = verified_number if recipient_is_sender else None
-                content.send(recipient, logged_event, phone_entry=phone_entry)
-
+        kw_actions = (
+            KeywordAction.ACTION_SMS,
+            KeywordAction.ACTION_SMS_SURVEY,
+            KeywordAction.ACTION_CONNECT_MESSAGE,
+            KeywordAction.ACTION_CONNECT_SURVEY,
+        )
+        if survey_keyword_action.action in kw_actions:
+            _process_messaging_action(survey_keyword_action, contact, case, verified_number, logged_event)
         elif survey_keyword_action.action == KeywordAction.ACTION_STRUCTURED_SMS:
             res = handle_structured_sms(
                 survey_keyword, survey_keyword_action,
@@ -687,3 +636,101 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 # process any of the other actions
                 return
     logged_event.completed()
+
+
+def _setup_messaging_event(survey_keyword, sender, msg):
+    logged_event = MessagingEvent.create_from_keyword(survey_keyword, sender)
+    subevent = logged_event.create_subevent_for_single_sms(
+        msg.couch_recipient_doc_type,
+        msg.couch_recipient,
+        completed=True
+    )
+    add_msg_tags(msg, MessageMetadata(messaging_subevent_id=subevent.pk))
+
+    return logged_event, subevent
+
+
+def _resolve_case_for_user(sender, survey_keyword, args, verified_number, logged_event):
+    if not keyword_uses_form_that_requires_case(survey_keyword):
+        return None, args[1:]
+
+    if len(args) <= 1:
+        send_keyword_response(verified_number, MSG_MISSING_EXTERNAL_ID, logged_event)
+        logged_event.error(MessagingEvent.ERROR_NO_EXTERNAL_ID_GIVEN)
+        raise KeywordProcessingError("Missing external ID")
+
+    external_id = args[1]
+    case, matches = get_case_by_external_id(verified_number.domain, external_id, sender)
+    if matches == 0:
+        send_keyword_response(verified_number, MSG_CASE_NOT_FOUND, logged_event)
+        logged_event.error(MessagingEvent.ERROR_CASE_EXTERNAL_ID_NOT_FOUND)
+        raise KeywordProcessingError("Case not found")
+    elif matches > 1:
+        send_keyword_response(verified_number, MSG_MULTIPLE_CASES_FOUND, logged_event)
+        logged_event.error(MessagingEvent.ERROR_MULTIPLE_CASES_WITH_EXTERNAL_ID_FOUND)
+        raise KeywordProcessingError("Multiple cases found")
+
+    return case, args[2:]
+
+
+def _resolve_action_contact(survey_keyword_action, sender, verified_number):
+    if survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER:
+        return sender
+    elif survey_keyword_action.recipient == KeywordAction.RECIPIENT_OWNER:
+        if is_commcarecase(sender):
+            return get_wrapped_owner(get_owner_id(sender))
+        return None
+    elif survey_keyword_action.recipient == KeywordAction.RECIPIENT_USER_GROUP:
+        try:
+            contact = Group.get(survey_keyword_action.recipient_id)
+            assert contact.doc_type == "Group"
+            assert contact.domain == verified_number.domain
+            return contact
+        except Exception:
+            return None
+    return None
+
+
+def _process_messaging_action(survey_keyword_action, contact, case, verified_number, logged_event):
+    if isinstance(contact, Group):
+        recipients = list(ScheduleInstance.expand_group(contact))
+    elif isinstance(contact, SQLLocation):
+        recipients = list(ScheduleInstance.expand_location_ids(contact.domain, [contact.location_id]))
+    else:
+        recipients = [contact]
+
+    recipient_is_sender = survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER
+
+    if survey_keyword_action.action == KeywordAction.ACTION_SMS:
+        content = SMSContent(message={'*': survey_keyword_action.message_content})
+        content.set_context(case=case)
+    elif survey_keyword_action.action == KeywordAction.ACTION_SMS_SURVEY:
+        content = SMSSurveyContent(
+            app_id=survey_keyword_action.app_id,
+            form_unique_id=survey_keyword_action.form_unique_id,
+            expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
+        )
+        content.set_context(
+            case=case,
+            critical_section_already_acquired=recipient_is_sender,
+        )
+    elif survey_keyword_action.action == KeywordAction.ACTION_CONNECT_MESSAGE:
+        content = ConnectMessageContent(
+            message={'*': survey_keyword_action.message_content},
+        )
+    elif survey_keyword_action.action == KeywordAction.ACTION_CONNECT_SURVEY:
+        content = ConnectMessageSurveyContent(
+            app_id=survey_keyword_action.app_id,
+            form_unique_id=survey_keyword_action.form_unique_id,
+            expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
+        )
+        content.set_context(
+            case=case,
+            critical_section_already_acquired=recipient_is_sender,
+        )
+    else:
+        raise ValueError("Unexpected action %s" % survey_keyword_action.action)
+
+    for recipient in recipients:
+        phone_entry = verified_number if recipient_is_sender else None
+        content.send(recipient, logged_event, phone_entry=phone_entry)
