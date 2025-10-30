@@ -169,22 +169,18 @@ class CustomDataEditor(object):
             profile_names = []
 
         form_fieldsets = []
-        if profile_names or field_names:
-            user_data_div = Div(
+        if profile_names:
+            form_fieldsets.append(Fieldset(
+                _("Profile"),
+                *profile_names
+            ))
+        if field_names:
+            form_fieldsets.append(FieldsetAccordionGroup(
+                _("Additional Information"),
+                *field_names,
+                active=True,
                 css_class="custom-data-fieldset"
-            )
-            form_fieldsets.append(user_data_div)
-            if profile_names:
-                user_data_div.append(Fieldset(
-                    _("Profile"),
-                    *profile_names
-                ))
-            if field_names:
-                user_data_div.append(FieldsetAccordionGroup(
-                    _("Additional Information"),
-                    *field_names,
-                    active=True
-                ))
+            ))
         if not is_post:
             form_fieldsets.append(self.uncategorized_form)
         return form_fieldsets
@@ -253,8 +249,6 @@ class CustomDataEditor(object):
         else:
             CustomDataForm.helper = HQFormHelper()
         CustomDataForm.helper.form_tag = False
-        CustomDataForm.helper.label_class = 'col-sm-3 col-md-2'
-        CustomDataForm.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         form_fieldsets = self.make_fieldsets(form_fields, post_dict is not None)
 
