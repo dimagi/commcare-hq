@@ -32,6 +32,7 @@ from corehq.apps.app_manager.exceptions import (
     AppManagerException,
     FormNotFoundException,
 )
+from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import ModuleNotFoundException
 from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.app_manager.util import (
@@ -257,6 +258,7 @@ def _get_base_vellum_options(request, domain, form, displayLang):
             'mappings': form.actions.get_mappings(),
             'properties': get_all_case_properties_for_case_type(domain, case_type),
             'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
+            'reserved_words': load_case_reserved_words(),
         }
 
     return options
