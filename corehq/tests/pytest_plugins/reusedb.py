@@ -268,6 +268,7 @@ def couch_sql_context(config):
             keepdb=config.skip_setup_for_reuse_db,
             serialized_aliases=(),
         )
+        call_command('sync_couch_views')  # sync design docs after creating dbs
 
     try:
         yield
