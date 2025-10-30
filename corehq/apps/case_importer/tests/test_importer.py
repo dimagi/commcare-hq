@@ -10,7 +10,6 @@ from celery.exceptions import Ignore
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
-from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import (
@@ -28,6 +27,7 @@ from corehq.apps.case_importer.util import (
 )
 from corehq.apps.case_importer.views import validate_column_names
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
@@ -36,6 +36,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_disabled, flag_enabled
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
@@ -105,35 +106,35 @@ class TestCaseImportRow(SimpleTestCase):
 
 class ImporterTest(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain("importer-test")
+        cls.domain = cls.domain_obj.name
+        cls.default_case_type = 'importer-test-casetype'
+
+        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        cls.couch_user.add_domain_membership(cls.domain, is_admin=True)
+        cls.couch_user.save()
+
+        create_enterprise_permissions(cls.couch_user.username, cls.domain, [], [])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.couch_user.delete(cls.domain, deleted_by=None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
     def setUp(self):
         super(ImporterTest, self).setUp()
-        self.domain_obj = create_domain("importer-test")
-        self.domain = self.domain_obj.name
-        self.default_case_type = 'importer-test-casetype'
-
-        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
-        self.couch_user.add_domain_membership(self.domain, is_admin=True)
-        self.couch_user.save()
-
-        self.subdomain1 = create_domain('subdomain1')
-        self.subdomain2 = create_domain('subdomain2')
-        self.ignored_domain = create_domain('ignored-domain')
-        create_enterprise_permissions(self.couch_user.username, self.domain,
-                                      [self.subdomain1.name, self.subdomain2.name],
-                                      [self.ignored_domain.name])
-
         self.factory = CaseFactory(domain=self.domain, case_defaults={
             'case_type': self.default_case_type,
         })
-        delete_all_cases()
 
     def tearDown(self):
-        self.couch_user.delete(self.domain, deleted_by=None)
-        self.domain_obj.delete()
-        self.subdomain1.delete()
-        self.subdomain2.delete()
-        self.ignored_domain.delete()
-        super(ImporterTest, self).tearDown()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        CaseType.objects.filter(domain=self.domain).delete()
+        super().tearDown()
 
     def _config(self, col_names, search_column=None, case_type=None,
                 search_field='case_id', create_new_cases=True):
@@ -202,7 +203,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertFalse(res['errors'])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             [case.external_id for case in CommCareCase.objects.get_cases(case_ids, self.domain)],
             ['external_id-0', 'external_id-0', 'external_id-1']
         )
@@ -497,74 +498,6 @@ class ImporterTest(TestCase):
             }
         )
 
-    @flag_enabled('DOMAIN_PERMISSIONS_MIRROR')
-    def test_multiple_domain_case_import(self):
-        headers_with_domain = ['case_id', 'name', 'artist', 'domain']
-        config_1 = self._config(headers_with_domain, create_new_cases=True, search_column='case_id')
-        case_with_domain_file = make_worksheet_wrapper(
-            ['case_id', 'name', 'artist', 'domain'],
-            ['', 'name-0', 'artist-0', self.domain],
-            ['', 'name-1', 'artist-1', self.subdomain1.name],
-            ['', 'name-2', 'artist-2', self.subdomain2.name],
-            ['', 'name-3', 'artist-3', self.domain],
-            ['', 'name-4', 'artist-4', self.domain],
-            ['', 'name-5', 'artist-5', 'not-existing-domain'],
-            ['', 'name-6', 'artist-6', self.ignored_domain.name],
-        )
-        res = do_import(case_with_domain_file, config_1, self.domain)
-        self.assertEqual(5, res['created_count'])
-        self.assertEqual(0, res['match_count'])
-        self.assertEqual(2, res['failed_count'])
-
-        # Asserting current domain
-        cur_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cur_cases = CommCareCase.objects.get_cases(cur_case_ids, self.domain)
-        self.assertEqual(3, len(cur_cases))
-        #Asserting current domain case property
-        cases = {c.name: c for c in cur_cases}
-        self.assertEqual(cases['name-0'].get_case_property('artist'), 'artist-0')
-
-        # Asserting subdomain 1
-        s1_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain1.name)
-        s1_cases = CommCareCase.objects.get_cases(s1_case_ids, self.domain)
-        self.assertEqual(1, len(s1_cases))
-        # Asserting subdomain 1 case property
-        s1_cases_pro = {c.name: c for c in s1_cases}
-        self.assertEqual(s1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
-
-        # Asserting subdomain 2
-        s2_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain2.name)
-        s2_cases = CommCareCase.objects.get_cases(s2_case_ids, self.domain)
-        self.assertEqual(1, len(s2_cases))
-        # Asserting subdomain 2 case property
-        s2_cases_pro = {c.name: c for c in s2_cases}
-        self.assertEqual(s2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
-
-    @flag_disabled('DOMAIN_PERMISSIONS_MIRROR')
-    def test_multiple_domain_case_import_mirror_domain_disabled(self):
-        headers_with_domain = ['case_id', 'name', 'artist', 'domain']
-        config_1 = self._config(headers_with_domain, create_new_cases=True, search_column='case_id')
-        case_with_domain_file = make_worksheet_wrapper(
-            ['case_id', 'name', 'artist', 'domain'],
-            ['', 'name-0', 'artist-0', self.domain],
-            ['', 'name-1', 'artist-1', 'domain-1'],
-            ['', 'name-2', 'artist-2', 'domain-2'],
-            ['', 'name-3', 'artist-3', self.domain],
-            ['', 'name-4', 'artist-4', self.domain],
-            ['', 'name-5', 'artist-5', 'not-existing-domain']
-        )
-        res = do_import(case_with_domain_file, config_1, self.domain)
-        self.assertEqual(6, res['created_count'])
-        self.assertEqual(0, res['match_count'])
-        self.assertEqual(0, res['failed_count'])
-        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        # Asserting current domain
-        cur_cases = CommCareCase.objects.get_cases(case_ids, self.domain)
-        self.assertEqual(6, len(cur_cases))
-        #Asserting domain case property
-        cases = {c.name: c for c in cur_cases}
-        self.assertEqual(cases['name-0'].get_case_property('domain'), self.domain)
-
     def import_mock_file(self, rows):
         config = self._config(rows[0])
         xls_file = make_worksheet_wrapper(*rows)
@@ -835,3 +768,138 @@ def get_commcare_user(domain_name):
         yield user
     finally:
         user.delete(domain_name, deleted_by=None)
+
+
+class MultipleDomainImporterTest(TestCase):
+    """
+    Separate test class for multi-domain import tests.
+
+    These tests require creating multiple domains and enterprise permissions per test,
+    which conflicts with the optimized setUpClass approach used in ImporterTest.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.domain_obj = create_domain("importer-test-multi")
+        self.domain = self.domain_obj.name
+        self.default_case_type = 'importer-test-casetype'
+
+        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        self.couch_user.add_domain_membership(self.domain, is_admin=True)
+        self.couch_user.save()
+
+        self.subdomain1 = create_domain('subdomain1')
+        self.subdomain2 = create_domain('subdomain2')
+        self.ignored_domain = create_domain('ignored-domain')
+        create_enterprise_permissions(
+            self.couch_user.username,
+            self.domain,
+            [self.subdomain1.name, self.subdomain2.name],
+            [self.ignored_domain.name],
+        )
+
+        self.factory = CaseFactory(domain=self.domain, case_defaults={
+            'case_type': self.default_case_type,
+        })
+
+    def tearDown(self):
+        self.couch_user.delete(self.domain, deleted_by=None)
+        self.domain_obj.delete()
+        self.subdomain1.delete()
+        self.subdomain2.delete()
+        self.ignored_domain.delete()
+        super().tearDown()
+
+    def _config(self, col_names, search_column=None, case_type=None,
+                search_field='case_id', create_new_cases=True):
+        return ImporterConfig(
+            couch_user_id=self.couch_user._id,
+            case_type=case_type or self.default_case_type,
+            excel_fields=col_names,
+            case_fields=[''] * len(col_names),
+            custom_fields=col_names,
+            search_column=search_column or col_names[0],
+            search_field=search_field,
+            create_new_cases=create_new_cases,
+        )
+
+    def import_mock_file(self, rows):
+        config = self._config(rows[0])
+        xls_file = make_worksheet_wrapper(*rows)
+        return do_import(xls_file, config, self.domain)
+
+    @flag_enabled('DOMAIN_PERMISSIONS_MIRROR')
+    def test_multiple_domain_case_import(self):
+        headers_with_domain = ['case_id', 'name', 'artist', 'domain']
+        config_1 = self._config(
+            headers_with_domain,
+            create_new_cases=True,
+            search_column='case_id',
+        )
+        case_with_domain_file = make_worksheet_wrapper(
+            ['case_id', 'name', 'artist', 'domain'],
+            ['', 'name-0', 'artist-0', self.domain],
+            ['', 'name-1', 'artist-1', self.subdomain1.name],
+            ['', 'name-2', 'artist-2', self.subdomain2.name],
+            ['', 'name-3', 'artist-3', self.domain],
+            ['', 'name-4', 'artist-4', self.domain],
+            ['', 'name-5', 'artist-5', 'not-existing-domain'],
+            ['', 'name-6', 'artist-6', self.ignored_domain.name],
+        )
+        res = do_import(case_with_domain_file, config_1, self.domain)
+        self.assertEqual(5, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(2, res['failed_count'])
+
+        # Asserting current domain
+        cur_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
+        cur_cases = CommCareCase.objects.get_cases(cur_case_ids, self.domain)
+        self.assertEqual(3, len(cur_cases))
+        #Asserting current domain case property
+        cases = {c.name: c for c in cur_cases}
+        self.assertEqual(cases['name-0'].get_case_property('artist'), 'artist-0')
+
+        # Asserting subdomain 1
+        s1_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain1.name)
+        s1_cases = CommCareCase.objects.get_cases(s1_case_ids, self.domain)
+        self.assertEqual(1, len(s1_cases))
+        # Asserting subdomain 1 case property
+        s1_cases_pro = {c.name: c for c in s1_cases}
+        self.assertEqual(s1_cases_pro['name-1'].get_case_property('artist'), 'artist-1')
+
+        # Asserting subdomain 2
+        s2_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain2.name)
+        s2_cases = CommCareCase.objects.get_cases(s2_case_ids, self.domain)
+        self.assertEqual(1, len(s2_cases))
+        # Asserting subdomain 2 case property
+        s2_cases_pro = {c.name: c for c in s2_cases}
+        self.assertEqual(s2_cases_pro['name-2'].get_case_property('artist'), 'artist-2')
+
+    @flag_disabled('DOMAIN_PERMISSIONS_MIRROR')
+    def test_multiple_domain_case_import_mirror_domain_disabled(self):
+        headers_with_domain = ['case_id', 'name', 'artist', 'domain']
+        config_1 = self._config(
+            headers_with_domain,
+            create_new_cases=True,
+            search_column='case_id',
+        )
+        case_with_domain_file = make_worksheet_wrapper(
+            ['case_id', 'name', 'artist', 'domain'],
+            ['', 'name-0', 'artist-0', self.domain],
+            ['', 'name-1', 'artist-1', 'domain-1'],
+            ['', 'name-2', 'artist-2', 'domain-2'],
+            ['', 'name-3', 'artist-3', self.domain],
+            ['', 'name-4', 'artist-4', self.domain],
+            ['', 'name-5', 'artist-5', 'not-existing-domain']
+        )
+        res = do_import(case_with_domain_file, config_1, self.domain)
+        self.assertEqual(6, res['created_count'])
+        self.assertEqual(0, res['match_count'])
+        self.assertEqual(0, res['failed_count'])
+        case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
+        # Asserting current domain
+        cur_cases = CommCareCase.objects.get_cases(case_ids, self.domain)
+        self.assertEqual(6, len(cur_cases))
+        # Asserting domain case property
+        cases = {c.name: c for c in cur_cases}
+        self.assertEqual(cases['name-0'].get_case_property('domain'), self.domain)
