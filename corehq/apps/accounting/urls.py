@@ -26,6 +26,7 @@ from corehq.apps.accounting.views import (
     accounting_default,
     TriggerDowngradeView,
     TriggerAutopaymentsView,
+    TriggerAutoRenewalView,
 )
 from corehq.apps.sso.views.accounting_admin import (
     NewIdentityProviderAdminView,
@@ -42,6 +43,8 @@ urlpatterns = [
         name=TriggerRemovedSsoUserAutoDeactivationView.urlname),
     url(r'^trigger_autopayments/$', TriggerAutopaymentsView.as_view(),
         name=TriggerAutopaymentsView.urlname),
+    url(r'^trigger_auto_renewal/$', TriggerAutoRenewalView.as_view(),
+        name=TriggerAutoRenewalView.urlname),
     url(r'^trigger_customer_invoice/$', TriggerCustomerInvoiceView.as_view(),
         name=TriggerCustomerInvoiceView.urlname),
     url(r'^single_option_filter/$', AccountingSingleOptionResponseView.as_view(),

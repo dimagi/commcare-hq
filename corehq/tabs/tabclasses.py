@@ -22,6 +22,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.accounting.views import (
     TriggerAutopaymentsView,
+    TriggerAutoRenewalView,
     TriggerDowngradeView,
     TriggerRemovedSsoUserAutoDeactivationView,
 )
@@ -2516,6 +2517,10 @@ class AccountingTab(UITab):
                 {
                     'title': _(TriggerAutopaymentsView.page_title),
                     'url': reverse(TriggerAutopaymentsView.urlname),
+                },
+                {
+                    'title': _(TriggerAutoRenewalView.page_title),
+                    'url': reverse(TriggerAutoRenewalView.urlname),
                 },
                 {
                     'title': _(TriggerRemovedSsoUserAutoDeactivationView.page_title),

@@ -426,20 +426,20 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
-def auto_renew_subscriptions():
+def auto_renew_subscriptions(domain_name=None):
     """
     Automatically renew eligible subscriptions 30 or fewer days from their end date.
     """
-    ending_subscriptions = _get_auto_renewable_subscriptions()
+    ending_subscriptions = _get_auto_renewable_subscriptions(domain_name=domain_name)
     for subscription in ending_subscriptions:
         if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain) and not subscription.is_renewed:
             auto_renew_subscription(subscription)
 
 
-def _get_auto_renewable_subscriptions():
+def _get_auto_renewable_subscriptions(domain_name=None):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=30)
-    return Subscription.visible_objects.filter(
+    auto_renewable_subscriptions = Subscription.visible_objects.filter(
         date_end__gte=today,
         date_end__lte=date_in_n_days,
         service_type=SubscriptionType.PRODUCT,
@@ -447,6 +447,9 @@ def _get_auto_renewable_subscriptions():
     ).exclude(
         account__is_customer_billing_account=True,
     )
+    if domain_name:
+        auto_renewable_subscriptions.filter(subscriber__domain=domain_name)
+    return auto_renewable_subscriptions
 
 
 def auto_renew_subscription(subscription):

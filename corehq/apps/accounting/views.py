@@ -29,6 +29,7 @@ from django_prbac.models import Grant, Role
 from memoized import memoized
 
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.accounting.tasks import auto_renew_subscriptions
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_overdue_invoice_over_threshold,
 )
@@ -80,6 +81,7 @@ from corehq.apps.accounting.forms import (
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
     TestReminderEmailFrom,
+    TriggerAutoRenewalForm,
     TriggerBookkeeperEmailForm,
     TriggerCustomerInvoiceForm,
     TriggerInvoiceForm,
@@ -1305,6 +1307,32 @@ class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
                     domain,
                     statements_url
                 )
+            )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerAutoRenewalView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_auto_renew'
+    page_title = "Trigger Subscription Auto-Renewal"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerAutoRenewalForm(self.request.POST)
+        return TriggerAutoRenewalForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            domain = self.trigger_form.cleaned_data['domain']
+            auto_renew_subscriptions(domain)
+            messages.success(
+                request,
+                f'Successfully triggered subscription auto-renewal for "{domain}". '
+                'Any eligible subscriptions for this project will be automatically renewed.',
             )
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
