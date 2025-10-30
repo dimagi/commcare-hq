@@ -159,7 +159,7 @@ class BaseStripePaymentHandler(object):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
-            payment_record.id, self.domain, self.receipt_email_template,
+            payment_record.id, self.domain, self.account.id, self.receipt_email_template,
             self.receipt_email_template_plaintext, additional_context
         )
 
@@ -382,24 +382,49 @@ class AutoPayInvoicePaymentHandler(object):
             except Exception as e:
                 log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e))
 
+    def pay_autopayable_customer_invoices(self, date_due=Ellipsis, account_name=None):
+        """
+        Pays the full balance of all autopayable customer invoices on date_due
+        Note: we use Ellipsis as the default value for date_due because date_due
+        can actually be None in the db.
+        """
+        autopayable_invoices = CustomerInvoice.autopayable_invoices(date_due)
+        if account_name is not None:
+            autopayable_invoices = autopayable_invoices.filter(account__name=account_name)
+        for invoice in autopayable_invoices:
+            try:
+                self._pay_invoice(invoice)
+            except Exception as e:
+                log_accounting_error("Error autopaying customer invoice %d: %s" % (invoice.id, e))
+
     def _pay_invoice(self, invoice):
-        log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
+        invoice_label = "customer invoice" if invoice.is_customer_invoice else "invoice"
+        log_accounting_info(
+            "[Autopay] Autopaying {invoice_label} {invoice_id}".format(
+                invoice_label=invoice_label, invoice_id=invoice.id
+            )
+        )
         amount = invoice.balance.quantize(Decimal(10) ** -2)
         if not amount:
             return
 
-        auto_payer = invoice.subscription.account.auto_pay_user
+        account = invoice.account
+        auto_payer = account.auto_pay_user
         payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
-        autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
+        autopay_card = payment_method.get_autopay_card(account)
         if autopay_card is None:
             return
 
         try:
-            log_accounting_info("[Autopay] Attempt to charge autopay invoice {} through Stripe".format(invoice.id))
+            log_accounting_info(
+                "[Autopay] Attempt to charge autopay {invoice_label} {invoice_id} through Stripe".format(
+                    invoice_label=invoice_label, invoice_id=invoice.id
+                )
+            )
             transaction_id = payment_method.create_charge(
                 autopay_card,
                 amount_in_dollars=amount,
-                description='Auto-payment for Invoice %s' % invoice.invoice_number,
+                description=f"Auto-payment for {invoice_label.title()} {invoice.invoice_number}",
                 idempotency_key=f"{invoice.invoice_number}_{amount}"
             )
         except stripe.error.CardError as e:
@@ -410,11 +435,11 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 payment_record = PaymentRecord.create_record(payment_method, transaction_id, amount)
             except IntegrityError:
-                log_accounting_error(f"[Autopay] Invoice was double charged {invoice.id}")
+                log_accounting_error(f"[Autopay] {invoice_label.title()} was double charged {invoice.id}")
             else:
                 invoice.pay_invoice(payment_record)
-                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
-                invoice.account.save()
+                account.last_payment_method = LastPayment.CC_AUTO
+                account.save()
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
@@ -422,16 +447,21 @@ class AutoPayInvoicePaymentHandler(object):
         receipt_email_template = 'accounting/email/invoice_receipt.html'
         receipt_email_template_plaintext = 'accounting/email/invoice_receipt.txt'
         try:
-            domain = invoice.subscription.subscriber.domain
             context = {
                 'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
                 'balance': fmt_dollar_amount(invoice.balance),
                 'is_paid': invoice.is_paid,
                 'date_due': invoice.date_due.strftime(USER_DATE_FORMAT) if invoice.date_due else 'None',
                 'invoice_num': invoice.invoice_number,
+                'is_customer_invoice': invoice.is_customer_invoice,
             }
             send_purchase_receipt.delay(
-                payment_record.id, domain, receipt_email_template, receipt_email_template_plaintext, context,
+                payment_record.id,
+                invoice.get_domain(),
+                invoice.account.id,
+                receipt_email_template,
+                receipt_email_template_plaintext,
+                context,
             )
         except Exception:
             self._handle_email_failure(payment_record.id)
@@ -445,17 +475,19 @@ class AutoPayInvoicePaymentHandler(object):
         err = body.get('error', {})
 
         log_accounting_error(
-            f"[Autopay] An automatic payment failed for invoice: {invoice.id} ({invoice.get_domain()})"
+            "[Autopay] An automatic payment failed for invoice: "
+            f"{invoice.id} ({invoice.get_domain() or invoice.account.name})"
             "because the card was declined. This invoice will not be automatically paid. "
             "Not necessarily actionable, but be aware that this happened. "
             f"error = {err}"
         )
-        send_autopay_failed.delay(invoice.id)
+        send_autopay_failed.delay(invoice.id, is_customer_invoice=invoice.is_customer_invoice)
 
     @staticmethod
     def _handle_card_errors(invoice, error):
         log_accounting_error(
-            f"[Autopay] An automatic payment failed for invoice: {invoice.id} ({invoice.get_domain()})"
+            "[Autopay] An automatic payment failed for invoice: "
+            f"{invoice.id} ({invoice.get_domain() or invoice.account.name})"
             f"because the of {error}. This invoice will not be automatically paid."
         )
 

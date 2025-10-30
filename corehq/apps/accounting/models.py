@@ -3768,7 +3768,8 @@ class CreditLine(models.Model):
         cls.add_credit(
             -payment_record.amount,
             account=billing_account,
-            invoice=invoice,
+            customer_invoice=invoice if invoice.is_customer_invoice else None,
+            invoice=invoice if not invoice.is_customer_invoice else None,
         )
 
 
