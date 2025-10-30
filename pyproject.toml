@@ -181,6 +181,20 @@ test = [
     'pytest-django',
     'pytest-unmagic',
     'coverage',
+    'mypy',
+    'mypy-extensions',
+    'types-bleach',
+    'types-decorator',
+    'types-html5lib',
+    'types-markdown',
+    'types-polib',
+    'types-pycurl',
+    'types-python-dateutil',
+    'types-pytz',
+    'types-pyyaml',
+    'types-requests',
+    'types-simplejson',
+    'types-six',
 ]
 
 [tool.pytest.ini_options]
@@ -235,3 +249,27 @@ pythonpath = [
 ]
 required_plugins = 'pytest-django'
 DJANGO_SETTINGS_MODULE = 'testsettings'
+
+[tool.mypy]
+# More info: https://mypy.readthedocs.io/en/stable/config_file.html
+
+# Check configuration
+warn_unused_configs = 'True'
+
+# Type checking
+disallow_any_generics = 'True'
+check_untyped_defs = 'True'
+warn_unused_ignores = 'True'
+warn_redundant_casts = 'True'
+warn_return_any = 'True'
+strict_equality = 'True'
+
+# Parse but don't check imported libraries
+follow_imports = 'silent'
+ignore_missing_imports = 'True'
+
+# Non-typing checks
+warn_unreachable = 'True'
+
+# Reporting
+pretty = 'True'
