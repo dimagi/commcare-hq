@@ -43,10 +43,12 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
+    DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountWebUserHistory,
+    BillingContactInfo,
     CreditLine,
     Currency,
     DefaultProductPlan,
@@ -88,7 +90,7 @@ from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
-from corehq.apps.users.models import CommCareUser, FakeUser
+from corehq.apps.users.models import CommCareUser, FakeUser, WebUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
@@ -457,6 +459,27 @@ def auto_renew_subscription(subscription):
         new_version=new_plan_version,
     )
     send_subscription_renewed_email(next_subscription)
+
+    if next_subscription.plan_version.plan.is_annual_plan:
+        invoice_contacts = [
+            subscription.account.billingcontactinfo.email_list
+            if BillingContactInfo.objects.filter(account=next_subscription.account).exists() else None
+        ]
+        if not invoice_contacts:
+            invoice_contacts = [
+                admin.get_email() for admin in WebUser.get_admins_by_domain(next_subscription.subscriber.domain)
+            ]
+        invoice_factory = DomainWireInvoiceFactory(
+            next_subscription.subscriber.domain,
+            contact_emails=invoice_contacts,
+            date_start=next_subscription.date_start,
+            date_end=next_subscription.date_end,
+        )
+        invoice_factory.create_subscription_credits_invoice(
+            next_subscription.plan_version,
+            next_subscription.date_start,
+            next_subscription.date_end,
+        )
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
