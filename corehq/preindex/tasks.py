@@ -1,9 +1,13 @@
+import logging
+
 from django.conf import settings
 
 from corehq.apps.celery import periodic_task
 from corehq.preindex.accessors import get_preindex_designs, index_design_doc
 from corehq.util.celery_utils import deserialize_run_every_setting
 from corehq.util.decorators import serial_task
+
+logger = logging.getLogger(__name__)
 
 couch_reindex_schedule = deserialize_run_every_setting(settings.COUCH_REINDEX_SCHEDULE)
 
@@ -20,4 +24,10 @@ def run_continuous_indexing_task():
 @serial_task('couch-continuous-indexing', timeout=60 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def preindex_couch_views():
     for design in get_preindex_designs():
-        index_design_doc(design)
+        try:
+            index_design_doc(design)
+        except RuntimeError as e:
+            if 'Failed to verify design document' in str(e):
+                logger.error(f'Failed to index design doc {design.app_label}')
+            else:
+                raise

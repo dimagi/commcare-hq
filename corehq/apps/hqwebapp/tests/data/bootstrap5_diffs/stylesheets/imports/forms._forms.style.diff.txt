@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,356 +1,21 @@
+@@ -1,356 +1,26 @@
 -// FORM ACTIONS from TWBS 2
 -// ------------
 -
@@ -46,8 +46,11 @@
 -  font-size: .8em;
 -  color: lighten(@cc-text, 40%);
 -  padding-bottom: 5px;
--}
--
++.field-control-offset {
++  @extend .offset-sm-4, .offset-md-3, .offset-lg-2, .col-12, .col-sm-8, .col-md-9, .col-lg-10;
++  padding-left: ($grid-gutter-width - $spacer) / 2;
+ }
+ 
 -.checkbox, .radio {
 -  input[type="checkbox"], input[type="radio"] {
 -    margin-top: 1.5px;
@@ -369,7 +372,7 @@
  }
  
  .form-hide-actions .form-actions {
-@@ -361,21 +26,42 @@
+@@ -361,21 +31,42 @@
    .validationMessage {
      display: block;
      padding-top: 8px;

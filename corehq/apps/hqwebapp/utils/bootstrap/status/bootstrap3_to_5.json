@@ -1,4 +1,7 @@
 {
+  "analytics": {
+    "in_progress": true
+  },
   "builds": {
     "is_complete": true,
     "templates": [
@@ -77,6 +80,7 @@
       "admin/sms_settings.html",
       "admin/transfer_domain.html",
       "admin/transfer_domain_pending.html",
+      "confirm_billing_info.html",
       "internal_calculations.html",
       "internal_settings.html",
       "update_billing_contact_info.html"
@@ -155,6 +159,9 @@
   },
   "programs": {
     "is_complete": true
+  },
+  "registration": {
+    "in_progress": true
   },
   "registry": {
     "is_complete": true

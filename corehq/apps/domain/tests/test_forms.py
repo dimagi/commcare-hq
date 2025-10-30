@@ -284,7 +284,7 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         )
 
     def create_form(self, new_plan_version, **kwargs):
-        args = (self.account, self.domain.name, self.user, new_plan_version, self.subscription)
+        args = (self.account, self.domain.name, self.user.username, new_plan_version, self.subscription)
         return ConfirmNewSubscriptionForm(*args, **kwargs)
 
     def test_form_initial_values(self):

@@ -3,6 +3,9 @@ import json
 import os
 from collections import defaultdict
 
+import urllib3
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 from django.contrib import messages
 from django.http import (
     HttpResponse,
@@ -14,12 +17,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
-
-import urllib3
 from django_prbac.utils import has_privilege
-
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request, json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -49,8 +47,9 @@ from corehq.apps.app_manager.decorators import (
 )
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
+    AppValidationError,
     IncompatibleFormTypeException,
-    RearrangeError, AppValidationError,
+    RearrangeError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -58,12 +57,13 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     ExchangeApplication,
+    LinkedApplication,
     Module,
     ModuleNotFoundException,
     app_template_dir,
+    load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template, LinkedApplication
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
@@ -78,8 +78,8 @@ from corehq.apps.app_manager.views.utils import (
     capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
-    validate_custom_assertions,
     update_linked_app,
+    validate_custom_assertions,
     validate_langs,
 )
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
@@ -90,6 +90,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     track_domain_request,
 )
+from corehq.apps.domain.models import all_app_manager_add_ons_enabled
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -97,9 +98,7 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors import (
-    get_practice_mode_mobile_workers,
-)
+from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.dates import iso_string_to_datetime
@@ -278,7 +277,16 @@ def get_app_view_context(request, app):
             'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
             'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
+        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False),
+
+        'is_linked_app': is_linked_app(app),
+        'is_remote_app': is_remote_app(app),
+
+        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
     })
+
+    # dependent on bulk_ui_translation_upload and bulk_app_translation_upload
+    # keys existing in context
     context.update({
         'bulk_ui_translation_form': get_bulk_upload_form(
             context,
@@ -290,14 +298,7 @@ def get_app_view_context(request, app):
             form_class=AppTranslationsBulkUploadForm,
         ),
     })
-    context.update({
-        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False)
-    })
 
-    context.update({
-        'is_linked_app': is_linked_app(app),
-        'is_remote_app': is_remote_app(app),
-    })
     if isinstance(app, Application):
         context.update({'custom_assertions': [
             {'test': assertion.test, 'text': assertion.text.get(lang)}
