@@ -48,7 +48,6 @@ from corehq.apps.accounting.invoicing import (
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountWebUserHistory,
-    BillingContactInfo,
     CreditLine,
     Currency,
     DefaultProductPlan,
@@ -90,7 +89,7 @@ from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
-from corehq.apps.users.models import CommCareUser, FakeUser, WebUser
+from corehq.apps.users.models import CommCareUser, FakeUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
@@ -464,17 +463,8 @@ def auto_renew_subscription(subscription):
     send_subscription_renewed_email(next_subscription)
 
     if next_subscription.plan_version.plan.is_annual_plan:
-        invoice_contacts = [
-            subscription.account.billingcontactinfo.email_list
-            if BillingContactInfo.objects.filter(account=next_subscription.account).exists() else None
-        ]
-        if not invoice_contacts:
-            invoice_contacts = [
-                admin.get_email() for admin in WebUser.get_admins_by_domain(next_subscription.subscriber.domain)
-            ]
         invoice_factory = DomainWireInvoiceFactory(
             next_subscription.subscriber.domain,
-            contact_emails=invoice_contacts,
             date_start=next_subscription.date_start,
             date_end=next_subscription.date_end,
         )
@@ -613,6 +603,7 @@ def create_wire_credits_invoice(domain_name,
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
+        contact_emails = contact_emails or wire_invoice.get_contact_emails()
         try:
             for email in contact_emails:
                 record.send_email(contact_email=email, cc_emails=cc_emails)
