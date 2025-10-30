@@ -6,7 +6,11 @@ from time_machine import travel
 from corehq.apps.accounting import tasks
 from corehq.apps.accounting.models import (
     FormSubmittingMobileWorkerHistory,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
     SubscriptionType,
+    WirePrepaymentBillingRecord,
+    WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseInvoiceTestCase
@@ -239,3 +243,44 @@ class TestAutoRenewableSubscriptions(BaseInvoiceTestCase):
 
         self.account.is_customer_billing_account = is_customer_billing_account
         self.account.save()
+
+
+class TestAutoRenewSubscription(BaseInvoiceTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.subscription.date_end = datetime.date.today() + datetime.timedelta(days=30)
+        self.subscription.service_type = SubscriptionType.PRODUCT
+        self.subscription.auto_renew = True
+        self.subscription.save()
+
+        self.account.is_customer_billing_account = False
+        self.account.save()
+
+    def test_auto_renew_subscription(self):
+        with patch('corehq.apps.accounting.tasks.send_subscription_renewed_email') as mock_send:
+            tasks.auto_renew_subscription(self.subscription)
+
+        next_subscription = self.subscription.next_subscription
+        mock_send.assert_called_once_with(next_subscription)
+        assert self.subscription.is_renewed
+        assert next_subscription.date_start == self.subscription.date_end
+        next_plan = next_subscription.plan_version.plan
+        assert next_plan.edition == self.subscription.plan_version.plan.edition
+        assert next_plan.is_annual_plan == self.subscription.plan_version.plan.is_annual_plan
+
+        subscription_adjustment = SubscriptionAdjustment.objects.get(
+            subscription=self.subscription,
+            related_subscription=next_subscription,
+        )
+        assert subscription_adjustment.method == SubscriptionAdjustmentMethod.AUTO_RENEWAL
+
+    def test_creates_prepayment_invoice_if_is_annual_plan(self):
+        self.subscription.plan_version.plan.is_annual_plan = True
+        self.subscription.plan_version.plan.save()
+        tasks.auto_renew_subscription(self.subscription)
+
+        prepayment_invoices = WirePrepaymentInvoice.objects.filter(domain=self.domain.name)
+        assert prepayment_invoices.count() == 1
+        prepayment_invoice = prepayment_invoices.get()
+        assert WirePrepaymentBillingRecord.objects.filter(invoice=prepayment_invoice).exists()
