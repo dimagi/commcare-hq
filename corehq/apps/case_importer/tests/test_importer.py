@@ -656,8 +656,12 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
 
     def test_select_validity_checking(self):
-        setup_data_dictionary(self.domain, self.default_case_type,
-                              [('mc', 'select'), ('d1', 'date')], {'mc': ['True', 'False']})
+        setup_data_dictionary(
+            self.domain,
+            self.default_case_type,
+            [('mc', 'select'), ('d1', 'date')],
+            {'mc': ['True', 'False']}
+        )
         file_rows = [
             ['case_id', 'd1', 'mc'],
             ['', '2022-04-01', 'True'],
@@ -666,7 +670,7 @@ class ImporterTest(TestCase):
         ]
 
         # With validity checking enabled, the bad choice on row 3
-        # should case that row to fail to import and should be
+        # should cause that row to fail to import and should be
         # flagged as invalid. The blank one should be valid.
         res = self.import_mock_file(file_rows)
         self.assertEqual(2, res['created_count'])
