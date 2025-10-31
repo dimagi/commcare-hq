@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from django.db import models
@@ -166,14 +167,56 @@ class CaseProperty(models.Model):
         return super(CaseProperty, self).delete(*args, **kwargs)
 
     def check_validity(self, value):
-        if value and self.data_type == 'date':
-            try:
-                datetime.strptime(value, ISO_DATE_FORMAT)
-            except ValueError:
-                raise exceptions.InvalidDate(sample=value)
-        elif value and self.data_type == 'select' and self.allowed_values.exists():
-            if not self.allowed_values.filter(allowed_value=value).exists():
-                raise exceptions.InvalidSelectValue(sample=value, message=self.valid_values_message)
+        if value is None or value == '':
+            return
+        validation_methods = {
+            self.DataType.DATE.value: self._validate_date,
+            self.DataType.NUMBER.value: self._validate_number,
+            self.DataType.SELECT.value: self._validate_select,
+            self.DataType.GPS.value: self._validate_gps,
+            self.DataType.PHONE_NUMBER.value: self._validate_phone_number,
+        }
+        method = validation_methods.get(
+            self.data_type,
+            lambda x: None
+        )
+        return method(value)
+
+    def _validate_date(self, value):
+        try:
+            datetime.strptime(value, ISO_DATE_FORMAT)
+        except ValueError:
+            raise exceptions.InvalidDate(sample=value)
+
+    def _validate_number(self, value):
+        try:
+            float(value)
+        except ValueError:
+            raise exceptions.InvalidNumber(sample=value)
+
+    def _validate_select(self, value):
+        if not self.allowed_values.exists():
+            return
+        if not self.allowed_values.filter(allowed_value=value).exists():
+            raise exceptions.InvalidSelectValue(
+                sample=value,
+                message=self.valid_values_message,
+            )
+
+    def _validate_gps(self, value):
+        gps_pattern = (
+            r'^-?\d+\.?\d*\s+'  # Latitude
+            r'-?\d+\.?\d*'  # Longitude
+            r'(?:\s+-?\d+\.?\d*)?'  # Elevation (optional)
+            r'(?:\s+\d+\.?\d*)?$'  # Precision (optional)
+        )
+        if not re.match(gps_pattern, value):
+            raise exceptions.InvalidGPS(sample=value)
+
+    def _validate_phone_number(self, value):
+        phone_number_pattern = r'^[0-9\.\(\)\+\-\ ]+$'
+        if not re.match(phone_number_pattern, value):
+            raise exceptions.InvalidPhoneNumber(sample=value)
 
     @property
     def valid_values_message(self):

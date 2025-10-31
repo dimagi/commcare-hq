@@ -322,24 +322,6 @@ def get_data_dict_deprecated_case_types(domain):
     return set(case_types)
 
 
-def fields_to_validate(domain, case_type_name):
-    """
-    Returns a dictionary {case_property_name: CaseProperty} of case
-    properties whose data type is "date" or "select" (multiple choice).
-
-    (Only date and multiple choice case properties are validated.)
-    """
-    props = CaseProperty.objects.filter(
-        case_type__domain=domain,
-        case_type__name=case_type_name,
-        data_type__in=(
-            CaseProperty.DataType.DATE,
-            CaseProperty.DataType.SELECT,
-        ),
-    )
-    return {prop.name: prop for prop in props}
-
-
 @quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
 def get_gps_properties(domain, case_type):
     return set(CaseProperty.objects.filter(
