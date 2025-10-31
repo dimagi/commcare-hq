@@ -3,7 +3,8 @@
 
 <div>
   <div class="form-group">
-    <label class="control-label col-sm-2">{% trans "Custom Icon" %}
+    <label class="control-label col-sm-2"
+      >{% trans "Custom Icon" %}
       <span
         class="hq-help-template"
         data-title="{% trans 'Custom Icon' %}"
@@ -17,7 +18,11 @@
       </span>
     </label>
     <div class="col-sm-2">
-      <select id="custom-icon-type-select" class="form-control" name="custom_icon_type">
+      <select
+        id="custom-icon-type-select"
+        class="form-control"
+        name="custom_icon_type"
+      >
         <option value="text">{% trans "Text Body" %}</option>
         <option value="xpath">{% trans "XPath Function" %}</option>
       </select>
