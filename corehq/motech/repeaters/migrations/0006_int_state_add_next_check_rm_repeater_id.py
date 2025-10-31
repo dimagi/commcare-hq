@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='sqlrepeatrecord',
             constraint=models.CheckConstraint(
-                condition=models.Q(
+                check=models.Q(
                     ('next_check__isnull', True),
                     models.Q(('next_check__isnull', False), ('state', 1)),
                     models.Q(('next_check__isnull', False), ('state', 2)),

@@ -1285,7 +1285,7 @@ class RepeatRecord(models.Model):
         constraints = [
             models.CheckConstraint(
                 name="next_check_pending_or_null",
-                condition=(
+                check=(
                     models.Q(next_check__isnull=True)
                     | models.Q(next_check__isnull=False, state=State.Pending)
                     | models.Q(next_check__isnull=False, state=State.Fail)
