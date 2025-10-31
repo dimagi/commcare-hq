@@ -55,11 +55,6 @@ class Command(BaseCommand):
             )
 
         translation.deactivate()
-        self.stdout.write(
-            self.style.SUCCESS(
-                f'\nSuccessfully generated translations for {len(languages)} languages'
-            )
-        )
 
     def _get_widget_translations(self):
         """
