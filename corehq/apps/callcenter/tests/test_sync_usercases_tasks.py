@@ -3,13 +3,16 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
+from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase
+from corehq.util.test_utils import privilege_enabled
 
 
+@privilege_enabled(privileges.USERCASE)
 class TestWebUserSyncUsercase(TestCase):
 
     @classmethod
@@ -25,8 +28,6 @@ class TestWebUserSyncUsercase(TestCase):
                                                 None, None)
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.user_id = cls.user._id
-        cls.domain_obj.usercase_enabled = True
-        cls.domain_obj.save()
 
         LocationType.objects.get_or_create(
             domain=cls.domain_name,
@@ -105,6 +106,7 @@ class TestWebUserSyncUsercase(TestCase):
         self.assertEqual(usercase_case_properties['commcare_location_ids'], '')
 
 
+@privilege_enabled(privileges.USERCASE)
 class TestBulkSyncUsercases(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -112,8 +114,6 @@ class TestBulkSyncUsercases(TestCase):
         cls.domain_obj = create_domain("test")
         cls.addClassCleanup(cls.domain_obj.delete)
         cls.domain_name = cls.domain_obj.name
-        cls.domain_obj.usercase_enabled = True
-        cls.domain_obj.save()
 
         cls.users = []
         cls.user_ids = []

@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from memoized import memoized
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
-from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.auditcare.models import ACCESS_CHOICES, AccessAudit, NavigationEventAudit
 from corehq.apps.auditcare.utils.export import (
     all_audit_events_by_user,
     filters_for_audit_event_query,
@@ -115,6 +115,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.simple.SimpleUsername',
         'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
+        'corehq.apps.reports.filters.select.UserAuditActionFilter',
     ]
     emailable = False
     exportable = True
@@ -128,6 +129,10 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def selected_user(self):
         return self.request.GET.get('username', None)
+
+    @property
+    def selected_action(self):
+        return self.request.GET.get('action', None)
 
     @property
     def headers(self):
@@ -153,7 +158,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
         rows = []
         events = all_audit_events_by_user(
-            self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate
+            self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate,
+            self.selected_action
         )
         for event in events:
             row = get_generic_log_event_row(event)
@@ -170,7 +176,19 @@ class UserAuditReport(AdminReport, DatespanMixin):
             start_date=self.datespan.startdate,
             end_date=self.datespan.enddate
         )
-        return NavigationEventAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+        if self.selected_action in ACCESS_CHOICES:
+            where['access_type'] = self.selected_action
+            return AccessAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+
+        # if action is not selected from AccessAudit, we use number of records in NavigationEventAudit as baseline
+        query = NavigationEventAudit.objects.filter(**where)
+
+        if self.selected_action:
+            query = query.extra(
+                where=["headers::jsonb->>'REQUEST_METHOD' = %s"],
+                params=[self.selected_action]
+            )
+        return query[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
 
     @property
     def report_context(self):

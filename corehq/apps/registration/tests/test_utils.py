@@ -168,7 +168,7 @@ class TestUsingProjectLogoInEmails(TestCase):
         self.assertDictEqual(
             project_logo_emails_context(self.domain),
             {
-                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
+                "base_container_template": "registration/email/base_templates/bootstrap3/_base_container_project_logo.html",
                 "link_to_logo": absolute_reverse(
                     ViewMultimediaFile.urlname, args=['CommCareImage', self.image._id])
             }

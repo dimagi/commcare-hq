@@ -11,6 +11,13 @@ if ModuleWatchdog.is_installed():
     # in pytest startup because of ddtrace's pytest11 entry point(s).
     ModuleWatchdog.uninstall()
 
+try:
+    # install https://github.com/mdmintz/pdbp as default debugger if available
+    # pytest IO-capturing will be turned off automatically when debugging
+    import pdbp  # noqa: F401
+except ImportError:
+    pass
+
 pytest_plugins = [
     'unmagic',
     'corehq.tests.pytest_plugins.dividedwerun',

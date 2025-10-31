@@ -1,0 +1,38 @@
+--- 
++++ 
+@@ -1,17 +1,15 @@
+ {% load i18n %}
+ 
+-<div class="modal fade" tabindex="-1" role="dialog" id="auto-renew-modal">
+-  <div class="modal-dialog" role="document">
++<div class="modal" tabindex="-1" id="auto-renew-modal">
++  <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+         <button
+           type="button"
+-          class="close"
+-          data-dismiss="modal"
++          class="btn-close"
++          data-bs-dismiss="modal"
+           aria-label="{% trans 'Close' %}"
+-        >
+-          <span aria-hidden="true">&times;</span>
+-        </button>
++        ></button>
+         <h4 class="modal-title">
+           {% if plan.is_auto_renew %}
+             {% trans "Disable Auto Renewal" %}
+@@ -38,7 +36,11 @@
+           {% endif %}"
+         >
+           {% csrf_token %}
+-          <button type="button" class="btn btn-default" data-dismiss="modal">
++          <button
++            type="button"
++            class="btn btn-outline-primary"
++            data-bs-dismiss="modal"
++          >
+             {% trans "Cancel" %}
+           </button>
+           {% if plan.is_auto_renew %}

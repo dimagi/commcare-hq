@@ -100,8 +100,9 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
     def render_import_multimedia_instructions(self, request, source_server, source_domain, source_app_id,
                                               new_app_id):
         from corehq.apps.app_manager.views.utils import back_to_main
+        subdomain = ServerLocation.get_subdomains()[source_server]
         source_multimedia_url = (
-            f"https://{ServerLocation.SUBDOMAINS[source_server]}.commcarehq.org/a/"
+            f"https://{subdomain}.commcarehq.org/a/"
             f"{source_domain}/apps/view/{source_app_id}/settings/#multimedia-tab"
         )
         current_multimedia_url = reverse(BulkUploadMultimediaView.urlname, args=[self.domain, new_app_id])

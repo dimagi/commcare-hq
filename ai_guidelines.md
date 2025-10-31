@@ -89,6 +89,11 @@ codebase. These guidelines apply in the following circumstances:
 - Tests should be clear and maintainable.
 - Doctests should be tested.
 - Run the tests that cover the changes before considering any changes complete.
+- Tests should be run with the `--reusedb=1` parameter to improve speed by
+  avoiding resetting the test database. e.g.
+  ```shell
+  $ uv run pytest --reusedb=1 path/to/test.py
+  ```
 - Use pytest features and pytest conventions, like Pythonic `assert`
   statements, and parametrized tests for repetitive test cases.
 - Use [pytest-unmagic][1] for explicit test fixtures.
@@ -99,11 +104,24 @@ codebase. These guidelines apply in the following circumstances:
 
 - The JavaScript Guide is documented under the `docs/js-guide/` directory.
 
-- Python is _optionally_ formatted using **yapf**:
-
+- Check JavaScript linting using
   ```shell
-  source .venv/bin/activate
-  yapf -i example/path/filename.py
+  $ npx eslint path/to/file.js
+  ```
+
+- Check Python linting using
+  ```shell
+  $ uv run flake8 path/to/file.py
+  ```
+
+- Python imports are kept clean and consistent using **isort**:
+  ```shell
+  $ uv run isort path/to/file.py
+  ```
+
+- Python is _optionally_ formatted using **yapf**:
+  ```shell
+  $ uv run yapf -i path/to/file.py
   ```
 
   AI Tool and Developer discretion is required:

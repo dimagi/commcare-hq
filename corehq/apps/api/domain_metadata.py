@@ -60,8 +60,9 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         try:
             base_properties = self._get_base_properties_from_domain_metrics(domain_obj.name)
             properties = self._add_extra_calculated_properties(base_properties, domain_obj.name, calc_prop_prefix)
-        except (DomainMetrics.DoesNotExist):
-            logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))
+        except DomainMetrics.DoesNotExist:
+            if domain_obj.is_active:
+                logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))
             return {}
         return properties
 

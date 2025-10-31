@@ -28,7 +28,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_meta')
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.domain_has_usercase_access')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):

@@ -4,10 +4,10 @@ from django.utils.translation import gettext_lazy as _
 
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from corehq import feature_previews, toggles
+from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, all_app_manager_add_ons_enabled
 from corehq.privileges import CHILD_CASES, LOOKUP_TABLES
 
 
@@ -221,8 +221,8 @@ def show(slug, request, app, module=None, form=None):
     if not add_on.has_privilege(request) and add_on.upgrade_text is None:
         return False
 
-    # Show if flag to enable all toggles is on
-    if toggles.ENABLE_ALL_ADD_ONS.enabled_for_request(request):
+    # Show if setting to enable all add-ons is on
+    if all_app_manager_add_ons_enabled(app.domain):
         return True
 
     if _grandfathered(slug, app):

@@ -178,6 +178,18 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'batch_number': 'B001',
                     'phone_number': '0987654322',
                 }),
+            _create_case(
+                cls.factory,
+                name='final_mobile_validation_false',
+                data={
+                    PaymentProperties.FINAL_MOBILE_VALIDATION: 'false',
+                }),
+            _create_case(
+                cls.factory,
+                name='final_mobile_validation_true',
+                data={
+                    PaymentProperties.FINAL_MOBILE_VALIDATION: 'true',
+                }),
         ]
         case_search_adapter.bulk_index(cls.case_list + [cls.case_linked_to_payment_case], refresh=True)
 
@@ -217,7 +229,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
     def test_response_data_rows(self):
         response = self._make_request()
         queryset = response.context['table'].data
-        assert len(queryset) == 2
+        assert len(queryset) == 3
         for row in queryset:
             if row.record.get('case_id') == self.case_list[0].case_id:
                 assert row.record.case.case_json == {
@@ -230,10 +242,15 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'payer_message': 'Thanks',
                     PaymentProperties.USER_OR_CASE_ID: self.case_linked_to_payment_case.case_id,
                 }
-            else:
+            elif row.record.get('case_id') == self.case_list[1].case_id:
                 assert row.record.case.case_json == {
                     'batch_number': 'B001',
                     'phone_number': '0987654322',
+                }
+            else:
+                assert row.record.get('case_id') == self.case_list[3].case_id
+                assert row.record.case.case_json == {
+                    PaymentProperties.FINAL_MOBILE_VALIDATION: 'true',
                 }
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
@@ -242,7 +259,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         response = self.client.post(
             self.endpoint,
             data={
-                'selected_ids': [case.case_id for case in self.case_list],
+                'selected_ids': [self.case_list[0].case_id, self.case_list[1].case_id],
             },
             headers={'HQ-HX-Action': 'verify_rows'},
         )
@@ -271,7 +288,32 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
 
         assert response.status_code == 400
         assert (
-            b"Only payments in 'Not Verified' or 'Request failed' state are eligible for verification."
+            b"Verification: Payment status must be one of the following: 'Not Verified', 'Request failed'"
+            in response.content
+        )
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_invalid_final_mobile_validation(self):
+        submitted_case = _create_case(
+            self.factory,
+            name='submitted_case',
+            data={
+                PaymentProperties.FINAL_MOBILE_VALIDATION: 'false',
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
+            }
+        )
+        self.addCleanup(submitted_case.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [submitted_case.case_id]},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        assert (
+            b"Only payments with 'commcare_final_mobile_validation' set to 'true' are eligible for verification."
             in response.content
         )
 
@@ -371,7 +413,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
 
         assert response.status_code == 400
         assert (
-            "Only payments in the '{}' state are eligible for verification reversal.".format(
+            "Verification reversal: Payment status must be one of the following: '{}'".format(
                 PaymentStatus.PENDING_SUBMISSION.label
             )
             in str(response.content)
@@ -491,7 +533,21 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                     PaymentProperties.BATCH_NUMBER: 'B002',
                 },
                 owner_id=cls.user_with_access.user_id
-            )
+            ),
+            _create_case(
+                cls.factory,
+                name='final_mobile_validation_false',
+                data={
+                    PaymentProperties.BATCH_NUMBER: 'B001',
+                    PaymentProperties.FINAL_MOBILE_VALIDATION: 'false',
+                }),
+            _create_case(
+                cls.factory,
+                name='final_mobile_validation_true',
+                data={
+                    PaymentProperties.BATCH_NUMBER: 'B001',
+                    PaymentProperties.FINAL_MOBILE_VALIDATION: 'true',
+                }),
         ]
         case_search_adapter.bulk_index(cls.case_list, refresh=True)
         user_adapter.bulk_index([cls.webuser, cls.user_without_access, cls.user_with_access], refresh=True)
@@ -513,16 +569,16 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert len(queryset) == 0
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_batch_number_filter_has_three(self):
+    def test_batch_number_filter(self):
         response = self._make_request(querystring='batch_number=B001')
         queryset = response.context['table'].data
-        assert len(queryset) == 3
+        assert len(queryset) == 4
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_batch_number_filter_no_value_has_three(self):
+    def test_batch_number_filter_no_value(self):
         response = self._make_request(querystring='batch_number=')
         queryset = response.context['table'].data
-        assert len(queryset) == 4
+        assert len(queryset) == 5
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_payment_status_filter_pending_payments_has_one(self):

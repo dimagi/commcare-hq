@@ -81,6 +81,7 @@ def login_and_domain_required(view_func):
 
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
+        from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
         user = req.user
         domain_name, domain_obj = load_domain(req, domain)
 
@@ -108,8 +109,9 @@ def login_and_domain_required(view_func):
                and not couch_user.is_active_in_domain(domain_name)):
                 return _show_deactivated_notice(req, domain)
             if _is_missing_two_factor(view_func, req):
+                set_bootstrap_version5()
                 return TemplateResponse(request=req,
-                                        template='two_factor/core/bootstrap3/otp_required.html',
+                                        template='two_factor/core/bootstrap5/otp_required.html',
                                         status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)

@@ -4,14 +4,28 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
+from memoized import memoized
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.es import filters
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    case_property_query,
+)
+from corehq.apps.es.users import (
+    missing_or_empty_user_data_property,
+    query_user_data,
+)
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
+from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter, PhoneNumberFilter
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import (
     KycConfig,
+    KycProperties,
     KycVerificationStatus,
     UserDataStore,
 )
@@ -21,8 +35,10 @@ from corehq.apps.integration.kyc.tables import (
     KycUserElasticRecord,
     KycVerifyTable,
 )
+from corehq.apps.reports.generic import get_filter_classes
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.timezones.utils import get_timezone
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -105,7 +121,49 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         }
 
     def get_queryset(self):
-        return self.kyc_config.get_kyc_users_query()
+        query = self.kyc_config.get_kyc_users_query()
+        return self._apply_filters(query)
+
+    def _apply_filters(self, query):
+        query_filters = []
+        if kyc_verification_status := self.request.GET.get(KycVerificationStatusFilter.slug):
+            self._apply_kyc_verification_status_filter(kyc_verification_status, query_filters)
+        if phone_number := self.request.GET.get(PhoneNumberFilter.slug):
+            self._apply_phone_number_filter(phone_number, query_filters)
+        if query_filters:
+            query = query.filter(filters.AND(*query_filters))
+        return query
+
+    def _apply_kyc_verification_status_filter(self, kyc_verification_status, query_filters):
+        field_name = KycProperties.KYC_VERIFICATION_STATUS
+        if kyc_verification_status == KycVerificationStatus.PENDING:
+            if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                condition = filters.OR(
+                    missing_or_empty_user_data_property(field_name),
+                    query_user_data(field_name, kyc_verification_status)
+                )
+            else:
+                condition = filters.OR(
+                    case_property_missing(field_name),
+                    case_property_query(field_name, kyc_verification_status)
+                )
+        else:
+            if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                condition = query_user_data(field_name, kyc_verification_status)
+            else:
+                condition = case_property_query(field_name, kyc_verification_status)
+        query_filters.append(condition)
+
+    def _apply_phone_number_filter(self, phone_number, query_filters):
+        if field_name := self.kyc_config.phone_number_field:
+            if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                condition = filters.OR(
+                    query_user_data(field_name, phone_number),
+                    filters.term('phone_numbers', phone_number)
+                )
+            else:
+                condition = case_property_query(field_name, phone_number)
+            query_filters.append(condition)
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
@@ -153,9 +211,40 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         ]
 
 
+class KYCFiltersMixin:
+
+    @property
+    def fields(self):
+        fields = [
+            'corehq.apps.integration.kyc.filters.KycVerificationStatusFilter',
+        ]
+        if hasattr(self, 'kyc_config') and self.kyc_config and self.kyc_config.phone_number_field:
+            fields.append('corehq.apps.integration.kyc.filters.PhoneNumberFilter')
+        return fields
+
+    def filters_context(self):
+        return {
+            'report': {
+                'title': self.page_title,
+                'section_name': self.section_name,
+                'show_filters': True,
+            },
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug) for f in self.filter_classes
+            ],
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+        }
+
+    @property
+    @memoized
+    def filter_classes(self):
+        timezone = get_timezone(self.request, self.domain)
+        return get_filter_classes(self.fields, self.request, self.domain, timezone, use_bootstrap5=True)
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
-class KycVerificationReportView(BaseDomainView):
+class KycVerificationReportView(BaseDomainView, KYCFiltersMixin):
     urlname = 'kyc_verify'
     template_name = 'kyc/kyc_verify_report.html'
     section_name = _('Data')
@@ -165,13 +254,14 @@ class KycVerificationReportView(BaseDomainView):
     def page_context(self):
         context = super().page_context
         context.update({
-            'domain_has_config': self.domain_has_config,
+            'domain_has_config': self.kyc_config is not None,
+            **self.filters_context(),
         })
         return context
 
-    @property
-    def domain_has_config(self):
-        return KycConfig.objects.filter(domain=self.domain).exists()
+    @cached_property
+    def kyc_config(self):
+        return KycConfig.objects.filter(domain=self.domain).first()
 
     @property
     def page_url(self):
@@ -186,10 +276,9 @@ class KycVerificationReportView(BaseDomainView):
         return super().get(request, *args, **kwargs)
 
     def _report_users_count_metric(self):
-        if self.domain_has_config:
-            kyc_config = KycConfig.objects.get(domain=self.domain)
+        if self.kyc_config:
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
-                kyc_config.get_kyc_users_count(),
+                self.kyc_config.get_kyc_users_count(),
                 tags={'domain': self.domain}
             )

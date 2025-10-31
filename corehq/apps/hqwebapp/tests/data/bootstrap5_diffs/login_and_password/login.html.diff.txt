@@ -7,8 +7,8 @@
  {% load hq_shared_tags %}
  {% load compress %}
  
--{% js_entry_b3 'registration/js/login' %}
-+{% js_entry 'registration/js/login' %}
+-{% js_entry_b3 'registration/js/bootstrap3/login' %}
++{% js_entry 'registration/js/bootstrap5/login' %}
  
  {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
  

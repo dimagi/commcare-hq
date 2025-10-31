@@ -173,8 +173,8 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
          (("employee", (("1", "cory", "m"),
                         ("2", "christian", "m"),
                         ("3", "amelia", "f"))),
-          ("building", (("1", "dimagi", "585 mass ave."),
-                        ("2", "old dimagi", "529 main st."))))
+          ("building", (("1", "dimagi", "245 main st."),
+                        ("2", "old dimagi", "585 mass ave."))))
         """
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]

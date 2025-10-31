@@ -51,10 +51,10 @@ var invoiceModel = function () {
 };
 
 $(function () {
-    $("#id_start_date").datepicker({
+    $("#id_date_start").datepicker({
         dateFormat: "yy-mm-dd",
     });
-    $("#id_end_date").datepicker({
+    $("#id_date_end").datepicker({
         dateFormat: "yy-mm-dd",
     });
     $("#id_new_date_end").datepicker({
