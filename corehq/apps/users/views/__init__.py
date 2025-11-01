@@ -1241,9 +1241,14 @@ class InviteWebUserView(BaseManageWebUserView):
         post_dict = None
         if self.request.method == 'POST':
             post_dict = self.request.POST
+
+        existing_custom_data = None
+        if self.invitation:
+            existing_custom_data = self.invitation.custom_user_data
         custom_data = CustomDataEditor(
             field_view=WebUserFieldsView,
             domain=self.domain,
+            existing_custom_data=existing_custom_data,
             post_dict=post_dict,
             ko_model="custom_fields",
             request_user=self.request.couch_user
