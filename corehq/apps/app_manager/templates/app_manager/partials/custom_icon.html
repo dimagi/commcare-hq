@@ -23,20 +23,24 @@
         class="form-control"
         name="custom_icon_type"
       >
-        <option value="text">{% trans "Text Body" %}</option>
-        <option value="xpath">{% trans "XPath Function" %}</option>
+        <option value="text" {% if custom_icon.is_text %}selected{% endif %}>
+          {% trans "Text Body" %}
+        </option>
+        <option value="xpath" {% if custom_icon.is_xpath %}selected{% endif %}>
+          {% trans "XPath Function" %}
+        </option>
       </select>
     </div>
     <div class="col-sm-4">
       <input
-        class="form-control"
+        class="form-control {% if not custom_icon.is_text %}hide{% endif %}"
         name="custom_icon_text_body"
         id="custom_icon_text_body"
         value="{{ custom_icon.text|trans:langs }}"
         placeholder="{% trans 'Text Body' %}"
       />
       <input
-        class="form-control"
+        class="form-control {% if not custom_icon.is_xpath %}hide{% endif %}"
         name="custom_icon_xpath"
         id="custom_icon_xpath"
         value="{% if custom_icon.xpath %}{{ custom_icon.xpath }}{% endif %}"
