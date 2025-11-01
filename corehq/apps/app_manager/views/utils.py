@@ -302,23 +302,17 @@ def handle_custom_icon_edits(request, form_or_module, lang):
 
         # if there is a request to set custom icon
         if icon_text_body or icon_xpath:
-            # ToDo: Redundant, now remove this
-            # validate that only of either text or xpath should be present
-            if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
-                raise AppMisconfigurationError(_("Please enter either text body or xpath for custom icon"))
-
-            # a form should have just one custom icon for now
+            # a form should have just one custom icon
             # so this just adds a new one with params or replaces the existing one with new params
-            # ToDo: rename form_custom_icon to custom_icon
-            form_custom_icon = (form_or_module.custom_icon if form_or_module.custom_icon else CustomIcon())
+            new_custom_icon = (form_or_module.custom_icon if form_or_module.custom_icon else CustomIcon())
             if icon_xpath:
-                form_custom_icon.text = {}
-                form_custom_icon.xpath = icon_xpath
+                new_custom_icon.text = {}
+                new_custom_icon.xpath = icon_xpath
             elif icon_text_body:
-                form_custom_icon.xpath = None
-                form_custom_icon.text[lang] = icon_text_body
+                new_custom_icon.xpath = None
+                new_custom_icon.text[lang] = icon_text_body
 
-            form_or_module.custom_icons = [form_custom_icon]
+            form_or_module.custom_icons = [new_custom_icon]
         else:
             # if there is a request to unset custom icon
             if form_or_module.custom_icon:
