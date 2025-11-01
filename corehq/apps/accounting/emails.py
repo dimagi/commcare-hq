@@ -111,6 +111,40 @@ def send_flagged_pay_annually_subscription_alert(subscription, current_invoice, 
     )
 
 
+def send_subscription_renewed_email(subscription):
+    from corehq.apps.domain.views import DomainSubscriptionView
+
+    to, cc, bcc = _get_reminder_email_contacts(subscription, subscription.subscriber.domain)
+    template = 'accounting/email/subscription_renewed.html'
+    template_plaintext = 'accounting/email/subscription_renewed.txt'
+
+    context = {
+        'domain': subscription.subscriber.domain,
+        'plan': subscription.plan_version.plan.name,
+        'date_start': subscription.date_start.strftime(USER_DATE_FORMAT),
+        'subscription_url': absolute_reverse(
+            DomainSubscriptionView.urlname, args=[subscription.subscriber.domain]
+        ),
+        'base_url': get_site_domain(),
+    }
+    subject = _(
+        "CommCare Alert: {domain}'s subscription to {plan} automatically renewed for {date_start}"
+    ).format(domain=context['domain'], plan=context['plan'], date_start=context['date_start'])
+
+    email_html = render_to_string(template, context)
+    email_plaintext = render_to_string(template_plaintext, context)
+    send_html_email_async.delay(
+        subject, to, email_html,
+        text_content=email_plaintext,
+        cc=cc,
+        bcc=bcc,
+        email_from=get_dimagi_from_email(),
+    )
+    log_accounting_info(
+        f"Sent subscription renewed email for {context['domain']}"
+    )
+
+
 def send_renewal_reminder_email(subscription, days_left):
     template = 'accounting/email/subscription_renewal_reminder.html'
     template_plaintext = 'accounting/email/subscription_renewal_reminder.txt'
