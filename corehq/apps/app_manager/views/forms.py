@@ -812,7 +812,7 @@ def get_form_view_context(
             {'test': assertion.test, 'text': assertion.text.get(current_lang)}
             for assertion in form.custom_assertions
         ],
-        'form_icon': None,
+        'form_custom_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
@@ -824,7 +824,7 @@ def get_form_view_context(
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
-        context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
+        context['form_custom_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
