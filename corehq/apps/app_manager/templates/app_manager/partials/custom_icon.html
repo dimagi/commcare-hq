@@ -35,14 +35,14 @@
       <input
         class="form-control {% if not custom_icon.is_text %}hide{% endif %}"
         name="custom_icon_text_body"
-        id="custom_icon_text_body"
+        id="custom-icon-text-body"
         value="{{ custom_icon.text|trans:langs }}"
         placeholder="{% trans 'Text Body' %}"
       />
       <input
         class="form-control {% if not custom_icon.is_xpath %}hide{% endif %}"
         name="custom_icon_xpath"
-        id="custom_icon_xpath"
+        id="custom-icon-xpath"
         value="{% if custom_icon.xpath %}{{ custom_icon.xpath }}{% endif %}"
         placeholder="{% trans 'XPath Function' %}"
       />

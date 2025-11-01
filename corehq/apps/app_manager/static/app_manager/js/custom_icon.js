@@ -3,8 +3,8 @@ import $ from "jquery";
 function customIconManager() {
     var self = {};
 
-    const $customIconXpathInput = $("#custom_icon_xpath");
-    const $customIconTextBodyInput = $("#custom_icon_text_body");
+    const $customIconXpathInput = $("#custom-icon-xpath");
+    const $customIconTextBodyInput = $("#custom-icon-text-body");
 
     var showXpathInput = function () {
         $customIconXpathInput.removeClass('hide');
