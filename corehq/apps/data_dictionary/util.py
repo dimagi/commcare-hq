@@ -322,6 +322,14 @@ def get_data_dict_deprecated_case_types(domain):
     return set(case_types)
 
 
+def get_case_properties_by_name(domain, case_type_name):
+    case_properties = CaseProperty.objects.filter(
+        case_type__domain=domain,
+        case_type__name=case_type_name,
+    )
+    return {p.name: p for p in case_properties}
+
+
 @quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
 def get_gps_properties(domain, case_type):
     return set(CaseProperty.objects.filter(

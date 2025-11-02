@@ -16,7 +16,7 @@ from soil.progress import TaskProgressManager
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.util import get_case_properties_by_name
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
@@ -134,11 +134,7 @@ class _TimedAndThrottledImporter:
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
         if domain_has_privilege(self.domain, privileges.DATA_DICT_TYPES):
-            props = CaseProperty.objects.filter(
-                case_type__domain=domain,
-                case_type__name=config.case_type,
-            )
-            self.field_to_case_property = {prop.name: prop for prop in props}
+            self.field_to_case_property = get_case_properties_by_name(domain, config.case_type)
         else:
             self.field_to_case_property = {}
         self.field_map = self._create_field_map()
