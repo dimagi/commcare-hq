@@ -180,7 +180,7 @@ class CaseProperty(models.Model):
             self.data_type,
             lambda x: None
         )
-        return method(value)
+        method(value)  # Raises CaseRowError subclass if `value` is invalid
 
     def _validate_date(self, value):
         try:
