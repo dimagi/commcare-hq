@@ -1,0 +1,251 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            <i class="fa fa-code"></i> {% trans "Custom UI" %}
+        </h3>
+    </div>
+    <div class="panel-body">
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i>
+            <strong>{% trans "Phase 2: Manual Upload" %}</strong>
+            <p class="mb-0">
+                {% trans "Upload a custom HTML file with CommCareAPI JavaScript calls. This file will be displayed in the app preview instead of standard Formplayer forms." %}
+            </p>
+            <p class="mb-0 mt-2">
+                <small>
+                    {% trans "In Phase 4, this will become an AI chat interface where you can describe your UI and have it generated automatically." %}
+                </small>
+            </p>
+        </div>
+        
+        <!-- Current Status Display -->
+        <div id="custom-ui-current-status" class="mb-4">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <!-- Upload Form -->
+        <form id="custom-ui-upload-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="custom-ui-file-input">
+                    {% trans "Select HTML File" %}
+                </label>
+                <input type="file" 
+                       id="custom-ui-file-input"
+                       name="file" 
+                       accept=".html,.htm" 
+                       class="form-control" 
+                       required>
+                <small class="form-text text-muted">
+                    {% trans "Select a custom UI HTML file. The file should include CommCareAPI JavaScript calls (e.g., window.CommCareAPI.submitForm())." %}
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-upload"></i> {% trans "Upload & Enable Custom UI" %}
+                </button>
+                
+                <button type="button" 
+                        id="disable-custom-ui-btn" 
+                        class="btn btn-warning"
+                        style="display: none;">
+                    <i class="fa fa-times"></i> {% trans "Disable Custom UI" %}
+                </button>
+            </div>
+        </form>
+        
+        <!-- Upload Status Messages -->
+        <div id="custom-ui-upload-status" class="mt-3"></div>
+        
+        <!-- CommCareAPI Documentation -->
+        <div class="mt-4">
+            <h4>{% trans "CommCareAPI Reference" %}</h4>
+            <p>{% trans "Your custom UI can use these JavaScript methods:" %}</p>
+            <pre><code>// Submit form data
+await window.CommCareAPI.submitForm({
+    xmlns: 'http://openrosa.org/formdesigner/...',
+    answers: { question1: 'value1', question2: 'value2' }
+});
+
+// Get all cases of a type
+const cases = await window.CommCareAPI.getCases('patient');
+
+// Get a specific case
+const case = await window.CommCareAPI.getCase('case-id-123');
+
+// Get current user info
+const user = await window.CommCareAPI.getCurrentUser();
+
+// Log messages
+window.CommCareAPI.log('info', 'Custom UI loaded');</code></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const appId = '{{ app.id }}';
+    const domain = '{{ domain }}';
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const statusDiv = document.getElementById('custom-ui-current-status');
+    const uploadStatusDiv = document.getElementById('custom-ui-upload-status');
+    const uploadForm = document.getElementById('custom-ui-upload-form');
+    const disableBtn = document.getElementById('disable-custom-ui-btn');
+    
+    // Load current status
+    function loadStatus() {
+        fetch(`/a/${domain}/apps/view/${appId}/custom_ui/status/`, {
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.enabled) {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong><i class="fa fa-check-circle"></i> {% trans "Custom UI Enabled" %}</strong>
+                            <br>{% trans "Entrypoint:" %} <code>${data.entrypoint || 'N/A'}</code>
+                            <br>{% trans "Multimedia ID:" %} <code>${data.multimedia_id || 'N/A'}</code>
+                            <br><small>{% trans "Refresh the app preview to see your custom UI." %}</small>
+                        </div>
+                    `;
+                    disableBtn.style.display = 'inline-block';
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-warning">
+                            <strong><i class="fa fa-exclamation-triangle"></i> {% trans "No Custom UI" %}</strong>
+                            <br>{% trans "Upload an HTML file to enable custom UI for this app." %}
+                        </div>
+                    `;
+                    disableBtn.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading status:', error);
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    {% trans "Error loading custom UI status" %}
+                </div>
+            `;
+        });
+    }
+    
+    // Upload form handler
+    uploadForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        uploadStatusDiv.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fa fa-spinner fa-spin"></i> {% trans "Uploading..." %}
+            </div>
+        `;
+        
+        try {
+            const response = await fetch(`/a/${domain}/apps/view/${appId}/custom_ui/save/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                uploadStatusDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong><i class="fa fa-check"></i> {% trans "Success!" %}</strong>
+                        <br>${result.message}
+                        <br><small>{% trans "Refresh the app preview to see your changes." %}</small>
+                    </div>
+                `;
+                
+                // Reload status after short delay
+                setTimeout(() => {
+                    loadStatus();
+                    uploadForm.reset();
+                }, 1500);
+            } else {
+                uploadStatusDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>{% trans "Upload Failed" %}</strong>
+                        <br>${result.message || '{% trans "Unknown error" %}'}
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            uploadStatusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>{% trans "Error" %}</strong>
+                    <br>${error.message}
+                </div>
+            `;
+        }
+    });
+    
+    // Disable button handler
+    disableBtn.addEventListener('click', async function() {
+        if (!confirm('{% trans "Disable custom UI? The file will remain saved but the app will use standard forms." %}')) {
+            return;
+        }
+        
+        uploadStatusDiv.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fa fa-spinner fa-spin"></i> {% trans "Disabling..." %}
+            </div>
+        `;
+        
+        try {
+            const response = await fetch(`/a/${domain}/apps/view/${appId}/custom_ui/disable/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                uploadStatusDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fa fa-check"></i> ${result.message}
+                    </div>
+                `;
+                setTimeout(() => {
+                    loadStatus();
+                    uploadStatusDiv.innerHTML = '';
+                }, 1500);
+            } else {
+                uploadStatusDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        {% trans "Error disabling custom UI:" %} ${result.message}
+                    </div>
+                `;
+            }
+        } catch (error) {
+            uploadStatusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    {% trans "Error:" %} ${error.message}
+                </div>
+            `;
+        }
+    });
+    
+    // Load status on page load
+    loadStatus();
+})();
+</script>
+

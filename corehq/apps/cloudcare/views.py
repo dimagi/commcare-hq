@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import string
 import urllib.parse
@@ -45,6 +46,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_doc,
 )
+
+logger = logging.getLogger(__name__)
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
@@ -240,7 +243,14 @@ class PreviewAppView(TemplateView):
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
             return render(request, 'cloudcare/block_preview_app.html', context)
+        
         app = get_app(request.domain, kwargs.pop('app_id'))
+        
+        # Check if custom UI is enabled
+        if app.profile.get('custom_ui_enabled', False):
+            return self.render_custom_ui(request, app)
+        
+        # Default: render Formplayer
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
             'formplayer_url': get_formplayer_url(for_js=True),
@@ -250,6 +260,153 @@ class PreviewAppView(TemplateView):
             "has_geocoder_privs": has_geocoder_privs(request.domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         })
+    
+    def render_custom_ui(self, request, app):
+        """
+        Render custom UI HTML with CommCareAPI bridge injected
+        """
+        from corehq.apps.hqmedia.models import CommCareMultimedia
+        
+        entrypoint = app.profile.get('custom_ui_entrypoint', 'custom_ui/index.html')
+        multimedia_id = app.profile.get('custom_ui_multimedia_id')
+        
+        if not multimedia_id:
+            return HttpResponse(
+                '<html><body><h1>Custom UI Error</h1>'
+                '<p>Custom UI is enabled but multimedia_id is not set.</p>'
+                '</body></html>',
+                status=500
+            )
+        
+        try:
+            # Get the multimedia object
+            multimedia = CommCareMultimedia.get(multimedia_id)
+            
+            # Get the HTML content from blob
+            html_bytes = multimedia.fetch_attachment(multimedia.file_hash)
+            html_content = html_bytes.decode('utf-8')
+            
+            # Inject CommCareAPI bridge before </body>
+            api_bridge = self.get_commcare_api_bridge(request, app)
+            
+            if '</body>' in html_content:
+                html_content = html_content.replace('</body>', f'{api_bridge}</body>')
+            else:
+                # If no </body> tag, append at end
+                html_content += api_bridge
+            
+            return HttpResponse(html_content, content_type='text/html')
+            
+        except Exception as e:
+            logger.exception(f"Error rendering custom UI for app {app._id}")
+            return HttpResponse(
+                f'<html><body><h1>Custom UI Error</h1>'
+                f'<p>Failed to load custom UI: {str(e)}</p>'
+                f'<p>Multimedia ID: {multimedia_id}</p>'
+                f'</body></html>',
+                status=500
+            )
+    
+    def get_commcare_api_bridge(self, request, app):
+        """
+        Generate JavaScript CommCareAPI bridge.
+        This provides mock implementations for preview mode.
+        Phase 5 will implement real API calls via Formplayer.
+        """
+        username = request.user.username
+        user_id = str(request.couch_user.user_id) if hasattr(request, 'couch_user') else 'preview-user'
+        domain = request.domain
+        
+        return f"""
+        <script>
+        // CommCareAPI Bridge (Preview Mode - Mock Implementation)
+        window.CommCareAPI = {{
+            submitForm: async function(data) {{
+                console.log('[CommCareAPI Preview] submitForm called with:', data);
+                
+                // Mock implementation for preview mode
+                alert('Form Submitted (Preview Mode)\\n\\nxmlns: ' + (data.xmlns || 'N/A') + '\\n\\nData: ' + JSON.stringify(data.answers || data, null, 2));
+                
+                // Return mock success response
+                return {{
+                    success: true,
+                    formRecordId: 'preview-form-' + Date.now(),
+                    message: 'Form submitted successfully (preview mode)'
+                }};
+            }},
+            
+            getCases: async function(caseType) {{
+                console.log('[CommCareAPI Preview] getCases called for type:', caseType);
+                
+                // Return mock case data
+                return [
+                    {{ 
+                        case_id: 'case-001', 
+                        case_name: 'John Doe (Mock)', 
+                        case_type: caseType || 'patient',
+                        owner_id: '{user_id}',
+                        date_opened: '2024-01-15',
+                        properties: {{
+                            age: '45',
+                            status: 'active'
+                        }}
+                    }},
+                    {{ 
+                        case_id: 'case-002', 
+                        case_name: 'Jane Smith (Mock)', 
+                        case_type: caseType || 'patient',
+                        owner_id: '{user_id}',
+                        date_opened: '2024-01-20',
+                        properties: {{
+                            age: '32',
+                            status: 'active'
+                        }}
+                    }}
+                ];
+            }},
+            
+            getCase: async function(caseId) {{
+                console.log('[CommCareAPI Preview] getCase called for ID:', caseId);
+                
+                return {{
+                    case_id: caseId,
+                    case_name: 'Mock Patient #' + caseId,
+                    case_type: 'patient',
+                    owner_id: '{user_id}',
+                    date_opened: '2024-01-15',
+                    properties: {{
+                        age: '45',
+                        status: 'active',
+                        notes: 'This is mock data for preview'
+                    }}
+                }};
+            }},
+            
+            getCurrentUser: async function() {{
+                console.log('[CommCareAPI Preview] getCurrentUser called');
+                
+                return {{
+                    username: '{username}',
+                    userId: '{user_id}',
+                    domain: '{domain}',
+                    isPreview: true
+                }};
+            }},
+            
+            log: function(level, message) {{
+                const levels = ['debug', 'info', 'warn', 'error'];
+                const logLevel = levels.includes(level) ? level : 'log';
+                console[logLevel]('[CommCareAPI]', message);
+            }},
+            
+            // Preview mode indicator
+            isPreview: true
+        }};
+        
+        console.log('[CommCareAPI] Bridge loaded in preview mode');
+        console.log('[CommCareAPI] Available methods:', Object.keys(window.CommCareAPI));
+        </script>
+        """
 
 
 def has_geocoder_privs(domain):

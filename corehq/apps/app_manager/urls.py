@@ -86,6 +86,11 @@ from corehq.apps.app_manager.views import (
     view_module,
     view_module_legacy,
 )
+from corehq.apps.app_manager.views.custom_ui import (
+    save_custom_ui,
+    get_custom_ui_status,
+    disable_custom_ui,
+)
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView, AllCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -116,6 +121,10 @@ app_urls = [
         compare_multimedia_sizes, name='compare_multimedia_sizes'),
     url(r'^compare_multimedia_sizes/(?P<other_build_id>[\w-]+)/(?P<build_profile_id>[\w-]+)/$',
         compare_multimedia_sizes, name='compare_multimedia_sizes_for_build_profile'),
+    # Custom UI endpoints
+    url(r'^custom_ui/save/$', save_custom_ui, name='save_custom_ui'),
+    url(r'^custom_ui/status/$', get_custom_ui_status, name='get_custom_ui_status'),
+    url(r'^custom_ui/disable/$', disable_custom_ui, name='disable_custom_ui'),
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
     url(r'^settings/$', app_settings, name='app_settings'),
