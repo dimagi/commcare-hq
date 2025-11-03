@@ -1758,6 +1758,7 @@ class CustomIcon(DocumentSchema):
     def is_xpath(self):
         return bool(self.xpath)
 
+
 class NavMenuItemMediaMixin(DocumentSchema):
     """
         Language-specific icon and audio.
