@@ -182,13 +182,15 @@ class CaseProperty(models.Model):
         )
         method(value)  # Raises CaseRowError subclass if `value` is invalid
 
-    def _validate_date(self, value):
+    @staticmethod
+    def _validate_date(value):
         try:
             datetime.strptime(value, ISO_DATE_FORMAT)
         except ValueError:
             raise exceptions.InvalidDate(sample=value)
 
-    def _validate_number(self, value):
+    @staticmethod
+    def _validate_number(value):
         try:
             float(value)
         except ValueError:
@@ -203,7 +205,8 @@ class CaseProperty(models.Model):
                 message=self.valid_values_message,
             )
 
-    def _validate_gps(self, value):
+    @staticmethod
+    def _validate_gps(value):
         gps_pattern = (
             r'^-?\d+\.?\d*\s+'  # Latitude
             r'-?\d+\.?\d*'  # Longitude
@@ -213,7 +216,8 @@ class CaseProperty(models.Model):
         if not re.match(gps_pattern, value):
             raise exceptions.InvalidGPS(sample=value)
 
-    def _validate_phone_number(self, value):
+    @staticmethod
+    def _validate_phone_number(value):
         phone_number_pattern = r'^[0-9\.\(\)\+\-\ ]+$'
         if not re.match(phone_number_pattern, value):
             raise exceptions.InvalidPhoneNumber(sample=value)
