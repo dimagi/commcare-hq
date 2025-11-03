@@ -78,6 +78,8 @@ def test_check_invalid_gps(value):
     '+1 555-123-4567',
     '081 234 5678',
     '12.34.56.78.90',
+    '12345',  # Minimum 5 digits
+    '(123) 45',  # Exactly 5 digits with formatting
 ])
 def test_check_valid_phone_number(value):
     prop = CaseProperty(data_type=CaseProperty.DataType.PHONE_NUMBER)
@@ -85,8 +87,11 @@ def test_check_valid_phone_number(value):
 
 
 @pytest.mark.parametrize('value', [
-    '(555) 123-4567 ext 89',
-    '*#12345',
+    '(555) 123-4567 ext 89',  # Invalid characters
+    '*#12345',  # Invalid characters
+    '1234',  # Only 4 digits - too few
+    '(12) 34',  # Only 4 digits with formatting
+    '+-+-+-',  # No digits
 ])
 def test_check_invalid_phone_number(value):
     prop = CaseProperty(data_type=CaseProperty.DataType.PHONE_NUMBER)

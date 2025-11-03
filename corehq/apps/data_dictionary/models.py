@@ -217,6 +217,9 @@ class CaseProperty(models.Model):
         phone_number_pattern = r'^[0-9\.\(\)\+\-\ ]+$'
         if not re.match(phone_number_pattern, value):
             raise exceptions.InvalidPhoneNumber(sample=value)
+        digit_count = sum(1 for char in value if char.isdigit())
+        if digit_count < 5:
+            raise exceptions.InvalidPhoneNumber(sample=value)
 
     @property
     def valid_values_message(self):
