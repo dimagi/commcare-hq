@@ -6,7 +6,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from datetime import datetime
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @require_POST
 @login_and_domain_required
-@require_permission(Permissions.edit_apps)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 def save_custom_ui(request, domain, app_id):
     """
     Save custom UI HTML file to app as multimedia attachment.
@@ -104,7 +104,7 @@ def save_custom_ui(request, domain, app_id):
 
 
 @login_and_domain_required
-@require_permission(Permissions.edit_apps)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 def get_custom_ui_status(request, domain, app_id):
     """
     Get current custom UI status for an app
@@ -132,7 +132,7 @@ def get_custom_ui_status(request, domain, app_id):
 
 @require_POST
 @login_and_domain_required
-@require_permission(Permissions.edit_apps)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 def disable_custom_ui(request, domain, app_id):
     """
     Disable custom UI for an app (doesn't delete the files)
