@@ -1854,6 +1854,10 @@ msgstr ""
 "доступ до нього лише через Організацію. Щоб змінити часовий пояс, вас "
 "потрібно додати до простору проєкту як учасника."
 
+#: corehq/apps/domain/static/domain/js/new_stripe_card_manager.js
+msgid "Card added successfully! Refreshing cards list..."
+msgstr "Картку успішно додано! Оновлюємо список карток..."
+
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
 "Do not allow new users to sign up on commcarehq.org. This may take up to an "
@@ -2841,6 +2845,11 @@ msgstr ""
 msgid "Good Job! Your password is strong!"
 msgstr "Гарна робота! Ваш пароль сильний!"
 
+#: corehq/apps/registration/static/registration/js/bootstrap3/user_login_form.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/user_login_form.js
+msgid "Continue"
+msgstr "Продовжити"
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr "Будь ласка, введіть своє ім'я."
@@ -2871,10 +2880,6 @@ msgstr "Будь ласка, вкажіть."
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
 msgstr "Будь ласка, вкажіть назву вашої організації або компанії."
-
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "Продовжити"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."

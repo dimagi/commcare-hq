@@ -1,4 +1,7 @@
 {
+  "analytics": {
+    "in_progress": true
+  },
   "builds": {
     "is_complete": true,
     "templates": [

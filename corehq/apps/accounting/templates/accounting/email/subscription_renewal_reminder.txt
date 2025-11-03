@@ -1,0 +1,31 @@
+{% load i18n %}
+
+{% blocktrans %}
+  Dear {{ domain }} administrator,
+
+  This is a reminder that your {{ plan_name }} subscription for {{ domain }}
+  ends soon!
+
+  Renewal:
+  If you would like to renew, just ensure that you have auto-renewal selected
+  here: {{ subscription_url }}
+
+  30 days prior to the renewal date, you will receive an invoice for the new
+  subscription term to renew you to the latest version of your current plan as
+  described here: {{ plan_info_url }}.
+  If you'd like to renew sooner, you can self-renew here: {{ subscription_url }}
+
+  Cancellation:
+  In case you decide you will not be renewing your subscription, you can simply
+  turn off auto-renew at any point during your subscription term.
+
+  In case you have any questions about your renewal,
+  please don't hesitate to contact {{ invoicing_contact_email }}.
+
+  Thank you for your use and support of CommCare.
+
+  Best regards,
+
+  The CommCare Team
+  {{ base_url }}
+{% endblocktrans %}

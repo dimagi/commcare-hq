@@ -27,7 +27,6 @@ from dimagi.ext.couchdbkit import (
     SafeSaveDocument,
     StringProperty,
 )
-from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
@@ -47,7 +46,6 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
     SubscriptionAdjustmentError,
     SubscriptionChangeError,
-    SubscriptionReminderError,
     SubscriptionRenewalError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
@@ -82,6 +80,7 @@ from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
@@ -1466,7 +1465,7 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=False):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1514,8 +1513,8 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
-            auto_renew=auto_renew,
         )
+        new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
         new_subscription.save()
         new_subscription.raise_conflicting_dates(new_subscription.date_start, new_subscription.date_end)
@@ -1632,6 +1631,7 @@ class Subscription(models.Model):
             renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
+        renewed_subscription.auto_renew = renewed_subscription.can_auto_renew
         renewed_subscription.save()
 
         # record renewal from old subscription
@@ -1685,221 +1685,6 @@ class Subscription(models.Model):
                 credit_line.balance * Decimal('-1'),
                 related_credit=transferred_credit,
             )
-
-    def send_ending_reminder_email(self):
-        """
-        Sends a reminder email to the emails specified in the accounting
-        contacts that the subscription will end on the specified end date.
-        """
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
-        if self.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
-            # never send a subscription ending email for Paused subscriptions...
-            return
-
-        today = datetime.date.today()
-        num_days_left = (self.date_end - today).days
-
-        domain_name = self.subscriber.domain
-        context = self.ending_reminder_context
-        subject = context['subject']
-
-        template = self.ending_reminder_email_html
-        template_plaintext = self.ending_reminder_email_text
-        email_html = render_to_string(template, context)
-        email_plaintext = render_to_string(template_plaintext, context)
-        bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
-        if self.account.dimagi_contact is not None:
-            bcc.append(self.account.dimagi_contact)
-        for email in self._reminder_email_contacts(domain_name):
-            send_html_email_async.delay(
-                subject, email, email_html,
-                text_content=email_plaintext,
-                email_from=get_dimagi_from_email(),
-                bcc=bcc,
-            )
-            log_accounting_info(
-                "Sent %(days_left)s-day subscription reminder "
-                "email for %(domain)s to %(email)s." % {
-                    'days_left': num_days_left,
-                    'domain': domain_name,
-                    'email': email,
-                }
-            )
-
-    @property
-    def ending_reminder_email_html(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder.html'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.html'
-        else:
-            return 'accounting/email/subscription_ending_reminder.html'
-
-    @property
-    def ending_reminder_email_text(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder.txt'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.txt'
-        else:
-            return 'accounting/email/subscription_ending_reminder.txt'
-
-    @property
-    def ending_reminder_context(self):
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
-
-        today = datetime.date.today()
-        num_days_left = (self.date_end - today).days
-        if num_days_left == 1:
-            ending_on = _("tomorrow!")
-        else:
-            ending_on = _("on %s." % self.date_end.strftime(USER_DATE_FORMAT))
-
-        user_desc = self.plan_version.user_facing_description
-        plan_name = user_desc['name']
-
-        domain_name = self.subscriber.domain
-
-        context = {
-            'domain': domain_name,
-            'plan_name': plan_name,
-            'account': self.account.name,
-            'ending_on': ending_on,
-            'subscription_url': absolute_reverse(
-                DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
-            'base_url': get_site_domain(),
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-            'sales_email': settings.SALES_EMAIL,
-        }
-
-        if self.account.is_customer_billing_account:
-            subject = _(
-                "CommCare Alert: %(account_name)s's subscription to "
-                "%(plan_name)s ends %(ending_on)s"
-            ) % {
-                'account_name': self.account.name,
-                'plan_name': plan_name,
-                'ending_on': ending_on,
-            }
-        elif self.is_trial:
-            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s") % {
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
-        else:
-            subject = _(
-                "CommCare Alert: %(domain)s's subscription to "
-                "%(plan_name)s ends %(ending_on)s"
-            ) % {
-                'plan_name': plan_name,
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
-        context.update({'subject': subject})
-        return context
-
-    def send_dimagi_ending_reminder_email(self):
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
-        if self.account.dimagi_contact is None:
-            raise SubscriptionReminderError(
-                "This subscription has no Dimagi contact."
-            )
-
-        subject = self.dimagi_ending_reminder_subject
-        context = self.dimagi_ending_reminder_context
-        email_html = render_to_string(self.dimagi_ending_reminder_email_html, context)
-        email_plaintext = render_to_string(self.dimagi_ending_reminder_email_text, context)
-        send_html_email_async.delay(
-            subject, self.account.dimagi_contact, email_html,
-            text_content=email_plaintext,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-        )
-
-    @property
-    def dimagi_ending_reminder_email_html(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder_dimagi.html'
-        else:
-            return 'accounting/email/subscription_ending_reminder_dimagi.html'
-
-    @property
-    def dimagi_ending_reminder_email_text(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder_dimagi.txt'
-        else:
-            return 'accounting/email/subscription_ending_reminder_dimagi.txt'
-
-    @property
-    def dimagi_ending_reminder_subject(self):
-        if self.account.is_customer_billing_account:
-            return "Alert: {account}'s subscriptions are ending on {end_date}".format(
-                account=self.account.name,
-                end_date=self.date_end.strftime(USER_DATE_FORMAT))
-        else:
-            return "Alert: {domain}'s subscription is ending on {end_date}".format(
-                domain=self.subscriber.domain,
-                end_date=self.date_end.strftime(USER_DATE_FORMAT))
-
-    @property
-    def dimagi_ending_reminder_context(self):
-        end_date = self.date_end.strftime(USER_DATE_FORMAT)
-        email = self.account.dimagi_contact
-        if self.account.is_customer_billing_account:
-            account = self.account.name
-            plan = self.plan_version.plan.edition
-            context = {
-                'account': account,
-                'plan': plan,
-                'end_date': end_date,
-                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
-                    USER_DATE_FORMAT),
-                'contacts': ', '.join(self._reminder_email_contacts(self.subscriber.domain)),
-                'dimagi_contact': email,
-                'accounts_email': settings.ACCOUNTS_EMAIL
-            }
-        else:
-            domain = self.subscriber.domain
-            context = {
-                'domain': domain,
-                'end_date': end_date,
-                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
-                    USER_DATE_FORMAT),
-                'contacts': ', '.join(self._reminder_email_contacts(domain)),
-                'dimagi_contact': email,
-            }
-        return context
-
-    def _reminder_email_contacts(self, domain_name):
-        emails = {a.get_email() for a in WebUser.get_admins_by_domain(domain_name)}
-        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
-        if not self.is_trial:
-            billing_contact_emails = (
-                self.account.billingcontactinfo.email_list
-                if BillingContactInfo.objects.filter(account=self.account).exists() else []
-            )
-            if not billing_contact_emails:
-                from corehq.apps.accounting.views import (
-                    ManageBillingAccountView,
-                )
-                _soft_assert_contact_emails_missing(
-                    False,
-                    'Billing Account for project %s is missing client contact emails: %s' % (
-                        domain_name,
-                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id])
-                    )
-                )
-            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
-        if self.account.is_customer_billing_account:
-            enterprise_admin_emails = self.account.enterprise_admin_emails
-            emails |= {enterprise_admin_email for enterprise_admin_email in enterprise_admin_emails}
-        return emails
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
@@ -2086,6 +1871,15 @@ class Subscription(models.Model):
             return True
         else:
             return False
+
+    @property
+    def can_auto_renew(self):
+        return (
+            SHOW_AUTO_RENEWAL.enabled(self.subscriber.domain)
+            and self.service_type == SubscriptionType.PRODUCT
+            and self.date_end is not None
+            and not self.account.is_customer_billing_account
+        )
 
     def user_can_change_subscription(self, user):
         if user.is_superuser:
@@ -3757,7 +3551,8 @@ class CreditLine(models.Model):
         cls.add_credit(
             -payment_record.amount,
             account=billing_account,
-            invoice=invoice,
+            customer_invoice=invoice if invoice.is_customer_invoice else None,
+            invoice=invoice if not invoice.is_customer_invoice else None,
         )
 
 

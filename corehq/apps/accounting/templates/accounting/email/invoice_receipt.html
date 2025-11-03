@@ -6,12 +6,21 @@
   {% endblocktrans %}
 </p>
 
-<p>
-  {% blocktrans %}
-    This email is a receipt for your payment of {{ amount }} toward Invoice No.
-    {{ invoice_num }} for your project {{ project }}.
-  {% endblocktrans %}
-</p>
+{% if is_customer_invoice %}
+  <p>
+    {% blocktrans %}
+      This email is a receipt for your payment of {{ amount }} toward Invoice
+      No. {{ invoice_num }} for your billing account {{ domain_or_account }}.
+    {% endblocktrans %}
+  </p>
+{% else %}
+  <p>
+    {% blocktrans %}
+      This email is a receipt for your payment of {{ amount }} toward Invoice
+      No. {{ invoice_num }} for your project {{ domain_or_account }}.
+    {% endblocktrans %}
+  </p>
+{% endif %}
 
 {% if is_paid %}
   <p>
@@ -24,14 +33,18 @@
     <li><strong>{% trans 'Invoice No.' %}:</strong> {{ invoice_num }}</li>
     <li><strong>{% trans 'Amount Paid' %}:</strong> {{ amount }}</li>
     <li><strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }}</li>
-    <li><strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}</li>
+    <li>
+      <strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}
+    </li>
   </ul>
 {% else %}
   <ul>
     <li><strong>{% trans 'Invoice No.' %}:</strong> {{ invoice_num }}</li>
     <li><strong>{% trans 'Amount Paid' %}:</strong> {{ amount }}</li>
     <li><strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }}</li>
-    <li><strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}</li>
+    <li>
+      <strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}
+    </li>
     <li><strong>{% trans 'Remaining Balance' %}:</strong> {{ balance }}</li>
     <li><strong>{% trans 'Date Due' %}:</strong> {{ date_due }}</li>
   </ul>

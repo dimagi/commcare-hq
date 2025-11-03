@@ -7,7 +7,7 @@ import initialAnalytics from "analytix/js/initial";
 import logging from "analytix/js/logging";
 import utils from "analytix/js/utils";
 import noopMetrics from "analytix/js/noopMetrics";
-import ctaForms from "analytix/js/cta_forms";
+import ctaForms from "analytix/js/bootstrap3/cta_forms";
 
 var _get = initialAnalytics.getFn('hubspot'),
     _logger = logging.getLoggerForApi('Hubspot'),
