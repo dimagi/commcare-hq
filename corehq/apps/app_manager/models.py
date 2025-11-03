@@ -71,7 +71,11 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager.const import FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
+from corehq.apps.app_manager.const import (
+    FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
+    CUSTOM_ICON_TYPE_TEXT,
+    CUSTOM_ICON_TYPE_XPATH,
+)
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -1827,9 +1831,21 @@ class CustomIcon(DocumentSchema):
     One can set either a simple text to display or
     an xpath expression to be evaluated for example count of cases within.
     """
-    form = StringProperty()
+
+    form = "badge"  # form is always badge
     text = DictProperty(str)
     xpath = StringProperty()
+
+    def _type(self):
+        return CUSTOM_ICON_TYPE_XPATH if self.xpath else CUSTOM_ICON_TYPE_TEXT
+
+    @property
+    def is_text(self):
+        return self._type() == CUSTOM_ICON_TYPE_TEXT
+
+    @property
+    def is_xpath(self):
+        return self._type() == CUSTOM_ICON_TYPE_XPATH
 
 
 class NavMenuItemMediaMixin(DocumentSchema):
