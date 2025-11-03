@@ -108,13 +108,15 @@ class TestCasePropertyValidationWithDB(TestCase):
         case_type = CaseType.objects.create(domain=domain, name="case_type")
         cls.addClassCleanup(case_type.delete)
         cls.prop = CaseProperty.objects.create(
+            name='prop',
             case_type=case_type,
             data_type=CaseProperty.DataType.SELECT
         )
         cls.valid_choices = ('foo', 'bar', 'baz')
         for choice in cls.valid_choices:
-            cls.prop.allowed_values.add(
-                CasePropertyAllowedValue(allowed_value=choice)
+            CasePropertyAllowedValue.objects.create(
+                case_property=cls.prop,
+                allowed_value=choice,
             )
 
     def test_check_valid_selections(self):
