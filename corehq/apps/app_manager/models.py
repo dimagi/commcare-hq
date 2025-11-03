@@ -1752,17 +1752,13 @@ class CustomIcon(DocumentSchema):
     text = DictProperty(str)
     xpath = StringProperty()
 
-    def _type(self):
-        return CUSTOM_ICON_TYPE_XPATH if self.xpath else CUSTOM_ICON_TYPE_TEXT
-
     @property
     def is_text(self):
-        return self._type() == CUSTOM_ICON_TYPE_TEXT
+        return not self.is_xpath
 
     @property
     def is_xpath(self):
-        return self._type() == CUSTOM_ICON_TYPE_XPATH
-
+        return bool(self.xpath)
 
 class NavMenuItemMediaMixin(DocumentSchema):
     """
