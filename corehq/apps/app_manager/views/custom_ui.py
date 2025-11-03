@@ -26,18 +26,26 @@ def save_custom_ui(request, domain, app_id):
     POST parameters:
     - file: HTML file upload
     OR
-    - html: HTML content as string
+    - html_content: HTML content as string (JSON)
     - filename: (optional) filename, defaults to 'index.html'
     """
     try:
+        import json
+        
         # Get HTML content from file upload or POST data
         if 'file' in request.FILES:
             uploaded_file = request.FILES['file']
             html_content = uploaded_file.read().decode('utf-8')
             filename = uploaded_file.name
         else:
-            html_content = request.POST.get('html')
-            filename = request.POST.get('filename', 'index.html')
+            # Check if JSON body
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                html_content = data.get('html_content')
+                filename = data.get('filename', 'index.html')
+            else:
+                html_content = request.POST.get('html_content') or request.POST.get('html')
+                filename = request.POST.get('filename', 'index.html')
         
         if not html_content:
             return JsonResponse({
