@@ -11,7 +11,6 @@ from corehq.apps.data_dictionary.models import (
 
 
 class TestCasePropertyValidation:
-
     def test_valid_date(self):
         valid_date = '2025-11-02'
         # check_validity raises exception on invalid date so just
@@ -20,10 +19,11 @@ class TestCasePropertyValidation:
         prop.check_validity(valid_date)
 
     @pytest.mark.parametrize('value', [
-        "2022",
-        "2022-14-03",
-        "Embedded 2025-11-02 in a longer string",
-        "  2025-11-02 ",  # caller is responsible for stripping any surrounding whitespace
+        '2022',
+        '2022-14-03',
+        'Embedded 2025-11-02 in a longer string',
+        # caller is responsible for stripping any surrounding whitespace
+        '  2025-11-02 ',
     ])
     def test_check_invalid_date(self, value):
         prop = CaseProperty(data_type=CaseProperty.DataType.DATE)
@@ -94,17 +94,16 @@ class TestCasePropertyValidation:
 
 
 class TestCasePropertyValidationWithDB(TestCase):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         domain = 'test-case-property'
-        case_type = CaseType.objects.create(domain=domain, name="case_type")
+        case_type = CaseType.objects.create(domain=domain, name='case_type')
         cls.addClassCleanup(case_type.delete)
         cls.prop = CaseProperty.objects.create(
             name='prop',
             case_type=case_type,
-            data_type=CaseProperty.DataType.SELECT
+            data_type=CaseProperty.DataType.SELECT,
         )
         cls.valid_choices = ('foo', 'bar', 'baz')
         for choice in cls.valid_choices:
