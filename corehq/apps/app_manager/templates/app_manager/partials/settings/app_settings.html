@@ -170,6 +170,7 @@
       <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
       <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
     {% endif %}
+    <li><a href="#custom-ui-settings" data-toggle="tab"><i class="fa fa-code"></i> {% trans "Custom UI" %}</a></li>
     <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
     {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
       <li><a href="#custom-assertions-tab" data-toggle="tab">{% trans "Custom Assertions" %}</a></li>
@@ -278,6 +279,10 @@
     </div>
     <div class="tab-pane" id="commcare-settings">
       {% include 'app_manager/partials/settings/commcare_settings.html' %}
+    </div>
+
+    <div class="tab-pane" id="custom-ui-settings">
+      {% include 'app_manager/partials/custom_ui_upload.html' %}
     </div>
 
     {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
