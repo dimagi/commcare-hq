@@ -82,12 +82,25 @@ def save_custom_ui(request, domain, app_id):
         )
         multimedia.save()
         
+        # Add multimedia to app's multimedia_map
+        # The path in CCZ will be custom_ui/filename
+        multimedia_path = f'custom_ui/{filename}'
+        if not app.multimedia_map:
+            app.multimedia_map = {}
+        
+        from corehq.apps.hqmedia.models import HQMediaMapItem
+        app.multimedia_map[multimedia_path] = HQMediaMapItem(
+            multimedia_id=multimedia._id,
+            unique_id=multimedia._id,
+            version=1,
+        )
+        
         # Update app profile to enable custom UI
         if not app.profile:
             app.profile = {}
         
         app.profile['custom_ui_enabled'] = True
-        app.profile['custom_ui_entrypoint'] = f'custom_ui/{filename}'
+        app.profile['custom_ui_entrypoint'] = multimedia_path
         app.profile['custom_ui_multimedia_id'] = multimedia._id
         app.save()
         
