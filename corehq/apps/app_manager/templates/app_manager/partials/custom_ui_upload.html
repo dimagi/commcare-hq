@@ -38,10 +38,20 @@
                        id="custom-ui-file-input"
                        name="file" 
                        accept=".html,.htm" 
-                       class="form-control" 
-                       required>
+                       class="form-control">
                 <small class="form-text text-muted">
                     {% trans "Select a custom UI HTML file. The file should include CommCareAPI JavaScript calls (e.g., window.CommCareAPI.submitForm())." %}
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label>{% trans "Or Paste HTML Content" %}</label>
+                <textarea id="custom-ui-html-textarea"
+                          class="form-control"
+                          rows="8"
+                          placeholder="Paste your custom UI HTML here..."></textarea>
+                <small class="form-text text-muted">
+                    {% trans "Alternative: paste your HTML content directly instead of uploading a file." %}
                 </small>
             </div>
             
@@ -143,11 +153,72 @@ window.CommCareAPI.log('info', 'Custom UI loaded');</code></pre>
     uploadForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        const textarea = document.getElementById('custom-ui-html-textarea');
+        const fileInput = document.getElementById('custom-ui-file-input');
+        const htmlContent = textarea.value.trim();
+        
+        // Check if user provided HTML via textarea
+        if (htmlContent) {
+            // Send HTML content directly
+            uploadStatusDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fa fa-spinner fa-spin"></i> {% trans "Uploading pasted HTML..." %}
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`/a/${domain}/apps/view/${appId}/custom_ui/save/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        html_content: htmlContent
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    uploadStatusDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong><i class="fa fa-check"></i> {% trans "Success!" %}</strong>
+                            <br>${result.message}
+                            <br><small>{% trans "Refresh the app preview to see your changes." %}</small>
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        loadStatus();
+                        textarea.value = '';
+                    }, 1500);
+                } else {
+                    uploadStatusDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>{% trans "Upload Failed" %}</strong>
+                            <br>${result.message || '{% trans "Unknown error" %}'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                uploadStatusDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>{% trans "Error" %}</strong>
+                        <br>${error.message}
+                    </div>
+                `;
+            }
+            return;
+        }
+        
+        // Otherwise use file upload
         const formData = new FormData(this);
         
         uploadStatusDiv.innerHTML = `
             <div class="alert alert-info">
-                <i class="fa fa-spinner fa-spin"></i> {% trans "Uploading..." %}
+                <i class="fa fa-spinner fa-spin"></i> {% trans "Uploading file..." %}
             </div>
         `;
         
