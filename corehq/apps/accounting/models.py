@@ -2025,6 +2025,17 @@ class WirePrepaymentInvoice(WireInvoice):
 
     items = []
 
+    def get_contact_emails(self):
+        invoice_contacts = (
+            self.account.billingcontactinfo.email_list
+            if BillingContactInfo.objects.filter(account=self.account).exists() else []
+        )
+        if not invoice_contacts:
+            invoice_contacts = [
+                admin.get_email() for admin in WebUser.get_admins_by_domain(self.domain)
+            ]
+        return invoice_contacts
+
     @property
     def is_prepayment(self):
         return True
