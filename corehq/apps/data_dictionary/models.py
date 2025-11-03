@@ -170,11 +170,11 @@ class CaseProperty(models.Model):
         if value is None or value == '':
             return
         validation_methods = {
-            self.DataType.DATE.value: self._validate_date,
-            self.DataType.NUMBER.value: self._validate_number,
-            self.DataType.SELECT.value: self._validate_select,
-            self.DataType.GPS.value: self._validate_gps,
-            self.DataType.PHONE_NUMBER.value: self._validate_phone_number,
+            self.DataType.DATE: self._validate_date,
+            self.DataType.NUMBER: self._validate_number,
+            self.DataType.SELECT: self._validate_select,
+            self.DataType.GPS: self._validate_gps,
+            self.DataType.PHONE_NUMBER: self._validate_phone_number,
         }
         method = validation_methods.get(
             self.data_type,
