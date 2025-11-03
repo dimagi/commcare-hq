@@ -5013,6 +5013,21 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def has_modules(self):
         return len(self.get_modules()) > 0 and not self.is_remote_app()
 
+    def all_media_paths(self, lang=None):
+        """
+        Override to include custom UI paths in addition to form/module media.
+        This ensures custom UI files are not removed by remove_unused_mappings().
+        """
+        paths = super().all_media_paths(lang=lang)
+        
+        # Add custom UI path if enabled
+        if self.profile and self.profile.get('custom_ui_enabled'):
+            custom_ui_path = self.profile.get('custom_ui_entrypoint')
+            if custom_ui_path:
+                paths = paths | {custom_ui_path}
+        
+        return paths
+
     @property
     @memoized
     def commtrack_enabled(self):
