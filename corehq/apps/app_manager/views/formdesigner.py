@@ -38,7 +38,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
-from corehq.apps.app_manager.models import ModuleNotFoundException
+from corehq.apps.app_manager.models import ModuleNotFoundException, AdvancedForm
 from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.app_manager.util import (
     app_callout_templates,
@@ -257,9 +257,10 @@ def _get_base_vellum_options(request, domain, form, displayLang):
     }
 
     has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    is_advanced_form = isinstance(form, AdvancedForm)
 
     case_type = form.get_module().case_type
-    if case_type and has_vellum_case_mapping:
+    if case_type and has_vellum_case_mapping and not is_advanced_form:
         case_properties = get_all_case_properties_for_case_type(domain, case_type)
         mappings = form.actions.get_mappings()
         options['caseManagement'] = {
