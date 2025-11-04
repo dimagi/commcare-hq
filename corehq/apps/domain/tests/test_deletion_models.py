@@ -13,7 +13,7 @@ IGNORE_APPS = {
     'admin',
     'auditcare',
     'captcha',
-    'celery',
+    'celery_tasks',
     'contenttypes',
     'django_celery_results',
     'django_digest',
