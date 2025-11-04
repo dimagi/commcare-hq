@@ -87,14 +87,14 @@
   "apps/hqwebapp/static/registration": [
     {
       "directories": [
-        "scss/",
-        "less/"
+        "less/",
+        "scss/"
       ],
       "file_type": "stylesheet",
       "label": "stylesheets",
       "files": [
         [
-          "registration.scss",
+          "registration.less",
           "registration.scss"
         ]
       ]
