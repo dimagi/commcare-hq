@@ -273,12 +273,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                        )
         return user_query
 
-    def user_locations(self, ancestors, location_types):
-        # returns the ancestor locations in order of location types passed
+    def user_locations(self, ancestors):
+        # returns the ancestor locations in order of location types
         ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
         return [
             ancestors_by_type_id.get(location_type.id, '---')
-            for location_type in location_types
+            for location_type in self._location_types()
         ]
 
     def process_rows(self, users, fmt_for_export=False):
@@ -360,8 +360,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 row_data.append(last_build_profile_name)
 
             if self._include_ancestor_locations_data():
-                location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
-                                                    self._location_types())
+                location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []))
                 row_data = location_data + row_data
 
             rows.append(row_data)
