@@ -522,19 +522,18 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         result = super(ApplicationStatusReport, self).export_table
         table = list(result[0][1])
-        location_colums = []
+        ancestor_locations_columns = []
 
         if self._include_location_data():
-            # ToDo: fix name location_colums
-            location_colums = ['{} Name'.format(loc_col.name.title()) for loc_col in self.required_loc_columns]
+            ancestor_locations_columns = ['{} Name'.format(loc_col.name.title()) for loc_col in self.required_loc_columns]
 
-        table[0] = location_colums + table[0]
+        table[0] = ancestor_locations_columns + table[0]
 
         for row in table[1:]:
             # Last submission
-            row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
+            row[len(ancestor_locations_columns) + 2] = _fmt_timestamp(row[len(ancestor_locations_columns) + 2])
             # Last sync
-            row[len(location_colums) + 3] = _fmt_timestamp(row[len(location_colums) + 3])
+            row[len(ancestor_locations_columns) + 3] = _fmt_timestamp(row[len(ancestor_locations_columns) + 3])
         result[0][1] = table
         return result
 
