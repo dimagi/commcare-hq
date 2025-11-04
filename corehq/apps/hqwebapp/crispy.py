@@ -338,36 +338,15 @@ class B3TextField(Field):
 
 
 class FieldsetAccordionGroup(AccordionGroup):
-    template = "hqwebapp/crispy/accordion_group.html"
-
-    def render(self, form, context, template_pack=None, **kwargs):
+    def get_template_name(self, template_pack):
         from corehq.apps.hqwebapp.utils.bootstrap import (
             BOOTSTRAP_5,
             get_bootstrap_version,
         )
-        template_pack = template_pack or get_template_pack()
-
-        # Handle active class like parent AccordionGroup does
-        if self.active:
-            if "active" not in self.css_class:
-                self.css_class += " active"
+        if get_bootstrap_version() == BOOTSTRAP_5:
+            return "hqwebapp/crispy/bootstrap5/accordion_group.html"
         else:
-            self.css_class = self.css_class.replace("active", "")
-
-        # Get rendered fields from parent Container class
-        fields = self.get_rendered_fields(form, context, template_pack, **kwargs)
-
-        # Get the template
-        template = self.get_template_name(template_pack)
-
-        # Inject use_bootstrap5 into the template context
-        template_context = {
-            "div": self,
-            "fields": fields,
-            "use_bootstrap5": get_bootstrap_version() == BOOTSTRAP_5,
-        }
-
-        return render_to_string(template, template_context)
+            return "hqwebapp/crispy/bootstrap3/accordion_group.html"
 
 
 class RadioSelect(Field):
