@@ -273,14 +273,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                        )
         return user_query
 
-    def user_locations(self, ancestors):
-        # returns the ancestor locations in order of location types
-        ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
-        return [
-            ancestors_by_type_id.get(location_type.id, '---')
-            for location_type in self._location_types()
-        ]
-
     def process_rows(self, users, fmt_for_export=False):
         rows = []
         users = list(users)
@@ -360,7 +352,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 row_data.append(last_build_profile_name)
 
             if self._include_ancestor_locations_data():
-                location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []))
+                location_data = self._user_ancestor_locations(grouped_ancestor_locs.get(user['location_id'], []))
                 row_data = location_data + row_data
 
             rows.append(row_data)
@@ -405,6 +397,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             grouped_location[location_id] = location_parents
 
         return grouped_location
+
+    def _user_ancestor_locations(self, ancestors):
+        # returns the ancestor locations in order of location types
+        ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
+        return [
+            ancestors_by_type_id.get(location_type.id, '---')
+            for location_type in self._location_types()
+        ]
 
     @memoized
     def _location_types(self):
