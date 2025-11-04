@@ -4,12 +4,14 @@ from django.db import models
 class TaskRecordState(models.TextChoices):
     # the following are meant to replicate celery task states
     # https://docs.celeryq.dev/en/latest/reference/celery.states.html
-    PENDING = "PENDING", "Pending"  # task was created, but not yet sent to the broker
-    SENT = "SENT", "Sent"  # commcare adds this state in a receiver for the after_task_publish signal
-    RECEIVED = "RECEIVED", "Received"
-    STARTED = "STARTED", "Started"
     FAILURE = "FAILURE", "Failure"
+    PENDING = "PENDING", "Pending"  # task was created, but not yet sent to the broker
+    RECEIVED = "RECEIVED", "Received"  # task was received by a worker, not a broker
+    REJECTED = "REJECTED", "Rejected"  # not in docs, but set when task cannot be processed by worker
+    RETRY = "RETRY", "Retry"
     REVOKED = "REVOKED", "Revoked"
+    SENT = "SENT", "Sent"  # commcare adds this state in a receiver for the after_task_publish signal
+    STARTED = "STARTED", "Started"
     SUCCESS = "SUCCESS", "Success"
 
 
