@@ -1,0 +1,312 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="custom-ui-ai-container">
+    <div class="row">
+        <!-- Chat Panel (Left Side) -->
+        <div class="col-md-5 chat-panel">
+            <div class="panel panel-default chat-panel-inner">
+                <div class="panel-heading">
+                    <h4 class="panel-title pull-left">
+                        <i class="fa fa-comments"></i> 
+                        {% trans "Chat with Claude" %}
+                        <span class="badge" data-bind="text: conversationLength"></span>
+                    </h4>
+                    <button class="btn btn-sm btn-default pull-right" 
+                            data-bind="click: clearConversation">
+                        <i class="fa fa-refresh"></i> {% trans "New Chat" %}
+                    </button>
+                    <div class="clearfix"></div>
+                </div>
+                
+                <div class="panel-body">
+                    <!-- Conversation Display -->
+                    <div class="conversation-container" 
+                         id="conversation-display"
+                         data-bind="foreach: messages">
+                        <div class="message-bubble" 
+                             data-bind="css: { 
+                                 'user-message': role === 'user', 
+                                 'assistant-message': role === 'assistant' 
+                             }">
+                            <div class="message-header">
+                                <span class="message-role" 
+                                      data-bind="text: role === 'user' ? '💬 You' : '🤖 Claude'">
+                                </span>
+                                <span class="message-time" 
+                                      data-bind="text: timestamp">
+                                </span>
+                            </div>
+                            <div class="message-content" 
+                                 data-bind="html: formattedContent">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div class="loading-indicator" 
+                         data-bind="visible: isGenerating">
+                        <i class="fa fa-spinner fa-spin"></i> 
+                        {% trans "Claude is thinking..." %}
+                    </div>
+                    
+                    <!-- Input Area -->
+                    <div class="chat-input-area">
+                        <textarea class="form-control" 
+                                  id="chat-input"
+                                  rows="3"
+                                  placeholder="{% trans 'Describe the UI you want to create...' %}"
+                                  data-bind="value: currentMessage, 
+                                           event: { keydown: handleKeyPress },
+                                           enable: !isGenerating()">
+                        </textarea>
+                        
+                        <div class="chat-actions mt-2">
+                            <button class="btn btn-primary btn-block" 
+                                    data-bind="click: sendMessage, 
+                                             enable: canSend">
+                                <i class="fa fa-paper-plane"></i> 
+                                {% trans "Send Message" %}
+                            </button>
+                            
+                            <!-- Quick Actions -->
+                            <div class="quick-actions mt-2">
+                                <small class="text-muted">{% trans "Quick starts:" %}</small>
+                                <div class="btn-group-vertical btn-group-sm btn-block">
+                                    <button class="btn btn-default btn-xs" 
+                                            data-bind="click: function() { 
+                                                quickStart('patient-form') 
+                                            }">
+                                        📋 {% trans "Patient Intake Form" %}
+                                    </button>
+                                    <button class="btn btn-default btn-xs" 
+                                            data-bind="click: function() { 
+                                                quickStart('case-list') 
+                                            }">
+                                        📊 {% trans "Case List Dashboard" %}
+                                    </button>
+                                    <button class="btn btn-default btn-xs" 
+                                            data-bind="click: function() { 
+                                                quickStart('survey') 
+                                            }">
+                                        📝 {% trans "Survey Interface" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status Panel -->
+            <div class="panel panel-default mt-2">
+                <div class="panel-body">
+                    <div data-bind="visible: customUIEnabled">
+                        <span class="label label-success">
+                            <i class="fa fa-check"></i> {% trans "Custom UI Active" %}
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                            {% trans "Last updated:" %} 
+                            <span data-bind="text: lastUpdateTime"></span>
+                        </small>
+                    </div>
+                    <div data-bind="visible: !customUIEnabled()">
+                        <span class="label label-default">
+                            {% trans "No Custom UI" %}
+                        </span>
+                    </div>
+                    
+                    <div class="mt-2" data-bind="visible: customUIEnabled">
+                        <button class="btn btn-sm btn-warning btn-block" 
+                                data-bind="click: disableCustomUI">
+                            <i class="fa fa-times"></i> 
+                            {% trans "Disable Custom UI" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview Panel (Right Side) -->
+        <div class="col-md-7 preview-panel">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title pull-left">
+                        <i class="fa fa-eye"></i> {% trans "Live Preview" %}
+                    </h4>
+                    <button class="btn btn-sm btn-default pull-right" 
+                            data-bind="click: refreshPreview">
+                        <i class="fa fa-refresh"></i> {% trans "Refresh" %}
+                    </button>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="panel-body preview-body">
+                    <!-- This will contain the existing preview iframe -->
+                    <div class="preview-wrapper">
+                        {% include "app_manager/partials/preview_app.html" %}
+                    </div>
+                    
+                    <div class="preview-instructions" 
+                         data-bind="visible: !customUIEnabled()">
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>{% trans "Get Started" %}</strong>
+                            <p>
+                                {% trans "Use the chat on the left to describe the custom UI you want to create. Claude will generate the HTML, and it will appear here automatically." %}
+                            </p>
+                            <p class="mb-0">
+                                <small>
+                                    {% trans "Example: 'Create a patient intake form with fields for name, age, and medical history.'" %}
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.custom-ui-ai-container {
+    min-height: 600px;
+}
+
+.chat-panel-inner {
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-panel-inner .panel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.conversation-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.message-bubble {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-message {
+    background: #e3f2fd;
+    border-left: 3px solid #2196F3;
+}
+
+.assistant-message {
+    background: #fff;
+    border-left: 3px solid #4CAF50;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.message-role {
+    font-weight: bold;
+}
+
+.message-time {
+    color: #999;
+}
+
+.message-content {
+    line-height: 1.6;
+}
+
+.message-content pre {
+    background: #282c34;
+    color: #abb2bf;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 13px;
+}
+
+.message-content code {
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+}
+
+.chat-input-area {
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+.loading-indicator {
+    text-align: center;
+    padding: 10px;
+    color: #666;
+}
+
+.quick-actions {
+    margin-top: 10px;
+}
+
+.quick-actions .btn {
+    text-align: left;
+    white-space: normal;
+}
+
+.preview-panel .panel {
+    height: 600px;
+}
+
+.preview-body {
+    height: 100%;
+    overflow: auto;
+}
+
+.preview-wrapper {
+    height: 100%;
+}
+
+.preview-instructions {
+    padding: 20px;
+}
+
+.mt-2 {
+    margin-top: 10px;
+}
+</style>
+
+<script src="{% static 'app_manager/js/custom_ui/chat_viewmodel.js' %}"></script>
+<script>
+$(document).ready(function() {
+    var chatViewModel = new CustomUIChatViewModel({
+        appId: '{{ app.id }}',
+        domain: '{{ domain }}',
+        generateUrl: '{% url "generate_ui_with_ai" domain app.id %}',
+        statusUrl: '{% url "get_custom_ui_status" domain app.id %}',
+        disableUrl: '{% url "disable_custom_ui" domain app.id %}'
+    });
+    
+    ko.applyBindings(chatViewModel, document.querySelector('.custom-ui-ai-container'));
+});
+</script>
+

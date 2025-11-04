@@ -282,7 +282,11 @@
     </div>
 
     <div class="tab-pane" id="custom-ui-settings">
-      {% include 'app_manager/partials/custom_ui_upload.html' %}
+      {% if ENABLE_CUSTOM_UI_AI %}
+        {% include 'app_manager/partials/custom_ui_chat.html' %}
+      {% else %}
+        {% include 'app_manager/partials/custom_ui_upload.html' %}
+      {% endif %}
     </div>
 
     {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}

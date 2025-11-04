@@ -1,0 +1,5 @@
+# AI/ML Requirements for Custom UI Generation
+
+# Anthropic Claude SDK for AI-powered UI generation
+anthropic>=0.18.0
+
