@@ -200,3 +200,15 @@ REPORTING_DATABASES = {
     'ucr': 'default',
     'aaa-data': 'default',
 }
+
+##############################################################################
+# Custom UI AI Generation Settings
+##############################################################################
+
+# Get your API key from: https://console.anthropic.com/
+# Sign up → API Keys → Create Key
+# IMPORTANT: Set this as an environment variable, NOT in this file!
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
+# Enable AI-powered custom UI generation
+ENABLE_CUSTOM_UI_AI = os.environ.get('ENABLE_CUSTOM_UI_AI', 'true').lower() == 'true'

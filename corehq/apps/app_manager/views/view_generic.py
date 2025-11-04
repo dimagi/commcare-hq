@@ -1,6 +1,7 @@
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.conf import settings
 
 from django_prbac.utils import has_privilege
 
@@ -135,6 +136,9 @@ def view_generic(
             context.update(get_releases_context(request, domain, app_id))
 
         context['is_app_settings_page'] = not release_manager
+        
+        # Add AI feature flag for Custom UI chat interface
+        context['ENABLE_CUSTOM_UI_AI'] = getattr(settings, 'ENABLE_CUSTOM_UI_AI', False)
 
     if form or module:
         context.update(_get_multimedia_context(
