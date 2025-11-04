@@ -288,8 +288,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         if self._include_ancestor_locations_data():
             location_ids = {user['location_id'] for user in users if user['location_id']}
             grouped_ancestor_locs = self._get_bulk_ancestors(location_ids)
-            # this is set here but used later
-            self._relevant_location_types = self._get_relevant_location_types(grouped_ancestor_locs)
 
         loc_names_dict = self._locations_names_dict(users)
         for user in users:
@@ -363,7 +361,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             if self._include_ancestor_locations_data():
                 location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
-                                                    self._relevant_location_types)
+                                                    self._location_types())
                 row_data = location_data + row_data
 
             rows.append(row_data)
@@ -409,20 +407,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         return grouped_location
 
-    def _get_relevant_location_types(self, grouped_ancestor_locs):
-        """
-        return location type objects relevant for the locations present in grouped ancestor locations
-
-        :param grouped_ancestor_locs: is a dict with location ID mapped to a list of locations, which is it's
-        hierarchy including itself
-        """
+    @memoized
+    def _location_types(self):
         from corehq.apps.locations.models import LocationType
-        location_types = LocationType.objects.by_domain(self.domain)
-        # Can we just use all location types by default? it would mostly anyway be all location types
-        all_user_locations = grouped_ancestor_locs.values()
-        all_user_loc_types = {loc.location_type_id for user_locs in all_user_locations for loc in user_locs}
-        relevant_location_types = [loc_type for loc_type in location_types if loc_type.id in all_user_loc_types]
-        return relevant_location_types
+        return LocationType.objects.by_domain(self.domain)
 
     def _locations_names_dict(self, user_es_docs):
         """
@@ -525,7 +513,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         if self._include_ancestor_locations_data():
             ancestor_locations_columns = ['{} Name'.format(loc_type.name.title())
-                                          for loc_type in self._relevant_location_types]
+                                          for loc_type in self._location_types()]
 
         table[0] = ancestor_locations_columns + table[0]
 
