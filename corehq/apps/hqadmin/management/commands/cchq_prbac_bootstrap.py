@@ -246,6 +246,9 @@ class Command(BaseCommand):
              name='Two Stage Mobile Worker Account Creation',
              description='Allows two-stage user provisioning '
                          '(users confirm and set their own passwords via email)'),
+        Role(slug=privileges.DATA_DICT_TYPES,
+             name='Data Dictionary case properties have data types',
+             description='Data Dictionary case properties have data types.'),
     ]
 
     BOOTSTRAP_PLANS = [
