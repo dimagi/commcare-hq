@@ -289,7 +289,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             location_ids = {user['location_id'] for user in users if user['location_id']}
             grouped_ancestor_locs = self._get_bulk_ancestors(location_ids)
             # this is set here but used later
-            self.relevant_location_types = self._get_relevant_location_types(grouped_ancestor_locs)
+            self._relevant_location_types = self._get_relevant_location_types(grouped_ancestor_locs)
 
         loc_names_dict = self._locations_names_dict(users)
         for user in users:
@@ -363,7 +363,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             if self._include_ancestor_locations_data():
                 location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
-                                                    self.relevant_location_types)
+                                                    self._relevant_location_types)
                 row_data = location_data + row_data
 
             rows.append(row_data)
@@ -525,7 +525,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         if self._include_ancestor_locations_data():
             ancestor_locations_columns = ['{} Name'.format(loc_type.name.title())
-                                          for loc_type in self.relevant_location_types]
+                                          for loc_type in self._relevant_location_types]
 
         table[0] = ancestor_locations_columns + table[0]
 
