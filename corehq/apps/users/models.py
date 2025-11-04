@@ -10,6 +10,7 @@ from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -810,9 +811,7 @@ class DjangoUserMixin(DocumentSchema):
 
     def check_password(self, password):
         """ Currently just for debugging"""
-        dummy = User()
-        dummy.password = self.password
-        return dummy.check_password(password)
+        return check_password(password, self.password)
 
 
 class EulaMixin(DocumentSchema):
