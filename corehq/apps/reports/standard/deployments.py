@@ -273,15 +273,24 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                        )
         return user_query
 
+    #  ToDo: rename method or change what is being returned to match the name
     def get_location_columns(self, grouped_ancestor_locs):
+        """
+        return location type objects relevant for the locations present in grouped ancestor locations
+
+        :param grouped_ancestor_locs: is a dict with location ID mapped to a list of locations, which is it's
+        hierarchy including itself
+        """
         from corehq.apps.locations.models import LocationType
         location_types = LocationType.objects.by_domain(self.domain)
+        # Can we just use all location types by default? it would mostly anyway be all location types
         all_user_locations = grouped_ancestor_locs.values()
         all_user_loc_types = {loc.location_type_id for user_locs in all_user_locations for loc in user_locs}
         required_loc_columns = [loc_type for loc_type in location_types if loc_type.id in all_user_loc_types]
         return required_loc_columns
 
     def user_locations(self, ancestors, location_types):
+        # returns the ancestor locations in order of location types passed
         ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
         return [
             ancestors_by_type_id.get(location_type.id, '---')
@@ -296,9 +305,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         location_id_2: [self, parent, parent_of_parent,.,.,.,],
 
         }
-        :param domain: domain for which locations is to be pulled out
         :param location_ids: locations ids whose ancestors needs to be find
-        :param kwargs: extra parameters
         :return: dict
         """
         where = Q(domain=self.domain, location_id__in=location_ids)
@@ -336,6 +343,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         if self.include_location_data():
             location_ids = {user['location_id'] for user in users if user['location_id']}
             grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
+            # this is set here but used later
             self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
         loc_names_dict = self._locations_names_dict(users)
@@ -516,6 +524,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         location_colums = []
 
         if self.include_location_data():
+            # ToDo: fix name location_colums
             location_colums = ['{} Name'.format(loc_col.name.title()) for loc_col in self.required_loc_columns]
 
         table[0] = location_colums + table[0]
