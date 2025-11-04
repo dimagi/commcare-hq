@@ -2816,7 +2816,12 @@ class Invitation(models.Model):
         super().delete()
 
     @classmethod
-    def by_domain(cls, domain, is_accepted=False, **filters):
+    def by_domain(cls, domain, is_accepted=False, expired=..., **filters):
+        one_month_ago = datetime.utcnow().date() - relativedelta(months=1)
+        if expired is True:
+            filters['invited_on__lt'] = one_month_ago
+        if expired is False:
+            filters['invited_on__gte'] = one_month_ago
         return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
 
     @classmethod
