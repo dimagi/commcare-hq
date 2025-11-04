@@ -285,7 +285,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         rows = []
         users = list(users)
 
-        if self._include_location_data():
+        if self._include_ancestor_locations_data():
             location_ids = {user['location_id'] for user in users if user['location_id']}
             grouped_ancestor_locs = self._get_bulk_ancestors(location_ids)
             # this is set here but used later
@@ -361,7 +361,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if self.show_build_profile:
                 row_data.append(last_build_profile_name)
 
-            if self._include_location_data():
+            if self._include_ancestor_locations_data():
                 location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
                                                     self.relevant_location_types)
                 row_data = location_data + row_data
@@ -370,7 +370,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return rows
 
     @memoized
-    def _include_location_data(self):
+    def _include_ancestor_locations_data(self):
         toggle = toggles.LOCATION_COLUMNS_APP_STATUS_REPORT
         return (
             (
@@ -523,7 +523,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         table = list(result[0][1])
         ancestor_locations_columns = []
 
-        if self._include_location_data():
+        if self._include_ancestor_locations_data():
             ancestor_locations_columns = ['{} Name'.format(loc_type.name.title())
                                           for loc_type in self.relevant_location_types]
 
