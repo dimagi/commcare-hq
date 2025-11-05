@@ -99,12 +99,10 @@ class TestDurableTask(TestCase):
             }
         }
 
-    def test_durable_flag_not_in_headers_for_regular_task(self):
+    def test_empty_headers_for_regular_task(self):
         plain_task.delay()
         args, kwargs = self.mock_apply_async.call_args
-        with pytest.raises(KeyError):
-            # attempt to access headers -> durable
-            kwargs['headers']['durable']
+        assert 'headers' not in kwargs
 
     def test_durable_task_includes_durable_flag_in_headers(self):
         durable_task.delay()
