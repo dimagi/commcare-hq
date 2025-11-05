@@ -1,5 +1,4 @@
-import json
-
+import kombu.utils.json as kombu_json
 from celery import Task
 from celery import states as celery_states
 from celery.signals import task_postrun
@@ -25,7 +24,6 @@ class DurableTask(Task):
 
     def apply_async(self, args=None, kwargs=None, **opts):
         from corehq.apps.celery.models import TaskRecord
-        from corehq.util.json import CommCareJSONEncoder
 
         if not getattr(self, 'durable', False):
             return super().apply_async(args=args, kwargs=kwargs, **opts)
@@ -35,8 +33,8 @@ class DurableTask(Task):
 
         record = TaskRecord(
             name=self.name,
-            args=json.dumps(args, cls=CommCareJSONEncoder),
-            kwargs=json.dumps(kwargs, cls=CommCareJSONEncoder),
+            args=kombu_json.dumps(args),
+            kwargs=kombu_json.dumps(kwargs),
             sent=False,
         )
         try:
