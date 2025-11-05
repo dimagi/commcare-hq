@@ -50,7 +50,7 @@ IGNORE_MODELS = {
     "auth.Group",
     "auth.Permission",
     "blobs.BlobMigrationState",
-    "celery_tasks.TaskRecord",
+    "celery.TaskRecord",
     "cleanup.DeletedCouchDoc",
     "cleanup.DeletedSQLDoc",
     "contenttypes.ContentType",

@@ -15,7 +15,6 @@ from corehq.apps.celery.shared_task import task  # noqa F401;
 class Config(AppConfig):
     """Configure global Celery app as part of Django setup"""
     name = 'corehq.apps.celery'
-    label = 'celery_tasks'
 
     def __init__(self, *args, **kw):
         _init_celery_app()
