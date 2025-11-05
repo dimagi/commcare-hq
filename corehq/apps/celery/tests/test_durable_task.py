@@ -79,7 +79,7 @@ class TestDurableTask(TestCase):
             'properties': {
                 'field_one': 'value_one',
                 'field_two': 'value_two',
-                'created': datetime.datetime(2025, 10, 31),
+                'created': datetime.datetime(2025, 10, 31, 11, 5),
             },
         }
 
@@ -87,14 +87,14 @@ class TestDurableTask(TestCase):
         record = TaskRecord.objects.get(task_id=result.task_id)
         deserialized_args = json.loads(record.args)
         deserialized_kwargs = json.loads(record.kwargs)
-        assert deserialized_args == [str(test_id)]
+        assert deserialized_args == [{'__type__': 'uuid', '__value__': {'hex': f'{test_id.hex}'}}]
         assert deserialized_kwargs == {
             'test_data': {
                 'id': 12345,
                 'properties': {
                     'field_one': 'value_one',
                     'field_two': 'value_two',
-                    'created': '2025-10-31T00:00:00.000000Z',
+                    'created': {'__type__': 'datetime', '__value__': '2025-10-31T11:05:00'},
                 },
             }
         }
