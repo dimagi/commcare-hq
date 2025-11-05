@@ -10,6 +10,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.tasks import remove_unused_custom_fields_from_users_task
 from corehq.apps.users.user_data import (
     SQLUserData,
     UserData,
@@ -121,6 +122,20 @@ class TestUserData(TestCase):
         user_data.profile_id = None
         user_data.save()
         self.assertEqual(user_data.profile, None)
+
+    def test_remove_unused_custom_fields_from_users_task(self):
+        CustomDataFieldsDefinition.objects.create(domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+        users = [self.make_commcare_user(), self.make_web_user()]
+        for user in users:
+            user_data = user.get_user_data(self.domain)
+            user_data['favorite_color'] = 'purple'
+            user_data.save()
+
+        remove_unused_custom_fields_from_users_task(self.domain)
+
+        for user in users:
+            user._user_data_accessors = {}  # wipe cache
+            self.assertNotIn('favorite_color', user.get_user_data(self.domain))
 
 
 def _get_profile(self, profile_id):
