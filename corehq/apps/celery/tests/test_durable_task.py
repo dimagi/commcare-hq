@@ -115,6 +115,13 @@ class TestDurableTask(TestCase):
             def durable_task_with_pickling(test_id):
                 pass
 
+    def test_existing_record_is_updated_for_retries(self):
+        task_id = uuid.uuid4()
+        TaskRecord.objects.create(task_id=task_id, name=durable_task.__name__, args='[]', kwargs='{}', sent=True)
+        durable_task.apply_async(task_id=str(task_id))
+        with pytest.raises(TaskRecord.DoesNotExist):
+            TaskRecord.objects.get(task_id=task_id)
+
 
 @attr.s(auto_attribs=True)
 class MockRequest:
