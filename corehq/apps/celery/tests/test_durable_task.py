@@ -11,7 +11,7 @@ from celery.exceptions import OperationalError
 from django.test import TestCase
 
 from corehq.apps.celery import task
-from corehq.apps.celery.durable import update_task_record
+from corehq.apps.celery.durable import UnsupportedSerializationError, update_task_record
 from corehq.apps.celery.models import TaskRecord
 
 
@@ -109,6 +109,12 @@ class TestDurableTask(TestCase):
         args, kwargs = self.mock_apply_async.call_args
         assert kwargs['headers']['durable']
 
+    def test_durable_task_with_pickling_raises_exception(self):
+        with pytest.raises(UnsupportedSerializationError):
+            @task(durable=True, serializer='pickle')
+            def durable_task_with_pickling(test_id):
+                pass
+
 
 @attr.s(auto_attribs=True)
 class MockRequest:
@@ -155,9 +161,7 @@ class TestUpdateTaskRecord(TestCase):
         ]
         for state in unready_states:
             task_id = uuid.uuid4()
-            TaskRecord.objects.create(
-                task_id=task_id, name='test-task', sent=True, args={}, kwargs={}
-            )
+            TaskRecord.objects.create(task_id=task_id, name='test-task', sent=True, args={}, kwargs={})
             task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
             update_task_record(task=task, state=state)
             record = TaskRecord.objects.get(task_id=task_id)
