@@ -5,6 +5,7 @@ from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
     send_abnormal_usage_alert,
 )
+from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_gauge_task
 from corehq.util.metrics.const import MPM_MAX
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
@@ -22,7 +23,10 @@ from .util import (
 )
 
 
-@task(queue='case_import_queue')
+# set a timeout long enough to give queued tasks a chance to process before timing out
+@serial_task(
+    '{domain}', default_retry_delay=60 * 10, max_retries=144, timeout=24 * 60 * 60, queue='case_import_queue'
+)
 def bulk_import_async(config_list_json, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
     result_stored = False

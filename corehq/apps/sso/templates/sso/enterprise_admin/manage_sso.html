@@ -1,25 +1,19 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block page_content %}
-  <p class="lead">
-    {% trans "Manage Single Sign-On" %}
-  </p>
+  <p class="lead">{% trans "Manage Single Sign-On" %}</p>
   <p class="help-block">
     {% blocktrans %}
-      Configure external Identity Providers associated with your
-      Enterprise Account below.
+      Configure external Identity Providers associated with your Enterprise
+      Account below.
     {% endblocktrans %}
   </p>
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">
-        {% trans "Identity Providers" %}
-      </h3>
-    </div>
-    <div class="panel-body">
+  <div class="card">
+    <h3 class="card-header">{% trans "Identity Providers" %}</h3>
+    <div class="card-body">
       <table class="table table-striped tape-responsive">
         <thead>
           <tr>
@@ -31,27 +25,23 @@
         </thead>
         <tbody>
           {% for idp in identity_providers %}
-          <tr>
-            <td>
-              {{ idp.name }}
-            </td>
-            <td>
-              {{ idp.get_email_domains|join:", " }}
-            </td>
-            <td>
-              {% if idp.is_active %}
-                {% trans "Active" %}
-              {% else %}
-                {% trans "Not Active" %}
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'edit_idp_enterprise' domain idp.slug %}">
-                <i class="fa fa-edit"></i>
-                {% trans "Edit" %}
-              </a>
-            </td>
-          </tr>
+            <tr>
+              <td>{{ idp.name }}</td>
+              <td>{{ idp.get_email_domains|join:", " }}</td>
+              <td>
+                {% if idp.is_active %}
+                  {% trans "Active" %}
+                {% else %}
+                  {% trans "Not Active" %}
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'edit_idp_enterprise' domain idp.slug %}">
+                  <i class="fa fa-edit"></i>
+                  {% trans "Edit" %}
+                </a>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>

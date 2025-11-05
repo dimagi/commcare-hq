@@ -326,7 +326,7 @@ def update_domain_date(user_id, domain):
             not domain_membership.last_accessed or domain_membership.last_accessed < today):
         domain_membership.last_accessed = today
         try:
-            user.save()
+            user.save(domains_to_sync_usercase=[domain])
         except ResourceConflict:
             pass
 

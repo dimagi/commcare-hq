@@ -61,7 +61,7 @@ class SessionHelper(object):
             try:
                 yield session
                 session.commit()
-            except:
+            except:  # noqa: E722
                 session.rollback()
                 raise
             finally:
@@ -209,7 +209,18 @@ def _close_connections(**kwargs):
     Session.remove()  # todo: unclear whether this is necessary
     connection_manager.close_scoped_sessions()
 
+
 signals.request_finished.connect(_close_connections)
+
+
+def cleanup_connections(sender):
+    """Close old connections
+
+    Use in long-running processes that use Django and/or SQLAlchemy
+    ORM but do not serve Django web requests.
+    https://github.com/jneight/django-db-geventpool#using-orm-when-not-serving-requests
+    """
+    signals.request_finished.send(sender=sender)
 
 
 @unit_testing_only

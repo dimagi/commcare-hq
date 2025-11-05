@@ -12,7 +12,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.utils.translation import gettext as _
 
-from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
 from corehq.apps.accounting.models import BillingAccount
@@ -120,7 +119,7 @@ class CreateIdentityProviderForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
@@ -450,10 +449,8 @@ class EditIdentityProviderAdminForm(forms.Form):
                 _("Manage Billing Account"),
             )
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
@@ -479,16 +476,16 @@ class EditIdentityProviderAdminForm(forms.Form):
                         twbscrispy.PrependedText('is_editable', ''),
                         twbscrispy.PrependedText('is_active', ''),
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             crispy.Div(
                 crispy.Div(
                     sp_or_rp_settings,
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -712,9 +709,9 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             crispy.Div(
                 crispy.Div(
                     fieldset,
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             )
 
         return [
@@ -733,9 +730,9 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                         twbscrispy.PrependedText('is_active', ''),
                         'login_enforcement_type',
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             api_key_management,
             hqcrispy.FormActions(
@@ -868,10 +865,8 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                 ),
             ]
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_class = 'form form-horizontal ko-template'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
@@ -879,9 +874,9 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                         _('Basic SAML Configuration for {}').format(self.idp.service_name),
                         *sp_details_form.service_provider_fields
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             crispy.Div(
                 crispy.Div(
@@ -893,9 +888,9 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                         crispy.Div(*certificate_details),
                         'idp_cert_public',
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             crispy.Div(
                 crispy.Div(
@@ -905,9 +900,9 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                         twbscrispy.PrependedText('require_encrypted_assertions', ''),
                         crispy.Div(*sp_details_form.token_encryption_fields),
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             crispy.Div(*self.get_remote_user_management_fields()),
             crispy.Div(*self.get_primary_fields())
@@ -919,7 +914,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         api_secret_toggles = crispy.Div(
             crispy.HTML(
                 format_html(
-                    '<p class="form-control-text" data-bind="hidden: isAPISecretVisible">'
+                    '<p class="mb-0" data-bind="hidden: isAPISecretVisible">'
                     '<span id="masked-api-value">{}</span> '
                     '<a href="#" data-bind="click: startEditingAPISecret">{}</a></p>',
                     masked_api,
@@ -928,7 +923,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
             ),
             crispy.HTML(
                 format_html(
-                    '<p class="form-control-text" data-bind="visible: isCancelUpdateVisible">'
+                    '<p class="mb-0" data-bind="visible: isCancelUpdateVisible">'
                     '<a href="#" data-bind="click: cancelEditingAPISecret">{}</a></p>',
                     gettext("Cancel Update")
                 ),
@@ -958,9 +953,9 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                     crispy.Field('date_api_secret_expiration', css_class='date-picker',
                                  data_bind="textInput: dateApiSecretExpiration"),
                 ),
-                css_class="panel-body"
+                css_class="card-body"
             ),
-            css_class="panel panel-modern-gray panel-form-only")]
+            css_class="card card-modern-gray card-form-only mb-3")]
 
     def clean_login_url(self):
         is_active = bool(self.data.get('is_active'))
@@ -1054,14 +1049,14 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
             client_secret_toggles = crispy.Div(
                 crispy.HTML(
                     format_html(
-                        '<p class="form-control-text"><a href="#" data-bind="click: showClientSecret, '
+                        '<p class="mb-0"><a href="#" data-bind="click: showClientSecret, '
                         'visible: isClientSecretHidden">{}</a></p>',
                         gettext("Show Secret")
                     ),
                 ),
                 crispy.HTML(
                     format_html(
-                        '<p class="form-control-text" data-bind="visible: isClientSecretVisible">'
+                        '<p class="mb-0" data-bind="visible: isClientSecretVisible">'
                         '<a href="#" data-bind="click: hideClientSecret">{}</a></p>',
                         gettext("Hide Secret")
                     ),
@@ -1070,10 +1065,8 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         else:
             client_secret_toggles = crispy.Div()
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_class = 'form form-horizontal ko-template'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
@@ -1082,9 +1075,9 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                         _get_help_text(self.idp),
                         crispy.Div(*rp_details_form.application_details_fields),
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             crispy.Div(
                 crispy.Div(
@@ -1104,9 +1097,9 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                         ),
                         'entity_id',
                     ),
-                    css_class="panel-body"
+                    css_class="card-body"
                 ),
-                css_class="panel panel-modern-gray panel-form-only"
+                css_class="card card-modern-gray card-form-only mb-3"
             ),
             crispy.Div(*self.get_primary_fields()),
         )

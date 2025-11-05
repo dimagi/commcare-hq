@@ -19,6 +19,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration, RegistryDataSourceConfiguration,
 )
+from corehq.apps.userreports.pillow import _SHARED_ADAPTER_CACHES
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 
@@ -44,6 +45,7 @@ def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
     for config in configs:
         configs_by_domain.setdefault(config.domain, []).append(config)
 
+    _SHARED_ADAPTER_CACHES.clear()
     for proc in pillow.processors:
         if hasattr(proc, 'table_manager'):
             proc.table_manager.data_source_providers = [

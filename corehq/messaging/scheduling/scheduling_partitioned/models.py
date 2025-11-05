@@ -60,11 +60,11 @@ class ScheduleInstance(PartitionedModel):
 
     class Meta(object):
         abstract = True
-        index_together = (
+        indexes = [
             # index for equality comparisons on the leading columns
-            ('active', 'next_event_due'),
-            ('domain', 'active', 'next_event_due'),
-        )
+            models.Index(fields=['active', 'next_event_due']),
+            models.Index(fields=['domain', 'active', 'next_event_due']),
+        ]
 
     def get_today_for_recipient(self, schedule):
         return ServerTime(util.utcnow()).user_time(self.get_timezone(schedule)).done().date()
@@ -697,7 +697,7 @@ class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertSchedule
 
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_casealertscheduleinstance'
-        index_together = AbstractAlertScheduleInstance.Meta.index_together
+        indexes = AbstractAlertScheduleInstance.Meta.indexes
         unique_together = (
             ('case_id', 'alert_schedule_id', 'recipient_type', 'recipient_id'),
         )
@@ -716,7 +716,7 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_casetimedscheduleinstance'
-        index_together = AbstractTimedScheduleInstance.Meta.index_together
+        indexes = AbstractTimedScheduleInstance.Meta.indexes
         unique_together = (
             ('case_id', 'timed_schedule_id', 'recipient_type', 'recipient_id'),
         )

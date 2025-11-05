@@ -130,6 +130,7 @@ pro_v1 = standard_v2 + [
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,
     privileges.CASE_DEDUPE,
+    privileges.SHOW_ENABLE_ALL_ADD_ONS,
     privileges.USERCASE,
     privileges.ZAPIER_INTEGRATION,
 ]
@@ -161,6 +162,7 @@ advanced_v0 = pro_v1 + [
     privileges.CUSTOM_DOMAIN_ALERTS,
     privileges.APP_DEPENDENCIES,
     privileges.BULK_DATA_EDITING,
+    privileges.DATA_DICT_TYPES,
     privileges.GEOJSON_EXPORT,
 ]
 

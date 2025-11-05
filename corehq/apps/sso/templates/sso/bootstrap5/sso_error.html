@@ -1,0 +1,30 @@
+{% extends login_template %}
+{% load i18n %}
+
+{% block title %}{% trans "Single Sign-On Error" %}{% endblock title %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="reg-form-container sign-in-container">
+          <div class="form-bubble form-bubble-lg">
+            <h2>
+              {% blocktrans %}
+                Single Sign-On
+              {% endblocktrans %}
+            </h2>
+            <p class="lead">{{ error }}</p>
+            <p>
+              {% blocktrans %}
+                This error is likely due to a misconfiguration with your
+                project's SSO settings. Please contact your project
+                administrator to resolve this issue.
+              {% endblocktrans %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock login-content %}

@@ -15,7 +15,7 @@ from corehq.apps.data_cleaning.models import (
 )
 from corehq.apps.data_cleaning.models.change import BulkEditChange
 from corehq.apps.data_cleaning.models.column import BulkEditColumnManager
-from corehq.apps.data_cleaning.models.types import EditActionType
+from corehq.apps.data_cleaning.models.types import EditActionType, PinnedFilterType
 from corehq.apps.data_cleaning.tests.mixins import CaseDataTestMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, group_adapter, user_adapter
@@ -114,6 +114,37 @@ class BulkEditSessionTest(TestCase):
             self.case_type,
         )
         assert old_session_id != new_session.session_id
+
+    def test_get_resumed_session(self):
+        session = BulkEditSession.objects.new_case_session(
+            self.django_user,
+            self.domain_name,
+            self.case_type,
+        )
+        case_owners_filter = session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        case_owners_filter.value = ['t__1', 't__2', 'g_555555']
+        case_owners_filter.save()
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        session.add_column('num_leaves', 'Number of Leaves', DataType.INTEGER)
+        resumed_session = session.get_resumed_session()
+        assert resumed_session.session_id != session.session_id
+        assert resumed_session.user == session.user
+        assert resumed_session.domain == session.domain
+        assert resumed_session.identifier == session.identifier
+        assert resumed_session.session_type == session.session_type
+        assert resumed_session.filters.count() == 1
+        # defaults for pinned filters, make sure it doesn't increase:
+        assert resumed_session.pinned_filters.count() == 2
+        # defaults for columns + 1 added above:
+        assert resumed_session.columns.count() == 7
+        copied_case_owners_filter = resumed_session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        assert copied_case_owners_filter.value == ['t__1', 't__2', 'g_555555']
+        copied_filter = resumed_session.filters.get(prop_id='num_leaves')
+        assert copied_filter.match_type == FilterMatchType.GREATER_THAN
+        assert copied_filter.value == '2'
+        copied_column = resumed_session.columns.get(prop_id='num_leaves')
+        assert copied_column.label == 'Number of Leaves'
+        assert copied_column.data_type == DataType.INTEGER
 
 
 @es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
@@ -701,3 +732,44 @@ class BulkEditSessionChangesTests(CaseDataTestMixin, BaseBulkEditSessionTest):
         }
         self.session.save()
         assert self.session.num_changed_records == 5
+
+
+class BulkEditSessionQuerysetTests(CaseDataTestMixin, BaseBulkEditSessionTest):
+    domain_name = 'session-test-queryset'
+
+    def test_get_document_from_queryset(self):
+        cases = [
+            {'_id': 'c1', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+            {'_id': 'c2', 'case_type': self.case_type, 'soil_mix': 'sandy'},
+            {'_id': 'c3', 'case_type': self.case_type, 'soil_mix': 'fine'},
+            {'_id': 'c4', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+            {'_id': 'c5', 'case_type': self.case_type, 'soil_mix': 'chunky'},
+        ]
+        self.bootstrap_cases_in_es_for_domain(self.domain_name, cases)
+        doc = self.session.get_document_from_queryset('c3')
+        assert doc is not None
+        assert doc['_id'] == 'c3'
+
+
+class BulkEditSessionInlineEditTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-inline-edit'
+
+    def test_apply_inline_edit_on_unselected_record(self):
+        assert self.session.records.count() == 0
+        self.session.apply_inline_edit('c1', 'soil_mix', 'chonky')
+        assert self.session.records.count() == 1
+        record = self.session.records.first()
+        assert record.doc_id == 'c1'
+        assert self.session.changes.count() == 1
+        change = self.session.changes.first()
+        assert change.prop_id == 'soil_mix'
+        assert change.action_type == EditActionType.REPLACE
+        assert change.replace_string == 'chonky'
+
+    def test_apply_inline_edit_on_selected_record(self):
+        self.session.select_record('c1')
+        assert self.session.records.count() == 1
+        self.session.apply_inline_edit('c1', 'soil_mix', 'chonky')
+        # no new records created
+        assert self.session.records.count() == 1
+        assert self.session.changes.count() == 1

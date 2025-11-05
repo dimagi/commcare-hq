@@ -1810,10 +1810,10 @@ class CaseRuleSubmission(models.Model):
     archived = models.BooleanField(default=False)
 
     class Meta(object):
-        index_together = (
-            ('domain', 'created_on'),
-            ('domain', 'rule', 'created_on'),
-        )
+        indexes = [
+            models.Index(fields=['domain', 'created_on']),
+            models.Index(fields=['domain', 'rule', 'created_on']),
+        ]
 
 
 class CaseRuleUndoer(object):
@@ -1902,9 +1902,7 @@ class DomainCaseRuleRun(models.Model):
     dbs_completed = models.JSONField(default=list)
 
     class Meta(object):
-        index_together = (
-            ('domain', 'started_on'),
-        )
+        indexes = [models.Index(fields=['domain', 'started_on'])]
 
     @classmethod
     def done(cls, run_id, cases_checked, result, db=None, halted=False):

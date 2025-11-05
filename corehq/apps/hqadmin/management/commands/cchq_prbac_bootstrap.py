@@ -238,11 +238,17 @@ class Command(BaseCommand):
         Role(slug=privileges.APP_DEPENDENCIES,
              name='App Dependencies',
              description='Set Android app dependencies that must be installed before using a CommCare app'),
+        Role(slug=privileges.SHOW_ENABLE_ALL_ADD_ONS,
+             name='Show "Enable All Add-Ons" button',
+             description='Show "Enable All Add-Ons" button in Application Settings'),
         Role(slug=privileges.BULK_DATA_EDITING, name='Bulk Data Editing', description=''),
         Role(slug=privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
              name='Two Stage Mobile Worker Account Creation',
              description='Allows two-stage user provisioning '
                          '(users confirm and set their own passwords via email)'),
+        Role(slug=privileges.DATA_DICT_TYPES,
+             name='Data Dictionary case properties have data types',
+             description='Data Dictionary case properties have data types.'),
         Role(slug=privileges.GEOJSON_EXPORT,
              name='Case Export supports the GeoJSON data format',
              description='Case Export supports exporting geolocated data in '

@@ -63,6 +63,10 @@ def get_latest_build_id_for_web_apps(domain, username, app_id):
 
 
 def get_web_app_ids_available_to_user(domain, user):
+    accessible_app_ids = [
+        app_id for app_id in get_app_ids_in_domain(domain)
+        if can_user_access_web_app(domain, user, app_id)
+    ]
     target = 'build' if (
         toggles.CLOUDCARE_LATEST_BUILD.enabled(domain)
         or toggles.CLOUDCARE_LATEST_BUILD.enabled(user.username)
@@ -70,7 +74,7 @@ def get_web_app_ids_available_to_user(domain, user):
     return [
         app_meta['_id'] for app_meta in get_latest_app_meta(domain, target)
         if app_meta['cloudcare_enabled']
-        and can_user_access_web_app(domain, user, app_meta['origin_id'])
+        and app_meta['origin_id'] in accessible_app_ids
     ]
 
 

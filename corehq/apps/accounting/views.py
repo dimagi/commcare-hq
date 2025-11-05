@@ -18,6 +18,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.generic import View
@@ -27,23 +28,15 @@ from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Grant, Role
 from memoized import memoized
 
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
-from corehq.apps.accounting.utils.invoicing import (
-    get_oldest_overdue_invoice_over_threshold,
-)
-from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
-from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
-from corehq.toggles import ACCOUNTING_TESTING_TOOLS
-
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import (
     AccountFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
+    CustomerInvoiceNumberAsyncHandler,
     DomainFilterAsyncHandler,
     FeatureRateAsyncHandler,
     InvoiceBalanceAsyncHandler,
     InvoiceNumberAsyncHandler,
-    CustomerInvoiceNumberAsyncHandler,
     Select2BillingInfoHandler,
     Select2CustomerInvoiceTriggerHandler,
     Select2InvoiceTriggerHandler,
@@ -58,12 +51,12 @@ from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
     NewSubscriptionError,
-    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.forms import (
     AdjustBalanceForm,
     BillingAccountBasicForm,
     BillingAccountContactForm,
+    BulkUpgradeToLatestVersionForm,
     CancelForm,
     ChangeSubscriptionForm,
     CreateAdminForm,
@@ -80,12 +73,12 @@ from corehq.apps.accounting.forms import (
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
     TestReminderEmailFrom,
+    TriggerAutopaymentsForm,
+    TriggerAutoRenewalForm,
     TriggerBookkeeperEmailForm,
     TriggerCustomerInvoiceForm,
-    TriggerInvoiceForm,
     TriggerDowngradeForm,
-    TriggerAutopaymentsForm,
-    BulkUpgradeToLatestVersionForm,
+    TriggerInvoiceForm,
     TriggerRemovedSsoUserAutoDeactivationForm,
 )
 from corehq.apps.accounting.interface import (
@@ -110,23 +103,29 @@ from corehq.apps.accounting.models import (
     Subscription,
     WireInvoice,
 )
+from corehq.apps.accounting.payment_handlers import (
+    AutoPayInvoicePaymentHandler,
+)
+from corehq.apps.accounting.tasks import auto_renew_subscriptions
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict,
     fmt_product_rate_dict,
     has_subscription_already_ended,
     log_accounting_error,
 )
-from corehq.apps.domain.decorators import (
-    require_superuser,
+from corehq.apps.accounting.utils.invoicing import (
+    get_oldest_overdue_invoice_over_threshold,
 )
-from corehq.apps.domain.views.accounting import (
-    DomainBillingStatementsView,
-)
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
+from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.views.accounting import DomainBillingStatementsView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
 )
+from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
+from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
 
 @require_superuser
@@ -503,7 +502,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             self.cancel_subscription()
             messages.success(request, "The subscription has been cancelled.")
         elif SuppressSubscriptionForm.submit_kwarg in self.request.POST and self.suppress_form.is_valid():
-            self.suppress_subscription()
+            self.subscription.suppress_subscription()
             return HttpResponseRedirect(SubscriptionInterface.get_url())
         elif 'subscription_change_note' in self.request.POST and self.change_subscription_form.is_valid():
             try:
@@ -521,16 +520,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             web_user=self.request.user.username,
         )
         self.subscription_canceled = True
-
-    def suppress_subscription(self):
-        if self.subscription.is_active:
-            raise SubscriptionAdjustmentError(
-                "Cannot suppress active subscription, id %d"
-                % self.subscription.id
-            )
-        else:
-            self.subscription.is_hidden_to_ops = True
-            self.subscription.save()
 
 
 class NewSoftwarePlanView(AccountingSectionView):
@@ -1320,6 +1309,32 @@ class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
         return self.get(request, *args, **kwargs)
 
 
+class TriggerAutoRenewalView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_auto_renew'
+    page_title = "Trigger Subscription Auto-Renewal"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerAutoRenewalForm(self.request.POST)
+        return TriggerAutoRenewalForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            domain = self.trigger_form.cleaned_data['domain']
+            auto_renew_subscriptions(domain)
+            messages.success(
+                request,
+                f'Successfully triggered subscription auto-renewal for "{domain}". '
+                'Any eligible subscriptions for this project will be automatically renewed.',
+            )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
 class TriggerRemovedSsoUserAutoDeactivationView(BaseTriggerAccountingTestView):
     urlname = 'accounting_test_deactivation'
     page_title = "Trigger Auto Deactivation of Removed SSO Users"
@@ -1338,7 +1353,7 @@ class TriggerRemovedSsoUserAutoDeactivationView(BaseTriggerAccountingTestView):
             auto_deactivate_removed_sso_users()
             messages.success(
                 request,
-                format_html(
+                mark_safe(  # nosec: no user input
                     'Successfully triggered auto deactivation of web users'
                 )
             )

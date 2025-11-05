@@ -1118,14 +1118,6 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
 )
 
-USH_USERCASES_FOR_WEB_USERS = StaticToggle(
-    'usercases_for_web_users',
-    "USH: Enable the creation of usercases for web users.",
-    TAG_CUSTOM,
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Usercase+Creation',
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 WEBAPPS_STICKY_SEARCH = StaticToggle(
     "webapps_sticky_search",
     "USH: Sticky search: In web apps, save user's most recent inputs on case search & claim screen.",
@@ -1176,7 +1168,7 @@ FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     'saas_formbuilder_save_to_case',
     'Form Builder - Save Questions to Case Properties',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
+    namespaces=[NAMESPACE_DOMAIN],
     description='Allows users to save questions to case properties within the Form Builder'
 )
 
@@ -1408,7 +1400,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1575,7 +1567,7 @@ EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1696,13 +1688,6 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
 
-ENABLE_ALL_ADD_ONS = StaticToggle(
-    'enable_all_add_ons',
-    'Enable all app manager add-ons',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
-)
-
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
     'bulk_upload_date_opened',
     "Allow updating of the date_opened field with the bulk uploader",
@@ -1801,7 +1786,7 @@ AGGREGATE_UCRS = StaticToggle(
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
     'Allow building report builder reports directly from raw UCR Data Sources',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2307,7 +2292,7 @@ CASE_UPDATES_UCR_FILTERS = StaticToggle(
 TURN_IO_BACKEND = StaticToggle(
     'turn_io_backend',
     'Enable Turn.io SMS backend',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2347,7 +2332,8 @@ DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
     parent_toggles=[DATA_REGISTRY]
 )
 
-CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
+CASE_IMPORT_DATA_DICTIONARY_VALIDATION = FrozenPrivilegeToggle(
+    privileges.DATA_DICT_TYPES,
     'case_import_data_dictionary_validaton',
     'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,

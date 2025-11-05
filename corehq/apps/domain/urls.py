@@ -37,6 +37,8 @@ from corehq.apps.domain.views.accounting import (
     SelectPlanView,
     SubscriptionRenewalView,
     WireInvoiceView,
+    enable_subscription_auto_renew,
+    disable_subscription_auto_renew,
     pause_subscription,
 )
 from corehq.apps.domain.views.base import select, accept_all_invitations
@@ -162,6 +164,8 @@ domain_settings = [
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
+    url(r'^subscription/auto_renew/disable/$', disable_subscription_auto_renew, name='disable_auto_renew'),
+    url(r'^subscription/auto_renew/enable/$', enable_subscription_auto_renew, name='enable_auto_renew'),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
     url(r'^subscription/credits/make_wire_payment/$', CreditsWireInvoiceView.as_view(),

@@ -201,8 +201,9 @@ def commcare_hq_names(request=None):
 def server_location_display(request):
     context = {}
     current_env = settings.SERVER_ENVIRONMENT
-    if current_env in ServerLocation.ENVS:
-        server = ServerLocation.ENVS.get(current_env)
+    envs = ServerLocation.get_envs()
+    if current_env in envs:
+        server = envs.get(current_env)
         context = {
             'server_display': {
                 'country_code': server['country_code'],

@@ -47,9 +47,6 @@ from corehq.apps.sso.utils.request_helpers import (
     is_request_blocked_from_viewing_domain_due_to_sso,
     is_request_using_sso,
 )
-from corehq.apps.sso.utils.view_helpers import (
-    render_untrusted_identity_provider_for_domain_view,
-)
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
@@ -84,6 +81,7 @@ def login_and_domain_required(view_func):
 
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
+        from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
         user = req.user
         domain_name, domain_obj = load_domain(req, domain)
 
@@ -111,14 +109,18 @@ def login_and_domain_required(view_func):
                and not couch_user.is_active_in_domain(domain_name)):
                 return _show_deactivated_notice(req, domain)
             if _is_missing_two_factor(view_func, req):
+                set_bootstrap_version5()
                 return TemplateResponse(request=req,
-                                        template='two_factor/core/bootstrap3/otp_required.html',
+                                        template='two_factor/core/bootstrap5/otp_required.html',
                                         status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             elif is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj):
                 # Important! Make sure this is always the final check prior
                 # to returning call_view() below
+                from corehq.apps.sso.utils.view_helpers import (
+                    render_untrusted_identity_provider_for_domain_view,
+                )
                 return render_untrusted_identity_provider_for_domain_view(req, domain_obj)
             else:
                 return call_view()

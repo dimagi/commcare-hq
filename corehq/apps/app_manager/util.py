@@ -18,9 +18,9 @@ from couchdbkit.exceptions import DocTypeError
 
 from dimagi.utils.couch import CriticalSection
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
-    AUTO_SELECT_USERCASE,
     CALCULATED_SORT_FIELD_RX,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -234,9 +234,8 @@ def module_case_hierarchy_has_circular_reference(module):
         return True
 
 
-def is_usercase_in_use(domain_name):
-    domain_obj = Domain.get_by_name(domain_name) if domain_name else None
-    return domain_obj and domain_obj.usercase_enabled
+def domain_has_usercase_access(domain):
+    return domain_has_privilege(domain, privileges.USERCASE) if domain else False
 
 
 def get_settings_values(app):
@@ -361,19 +360,9 @@ def actions_use_usercase(actions):
             or ('usercase_preload' in actions and actions['usercase_preload'].preload))
 
 
-def advanced_actions_use_usercase(actions):
-    return any(c.auto_select and c.auto_select.mode == AUTO_SELECT_USERCASE for c in actions.load_update_cases)
-
-
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
-        domain_obj = Domain.get_by_name(domain_name, strict=True)
-        if not domain_obj:  # copying domains passes in an id before name is saved
-            domain_obj = Domain.get(domain_name)
-        if not domain_obj.usercase_enabled:
-            domain_obj.usercase_enabled = True
-            domain_obj.save()
-            create_usercases.delay(domain_name)
+        create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):

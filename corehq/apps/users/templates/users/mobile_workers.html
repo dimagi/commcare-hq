@@ -439,7 +439,7 @@
                         type="button"
                         class="btn btn-default"
                         data-toggle="modal"
-                        data-bind="attr: {'data-target': '#deactivate_personalid_link_' + username()}"
+                        data-bind="attr: {'data-target': '#deactivate_personalid_link_' + user_id()}"
                       >
                         {% trans "Unlink PersonalID" %}
                       </button>
@@ -451,7 +451,7 @@
                         type="button"
                         class="btn btn-default"
                         data-toggle="modal"
-                        data-bind="attr: {'data-target': '#activate_personalid_link_' + username()}"
+                        data-bind="attr: {'data-target': '#activate_personalid_link_' + user_id()}"
                       >
                         {% trans "Link PersonalID" %}
                       </button>

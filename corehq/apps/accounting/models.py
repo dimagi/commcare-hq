@@ -1,6 +1,5 @@
 import datetime
 import itertools
-from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -18,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 import stripe
+from dateutil.relativedelta import relativedelta
 from django_prbac.models import Role
 from memoized import memoized
 
@@ -27,7 +27,6 @@ from dimagi.ext.couchdbkit import (
     SafeSaveDocument,
     StringProperty,
 )
-from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
@@ -47,7 +46,6 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
     SubscriptionAdjustmentError,
     SubscriptionChangeError,
-    SubscriptionReminderError,
     SubscriptionRenewalError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
@@ -82,6 +80,7 @@ from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
@@ -350,11 +349,13 @@ class CommunicationType(object):
     INVOICE_REMINDER = "INVOICE_REMINDER"
     OVERDUE_INVOICE = "OVERDUE_INVOICE"
     DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
+    UPCOMING_MONTHLY_PAYMENT = "UPCOMING_MONTHLY_PAYMENT"
     CHOICES = (
         (OTHER, "other"),
         (INVOICE_REMINDER, "Invoice Reminder"),
         (OVERDUE_INVOICE, "Overdue Invoice"),
         (DOWNGRADE_WARNING, "Subscription Pause Warning"),
+        (UPCOMING_MONTHLY_PAYMENT, "Upcoming Monthly Payment"),
     )
 
 
@@ -401,7 +402,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     dimagi_contact = models.EmailField(blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
-    is_auto_invoiceable = models.BooleanField(default=False)
     date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
     account_type = models.CharField(
         max_length=25,
@@ -424,6 +424,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=EntryPoint.CHOICES,
     )
     auto_pay_user = models.CharField(max_length=80, null=True, blank=True)
+    require_auto_pay = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
@@ -1358,7 +1359,7 @@ class Subscription(models.Model):
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
                             skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
-                            skip_auto_downgrade_reason=None):
+                            skip_auto_downgrade_reason=None, auto_renew=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1376,6 +1377,7 @@ class Subscription(models.Model):
             funding_source=funding_source,
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason,
+            auto_renew=auto_renew,
         )
 
         self.save()
@@ -1420,6 +1422,7 @@ class Subscription(models.Model):
             'funding_source',
             'skip_auto_downgrade',
             'skip_auto_downgrade_reason',
+            'auto_renew',
         }
 
         assert property_names >= set(kwargs.keys())
@@ -1450,6 +1453,7 @@ class Subscription(models.Model):
             skip_invoicing_if_no_feature_charges=self.skip_invoicing_if_no_feature_charges,
             skip_auto_downgrade=self.skip_auto_downgrade,
             skip_auto_downgrade_reason=self.skip_auto_downgrade_reason,
+            auto_renew=self.auto_renew,
         )
 
     @transaction.atomic
@@ -1461,7 +1465,7 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1510,6 +1514,7 @@ class Subscription(models.Model):
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
         )
+        new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
         new_subscription.save()
         new_subscription.raise_conflicting_dates(new_subscription.date_start, new_subscription.date_end)
@@ -1572,6 +1577,7 @@ class Subscription(models.Model):
             method=adjustment_method, note=note, web_user=web_user,
         )
 
+    @transaction.atomic
     def renew_subscription(self, note=None, web_user=None,
                            adjustment_method=None,
                            service_type=None, pro_bono_status=None,
@@ -1625,17 +1631,32 @@ class Subscription(models.Model):
             renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
+        renewed_subscription.auto_renew = renewed_subscription.can_auto_renew
         renewed_subscription.save()
 
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
             self, method=adjustment_method, note=note, web_user=web_user,
-            reason=SubscriptionAdjustmentReason.RENEW,
+            reason=SubscriptionAdjustmentReason.RENEW, related_subscription=renewed_subscription
+        )
+        SubscriptionAdjustment.record_adjustment(
+            renewed_subscription, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.CREATE
         )
 
         send_subscription_renewal_alert(self.subscriber.domain, renewed_subscription, self)
 
         return renewed_subscription
+
+    def suppress_subscription(self):
+        if self.is_active:
+            raise SubscriptionAdjustmentError(
+                "Cannot suppress active subscription, id %d"
+                % self.id
+            )
+        else:
+            self.is_hidden_to_ops = True
+            self.save()
 
     def transfer_credits(self, subscription=None):
         """Transfers all credit balances related to an account or subscription
@@ -1664,221 +1685,6 @@ class Subscription(models.Model):
                 credit_line.balance * Decimal('-1'),
                 related_credit=transferred_credit,
             )
-
-    def send_ending_reminder_email(self):
-        """
-        Sends a reminder email to the emails specified in the accounting
-        contacts that the subscription will end on the specified end date.
-        """
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
-        if self.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
-            # never send a subscription ending email for Paused subscriptions...
-            return
-
-        today = datetime.date.today()
-        num_days_left = (self.date_end - today).days
-
-        domain_name = self.subscriber.domain
-        context = self.ending_reminder_context
-        subject = context['subject']
-
-        template = self.ending_reminder_email_html
-        template_plaintext = self.ending_reminder_email_text
-        email_html = render_to_string(template, context)
-        email_plaintext = render_to_string(template_plaintext, context)
-        bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
-        if self.account.dimagi_contact is not None:
-            bcc.append(self.account.dimagi_contact)
-        for email in self._reminder_email_contacts(domain_name):
-            send_html_email_async.delay(
-                subject, email, email_html,
-                text_content=email_plaintext,
-                email_from=get_dimagi_from_email(),
-                bcc=bcc,
-            )
-            log_accounting_info(
-                "Sent %(days_left)s-day subscription reminder "
-                "email for %(domain)s to %(email)s." % {
-                    'days_left': num_days_left,
-                    'domain': domain_name,
-                    'email': email,
-                }
-            )
-
-    @property
-    def ending_reminder_email_html(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder.html'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.html'
-        else:
-            return 'accounting/email/subscription_ending_reminder.html'
-
-    @property
-    def ending_reminder_email_text(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder.txt'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.txt'
-        else:
-            return 'accounting/email/subscription_ending_reminder.txt'
-
-    @property
-    def ending_reminder_context(self):
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
-
-        today = datetime.date.today()
-        num_days_left = (self.date_end - today).days
-        if num_days_left == 1:
-            ending_on = _("tomorrow!")
-        else:
-            ending_on = _("on %s." % self.date_end.strftime(USER_DATE_FORMAT))
-
-        user_desc = self.plan_version.user_facing_description
-        plan_name = user_desc['name']
-
-        domain_name = self.subscriber.domain
-
-        context = {
-            'domain': domain_name,
-            'plan_name': plan_name,
-            'account': self.account.name,
-            'ending_on': ending_on,
-            'subscription_url': absolute_reverse(
-                DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
-            'base_url': get_site_domain(),
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-            'sales_email': settings.SALES_EMAIL,
-        }
-
-        if self.account.is_customer_billing_account:
-            subject = _(
-                "CommCare Alert: %(account_name)s's subscription to "
-                "%(plan_name)s ends %(ending_on)s"
-            ) % {
-                'account_name': self.account.name,
-                'plan_name': plan_name,
-                'ending_on': ending_on,
-            }
-        elif self.is_trial:
-            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s") % {
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
-        else:
-            subject = _(
-                "CommCare Alert: %(domain)s's subscription to "
-                "%(plan_name)s ends %(ending_on)s"
-            ) % {
-                'plan_name': plan_name,
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
-        context.update({'subject': subject})
-        return context
-
-    def send_dimagi_ending_reminder_email(self):
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
-        if self.account.dimagi_contact is None:
-            raise SubscriptionReminderError(
-                "This subscription has no Dimagi contact."
-            )
-
-        subject = self.dimagi_ending_reminder_subject
-        context = self.dimagi_ending_reminder_context
-        email_html = render_to_string(self.dimagi_ending_reminder_email_html, context)
-        email_plaintext = render_to_string(self.dimagi_ending_reminder_email_text, context)
-        send_html_email_async.delay(
-            subject, self.account.dimagi_contact, email_html,
-            text_content=email_plaintext,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-        )
-
-    @property
-    def dimagi_ending_reminder_email_html(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder_dimagi.html'
-        else:
-            return 'accounting/email/subscription_ending_reminder_dimagi.html'
-
-    @property
-    def dimagi_ending_reminder_email_text(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder_dimagi.txt'
-        else:
-            return 'accounting/email/subscription_ending_reminder_dimagi.txt'
-
-    @property
-    def dimagi_ending_reminder_subject(self):
-        if self.account.is_customer_billing_account:
-            return "Alert: {account}'s subscriptions are ending on {end_date}".format(
-                account=self.account.name,
-                end_date=self.date_end.strftime(USER_DATE_FORMAT))
-        else:
-            return "Alert: {domain}'s subscription is ending on {end_date}".format(
-                domain=self.subscriber.domain,
-                end_date=self.date_end.strftime(USER_DATE_FORMAT))
-
-    @property
-    def dimagi_ending_reminder_context(self):
-        end_date = self.date_end.strftime(USER_DATE_FORMAT)
-        email = self.account.dimagi_contact
-        if self.account.is_customer_billing_account:
-            account = self.account.name
-            plan = self.plan_version.plan.edition
-            context = {
-                'account': account,
-                'plan': plan,
-                'end_date': end_date,
-                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
-                    USER_DATE_FORMAT),
-                'contacts': ', '.join(self._reminder_email_contacts(self.subscriber.domain)),
-                'dimagi_contact': email,
-                'accounts_email': settings.ACCOUNTS_EMAIL
-            }
-        else:
-            domain = self.subscriber.domain
-            context = {
-                'domain': domain,
-                'end_date': end_date,
-                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
-                    USER_DATE_FORMAT),
-                'contacts': ', '.join(self._reminder_email_contacts(domain)),
-                'dimagi_contact': email,
-            }
-        return context
-
-    def _reminder_email_contacts(self, domain_name):
-        emails = {a.get_email() for a in WebUser.get_admins_by_domain(domain_name)}
-        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
-        if not self.is_trial:
-            billing_contact_emails = (
-                self.account.billingcontactinfo.email_list
-                if BillingContactInfo.objects.filter(account=self.account).exists() else []
-            )
-            if not billing_contact_emails:
-                from corehq.apps.accounting.views import (
-                    ManageBillingAccountView,
-                )
-                _soft_assert_contact_emails_missing(
-                    False,
-                    'Billing Account for project %s is missing client contact emails: %s' % (
-                        domain_name,
-                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id])
-                    )
-                )
-            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
-        if self.account.is_customer_billing_account:
-            enterprise_admin_emails = self.account.enterprise_admin_emails
-            emails |= {enterprise_admin_email for enterprise_admin_email in enterprise_admin_emails}
-        return emails
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
@@ -2066,6 +1872,15 @@ class Subscription(models.Model):
         else:
             return False
 
+    @property
+    def can_auto_renew(self):
+        return (
+            SHOW_AUTO_RENEWAL.enabled(self.subscriber.domain)
+            and self.service_type == SubscriptionType.PRODUCT
+            and self.date_end is not None
+            and not self.account.is_customer_billing_account
+        )
+
     def user_can_change_subscription(self, user):
         if user.is_superuser:
             return True
@@ -2209,6 +2024,17 @@ class WirePrepaymentInvoice(WireInvoice):
         proxy = True
 
     items = []
+
+    def get_contact_emails(self):
+        invoice_contacts = (
+            self.account.billingcontactinfo.email_list
+            if BillingContactInfo.objects.filter(account=self.account).exists() else []
+        )
+        if not invoice_contacts:
+            invoice_contacts = [
+                admin.get_email() for admin in WebUser.get_admins_by_domain(self.domain)
+            ]
+        return invoice_contacts
 
     @property
     def is_prepayment(self):
@@ -2357,6 +2183,7 @@ class Invoice(InvoiceBase):
         """ Invoices that can be auto paid on date_due """
         invoices = cls.objects.select_related('subscription__account').filter(
             is_hidden=False,
+            date_paid__isnull=True,
             subscription__account__auto_pay_user__isnull=False,
         )
         # we use Ellipsis because date due can actually be None
@@ -2479,6 +2306,7 @@ class CustomerInvoice(InvoiceBase):
         invoices = cls.objects.select_related('account').filter(
             date_due=date_due,
             is_hidden=False,
+            date_paid__isnull=True,
             account__auto_pay_user__isnull=False
         )
         return invoices
@@ -3734,7 +3562,8 @@ class CreditLine(models.Model):
         cls.add_credit(
             -payment_record.amount,
             account=billing_account,
-            invoice=invoice,
+            customer_invoice=invoice if invoice.is_customer_invoice else None,
+            invoice=invoice if not invoice.is_customer_invoice else None,
         )
 
 
@@ -3818,6 +3647,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_year': card.exp_year,
             'token': card.id,
             'is_autopay': self._is_autopay(card, billing_account),
+            'other_autopay_domains': self._get_other_autopay_primary_domains(card, billing_account),
         } for card in self.all_cards]
 
     def get_card(self, card_token):
@@ -3908,6 +3738,25 @@ class StripePaymentMethod(PaymentMethod):
     @staticmethod
     def _is_autopay(card, billing_account):
         return card.metadata.get(StripePaymentMethod._auto_pay_card_metadata_key(billing_account)) == 'True'
+
+    @staticmethod
+    def _get_other_autopay_primary_domains(card, billing_account):
+        autopay_meta = {k: v for k, v in card.metadata.items() if k.startswith('auto_pay_') and v == 'True'}
+        if len(autopay_meta) <= 1:
+            return []
+
+        account_key = StripePaymentMethod._auto_pay_card_metadata_key(billing_account)
+        if autopay_meta.get(account_key):
+            # we only want other domains if the card is not autopay for the given billing account
+            return []
+
+        other_autopay_accounts = [v.replace('auto_pay_', '') for v in autopay_meta.keys()]
+        return list(
+            BillingAccount.objects.filter(id__in=other_autopay_accounts).values_list(
+                'created_by_domain',  # created_by_domain is considered the "primary" domain for a billing account
+                flat=True,
+            )
+        )
 
     @staticmethod
     def _auto_pay_card_metadata_key(billing_account):
@@ -4055,6 +3904,10 @@ class CommunicationHistoryBase(models.Model):
 
     class Meta(object):
         abstract = True
+
+
+class AccountCommunicationHistory(CommunicationHistoryBase):
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
 
 
 class InvoiceCommunicationHistory(CommunicationHistoryBase):

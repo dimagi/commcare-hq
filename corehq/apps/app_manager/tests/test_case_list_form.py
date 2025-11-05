@@ -371,7 +371,8 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         factory.form_requires_case(update_person_form, 'house')
         factory.form_requires_case(update_person_form, 'person', parent_case_type='house')
 
-        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced'), factory.app.create_suite())
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced'),
+            factory.app.create_suite())
 
     def test_case_list_form_parent_child_submodule_advanced_rename_case_var(self, *args):
         # Test that the session vars in the entries for the submodule get updated
@@ -409,7 +410,8 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         # get changed to avoid conflicts
         update_person_form.actions.load_update_cases[1].case_tag = 'load_house_renamed'
 
-        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced-rename-var'), factory.app.create_suite())
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced-rename-var'),
+            factory.app.create_suite())
 
     def test_case_list_form_parent_child_submodule_mixed(self, *args):
         # * Register house (case type = house, basic)
@@ -445,7 +447,8 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         factory.form_requires_case(update_person_form, 'person', parent_case_type='house')
 
-        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-mixed'), factory.app.create_suite())
+        self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-mixed'),
+            factory.app.create_suite())
 
     def test_target_module_different_datums(self, *args):
         # * Registration
@@ -499,7 +502,8 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         factory.form_requires_case(register_member_form, 'household')
         factory.form_opens_case(register_member_form, 'member', is_subcase=True)
 
-        members, edit_member_form = factory.new_basic_module('members', 'member', case_list_form=register_member_form)
+        members, edit_member_form = factory.new_basic_module('members', 'member',
+                                                            case_list_form=register_member_form)
         factory.form_requires_case(edit_member_form)
 
         suite = factory.app.create_suite()
@@ -513,7 +517,7 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'case_list_form'
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.domain_has_usercase_access')
         self.is_usercase_in_use_patch.start()
 
         self.app = Application.new_app('domain', 'New App')

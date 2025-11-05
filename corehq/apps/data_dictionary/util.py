@@ -311,9 +311,9 @@ def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
     }
 
 
-@quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
-def get_data_dict_case_types(domain):
-    case_types = CaseType.objects.filter(domain=domain).values_list('name', flat=True)
+@quickcache(vary_on=['domain', 'is_deprecated'], timeout=24 * 60 * 60)
+def get_data_dict_case_types(domain, is_deprecated=False):
+    case_types = CaseType.objects.filter(domain=domain, is_deprecated=is_deprecated).values_list('name', flat=True)
     return set(case_types)
 
 
@@ -322,14 +322,12 @@ def get_data_dict_deprecated_case_types(domain):
     return set(case_types)
 
 
-def fields_to_validate(domain, case_type_name):
-    filter_kwargs = {
-        'case_type__domain': domain,
-        'case_type__name': case_type_name,
-        'data_type__in': ['date', 'select'],
-    }
-    props = CaseProperty.objects.filter(**filter_kwargs)
-    return {prop.name: prop for prop in props}
+def get_case_properties_by_name(domain, case_type_name):
+    case_properties = CaseProperty.objects.filter(
+        case_type__domain=domain,
+        case_type__name=case_type_name,
+    )
+    return {p.name: p for p in case_properties}
 
 
 @quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)

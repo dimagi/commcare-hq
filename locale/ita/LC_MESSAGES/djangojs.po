@@ -226,6 +226,16 @@ msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "I tipi di caso possono includere solo i caratteri a-z, 0-9, '-' e '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"This is a reserved case type. Refer to <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">doc</a> before using."
+msgstr ""
+"Questo è un tipo di caso riservato. Consulta la <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">documentazione</a> prima dell'utilizzo."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "Questo è un tipo di caso riservato. Scegli un altro nome."
 
@@ -764,10 +774,6 @@ msgstr "Modifica modulo"
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
 msgid "Form Settings"
 msgstr "Impostazioni modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Could not enable user properties, please try again later."
-msgstr "Impossibile abilitare le proprietà utente, riprova più tardi."
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
 msgid "This form either no longer exists or has a different case type"
@@ -1849,6 +1855,12 @@ msgstr ""
 " allo spazio di progetto come membro per poter modificare il tuo fuso "
 "orario."
 
+#: corehq/apps/domain/static/domain/js/new_stripe_card_manager.js
+msgid "Card added successfully! Refreshing cards list..."
+msgstr ""
+"Carta aggiunta con successo! Aggiornamento dell'elenco delle carte in "
+"corso..."
+
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
 "Do not allow new users to sign up on commcarehq.org. This may take up to an "
@@ -2840,6 +2852,11 @@ msgstr ""
 msgid "Good Job! Your password is strong!"
 msgstr "Ottimo lavoro! La tua password è forte!"
 
+#: corehq/apps/registration/static/registration/js/bootstrap3/user_login_form.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/user_login_form.js
+msgid "Continue"
+msgstr "Continua"
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr "Per favore inserisci il tuo nome."
@@ -2870,10 +2887,6 @@ msgstr "Per favore specifica."
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
 msgstr "Per favore indica il nome della tua organizzazione o azienda."
-
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "Continua"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
@@ -4255,6 +4268,9 @@ msgstr "Fallito! La risposta è: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
+
+#~ msgid "Could not enable user properties, please try again later."
+#~ msgstr "Impossibile abilitare le proprietà utente, riprova più tardi."
 
 #~ msgid "Email address is required when users confirm their own accounts."
 #~ msgstr ""

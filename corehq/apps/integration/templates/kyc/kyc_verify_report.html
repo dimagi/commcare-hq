@@ -22,6 +22,10 @@
         </a>
       </div>
     {% else %}
+      <div class="mb-3">
+        {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
+      </div>
+
       <p>
         <button
           id="verify-selected-btn"

@@ -3,14 +3,16 @@ import os
 import re
 from collections import defaultdict
 
-import requests
-
 from django.conf import settings
 from django.utils.text import camel_case_to_spaces
 
 import jsonschema
+import requests
 
-from corehq.apps.integration.kyc.models import KycVerificationFailureCause, KycVerificationStatus
+from corehq.apps.integration.kyc.models import (
+    KycVerificationFailureCause,
+    KycVerificationStatus,
+)
 from corehq.util.metrics import metrics_counter
 
 

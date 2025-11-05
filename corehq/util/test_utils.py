@@ -206,15 +206,31 @@ def disable_overpatch(patch_obj):
 
 class privilege_enabled:
     """
-    A decorator and context manager to enable a privilege for a domain
-    or a request.
+    A decorator and context manager to enable one or more privileges for
+    a domain or a request.
+
+    e.g. ::
+
+        @privilege_enabled(privileges.DATA_DICTIONARY)
+        class MyTest(TestCase):
+            ...
+
+        @privilege_enabled(privileges.DATA_DICTIONARY, privileges.DATA_DICT_TYPES)
+        class MyTest(TestCase):
+            ...
 
     If you find that the import you need to be patched is not yet
     supported, add it to ``self.imports``.
     """
     imports = (  # (Alphabetical to reduce conflicts)
         'corehq.apps.app_manager.app_strings.domain_has_privilege',
+        'corehq.apps.app_manager.util.domain_has_privilege',
+        'corehq.apps.callcenter.sync_usercase.domain_has_privilege',
+        'corehq.apps.callcenter.tasks.domain_has_privilege',
+        'corehq.apps.case_importer.do_import.domain_has_privilege',
         'corehq.apps.data_cleaning.decorators.domain_has_privilege',
+        'corehq.apps.data_dictionary.bulk.domain_has_privilege',
+        'corehq.apps.data_dictionary.views.domain_has_privilege',
         'corehq.apps.data_cleaning.utils.cases.domain_has_privilege',
         'corehq.apps.domain.auth.domain_has_privilege',
         'corehq.apps.export.views.list.domain_has_privilege',
@@ -227,7 +243,9 @@ class privilege_enabled:
         'django_prbac.decorators.has_privilege',
     )
 
-    def __init__(self, privilege_slug):
+    def __init__(self, *privilege_slugs):
+        if not privilege_slugs:
+            raise ValueError("At least one privilege slug is required")
 
         def patched(domain_or_request, slug, **assignment):
             from django_prbac.utils import \
@@ -240,7 +258,7 @@ class privilege_enabled:
             else:
                 has_privilege = domain_has_privilege
             return (
-                slug == privilege_slug
+                slug in privilege_slugs
                 or has_privilege(domain_or_request, slug, **assignment)
             )
 

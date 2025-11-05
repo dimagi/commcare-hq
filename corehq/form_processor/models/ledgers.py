@@ -199,10 +199,10 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         app_label = "form_processor"
         # note: can't put a unique constraint here (case_id, form_id, section_id, entry_id)
         # since a single form can make multiple updates to a ledger
-        index_together = [
-            ["case", "section_id", "entry_id"],
+        indexes = [
+            models.Index(fields=["case", "section_id", "entry_id"]),
+            models.Index(fields=['form_id']),
         ]
-        indexes = [models.Index(fields=['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

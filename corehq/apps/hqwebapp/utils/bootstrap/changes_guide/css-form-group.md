@@ -8,3 +8,5 @@ with the `field-label` class. If the first child is a control container such as 
 * Replace the column classes (`col-lg-2`, etc.) of the `form-group`'s second child with `field-control`.
 This `div` should contain the field control (the actual input, which will often use the `form-control` class).
 * Replace `form-group` with `row mb-3`.
+* Replace `form-label` with `col-form-label` (Recommended by B5 offical doc: https://getbootstrap.com/docs/5.0/forms/layout/#horizontal-form)
+* `form-control-text` can be dropped, replace it with using `mt-2`

@@ -87,6 +87,7 @@ Changing views can block our deploys due to the way we sync our couch views. If 
 a view, please sync with someone else who understands this process and coordinate with the team
 to ensure we can rebuild the view without issue.
 
+View :ref:`couch-design-doc-changes` for more information.
 
 Migration Patterns and Best Practices
 -------------------------------------
@@ -94,3 +95,4 @@ Migration Patterns and Best Practices
 - :ref:`migrations-in-practice`
 - :ref:`auto-managed-migration-pattern`
 - :ref:`couch-to-sql-model-migration`
+- :ref:`couch-design-doc-changes`

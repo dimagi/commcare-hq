@@ -24,6 +24,13 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
+from corehq.apps.accounting.emails import (
+    send_dimagi_contact_ending_reminder_email,
+    send_ending_reminder_email,
+    send_renewal_reminder_email,
+    send_subscription_ending_email,
+    send_subscription_renewed_email,
+)
 from corehq.apps.accounting.exceptions import (
     ActiveSubscriptionWithoutDomain,
     CreditLineBalanceMismatchError,
@@ -36,16 +43,19 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
+    DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountWebUserHistory,
     CreditLine,
     Currency,
+    DefaultProductPlan,
     DomainUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
     InvoicingPlan,
+    SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
@@ -86,6 +96,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
     USER_MONTH_FORMAT,
 )
+from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
@@ -413,54 +424,142 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def auto_renew_subscriptions(domain_name=None):
+    """
+    Automatically renew eligible subscriptions 30 or fewer days from their end date.
+    """
+    ending_subscriptions = _get_auto_renewable_subscriptions(domain_name=domain_name)
+    for subscription in ending_subscriptions:
+        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain) and not subscription.is_renewed:
+            auto_renew_subscription(subscription)
+
+
+def _get_auto_renewable_subscriptions(domain_name=None):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=30)
+    auto_renewable_subscriptions = Subscription.visible_objects.filter(
+        date_end__gte=today,
+        date_end__lte=date_in_n_days,
+        service_type=SubscriptionType.PRODUCT,
+        auto_renew=True,
+    ).exclude(
+        account__is_customer_billing_account=True,
+    )
+    if domain_name:
+        auto_renewable_subscriptions.filter(subscriber__domain=domain_name)
+    return auto_renewable_subscriptions
+
+
+@transaction.atomic
+def auto_renew_subscription(subscription):
+    new_plan_version = DefaultProductPlan.get_default_plan_version(
+        edition=subscription.plan_version.plan.edition,
+        is_annual_plan=subscription.plan_version.plan.is_annual_plan,
+    )
+    next_subscription = subscription.renew_subscription(
+        adjustment_method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+        new_version=new_plan_version,
+    )
+    send_subscription_renewed_email(next_subscription)
+
+    if next_subscription.plan_version.plan.is_annual_plan:
+        invoice_factory = DomainWireInvoiceFactory(
+            next_subscription.subscriber.domain,
+            date_start=next_subscription.date_start,
+            date_end=next_subscription.date_end,
+        )
+        invoice_factory.create_subscription_credits_invoice(
+            next_subscription.plan_version,
+            next_subscription.date_start,
+            next_subscription.date_end,
+        )
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
+    # current reminders to be removed once auto-renewal is GA
     send_subscription_reminder_emails(30)
     send_subscription_reminder_emails(10)
     send_subscription_reminder_emails(1)
 
+    # new set of emails replaces existing reminders once auto-renewal is GA
+    send_renewal_reminder_emails(90)
+    send_renewal_reminder_emails(60)
+    send_subscription_ending_emails(30)
+    send_subscription_ending_emails(10)
+    send_subscription_ending_emails(1)
+
+
+def send_subscription_reminder_emails(days_left):
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(days_left, is_trial=False)
+    for subscription in ending_subscriptions:
+        _try_send_subscription_email(subscription, days_left, send_ending_reminder_email)
+
+
+def send_renewal_reminder_emails(days_left):
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        days_left, is_trial=False, service_type=SubscriptionType.PRODUCT
+    ).exclude(account__is_customer_billing_account=True)
+    for subscription in ending_subscriptions:
+        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
+            _try_send_subscription_email(subscription, days_left, send_renewal_reminder_email)
+
+
+def send_subscription_ending_emails(days_left):
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        days_left, is_trial=False, service_type=SubscriptionType.PRODUCT, auto_renew=False,
+    ).exclude(account__is_customer_billing_account=True)
+    for subscription in ending_subscriptions:
+        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
+            _try_send_subscription_email(subscription, days_left, send_subscription_ending_email)
+
+
+def _try_send_subscription_email(subscription, days_left, send_email_func):
+    try:
+        # only send reminder emails if the subscription isn't renewed
+        if not subscription.is_renewed:
+            send_email_func(subscription, days_left)
+    except Exception as e:
+        log_accounting_error(
+            "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
+            show_stack_trace=True,
+        )
+
 
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
-def remind_dimagi_contact_subscription_ending_60_days():
+def remind_dimagi_contact_subscription_ending():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
     """
     send_subscription_reminder_emails_dimagi_contact(60)
+    send_subscription_reminder_emails_dimagi_contact(30)
+    send_subscription_reminder_emails_dimagi_contact(10)
+    send_subscription_reminder_emails_dimagi_contact(1)
 
 
-def send_subscription_reminder_emails(num_days):
-    today = datetime.date.today()
-    date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.visible_objects.filter(
-        date_end=date_in_n_days, do_not_email_reminder=False, is_trial=False
-    )
-    for subscription in ending_subscriptions:
-        try:
-            # only send reminder emails if the subscription isn't renewed
-            if not subscription.is_renewed:
-                subscription.send_ending_reminder_email()
-        except Exception as e:
-            log_accounting_error(
-                "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
-                show_stack_trace=True,
-            )
-
-
-def send_subscription_reminder_emails_dimagi_contact(num_days):
-    today = datetime.date.today()
-    date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = (Subscription.visible_objects
-                            .filter(is_active=True)
-                            .filter(date_end=date_in_n_days)
-                            .filter(do_not_email_reminder=False)
-                            .exclude(account__dimagi_contact=''))
+def send_subscription_reminder_emails_dimagi_contact(days_left):
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        days_left, is_active=True, service_type=SubscriptionType.IMPLEMENTATION
+    ).exclude(account__dimagi_contact='')
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
-            subscription.send_dimagi_ending_reminder_email()
+            send_dimagi_contact_ending_reminder_email(subscription)
+
+
+def _filter_subscriptions_for_reminder_emails(days_left, **kwargs):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=days_left)
+    ending_subscriptions = Subscription.visible_objects.filter(
+        date_end=date_in_n_days, do_not_email_reminder=False, **kwargs
+    ).exclude(
+        plan_version__plan__edition=SoftwarePlanEdition.PAUSED
+    )
+    return ending_subscriptions
 
 
 @task(ignore_result=True, acks_late=True)
@@ -505,6 +604,7 @@ def create_wire_credits_invoice(domain_name,
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
+        contact_emails = contact_emails or wire_invoice.get_contact_emails()
         try:
             for email in contact_emails:
                 record.send_email(contact_email=email, cc_emails=cc_emails)
@@ -519,8 +619,12 @@ def create_wire_credits_invoice(domain_name,
 
 
 @task(ignore_result=True, acks_late=True)
-def send_purchase_receipt(payment_record_id, domain, template_html, template_plaintext, additional_context):
-    context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+def send_purchase_receipt(
+    payment_record_id, domain_name, account_id, template_html, template_plaintext, additional_context
+):
+    context = get_context_to_send_purchase_receipt(
+        payment_record_id, domain_name, account_id, additional_context
+    )
 
     email_html = render_to_string(template_html, context['template_context'])
     email_plaintext = render_to_string(template_plaintext, context['template_context'])
@@ -535,8 +639,8 @@ def send_purchase_receipt(payment_record_id, domain, template_html, template_pla
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice_id):
-    context = get_context_to_send_autopay_failed_email(invoice_id)
+def send_autopay_failed(invoice_id, is_customer_invoice=False):
+    context = get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=is_customer_invoice)
 
     template_html = 'accounting/email/autopay_failed.html'
     html_content = render_to_string(template_html, context['template_context'])
@@ -652,7 +756,9 @@ def weekly_digest():
 @periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
-    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
+    today = datetime.datetime.today()
+    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(today)
+    AutoPayInvoicePaymentHandler().pay_autopayable_customer_invoices(today)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)

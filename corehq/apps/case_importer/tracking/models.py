@@ -33,7 +33,7 @@ class CaseUploadRecord(models.Model):
     upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True, on_delete=models.CASCADE)
 
     class Meta(object):
-        index_together = ('domain', 'created')
+        indexes = [models.Index(fields=['domain', 'created'])]
 
     @property
     @memoized

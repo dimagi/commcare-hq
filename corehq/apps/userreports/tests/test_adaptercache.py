@@ -1,9 +1,12 @@
 from datetime import UTC, datetime
 
+import gevent
+import pytest
 from attrs import define, field
+from gevent.event import Event
 from time_machine import travel
 
-from ..adaptercache import MigrationCache, TTLCache
+from ..adaptercache import AdapterCache, MigrationCache, TTLCache
 
 
 class TestTTLCache:
@@ -165,6 +168,135 @@ class TestTTLCache:
             cache.refresh()
             assert cache.get_adapters('one') == [adapter]
 
+    def test_concurrent_refresh(self):
+        def iter_adapters(domain=None, *, since=None):
+            if since is not None:
+                refreshes.append(1)
+                cache.refresh()  # should return immediately, without recursion
+            yield adapter.domain, adapter
+
+        refreshes = []
+        adapter = Adapter('one')
+        cache = TTLCache(iter_adapters)
+
+        cache.refresh()  # should not recurse infinitely
+        assert sum(refreshes) == 1
+
+    def test_concurrent_load(self):
+        def iter_adapters(domain=None, *, since=None):
+            worker = gevent.getcurrent()
+            assert worker is worker1, f"{worker} should not iter_adapters"
+            iterating.set()
+            assert unblock.wait(timeout=2)
+            order.append(3)
+            yield adapter.domain, adapter
+
+        def do_get(cache, ident, domain):
+            assert domain not in cache.adapters
+            order.append(ident)
+            return cache.get_adapters(domain)
+
+        adapter = Adapter('one')
+        adapter_cache = AdapterCache()
+        cache = TTLCache(iter_adapters, adapter_cache)
+        other = TTLCache(iter_adapters, adapter_cache)
+        order = []
+
+        iterating = Event()
+        unblock = Event()
+        worker1 = gevent.spawn(do_get, cache, 1, 'one')
+        assert iterating.wait(timeout=2)
+
+        worker2 = gevent.spawn(do_get, other, 2, 'one')
+        gevent.sleep()  # allow worker2 to run until blocked
+        assert not worker2.ready(), str(worker2.exception)
+
+        unblock.set()
+        gevent.joinall([worker1, worker2], timeout=5)
+        assert order == [1, 2, 3]
+        assert worker1.get(block=False) == [adapter]
+        assert worker2.get(block=False) == [adapter]
+
+    def test_concurrent_load_different_domains(self):
+        def iter_adapters(domain=None, *, since=None):
+            iterating.set()
+            assert unblock.wait(timeout=2)
+            order.append(3)
+            yield adapter.domain, adapter
+            yield 'two', adapter
+
+        def do_get(cache, ident, domain):
+            assert domain not in cache.adapters
+            order.append(ident)
+            return cache.get_adapters(domain)
+
+        adapter = Adapter('one')
+        adapter_cache = AdapterCache()
+        cache = TTLCache(iter_adapters, adapter_cache)
+        other = TTLCache(iter_adapters, adapter_cache)
+        order = []
+
+        iterating = Event()
+        unblock = Event()
+
+        worker1 = gevent.spawn(do_get, cache, 1, 'one')
+        assert iterating.wait(timeout=2)
+        iterating.clear()
+
+        worker2 = gevent.spawn(do_get, other, 2, 'two')
+        assert iterating.wait(timeout=2)
+        assert not worker2.ready(), str(worker2.exception)
+
+        unblock.set()
+        gevent.joinall([worker1, worker2], timeout=7)
+        assert order == [1, 2, 3, 3]
+        # [..., 3, 3] means iter_adapters got called twice concurrently.
+        # Not super efficient for RegistryDataSourceTableManager, but
+        # should be safe. More efficient than using a single lock for
+        # all domains, and far easier to implement than locking on the
+        # set of domains associated with all registries known to the
+        # domain for which adapters are being loaded.
+
+        assert worker1.get(block=False) == [adapter]
+        assert worker2.get(block=False) == [adapter]
+
+    def test_concurrent_load_error(self):
+        def iter_adapters(domain=None, *, since=None):
+            iterating.set()
+            assert unblock.wait(timeout=2)
+            if gevent.getcurrent() is worker1:
+                raise DatabaseError
+            order.append(3)
+            yield adapter.domain, adapter
+
+        def do_get(cache, ident, domain):
+            assert domain not in cache.adapters
+            order.append(ident)
+            return cache.get_adapters(domain)
+
+        adapter = Adapter('one')
+        adapter_cache = AdapterCache()
+        cache = TTLCache(iter_adapters, adapter_cache)
+        other = TTLCache(iter_adapters, adapter_cache)
+        order = []
+
+        iterating = Event()
+        unblock = Event()
+
+        worker1 = gevent.spawn(do_get, cache, 1, 'one')
+        assert iterating.wait(timeout=2)
+
+        worker2 = gevent.spawn(do_get, other, 2, 'one')
+        assert iterating.wait(timeout=2)
+        assert not worker2.ready(), str(worker2.exception)
+
+        unblock.set()
+        gevent.joinall([worker1, worker2], timeout=7)
+        assert order == [1, 2, 3]
+        with pytest.raises(DatabaseError):
+            worker1.get(block=False)
+        assert worker2.get(block=False) == [adapter]
+
 
 class TestMigrationCache:
 
@@ -215,6 +347,10 @@ class Adapter:
         repr=lambda v: v.isoformat(),
     )
     is_active = field(default=True)
+
+
+class DatabaseError(Exception):
+    pass
 
 
 _ids = iter(range(1_000_000))

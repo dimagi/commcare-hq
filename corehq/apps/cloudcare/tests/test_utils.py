@@ -16,6 +16,7 @@ from corehq.apps.cloudcare.models import ApplicationAccess, SQLAppGroup
 from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
     get_mobile_ucr_count,
+    get_web_app_ids_available_to_user,
     get_web_apps_available_to_user,
     should_restrict_web_apps_usage,
 )
@@ -315,6 +316,10 @@ class TestGetWebAppsAvailableToUser(TestCase):
     def assert_apps(self, expected):
         self.assertItemsEqual(
             [app['_id'] for app in get_web_apps_available_to_user(self.domain, self.user)],
+            expected
+        )
+        self.assertItemsEqual(
+            [app_id for app_id in get_web_app_ids_available_to_user(self.domain, self.user)],
             expected
         )
 

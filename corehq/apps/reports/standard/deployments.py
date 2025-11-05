@@ -32,6 +32,7 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.const import AllowedRenderings
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.dates import SingleDateFilter
@@ -533,8 +534,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             return '---'
         assigned_location_ids = user.get_location_ids(self.domain)
         primary_location_id = user.get_location_id(self.domain)
-        return self._get_formatted_assigned_location_names(primary_location_id, assigned_location_ids,
-                                                           user_loc_dict)
+        if self.rendered_as == AllowedRenderings.EXPORT:
+            # get text names for Excel export
+            return self._get_assigned_location_names(primary_location_id, assigned_location_ids, user_loc_dict)
+        else:
+            return self._get_formatted_assigned_location_names(primary_location_id, assigned_location_ids,
+                                                               user_loc_dict)
+
+    @staticmethod
+    def _get_assigned_location_names(primary_location_id, assigned_location_ids, user_loc_dict):
+        assigned_location_names = []
+        if primary_location_id in user_loc_dict:
+            assigned_location_names.append(user_loc_dict[primary_location_id])
+        other_assigned_location_ids = set(assigned_location_ids) - {primary_location_id}
+        for location_id in other_assigned_location_ids:
+            if location_id in user_loc_dict:
+                assigned_location_names.append(user_loc_dict[location_id])
+        return ', '.join(assigned_location_names)
 
     @staticmethod
     def _get_formatted_assigned_location_names(primary_location_id, assigned_location_ids, user_loc_dict):

@@ -6,7 +6,6 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationTableView,
 )
 
-
 urlpatterns = [
     url(r'^configure/$', KycConfigurationView.as_view(),
         name=KycConfigurationView.urlname),
