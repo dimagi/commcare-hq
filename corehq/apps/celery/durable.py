@@ -5,7 +5,24 @@ from celery import states as celery_states
 from celery.signals import task_postrun
 
 
+class UnsupportedSerializationError(Exception):
+    """Raised when attempting to use serialization other than JSON"""
+
+
 class DurableTask(Task):
+    """
+    Only supports tasks configured with json serialization (i.e. no support for pickle)
+    """
+
+    def __init__(self):
+        super().__init__()
+        if getattr(self, 'durable', False):
+            if self.serializer != 'json':
+                raise UnsupportedSerializationError(
+                    f"Cannot create a durable task with {self.serializer} serialization."
+                    "Durable tasks only support JSON serialization."
+                )
+
     def apply_async(self, args=None, kwargs=None, **opts):
         from corehq.apps.celery.models import TaskRecord
         from corehq.util.json import CommCareJSONEncoder
