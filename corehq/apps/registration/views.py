@@ -306,9 +306,10 @@ class UserRegistrationView(BasePageView):
         return reverse(self.urlname)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class RegisterDomainView(TemplateView):
 
-    template_name = 'registration/bootstrap3/domain_request.html'
+    template_name = 'registration/bootstrap5/domain_request.html'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -323,7 +324,7 @@ class RegisterDomainView(TemplateView):
                     'requested_domain': pending_domains[0],
                     'current_page': {'page_name': _('Confirm Account')},
                 })
-                return render(request, 'registration/bootstrap3/confirmation_waiting.html', context)
+                return render(request, 'registration/bootstrap5/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
     @property
@@ -390,7 +391,7 @@ class RegisterDomainView(TemplateView):
                 'current_page': {'page_name': _('Confirm Account')},
             })
             track_workflow_noop(self.request.user.email, "Created new project")
-            return render(request, 'registration/bootstrap3/confirmation_sent.html', context)
+            return render(request, 'registration/bootstrap5/confirmation_sent.html', context)
 
         if nextpage:
             return HttpResponseRedirect(nextpage)
