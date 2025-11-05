@@ -10,7 +10,7 @@
       type="text/less"
       rel="stylesheet"
       media="all"
-      href="{% static 'registration/less/register-domain.less' %}"
+      href="{% static 'registration/scss/register-domain.scss' %}"
     />
   {% endcompress %}
 {% endblock stylesheets %}
@@ -19,7 +19,7 @@
 
 {% block content %}
   <div class="container">
-    <div class="page-header">  {# todo B5: css-page-header #}
+    <div class="mt-5">
       {% if is_new_user %}
         <h1>
           {% blocktrans %}
@@ -55,7 +55,7 @@
     </div>
 
     {% if invitation_links %}
-      <div class="card card-modern-gray">  {# todo B5: css-panel #}
+      <div class="card card-modern-gray">
         <div class="card-header">
           <h4 class="card-title card-title-nolink">
             {% trans "My Invitations" %}
@@ -94,9 +94,9 @@
         </div>
       </div>
     {% endif %}
-    <div class="card card-modern-gray">  {# todo B5: css-panel #}
+    <div class="card card-modern-gray my-3">
       <div class="card-body">
-        <h4>{% trans "Your New Project Space" %}</h4>
+        <h4 class="mt-2">{% trans "Your New Project Space" %}</h4>
         <p>
           {% blocktrans %}
             A
@@ -110,20 +110,18 @@
           {% endblocktrans %}
         </p>
 
-        <div class="spacer"></div>
-
         {% if not is_new_user %}
-          <div class="alert alert-info">
-            <div class="row icon-row">
-              <div class="col-sm-1 text-center">
+          <div class="alert alert-primary">
+            <div class="row d-flex align-items-center">
+              <div class="col-sm-1 text-center gx-0">
                 {% include 'registration/partials/icon_stack.html' with icon_class='fa fa-briefcase' %}
               </div>
               <div class="col-sm-11">
-                <h5><b>{% trans "Subscription" %}</b></h5>
+                <h5 class="h6 my-2"><b>{% trans "Subscription" %}</b></h5>
               </div>
             </div>
             <div class="row">
-              <div class="col-sm-11 col-xs-push-1">
+              <div class="col-sm-11 offset-sm-1">
                 <p>
                   {% blocktrans %}
                     All new projects start on CommCare's free edition. Once you
@@ -137,16 +135,16 @@
               </div>
             </div>
 
-            <div class="row icon-row">
-              <div class="col-sm-1 text-center">
+            <div class="row d-flex align-items-center">
+              <div class="col-sm-1 text-center gx-0">
                 {% include 'registration/partials/icon_stack.html' with icon_class='fcc fcc-globe' %}
               </div>
               <div class="col-sm-11">
-                <h5><b>{% trans "Cloud Location" %}</b></h5>
+                <h5 class="h6 my-2"><b>{% trans "Cloud Location" %}</b></h5>
               </div>
             </div>
             <div class="row">
-              <div class="col-sm-11 col-xs-push-1">
+              <div class="col-sm-11 offset-sm-1">
                 <p>
                   {% if server_display %}
                     {% blocktrans with server_display.hr_name as server_location %}
