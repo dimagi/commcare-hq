@@ -131,6 +131,7 @@ accounting
  0109_enable_all_add_ons_priv
  0110_alter_customerinvoicecommunicationhistory_communication_type_and_more
  0111_rename_is_auto_invoiceable_billingaccount_require_auto_pay
+ 0112_data_dict_types_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -875,6 +876,7 @@ preindex
  0003_initial
  0004_initial
  0005_initial
+ 0006_initial
 products
  0001_initial
 project_limits

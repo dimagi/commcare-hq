@@ -1850,6 +1850,10 @@ msgstr ""
 "प्रोजेक्ट स्पेस तक केवल एक संगठन के माध्यम से ही पहुँच है। टाइमज़ोन ओवरराइड "
 "करने के लिए आपको प्रोजेक्ट स्पेस में सदस्य के रूप में जोड़ा जाना चाहिए।"
 
+#: corehq/apps/domain/static/domain/js/new_stripe_card_manager.js
+msgid "Card added successfully! Refreshing cards list..."
+msgstr "कार्ड सफलतापूर्वक जोड़ा गया! कार्ड सूची को रीफ़्रेश किया जा रहा है..."
+
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
 "Do not allow new users to sign up on commcarehq.org. This may take up to an "
@@ -2832,6 +2836,11 @@ msgstr ""
 msgid "Good Job! Your password is strong!"
 msgstr "शानदार! आपका पासवर्ड मजबूत है!"
 
+#: corehq/apps/registration/static/registration/js/bootstrap3/user_login_form.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/user_login_form.js
+msgid "Continue"
+msgstr "जारी रखें"
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr "कृपया अपना नाम दर्ज करें।"
@@ -2862,10 +2871,6 @@ msgstr "कृपया निर्दिष्ट करें।"
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please list your organization or company name."
 msgstr "कृपया अपनी संस्था या कंपनी का नाम लिखें।"
-
-#: corehq/apps/registration/static/registration/js/user_login_form.js
-msgid "Continue"
-msgstr "जारी रखें"
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
