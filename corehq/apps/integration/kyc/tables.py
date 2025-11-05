@@ -14,6 +14,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import (
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 from corehq.apps.integration.kyc.models import KycProperties, KycUser
+from corehq.apps.users.models import CouchUser
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 
@@ -44,6 +45,7 @@ def serialize_kyc_data_for_table(kyc_user, kyc_config):
             "error_message": kyc_user.kyc_verification_error_message,
         },
         "kyc_last_verified_at": kyc_user.kyc_last_verified_at,
+        "kyc_verified_by": kyc_user.kyc_verified_by,
     }
 
     for provider_field, field in kyc_config.get_api_field_to_user_data_map_values().items():
@@ -139,9 +141,14 @@ class KycVerifyTable(BaseHtmxTable, ElasticTable):
             (KycProperties.KYC_LAST_VERIFIED_AT, DateTimeStringColumn(
                 verbose_name=_('Last Verified')
             )),
+            (KycProperties.KYC_VERIFIED_BY, columns.Column(verbose_name=_('Verified By'), empty_values=())),
             ('verify_btn', columns.TemplateColumn(
                 template_name='kyc/partials/kyc_verify_button.html',
                 verbose_name=_('Verify')
             )),
         ])
         return cols
+
+    def render_kyc_verified_by(self, value, record):
+        user = CouchUser.get_by_user_id(value) if value else None
+        return user.full_name if user else ''
