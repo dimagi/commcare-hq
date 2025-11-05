@@ -23,6 +23,7 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.models import ServerLocation
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
@@ -88,17 +89,22 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe(_(
-            """I have read and agree to Dimagi's
-            <a href="http://www.dimagi.com/terms/latest/privacy/"
-               target="_blank">Privacy Policy</a>,
-            <a href="http://www.dimagi.com/terms/latest/tos/"
-               target="_blank">Terms of Service</a>,
-            <a href="http://www.dimagi.com/terms/latest/ba/"
-               target="_blank">Business Agreement</a>, and
-            <a href="http://www.dimagi.com/terms/latest/aup/"
-               target="_blank">Acceptable Use Policy</a>.
-            """)))
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(_(
+                """I have read and agree to Dimagi's
+                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                target="_blank">Privacy Policy</a>,
+                <a href="http://www.dimagi.com/terms/latest/tos/"
+                target="_blank">Terms of Service</a>,
+                <a href="http://www.dimagi.com/terms/latest/ba/"
+                target="_blank">Business Agreement</a>, and
+                <a href="http://www.dimagi.com/terms/latest/aup/"
+                target="_blank">Acceptable Use Policy</a>.
+                """)
+            ),
+        ),
+        label="",
+    )
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
@@ -127,9 +133,10 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Div(
                     hqcrispy.RadioSelect(
                         'persona',
-                        css_class="input-lg",
+                        css_class="form-control-lg",
                         data_bind="checked: personaChoice, "
                     ),
+                    css_class="mb-3",
                     data_bind="css: {"
                               " 'has-success': isPersonaChoiceChosen, "
                               " 'has-error': isPersonaChoiceNeeded"
@@ -138,10 +145,11 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Div(
                     hqcrispy.InlineField(
                         'persona_other',
-                        css_class="input-lg",
+                        css_class="form-control-lg",
                         data_bind="value: personaOther, "
                                   "visible: isPersonaChoiceOther, "
                     ),
+                    css_class="mb-3",
                     data_bind="css: {"
                               " 'has-success': isPersonaChoiceOtherPresent, "
                               " 'has-error': isPersonaChoiceOtherNeeded"
@@ -153,13 +161,14 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Div(
                     hqcrispy.InlineField(
                         'company_name',
-                        css_class="input-lg",
+                        css_class="form-control-lg",
                         data_bind="value: companyName, "
                                   "valueUpdate: 'keyup', "
                                   "koValidationStateFeedback: { "
                                   "   validator: companyName "
                                   "}",
                     ),
+                    css_class="mb-3",
                     data_bind="visible: isPersonaChoiceProfessional, ",
                 ),
             ]
@@ -173,19 +182,22 @@ class RegisterWebUserForm(forms.Form):
                     _('Create Your Account'),
                     hqcrispy.FormStepNumber(1, 2),
                     *server_location_field,
-                    hqcrispy.InlineField(
-                        'full_name',
-                        css_class="input-lg",
-                        data_bind="value: fullName, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: fullName "
-                                  "}"
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'full_name',
+                            css_class="form-control-lg",
+                            data_bind="value: fullName, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "   validator: fullName "
+                                      "}"
+                        ),
+                        css_class="mb-3",
                     ),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'email',
-                            css_class="input-lg",
+                            css_class="form-control-lg",
                             data_bind="value: email, "
                                       "valueUpdate: 'keyup', "
                                       "koValidationStateFeedback: { "
@@ -199,13 +211,13 @@ class RegisterWebUserForm(forms.Form):
                         crispy.HTML('<p class="validation-message-block" '
                                     'data-bind="visible: isEmailValidating, '
                                     'text: validatingEmailMsg">&nbsp;</p>'),
-                        hqcrispy.ValidationMessage('emailDelayed'),
                         data_bind="validationOptions: { allowHtmlMessages: 1 }",
+                        css_class="mb-3",
                     ),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'password',
-                            css_class="input-lg",
+                            css_class="form-control-lg",
                             autocomplete="new-password",
                             data_bind="value: password, "
                                       "valueUpdate: 'keyup', "
@@ -214,25 +226,31 @@ class RegisterWebUserForm(forms.Form):
                                       "   delayedValidator: passwordDelayed "
                                       "}",
                         ),
-                        hqcrispy.ValidationMessage('passwordDelayed'),
-                        data_bind="visible: showPasswordField"
+                        data_bind="visible: showPasswordField",
+                        css_class="mb-3",
                     ),
-                    hqcrispy.InlineField(
-                        'phone_number',
-                        css_class="input-lg",
-                        data_bind="value: phoneNumber, "
-                                  "valueUpdate: 'keyup'"
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'phone_number',
+                            css_class="form-control-lg",
+                            data_bind="value: phoneNumber, "
+                                      "valueUpdate: 'keyup'"
+                        ),
+                        css_class="mb-3",
                     ),
                     hqcrispy.InlineField('atypical_user'),
-                    twbscrispy.StrictButton(
-                        gettext("Back"),
-                        css_id="back-to-start-btn",
-                        css_class="btn btn-default btn-lg hide",
-                    ),
-                    twbscrispy.StrictButton(
-                        gettext("Next"),
-                        css_class="btn btn-primary btn-lg",
-                        data_bind="click: nextStep, disable: disableNextStepOne"
+                    crispy.Div(
+                        twbscrispy.StrictButton(
+                            gettext("Back"),
+                            css_id="back-to-start-btn",
+                            css_class="btn btn-outline-primary btn-lg d-none",
+                        ),
+                        twbscrispy.StrictButton(
+                            gettext("Next"),
+                            css_class="btn btn-primary btn-lg",
+                            data_bind="click: nextStep, disable: disableNextStepOne"
+                        ),
+                        css_class="mt-3",
                     ),
                     hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
@@ -244,24 +262,29 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Fieldset(
                     _('Name Your First Project'),
                     hqcrispy.FormStepNumber(2, 2),
-                    hqcrispy.InlineField(
-                        'project_name',
-                        css_class="input-lg",
-                        data_bind="value: projectName, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: projectName "
-                                  "}",
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'project_name',
+                            css_class="form-control-lg",
+                            data_bind="value: projectName, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "   validator: projectName "
+                                      "}",
+                        ),
+                        css_class="mb-3",
                     ),
                     crispy.Div(*saas_fields),
-                    hqcrispy.InlineField(
-                        'eula_confirmed',
-                        css_class="input-lg",
-                        data_bind="checked: eulaConfirmed"
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'eula_confirmed',
+                            data_bind="checked: eulaConfirmed"
+                        ),
+                        css_class="mb-3",
                     ),
                     twbscrispy.StrictButton(
                         gettext("Back"),
-                        css_class="btn btn-default btn-lg",
+                        css_class="btn btn-outline-primary btn-lg",
                         data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
