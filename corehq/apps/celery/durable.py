@@ -43,7 +43,7 @@ class DurableTask(Task):
             record.sent = True
             return result
         except Exception as e:
-            record.error = str(e)
+            record.error = f"{type(e).__name__}: {e}"
             raise
         finally:
             record.save()
