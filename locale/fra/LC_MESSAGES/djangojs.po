@@ -176,31 +176,38 @@ msgstr "Facturé mensuellement"
 msgid "Please enter a valid email."
 msgstr "Veuillez entrer une adresse e-mail valide"
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your first name."
 msgstr "Veuillez saisir votre prénom."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your last name."
 msgstr "Veuillez saisir votre nom de famille."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your organization."
 msgstr "Veuillez saisir votre organisation."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your job title."
 msgstr "Veuillez saisir votre poste."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your email address."
 msgstr "Veuillez saisir votre adresse e-mail."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "We are sorry, but something unexpected has occurred."
 msgstr "Nous sommes désolé·e·s, un événement inattendu s’est produit."
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/hubspot.js
 msgid "Submit Request"
 msgstr "Soumettre la demande"
 

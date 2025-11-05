@@ -155,31 +155,38 @@ msgstr "يتم الفوترة شهريًا"
 msgid "Please enter a valid email."
 msgstr "يرجى إدخال بريد إلكتروني صالح."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your first name."
 msgstr "يرجى إدخال الاسم الأول."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your last name."
 msgstr "يرجى إدخال اسم العائلة."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your organization."
 msgstr "يرجى إدخال اسم المؤسسة."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your job title."
 msgstr "يرجى إدخال المسمى الوظيفي."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your email address."
 msgstr "يرجى إدخال عنوان بريدك الإلكتروني."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "We are sorry, but something unexpected has occurred."
 msgstr "نأسف، حدث أمر غير متوقع."
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/hubspot.js
 msgid "Submit Request"
 msgstr "إرسال الطلب"
 
