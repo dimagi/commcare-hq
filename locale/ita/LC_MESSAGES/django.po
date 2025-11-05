@@ -17,6 +17,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: corehq/apps/accounting/emails.py
+#, python-brace-format
+#| msgid ""
+#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
+#| "%(ending_on)s"
+msgid ""
+"CommCare Alert: {domain}'s subscription to {plan} automatically renewed for "
+"{date_start}"
+msgstr ""
+"Avviso CommCare: l'abbonamento di {domain} a {plan} è stato rinnovato "
+"automaticamente per {date_start}"
+
+#: corehq/apps/accounting/emails.py corehq/apps/sso/utils/context_helpers.py
+msgid "tomorrow!"
+msgstr "domani!"
+
+#: corehq/apps/accounting/emails.py
+#, python-format
+msgid "on %s."
+msgstr "il %s."
+
+#: corehq/apps/accounting/emails.py
+#, python-format
+#| msgid ""
+#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
+#| "%(ending_on)s"
+msgid ""
+"CommCare Alert: %(domain_or_account)s's subscription to %(plan_name)s ends "
+"%(ending_on)s"
+msgstr ""
+"Avviso CommCare: l'abbonamento di %(domain_or_account)s a %(plan_name)s "
+"termina il %(ending_on)s"
+
 #: corehq/apps/accounting/filters.py
 msgid "Account Type"
 msgstr "Tipo di account"
@@ -679,6 +712,26 @@ msgid "Submit Request"
 msgstr "Invia Richiesta"
 
 #: corehq/apps/accounting/forms.py
+#| msgid "Do Not Email Subscription Reminders"
+msgid "Subscription Reminder"
+msgstr "Promemoria Abbonamento"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Reminder"
+msgid "Renewal Reminder"
+msgstr "Promemoria Rinnovo"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Subscription Credit"
+msgid "Subscription Ending"
+msgstr "Abbonamento in Scadenza"
+
+#: corehq/apps/accounting/forms.py
+#| msgid "Do Not Email Subscription Reminders"
+msgid "Dimagi Contact Subscription Reminder"
+msgstr "Promemoria Abbonamento Contatto Dimagi"
+
+#: corehq/apps/accounting/forms.py
 #, python-format
 msgid "Received invalid adjustment type: %s"
 msgstr "Tipo di rettifica non valido ricevuto: %s"
@@ -809,40 +862,6 @@ msgstr "Codice postale"
 #: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr "Paese"
-
-#: corehq/apps/accounting/models.py corehq/apps/sso/utils/context_helpers.py
-msgid "tomorrow!"
-msgstr "domani!"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "on %s."
-msgstr "il %s."
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
-msgstr ""
-"Avviso CommCare: l'abbonamento di %(account_name)s a %(plan_name)s termina "
-"%(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
-msgstr ""
-"Avviso CommCare: la prova di 30 giorni per '%(domain)s' termina "
-"%(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
-msgstr ""
-"Avviso CommCare: l'abbonamento di %(domain)s a %(plan_name)s termina "
-"%(ending_on)s"
 
 #: corehq/apps/accounting/models.py
 #, python-format
@@ -1398,6 +1417,263 @@ msgstr ""
 "    Dichiarazione da: CommCare e la società Dimagi, Inc. 245 Main Street, 2° piano, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
+msgid ""
+"\n"
+"    Hello,\n"
+"  "
+msgstr ""
+"\n"
+"    Ciao,\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for billing account %(domain_or_account)s was\n"
+"      declined. Please check to see if your billing information correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+"\n"
+"      Questo è un avviso per informarti che il pagamento con carta di credito per il tuo\n"
+"      abbonamento CommCare per il conto di fatturazione %(domain_or_account)s è stato\n"
+"      rifiutato. Verifica che le informazioni di fatturazione corrispondano correttamente\n"
+"      alla tua carta di credito.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for project space:\n"
+"      <a href=\"%(domain_url)s\">%(domain_or_account)s</a>\n"
+"      was declined. Please check to see if your billing information correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+"\n"
+"      Questo è un avviso per informarti che il pagamento con carta di credito per il tuo\n"
+"      abbonamento CommCare per lo spazio di progetto:\n"
+"      <a href=\"%(domain_url)s\">%(domain_or_account)s</a>\n"
+"      è stato rifiutato. Verifica che le informazioni di fatturazione corrispondano correttamente\n"
+"      alla tua carta di credito.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Here are the details of your declined payment:\n"
+"  "
+msgstr ""
+"\n"
+"    Ecco i dettagli del tuo pagamento rifiutato:\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Billed To: %(brand)s card with the last four digits %(last4)s expiring\n"
+"      %(exp_month)s/%(exp_year)s\n"
+"    "
+msgstr ""
+"\n"
+"      Fatturato a: carta %(brand)s con ultime quattro cifre %(last4)s in scadenza\n"
+"      %(exp_month)s/%(exp_year)s\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#| msgid "Subscription"
+msgid "Subscription plan"
+msgstr "Piano di abbonamento"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#| msgid "Billing Statements"
+msgid "Billing date"
+msgstr "Data di fatturazione"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#| msgid "Invoice #%s"
+msgid "Invoice #"
+msgstr "Fattura n°"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#| msgid ""
+#| "\n"
+#| "    Please find attached the prepayment invoice for your CommCare subscription.\n"
+#| "  "
+msgid ""
+"\n"
+"    Please update your billing information to prevent disruption to your\n"
+"    CommCare subscription.\n"
+"  "
+msgstr ""
+"\n"
+"    Aggiorna le tue informazioni di fatturazione per evitare interruzioni al tuo\n"
+"    abbonamento CommCare.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Please update your billing information at\n"
+"      <a href=\"%(billing_info_url)s\">%(billing_info_url)s</a>\n"
+"      to prevent disruption to your CommCare subscription.\n"
+"    "
+msgstr ""
+"\n"
+"      Aggiorna le tue informazioni di fatturazione su\n"
+"      <a href=\"%(billing_info_url)s\">%(billing_info_url)s</a>\n"
+"      per evitare interruzioni al tuo abbonamento CommCare.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    You'll need to pay the prior invoice whose payment method was declined, but\n"
+"    future invoices will be paid via the updated billing information.\n"
+"  "
+msgstr ""
+"\n"
+"    Dovrai pagare la fattura precedente il cui metodo di pagamento è stato rifiutato, ma\n"
+"    le fatture future saranno pagate tramite le informazioni di fatturazione aggiornate.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "      If you believe this to be in error, please contact support.\n"
+#| "    "
+msgid ""
+"\n"
+"    If you have any questions, please contact %(support_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Se hai domande, contatta %(support_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#| msgid ""
+#| "\n"
+#| "    Thanks, <br />\n"
+#| "    CommCare Team\n"
+#| "  "
+msgid ""
+"\n"
+"    Thanks,<br />\n"
+"    -Dimagi\n"
+"  "
+msgstr ""
+"\n"
+"    Grazie,<br />\n"
+"    -Dimagi\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#| msgid ""
+#| "\n"
+#| "Hello,\n"
+msgid ""
+"\n"
+"Hello,"
+msgstr ""
+"\n"
+"Ciao,"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your CommCare\n"
+"subscription for billing account %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+"\n"
+"Questo è un avviso per informarti che il pagamento con carta di credito per il tuo abbonamento CommCare\n"
+"per il conto di fatturazione %(domain_or_account)s è stato rifiutato. Verifica\n"
+"che le informazioni di fatturazione corrispondano correttamente alla tua carta di credito."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your CommCare\n"
+"subscription for project space %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+"\n"
+"Questo è un avviso per informarti che il pagamento con carta di credito per il tuo abbonamento CommCare\n"
+"per lo spazio di progetto %(domain_or_account)s è stato rifiutato. Verifica\n"
+"che le informazioni di fatturazione corrispondano correttamente alla tua carta di credito."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Here are the details of your declined payment:\n"
+"Billed To: %(brand)s card with last four digits %(last4)s expiring %(exp_month)s/%(exp_year)s"
+msgstr ""
+"\n"
+"Ecco i dettagli del tuo pagamento rifiutato:\n"
+"Fatturato a: carta %(brand)s con ultime quattro cifre %(last4)s in scadenza %(exp_month)s/%(exp_year)s"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#| msgid ""
+#| "\n"
+#| "    Please find attached the prepayment invoice for your CommCare subscription.\n"
+#| "  "
+msgid ""
+"\n"
+"Please update your billing information to prevent disruption to your CommCare\n"
+"subscription."
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Please update your billing information at %(billing_info_url)s\n"
+"to prevent disruption to your CommCare subscription."
+msgstr ""
+"\n"
+"Aggiorna le tue informazioni di fatturazione su %(billing_info_url)s\n"
+"per evitare interruzioni al tuo abbonamento CommCare."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"You'll need to pay the\n"
+"prior invoice whose payment method was declined, but future invoices will be\n"
+"paid via the updated billing information.\n"
+"\n"
+"If you have any questions, please contact %(support_email)s.\n"
+"\n"
+"Thanks,\n"
+"-Dimagi"
+msgstr ""
+"\n"
+"Dovrai pagare la\n"
+"fattura precedente il cui metodo di pagamento è stato rifiutato, ma le fatture future saranno\n"
+"pagate tramite le informazioni di fatturazione aggiornate.\n"
+"\n"
+"Se hai domande, contatta %(support_email)s.\n"
+"\n"
+"Grazie,\n"
+"-Dimagi"
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
@@ -2168,7 +2444,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/registry/templates/registry/email/access_granted.html
 #: corehq/apps/registry/templates/registry/email/access_granted.txt
 #: corehq/apps/registry/templates/registry/email/invitation.html
@@ -2220,8 +2495,11 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2237,7 +2515,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2284,6 +2561,9 @@ msgstr ""
 "%(base_url)s\n"
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #, python-format
 msgid ""
 "\n"
@@ -2779,16 +3059,39 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
 msgid ""
 "\n"
-"    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-"    %(invoice_num)s for your project %(project)s.\n"
-"  "
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your billing account %(domain_or_account)s.\n"
+"    "
 msgstr ""
 "\n"
-"    Questa email è una ricevuta per il pagamento di %(amount)s relativo alla Fattura N.\n"
-"    %(invoice_num)s per il tuo progetto %(project)s.\n"
-"  "
+"      Questa email è una ricevuta per il pagamento di %(amount)s relativo alla Fattura\n"
+"      n° %(invoice_num)s per il tuo conto di fatturazione %(domain_or_account)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
+msgid ""
+"\n"
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your project %(domain_or_account)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Questa email è una ricevuta per il pagamento di %(amount)s relativo alla Fattura\n"
+"      n° %(invoice_num)s per il tuo progetto %(domain_or_account)s.\n"
+"    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
@@ -2814,16 +3117,72 @@ msgstr "Data di Scadenza"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
+#| msgid "Dear %(name)s,"
 msgid ""
-"Dear %(name)s,\n"
+"\n"
+"Dear %(name)s,"
+msgstr ""
+"\n"
+"Gentile %(name)s,"
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
+msgid ""
 "\n"
 "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-"%(invoice_num)s for your project %(project)s.\n"
+"%(invoice_num)s for your billing account %(domain_or_account)s."
 msgstr ""
-"Gentile %(name)s,\n"
 "\n"
-"Questa email è una ricevuta per il pagamento di %(amount)s relativo alla Fattura N.\n"
-"%(invoice_num)s per il tuo progetto %(project)s.\n"
+"Questa email è una ricevuta per il pagamento di %(amount)s relativo alla Fattura n°\n"
+"%(invoice_num)s per il tuo conto di fatturazione %(domain_or_account)s."
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
+msgid ""
+"\n"
+"This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+"%(invoice_num)s for your project %(domain_or_account)s."
+msgstr ""
+"\n"
+"Questa email è una ricevuta per il pagamento di %(amount)s relativo alla Fattura n°\n"
+"%(invoice_num)s per il tuo progetto %(domain_or_account)s."
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+#| msgid ""
+#| "\n"
+#| "Invoices for project space %(domain)s are now marked as paid as of %(date_paid)s.\n"
+#| "\n"
+#| "Project Space: %(domain)s\n"
+#| "Amount Paid: %(amount)s\n"
+#| "Payment Date: %(date_paid)s\n"
+#| "Transaction No.: %(transaction_id)s"
+msgid ""
+"\n"
+"This invoice is now marked as paid as of %(date_paid)s.\n"
+"\n"
+"Invoice No.: %(invoice_num)s\n"
+"Amount Paid: %(amount)s\n"
+"Payment Date: %(date_paid)s\n"
+"Transaction No.: %(transaction_id)s"
+msgstr ""
+"\n"
+"Questa fattura è ora contrassegnata come pagata in data %(date_paid)s.\n"
+"\n"
+"Fattura n°: %(invoice_num)s\n"
+"Importo Pagato: %(amount)s\n"
+"Data Pagamento: %(date_paid)s\n"
+"Numero Transazione: %(transaction_id)s"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
@@ -2850,6 +3209,18 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "Thank you for using CommCare. If you have any questions, please don't\n"
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "\n"
+#| "Best Regards,\n"
+#| "The CommCare Team\n"
+#| "www.commcarehq.org\n"
+#| "\n"
+#| "Email From:\n"
+#| "CommCare and the corporation Dimagi, Inc.\n"
+#| "245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
@@ -2861,19 +3232,18 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA"
 msgstr ""
 "\n"
-"Grazie per aver utilizzato CommCare. Se hai domande, non esitare a\n"
-"contattare %(invoicing_contact_email)s.\n"
+"Grazie per aver utilizzato CommCare. Se hai domande, non esitare a contattare %(invoicing_contact_email)s.\n"
 "\n"
 "Cordiali saluti,\n"
-"Il team di CommCare\n"
+"Il Team CommCare\n"
 "www.commcarehq.org\n"
 "\n"
 "Email da:\n"
 "CommCare e la società Dimagi, Inc.\n"
-"245 Main Street, 2° piano, Cambridge, MA 02142 USA\n"
+"245 Main Street, 2° piano, Cambridge, MA 02142 USA"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
@@ -3183,6 +3553,70 @@ msgstr ""
 "Il Team di CommCare\n"
 "www.commcarehq.org\n"
 
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Your subscription will pause %(ending_on)s In case you would like to\n"
+"    renew, please select auto-renewal <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    Il tuo abbonamento verrà messo in pausa il %(ending_on)s. Nel caso volessi\n"
+"    rinnovare, seleziona il rinnovo automatico <a href=\"%(subscription_url)s\">qui</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Please reach out to %(invoicing_contact_email)s if you have any questions.\n"
+"  "
+msgstr ""
+"\n"
+"    Contatta %(invoicing_contact_email)s se hai domande.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#| msgid "The CommCare Team"
+msgid ""
+"\n"
+"    The CommCare Team\n"
+"  "
+msgstr ""
+"\n"
+"    Il Team CommCare\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(domain)s administrator,\n"
+"\n"
+"  Your subscription will pause %(ending_on)s In case you would like to\n"
+"  renew, please select auto-renewal here: %(subscription_url)s\n"
+"\n"
+"  Please reach out to %(invoicing_contact_email)s if you have any questions.\n"
+"\n"
+"  Best regards,\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Gentile amministratore di %(domain)s,\n"
+"\n"
+"  Il tuo abbonamento verrà messo in pausa il %(ending_on)s. Nel caso volessi\n"
+"  rinnovare, seleziona il rinnovo automatico qui: %(subscription_url)s\n"
+"\n"
+"  Contatta %(invoicing_contact_email)s se hai domande.\n"
+"\n"
+"  Cordiali saluti,\n"
+"  Il Team CommCare\n"
+"  %(base_url)s\n"
+
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
 #, python-format
 msgid ""
@@ -3259,53 +3693,267 @@ msgstr ""
 "Il Team di CommCare\n"
 "%(base_url)s\n"
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    Dear %(name)s,\n"
+#| "  "
+msgid ""
+"\n"
+"    Dear %(dimagi_contact)s,\n"
+"  "
+msgstr ""
+"\n"
+"    Gentile %(dimagi_contact)s,\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    You have been added to the %(domain)s project on %(hq_name)s.\n"
+#| "  "
+msgid ""
+"\n"
+"    You have been identified as the Dimagi point of contact for\n"
+"    %(account_or_domain)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Sei stato identificato come il referente Dimagi per\n"
+"    %(account_or_domain)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "        Your <b>%(plan_name)s</b> subscription will automatically renew on\n"
+#| "        %(date_end)s.\n"
+#| "      "
+msgid ""
+"\n"
+"      This account has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Questo account ha un abbonamento %(plan)s che terminerà il\n"
+"      %(end_date)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "        Your <b>%(plan_name)s</b> subscription will automatically renew on\n"
+#| "        %(date_end)s.\n"
+#| "      "
+msgid ""
+"\n"
+"      This project space has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Questo spazio di progetto ha un abbonamento %(plan)s che terminerà il\n"
+"      %(end_date)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#| msgid ""
+#| "\n"
+#| "    Your 30 Day Trial for %(domain)s ends soon! If you do not\n"
+#| "    change your subscription before then, your subscription will be paused on\n"
+#| "    %(ending_on)s and you will lose access to all features until you\n"
+#| "    re-subscribe to a new paid plan.\n"
+#| "  "
+msgid ""
+"\n"
+"    After that date, the subscription will automatically pause and this space\n"
+"    will lose access to all features until it is re-subscribed to a new paid\n"
+"    plan.\n"
+"  "
+msgstr ""
+"\n"
+"    Dopo tale data, l'abbonamento verrà automaticamente messo in pausa e questo spazio\n"
+"    perderà l'accesso a tutte le funzionalità fino a quando non verrà sottoscritto un nuovo piano a pagamento.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    To change or renew your subscription, please reach out to %(sales_email)s.\n"
+#| "  "
+msgid ""
+"\n"
+"    In case you would like to extend this subscription or have any questions,\n"
+"    please reach out to %(accounts_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Nel caso volessi estendere questo abbonamento o avessi domande,\n"
+"    ti preghiamo di contattare %(accounts_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#| msgid "The CommCare Team"
+msgid ""
+"\n"
+"    The CommCare Team<br />\n"
+"  "
+msgstr ""
+"\n"
+"    Il Team di CommCare<br />\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
 #, python-format
 msgid ""
 "\n"
-"    Your 30 Day Trial for %(domain)s ends soon! If you do not\n"
-"    change your subscription before then, your subscription will be paused on\n"
-"    %(ending_on)s and you will lose access to all features until you\n"
-"    re-subscribe to a new paid plan.\n"
-"  "
+"  Dear %(dimagi_contact)s,\n"
+"\n"
+"  You have been identified as the Dimagi point of contact for\n"
+"  %(account_or_domain)s.\n"
 msgstr ""
 "\n"
-"    La tua prova gratuita di 30 giorni per %(domain)s sta per terminare! Se non\n"
-"    modifichi il tuo abbonamento prima di allora, il tuo abbonamento verrà sospeso il\n"
-"    %(ending_on)s e perderai l'accesso a tutte le funzionalità finché non\n"
-"    sottoscriverai nuovamente un piano a pagamento.\n"
-"  "
+"  Gentile %(dimagi_contact)s,\n"
+"\n"
+"  Sei stato identificato come il referente Dimagi per\n"
+"  %(account_or_domain)s.\n"
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
 #, python-format
 msgid ""
 "\n"
-"    To change your subscription, please log into your project on\n"
-"    CommCare HQ and navigate to the\n"
-"    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
-"    project settings.\n"
+"    This account has a %(plan)s subscription that is ending on %(end_date)s.\n"
 "  "
 msgstr ""
 "\n"
-"    Per modificare il tuo abbonamento, accedi al tuo progetto su\n"
-"    CommCare HQ e vai alla\n"
-"    <a href=\"%(subscription_url)s\">pagina abbonamento</a> nelle\n"
-"    impostazioni del progetto.\n"
+"    Questo account ha un abbonamento %(plan)s che terminerà il %(end_date)s.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+#| msgid ""
+#| "\n"
+#| "        Your <b>%(plan_name)s</b> subscription will automatically renew on\n"
+#| "        %(date_end)s.\n"
+#| "      "
 msgid ""
 "\n"
-"    If you have questions about our pricing plans,\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">you can review them here</a>.\n"
+"    This project space has a %(plan)s subscription that is ending on\n"
+"    %(end_date)s.\n"
 "  "
 msgstr ""
 "\n"
-"    Se hai domande sui nostri piani tariffari,\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">puoi consultarli qui</a>.\n"
+"    Questo spazio di progetto ha un abbonamento %(plan)s che terminerà il\n"
+"    %(end_date)s.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"  After that date, the subscription will automatically pause and this space will\n"
+"  lose access to all features until it is re-subscribed to a new paid plan.\n"
+"\n"
+"  In case you would like to extend this subscription or have any questions,\n"
+"  please reach out to %(accounts_email)s.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Dopo tale data, l'abbonamento verrà automaticamente messo in pausa e questo spazio\n"
+"  perderà l'accesso a tutte le funzionalità fino a quando non verrà sottoscritto un nuovo piano a pagamento.\n"
+"\n"
+"  Nel caso volessi estendere questo abbonamento o avessi domande,\n"
+"  ti preghiamo di contattare %(accounts_email)s.\n"
+"\n"
+"  Cordiali saluti,\n"
+"\n"
+"  Il Team di CommCare\n"
+"  %(base_url)s\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"    ends soon!\n"
+"  "
+msgstr ""
+"\n"
+"    Questo è un promemoria che il tuo abbonamento %(plan_name)s per %(domain)s\n"
+"    terminerà a breve!\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    Renewal: If you would like to renew, just ensure that you have auto-renewal\n"
+"    selected <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    Rinnovo: Se desideri rinnovare, assicurati semplicemente di aver selezionato il rinnovo automatico\n"
+"    <a href=\"%(subscription_url)s\">qui</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    30 days prior to the renewal date, you will receive an invoice for the new\n"
+"    subscription term to renew you to the latest version of your current plan as\n"
+"    <a href=\"%(plan_info_url)s\">described here</a>. If you'd like to renew\n"
+"    sooner, you can self-renew <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    30 giorni prima della data di rinnovo, riceverai una fattura per il nuovo\n"
+"    periodo di abbonamento per rinnovare alla versione più recente del tuo piano attuale come\n"
+"    <a href=\"%(plan_info_url)s\">descritto qui</a>. Se desideri rinnovare prima, puoi farlo autonomamente\n"
+"    <a href=\"%(subscription_url)s\">qui</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+msgid ""
+"\n"
+"    Cancellation: In case you decide you will not be renewing your subscription,\n"
+"    you can simply turn off auto-renew at any point during your subscription\n"
+"    term.\n"
+"  "
+msgstr ""
+"\n"
+"    Cancellazione: Nel caso decidessi di non rinnovare il tuo abbonamento,\n"
+"    puoi semplicemente disattivare il rinnovo automatico in qualsiasi momento durante il periodo di abbonamento.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
+#| "  "
+msgid ""
+"\n"
+"    In case you have any questions about your renewal, please don't hesitate to\n"
+"    contact %(invoicing_contact_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Nel caso avessi domande sul rinnovo, non esitare a\n"
+"    contattare %(invoicing_contact_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
 msgid ""
 "\n"
 "    Thank you for your use and support of CommCare.\n"
@@ -3315,51 +3963,147 @@ msgstr ""
 "    Grazie per l'utilizzo e il supporto a CommCare.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.txt
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.txt
+#, python-format
+#| msgid ""
+#| "\n"
+#| "Dear %(domain)s administrator,\n"
+#| "\n"
+#| "Your %(plan_name)s subscription for %(domain)s ends soon! If you do not\n"
+#| "renew your subscription before then, your subscription will be paused on\n"
+#| "%(ending_on)s and you will lose access to all features until you\n"
+#| "re-subscribe to a new paid plan.\n"
+#| "\n"
+#| "To change or renew your subscription, please log into your project on\n"
+#| "CommCare HQ and and navigate to the subscription page in your project\n"
+#| "settings: %(subscription_url)s\n"
+#| "\n"
+#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
+#| "Thank you for your use and support of CommCare.\n"
+#| "\n"
+#| "Best regards,\n"
+#| "\n"
+#| "The CommCare Team\n"
+#| "%(base_url)s\n"
+msgid ""
+"\n"
+"  Dear %(domain)s administrator,\n"
+"\n"
+"  This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"  ends soon!\n"
+"\n"
+"  Renewal:\n"
+"  If you would like to renew, just ensure that you have auto-renewal selected\n"
+"  here: %(subscription_url)s\n"
+"\n"
+"  30 days prior to the renewal date, you will receive an invoice for the new\n"
+"  subscription term to renew you to the latest version of your current plan as\n"
+"  described here: %(plan_info_url)s.\n"
+"  If you'd like to renew sooner, you can self-renew here: %(subscription_url)s\n"
+"\n"
+"  Cancellation:\n"
+"  In case you decide you will not be renewing your subscription, you can simply\n"
+"  turn off auto-renew at any point during your subscription term.\n"
+"\n"
+"  In case you have any questions about your renewal,\n"
+"  please don't hesitate to contact %(invoicing_contact_email)s.\n"
+"\n"
+"  Thank you for your use and support of CommCare.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Gentile amministratore di %(domain)s,\n"
+"\n"
+"  Questo è un promemoria che il tuo abbonamento %(plan_name)s per %(domain)s\n"
+"  terminerà a breve!\n"
+"\n"
+"  Rinnovo:\n"
+"  Se desideri rinnovare, assicurati semplicemente di aver selezionato il rinnovo automatico\n"
+"  qui: %(subscription_url)s\n"
+"\n"
+"  30 giorni prima della data di rinnovo, riceverai una fattura per il nuovo\n"
+"  periodo di abbonamento per rinnovare alla versione più recente del tuo piano attuale come\n"
+"  descritto qui: %(plan_info_url)s.\n"
+"  Se desideri rinnovare prima, puoi farlo autonomamente qui: %(subscription_url)s\n"
+"\n"
+"  Cancellazione:\n"
+"  Nel caso decidessi di non rinnovare il tuo abbonamento, puoi semplicemente\n"
+"  disattivare il rinnovo automatico in qualsiasi momento durante il periodo di abbonamento.\n"
+"\n"
+"  Nel caso avessi domande sul rinnovo,\n"
+"  non esitare a contattare %(invoicing_contact_email)s.\n"
+"\n"
+"  Grazie per l'utilizzo e il supporto a CommCare.\n"
+"\n"
+"  Cordiali saluti,\n"
+"\n"
+"  Il Team di CommCare\n"
+"  %(base_url)s\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your subscription for project space %(domain)s on\n"
+"    %(plan)s is set to automatically renew on %(date_start)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Questo è un promemoria che il tuo abbonamento per lo spazio di progetto %(domain)s su\n"
+"    %(plan)s è impostato per il rinnovo automatico il %(date_start)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    In case you would not like to renew your subscription, you can simply turn\n"
+"    off auto-renew <a href=\"%(subscription_url)s\">here</a> at any point during\n"
+"    your subscription term.\n"
+"  "
+msgstr ""
+"\n"
+"    Nel caso non volessi rinnovare il tuo abbonamento, puoi semplicemente disattivare\n"
+"    il rinnovo automatico <a href=\"%(subscription_url)s\">qui</a> in qualsiasi momento durante\n"
+"    il periodo di abbonamento.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.txt
 #, python-format
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
 "\n"
-"Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
-"change your subscription before then, your subscription will be paused on\n"
-"%(ending_on)s and you will lose access to all features until you\n"
-"re-subscribe to a new paid plan.\n"
+"This is a reminder that your subscription for project space %(domain)s on\n"
+"%(plan)s is set to automatically renew on %(date_start)s.\n"
 "\n"
-"To change your subscription, please log into your project on\n"
-"CommCare HQ and and navigate to the subscription page in your project\n"
-"settings: %(subscription_url)s\n"
-"\n"
-"If you have questions about our pricing plans, you can review them here:\n"
-"https://www.commcarehq.org/pricing/\n"
-"\n"
-"Thank you for your use and support of CommCare.\n"
+"In case you would not like to renew your subscription, you can simply turn\n"
+"off auto-renew here at any point during your subscription term:\n"
+"%(subscription_url)s\n"
 "\n"
 "Best regards,\n"
 "\n"
 "The CommCare Team\n"
-"%(base_url)s\n"
+"%(base_url)s"
 msgstr ""
 "\n"
 "Gentile amministratore di %(domain)s,\n"
 "\n"
-"La tua prova gratuita di 30 giorni per %(domain)s sta per terminare! Se non\n"
-"modifichi l'abbonamento prima di allora, il tuo abbonamento verrà sospeso il\n"
-"%(ending_on)s e perderai l'accesso a tutte le funzionalità finché non ti\n"
-"abboni a un nuovo piano a pagamento.\n"
+"Questo è un promemoria che il tuo abbonamento per lo spazio di progetto %(domain)s su\n"
+"%(plan)s è impostato per il rinnovo automatico il %(date_start)s.\n"
 "\n"
-"Per modificare il tuo abbonamento, accedi al tuo progetto su\n"
-"CommCare HQ e vai alla pagina dell'abbonamento nelle impostazioni del progetto: %(subscription_url)s\n"
-"\n"
-"Se hai domande sui nostri piani tariffari, puoi consultarli qui:\n"
-"https://www.commcarehq.org/pricing/\n"
-"\n"
-"Grazie per aver scelto e supportato CommCare.\n"
+"Nel caso non volessi rinnovare il tuo abbonamento, puoi semplicemente disattivare\n"
+"il rinnovo automatico qui in qualsiasi momento durante il periodo di abbonamento:\n"
+"%(subscription_url)s\n"
 "\n"
 "Cordiali saluti,\n"
 "\n"
 "Il Team di CommCare\n"
-"%(base_url)s\n"
+"%(base_url)s"
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
@@ -3968,7 +4712,6 @@ msgid "Card"
 msgstr "Carta"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#| msgid "Account Autopay Card"
 msgid "Use account autopay card"
 msgstr "Usa la carta autopay dell'account"
 
@@ -14102,6 +14845,39 @@ msgid "Required format: YYYY-MM-DD (e.g. \"2021-12-31\")"
 msgstr "Formato richiesto: YYYY-MM-DD (es. \"2021-12-31\")"
 
 #: corehq/apps/case_importer/exceptions.py
+#| msgid "Invalid user"
+msgid "Invalid Number"
+msgstr "Numero non valido"
+
+#: corehq/apps/case_importer/exceptions.py
+#| msgid "The user is not a demo user."
+msgid "The given value is not a number"
+msgstr "Il valore fornito non è un numero"
+
+#: corehq/apps/case_importer/exceptions.py
+#| msgid "Invalid"
+msgid "Invalid GPS"
+msgstr "GPS non valido"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid ""
+"Required format: \"latitude longitude\" or \"latitude longitude altitude "
+"precision\""
+msgstr ""
+"Formato richiesto: \"latitudine longitudine\" oppure \"latitudine "
+"longitudine altitudine precisione\""
+
+#: corehq/apps/case_importer/exceptions.py
+#| msgid "Add Phone Number"
+msgid "Invalid Phone Number"
+msgstr "Numero di telefono non valido"
+
+#: corehq/apps/case_importer/exceptions.py
+#| msgid "%s is an invalid phone number."
+msgid "The given value is not a valid phone number"
+msgstr "Il valore fornito non è un numero di telefono valido"
+
+#: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected multiple choice value"
 msgstr "Valore a scelta multipla inatteso"
 
@@ -15954,6 +16730,11 @@ msgstr "Impossibile aggiornare '{}'. Non hai il ruolo appropriato"
 msgid "Unable to remove synced fields. You do not have the appropriate role"
 msgstr ""
 "Impossibile rimuovere i campi sincronizzati. Non hai il ruolo appropriato"
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#| msgid "Could not delete profile '{}' because it has users assigned."
+msgid "Could not delete profile '{}' because it has invitations assigned."
+msgstr "Impossibile eliminare il profilo '{}' perché ha inviti assegnati."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Could not delete profile '{}' because it has users assigned."
@@ -18151,8 +18932,9 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
-msgid "Valid Values &amp; Formats"
-msgstr "Valori e Formati Validi"
+#| msgid "No Validation"
+msgid "Import Validation"
+msgstr "Validazione importazione"
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Case Property Group must have a name"
@@ -22499,7 +23281,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#| msgid "Loading payment methods, please wait..."
 msgid "Loading autopay cards, please wait..."
 msgstr "Caricamento carte autopay, attendere prego..."
 
@@ -22510,11 +23291,6 @@ msgid "Confirmation"
 msgstr "Conferma"
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#| msgid ""
-#| "\n"
-#| "              Please note that this may take several minutes.\n"
-#| "              Thank you for your patience!\n"
-#| "            "
 msgid ""
 "\n"
 "                Please complete the Basic Information section and select a card\n"
@@ -22527,10 +23303,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#| msgid ""
-#| "\n"
-#| "                Want to learn more before signing up?\n"
-#| "              "
 msgid ""
 "\n"
 "                Please provide an autopay card before continuing.\n"
@@ -22541,10 +23313,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#| msgid ""
-#| "\n"
-#| "                Want to learn more before signing up?\n"
-#| "              "
 msgid ""
 "\n"
 "                Please complete the Basic Information section before continuing.\n"
@@ -22582,10 +23350,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#| msgid ""
-#| "\n"
-#| "                    This subscription will be paused on %(next_date)s.\n"
-#| "                  "
 msgid ""
 "\n"
 "                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.\n"
@@ -22872,17 +23636,6 @@ msgstr ""
 "\n"
 "    Se pensi che si tratti di un errore, puoi semplicemente ignorare questa email.\n"
 "    Per saperne di più su CommCare visita http://www.commcarehq.org/.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    Hello,\n"
-"  "
-msgstr ""
-"\n"
-"    Ciao,\n"
-"  "
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
 #, python-format
@@ -23678,20 +24431,14 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-#| msgid "Autopay Card"
 msgid "Select Autopay Card"
 msgstr "Seleziona carta autopay"
 
 #: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-#| msgid "Remove Autopay"
 msgid "Remove autopay method"
 msgstr "Rimuovi metodo autopay"
 
 #: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-#| msgid ""
-#| "\n"
-#| "        You don't have an autopay card set for your account.\n"
-#| "      "
 msgid ""
 "\n"
 "          Please add an autopay card before subscribing.\n"
@@ -24717,14 +25464,12 @@ msgstr ""
 " %(downgrade_date)s. Se si tratta di un errore, contatta %(contact_email)s."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid "Unknown error setting autopay. Please contact Support."
 msgid "Unknown error unsetting autopay method. Please contact Support."
 msgstr ""
 "Errore sconosciuto durante la rimozione del metodo autopay. Contatta il "
 "Supporto."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid "Unknown error setting autopay. Please contact Support."
 msgid "Unknown error setting autopay method. Please contact Support."
 msgstr ""
 "Errore sconosciuto durante l'impostazione del metodo autopay. Contatta il "
@@ -46788,11 +47533,6 @@ msgid "Why can't I edit?"
 msgstr "Perché non posso modificare?"
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
-#| msgid ""
-#| "\n"
-#| "              You do not have permission to modify this flag. Please contact\n"
-#| "              support if any changes are needed.\n"
-#| "            "
 msgid ""
 "\n"
 "                You do not have permission to modify this flag. Please contact\n"
@@ -57546,6 +58286,11 @@ msgstr "Mostra il pulsante \"Abilita tutti i componenti aggiuntivi\""
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "Creazione account operatore mobile in due fasi"
 
+#: corehq/privileges.py
+#| msgid "Use the Data Dictionary to manage case types."
+msgid "Data Dictionary case properties have data types"
+msgstr "Le proprietà dei casi del Dizionario Dati hanno tipi di dati"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Report del Generatore di Report"
@@ -58599,6 +59344,107 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#, python-format
+#~ msgid ""
+#~ "CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
+#~ "%(ending_on)s"
+#~ msgstr ""
+#~ "Avviso CommCare: l'abbonamento di %(account_name)s a %(plan_name)s termina "
+#~ "%(ending_on)s"
+
+#, python-format
+#~ msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
+#~ msgstr ""
+#~ "Avviso CommCare: la prova di 30 giorni per '%(domain)s' termina "
+#~ "%(ending_on)s"
+
+#, python-format
+#~ msgid ""
+#~ "Dear %(name)s,\n"
+#~ "\n"
+#~ "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+#~ "%(invoice_num)s for your project %(project)s.\n"
+#~ msgstr ""
+#~ "Gentile %(name)s,\n"
+#~ "\n"
+#~ "Questa email è una ricevuta per il pagamento di %(amount)s relativo alla Fattura N.\n"
+#~ "%(invoice_num)s per il tuo progetto %(project)s.\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    To change your subscription, please log into your project on\n"
+#~ "    CommCare HQ and navigate to the\n"
+#~ "    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
+#~ "    project settings.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Per modificare il tuo abbonamento, accedi al tuo progetto su\n"
+#~ "    CommCare HQ e vai alla\n"
+#~ "    <a href=\"%(subscription_url)s\">pagina abbonamento</a> nelle\n"
+#~ "    impostazioni del progetto.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    If you have questions about our pricing plans,\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">you can review them here</a>.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Se hai domande sui nostri piani tariffari,\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">puoi consultarli qui</a>.\n"
+#~ "  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "Dear %(domain)s administrator,\n"
+#~ "\n"
+#~ "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
+#~ "change your subscription before then, your subscription will be paused on\n"
+#~ "%(ending_on)s and you will lose access to all features until you\n"
+#~ "re-subscribe to a new paid plan.\n"
+#~ "\n"
+#~ "To change your subscription, please log into your project on\n"
+#~ "CommCare HQ and and navigate to the subscription page in your project\n"
+#~ "settings: %(subscription_url)s\n"
+#~ "\n"
+#~ "If you have questions about our pricing plans, you can review them here:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "Thank you for your use and support of CommCare.\n"
+#~ "\n"
+#~ "Best regards,\n"
+#~ "\n"
+#~ "The CommCare Team\n"
+#~ "%(base_url)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Gentile amministratore di %(domain)s,\n"
+#~ "\n"
+#~ "La tua prova gratuita di 30 giorni per %(domain)s sta per terminare! Se non\n"
+#~ "modifichi l'abbonamento prima di allora, il tuo abbonamento verrà sospeso il\n"
+#~ "%(ending_on)s e perderai l'accesso a tutte le funzionalità finché non ti\n"
+#~ "abboni a un nuovo piano a pagamento.\n"
+#~ "\n"
+#~ "Per modificare il tuo abbonamento, accedi al tuo progetto su\n"
+#~ "CommCare HQ e vai alla pagina dell'abbonamento nelle impostazioni del progetto: %(subscription_url)s\n"
+#~ "\n"
+#~ "Se hai domande sui nostri piani tariffari, puoi consultarli qui:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "Grazie per aver scelto e supportato CommCare.\n"
+#~ "\n"
+#~ "Cordiali saluti,\n"
+#~ "\n"
+#~ "Il Team di CommCare\n"
+#~ "%(base_url)s\n"
+
+#~ msgid "Valid Values &amp; Formats"
+#~ msgstr "Valori e Formati Validi"
 
 #~ msgid "Saved Credit Cards"
 #~ msgstr "Carte di credito salvate"

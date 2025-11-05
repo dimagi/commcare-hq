@@ -162,31 +162,38 @@ msgstr "Оплата щомісяця"
 msgid "Please enter a valid email."
 msgstr "Будь ласка, введіть дійсну електронну адресу."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your first name."
 msgstr "Будь ласка, введіть ім’я."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your last name."
 msgstr "Будь ласка, введіть прізвище."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your organization."
 msgstr "Будь ласка, введіть вашу організацію."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your job title."
 msgstr "Будь ласка, введіть вашу посаду."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your email address."
 msgstr "Будь ласка, введіть вашу електронну адресу."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "We are sorry, but something unexpected has occurred."
 msgstr "Вибачте, сталася непередбачена помилка."
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/hubspot.js
 msgid "Submit Request"
 msgstr "Надіслати запит"
 
