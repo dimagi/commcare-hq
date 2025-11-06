@@ -353,7 +353,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             if self._include_ancestor_locations_data():
                 location_data = self._user_ancestor_locations(grouped_ancestor_locs.get(user['location_id'], []))
-                row_data = location_data + row_data
+                row_data = row_data + location_data
 
             rows.append(row_data)
         return rows
@@ -514,13 +514,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             ancestor_locations_columns = ['{} Name'.format(loc_type.name.title())
                                           for loc_type in self._location_types()]
 
-        table[0] = ancestor_locations_columns + table[0]
+        table[0] = table[0] + ancestor_locations_columns
 
         for row in table[1:]:
             # Last submission
-            row[len(ancestor_locations_columns) + 2] = _fmt_timestamp(row[len(ancestor_locations_columns) + 2])
+            row[2] = _fmt_timestamp(row[2])
             # Last sync
-            row[len(ancestor_locations_columns) + 3] = _fmt_timestamp(row[len(ancestor_locations_columns) + 3])
+            row[3] = _fmt_timestamp(row[3])
         result[0][1] = table
         return result
 
