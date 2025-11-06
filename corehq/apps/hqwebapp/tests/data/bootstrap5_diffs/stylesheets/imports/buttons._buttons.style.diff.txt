@@ -37,7 +37,7 @@
  
  .btn-purple {
 -  .button-variant(white; @cc-dark-cool-accent-mid; darken(@cc-dark-cool-accent-mid, 5));
-+  @include button-variant($white, $cc-dark-cool-accent-mid, darken($cc-dark-cool-accent-mid, 5));
++  @include button-variant($cc-dark-cool-accent-mid, $cc-dark-cool-accent-mid, $white, darken($cc-dark-cool-accent-mid, 5));
  }
  
  .btn-full-width {
