@@ -137,12 +137,7 @@ class UserData:
             raise UserDataError(_("User data profile not found")) from e
 
     def remove_unrecognized(self, schema_fields):
-        changed = False
-        for k in list(self._local_to_user):
-            if k not in schema_fields and not is_system_key(k):
-                del self[k]
-                changed = True
-        return changed
+        return _remove_unrecognized(self._local_to_user, schema_fields)
 
     def items(self):
         return self.to_dict().items()
@@ -203,6 +198,15 @@ class UserData:
             return ret
 
 
+def _remove_unrecognized(local_data, schema_fields):
+    changed = False
+    for k in list(local_data):
+        if k not in schema_fields and not is_system_key(k):
+            del local_data[k]
+            changed = True
+    return changed
+
+
 class SQLUserDataManager(models.Manager):
 
     def get_queryset(self):
@@ -229,6 +233,9 @@ class SQLUserData(models.Model):
     class Meta:
         unique_together = ("user_id", "domain")
         indexes = [models.Index(fields=['user_id', 'domain'])]
+
+    def remove_unrecognized(self, schema_fields):
+        return _remove_unrecognized(self.data, schema_fields)
 
 
 def get_all_profiles_by_id(domain):
