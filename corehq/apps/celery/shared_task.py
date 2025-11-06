@@ -2,7 +2,6 @@ from celery import shared_task
 from django.conf import settings
 
 from corehq.apps.celery.periodic import PeriodicTask
-from corehq.apps.celery.durable import DurableTask
 
 
 def task(*args, **kwargs):
@@ -24,6 +23,8 @@ def task(*args, **kwargs):
 
         All other options defined https://docs.celeryq.dev/en/stable/userguide/tasks.html#list-of-options
     """
+    # depends on a database model which cannot be imported until the app is registered
+    from corehq.apps.celery.durable import DurableTask
 
     default_queue = getattr(settings, 'CELERY_MAIN_QUEUE', 'celery')
     if len(args) == 1 and callable(args[0]) and not kwargs:
