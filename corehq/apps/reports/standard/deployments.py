@@ -275,11 +275,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def process_rows(self, users, fmt_for_export=False):
         rows = []
+        grouped_ancestor_locs = {}
         users = list(users)
 
         if self._include_ancestor_locations_data():
             location_ids = {user['location_id'] for user in users if user['location_id']}
-            grouped_ancestor_locs = self._get_bulk_ancestors(location_ids)
+            if location_ids:
+                grouped_ancestor_locs = self._get_bulk_ancestors(location_ids)
 
         loc_names_dict = self._locations_names_dict(users)
         for user in users:
