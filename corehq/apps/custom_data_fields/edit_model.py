@@ -17,7 +17,7 @@ from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
-from corehq.apps.users.models import SQLUserData, CouchUser
+from corehq.apps.users.models import SQLUserData, CouchUser, Invitation
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -395,6 +395,10 @@ class CustomDataModelMixin(object):
         errors = []
         for profile in all_profiles:
             if profile.id not in updated_profile_list:
+                if Invitation.by_domain(self.domain, expired=False).filter(profile=profile).exists():
+                    errors.append(_("Could not delete profile '{}' because it has invitations "
+                                    "assigned.").format(profile.name))
+                    break
                 user_data = SQLUserData.objects.filter(profile=profile)
                 for ud in user_data:
                     user = CouchUser.get_by_user_id(ud.user_id)

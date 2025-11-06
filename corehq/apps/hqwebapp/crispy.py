@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+
 from django.forms.widgets import DateTimeInput
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -8,8 +9,7 @@ from crispy_forms.bootstrap import AccordionGroup
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Field
-from crispy_forms.layout import LayoutObject
+from crispy_forms.layout import Field, LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
 CSS_LABEL_CLASS = 'field-label'
@@ -24,7 +24,10 @@ class HQFormHelper(FormHelper):
 
     def __init__(self, *args, **kwargs):
         super(HQFormHelper, self).__init__(*args, **kwargs)
-        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        from corehq.apps.hqwebapp.utils.bootstrap import (
+            BOOTSTRAP_5,
+            get_bootstrap_version,
+        )
         self.use_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
 
         if 'autocomplete' not in self.attrs:
@@ -335,7 +338,15 @@ class B3TextField(Field):
 
 
 class FieldsetAccordionGroup(AccordionGroup):
-    template = "hqwebapp/crispy/accordion_group.html"
+    def get_template_name(self, template_pack):
+        from corehq.apps.hqwebapp.utils.bootstrap import (
+            BOOTSTRAP_5,
+            get_bootstrap_version,
+        )
+        if get_bootstrap_version() == BOOTSTRAP_5:
+            return "hqwebapp/crispy/bootstrap5/accordion_group.html"
+        else:
+            return "hqwebapp/crispy/bootstrap3/accordion_group.html"
 
 
 class RadioSelect(Field):

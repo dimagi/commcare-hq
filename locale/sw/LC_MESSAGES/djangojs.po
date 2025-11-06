@@ -162,31 +162,38 @@ msgstr "Inalipiwa kila mwezi"
 msgid "Please enter a valid email."
 msgstr "Tafadhali ingiza barua pepe halali."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your first name."
 msgstr "Tafadhali ingiza jina lako la kwanza."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your last name."
 msgstr "Tafadhali ingiza jina lako la mwisho."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your organization."
 msgstr "Tafadhali ingiza shirika lako."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your job title."
 msgstr "Tafadhali ingiza cheo chako kazini."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your email address."
 msgstr "Tafadhali ingiza anwani yako ya barua pepe."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "We are sorry, but something unexpected has occurred."
 msgstr "Pole, kuna tatizo lisilotarajiwa limetokea."
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/hubspot.js
 msgid "Submit Request"
 msgstr "Tuma Ombi"
 
