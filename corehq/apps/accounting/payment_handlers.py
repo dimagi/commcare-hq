@@ -75,6 +75,7 @@ class BaseStripePaymentHandler(object):
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
         is_autopay_card = request.POST.get('selectedCardType') == 'autopay'
         new_saved_card = request.POST.get('saveCard') and not is_saved_card
+        is_one_time_payment = not (is_saved_card or is_autopay_card or new_saved_card)
 
         billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {
@@ -95,7 +96,7 @@ class BaseStripePaymentHandler(object):
                 else:
                     payment_method = self.payment_method
 
-                if hasattr(payment_method, 'customer'):
+                if not is_one_time_payment and hasattr(payment_method, 'customer'):
                     customer = payment_method.customer
 
                 if new_saved_card:
