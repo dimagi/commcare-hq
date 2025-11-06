@@ -163,6 +163,7 @@ advanced_v0 = pro_v1 + [
     privileges.APP_DEPENDENCIES,
     privileges.BULK_DATA_EDITING,
     privileges.DATA_DICT_TYPES,
+    privileges.GEOJSON_EXPORT,
 ]
 
 enterprise_v0 = advanced_v0 + [

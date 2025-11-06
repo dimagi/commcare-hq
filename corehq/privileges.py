@@ -126,6 +126,7 @@ CASE_DEDUPE = 'case_deduplicate'
 CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 APP_DEPENDENCIES = 'app_dependencies'
 DATA_DICT_TYPES = 'data_dict_types'
+GEOJSON_EXPORT = 'geojson_export'
 
 # "Enable All Application Add-Ons" in Project Settings > Basic and
 # "Enable All Add-Ons" in Application Settings > "Add-Ons"
@@ -199,6 +200,7 @@ MAX_PRIVILEGES = [
     BULK_DATA_EDITING,
     TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     DATA_DICT_TYPES,
+    GEOJSON_EXPORT,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -281,5 +283,6 @@ class Titles(object):
             APP_DEPENDENCIES: _("App Dependencies"),
             SHOW_ENABLE_ALL_ADD_ONS: _('Show "Enable All Add-Ons" button'),
             TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION: _("Two-stage Mobile Worker Account Creation"),
-            DATA_DICT_TYPES: _("Data Dictionary case properties have data types")
+            DATA_DICT_TYPES: _("Data Dictionary case properties have data types"),
+            GEOJSON_EXPORT: _("Case Export supports exporting geolocated data in GeoJSON format"),
         }.get(privilege, privilege)
