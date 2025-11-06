@@ -791,7 +791,7 @@ def send_credits_on_hq_report():
     if settings.SAAS_REPORTING_EMAIL and settings.SERVER_ENVIRONMENT in [
         'production',
         'india',
-        'swiss'
+        'eu'
     ]:
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
         credits_report = CreditsAutomatedReport()
