@@ -1,9 +1,9 @@
 import datetime
-import json
 import uuid
 from unittest.mock import patch
 
 import attr
+import kombu.utils.json as kombu_json
 import pytest
 from celery import Task
 from celery import states as celery_states
@@ -13,27 +13,7 @@ from django.test import TestCase
 from corehq.apps.celery import task
 from corehq.apps.celery.durable import UnsupportedSerializationError, update_task_record
 from corehq.apps.celery.models import TaskRecord
-
-
-@task()
-def plain_task():
-    pass
-
-
-@task(durable=True)
-def durable_task():
-    pass
-
-
-@task(durable=True)
-def durable_task_with_args(test_id, test_data=None):
-    pass
-
-
-@attr.s(auto_attribs=True)
-class MockAsyncResult:
-    task_id: str
-    state: str
+from corehq.util.test_utils import generate_cases
 
 
 class TestDurableTask(TestCase):
@@ -59,45 +39,36 @@ class TestDurableTask(TestCase):
 
     def test_task_is_tracked(self):
         result = durable_task.delay()
-        record = TaskRecord.objects.get(task_id=result.task_id)
-        assert record.sent
+        TaskRecord.objects.get(task_id=result.task_id)  # should not raise
 
     def test_unable_to_send_task_to_broker(self):
-        self.mock_apply_async.side_effect = OperationalError
+        self.mock_apply_async.side_effect = OperationalError("failed to send to broker")
         with pytest.raises(OperationalError):
             durable_task.delay()
 
-        records = TaskRecord.objects.filter(task_id__isnull=True)
-        assert len(records) == 1
-        assert not records[0].sent
-        assert records[0].name == 'corehq.apps.celery.tests.test_durable_task.durable_task'
+        (record,) = TaskRecord.objects.filter(task_id__isnull=True)
+        assert not record.sent
+        assert record.name == 'corehq.apps.celery.tests.test_durable_task.durable_task'
+        assert record.error == 'OperationalError: failed to send to broker'
 
     def test_args_and_kwargs_are_serialized(self):
-        test_id = uuid.uuid4()
+        test_uuid = uuid.uuid4()
+        test_datetime = datetime.datetime(2025, 10, 31, 11, 5)
         test_data = {
             'id': 12345,
             'properties': {
                 'field_one': 'value_one',
-                'field_two': 'value_two',
-                'created': datetime.datetime(2025, 10, 31, 11, 5),
+                'created': test_datetime,
             },
         }
 
-        result = durable_task_with_args.delay(test_id, test_data=test_data)
+        result = durable_task_with_args.delay(test_uuid, test_data=test_data)
         record = TaskRecord.objects.get(task_id=result.task_id)
-        deserialized_args = json.loads(record.args)
-        deserialized_kwargs = json.loads(record.kwargs)
-        assert deserialized_args == [{'__type__': 'uuid', '__value__': {'hex': f'{test_id.hex}'}}]
-        assert deserialized_kwargs == {
-            'test_data': {
-                'id': 12345,
-                'properties': {
-                    'field_one': 'value_one',
-                    'field_two': 'value_two',
-                    'created': {'__type__': 'datetime', '__value__': '2025-10-31T11:05:00'},
-                },
-            }
-        }
+
+        deserialized_args = kombu_json.loads(record.args)
+        assert deserialized_args == [test_uuid]
+        deserialized_kwargs = kombu_json.loads(record.kwargs)
+        assert deserialized_kwargs == {'test_data': test_data}
 
     def test_empty_headers_for_regular_task(self):
         plain_task.delay()
@@ -111,16 +82,80 @@ class TestDurableTask(TestCase):
 
     def test_durable_task_with_pickling_raises_exception(self):
         with pytest.raises(UnsupportedSerializationError):
+
             @task(durable=True, serializer='pickle')
             def durable_task_with_pickling(test_id):
                 pass
 
     def test_existing_record_is_updated_for_retries(self):
+        # this would ideally test that the record is updated prior to be deleted
+        # in update_task_record, but due to CELERY_ALWAYS_EAGER and trickiness
+        # disabling the receiver for the task_postrun signal, it isn't straightforward
         task_id = uuid.uuid4()
         TaskRecord.objects.create(task_id=task_id, name=durable_task.__name__, args='[]', kwargs='{}', sent=True)
+        # calls apply_async directly to pass in the task_id kwarg, which isn't possible via .delay()
         durable_task.apply_async(task_id=str(task_id))
         with pytest.raises(TaskRecord.DoesNotExist):
             TaskRecord.objects.get(task_id=task_id)
+
+
+class TestUpdateTaskRecord(TestCase):
+    def test_empty_task_does_not_raise_error(self):
+        update_task_record(task={}, state=celery_states.SUCCESS)  # should not raise
+
+    def test_task_without_durable_flag(self):
+        task = MockTask(request=MockRequest(id=uuid.uuid4(), headers={}))
+        update_task_record(task=task, state=celery_states.SUCCESS)  # should not raise
+
+    @generate_cases([
+        (celery_states.SUCCESS,),
+        (celery_states.FAILURE,),
+        (celery_states.REVOKED,),
+    ])
+    def test_durable_task_record_is_deleted_when_in_ready_state(self, ready_state):
+        # ready_states as defined by celery (v5.4.0)
+        task_id = uuid.uuid4()
+        TaskRecord.objects.create(task_id=task_id, name='app.test_task', sent=True, args={}, kwargs={})
+        task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
+        update_task_record(task=task, state=ready_state)
+        with pytest.raises(TaskRecord.DoesNotExist):
+            TaskRecord.objects.get(task_id=task_id)
+
+    @generate_cases([
+        (celery_states.PENDING,),
+        (celery_states.RECEIVED,),
+        (celery_states.STARTED,),
+        (celery_states.REJECTED,),
+        (celery_states.RETRY,),
+    ])
+    def test_durable_task_record_is_not_deleted_when_in_unready_state(self, unready_state):
+        # unready_states as defined by celery (v5.4.0)
+        task_id = uuid.uuid4()
+        TaskRecord.objects.create(task_id=task_id, name='app.test_task', sent=True, args={}, kwargs={})
+        task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
+        update_task_record(task=task, state=unready_state)
+        TaskRecord.objects.get(task_id=task_id)  # should not raise
+
+
+@task()
+def plain_task():
+    pass
+
+
+@task(durable=True)
+def durable_task():
+    pass
+
+
+@task(durable=True)
+def durable_task_with_args(test_id, test_data=None):
+    pass
+
+
+@attr.s(auto_attribs=True)
+class MockAsyncResult:
+    task_id: str
+    state: str
 
 
 @attr.s(auto_attribs=True)
@@ -132,44 +167,3 @@ class MockRequest:
 @attr.s(auto_attribs=True)
 class MockTask:
     request: MockRequest
-
-
-class TestUpdateTaskRecord(TestCase):
-    def test_empty_task_does_not_raise_error(self):
-        update_task_record(task={})
-
-    def test_task_without_durable_flag(self):
-        task = MockTask(request=MockRequest(id=uuid.uuid4(), headers={}))
-        update_task_record(task=task, state=celery_states.SUCCESS)
-
-    def test_durable_task_record_is_deleted_when_in_ready_state(self):
-        # as defined by celery at the time of writing this test
-        ready_states = [
-            celery_states.SUCCESS,
-            celery_states.FAILURE,
-            celery_states.REVOKED,
-        ]
-        for state in ready_states:
-            task_id = uuid.uuid4()
-            TaskRecord.objects.create(task_id=task_id, name='test-task', sent=True, args={}, kwargs={})
-            task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
-            update_task_record(task=task, state=state)
-            with pytest.raises(TaskRecord.DoesNotExist):
-                TaskRecord.objects.get(task_id=task_id)
-
-    def test_durable_task_record_is_not_deleted_when_in_unready_state(self):
-        # as defined by celery at the time of writing this test
-        unready_states = [
-            celery_states.PENDING,
-            celery_states.RECEIVED,
-            celery_states.STARTED,
-            celery_states.REJECTED,
-            celery_states.RETRY,
-        ]
-        for state in unready_states:
-            task_id = uuid.uuid4()
-            TaskRecord.objects.create(task_id=task_id, name='test-task', sent=True, args={}, kwargs={})
-            task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
-            update_task_record(task=task, state=state)
-            record = TaskRecord.objects.get(task_id=task_id)
-            assert record.sent
