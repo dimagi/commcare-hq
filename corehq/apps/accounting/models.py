@@ -3719,7 +3719,7 @@ class StripePaymentMethod(PaymentMethod):
 
     def _update_autopay_status(self, card, billing_account, autopay):
         stripe.Customer.modify_source(customer=self.customer.id, id=card.id,
-                                      metadata={self._auto_pay_card_metadata_key(billing_account): autopay})
+                                      metadata={self._auto_pay_card_metadata_key(billing_account): str(autopay)})
 
     def _remove_autopay_card(self, billing_account):
         autopay_card = self.get_autopay_card(billing_account)
