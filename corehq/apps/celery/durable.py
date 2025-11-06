@@ -4,6 +4,8 @@ from celery import states as celery_states
 from celery.signals import task_postrun
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery.models import TaskRecord
+
 
 class DurableTask(Task):
     """
@@ -19,8 +21,6 @@ class DurableTask(Task):
             )
 
     def apply_async(self, args=None, kwargs=None, **opts):
-        from corehq.apps.celery.models import TaskRecord
-
         if not getattr(self, 'durable', False):
             return super().apply_async(args=args, kwargs=kwargs, **opts)
 
@@ -62,8 +62,6 @@ class DurableTask(Task):
 
 @task_postrun.connect
 def update_task_record(*, state, **kwargs):
-    from corehq.apps.celery.models import TaskRecord
-
     task = kwargs.get('task')
     try:
         headers = task.request.headers or {}
