@@ -275,13 +275,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def process_rows(self, users, fmt_for_export=False):
         rows = []
-        grouped_ancestor_locs = {}
+        locations_hierarchy = {}
         users = list(users)
 
-        if self._include_ancestor_locations_data():
+        if self._include_primary_locations_hierarchy():
             location_ids = {user['location_id'] for user in users if user['location_id']}
             if location_ids:
-                grouped_ancestor_locs = self._get_bulk_ancestors(location_ids)
+                locations_hierarchy = self._get_hierarchy(location_ids)
 
         loc_names_dict = self._locations_names_dict(users)
         for user in users:
@@ -353,15 +353,15 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if self.show_build_profile:
                 row_data.append(last_build_profile_name)
 
-            if self._include_ancestor_locations_data():
-                location_data = self._user_ancestor_locations(grouped_ancestor_locs.get(user['location_id'], []))
+            if self._include_primary_locations_hierarchy():
+                location_data = self._ordered_hierarchy(locations_hierarchy.get(user['location_id'], []))
                 row_data = row_data + location_data
 
             rows.append(row_data)
         return rows
 
     @memoized
-    def _include_ancestor_locations_data(self):
+    def _include_primary_locations_hierarchy(self):
         toggle = toggles.LOCATION_COLUMNS_APP_STATUS_REPORT
         return (
             (
@@ -370,16 +370,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             )
         )
 
-    def _get_bulk_ancestors(self, location_ids):
+    def _get_hierarchy(self, location_ids):
         """
-        Returns the grouped ancestors for the location ids passed in the
-        dictionary of following pattern
-        {location_id_1: [self, parent, parent_of_parent,.,.,.,],
-        location_id_2: [self, parent, parent_of_parent,.,.,.,],
-
+        Returns the hierarchy for locations
+        {
+            location_id_1: [self, parent, parent_of_parent,.,.,.,],
+            location_id_2: [self, parent, parent_of_parent,.,.,.,],
         }
-        :param location_ids: locations ids whose ancestors needs to be find
-        :return: dict
         """
         where = Q(domain=self.domain, location_id__in=location_ids)
         location_ancestors = SQLLocation.objects.get_ancestors(where)
@@ -400,8 +397,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         return grouped_location
 
-    def _user_ancestor_locations(self, ancestors):
-        # returns the ancestor locations in order of location types
+    def _ordered_hierarchy(self, ancestors):
+        # returns the ancestor locations in corresponding slot for ALL location types
+        # add empty placeholder when no corresponding ancestor for a location type
         ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
         return [
             ancestors_by_type_id.get(location_type.id, '---')
@@ -512,7 +510,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         table = list(result[0][1])
         ancestor_locations_columns = []
 
-        if self._include_ancestor_locations_data():
+        if self._include_primary_locations_hierarchy():
             ancestor_locations_columns = [_('{} Name').format(loc_type.name.title())
                                           for loc_type in self._location_types()]
 

@@ -244,9 +244,9 @@ class TestApplicationStatusReport(TestCase):
             ]
         )
 
-    @patch('corehq.apps.reports.standard.deployments.ApplicationStatusReport._include_ancestor_locations_data')
-    def test_export_table_with_ancestor_locations_data(self, mock_include_ancestor_locations_data):
-        mock_include_ancestor_locations_data.return_value = True
+    @patch('corehq.apps.reports.standard.deployments.ApplicationStatusReport._include_primary_locations_hierarchy')
+    def test_export_table_with_ancestor_locations_data(self, mock_include_primary_locations_hierarchy):
+        mock_include_primary_locations_hierarchy.return_value = True
 
         report = ApplicationStatusReport(self.request, domain=self.domain_name_a)
         export_table = report.export_table
