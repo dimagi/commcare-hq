@@ -5,10 +5,6 @@ from celery.signals import task_postrun
 from dimagi.utils.logging import notify_exception
 
 
-class UnsupportedSerializationError(Exception):
-    """Raised when attempting to use serialization other than JSON"""
-
-
 class DurableTask(Task):
     """
     Only supports tasks configured with json serialization (i.e. no support for pickle)
@@ -16,12 +12,11 @@ class DurableTask(Task):
 
     def __init__(self):
         super().__init__()
-        if getattr(self, 'durable', False):
-            if self.serializer != 'json':
-                raise UnsupportedSerializationError(
-                    f"Cannot create a durable task with {self.serializer} serialization."
-                    "Durable tasks only support JSON serialization."
-                )
+        if getattr(self, 'durable', False) and self.serializer != 'json':
+            raise UnsupportedSerializationError(
+                f"Cannot create a durable task with {self.serializer} serialization."
+                "Durable tasks only support JSON serialization."
+            )
 
     def apply_async(self, args=None, kwargs=None, **opts):
         from corehq.apps.celery.models import TaskRecord
@@ -45,7 +40,7 @@ class DurableTask(Task):
                     details={'error': str(e)},
                 )
 
-        if not record:
+        if record is None:
             record = TaskRecord(
                 name=self.name,
                 args=kombu_json.dumps(args),
@@ -66,18 +61,20 @@ class DurableTask(Task):
 
 
 @task_postrun.connect
-def update_task_record(**kwargs):
+def update_task_record(*, state, **kwargs):
     from corehq.apps.celery.models import TaskRecord
 
     task = kwargs.get('task')
     try:
-        headers = task.request.headers
-    except (NameError, AttributeError):
+        headers = task.request.headers or {}
+    except AttributeError:
         # if there are no headers, it isn't a durable task
         return
 
-    if headers.get('durable', False):
-        state = kwargs.get('state')
-        if state in celery_states.READY_STATES:
-            record = TaskRecord.objects.get(task_id=task.request.id)
-            record.delete()
+    if headers.get('durable', False) and state in celery_states.READY_STATES:
+        record = TaskRecord.objects.get(task_id=task.request.id)
+        record.delete()
+
+
+class UnsupportedSerializationError(Exception):
+    """Raised when attempting to use serialization other than JSON"""
