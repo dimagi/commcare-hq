@@ -46,7 +46,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
     var _rateLimit = { rateLimit: { method: "notifyWhenChangesStop", timeout: 400 } };
 
     // ---------------------------------------------------------------------
-    // Step 1 Fields
+    // Create User Account Fields
     // ---------------------------------------------------------------------
     const serverLocationModel = serverLocationSelect({});
     self.serverLocation = serverLocationModel.serverLocation;
@@ -141,7 +141,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
     self.phoneNumber = ko.observable();
 
     // ---------------------------------------------------------------------
-    // Step 2
+    // Name Project Fields
     // ---------------------------------------------------------------------
     self.projectName = ko.observable(defaults.project_name)
         .extend({
@@ -251,7 +251,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
         return $(containerSelector + " form ." + self.steps()[stepNum]);
     };
 
-    self.isStepOneValid = ko.computed(function () {
+    self.isUserStepValid = ko.computed(function () {
         var isPasswordValid;
         if (self.isSso()) {
             isPasswordValid = true;
@@ -272,11 +272,11 @@ var formViewModel = function (defaults, containerSelector, steps) {
             && isPasswordValid;
     });
 
-    self.disableNextStepOne = ko.computed(function () {
-        return !self.isStepOneValid();
+    self.disableNextUserStep = ko.computed(function () {
+        return !self.isUserStepValid();
     });
 
-    self.isStepTwoValid = ko.computed(function () {
+    self.isProjectStepValid = ko.computed(function () {
         return self.projectName() !== undefined
             && self.projectName.isValid()
             && self.isCompanyNameValid()
@@ -284,8 +284,8 @@ var formViewModel = function (defaults, containerSelector, steps) {
             && self.eulaConfirmed();
     });
 
-    self.disableNextStepTwo = ko.computed(function () {
-        return !self.isStepTwoValid();
+    self.disableNextProjectStep = ko.computed(function () {
+        return !self.isProjectStepValid();
     });
 
     self.nextStep = function () {

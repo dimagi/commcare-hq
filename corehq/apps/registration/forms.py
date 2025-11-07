@@ -247,14 +247,14 @@ class RegisterWebUserForm(forms.Form):
                         twbscrispy.StrictButton(
                             gettext("Next"),
                             css_class="btn btn-primary btn-lg",
-                            data_bind="click: nextStep, disable: disableNextStepOne"
+                            data_bind="click: nextStep, disable: disableNextUserStep"
                         ),
                         css_class="mt-3",
                     ),
                     hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
                 ),
-                css_class="form-bubble form-step step-1",
+                css_class="form-bubble form-step user-step",
                 style="display: none;"
             ),
             crispy.Div(
@@ -290,10 +290,10 @@ class RegisterWebUserForm(forms.Form):
                         gettext("Finish"),
                         css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
-                                  "disable: disableNextStepTwo"
+                                  "disable: disableNextProjectStep"
                     )
                 ),
-                css_class="form-bubble form-step step-2",
+                css_class="form-bubble form-step project-step",
                 style="display: none;"
             ),
         )
