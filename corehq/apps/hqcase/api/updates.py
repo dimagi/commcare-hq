@@ -201,7 +201,20 @@ def _get_bulk_updates(domain, all_data, user):
         try:
             is_creation = data.pop('create', None)
             if is_creation is None:
-                raise UserError("A 'create' flag is required for each update.")
+                if not data.get('case_id') and data.get('external_id'):
+                    # Allow upsert on external_id
+                    case = CommCareCase.objects.get_case_by_external_id(
+                        domain,
+                        data['external_id'],
+                        raise_multiple=True,
+                    )  # Raises CommCareCase.MultipleObjectsReturned
+                    if case:
+                        is_creation = False
+                        data['case_id'] = case.case_id
+                    else:
+                        is_creation = True
+                else:
+                    raise UserError("A 'create' flag is required for each update.")
             updates.append(_get_individual_update(domain, data, user, is_creation))
         except UserError as e:
             errors.append(f'Error in row {i}: {e}')
