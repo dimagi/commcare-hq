@@ -546,6 +546,21 @@ class UpdateCaseAction(FormAction):
         if all_missing_mappings:
             raise MissingPropertyMapException(*all_missing_mappings)
 
+    def get_mappings(self):
+        mappings = {}
+        self.make_multi()
+
+        for (case_property, updates) in self.update_multi.items():
+            mappings[case_property] = [self.update_to_json(update) for update in updates]
+
+        return mappings
+
+    def update_to_json(self, update):
+        json = update.to_json()
+        if 'doc_type' in json:
+            del json['doc_type']
+        return json
+
 
 class PreloadAction(FormAction):
 
@@ -655,6 +670,34 @@ class OpenCaseAction(FormAction):
     def _update_has_name(self, update):
         return bool(update.question_path)
 
+    def get_assigned_names(self):
+        questions = []
+        if self.name_update_multi:
+            questions.extend(self.name_update_multi)
+
+        if self.name_update:
+            questions.append(self.name_update)
+
+        return [question.question_path for question in questions if question.question_path]
+
+    def assign_name_update(self, question_path):
+        self.name_update = ConditionalCaseUpdate(question_path=question_path)
+        self.name_update_multi = []
+
+    def get_mappings(self):
+        mappings = {}
+        self.make_multi()
+
+        mappings['name'] = [self.update_to_json(update) for update in self.name_update_multi]
+
+        return mappings
+
+    def update_to_json(self, update):
+        json = update.to_json()
+        if 'doc_type' in json:
+            del json['doc_type']
+        return json
+
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
@@ -696,6 +739,33 @@ class UpdateCaseDiff(DocumentSchema):
 class FormActionsDiff(DocumentSchema):
     open_case = SchemaProperty(OpenCaseDiff)
     update_case = SchemaProperty(UpdateCaseDiff)
+
+    @classmethod
+    def parse_universal_diff(cls, universal_diff_json, is_registration=False):
+        open_diff = OpenCaseDiff()
+        update_diff = UpdateCaseDiff(universal_diff_json)
+
+        if is_registration:
+            if 'name' in update_diff.add:
+                name_additions = update_diff.add['name']
+                open_diff.add = name_additions
+                del update_diff.add['name']
+
+            if 'name' in update_diff.update:
+                name_updates = update_diff.update['name']
+                open_diff.update = name_updates
+                del update_diff.update['name']
+
+            if 'name' in update_diff.delete:
+                name_deletions = update_diff.delete['name']
+                open_diff.delete = name_deletions
+                del update_diff.delete['name']
+
+        diff = FormActionsDiff()
+        diff.open_case = open_diff
+        diff.update_case = update_diff
+
+        return diff
 
 
 class FormActions(UpdateableDocument):
@@ -766,6 +836,17 @@ class FormActions(UpdateableDocument):
                 self.update_case.normalize_update()
             else:
                 self.update_case.make_single()
+
+    def get_mappings(self):
+        mappings = {}
+
+        if self.open_case:
+            mappings.update(self.open_case.get_mappings())
+
+        if self.update_case:
+            mappings.update(self.update_case.get_mappings())
+
+        return mappings
 
 
 class CaseIndex(DocumentSchema):
@@ -1726,6 +1807,9 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         """
         return self.get_case_updates().get(case_type, [])
 
+    def get_source_with_mappings(self):
+        return self.source
+
 
 class JRResourceProperty(StringProperty):
 
@@ -2112,6 +2196,14 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
                 case_relationships_by_child_type[child_case_type].add(
                     (parent_case_type, subcase.reference_id or 'parent'))
         return case_relationships_by_child_type
+
+    def get_source_with_mappings(self):
+        if not self._parent.case_type:
+            return self.source
+
+        xform = XForm(self.source)
+        xform.add_case_mappings(self)
+        return xform.render_pretty().decode('utf-8')
 
 
 class GraphAnnotations(IndexedSchema):
