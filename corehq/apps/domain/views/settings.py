@@ -562,6 +562,7 @@ class DomainPasswordResetView(PasswordResetView):
         return kwargs
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CustomPasswordResetView(PasswordResetConfirmView):
     urlname = "password_reset_confirm"
 
