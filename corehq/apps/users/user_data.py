@@ -66,19 +66,14 @@ class UserData:
 
     def to_dict(self):
         return {
-            **self._schema_defaults,
+            **{field: '' for field in self._schema_fields},
             **{k: v for k, v in self._local_to_user.items() if k not in self._provided_by_system},
             **self._provided_by_system,
         }
 
-    @property
-    def _schema_defaults(self):
-        fields = self._schema_fields
-        return {field.slug: '' for field in fields}
-
     @cached_property
     def _schema_fields(self):
-        return get_user_schema_fields(self.domain)
+        return _get_schema_fields(self.domain)
 
     @property
     def raw(self):
@@ -125,8 +120,8 @@ class UserData:
         except CustomDataFieldsProfile.DoesNotExist as e:
             raise UserDataError(_("User data profile not found")) from e
 
-    def remove_unrecognized(self, schema_fields):
-        return _remove_unrecognized(self._local_to_user, schema_fields)
+    def remove_unrecognized(self):
+        return _remove_unrecognized(self._local_to_user, self._schema_fields)
 
     def items(self):
         return self.to_dict().items()
@@ -235,15 +230,15 @@ def get_all_profiles_by_id(domain):
     }
 
 
-def get_user_schema_fields(domain):
+def _get_schema_fields(domain):
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 
     try:
         definition = CustomDataFieldsDefinition.objects.get(domain=domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
     except CustomDataFieldsDefinition.DoesNotExist:
-        return []
+        return set()
     else:
-        return definition.get_fields()
+        return {f.slug for f in definition.get_fields()}
 
 
 def prime_user_data_caches(users, domain):
@@ -253,7 +248,7 @@ def prime_user_data_caches(users, domain):
     :return: generator that yields the enriched user objects
     """
     profiles_by_id = get_all_profiles_by_id(domain)
-    schema_fields = get_user_schema_fields(domain)
+    schema_fields = _get_schema_fields(domain)
 
     for chunk in chunked(users, 100):
         user_ids = [user.user_id for user in chunk]
