@@ -78,18 +78,7 @@ class UserData:
 
     @cached_property
     def _schema_fields(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import (
-            CUSTOM_USER_DATA_FIELD_TYPE,
-        )
-
-        try:
-            definition = CustomDataFieldsDefinition.objects.get(
-                domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
-            fields = definition.get_fields()
-        except CustomDataFieldsDefinition.DoesNotExist:
-            return []
-
-        return fields
+        return get_user_schema_fields(self.domain)
 
     @property
     def raw(self):
@@ -252,10 +241,9 @@ def get_user_schema_fields(domain):
     try:
         definition = CustomDataFieldsDefinition.objects.get(domain=domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
     except CustomDataFieldsDefinition.DoesNotExist:
-        fields = []
+        return []
     else:
-        fields = definition.get_fields()
-    return fields
+        return definition.get_fields()
 
 
 def prime_user_data_caches(users, domain):
