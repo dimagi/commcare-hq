@@ -6,7 +6,7 @@ import "registration/js/bootstrap5/login";
 
 newUser.setOnModuleLoad(function () {
     $('.loading-form-step').fadeOut(500, function () {
-        $('.user-step').fadeIn(500);
+        $('.cloud-step').fadeIn(500);
     });
 });
 newUser.initRMI(initialPageData.reverse('process_registration'));
@@ -17,7 +17,7 @@ if (!initialPageData.get('hide_password_feedback')) {
 var regForm = newUser.formViewModel(
     initialPageData.get('reg_form_defaults'),
     '#registration-form-container',
-    ['user-step', 'project-step', 'final-step'],
+    ['cloud-step', 'user-step', 'project-step', 'final-step'],
 );
 $('#registration-form-container').koApplyBindings(regForm);
 

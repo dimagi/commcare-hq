@@ -178,8 +178,30 @@ class RegisterWebUserForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Fieldset(
+                    _('Choose Your Cloud Location'),
+                    hqcrispy.FormStepNumber(1, 3),
+                    # TODO: cloud location selection
+                    crispy.Div(
+                        twbscrispy.StrictButton(
+                            gettext("Back"),
+                            css_id="back-to-start-btn",
+                            css_class="btn btn-outline-primary btn-lg d-none",
+                        ),
+                        twbscrispy.StrictButton(
+                            gettext("Next"),
+                            css_class="btn btn-primary btn-lg",
+                            data_bind="click: nextStep"
+                        ),
+                        css_class="mt-3",
+                    ),
+                ),
+                css_class="form-bubble form-step cloud-step",
+                style="display: none;"
+            ),
+            crispy.Div(
+                crispy.Fieldset(
                     _('Create Your Account'),
-                    hqcrispy.FormStepNumber(1, 2),
+                    hqcrispy.FormStepNumber(2, 3),
                     *server_location_field,
                     crispy.Div(
                         hqcrispy.InlineField(
@@ -241,8 +263,8 @@ class RegisterWebUserForm(forms.Form):
                     crispy.Div(
                         twbscrispy.StrictButton(
                             gettext("Back"),
-                            css_id="back-to-start-btn",
-                            css_class="btn btn-outline-primary btn-lg d-none",
+                            css_class="btn btn-outline-primary btn-lg",
+                            data_bind="click: previousStep"
                         ),
                         twbscrispy.StrictButton(
                             gettext("Next"),
@@ -260,7 +282,7 @@ class RegisterWebUserForm(forms.Form):
             crispy.Div(
                 crispy.Fieldset(
                     _('Name Your First Project'),
-                    hqcrispy.FormStepNumber(2, 2),
+                    hqcrispy.FormStepNumber(3, 3),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'project_name',
