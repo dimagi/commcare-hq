@@ -391,7 +391,7 @@ class RegisterDomainView(TemplateView):
                 'current_page': {'page_name': _('Confirm Account')},
             })
             track_workflow_noop(self.request.user.email, "Created new project")
-            return render(request, 'registration/bootstrap5/confirmation_sent.html', context)
+            return render(request, 'registration/confirmation_sent.html', context)
 
         if nextpage:
             return HttpResponseRedirect(nextpage)
@@ -481,7 +481,7 @@ def resend_confirmation(request):
                 'requested_domain': dom_req.domain,
                 'current_page': {'page_name': _('Confirmation Email Sent')},
             })
-            return render(request, 'registration/bootstrap5/confirmation_sent.html',
+            return render(request, 'registration/confirmation_sent.html',
                 context)
 
     context.update({

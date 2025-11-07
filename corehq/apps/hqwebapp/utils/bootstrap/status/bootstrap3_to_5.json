@@ -163,6 +163,7 @@
   "registration": {
     "in_progress": true,
     "templates": [
+      "confirmation_sent.html",
       "confirmation_waiting.html",
       "domain_request.html",
       "register_new_user.html"
