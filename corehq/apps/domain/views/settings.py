@@ -554,6 +554,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class DomainPasswordResetView(PasswordResetView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
