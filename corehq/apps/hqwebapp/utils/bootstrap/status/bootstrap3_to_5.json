@@ -168,7 +168,8 @@
       "confirmation_sent.html",
       "confirmation_waiting.html",
       "domain_request.html",
-      "register_new_user.html"
+      "register_new_user.html",
+      "spec/mocha.html"
     ],
     "javascript": [
       "js/register_new_user.js"
