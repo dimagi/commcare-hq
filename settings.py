@@ -1182,6 +1182,13 @@ MTN_KYC_CONNECTION_SETTINGS = {
     'client_secret': 'password',
 }
 
+#### Chatbot configuration
+# Override in localsettings.py
+# See https://docs.openchatstudio.com/chat_widget/
+
+# ID of the chatbot in Open Chat Studio
+AI_CHATBOT_ID = None
+AI_CHATBOT_TOKEN = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -2130,10 +2137,3 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 # make sure you add it before localsettings are imported (from localsettings import *)
 
 MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000
-
-#### Chatbot configuration
-# See https://docs.openchatstudio.com/chat_widget/
-
-# ID of the chatbot in Open Chat Studio
-AI_CHATBOT_ID = None
-AI_CHATBOT_TOKEN = None
