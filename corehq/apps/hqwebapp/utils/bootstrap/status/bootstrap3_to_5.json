@@ -168,6 +168,7 @@
       "confirmation_sent.html",
       "confirmation_waiting.html",
       "domain_request.html",
+      "email/password_reset_email_hq.html",
       "register_new_user.html",
       "spec/mocha.html"
     ],
