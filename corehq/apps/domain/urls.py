@@ -135,9 +135,13 @@ urlpatterns = [
             extra_context={'current_page': {'page_name': _('Password Reset Confirmation')}},
         ),
         name=CustomPasswordResetView.urlname),
-    url(r'^accounts/password_reset_confirm/done/$', PasswordResetCompleteView.as_view(
-        template_name='login_and_password/password_reset_complete.html',
-        extra_context={'current_page': {'page_name': _('Password Reset Complete')}}),
+    url(r'^accounts/password_reset_confirm/done/$',
+        use_bootstrap5(
+            PasswordResetCompleteView.as_view(
+                template_name='login_and_password/password_reset_complete.html',
+                extra_context={'current_page': {'page_name': _('Password Reset Complete')}}
+            )
+        ),
         name='password_reset_complete'),
 ]
 
