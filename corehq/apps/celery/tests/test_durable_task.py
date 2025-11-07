@@ -93,8 +93,11 @@ class TestDurableTask(TestCase):
         # disabling the receiver for the task_postrun signal, it isn't straightforward
         task_id = uuid.uuid4()
         TaskRecord.objects.create(task_id=task_id, name=durable_task.__name__, args='[]', kwargs='{}', sent=True)
+
         # calls apply_async directly to pass in the task_id kwarg, which isn't possible via .delay()
         durable_task.apply_async(task_id=str(task_id))
+
+        # the record is deleted because the task ran eagerly on apply_async and fired the task_postrun signal
         with pytest.raises(TaskRecord.DoesNotExist):
             TaskRecord.objects.get(task_id=task_id)
 
