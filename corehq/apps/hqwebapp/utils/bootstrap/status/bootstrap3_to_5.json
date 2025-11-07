@@ -176,6 +176,7 @@
       "spec/mocha.html"
     ],
     "javascript": [
+      "js/password_reset_confirm.js",
       "js/register_new_user.js"
     ]
   },
