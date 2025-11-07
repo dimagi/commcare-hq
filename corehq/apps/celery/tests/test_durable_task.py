@@ -37,6 +37,14 @@ class TestDurableTask(TestCase):
         with pytest.raises(TaskRecord.DoesNotExist):
             TaskRecord.objects.get(task_id=result.task_id)
 
+    def test_explicitly_not_durable_task_is_not_tracked(self):
+        @task(durable=False)
+        def explicitly_not_durable_task():
+            pass
+        result = explicitly_not_durable_task.delay()
+        with pytest.raises(TaskRecord.DoesNotExist):
+            TaskRecord.objects.get(task_id=result.task_id)
+
     def test_task_is_tracked(self):
         result = durable_task.delay()
         TaskRecord.objects.get(task_id=result.task_id)  # should not raise
