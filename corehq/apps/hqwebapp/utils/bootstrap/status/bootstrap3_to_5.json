@@ -168,6 +168,7 @@
       "confirmation_sent.html",
       "confirmation_waiting.html",
       "domain_request.html",
+      "email/base_templates/_base.html",
       "email/base_templates/_base_container_project_logo.html",
       "email/password_reset_email_hq.html",
       "register_new_user.html",
