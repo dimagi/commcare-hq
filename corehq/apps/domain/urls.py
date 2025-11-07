@@ -81,7 +81,7 @@ from corehq.apps.domain.views.settings import (
     CredentialsApplicationSettingsView,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -92,7 +92,7 @@ from corehq.motech.repeaters.views import (
 )
 
 PASSWORD_RESET_KWARGS = {
-    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
+    'template_name': 'login_and_password/bootstrap5/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')},
@@ -124,7 +124,7 @@ urlpatterns = [
             extra_context={'current_page': {'page_name': _('Password Change Complete')}}),
         name='password_change_done'),
     url(r'^accounts/password_reset_email/$',
-        PasswordResetView.as_view(**PASSWORD_RESET_KWARGS), name='password_reset_email'),
+        use_bootstrap5(PasswordResetView.as_view(**PASSWORD_RESET_KWARGS)), name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$',
         PasswordResetDoneView.as_view(**PASSWORD_RESET_DONE_KWARGS),
         name='password_reset_done'),
