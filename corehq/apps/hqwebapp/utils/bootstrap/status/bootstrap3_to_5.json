@@ -177,6 +177,7 @@
     ],
     "javascript": [
       "js/password_reset_confirm.js",
+      "js/password_reset_form.js",
       "js/register_new_user.js"
     ]
   },
