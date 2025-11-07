@@ -86,10 +86,6 @@ class TestApplicationStatusReport(TestCase):
         loc_city = make_location(site_code='bmb', name='Bombay', domain=domain,
                                  location_type=loc_type_city.name, parent=loc_state)
         loc_city.save()
-
-        # cleans up the full hierarchy
-        cls.addClassCleanup(loc_country.location_type.delete)
-
         return [loc_country, loc_state, loc_city]
 
     @staticmethod

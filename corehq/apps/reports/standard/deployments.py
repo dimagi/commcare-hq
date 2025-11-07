@@ -374,8 +374,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         """
         Returns the hierarchy for locations
         {
-            location_id_1: [self, parent, parent_of_parent,.,.,.,],
-            location_id_2: [self, parent, parent_of_parent,.,.,.,],
+            location_id_1: [self, parent, parent_of_parent,...],
+            location_id_2: [self, parent, parent_of_parent,...],
         }
         """
         where = Q(domain=self.domain, location_id__in=location_ids)
@@ -398,8 +398,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return grouped_location
 
     def _ordered_hierarchy(self, ancestors):
-        # returns the ancestor locations in corresponding slot for ALL location types
-        # add empty placeholder when no corresponding ancestor for a location type
+        """
+        returns the ancestor locations in corresponding slot for ALL location types
+        add empty placeholder when no corresponding ancestor for a location type
+        """
         ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
         return [
             ancestors_by_type_id.get(location_type.id, '---')
@@ -511,8 +513,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         ancestor_locations_columns = []
 
         if self._include_primary_locations_hierarchy():
-            ancestor_locations_columns = [_('{} Name').format(loc_type.name.title())
-                                          for loc_type in self._location_types()]
+            ancestor_locations_columns = [
+                _('{location_type_name} Name').format(location_type_name=loc_type.name.title())
+                for loc_type in self._location_types()
+            ]
 
         table[0] = table[0] + ancestor_locations_columns
 
