@@ -374,8 +374,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         """
         Returns the hierarchy for locations
         {
-            location_id_1: [self, parent, parent_of_parent,...],
-            location_id_2: [self, parent, parent_of_parent,...],
+            location_id_1: [self, parent, parent_of_parent, ...],
+            location_id_2: [self, parent, parent_of_parent, ...],
         }
         """
         where = Q(domain=self.domain, location_id__in=location_ids)
