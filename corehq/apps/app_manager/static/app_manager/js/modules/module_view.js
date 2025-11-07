@@ -17,6 +17,7 @@ import "app_manager/js/modules/case_list_setting";
 import "hqwebapp/js/components/select_toggle";
 import "hqwebapp/js/key-value-mapping";
 import "app_manager/js/xpathValidator";
+import { customIconManager } from "app_manager/js/custom_icon";
 
 $(function () {
     // Module name
@@ -320,4 +321,5 @@ $(function () {
     };
     updateDisplayView();
     $menuMode.on('change', updateDisplayView);
+    customIconManager().init();
 });
