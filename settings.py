@@ -2135,3 +2135,4 @@ MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000
 
 # ID of the chatbot in Open Chat Studio
 AI_CHATBOT_ID = None
+AI_CHATBOT_TOKEN = None
