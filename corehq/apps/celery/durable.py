@@ -41,12 +41,9 @@ class DurableTask(Task):
                 )
 
         if record is None:
-            record = TaskRecord(
-                name=self.name,
-                args=kombu_json.dumps(args),
-                kwargs=kombu_json.dumps(kwargs),
-                sent=False,
-            )
+            record = TaskRecord(name=self.name, sent=False)
+        record.args = kombu_json.dumps(args)
+        record.kwargs = kombu_json.dumps(kwargs)
 
         try:
             result = super().apply_async(args=args, kwargs=kwargs, headers=headers, **opts)
