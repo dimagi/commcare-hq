@@ -47,6 +47,9 @@ class DurableTask(Task):
 
         try:
             result = super().apply_async(args=args, kwargs=kwargs, headers=headers, **opts)
+            # no need to reset record.error because we only add errors to tasks that were not
+            # queued successfully and have an empty task_id, meaning that TaskRecord will never
+            # be updated.
             record.task_id = result.task_id
             record.sent = True
             return result
