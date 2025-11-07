@@ -2129,3 +2129,9 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 # make sure you add it before localsettings are imported (from localsettings import *)
 
 MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000
+
+#### Chatbot configuration
+# See https://docs.openchatstudio.com/chat_widget/
+
+# ID of the chatbot in Open Chat Studio
+AI_CHATBOT_ID = None
