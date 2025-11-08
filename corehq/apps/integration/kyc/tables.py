@@ -14,7 +14,6 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import (
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 from corehq.apps.integration.kyc.models import KycProperties, KycUser
-from corehq.apps.users.models import CouchUser
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 
@@ -141,14 +140,10 @@ class KycVerifyTable(BaseHtmxTable, ElasticTable):
             (KycProperties.KYC_LAST_VERIFIED_AT, DateTimeStringColumn(
                 verbose_name=_('Last Verified')
             )),
-            (KycProperties.KYC_VERIFIED_BY, columns.Column(verbose_name=_('Verified By'), empty_values=())),
+            (KycProperties.KYC_VERIFIED_BY, columns.Column(verbose_name=_('Verified By'))),
             ('verify_btn', columns.TemplateColumn(
                 template_name='kyc/partials/kyc_verify_button.html',
                 verbose_name=_('Verify')
             )),
         ])
         return cols
-
-    def render_kyc_verified_by(self, value, record):
-        user = CouchUser.get_by_user_id(value) if value else None
-        return user.full_name if user else ''
