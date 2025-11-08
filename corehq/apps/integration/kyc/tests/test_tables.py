@@ -34,6 +34,7 @@ class TestKycVerifyTable(SimpleTestCase):
             ('boots_with_fur', 'Boots With Fur'),
             ('kyc_verification_status', 'KYC Status'),
             ('kyc_last_verified_at', 'Last Verified'),
+            ('kyc_verified_by', 'Verified By'),
             ('verify_btn', 'Verify')
         ]
         for i, (name, verbose_name) in enumerate(expected_data):
