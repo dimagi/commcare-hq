@@ -379,9 +379,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         }
         """
         where = Q(domain=self.domain, location_id__in=location_ids)
-        location_ancestors = SQLLocation.objects.get_ancestors(where)
-        location_by_id = {location.location_id: location for location in location_ancestors}
-        location_by_pk = {location.id: location for location in location_ancestors}
+        # include_self is ignored when Q is passed but added for code clarity
+        locations_and_ancestors = SQLLocation.objects.get_ancestors(where, include_self=True)
+        location_by_location_id = {location.location_id: location for location in locations_and_ancestors}
+        location_by_pk = {location.pk: location for location in locations_and_ancestors}
 
         hierarchy_cache = {}
 
@@ -398,8 +399,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         grouped_location = {}
         for location_id in location_ids:
-            if location_id in location_by_id:
-                pk = location_by_id[location_id].id
+            if location_id in location_by_location_id:
+                pk = location_by_location_id[location_id].pk
                 grouped_location[location_id] = get_hierarchy(pk)
             else:
                 grouped_location[location_id] = []
