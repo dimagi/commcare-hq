@@ -383,17 +383,26 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         location_by_id = {location.location_id: location for location in location_ancestors}
         location_by_pk = {location.id: location for location in location_ancestors}
 
+        hierarchy_cache = {}
+
+        def get_hierarchy(location_pk):
+            if location_pk is None:
+                return []
+            if location_pk in hierarchy_cache:
+                return hierarchy_cache[location_pk]
+
+            location = location_by_pk[location_pk]
+            hierarchy = [location] + get_hierarchy(location.parent_id)
+            hierarchy_cache[location_pk] = hierarchy
+            return hierarchy
+
         grouped_location = {}
         for location_id in location_ids:
-
-            location_parents = []
-            current_location = location_by_id[location_id].id if location_id in location_by_id else None
-
-            while current_location is not None:
-                location_parents.append(location_by_pk[current_location])
-                current_location = location_by_pk[current_location].parent_id
-
-            grouped_location[location_id] = location_parents
+            if location_id in location_by_id:
+                pk = location_by_id[location_id].id
+                grouped_location[location_id] = get_hierarchy(pk)
+            else:
+                grouped_location[location_id] = []
 
         return grouped_location
 
