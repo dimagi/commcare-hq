@@ -523,10 +523,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         ancestor_locations_columns = []
 
         if self._include_primary_locations_hierarchy():
-            ancestor_locations_columns = [
-                _('{location_type_name} Name').format(location_type_name=loc_type.name.title())
-                for loc_type in self._location_types()
-            ]
+            ancestor_locations_columns = [loc_type.name.title() for loc_type in self._location_types()]
 
         table[0] = table[0] + ancestor_locations_columns
 

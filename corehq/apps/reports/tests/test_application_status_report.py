@@ -255,7 +255,7 @@ class TestApplicationStatusReport(TestCase):
                         [
                             'Username', 'Assigned Location(s)', 'Last Submission', 'Last Sync', 'Application',
                             'Application Version', 'CommCare Version', "Number of unsent forms in user's phone",
-                            'Country Name', 'State Name', 'City Name'
+                            'Country', 'State', 'City'
                         ],
                         [
                             'mobile_worker2', 'Bombay', '---', '---', 'App A', 8, '---', '---', 'India',
