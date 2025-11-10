@@ -17,6 +17,7 @@ from django.views.generic.base import TemplateView, View
 
 from memoized import memoized
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -220,8 +221,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             current_location = current_env_data['short_name'] if current_env_data else _("current")
             message = _(
                 'This email is already registered in the {location} cloud location. '
-                'Please <a href="{login_link}">sign in here</a>.'
-            ).format(location=current_location, login_link=reverse('login'))
+            ).format(location=current_location)
         else:
             domain = email[email.find("@") + 1:]
             for account in BillingAccount.get_enterprise_restricted_signup_accounts():
@@ -251,9 +251,10 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         return response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class UserRegistrationView(BasePageView):
     urlname = 'register_user'
-    template_name = 'registration/bootstrap3/register_new_user.html'
+    template_name = 'registration/register_new_user.html'
 
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
