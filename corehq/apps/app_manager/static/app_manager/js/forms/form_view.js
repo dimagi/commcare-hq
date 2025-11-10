@@ -19,6 +19,7 @@ import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable binding
 import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
+import { customIconManager } from "app_manager/js/custom_icon";
 
 appManagerUtils.setPrependedPageTitle("\u2699 ", true);
 appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
@@ -164,4 +165,6 @@ $(function () {
             $("#xform_file_submit").hide();
         }
     }).trigger('change');
+
+    customIconManager().init();
 });

@@ -299,11 +299,11 @@ def _get_multimedia_context(
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
         if module.custom_icon:
-            multimedia_context['module_icon'] = module.custom_icon
+            multimedia_context['module_custom_icon'] = module.custom_icon
         else:
-            multimedia_context['module_icon'] = CustomIcon()
+            multimedia_context['module_custom_icon'] = CustomIcon()
     else:
-        multimedia_context['module_icon'] = None
+        multimedia_context['module_custom_icon'] = None
 
     multimedia_context['nav_menu_media_specifics'] = _get_specific_media(
         username,
