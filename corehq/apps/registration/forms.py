@@ -25,7 +25,6 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
-from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
@@ -569,11 +568,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         if domain_obj:
             if self.custom_data:
                 prefixed_fields = {}
-                if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(domain):
-                    prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
-                elif PROFILE_SLUG in self.custom_data.form.fields:
-                    prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
-                    prefixed_fields[prefixed_profile_key] = self.custom_data.form.fields[PROFILE_SLUG]
+                prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
                 self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
