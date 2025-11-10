@@ -57,18 +57,6 @@ var handleLocationRequest = function (optionsFromLastRequest) {
     }
 };
 
-var startOrStopLocationWatching = function (shouldWatchLocation) {
-    if (navigator.geolocation) {
-        var watching = Boolean(sessionStorage.lastLocationWatchId);
-        if (!watching && shouldWatchLocation) {
-            sessionStorage.lastLocationWatchId = navigator.geolocation.watchPosition(recordPosition);
-        } else if (watching && !shouldWatchLocation) {
-            navigator.geolocation.clearWatch(sessionStorage.lastLocationWatchId);
-            sessionStorage.lastLocationWatchId = '';
-        }
-    }
-};
-
 var showBreadcrumbs = function (breadcrumbs) {
     var detailCollection,
         breadcrumbModels;
@@ -227,6 +215,5 @@ export default {
     handleLocationRequest: handleLocationRequest,
     showBreadcrumbs: showBreadcrumbs,
     showMenuDropdown: showMenuDropdown,
-    startOrStopLocationWatching: startOrStopLocationWatching,
     isSidebarEnabled: isSidebarEnabled,
 };
