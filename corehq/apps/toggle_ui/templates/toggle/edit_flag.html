@@ -73,20 +73,24 @@
     </p>
   {% endif %}
 
-  {% if by_service %}
-    {% for service, domains in by_service.items %}
+  {% if service_type_nested %}
+    {% for service_type, by_plan_name in service_type_nested.items %}
       <table class="table table-striped table-hover">
         <thead>
           <tr>
-            <th class="col-sm-4">Subscription Type</th>
-            <th class="col-sm-8">List of Domains</th>
+            <th class="col-sm-2">Subscription Type</th>
+            <th class="col-sm-3">Plan Name</th>
+            <th class="col-sm-7">List of Domains</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>{{ service }}</td>
-            <td>{{ domains | join:", " }}</td>
-          </tr>
+          {% for plan_name, domains in by_plan_name.items %}
+            <tr>
+              <td>{{ service_type }}</td>
+              <td>{{ plan_name }}</td>
+              <td>{{ domains | join:", " }}</td>
+            </tr>
+          {% endfor %}
         </tbody>
       </table>
     {% endfor %}
