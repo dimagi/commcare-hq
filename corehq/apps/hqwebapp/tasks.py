@@ -54,6 +54,11 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
         )
 
 
+@task(durable=True)
+def grahams_simple_test_task():
+    print("success")
+
+
 @task(durable=True, bind=True, default_retry_delay=10, max_retries=5)
 def grahams_test_task(self):
     if self.request.retries >= 3:
