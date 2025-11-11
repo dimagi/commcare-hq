@@ -64,7 +64,8 @@ def update_task_record(*, state, **kwargs):
         # if there are no headers, it isn't a durable task
         return
 
-    notify_error(None, f"update_task_record for task {task.request.id} in state {state}")
+    if headers.get('durable', False):
+        notify_error(None, f"update_task_record for task {task.request.id} in state {state}")
 
     if headers.get('durable', False) and state in celery_states.READY_STATES:
         record = TaskRecord.objects.get(task_id=task.request.id)
