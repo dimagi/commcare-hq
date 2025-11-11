@@ -567,7 +567,6 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             if self.custom_data:
-                prefixed_fields = {}
                 prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
                 self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
