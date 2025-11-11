@@ -62,7 +62,7 @@
 +
 +      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
 +        <div class="collapse navbar-collapse ms-2" id="hq-full-menu">
-+          <div class="nav-settings-bar">
++          <div class="nav-settings-bar pe-2">
 +            {% include 'hqwebapp/includes/bootstrap5/global_navigation_bar.html' %}
 +          </div>
 +          {% block tabs %}
@@ -77,7 +77,7 @@
 -            <div class="navbar-btn dropdown" style="display: inline-block;">
 +        <nav class="navbar-signin ms-2" role="navigation">
 +          <div class="nav-settings-bar">
-+            <div class="navbar-btn dropdown d-inline-block">
++            <div class="me-2 dropdown d-inline-block">
                <button
 -                class="dropdown-toggle btn btn-default"
 -                data-toggle="dropdown"
@@ -99,15 +99,25 @@
                          type="submit"
                          name="language"
                          value="{{ lang_code }}"
-@@ -73,7 +98,7 @@
+@@ -67,15 +92,15 @@
+                 {% endfor %}
+               </ul>
+             </div>
+-            <a href="{% url "login" %}" class="btn btn-primary navbar-btn"
++            <a href="{% url "login" %}" class="btn btn-primary me-2"
+               >{% trans 'Sign In' %}</a
+             >
              {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
                <a
                  href="#cta-form-get-demo"
 -                data-toggle="modal"
 +                data-bs-toggle="modal"
                  id="cta-form-get-demo-button-header"
-                 class="btn btn-purple navbar-btn"
+-                class="btn btn-purple navbar-btn"
++                class="btn btn-purple me-2"
                >
+                 {% trans 'Schedule a Demo' %}
+               </a>
 @@ -83,59 +108,17 @@
            </div>
          </nav>
