@@ -56,12 +56,15 @@ class DurableTask(Task):
 
 @task_postrun.connect
 def update_task_record(*, state, **kwargs):
+    from dimagi.utils.logging import notify_error
     task = kwargs.get('task')
     try:
         headers = task.request.headers or {}
     except AttributeError:
         # if there are no headers, it isn't a durable task
         return
+
+    notify_error(None, f"update_task_record for task {task.request.id} in state {state}")
 
     if headers.get('durable', False) and state in celery_states.READY_STATES:
         record = TaskRecord.objects.get(task_id=task.request.id)
