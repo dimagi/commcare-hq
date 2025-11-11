@@ -32,12 +32,10 @@ class DurableTask(Task):
             'args': kombu_json.dumps(args),
             'kwargs': kombu_json.dumps(kwargs),
             'sent': False,
+            'error': '',
         }
         try:
             result = super().apply_async(args=args, kwargs=kwargs, headers=headers, **opts)
-            # no need to reset error because we only add errors to tasks that were not
-            # queued successfully and have an empty task_id, meaning that TaskRecord will never
-            # be updated.
             task_id = result.task_id
             defaults['sent'] = True
             return result
