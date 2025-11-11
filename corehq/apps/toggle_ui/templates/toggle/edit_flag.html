@@ -95,6 +95,27 @@
     {% endfor %}
   {% endif %}
 
+  {% if paused %}
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th class="col-sm-2">Subscription Type</th>
+          <th class="col-sm-3">Plan Name</th>
+          <th class="col-sm-7">List of Domains</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for service_type, domains in paused.items %}
+          <tr>
+            <td>{{ service_type }}</td>
+            <td>CommCare Paused Edition</td>
+            <td>{{ domains | join:", " }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
   {% if static_toggle.relevant_environments %}
     {% if debug or server_environment in static_toggle.relevant_environments %}
       <div class="alert alert-warning" role="alert">
