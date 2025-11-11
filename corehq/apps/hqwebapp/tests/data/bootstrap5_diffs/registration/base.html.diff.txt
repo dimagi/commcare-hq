@@ -6,7 +6,7 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -6,7 +6,7 @@
+@@ -6,16 +6,13 @@
  {% block login-content %}
    <div class="container-fluid">
      <div class="row">
@@ -14,4 +14,15 @@
 +      <div class="col-sm-12">
          <div class="reg-form-container">
            <div class="form-bubble form-bubble-lg">
-             {% block registration-content %}{% endblock %}
+-            {% block registration-content %}{% endblock %}
++            {% block registration-content %}{% endblock registration-content %}
+           </div>
+         </div>
+       </div>
+     </div>
+   </div>
+-{% endblock %}
+-
+-
+-
++{% endblock login-content %}
