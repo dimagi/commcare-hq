@@ -2,7 +2,6 @@ import kombu.utils.json as kombu_json
 from celery import Task
 from celery import states as celery_states
 from celery.signals import task_postrun
-from dimagi.utils.logging import notify_exception
 
 from corehq.apps.celery.models import TaskRecord
 
@@ -27,37 +26,34 @@ class DurableTask(Task):
         headers = opts.pop('headers', {}) or {}
         headers['durable'] = True
 
-        record = None
         task_id = opts.get('task_id', None)
-        if task_id:
-            # if a task calls `self.retry()`, it triggers another apply_async call
-            try:
-                record = TaskRecord.objects.get(task_id=task_id)
-            except TaskRecord.DoesNotExist as e:
-                notify_exception(
-                    None,
-                    f'Unexpectedly could not find TaskRecord object for id {task_id}',
-                    details={'error': str(e)},
-                )
-
-        if record is None:
-            record = TaskRecord(name=self.name, sent=False)
-        record.args = kombu_json.dumps(args)
-        record.kwargs = kombu_json.dumps(kwargs)
-
+        defaults = {
+            'name': self.name,
+            'args': kombu_json.dumps(args),
+            'kwargs': kombu_json.dumps(kwargs),
+            'sent': False,
+        }
         try:
             result = super().apply_async(args=args, kwargs=kwargs, headers=headers, **opts)
-            # no need to reset record.error because we only add errors to tasks that were not
+            # no need to reset error because we only add errors to tasks that were not
             # queued successfully and have an empty task_id, meaning that TaskRecord will never
             # be updated.
-            record.task_id = result.task_id
-            record.sent = True
+            task_id = result.task_id
+            defaults['sent'] = True
             return result
         except Exception as e:
-            record.error = f"{type(e).__name__}: {e}"
+            defaults['error'] = f"{type(e).__name__}: {e}"
             raise
         finally:
-            record.save()
+            # only provide update args if this is a retry (ie task_id was provided)
+            # it is possible for an apply_async called via a retry to "beat" the original apply_async
+            # call since the TaskRecord isn't created until after the task is sent to the broker.
+            # To handle this edge case, ignore updating the TaskRecord if this is the original apply_async
+            # by passing in an empty dict for defaults
+            update_defaults = defaults if opts.get('task_id', None) else {}
+            TaskRecord.objects.update_or_create(
+                task_id=task_id, create_defaults=defaults, defaults=update_defaults
+            )
 
 
 @task_postrun.connect
