@@ -348,8 +348,8 @@ def _get_service_type(toggle):
             domain = _enabled_item_name(enabled)
             if subscription := Subscription.get_active_subscription_by_domain(domain):
                 service_type[domain] = f"{subscription.service_type} : {subscription.plan_version.plan.name}"
-                if subscription.plan_version.plan.name == "CommCare Paused Edition":
-                    paused[subscription.service_type].append(domain)
+                if subscription.plan_version.plan.name.startswith("CommCare Paused Edition"):
+                    paused[(subscription.service_type, subscription.plan_version.plan.name)].append(domain)
                 else:
                     nested[subscription.service_type][subscription.plan_version.plan.name].append(domain)
             else:

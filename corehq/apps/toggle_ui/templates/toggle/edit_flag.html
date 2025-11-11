@@ -105,10 +105,10 @@
         </tr>
       </thead>
       <tbody>
-        {% for service_type, domains in paused.items %}
+        {% for service_type_and_plan_name, domains in paused.items %}
           <tr>
-            <td>{{ service_type }}</td>
-            <td>CommCare Paused Edition</td>
+            <td>{{ service_type_and_plan_name.0 }}</td>
+            <td>{{ service_type_and_plan_name.1 }}</td>
             <td>{{ domains | join:", " }}</td>
           </tr>
         {% endfor %}
