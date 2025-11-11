@@ -94,6 +94,37 @@ class DeduplicationPillowTest(TestCase):
 
         self.assertSetEqual(set(results), {case.case_id, 'duplicate_case_id'})
 
+    def test_pillow_processes_case_being_closed(self):
+        rule = self._create_rule('system_prop_test', ['name'])
+        action = CaseDeduplicationActionDefinition.from_rule(rule)
+        assert not action.include_closed
+
+        case = self.factory.create_case(case_name="foo", case_type=self.case_type, close=True)
+        dup = CaseDuplicateNew.create(case, action=action)
+        assert dup.id is not None
+
+        self.find_duplicates_mock.return_value = [case.case_id, 'duplicate_case_id']
+
+        self.pillow.process_changes(since=self.kafka_offset, forever=False)
+
+        with self.assertRaises(CaseDuplicateNew.DoesNotExist):
+            dup.refresh_from_db()
+
+    def test_pillow_does_not_process_closed_cases(self):
+        rule = self._create_rule('system_prop_test', ['name'])
+        action = CaseDeduplicationActionDefinition.from_rule(rule)
+        assert not action.include_closed
+
+        case = create_case(domain=self.domain, name='test', case_type=self.case_type, closed=True, save=True)
+        self.factory.update_case(case.case_id, case_name="new name")
+
+        called = []
+        self.find_duplicates_mock.side_effect = lambda *a, **k: called.append('fail')
+
+        self.pillow.process_changes(since=self.kafka_offset, forever=False)
+
+        assert not called
+
     def test_pillow_processes_resaves(self):
         rule = self._create_rule('test', ['age'])
         action = CaseDeduplicationActionDefinition.from_rule(rule)
