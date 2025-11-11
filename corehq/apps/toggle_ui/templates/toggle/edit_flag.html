@@ -7,23 +7,22 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
 
 {% block stylesheets %}
-<style>
-  .margin-vertical-sm {
-    margin-top: 5px;
-    margin-bottom: 5px;
-  }
+  <style>
+    .margin-vertical-sm {
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
 
-  .label-release {
-    background-color: #c22eff !important;
-  }
+    .label-release {
+      background-color: #c22eff !important;
+    }
 
-  /* B5: replace with table-borderless and align-middle */
-  #feature-flag-items tbody td {
-    border: 0;
-    vertical-align: middle;
-  }
-</style>
-
+    /* B5: replace with table-borderless and align-middle */
+    #feature-flag-items tbody td {
+      border: 0;
+      vertical-align: middle;
+    }
+  </style>
 {% endblock %}
 
 {% block page_content %}
@@ -172,7 +171,7 @@
 
   {% if not is_random %}
     <div
-      class="alert d-flex justify-content-between {% if toggle.status == 'active' %} alert-info {% else %} alert-warning {% endif %}"
+      class="alert d-flex justify-content-between {% if toggle.status == 'active' %}alert-info{% else %}alert-warning{% endif %}"
       role="alert"
     >
       <div>Toggle Status: <strong>{{ toggle.status }}</strong></div>
@@ -184,18 +183,35 @@
         See More {% if user.is_staff %}/ Edit{% endif %}
       </button>
     </div>
-    {% endif %}
+  {% endif %}
 
-  <div class="modal fade" id="change-toggle-status" tabindex="-1" role="dialog" aria-labelledby="change-toggle-status-label">
+  <div
+    class="modal fade"
+    id="change-toggle-status"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="change-toggle-status-label"
+  >
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
             <span aria-hidden="true">&times;</span>
           </button>
-          <h4 class="modal-title" id="change-toggle-status-label">Change feature flag status</h4>
+          <h4 class="modal-title" id="change-toggle-status-label">
+            Change feature flag status
+          </h4>
         </div>
-        <form class="form" action="{% url 'toggle_status' toggle.slug %}" method="POST">
+        <form
+          class="form"
+          action="{% url 'toggle_status' toggle.slug %}"
+          method="POST"
+        >
           {% csrf_token %}
           <div class="modal-body">
             <p>
@@ -215,18 +231,18 @@
               for all projects and users.
             </p>
             {% for status_option in status_options %}
-            <div class="radio">
-              <label>
-                <input
-                  type="radio"
-                  name="toggle_status"
-                  value="{{ status_option }}"
-                  {% if status_option == toggle.status %}checked{% endif %}
-                  {% if not user.is_staff %}disabled{% endif %}
-                >
-                {{ status_option }}
-              </label>
-            </div>
+              <div class="radio">
+                <label>
+                  <input
+                    type="radio"
+                    name="toggle_status"
+                    value="{{ status_option }}"
+                    {% if status_option == toggle.status %}checked{% endif %}
+                    {% if not user.is_staff %}disabled{% endif %}
+                  />
+                  {{ status_option }}
+                </label>
+              </div>
             {% endfor %}
           </div>
           <div class="modal-footer">
@@ -300,8 +316,10 @@
             <th>
               {% trans "Enabled toggle items" %}
               {% if is_random %}
-              <span data-bind="makeHqHelp: {
-                description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"></span>
+                <span
+                  data-bind="makeHqHelp: {
+                description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"
+                ></span>
               {% endif %}
             </th>
             <th>Namespace</th>
@@ -331,34 +349,32 @@
                   {% if not can_edit_toggle %}disabled{% endif %}
                 />
                 <span class="input-group-addon">
-                  <i data-bind="class: (value() && value()[0] == '!') ? 'fa fa-circle-xmark' : 'fa fa-check'"></i>
+                  <i
+                    data-bind="class: (value() && value()[0] == '!') ? 'fa fa-circle-xmark' : 'fa fa-check'"
+                  ></i>
                 </span>
               </div>
             </td>
             <td class="col-sm-2">
-              <a style="display: none" data-bind="
+              <a
+                style="display: none"
+                data-bind="
                 visible: namespace() === 'domain',
                 attr: { href: domainUrl }
-              ">
+              "
+              >
                 domain <i class="fa fa-external-link"></i>
               </a>
-              <span style="display: none"
-                data-bind="visible: namespace() != 'domain'">
-                <i class='fa fa-user'></i> user
+              <span
+                style="display: none"
+                data-bind="visible: namespace() != 'domain'"
+              >
+                <i class="fa fa-user"></i> user
               </span>
             </td>
-            <td
-              class="col-sm-2"
-              data-bind="text: last_used"
-            ></td>
-            <td
-              class="col-sm-4"
-              data-bind="text: service_type"
-            ></td>
-            <td
-              class="col-sm-4"
-              data-bind="text: dimagi_users"
-            ></td>
+            <td class="col-sm-2" data-bind="text: last_used"></td>
+            <td class="col-sm-4" data-bind="text: service_type"></td>
+            <td class="col-sm-4" data-bind="text: dimagi_users"></td>
           </tr>
         </tbody>
       </table>
