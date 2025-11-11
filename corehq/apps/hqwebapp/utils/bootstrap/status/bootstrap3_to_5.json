@@ -161,7 +161,13 @@
     "is_complete": true
   },
   "registration": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "register_new_user.html"
+    ],
+    "javascript": [
+      "js/register_new_user.js"
+    ]
   },
   "registry": {
     "is_complete": true
