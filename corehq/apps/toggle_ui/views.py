@@ -186,7 +186,8 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
-            context['service_type'], context['by_service'] = _get_service_type(toggle)
+            context['service_type'], context['by_service'], context['service_type_nested'], context['paused'] =\
+                _get_service_type(toggle)
             context['dimagi_users'] = _get_dimagi_users(toggle)
 
         return context
@@ -220,13 +221,12 @@ class ToggleEditView(BasePageView):
         _notify_on_change(self.static_toggle, currently_enabled - previously_enabled, self.request.user.username)
         _call_save_fn_and_clear_cache_and_enable_dependencies(
             self.request.user.username, self.static_toggle, previously_enabled, currently_enabled)
-
         data = {
             'items': item_list
         }
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
-            data['service_type'], data['by_service'] = _get_service_type(toggle)
+            data['service_type'], data['by_service'], _, _ = _get_service_type(toggle)
         return JsonResponse(data)
 
     def _save_randomness(self, toggle, randomness):
@@ -341,19 +341,30 @@ def _get_service_type(toggle):
     """Returns subscription service type for each toggle
     """
     service_type = {}
+    nested = defaultdict(lambda: defaultdict(list))
+    paused = defaultdict(list)
     for enabled in toggle.enabled_users:
         if _namespace_domain(enabled):
             domain = _enabled_item_name(enabled)
             if subscription := Subscription.get_active_subscription_by_domain(domain):
                 service_type[domain] = f"{subscription.service_type} : {subscription.plan_version.plan.name}"
+                if subscription.plan_version.plan.name == "CommCare Paused Edition":
+                    paused[subscription.service_type].append(domain)
+                else:
+                    nested[subscription.service_type][subscription.plan_version.plan.name].append(domain)
             else:
                 service_type[domain] = "<None>"
+                nested["<None>"]["<None>"].append(domain)
 
     by_service = defaultdict(list)
     for domain, _type in sorted(service_type.items()):
         by_service[_type].append(domain)
+    sorted_nested = {
+        outer_key: dict(sorted(inner_dict.items()))
+        for outer_key, inner_dict in sorted(nested.items())
+    }
 
-    return service_type, dict(by_service)
+    return service_type, dict(by_service), sorted_nested, dict(sorted(paused.items()))
 
 
 def _get_dimagi_users(toggle):
