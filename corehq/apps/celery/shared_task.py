@@ -6,18 +6,22 @@ from corehq.apps.celery.periodic import PeriodicTask
 
 def task(*args, **kwargs):
     """
-    A wrapper over shared_task decorator which enforces the default task
-    serializer as JSON. You should use this decorator to create celery tasks in HQ.
+    A wrapper over shared_task decorator. You should use this decorator to create celery tasks in HQ.
 
-    This is planned to be used until https://github.com/celery/celery/issues/6759 is fixed.
-    After the fix goes out
-        - feel free to remove it and use the native shared_task decorator
-        - Set CELERY_TASK_SERIALIZER back to json
+    This decorator serves multiple purposes:
+
+    - enforces the default task serializer as JSON, which is needed until
+    https://github.com/celery/celery/issues/6759 is resolved, at which point CELERY_TASK_SERIALIZER
+    can be set back to json.
+    - Sets DurableTask as the base class for Tasks created via this decorator.
 
     Parameters:
         serializer (string): Serialization method to use.
         Can be pickle, json, yaml, msgpack or any custom serialization
         method that's been registered with kombu.serialization.registry.
+
+        durable (boolean): If true, creates a TaskRecord object to track a task until it is completed
+        by a worker.
 
         queue (string): Name of the queue in which task is supposed to run
 
