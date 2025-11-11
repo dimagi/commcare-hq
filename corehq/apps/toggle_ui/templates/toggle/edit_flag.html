@@ -323,9 +323,11 @@
               {% endif %}
             </th>
             <th>Namespace</th>
-            <th>Latest Form Submission</th>
-            <th>Subscription Plan</th>
-            <th>Dimagi Users</th>
+            {% if usage_info %}
+              <th>Latest Form Submission</th>
+              <th>Subscription Plan</th>
+              <th>Dimagi Users</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody data-bind="foreach: items">
@@ -372,9 +374,11 @@
                 <i class="fa fa-user"></i> user
               </span>
             </td>
-            <td class="col-sm-2" data-bind="text: last_used"></td>
-            <td class="col-sm-4" data-bind="text: service_type"></td>
-            <td class="col-sm-4" data-bind="text: dimagi_users"></td>
+            {% if usage_info %}
+              <td class="col-sm-2" data-bind="text: last_used"></td>
+              <td class="col-sm-4" data-bind="text: service_type"></td>
+              <td class="col-sm-4" data-bind="text: dimagi_users"></td>
+            {% endif %}
           </tr>
         </tbody>
       </table>
