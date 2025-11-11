@@ -23,6 +23,8 @@ def task(*args, **kwargs):
 
         All other options defined https://docs.celeryq.dev/en/stable/userguide/tasks.html#list-of-options
     """
+    # depends on a database model which cannot be imported until the app is registered
+    from corehq.apps.celery.durable import DurableTask
 
     default_queue = getattr(settings, 'CELERY_MAIN_QUEUE', 'celery')
     if len(args) == 1 and callable(args[0]) and not kwargs:
@@ -31,6 +33,7 @@ def task(*args, **kwargs):
     kwargs.setdefault('serializer', 'json')
     kwargs.setdefault('queue', default_queue)
     kwargs.setdefault('options', {})
+    kwargs.setdefault('base', DurableTask)
 
     if kwargs.get('base') == PeriodicTask:
         kwargs['options']['queue'] = kwargs.get('queue')
