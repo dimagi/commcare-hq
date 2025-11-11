@@ -104,9 +104,9 @@ class TestDurableTask(TestCase):
         )
         self.mock_apply_async.return_value = MockAsyncResult(task_id=task_id, state=celery_states.PENDING)
 
-        # calls apply_async directly to pass in the task_id kwarg, which isn't possible via .delay()
         retry_args = ['def456']
         retry_kwargs = {'a': 1}
+        # simulate retry by calling apply_async with task_id directly
         durable_task_with_args.apply_async(task_id=task_id, args=retry_args, kwargs=retry_kwargs)
 
         record = TaskRecord.objects.get(task_id=task_id)
@@ -136,6 +136,42 @@ class TestDurableTask(TestCase):
         record = TaskRecord.objects.get(task_id=task_id)
         assert kombu_json.loads(record.args) == retry_args
         assert kombu_json.loads(record.kwargs) == retry_kwargs
+
+    def test_sent_is_reset_if_error_encountered_on_retry(self):
+        task_id = str(uuid.uuid4())
+        TaskRecord.objects.create(
+            task_id=task_id,
+            name=durable_task.__name__,
+            args='[]',
+            kwargs='{}',
+            sent=True,
+        )
+
+        self.mock_apply_async.side_effect = OperationalError("failed to send to broker")
+        with pytest.raises(OperationalError):
+            # simulate retry by calling apply_async with task_id directly
+            durable_task.apply_async(task_id=task_id)
+
+        record = TaskRecord.objects.get(task_id=task_id)
+        assert not record.sent
+
+    def test_error_is_reset_if_successful_on_retry(self):
+        task_id = str(uuid.uuid4())
+        TaskRecord.objects.create(
+            task_id=task_id,
+            name=durable_task.__name__,
+            args='[]',
+            kwargs='{}',
+            sent=False,
+            error='OperationalError: failed to send to broker',
+        )
+
+        # simulate retry by calling apply_async with task_id directly
+        self.mock_apply_async.return_value = MockAsyncResult(task_id=task_id, state=celery_states.PENDING)
+        durable_task.apply_async(task_id=task_id)
+
+        record = TaskRecord.objects.get(task_id=task_id)
+        assert record.error == ''
 
 
 class TestUpdateTaskRecord(TestCase):
