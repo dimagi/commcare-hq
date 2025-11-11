@@ -27,7 +27,9 @@ class TestDurableTask(TestCase):
 
         # setup simulated broker by mocking Task.apply_async
         apply_async_patcher = patch.object(
-            Task, 'apply_async', return_value=MockAsyncResult(task_id=uuid.uuid4(), state=celery_states.PENDING)
+            Task,
+            'apply_async',
+            return_value=MockAsyncResult(task_id=str(uuid.uuid4()), state=celery_states.PENDING),
         )
         self.mock_apply_async = apply_async_patcher.start()
         self.addCleanup(apply_async_patcher.stop)
@@ -95,19 +97,45 @@ class TestDurableTask(TestCase):
             def durable_task_with_pickling(test_id):
                 pass
 
-    def test_existing_record_is_updated_for_retries(self):
-        # this would ideally test that the record is updated prior to be deleted
-        # in update_task_record, but due to CELERY_ALWAYS_EAGER and trickiness
-        # disabling the receiver for the task_postrun signal, it isn't straightforward
-        task_id = uuid.uuid4()
-        TaskRecord.objects.create(task_id=task_id, name=durable_task.__name__, args='[]', kwargs='{}', sent=True)
+    def test_existing_record_is_updated_on_retry(self):
+        task_id = str(uuid.uuid4())
+        TaskRecord.objects.create(
+            task_id=task_id, name=durable_task_with_args.__name__, args='["abc123"]', kwargs='{}', sent=True
+        )
+        self.mock_apply_async.return_value = MockAsyncResult(task_id=task_id, state=celery_states.PENDING)
 
         # calls apply_async directly to pass in the task_id kwarg, which isn't possible via .delay()
-        durable_task.apply_async(task_id=str(task_id))
+        retry_args = ['def456']
+        retry_kwargs = {'a': 1}
+        durable_task_with_args.apply_async(task_id=task_id, args=retry_args, kwargs=retry_kwargs)
 
-        # the record is deleted because the task ran eagerly on apply_async and fired the task_postrun signal
-        with pytest.raises(TaskRecord.DoesNotExist):
-            TaskRecord.objects.get(task_id=task_id)
+        record = TaskRecord.objects.get(task_id=task_id)
+        assert kombu_json.loads(record.args) == retry_args
+        assert kombu_json.loads(record.kwargs) == retry_kwargs
+
+    def test_retry_wins_in_race_condition(self):
+        task_id = str(uuid.uuid4())
+        retry_args = ['def456']
+        retry_kwargs = {'a': 1}
+
+        def race_apply_async(*args, **kwargs):
+            # simulate celery worker creating a TaskRecord before the original apply_async does
+            TaskRecord.objects.create(
+                task_id=task_id,
+                name=durable_task_with_args.__name__,
+                args=kombu_json.dumps(retry_args),
+                kwargs=kombu_json.dumps(retry_kwargs),
+                sent=True,
+            )
+            return MockAsyncResult(task_id=task_id, state=celery_states.PENDING)
+
+        self.mock_apply_async.side_effect = race_apply_async
+
+        durable_task_with_args.delay("abc123", test_data={"old": "old arg"})
+
+        record = TaskRecord.objects.get(task_id=task_id)
+        assert kombu_json.loads(record.args) == retry_args
+        assert kombu_json.loads(record.kwargs) == retry_kwargs
 
 
 class TestUpdateTaskRecord(TestCase):
