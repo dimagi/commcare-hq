@@ -9,11 +9,9 @@
 
 {% block background_content %}
   <div class="bg-container">
-    <div class="bg-full-cover-fixed bg-registration b-lazy"
-         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
     <div class="bg-overlay"></div>
   </div>
-{% endblock %}
+{% endblock background_content %}
 
 {% block stylesheets %}
   <link type="text/css"
@@ -22,10 +20,10 @@
         href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
 
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'registration/less/registration.less' %}" />
+          href="{% static 'registration/scss/registration.scss' %}" />
   {% endcompress %}
 {% endblock stylesheets %}
 
@@ -35,11 +33,13 @@
   {% registerurl 'check_sso_login_status' %}
   {% registerurl 'iframe_sso_login_pending' %}
   {% block login-content %}
-    <div {% if enforce_sso_login %}
-         id="user-login-form"
-         class="ko-template"
-         {% endif %}>
+    <div
+      {% if enforce_sso_login %}
+        id="user-login-form"
+        class="ko-template"
+      {% endif %}
+    >
       {% include "login_and_password/partials/bootstrap5/login_full.html" %}
     </div>
-  {% endblock %}
+  {% endblock login-content %}
 {% endblock content %}
