@@ -30,7 +30,7 @@ def _grandfather_privilege(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0111_rename_is_auto_invoiceable_billingaccount_require_auto_pay'),
+        ('accounting', '0113_geojson_export_priv'),
     ]
 
     operations = [
