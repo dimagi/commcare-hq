@@ -66,18 +66,17 @@ def update_task_record(*, state, **kwargs):
         f"{grahams_test_task.__module__}.{grahams_test_task.__name__}",
     ]
     if task.name in test_tasks:
-        notify_error(None, f"update_task_record for task {task.request.id} in state {state}")
+        notify_error(None, f"update_task_record: task {task.request.id} in state {state}")
     try:
         headers = task.request.headers or {}
     except AttributeError:
         # if there are no headers, it isn't a durable task
-        return
-    finally:
         if task.name in test_tasks:
-            notify_error(None, f"update_task_record exited early for durable task {task.name} and state {state}")
+            notify_error(None, f"update_task_record: exited early for durable task {task.name} and state {state}")
+        return
 
     if headers.get('durable', False) and state in celery_states.READY_STATES:
-        notify_error(None, f"update_task_record deleting Taskrecord {task.request.id}")
+        notify_error(None, f"update_task_record: deleting TaskRecord {task.request.id}")
         record = TaskRecord.objects.get(task_id=task.request.id)
         record.delete()
 
