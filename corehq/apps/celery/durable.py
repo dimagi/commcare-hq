@@ -1,7 +1,7 @@
 import kombu.utils.json as kombu_json
 from celery import Task
 from celery import states as celery_states
-from celery.signals import task_postrun
+from dimagi.utils.logging import notify_error
 
 from corehq.apps.celery.models import TaskRecord
 
@@ -13,18 +13,16 @@ class DurableTask(Task):
 
     def __init__(self):
         super().__init__()
-        if getattr(self, 'durable', False) and self.serializer != 'json':
+        self.durable = getattr(self, 'durable', False)
+        if self.durable and self.serializer != 'json':
             raise UnsupportedSerializationError(
                 f"Cannot create a durable task with {self.serializer} serialization."
                 "Durable tasks only support JSON serialization."
             )
 
     def apply_async(self, args=None, kwargs=None, **opts):
-        if not getattr(self, 'durable', False):
+        if not self.durable:
             return super().apply_async(args=args, kwargs=kwargs, **opts)
-
-        headers = opts.pop('headers', {}) or {}
-        headers['durable'] = True
 
         task_id = opts.get('task_id', None)
         defaults = {
@@ -35,7 +33,7 @@ class DurableTask(Task):
             'error': '',
         }
         try:
-            result = super().apply_async(args=args, kwargs=kwargs, headers=headers, **opts)
+            result = super().apply_async(args=args, kwargs=kwargs, **opts)
             task_id = result.task_id
             defaults['sent'] = True
             return result
@@ -53,19 +51,20 @@ class DurableTask(Task):
                 task_id=task_id, create_defaults=defaults, defaults=update_defaults
             )
 
+    def after_return(self, state, retval, task_id, *args):
+        if self.durable:
+            delete_task_record(task_id, state)
 
-@task_postrun.connect
-def update_task_record(*, state, **kwargs):
-    task = kwargs.get('task')
-    try:
-        headers = task.request.headers or {}
-    except AttributeError:
-        # if there are no headers, it isn't a durable task
-        return
 
-    if headers.get('durable', False) and state in celery_states.READY_STATES:
-        record = TaskRecord.objects.get(task_id=task.request.id)
+def delete_task_record(task_id, state):
+    if state in [celery_states.SUCCESS, celery_states.FAILURE]:
+        record = TaskRecord.objects.get(task_id=task_id)
         record.delete()
+    else:
+        notify_error(
+            "DurableTaskError",
+            f"Unexpected call to delete_task_record for task id {task_id} in state {state}",
+        )
 
 
 class UnsupportedSerializationError(Exception):

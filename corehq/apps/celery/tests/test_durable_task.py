@@ -11,12 +11,12 @@ from celery.exceptions import OperationalError
 from django.test import TestCase
 
 from corehq.apps.celery import task
-from corehq.apps.celery.durable import UnsupportedSerializationError, update_task_record
+from corehq.apps.celery.durable import UnsupportedSerializationError, delete_task_record
 from corehq.apps.celery.models import TaskRecord
 from corehq.util.test_utils import generate_cases
 
 
-class TestDurableTask(TestCase):
+class TestDurableTaskApplyAsync(TestCase):
     """
     Despite running in eager mode, apply_async is still run as usual and this test
     can simulate failures to send the task to the broker.
@@ -79,16 +79,6 @@ class TestDurableTask(TestCase):
         assert deserialized_args == [test_uuid]
         deserialized_kwargs = kombu_json.loads(record.kwargs)
         assert deserialized_kwargs == {'test_data': test_data}
-
-    def test_empty_headers_for_regular_task(self):
-        plain_task.delay()
-        args, kwargs = self.mock_apply_async.call_args
-        assert 'headers' not in kwargs
-
-    def test_durable_task_includes_durable_flag_in_headers(self):
-        durable_task.delay()
-        args, kwargs = self.mock_apply_async.call_args
-        assert kwargs['headers']['durable']
 
     def test_durable_task_with_pickling_raises_exception(self):
         with pytest.raises(UnsupportedSerializationError):
@@ -174,25 +164,21 @@ class TestDurableTask(TestCase):
         assert record.error == ''
 
 
-class TestUpdateTaskRecord(TestCase):
-    def test_empty_task_does_not_raise_error(self):
-        update_task_record(task={}, state=celery_states.SUCCESS)  # should not raise
+class TestDurableTaskAfterReturn(TestCase):
 
-    def test_task_without_durable_flag(self):
-        task = MockTask(request=MockRequest(id=uuid.uuid4(), headers={}))
-        update_task_record(task=task, state=celery_states.SUCCESS)  # should not raise
+    def test_plain_task_does_not_call_delete(self):
+        with patch('corehq.apps.celery.durable.delete_task_record') as mock_delete:
+            plain_task.after_return(celery_states.SUCCESS, None, str(uuid.uuid4()))
+            mock_delete.assert_not_called()
 
     @generate_cases([
         (celery_states.SUCCESS,),
         (celery_states.FAILURE,),
-        (celery_states.REVOKED,),
     ])
-    def test_durable_task_record_is_deleted_when_in_ready_state(self, ready_state):
-        # ready_states as defined by celery (v5.4.0)
-        task_id = uuid.uuid4()
+    def test_durable_task_record_is_deleted_when_in_complete_state(self, ready_state):
+        task_id = str(uuid.uuid4())
         TaskRecord.objects.create(task_id=task_id, name='app.test_task', sent=True, args={}, kwargs={})
-        task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
-        update_task_record(task=task, state=ready_state)
+        durable_task.after_return(ready_state, None, task_id)
         with pytest.raises(TaskRecord.DoesNotExist):
             TaskRecord.objects.get(task_id=task_id)
 
@@ -202,13 +188,14 @@ class TestUpdateTaskRecord(TestCase):
         (celery_states.STARTED,),
         (celery_states.REJECTED,),
         (celery_states.RETRY,),
+        (celery_states.REVOKED,),
     ])
-    def test_durable_task_record_is_not_deleted_when_in_unready_state(self, unready_state):
-        # unready_states as defined by celery (v5.4.0)
-        task_id = uuid.uuid4()
+    def test_durable_task_record_is_not_deleted_when_in_incomplete_state(self, unready_state):
+        task_id = str(uuid.uuid4())
         TaskRecord.objects.create(task_id=task_id, name='app.test_task', sent=True, args={}, kwargs={})
-        task = MockTask(request=MockRequest(id=task_id, headers={'durable': True}))
-        update_task_record(task=task, state=unready_state)
+        with patch('corehq.apps.celery.durable.notify_error') as mock_notify:
+            delete_task_record(task_id=task_id, state=unready_state)
+            mock_notify.assert_called()
         TaskRecord.objects.get(task_id=task_id)  # should not raise
 
 
@@ -231,14 +218,3 @@ def durable_task_with_args(test_id, test_data=None):
 class MockAsyncResult:
     task_id: str
     state: str
-
-
-@attr.s(auto_attribs=True)
-class MockRequest:
-    id: str
-    headers: dict
-
-
-@attr.s(auto_attribs=True)
-class MockTask:
-    request: MockRequest
