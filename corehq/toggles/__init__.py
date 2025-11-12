@@ -736,7 +736,7 @@ V1_SHADOW_MODULES = StaticToggle(
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Allow custom XML to define case lists (ex. for case tiles)',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
@@ -936,7 +936,7 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
     'Display Settings To Get Hierarchical Location Fixture',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
         "Do not turn this feature flag.  It is only used for providing "
@@ -1112,7 +1112,7 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     'dynamically_update_search_results',
     "In case search with split screen case search enabled, search results update when a search field is updated"
     " without requiring the user to manually press a button to search.",
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
@@ -1484,7 +1484,7 @@ RICH_TEXT_EMAILS = StaticToggle(
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1543,7 +1543,7 @@ WHATSAPP_MESSAGING = StaticToggle(
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1793,7 +1793,7 @@ SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
