@@ -5,10 +5,10 @@ from django.test import SimpleTestCase, TestCase
 
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from unittest.mock import patch
 
 from pillowtop.dao.exceptions import DocumentMismatchError
 from pillowtop.feed.interface import Change, ChangeMeta
+from pillowtop.processors.elastic import BulkElasticProcessor
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
@@ -17,9 +17,8 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
 from corehq.apps.cleanup.models import DeletedCouchDoc
-from corehq.pillows.case import get_case_pillow
 from corehq.apps.es.cases import case_adapter
-from corehq.util.elastic import ensure_index_deleted
+from corehq.apps.es.tests.utils import es_test
 
 
 class ChangeFeedPillowTest(SimpleTestCase):
@@ -104,14 +103,11 @@ class ChangeFeedPillowTest(SimpleTestCase):
         self.assertLessEqual(change_meta.publish_timestamp, datetime.utcnow())
 
 
+@es_test(requires=[case_adapter])
 class TestElasticProcessorPillows(TestCase):
 
     def setUp(self):
-        with patch('pillowtop.checkpoints.manager.get_or_create_checkpoint'):
-            self.pillow = get_case_pillow(skip_ucr=True)
-
-    def tearDown(self):
-        ensure_index_deleted(case_adapter.index_name)
+        self.processor = BulkElasticProcessor(adapter=case_adapter)
 
     def test_mismatched_rev(self):
         """
@@ -152,7 +148,7 @@ class TestElasticProcessorPillows(TestCase):
         )
 
         with self.assertRaises(DocumentMismatchError):
-            self.pillow.process_change(
+            self.processor.process_change(
                 Change(
                     id='test-id',
                     sequence_id='3',
@@ -162,7 +158,7 @@ class TestElasticProcessorPillows(TestCase):
             )
 
         with self.assertRaises(DocumentMismatchError):
-            self.pillow.process_change(
+            self.processor.process_change(
                 Change(
                     id='test-id',
                     sequence_id='3',
@@ -172,7 +168,7 @@ class TestElasticProcessorPillows(TestCase):
             )
 
         try:
-            self.pillow.process_change(
+            self.processor.process_change(
                 Change(
                     id='test-id',
                     sequence_id='3',
@@ -181,10 +177,10 @@ class TestElasticProcessorPillows(TestCase):
                 )
             )
         except DocumentMismatchError:
-            self.fail('Incorectly raise a DocumentMismatchError for matching revs')
+            self.fail('Incorrectly raise a DocumentMismatchError for matching revs')
 
         try:
-            self.pillow.process_change(
+            self.processor.process_change(
                 Change(
                     id='test-id',
                     sequence_id='3',
@@ -193,7 +189,7 @@ class TestElasticProcessorPillows(TestCase):
                 )
             )
         except DocumentMismatchError:
-            self.fail('Incorectly raise a DocumentMismatchError for matching revs')
+            self.fail('Incorrectly raise a DocumentMismatchError for matching revs')
 
 
 class TestKafkaProcessor(TestCase):
