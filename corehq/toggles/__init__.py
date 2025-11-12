@@ -2333,7 +2333,8 @@ DATA_REGISTRY_CASE_UPDATE_REPEATER = StaticToggle(
     parent_toggles=[DATA_REGISTRY]
 )
 
-CASE_IMPORT_DATA_DICTIONARY_VALIDATION = StaticToggle(
+CASE_IMPORT_DATA_DICTIONARY_VALIDATION = FrozenPrivilegeToggle(
+    privileges.DATA_DICT_TYPES,
     'case_import_data_dictionary_validaton',
     'USH: Validate data per data dictionary definitions during case import',
     TAG_CUSTOM,
@@ -2460,13 +2461,6 @@ RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
     'Limit which user profiles a web user can assign to other web users and mobile workers.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
-    'web_user_invite_additional_fields',
-    'USH: Enable additional fields in web user invite form for enhanced user details',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -2793,8 +2787,9 @@ VELLUM_CASE_MICRO_IMAGE = StaticToggle(
     description='Add a micro image to cases in the case list.'
 )
 
-SUPPORT_GEO_JSON_EXPORT = StaticToggle(
-    slug='support_geo_json_export',
+SUPPORT_GEO_JSON_EXPORT = FrozenPrivilegeToggle(
+    privileges.GEOJSON_EXPORT,
+    'support_geo_json_export',
     label='Support GeoJSON export in Case Exporter',
     tag=TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
