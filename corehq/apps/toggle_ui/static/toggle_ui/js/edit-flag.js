@@ -43,7 +43,13 @@ function toggleViewModel() {
                 );
             });
         self.items(_.sortBy(items, function (item) {
-            return [item.last_used(), item.value()];
+            const lastUsed = item.last_used();
+            if (lastUsed === 'Not Found' || !lastUsed) {
+                return ['~', item.value()];  // '~' sorts after all dates/numbers
+            }
+            // Invert the date string for descending sort
+            const invertedDate = lastUsed.replace(/\d/g, d => 9 - parseInt(d));
+            return [invertedDate, item.value()];
         }));
     };
 
