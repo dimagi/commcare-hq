@@ -61,6 +61,23 @@ class TestDurableTaskApplyAsync(TestCase):
         assert record.name == 'corehq.apps.celery.tests.test_durable_task.durable_task'
         assert record.error == 'OperationalError: failed to send to broker'
 
+    def test_multiple_task_records_with_no_task_id_can_live_in_harmony(self):
+        TaskRecord.objects.create(
+            task_id=None,
+            name=durable_task.__name__,
+            args='[]',
+            kwargs='{}',
+            sent=False,
+            error='RandomError: not sure how this happened',
+        )
+        self.mock_apply_async.side_effect = OperationalError("failed to send to broker")
+        with pytest.raises(OperationalError):
+            durable_task.delay()
+
+        # ensure both the old and new record exist
+        old_record, new_record = TaskRecord.objects.filter(task_id__isnull=True).order_by('date_created')
+        assert old_record.error != new_record.error
+
     def test_args_and_kwargs_are_serialized(self):
         test_uuid = uuid.uuid4()
         test_datetime = datetime.datetime(2025, 10, 31, 11, 5)
