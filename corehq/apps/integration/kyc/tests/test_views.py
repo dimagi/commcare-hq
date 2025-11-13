@@ -258,6 +258,19 @@ class TestKycVerificationTableView(BaseTestKycView):
         assert response.status_code == 200
 
     @flag_enabled('KYC_VERIFICATION')
+    @patch('corehq.apps.hqwebapp.tables.export.export_all_rows_task.delay')
+    def test_export_action(self, export_task_mock):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(
+            self.endpoint,
+            headers={'HQ-HX-Action': 'export'},
+        )
+
+        assert response.status_code == 200
+        export_task_mock.assert_called_once()
+        assert "Export is being generated" in response.content.decode()
+
+    @flag_enabled('KYC_VERIFICATION')
     def test_response_data_users(self):
         response = self._make_request()
         queryset = response.context['table'].data

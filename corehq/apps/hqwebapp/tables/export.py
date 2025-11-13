@@ -100,7 +100,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         Can be overridden for customization.
         """
         table_class = self.get_table_class()
-        table = table_class(data=self.get_table_data())
+        table = table_class(data=self.get_table_data(), **self.get_table_kwargs())
         # Elastic Table uses queryset for data which gets evaluated lazily on pagination.
         # As export is not paginated, we need to ensure that all records are fetched.
         if isinstance(table, ElasticTable):
