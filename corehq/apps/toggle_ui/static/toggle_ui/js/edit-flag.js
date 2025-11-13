@@ -42,15 +42,16 @@ function toggleViewModel() {
                     dimagiUsers[value],
                 );
             });
-        self.items(_.sortBy(items, function (item) {
-            const lastUsed = item.last_used();
-            if (lastUsed === 'Not Found' || !lastUsed) {
-                return ['~', item.value()];  // '~' sorts after all dates/numbers
-            }
-            // Invert the date string for descending sort
-            const invertedDate = lastUsed.replace(/\d/g, d => 9 - parseInt(d));
-            return [invertedDate, item.value()];
-        }));
+        const sorted = _.chain(items)
+            .sortBy(function (item) { // sortBy is stable. secondary sort by name first
+                return item.value();
+            })
+            .sortBy(function (item) { // sortBy date low to high. 0 is highest
+                const lastUsed = item.last_used();
+                return (lastUsed === 'Not Found') || !lastUsed ? 0 : -Date.parse(lastUsed); // Date desc (secondary sort)
+            })
+            .value();
+        self.items(sorted);
     };
 
     self.addItem = function (namespace) {
