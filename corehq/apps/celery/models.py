@@ -15,7 +15,6 @@ class TaskRecord(models.Model):
     sent = models.BooleanField()  # if True, task was successfully sent to the broker
     error = models.TextField(blank=True, default='')  # optional - captures issues queueing task
     date_created = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"<{self.name}> {self.task_id} {self.date_created}"
