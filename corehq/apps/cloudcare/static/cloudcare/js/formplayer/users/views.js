@@ -81,16 +81,8 @@ var UserRowView = Marionette.View.extend({
             confirmText: gettext('Log in'),
             onConfirm: function () {
                 usersUtils.Users.logInAsUser(this.model.get('username'));
+                FormplayerFrontend.trigger('navigateHome');
                 FormplayerFrontend.showRestoreAs(usersModels.getCurrentUser());
-                var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
-                if (loginAsNextOptions) {
-                    FormplayerFrontend.trigger("clearLoginAsNextOptions");
-                    import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
-                        MenusController.default.selectMenu(loginAsNextOptions);
-                    });
-                } else {
-                    FormplayerFrontend.trigger('navigateHome');
-                }
             }.bind(this),
         });
     },
