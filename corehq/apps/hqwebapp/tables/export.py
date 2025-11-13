@@ -4,6 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import QueryDict
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
+from django.template.context import Context
 from django.utils.translation import gettext as _
 
 from django_tables2.rows import BoundRows
@@ -113,7 +114,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """
         Can be overridden to provide additional context for the export.
         """
-        return {}
+        return Context()
 
     def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()
