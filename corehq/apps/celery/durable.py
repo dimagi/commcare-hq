@@ -41,14 +41,15 @@ class DurableTask(Task):
             defaults['error'] = f"{type(e).__name__}: {e}"
             raise
         finally:
-            # only provide update args if this is a retry (ie task_id was provided)
-            # it is possible for an apply_async called via a retry to "beat" the original apply_async
-            # call since the TaskRecord isn't created until after the task is sent to the broker.
-            # To handle this edge case, ignore updating the TaskRecord if this is the original apply_async
-            # by passing in an empty dict for defaults
-            update_defaults = defaults if opts.get('task_id', None) else {}
-            TaskRecord.objects.update_or_create(
-                task_id=task_id, create_defaults=defaults, defaults=update_defaults
+            is_retry = opts.get('task_id', None) is not None
+            # only bulk_create supports upserts
+            TaskRecord.objects.bulk_create(
+                [TaskRecord(task_id=task_id, **defaults)],
+                ignore_conflicts=not is_retry,
+                update_conflicts=is_retry,
+                # unique_fields and update_fields are only used when update_conflicts=True
+                unique_fields=['task_id'] if is_retry else None,
+                update_fields=list(defaults) if is_retry else None,
             )
 
     def after_return(self, state, retval, task_id, *args):
