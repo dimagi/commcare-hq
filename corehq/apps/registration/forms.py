@@ -408,7 +408,7 @@ class DomainRegistrationForm(forms.Form):
                 hqcrispy.LinkButton(
                     _("Cancel"),
                     reverse('homepage'),
-                    css_class="btn btn-default",
+                    css_class="btn btn-outline-primary",
                 ),
             )
         )
