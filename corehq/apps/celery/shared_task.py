@@ -10,10 +10,11 @@ def task(*args, **kwargs):
 
     This decorator serves multiple purposes:
 
+    - Adds "durable" task functionality that optionally creates a permanent
+    record of incomplete tasks
     - enforces the default task serializer as JSON, which is needed until
-    https://github.com/celery/celery/issues/6759 is resolved, at which point CELERY_TASK_SERIALIZER
-    can be set back to json.
-    - Sets DurableTask as the base class for Tasks created via this decorator.
+    https://github.com/celery/celery/issues/6759 is resolved, at which point
+    CELERY_TASK_SERIALIZER can be set back to json.
 
     Parameters:
         serializer (string): Serialization method to use.
