@@ -186,7 +186,7 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
-            context['service_type'], context['by_service'], context['service_type_nested'], context['paused'] =\
+            context['service_type'], context['service_type_nested'], context['paused'] =\
                 _get_service_type(toggle)
             context['dimagi_users'] = _get_dimagi_users(toggle)
 
@@ -226,7 +226,7 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
-            data['service_type'], data['by_service'], _, _ = _get_service_type(toggle)
+            data['service_type'], _, _ = _get_service_type(toggle)
         return JsonResponse(data)
 
     def _save_randomness(self, toggle, randomness):
@@ -356,15 +356,12 @@ def _get_service_type(toggle):
                 service_type[domain] = "<None>"
                 nested["<None>"]["<None>"].append(domain)
 
-    by_service = defaultdict(list)
-    for domain, _type in sorted(service_type.items()):
-        by_service[_type].append(domain)
     sorted_nested = {
         outer_key: dict(sorted(inner_dict.items()))
         for outer_key, inner_dict in sorted(nested.items())
     }
 
-    return service_type, dict(by_service), sorted_nested, dict(sorted(paused.items()))
+    return service_type, sorted_nested, dict(sorted(paused.items()))
 
 
 def _get_dimagi_users(toggle):
