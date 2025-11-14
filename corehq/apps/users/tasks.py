@@ -42,6 +42,7 @@ from corehq.util.celery_utils import (
     run_periodic_task_again,
 )
 from corehq.util.metrics import metrics_counter
+from corehq.util.queries import queryset_to_iterator
 
 logger = get_task_logger(__name__)
 
@@ -302,18 +303,16 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     """Removes all unused custom data fields from all users in the domain"""
     from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-    from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+    from corehq.apps.users.user_data import SQLUserData
     from corehq.apps.users.views.mobile.custom_data_fields import (
         CUSTOM_USER_DATA_FIELD_TYPE,
     )
     fields_definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
     assert fields_definition, 'remove_unused_custom_fields_from_users_task called without a valid definition'
     schema_fields = {f.slug for f in fields_definition.get_fields()}
-    for user in get_all_commcare_users_by_domain(domain):
-        user_data = user.get_user_data(domain)
-        changed = user_data.remove_unrecognized(schema_fields)
-        if changed:
-            user.save()
+    for sql_user_data in queryset_to_iterator(SQLUserData.objects.filter(domain=domain), SQLUserData):
+        if sql_user_data.remove_unrecognized(schema_fields):
+            sql_user_data.save()
 
 
 @task()
