@@ -9,6 +9,7 @@ from corehq.apps.cloudcare.views import session_endpoint
 from corehq.apps.domain.forms import ConfidentialDomainPasswordResetForm
 from corehq.apps.domain.views.settings import DomainPasswordResetView
 from corehq.apps.domain.views.sms import PublicSMSRatesView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
 )
@@ -112,7 +113,7 @@ urlpatterns = [
         name='log_domain_email_event'),
     url(
         r'^oauth/applications/register/',
-        OauthApplicationRegistration.as_view(),
+        waf_allow('EC2MetaDataSSRF_BODY')(OauthApplicationRegistration.as_view()),
         name=OauthApplicationRegistration.urlname
     ),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
