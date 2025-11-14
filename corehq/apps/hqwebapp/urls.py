@@ -1,7 +1,7 @@
-from django.urls import include, re_path as url
 from django.conf import settings
+from django.urls import include
+from django.urls import re_path as url
 from django.utils.translation import gettext_lazy as _
-
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
 
@@ -15,14 +15,16 @@ from corehq.apps.hqwebapp.session_details_endpoint.views import (
 )
 from corehq.apps.hqwebapp.views import (
     BugReportView,
-    SolutionsFeatureRequestView,
     MaintenanceAlertsView,
+    OauthApplicationRegistration,
+    SolutionsFeatureRequestView,
+    check_sso_login_status,
     create_alert,
     debug_notify,
     domain_login,
+    domain_login_new_window,
     dropbox_upload,
     iframe_domain_login,
-    domain_login_new_window,
     iframe_sso_login_pending,
     jserror,
     log_email_event,
@@ -36,12 +38,10 @@ from corehq.apps.hqwebapp.views import (
     quick_find,
     redirect_to_default,
     redirect_to_dimagi,
-    OauthApplicationRegistration,
     retrieve_download,
     server_up,
     set_language,
     temporary_google_verify,
-    check_sso_login_status,
 )
 from corehq.apps.settings.views import (
     TwoFactorBackupTokensView,
