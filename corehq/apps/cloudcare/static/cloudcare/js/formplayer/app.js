@@ -459,23 +459,6 @@ FormplayerFrontend.getChannel().reply('getAppDisplayProperties', function () {
     return FormplayerFrontend.DisplayProperties || {};
 });
 
-// Support for workflows that require Log In As before moving on to the
-// screen that the user originally requested.
-FormplayerFrontend.on('setLoginAsNextOptions', function (options) {
-    FormplayerFrontend.LoginAsNextOptions = options;
-    if (Object.freeze) {
-        Object.freeze(FormplayerFrontend.LoginAsNextOptions);
-    }
-});
-
-FormplayerFrontend.on('clearLoginAsNextOptions', function () {
-    return FormplayerFrontend.LoginAsNextOptions = null;
-});
-
-FormplayerFrontend.getChannel().reply('getLoginAsNextOptions', function () {
-    return FormplayerFrontend.LoginAsNextOptions || null;
-});
-
 function makeSyncRequest(route, requestData) {
     var options,
         complete,
