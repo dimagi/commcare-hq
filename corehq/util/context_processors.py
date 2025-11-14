@@ -167,6 +167,13 @@ def enterprise_mode(request):
     }
 
 
+def ai_chat_widget(request):
+    return {
+        'CHATBOT_ID': settings.AI_CHATBOT_ID,
+        'CHATBOT_TOKEN': settings.AI_CHATBOT_TOKEN,
+    }
+
+
 def commcare_hq_names(request=None):
     return {
         'commcare_hq_names': {
