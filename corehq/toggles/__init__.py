@@ -838,7 +838,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -2252,7 +2252,7 @@ COWIN_INTEGRATION = StaticToggle(
 EXPRESSION_REPEATER = StaticToggle(
     'expression_repeater',
     'Integrate with generic APIs using UCR expressions',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
 )
@@ -2268,7 +2268,7 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
 ARCGIS_INTEGRATION = StaticToggle(
     'arcgis_integration',
     'Enable the ArcGIS Form Repeater integration. Used for forwarding form data to an ArcGIS account.',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
