@@ -1486,6 +1486,7 @@ def log_email_event(request, secret, domain=None):
     return HttpResponse()
 
 
+@waf_allow('EC2MetaDataSSRF_BODY')
 @method_decorator(require_superuser, name="dispatch")
 class OauthApplicationRegistration(BasePageView):
     urlname = 'oauth_application_registration'
