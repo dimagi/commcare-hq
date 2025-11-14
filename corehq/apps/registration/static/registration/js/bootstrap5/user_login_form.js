@@ -5,12 +5,13 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
 import emailUtils from "hqwebapp/js/utils/email";
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
+import { Collapse } from "bootstrap5";
 
 var loginController = function (options) {
     assertProperties.assertRequired(options, [
         'initialUsername',
         'passwordField',
-        'passwordFormGroup',
+        'passwordFormGroupId',
         'nextUrl',
         'isSessionExpiration',
     ]);
@@ -21,7 +22,9 @@ var loginController = function (options) {
     self.nextUrl = options.nextUrl;
     self.isSessionExpiration = options.isSessionExpiration;
     self.passwordField = options.passwordField;
-    self.passwordFormGroup = options.passwordFormGroup;
+    self.passwordFormGroup = new Collapse(
+        document.getElementById(options.passwordFormGroupId), { toggle: false },
+    );
 
     self.authUsername = ko.observable(options.initialUsername);
     self.authUsername.subscribe(function (newValue) {
@@ -78,10 +81,9 @@ var loginController = function (options) {
      * "Continue <etc>" button.
      */
     self.resetLoginState = function () {
-        self.passwordFormGroup.slideUp('fast', function () {
-            self.showContinueButton(true);
-            self.showSignInButton(false);
-        });
+        self.passwordFormGroup.hide();
+        self.showContinueButton(true);
+        self.showSignInButton(false);
     };
 
     /**
@@ -133,11 +135,10 @@ var loginController = function (options) {
     };
 
     self.continueToPasswordLogin = function () {
-        self.passwordFormGroup.slideDown('fast', function () {
-            self.showContinueButton(false);
-            self.showSignInButton(true);
-            self.passwordField.focus();
-        });
+        self.passwordFormGroup.show();
+        self.showContinueButton(false);
+        self.showSignInButton(true);
+        self.passwordField.focus();
     };
 
     self.init = function () {
