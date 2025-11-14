@@ -22,9 +22,8 @@ var loginController = function (options) {
     self.nextUrl = options.nextUrl;
     self.isSessionExpiration = options.isSessionExpiration;
     self.passwordField = options.passwordField;
-    self.passwordFormGroup = new Collapse(
-        document.getElementById(options.passwordFormGroupId), { toggle: false },
-    );
+    self.passwordFormGroupEl = document.getElementById(options.passwordFormGroupId);
+    self.passwordFormGroup = new Collapse(self.passwordFormGroupEl, { toggle: false });
 
     self.authUsername = ko.observable(options.initialUsername);
     self.authUsername.subscribe(function (newValue) {
@@ -80,10 +79,13 @@ var loginController = function (options) {
      * This resets the login state to just the username field and the
      * "Continue <etc>" button.
      */
-    self.resetLoginState = function () {
-        self.passwordFormGroup.hide();
+    self.passwordFormGroupEl.addEventListener('hidden.bs.collapse', function () {
         self.showContinueButton(true);
         self.showSignInButton(false);
+    });
+
+    self.resetLoginState = function () {
+        self.passwordFormGroup.hide();
     };
 
     /**
@@ -134,11 +136,14 @@ var loginController = function (options) {
         }
     };
 
-    self.continueToPasswordLogin = function () {
-        self.passwordFormGroup.show();
+    self.passwordFormGroupEl.addEventListener('shown.bs.collapse', function () {
         self.showContinueButton(false);
         self.showSignInButton(true);
         self.passwordField.focus();
+    });
+
+    self.continueToPasswordLogin = function () {
+        self.passwordFormGroup.show();
     };
 
     self.init = function () {
