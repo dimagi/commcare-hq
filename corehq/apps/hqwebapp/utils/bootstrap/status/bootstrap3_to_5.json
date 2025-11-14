@@ -163,9 +163,21 @@
   "registration": {
     "in_progress": true,
     "templates": [
-      "register_new_user.html"
+      "base.html",
+      "confirmation_error.html",
+      "confirmation_resend.html",
+      "confirmation_sent.html",
+      "confirmation_waiting.html",
+      "domain_request.html",
+      "email/base_templates/_base.html",
+      "email/base_templates/_base_container_project_logo.html",
+      "email/password_reset_email_hq.html",
+      "register_new_user.html",
+      "spec/mocha.html"
     ],
     "javascript": [
+      "js/password_reset_confirm.js",
+      "js/password_reset_form.js",
       "js/register_new_user.js"
     ]
   },

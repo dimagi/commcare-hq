@@ -23,11 +23,10 @@ $(function () {
     }
 
     if (initialPageData.get('enforce_sso_login')) {
-        var $passwordField = $('#id_auth-password');
         var loginController = userLoginForm.loginController({
             initialUsername: $('#id_auth-username').val(),
-            passwordField: $passwordField,
-            passwordFormGroup: $passwordField.closest('.form-group'),
+            passwordField: $('#id_auth-password'),
+            passwordFormGroupId: 'form-group-password',
             nextUrl: urlParams.get('next'),
             isSessionExpiration: isSessionExpiration,
         });

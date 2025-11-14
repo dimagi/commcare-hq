@@ -54,7 +54,7 @@ from corehq.apps.settings.views import (
 )
 
 PASSWORD_RESET_KWARGS = {
-    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
+    'template_name': 'login_and_password/password_reset_form.html',
     'form_class': ConfidentialDomainPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')},
