@@ -80,10 +80,13 @@ var loginController = function (options) {
      * This resets the login state to just the username field and the
      * "Continue <etc>" button.
      */
-    self.resetLoginState = function () {
-        self.passwordFormGroup.hide();
+    self.passwordFormGroupEl.addEventListener('hidden.bs.collapse', function () {
         self.showContinueButton(true);
         self.showSignInButton(false);
+    });
+
+    self.resetLoginState = function () {
+        self.passwordFormGroup.hide();
     };
 
     /**
@@ -134,11 +137,14 @@ var loginController = function (options) {
         }
     };
 
-    self.continueToPasswordLogin = function () {
-        self.passwordFormGroup.show();
+    self.passwordFormGroupEl.addEventListener('shown.bs.collapse', function () {
         self.showContinueButton(false);
         self.showSignInButton(true);
         self.passwordField.focus();
+    });
+
+    self.continueToPasswordLogin = function () {
+        self.passwordFormGroup.show();
     };
 
     self.init = function () {
