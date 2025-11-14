@@ -59,7 +59,7 @@ jobs:
           ./manage.py copy_required_static_files
 
       - name: Upload Static Files On Push
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: staticfiles-${{ github.sha }}
           path: REQUIRED_STATIC_FILES.zip

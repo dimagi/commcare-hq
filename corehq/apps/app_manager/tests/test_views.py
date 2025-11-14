@@ -688,7 +688,7 @@ class TestViewGeneric(ViewsBase):
         'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'has_mobile_workers',
         'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
         'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'form_submit_history_url', 'btn_style',
-        'chat_widget_config', 'ACCOUNTS_EMAIL', 'all_add_ons_enabled',
+        'ACCOUNTS_EMAIL', 'all_add_ons_enabled',
     }
 
     expected_keys_module = {
@@ -701,8 +701,8 @@ class TestViewGeneric(ViewsBase):
         'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules',
         'app_id', 'request', 'MINIMUM_PASSWORD_LENGTH', 'type', 'is_saas_environment', 'show_all_projects_link',
         'enterprise_mode', 'csrf_token', 'is_dimagi_environment', 'domain_names',
-        'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'show_training_modules', 'AUDIO_LABEL',
-        'show_shadow_module_v1', 'practice_users', 'add_ons', 'module_icon', 'SALES_EMAIL', 'app', 'domain_links',
+        'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'show_training_modules', 'AUDIO_LABEL', 'app',
+        'show_shadow_module_v1', 'practice_users', 'add_ons', 'module_custom_icon', 'SALES_EMAIL', 'domain_links',
         'app_subset', 'show_biometric', 'case_list_form_options', 'MINIMUM_ZXCVBN_SCORE', 'ICON_LABEL', 'app_name',
         'linkable_domains', 'alerts', 'show_shadow_forms', 'data_registry_workflow_choices', 'use_bootstrap5',
         'title_block', 'login_template', 'base_template', 'MEDIA_URL', 'lang', 'show_live_preview',
@@ -717,7 +717,7 @@ class TestViewGeneric(ViewsBase):
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
         'formats_supporting_case_list_optimizations', 'module_type', 'icon_class', 'form_submit_history_url',
-        'btn_style', 'chat_widget_config', 'ACCOUNTS_EMAIL',
+        'btn_style', 'ACCOUNTS_EMAIL',
     }
 
     expected_keys_form = {
@@ -731,11 +731,11 @@ class TestViewGeneric(ViewsBase):
         'is_saas_environment', 'show_all_projects_link', 'enterprise_mode', 'module_is_multi_select', 'csrf_token',
         'nav_form', 'xform_validation_errored', 'allow_form_filtering',
         'is_dimagi_environment', 'domain_names', 'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'js_entry',
-        'show_training_modules', 'AUDIO_LABEL', 'show_shadow_module_v1', 'practice_users', 'add_ons',
-        'module_icon', 'custom_instances', 'SALES_EMAIL', 'app', 'domain_links', 'form_errors', 'app_subset',
+        'show_training_modules', 'AUDIO_LABEL', 'show_shadow_module_v1', 'practice_users', 'add_ons', 'app',
+        'module_custom_icon', 'custom_instances', 'SALES_EMAIL', 'domain_links', 'form_errors', 'app_subset',
         'show_biometric', 'MINIMUM_ZXCVBN_SCORE', 'ICON_LABEL', 'app_name', 'linkable_domains', 'alerts',
-        'show_shadow_forms', 'use_bootstrap5', 'form_icon', 'title_block', 'login_template', 'base_template',
-        'MEDIA_URL', 'lang', 'show_live_preview', 'latest_version_for_build_profiles',
+        'show_shadow_forms', 'use_bootstrap5', 'form_custom_icon', 'title_block', 'login_template',
+        'base_template', 'MEDIA_URL', 'lang', 'show_live_preview', 'latest_version_for_build_profiles',
         'edit_name_url', 'privileges', 'settings_active', 'commcare_hq_names', 'add_ons_layout',
         'limit_to_linked_domains', 'module', 'is_case_list_form', 'True', 'multimedia', 'MAPBOX_ACCESS_TOKEN',
         'xform_validation_missing', 'LANGUAGES', 'allow_report_an_issue',
@@ -747,7 +747,7 @@ class TestViewGeneric(ViewsBase):
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'allow_usercase',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
         'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
-        'form_submit_history_url', 'btn_style', 'chat_widget_config', 'ACCOUNTS_EMAIL',
+        'form_submit_history_url', 'btn_style', 'ACCOUNTS_EMAIL',
     }
 
 

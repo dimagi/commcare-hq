@@ -71,7 +71,12 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WireBillingRecord,
 )
-from corehq.apps.accounting.tasks import send_subscription_reminder_emails
+from corehq.apps.accounting.tasks import (
+    send_renewal_reminder_emails,
+    send_subscription_ending_emails,
+    send_subscription_reminder_emails,
+    send_subscription_reminder_emails_dimagi_contact,
+)
 from corehq.apps.accounting.utils import (
     get_account_name_from_default_name,
     get_money_str,
@@ -2330,13 +2335,17 @@ class TriggerBookkeeperEmailForm(forms.Form):
 
 
 class TestReminderEmailFrom(forms.Form):
-    days = forms.ChoiceField(
-        label="Days Until Subscription Ends",
+    reminder_type = forms.ChoiceField(
+        label="Type of Reminder to Trigger",
         choices=(
-            (1, 1),
-            (10, 10),
-            (30, 30),
+            ('subscription_reminder', _("Subscription Reminder")),
+            ('renewal_reminder', _("Renewal Reminder")),
+            ('subscription_ending', _("Subscription Ending")),
+            ('dimagi_contact', _("Dimagi Contact Subscription Reminder")),
         )
+    )
+    days = forms.IntegerField(
+        label="Days Until Subscription Ends"
     )
 
     def __init__(self, *args, **kwargs):
@@ -2350,6 +2359,7 @@ class TestReminderEmailFrom(forms.Form):
             crispy.Fieldset(
                 "Test Subscription Reminder Emails",
                 'days',
+                'reminder_type',
             ),
             crispy.Div(
                 crispy.HTML(
@@ -2369,7 +2379,16 @@ class TestReminderEmailFrom(forms.Form):
         )
 
     def send_emails(self):
-        send_subscription_reminder_emails(int(self.cleaned_data['days']))
+        reminder_type = self.cleaned_data['reminder_type']
+        days = int(self.cleaned_data['days'])
+        if reminder_type == 'subscription_reminder':
+            send_subscription_reminder_emails(days)
+        elif reminder_type == 'renewal_reminder':
+            send_renewal_reminder_emails(days)
+        elif reminder_type == 'subscription_ending':
+            send_subscription_ending_emails(days)
+        elif reminder_type == 'dimagi_contact':
+            send_subscription_reminder_emails_dimagi_contact(days)
 
 
 class AdjustBalanceForm(forms.Form):
@@ -2859,6 +2878,36 @@ class TriggerAutopaymentsForm(forms.Form):
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Autopayments for Project",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+
+class TriggerAutoRenewalForm(forms.Form):
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Auto-Renewal',
+                crispy.Field(
+                    'domain',
+                    css_class="input-xxlarge accounting-async-select2",
+                    placeholder="Search for Project"
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Auto-Renewal for Project",
                     css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),
