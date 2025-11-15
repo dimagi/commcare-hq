@@ -190,7 +190,7 @@
                     {% trans "Sort Property" %}
                     <span
                       class="hq-help-template"
-                      data-title="{% trans "Sort Properties" %}"
+                      data-title="{% trans 'Sort Properties' %}"
                       data-content="{% blocktrans %}
                         Properties in this list determine how cases are ordered
                         in your case list. This is useful if for example you
@@ -207,7 +207,7 @@
                       {% trans "Display Blanks" %}
                       <span
                         class="hq-help-template"
-                        data-title="{% trans "Display Blanks" %}"
+                        data-title="{% trans 'Display Blanks' %}"
                         data-content="{% blocktrans %}
                           Should cases that don't have a value for the sort
                           property appear at the top or the bottom of the case
@@ -222,7 +222,7 @@
                     {% trans "Display Text" %}
                     <span
                       class="hq-help-template"
-                      data-title="{% trans "Display Text" %}"
+                      data-title="{% trans 'Display Text' %}"
                       data-content="{% blocktrans %}
                         The 'Display Text' is used for properties that are only
                         listed as Sort Properties and not as Display Properties
@@ -251,9 +251,7 @@
                     <div data-bind="visible: showWarning">
                       <span
                         class="help-block"
-                        data-bind="
-                                        text: warningText
-                                    "
+                        data-bind="text: warningText"
                       ></span>
                     </div>
                     <!-- /ko -->
@@ -266,9 +264,9 @@
                       />
                       <div class="label label-default">
                         {% trans "Sort Calculation" %}&nbsp;(#<span
-                        data-bind="text: $index() + 1"
-                      ></span
-                      >)
+                          data-bind="text: $index() + 1"
+                        ></span
+                        >)
                       </div>
                       <!-- /ko -->
                     {% endif %}
@@ -285,7 +283,6 @@
                       ></option>
                     </select>
                   </td>
-
                   {% if app.enable_case_list_sort_blanks %}
                     <td>
                       <select class="form-control" data-bind="value: blanks">
@@ -331,8 +328,9 @@
           <div class="form-group">
             <button
               class="btn btn-default btn-sm"
-              data-bind="
-                    click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
+              data-bind="click: function(data){
+                data.addSortRow(field='',type='',direction='',blanks='',display='',notify=true,sortCalculation='');
+              }"
             >
               <i class="fa fa-plus"></i>
               {% trans "Add sort property" %}
