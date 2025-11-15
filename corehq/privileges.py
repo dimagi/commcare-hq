@@ -132,6 +132,8 @@ GEOJSON_EXPORT = 'geojson_export'
 # "Enable All Add-Ons" in Application Settings > "Add-Ons"
 SHOW_ENABLE_ALL_ADD_ONS = 'show_enable_all_add_ons'
 
+CUSTOM_ICON_BADGES = 'custom_icon_badges'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -201,6 +203,7 @@ MAX_PRIVILEGES = [
     TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     DATA_DICT_TYPES,
     GEOJSON_EXPORT,
+    CUSTOM_ICON_BADGES,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -285,4 +288,5 @@ class Titles(object):
             TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION: _("Two-stage Mobile Worker Account Creation"),
             DATA_DICT_TYPES: _("Data Dictionary case properties have data types"),
             GEOJSON_EXPORT: _("Case Export supports exporting geolocated data in GeoJSON format"),
+            CUSTOM_ICON_BADGES: _('Add text or xpath based custom icon badges to menus and forms'),
         }.get(privilege, privilege)

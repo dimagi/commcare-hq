@@ -253,6 +253,8 @@ class Command(BaseCommand):
              name='Case Export supports the GeoJSON data format',
              description='Case Export supports exporting geolocated data in '
                          'GeoJSON format.'),
+        Role(slug=privileges.CUSTOM_ICON_BADGES, name='Custom Icon Badges',
+             description='Add text or xpath based custom icon badges to menus and forms'),
     ]
 
     BOOTSTRAP_PLANS = [

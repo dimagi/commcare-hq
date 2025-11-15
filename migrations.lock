@@ -133,6 +133,7 @@ accounting
  0111_rename_is_auto_invoiceable_billingaccount_require_auto_pay
  0112_data_dict_types_priv
  0113_geojson_export_priv
+ 0114_custom_icon_badges_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
