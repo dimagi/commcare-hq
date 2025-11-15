@@ -25,6 +25,7 @@
   <div id="verify-alert"></div>
   <div id="revert-verification-alert"></div>
   <div id="export-alert"></div>
+  <div id="demo-alert"></div>
   <div class="mb-2 mt-4">
     <div class="d-flex flex-wrap gap-3">
       <button
@@ -60,6 +61,31 @@
         <i class="fa fa-share"></i>
         <span> {% trans "Export to Excel" %} </span>
       </button>
+
+      <!-- New demo buttons on the right -->
+      <div class="ms-auto d-flex gap-3">
+        <button
+          id="trigger-submissions-btn"
+          class="btn btn-outline-secondary"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#trigger-submissions-modal"
+        >
+          <i class="fa fa-play"></i>
+          Trigger Submissions
+        </button>
+
+        <button
+          id="trigger-fetch-status-btn"
+          class="btn btn-outline-secondary"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#trigger-fetch-status-modal"
+        >
+          <i class="fa fa-refresh"></i>
+          Trigger Fetch Status
+        </button>
+      </div>
     </div>
   </div>
   <div
@@ -74,6 +100,7 @@
   </div>
   {% include "payments/partials/payments_confirmation_modal.html" %}
   {% include "payments/partials/payments_revert_verification_modal.html" %}
+  {% include "payments/partials/demo_modals.html" %}
 {% endblock %}
 
 {% block modals %}
