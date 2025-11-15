@@ -2,8 +2,7 @@ from Crypto.Cipher import AES
 import base64
 import json
 
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -20,7 +19,9 @@ from corehq.util.hmac_request import validate_request_hmac
 def receive_message(request, *args, **kwargs):
     data = json.loads(request.body.decode("utf-8"))
     channel_id = data["channel_id"]
-    user_link = ConnectIDUserLink.objects.get(channel_id=channel_id)
+    user_link = ConnectIDUserLink.objects.filter(channel_id=channel_id, is_active=True).first()
+    if user_link is None:
+        return HttpResponseNotFound
     username = user_link.commcare_user.username
     couch_user = CouchUser.get_by_username(username)
     phone_obj = ConnectMessagingNumber(couch_user)
@@ -53,11 +54,13 @@ def connectid_messaging_key(request, *args, **kwargs):
     channel_id = request.POST.get("channel_id")
     if channel_id is None:
         return HttpResponseBadRequest("Channel ID is required.")
-    link = get_object_or_404(
-        ConnectIDUserLink,
+    link = ConnectIDUserLink.objects.filter(
         channel_id=channel_id,
-        connectid_username=request.connectid_username
-    )
+        connectid_username=request.connectid_username,
+        is_active=True,
+    ).first()
+    if link is None:
+        return HttpResponseNotFound
     messaging_key = link.messaging_key
     return JsonResponse({"key": messaging_key.key})
 
@@ -71,9 +74,7 @@ def update_connectid_messaging_consent(request, *args, **kwargs):
     consent = data.get("consent", False)
     if channel_id is None:
         return HttpResponseBadRequest("Channel ID is required.")
-    link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
-    link.messaging_consent = consent
-    link.save()
+    ConnectIDUserLink.objects.filter(channel_id=channel_id, is_active=True).update(messaging_consent=consent)
     return HttpResponse(status=200)
 
 
@@ -85,7 +86,9 @@ def messaging_callback_url(request, *args, **kwargs):
     channel_id = data.get("channel_id")
     if channel_id is None:
         return HttpResponseBadRequest("Channel ID is required.")
-    user_link = get_object_or_404(ConnectIDUserLink, channel_id=channel_id)
+    user_link = ConnectIDUserLink.objects.filter(channel_id=channel_id, is_active=True).first()
+    if user_link is None:
+        return HttpResponseNotFound
     messages = data.get("messages", [])
     messages_to_update = []
     message_data = {message.get("message_id"): message.get("received_on") for message in messages}
