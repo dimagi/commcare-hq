@@ -82,11 +82,12 @@
       {% block messages %}{% endblock %}
 
       {% block content %}{% endblock content %}
-      {% if request|feature_preview_enabled:"OCS_CHATBOT" %}
+      {% if CHATBOT_ID and CHATBOT_TOKEN and request|feature_preview_enabled:"OCS_CHATBOT" %}
         <div class="ocs-widget-container">
           <open-chat-studio-widget
             visible="false"
-            chatbot-id="5a912293-eccc-4cf8-8eff-207d99d59aeb"
+            chatbot-id="{{ CHATBOT_ID }}"
+            embed-key="{{ CHATBOT_TOKEN }}"
             icon-url="{% static 'hqwebapp/images/chatbot_avatar.png' %}"
             position="right"
             language="{{ LANGUAGE_CODE }}"
