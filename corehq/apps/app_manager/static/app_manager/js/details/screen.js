@@ -546,7 +546,11 @@ export default function (spec, config, options) {
             var sortRows = self.config.sortRows.sortRows();
             for (var i = 0; i < sortRows.length; i++) {
                 var row = sortRows[i];
-                if (!row.hasValidPropertyName()) {
+                if (row.useSortCalculation) {
+                    if (!row.sortCalculation().trim()) {
+                        row.showWarning(true);
+                    }
+                } else if (!row.hasValidPropertyName()) {
                     row.showWarning(true);
                 }
             }
