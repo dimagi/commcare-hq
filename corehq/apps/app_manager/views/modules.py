@@ -1240,6 +1240,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             item.display[lang] = sort_element['display']
             if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
                 item.sort_calculation = sort_element['sort_calculation']
+                if not item.field and not item.sort_calculation:
+                    return HttpResponseBadRequest(_("Sort property needs a property or a calculation"))
             else:
                 item.sort_calculation = ""
             detail.short.sort_elements.append(item)

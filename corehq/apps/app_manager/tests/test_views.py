@@ -751,6 +751,93 @@ class TestViewGeneric(ViewsBase):
     }
 
 
+class TestModuleViews(ViewsBase):
+    domain = 'test-module-views'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        factory = AppFactory(domain=cls.domain)
+        cls.app = factory.app
+        cls.module = factory.new_basic_module('open_case', 'house', with_form=False)
+        cls.app.save()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.username, password=self.password)
+
+    def test_edit_module_detail_screens(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": ""
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": "now()"
+                }
+            ])
+        }
+
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property_validations(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": ""
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode('utf-8'), 'Sort property needs a property or a calculation')
+
+
 class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     """Test that the DownloadCaseSummaryView can be accessed with an API key."""
 
