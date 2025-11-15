@@ -9,8 +9,11 @@ import ko from "knockout";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
 import Utils from "app_manager/js/details/utils";
 
-var sortRow = function (params, saveButton) {
+var sortRow = function (params, useSortCalculation, saveButton) {
     var self = {};
+    // set either when adding a new UI element to force rendering for sort calculation
+    // or overwritten if sortCalculation present which is for the objects being created on page load
+    self.useSortCalculation = useSortCalculation || (!!params.sortCalculation);
     params = params || {};
 
     self.selectField = uiElementSelect.new(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
@@ -107,7 +110,8 @@ var sortRows = function (properties, saveButton) {
     self.sortRows = ko.observableArray([]);
     self.properties = properties;
 
-    self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation) {
+    self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation,
+        useSortCalculation = false) {
         self.sortRows.push(sortRow({
             field: field,
             type: type,
@@ -116,7 +120,7 @@ var sortRows = function (properties, saveButton) {
             display: display,
             properties: [...self.properties],  // clone list here to avoid updates from select2 leaking out
             sortCalculation: sortCalculation,
-        }, saveButton));
+        }, useSortCalculation,  saveButton));
         if (notify) {
             saveButton.fire('change');
         }

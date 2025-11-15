@@ -246,7 +246,7 @@
                     class="form-group col-sm-2"
                     data-bind="css: {'has-error': showWarning}"
                   >
-                    <!-- ko ifnot: sortCalculation -->
+                    <!-- ko ifnot: useSortCalculation -->
                     <div data-bind="jqueryElement: selectField.ui"></div>
                     <div data-bind="visible: showWarning">
                       <span
@@ -256,7 +256,7 @@
                     </div>
                     <!-- /ko -->
                     {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-                      <!-- ko if: sortCalculation -->
+                      <!-- ko if: useSortCalculation -->
                       <input
                         class="form-control"
                         type="text"
@@ -326,15 +326,59 @@
             </table>
           </div>
           <div class="form-group">
-            <button
-              class="btn btn-default btn-sm"
-              data-bind="click: function(data){
-                data.addSortRow(field='',type='',direction='',blanks='',display='',notify=true,sortCalculation='');
-              }"
-            >
-              <i class="fa fa-plus"></i>
-              {% trans "Add sort property" %}
-            </button>
+            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+              <div class="btn-group">
+                <button
+                  class="btn btn-default"
+                  data-bind="click: function(data){
+                    data.addSortRow(field='',type='',direction='',blanks='',display='',notify=true,
+                      sortCalculation=''
+                    );
+                  }"
+                >
+                  <i class="fa fa-plus"></i>
+                  {% trans "Add Sort Property" %}
+                </button>
+                <button
+                  class="btn btn-default dropdown-toggle"
+                  data-toggle="dropdown"
+                >
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li
+                    data-bind="click: function(data){
+                      data.addSortRow(field='',type='',direction='',blanks='',display='',notify=true,
+                        sortCalculation=''
+                      );
+                    }"
+                  >
+                    <a>{% trans "Sort Property" %}</a>
+                  </li>
+                  <li
+                    data-bind="click: function(data){
+                      data.addSortRow(field='',type='',direction='',blanks='',display='',notify=true,
+                        sortCalculation='',useSortCalculation=true
+                      );
+                    }"
+                  >
+                    <a>{% trans "Sort Calculation" %}</a>
+                  </li>
+                </ul>
+              </div>
+            {% else %}
+              <button
+                class="btn btn-default btn-sm"
+                data-bind="click: function(data){
+                  data.addSortRow(field='',type='',direction='',blanks='',display='',notify=true,
+                    sortCalculation=''
+                  );
+                }"
+              >
+                <i class="fa fa-plus"></i>
+                {% trans "Add sort property" %}
+              </button>
+            {% endif %}
           </div>
         {% endif %}
       </div>
