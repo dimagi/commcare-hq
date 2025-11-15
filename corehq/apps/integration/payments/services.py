@@ -394,6 +394,7 @@ def _get_status_details(status, error_code=None):
 
     status_update = {
         PaymentProperties.PAYMENT_STATUS: status,
+        PaymentProperties.PAYMENT_STATUS_CONFIRMED_ON: datetime.utcnow().isoformat(),
     }
 
     if error_code is not None:
