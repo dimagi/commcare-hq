@@ -537,11 +537,6 @@ export default function (spec, config, options) {
                 "Please update following properties: ");
             errors.push(msg + self.config.search.commonProperties());
         }
-        if (errors.length) {
-            alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));
-            return;
-        }
-
         if (self.containsSortConfiguration) {
             var sortRows = self.config.sortRows.sortRows();
             for (var i = 0; i < sortRows.length; i++) {
@@ -549,12 +544,20 @@ export default function (spec, config, options) {
                 if (row.useSortCalculation) {
                     if (!row.sortCalculation().trim()) {
                         row.showWarning(true);
+                        errors.push(gettext("Missing sort calculation."));
                     }
                 } else if (!row.hasValidPropertyName()) {
                     row.showWarning(true);
+                    errors.push(gettext("Missing sort property."));
                 }
             }
         }
+
+        if (errors.length) {
+            alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));
+            return;
+        }
+
         if (self.validate()) {
             self.saveButton.ajax({
                 url: self.saveUrl,
