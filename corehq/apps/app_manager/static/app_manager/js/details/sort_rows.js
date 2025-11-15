@@ -8,6 +8,7 @@
 import ko from "knockout";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
 import Utils from "app_manager/js/details/utils";
+import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 
 var sortRow = function (params, saveButton) {
     var self = {};
@@ -157,6 +158,32 @@ var sortRows = function (properties, saveButton) {
         });
     };
 
+    self.validate = function () {
+        var errors = [];
+
+        $("#message-alerts > div").each(function () {
+            $(this).alert('close');
+        });
+
+        self.sortRows().forEach((row) => {
+            if (row.useSortCalculation) {
+                if (!row.sortCalculation().trim()) {
+                    row.showWarning(true);
+                    errors.push(gettext("Missing sort calculation."));
+                }
+            } else if (!row.hasValidPropertyName()) {
+                row.showWarning(true);
+                errors.push(gettext("Missing sort property."));
+            }
+        });
+        if (errors.length) {
+            _.each(errors, function (error) {
+                alertUser.alert_user(error, "danger");
+            });
+            return false;
+        }
+        return true;
+    };
     return self;
 };
 
