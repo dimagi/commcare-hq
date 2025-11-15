@@ -284,10 +284,11 @@ class TestKycUser(BaseKycUsersSetup):
         assert kyc_user.kyc_provider is None
         assert kyc_user.kyc_verification_error_message is None
 
-    def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider):
+    def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider, expected_verified_by):
         assert kyc_user.kyc_verification_status == expected_status
         assert kyc_user.kyc_last_verified_at is not None
         assert kyc_user.kyc_provider == expected_provider
+        assert kyc_user.kyc_verified_by == expected_verified_by
 
     def test_update_verification_status_for_custom_user_data(self):
         config = KycConfig(
@@ -296,9 +297,14 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.commcare_user)
-        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED, verified_by=self.commcare_user.username)
 
-        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+        self._assert_for_verification_status(
+            kyc_user,
+            KycVerificationStatus.PASSED,
+            config.provider,
+            self.commcare_user.username
+        )
 
     def test_update_verification_status_for_user_case(self):
         config = KycConfig(
@@ -307,9 +313,14 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.user_case)
-        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED, verified_by=self.commcare_user.username)
 
-        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+        self._assert_for_verification_status(
+            kyc_user,
+            KycVerificationStatus.PASSED,
+            config.provider,
+            self.commcare_user.username
+        )
 
     def test_update_verification_status_for_other_case_type(self):
         config = KycConfig(
@@ -318,9 +329,14 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.other_case)
-        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED, verified_by=self.commcare_user.username)
 
-        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+        self._assert_for_verification_status(
+            kyc_user,
+            KycVerificationStatus.PASSED,
+            config.provider,
+            self.commcare_user.username
+        )
 
     def test_verification_status_invalid_value(self):
         config = KycConfig(
