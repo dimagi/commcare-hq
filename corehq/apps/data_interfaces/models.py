@@ -1141,18 +1141,17 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
         return deduplicate_action_definition
 
-    def properties_fit_definition(self, updated_case_properties):
-        """Given a list of case properties, returns whether these will be pertinent in
+    def properties_fit_definition(self, case_properties):
+        """Given a set of case properties, returns whether these will be pertinent in
         finding duplicate cases.
         """
 
         definition_properties = set(self.case_properties)
-        updated_case_properties = set(updated_case_properties)
 
         if self.match_type == CaseDeduplicationMatchTypeChoices.ALL:
-            return updated_case_properties.issuperset(definition_properties)
+            return case_properties.issuperset(definition_properties)
         elif self.match_type == CaseDeduplicationMatchTypeChoices.ANY:
-            return updated_case_properties.intersection(definition_properties)
+            return case_properties.intersection(definition_properties)
 
         raise ValueError(f"Unknown match type: {self.match_type}")
 

@@ -41,12 +41,13 @@ def get_sample_registry_data_source(**kwargs):
 
 
 def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
+    """Configure UCR processors and discard other pillow processors"""
     configs_by_domain = {}
     for config in configs:
         configs_by_domain.setdefault(config.domain, []).append(config)
 
     _SHARED_ADAPTER_CACHES.clear()
-    for proc in pillow.processors:
+    for proc in list(pillow.processors):
         if hasattr(proc, 'table_manager'):
             proc.table_manager.data_source_providers = [
                 MockDataSourceProvider(configs_by_domain)
@@ -56,6 +57,8 @@ def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
                     for config in configs:
                         proc.table_manager.rebuild_coordinator.reset(config._id)
                 proc.table_manager.get_adapters(domain)  # bootstrap
+        else:
+            pillow.processors.remove(proc)
 
 
 def cleanup_ucr(data_source):

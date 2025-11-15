@@ -27,10 +27,6 @@ from corehq.apps.receiverwrapper.exceptions import (
     IgnoreDocument,
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.userreports.pillow import (
-    ConfigurableReportPillowProcessor,
-    ConfigurableReportTableManager,
-)
 from corehq.apps.userreports.tests.utils import (
     bootstrap_pillow,
     get_sample_data_source,
@@ -1341,7 +1337,8 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         cls.adapter = get_indicator_adapter(cls.data_source)
         cls.adapter.build_table()
         cls.addClassCleanup(cls.adapter.drop_table)
-        cls.pillow = _get_pillow([cls.data_source], processor_chunk_size=100)
+        cls.pillow = get_case_pillow(processor_chunk_size=100)
+        bootstrap_pillow(cls.pillow, cls.data_source)
 
         cls.connx = ConnectionSettings.objects.create(
             domain=cls.domain,
@@ -1691,13 +1688,3 @@ class TestBackoffCodes(TestCase):
 
 def str_seconds(dt):
     return dt.isoformat(timespec='seconds')
-
-
-def _get_pillow(configs, processor_chunk_size=0):
-    pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
-    # overwrite processors since we're only concerned with UCR here
-    table_manager = ConfigurableReportTableManager(data_source_providers=[])
-    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    pillow.processors = [ucr_processor]
-    bootstrap_pillow(pillow, *configs)
-    return pillow
