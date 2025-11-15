@@ -215,7 +215,6 @@ Utils.CloudcareUrl = function (options) {
     this.queryData = options.queryData;
     this.singleApp = options.singleApp;
     this.sortIndex = options.sortIndex;
-    this.forceLoginAs = options.forceLoginAs;
     this.requestInitiatedByTag = options.requestInitiatedByTag;
 
     this.setSelections = function (selections) {
@@ -357,7 +356,6 @@ Utils.CloudcareUrl.prototype.toJson = function () {
         queryData: self.queryData || {},    // formplayer can't handle a null
         singleApp: self.singleApp,
         sortIndex: self.sortIndex,
-        forceLoginAs: self.forceLoginAs,
         requestInitiatedByTag: self.requestInitiatedByTag,
     };
     return JSON.stringify(dict);
@@ -381,7 +379,6 @@ Utils.CloudcareUrl.fromJson = function (json) {
         'queryData': data.queryData,
         'singleApp': data.singleApp,
         'sortIndex': data.sortIndex,
-        'forceLoginAs': data.forceLoginAs,
         "requestInitiatedByTag": data.requestInitiatedByTag,
     };
     return new Utils.CloudcareUrl(options);
