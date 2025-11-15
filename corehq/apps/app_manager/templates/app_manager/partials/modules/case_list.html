@@ -217,9 +217,6 @@
                       </span>
                     </th>
                   {% endif %}
-                  {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-                    <th>{% trans "Sort Calculation" %}</th>
-                  {% endif %}
                   <th>{% trans "Format" %}</th>
                   <th>
                     {% trans "Display Text" %}
@@ -249,6 +246,7 @@
                     class="form-group col-sm-2"
                     data-bind="css: {'has-error': showWarning}"
                   >
+                    <!-- ko ifnot: sortCalculation -->
                     <div data-bind="jqueryElement: selectField.ui"></div>
                     <div data-bind="visible: showWarning">
                       <span
@@ -258,6 +256,22 @@
                                     "
                       ></span>
                     </div>
+                    <!-- /ko -->
+                    {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                      <!-- ko if: sortCalculation -->
+                      <input
+                        class="form-control"
+                        type="text"
+                        data-bind="value: sortCalculation"
+                      />
+                      <div class="label label-default">
+                        {% trans "Sort Calculation" %}&nbsp;(#<span
+                        data-bind="text: $index() + 1"
+                      ></span
+                      >)
+                      </div>
+                      <!-- /ko -->
+                    {% endif %}
                   </td>
                   <td>
                     <select class="form-control" data-bind="value: direction">
@@ -282,17 +296,6 @@
                       </select>
                     </td>
                   {% endif %}
-
-                  {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-                    <td>
-                      <input
-                        class="form-control"
-                        type="text"
-                        data-bind="value: sortCalculation"
-                      />
-                    </td>
-                  {% endif %}
-
                   <td>
                     <select class="form-control" data-bind="value: type">
                       <option value="plain">{% trans "Plain" %}</option>
