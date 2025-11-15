@@ -48,8 +48,6 @@ var MenuSelect = Backbone.Collection.extend({
         'numEntitiesPerRow',
         'pageCount',
         'redoLast',
-        'shouldRequestLocation',
-        'shouldWatchLocation',
         'sortIndices',
         'styles',
         'titles',
