@@ -304,7 +304,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         return attribute in request.POST
 
     if 'sha1' in request.POST and (should_edit("xform") or "xform" in request.FILES):
-        conflict = _get_xform_conflict_response(form, request.POST['sha1'])
+        conflict = _get_xform_conflict_response(form.source, request.POST['sha1'])
         if conflict is not None:
             return conflict
 
@@ -336,7 +336,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                save_xform(app, form, xform)
+
+                case_update_diff = _get_case_update_diff(request, form)
+                save_xform(app, form, xform, case_update_diff)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -523,15 +525,18 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
+    existing_xml = form.source
 
-    conflict = _get_xform_conflict_response(form, sha1_checksum)
+    conflict = _get_xform_conflict_response(existing_xml, sha1_checksum)
     if conflict is not None:
         return conflict
 
-    xml = apply_patch(patch, form.source)
+    xml = apply_patch(patch, existing_xml)
+
+    case_update_diff = _get_case_update_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'))
+        xml = save_xform(app, form, xml.encode('utf-8'), case_update_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
@@ -551,8 +556,19 @@ def apply_patch(patch, text):
     return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
 
 
-def _get_xform_conflict_response(form, sha1_checksum):
-    form_xml = form.source
+def _get_case_update_diff(request, form):
+    update_diff = None
+
+    uses_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    if uses_vellum_case_mapping and 'mapping_diff' in request.POST:
+        diff_json = json.loads(request.POST['mapping_diff'])
+        is_registration_form = form.is_registration_form()
+        update_diff = FormActionsDiff.parse_universal_diff(diff_json, is_registration=is_registration_form)
+
+    return update_diff
+
+
+def _get_xform_conflict_response(form_xml, sha1_checksum):
     if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
         return json_response({'status': 'conflict', 'xform': form_xml})
     return None
