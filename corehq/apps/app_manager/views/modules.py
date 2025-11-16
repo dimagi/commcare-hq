@@ -1242,6 +1242,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 item.sort_calculation = sort_element['sort_calculation']
             else:
                 item.sort_calculation = ""
+            if not item.field and not item.sort_calculation:
+                return HttpResponseBadRequest(_("Sort property needs a property or a calculation"))
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
