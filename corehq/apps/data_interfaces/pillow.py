@@ -102,15 +102,17 @@ class CaseDeduplicationProcessor(PillowProcessor):
         return associated_form
 
     def _is_applicable(self, rule, case, case_properties, form_id):
+        def form_closes_case(form_id, case):
+            # When this returns True the rule is applicable because it may
+            # delete a related <CaseDuplicateNew>
+            return any(tx.form_id == form_id for tx in case.get_closing_transactions())
+
         if case.type != rule.case_type:
             return False
         action_definition = CaseDeduplicationActionDefinition.from_rule(rule)
         return action_definition.properties_fit_definition(case_properties) and (
             not case.closed
             or action_definition.include_closed
-
-            # True if case is being closed by the form associated with this change.
-            # Applicable because the rule may delete a related <CaseDuplicateNew>.
-            # Check last to avoid transactions DB hit unless required.
-            or any(tx.form_id == form_id for tx in case.get_closing_transactions())
+            # check last to avoid transactions DB hit unless required
+            or form_closes_case(form_id, case)
         )
