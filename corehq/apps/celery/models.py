@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 
@@ -7,8 +9,7 @@ class TaskRecord(models.Model):
     Once processed by a worker, whether it fails or succeeds, this record is deleted.
     """
 
-    # by default, multiple null values are allowed with unique constraint
-    task_id = models.UUIDField(unique=True, null=True)
+    task_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     name = models.CharField(max_length=255)
     args = models.JSONField()
     kwargs = models.JSONField()
