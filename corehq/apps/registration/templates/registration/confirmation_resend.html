@@ -1,4 +1,4 @@
-{% extends "registration/bootstrap5/base.html" %}
+{% extends "registration/base.html" %}
 {% load i18n %}
 
 {% block title %}{% trans "Resend Confirmation Email" %}{% endblock title %}
@@ -6,25 +6,21 @@
 {% block registration-content %}
   <form method="post" action="{% url "registration_resend_domain_confirmation" %}">
     {% csrf_token %}
-    <h2 class="text-center">
+    <h2 class="text-center mt-3">
       {% trans "Resend Confirmation" %}
     </h2>
 
-    <div class="form-group">  {# todo B5: css-form-group #}
-      <label class="form-label has-feedback">
-        {% trans "Email" %}
-      </label>
+    <div class="mb-3">
+      <p class="form-label">{% trans "Email" %}</p>
       <div>
-        <span class="form-control">{{ request.user.username }}</span>
+        <span class="form-control form-control-lg">{{ request.user.username }}</span>
       </div>
     </div>
 
-    <div class="form-group">  {# todo B5: css-form-group #}
-      <label class="form-label has-feedback">
-        {% trans "Pending Project Name" %}
-      </label>
+    <div class="mb-3">
+      <p class="form-label">{% trans "Pending Project Name" %}</p>
       <div>
-        <span class="form-control">{{ requested_domain }}</span>
+        <span class="form-control form-control-lg">{{ requested_domain }}</span>
       </div>
     </div>
 
