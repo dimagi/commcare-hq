@@ -125,6 +125,25 @@ class DeduplicationPillowTest(TestCase):
 
         assert not called
 
+    def test_pillow_processes_closed_case_when_include_closed_is_true(self):
+        rule = self._create_rule('system_prop_test', ['name'], include_closed=True)
+        action = CaseDeduplicationActionDefinition.from_rule(rule)
+        assert action.include_closed
+
+        foo = self.factory.create_case(case_name="foo", case_type=self.case_type, close=True)
+
+        def find_duplicates(domain, case, *args, **kwargs):
+            assert case.case_id == foo.case_id
+            called.append(True)
+            return [case.case_id]
+
+        called = []
+        self.find_duplicates_mock.side_effect = find_duplicates
+
+        self.pillow.process_changes(since=self.kafka_offset, forever=False)
+
+        assert called
+
     def test_pillow_processes_resaves(self):
         rule = self._create_rule('test', ['age'])
         action = CaseDeduplicationActionDefinition.from_rule(rule)
@@ -173,7 +192,7 @@ class DeduplicationPillowTest(TestCase):
         resulting_ids = CaseDuplicateNew.objects.filter(action=action, hash=hash).values_list('case_id', flat=True)
         self.assertIn(case1.case_id, resulting_ids)
 
-    def _create_rule(self, name='test', match_on=None):
+    def _create_rule(self, name='test', match_on=None, include_closed=False):
         rule = AutomaticUpdateRule.objects.create(
             domain=self.domain,
             name=name,
@@ -190,7 +209,8 @@ class DeduplicationPillowTest(TestCase):
         rule.add_action(
             CaseDeduplicationActionDefinition,
             match_type=CaseDeduplicationMatchTypeChoices.ALL,
-            case_properties=match_on
+            case_properties=match_on,
+            include_closed=include_closed,
         )
 
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
