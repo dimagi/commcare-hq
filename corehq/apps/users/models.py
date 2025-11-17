@@ -579,6 +579,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             user_data.update({}, profile_id=profile.id)
         if custom_user_data:
             user_data.update(custom_user_data)
+            user_data.remove_unrecognized()
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []

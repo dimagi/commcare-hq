@@ -1,6 +1,6 @@
 from datetime import datetime
 import uuid
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import make_loc
@@ -10,6 +10,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.tasks import remove_unused_custom_fields_from_users_task
 from corehq.apps.users.user_data import (
     SQLUserData,
     UserData,
@@ -122,6 +123,20 @@ class TestUserData(TestCase):
         user_data.save()
         self.assertEqual(user_data.profile, None)
 
+    def test_remove_unused_custom_fields_from_users_task(self):
+        CustomDataFieldsDefinition.objects.create(domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+        users = [self.make_commcare_user(), self.make_web_user()]
+        for user in users:
+            user_data = user.get_user_data(self.domain)
+            user_data['favorite_color'] = 'purple'
+            user_data.save()
+
+        remove_unused_custom_fields_from_users_task(self.domain)
+
+        for user in users:
+            user._user_data_accessors = {}  # wipe cache
+            self.assertNotIn('favorite_color', user.get_user_data(self.domain))
+
 
 def _get_profile(self, profile_id):
     if profile_id == 'blues':
@@ -153,13 +168,6 @@ class TestUserDataModel(TestCase):
         cls.loc_ids = [loc.location_id for loc in [cls.loc1, cls.loc2]]
 
     def setUp(self):
-        self.user_fields = []
-        field_patcher = patch('corehq.apps.users.user_data.UserData._schema_fields', new_callable=PropertyMock)
-        mocked_schema_fields = field_patcher.start()
-        mocked_schema_fields.side_effect = lambda: self.user_fields
-
-        self.addCleanup(field_patcher.stop)
-
         self.user = CommCareUser.create(
             domain=self.domain,
             username='cc1',
@@ -171,22 +179,24 @@ class TestUserDataModel(TestCase):
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
     def init_user_data(self, raw_user_data=None, profile_id=None, domain=None):
-        return UserData(
+        user_data = UserData(
             raw_user_data=raw_user_data or {},
             couch_user=self.user,
             domain=domain or self.domain,
             profile_id=profile_id,
         )
+        user_data._schema_fields = set()  # Avoid setting up and fetching CustomDataFieldsDefinition
+        return user_data
 
     def test_defaults_unspecified_schema_properties_to_empty(self):
-        self.user_fields = [Field(slug='one')]
         user_data = self.init_user_data({})
+        user_data._schema_fields = {'one'}
         result = user_data.to_dict()
         self.assertEqual(result['one'], '')
 
     def test_specified_user_data_overrides_schema_defaults(self):
-        self.user_fields = [Field(slug='one')]
         user_data = self.init_user_data({'one': 'some_value'})
+        user_data._schema_fields = {'one'}
         result = user_data.to_dict()
         self.assertEqual(result['one'], 'some_value')
 
@@ -293,16 +303,18 @@ class TestUserDataModel(TestCase):
             'not_in_schema': 'true',
             'commcare_location_id': '123',
         })
-        changed = user_data.remove_unrecognized({'in_schema', 'in_schema_not_doc'})
+        user_data._schema_fields = {'in_schema', 'in_schema_not_doc'}
+        changed = user_data.remove_unrecognized()
         self.assertTrue(changed)
         self.assertEqual(user_data.raw, {'in_schema': 'true', 'commcare_location_id': '123'})
 
     def test_remove_unrecognized_empty_field(self):
         user_data = self.init_user_data({})
-        changed = user_data.remove_unrecognized(set())
+        changed = user_data.remove_unrecognized()
         self.assertFalse(changed)
         self.assertEqual(user_data.raw, {})
-        changed = user_data.remove_unrecognized({'a', 'b'})
+        user_data._schema_fields = {'a', 'b'}
+        changed = user_data.remove_unrecognized()
         self.assertFalse(changed)
         self.assertEqual(user_data.raw, {})
 
