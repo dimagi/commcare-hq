@@ -4,11 +4,12 @@ from pillowtop.processors import PillowProcessor
 
 from corehq.apps.data_interfaces.deduplication import is_dedupe_xmlns
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseDeduplicationActionDefinition
+from corehq.apps.data_interfaces.deduplication import CASE_UI_PROPERTIES
 from corehq.apps.data_interfaces.utils import run_rules_for_case
+from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.models.forms import XFormInstance
-from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 from corehq.util.soft_assert import soft_assert
 
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -73,7 +74,7 @@ class CaseDeduplicationProcessor(PillowProcessor):
         else:
             associated_form = self._get_associated_form(change)
             if associated_form and not is_dedupe_xmlns(associated_form.xmlns):
-                case_properties = set(case.case_json) | {"external_id", "owner_id", "name", "date_opened"}
+                case_properties = set(case.case_json) | CASE_UI_PROPERTIES
                 applicable_rules = [rule for rule in rules
                                     if self._is_applicable(rule, case, case_properties, form_id)]
             else:
