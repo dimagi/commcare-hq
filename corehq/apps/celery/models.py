@@ -12,7 +12,6 @@ class TaskRecord(models.Model):
     name = models.CharField(max_length=255)
     args = models.JSONField()
     kwargs = models.JSONField()
-    sent = models.BooleanField()  # if True, task was successfully sent to the broker
     error = models.TextField(blank=True, default='')  # optional - captures issues queueing task
     date_created = models.DateTimeField(auto_now_add=True)
 
