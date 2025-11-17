@@ -24,33 +24,29 @@ class DurableTask(Task):
         if not self.durable:
             return super().apply_async(args=args, kwargs=kwargs, **opts)
 
-        task_id = opts.get('task_id', None)
         defaults = {
             'name': self.name,
             'args': kombu_json.dumps(args),
             'kwargs': kombu_json.dumps(kwargs),
-            'sent': False,
-            'error': '',
         }
+        existing_task_id = opts.pop('task_id', None)
+        is_retry = existing_task_id is not None
+        # upsert instead of get and insert/update
+        # more efficient than TaskRecord.objects.update_or_create(task_id=task_id, **defaults)
+        (record,) = TaskRecord.objects.bulk_create(
+            [TaskRecord(task_id=existing_task_id, **defaults)],
+            ignore_conflicts=not is_retry,
+            update_conflicts=is_retry,
+            # unique_fields and update_fields are only used when update_conflicts=True
+            unique_fields=['task_id'] if is_retry else None,
+            update_fields=list(defaults) if is_retry else None,
+        )
         try:
-            result = super().apply_async(args=args, kwargs=kwargs, **opts)
-            task_id = result.task_id
-            defaults['sent'] = True
-            return result
+            return super().apply_async(args=args, kwargs=kwargs, task_id=record.task_id, **opts)
         except Exception as e:
-            defaults['error'] = f"{type(e).__name__}: {e}"
+            error = f"{type(e).__name__}: {e}"
+            TaskRecord.objects.filter(task_id=record.task_id).update(error=error)
             raise
-        finally:
-            is_retry = opts.get('task_id', None) is not None
-            # only bulk_create supports upserts
-            TaskRecord.objects.bulk_create(
-                [TaskRecord(task_id=task_id, **defaults)],
-                ignore_conflicts=not is_retry,
-                update_conflicts=is_retry,
-                # unique_fields and update_fields are only used when update_conflicts=True
-                unique_fields=['task_id'] if is_retry else None,
-                update_fields=list(defaults) if is_retry else None,
-            )
 
     def after_return(self, state, retval, task_id, *args):
         if self.durable:
@@ -59,8 +55,7 @@ class DurableTask(Task):
 
 def delete_task_record(task_id, state):
     if state in [celery_states.SUCCESS, celery_states.FAILURE]:
-        record = TaskRecord.objects.get(task_id=task_id)
-        record.delete()
+        TaskRecord.objects.filter(task_id=task_id).delete()
     else:
         notify_error(
             "DurableTaskError",
