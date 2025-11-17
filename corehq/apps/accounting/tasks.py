@@ -447,7 +447,9 @@ def _get_auto_renewable_subscriptions(domain_name=None):
         account__is_customer_billing_account=True,
     )
     if domain_name:
-        auto_renewable_subscriptions.filter(subscriber__domain=domain_name)
+        auto_renewable_subscriptions = auto_renewable_subscriptions.filter(
+            subscriber__domain=domain_name
+        )
     return auto_renewable_subscriptions
 
 

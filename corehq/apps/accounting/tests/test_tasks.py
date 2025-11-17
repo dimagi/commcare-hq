@@ -220,6 +220,17 @@ class TestAutoRenewableSubscriptions(BaseInvoiceTestCase):
         subscriptions = tasks._get_auto_renewable_subscriptions()
         assert self.subscription not in subscriptions
 
+    def test_filters_by_domain(self):
+        self._set_auto_renew_properties(
+            date_end=datetime.date.today() + datetime.timedelta(days=30)
+        )
+        subscriptions = tasks._get_auto_renewable_subscriptions(domain_name='not-this-domain')
+        assert subscriptions.count() == 0
+
+        subscriptions = tasks._get_auto_renewable_subscriptions(domain_name=self.domain.name)
+        assert subscriptions.count() == 1
+        assert self.subscription in subscriptions
+
     def test_auto_renew_ignores_already_renewed(self):
         self._set_auto_renew_properties()
         self.subscription.renew_subscription()
