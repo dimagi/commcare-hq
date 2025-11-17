@@ -24,6 +24,7 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 
 from ..data_source_providers import MockDataSourceProvider
+from ..pillow import ConfigurableReportPillowProcessor
 
 
 def get_sample_report_config():
@@ -48,7 +49,7 @@ def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
 
     _SHARED_ADAPTER_CACHES.clear()
     for proc in list(pillow.processors):
-        if hasattr(proc, 'table_manager'):
+        if isinstance(proc, ConfigurableReportPillowProcessor):
             proc.table_manager.data_source_providers = [
                 MockDataSourceProvider(configs_by_domain)
             ]
