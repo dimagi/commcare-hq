@@ -6,11 +6,16 @@
  * sorting-related attributes like direction.
  */
 import ko from "knockout";
+import _ from "underscore";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
 import Utils from "app_manager/js/details/utils";
+import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 
 var sortRow = function (params, saveButton) {
     var self = {};
+    // set either when adding a new UI element to force rendering for sort calculation
+    // or overwritten if sortCalculation present which is for the objects being created on page load
+    self.useSortCalculation = params.useSortCalculation || (!!params.sortCalculation);
     params = params || {};
 
     self.selectField = uiElementSelect.new(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
@@ -107,7 +112,8 @@ var sortRows = function (properties, saveButton) {
     self.sortRows = ko.observableArray([]);
     self.properties = properties;
 
-    self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation) {
+    self.addSortRow = function (field, type, direction, blanks, display, notify, sortCalculation,
+        useSortCalculation = false) {
         self.sortRows.push(sortRow({
             field: field,
             type: type,
@@ -116,6 +122,7 @@ var sortRows = function (properties, saveButton) {
             display: display,
             properties: [...self.properties],  // clone list here to avoid updates from select2 leaking out
             sortCalculation: sortCalculation,
+            useSortCalculation: useSortCalculation,
         }, saveButton));
         if (notify) {
             saveButton.fire('change');
@@ -152,6 +159,32 @@ var sortRows = function (properties, saveButton) {
         });
     };
 
+    self.validate = function () {
+        var errors = [];
+
+        $("#message-alerts > div").each(function () {
+            $(this).alert('close');
+        });
+
+        self.sortRows().forEach((row) => {
+            if (row.useSortCalculation) {
+                if (!row.sortCalculation().trim()) {
+                    row.showWarning(true);
+                    errors.push(gettext("Missing sort calculation."));
+                }
+            } else if (!row.hasValidPropertyName()) {
+                row.showWarning(true);
+                errors.push(gettext("Missing sort property."));
+            }
+        });
+        if (errors.length) {
+            _.each(errors, function (error) {
+                alertUser.alert_user(error, "danger");
+            });
+            return false;
+        }
+        return true;
+    };
     return self;
 };
 
