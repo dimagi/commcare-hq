@@ -246,11 +246,13 @@ class TestAutoRenewableSubscriptions(BaseInvoiceTestCase):
     @staticmethod
     def _set_auto_renew_properties(
         subscription,
-        date_end=datetime.date.today() + datetime.timedelta(days=30),
+        date_end=None,
         service_type=SubscriptionType.PRODUCT,
         auto_renew=True,
         is_customer_billing_account=False,
     ):
+        if not date_end:
+            date_end = datetime.date.today() + datetime.timedelta(days=30)
         subscription.date_end = date_end
         subscription.service_type = service_type
         subscription.auto_renew = auto_renew
