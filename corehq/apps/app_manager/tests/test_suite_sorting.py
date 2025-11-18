@@ -74,28 +74,112 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
     def test_sort_calculation(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         detail = app.modules[0].case_details.short
-        detail.sort_elements.append(
+        # sort element with field only
+        detail.sort_elements = [
             SortElement(
                 field=detail.columns[0].field,
                 type='string',
                 direction='descending',
                 blanks='first',
-                sort_calculation='random()'
             )
-        )
-        sort_node = """
+        ]
+        sort_node_with_field_only = """
         <partial>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_short.case_name_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="case_name"/>
+              </text>
+            </template>
             <sort direction="descending" blanks="first" order="1" type="string">
               <text>
-                <xpath function="random()"/>
+                <xpath function="case_name"/>
               </text>
             </sort>
+          </field>
         </partial>
         """
         self.assertXmlPartialEqual(
-            sort_node,
+            sort_node_with_field_only,
             app.create_suite(),
-            "./detail[@id='m0_case_short']/field/sort"
+            "./detail[@id='m0_case_short']/field[1]"
+        )
+
+        # sort element with calculation only (new way where a sort calculation does not have a field set)
+        detail.sort_elements = [
+            SortElement(
+                field='',
+                type='string',
+                direction='descending',
+                blanks='first',
+                sort_calculation='now()'
+            )
+        ]
+
+        sort_node_with_calculation_only = """
+        <partial>
+          <field>
+            <header width="0">
+              <text/>
+            </header>
+            <template width="0">
+              <text/>
+            </template>
+            <sort direction="descending" blanks="first" order="1" type="string">
+              <text>
+                <xpath function="now()"/>
+              </text>
+            </sort>
+           </field>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            sort_node_with_calculation_only,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[2]"
+        )
+
+        # sort element with field and calculation (to ensure support for legacy way of adding sort calculations)
+        detail.sort_elements = [
+            SortElement(
+                field=detail.columns[0].field,
+                type='string',
+                direction='descending',
+                blanks='first',
+                sort_calculation='yesterday()'
+            )
+        ]
+
+        sort_node_with_field_and_calculation = """
+        <partial>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_short.case_name_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="case_name"/>
+              </text>
+            </template>
+            <sort direction="descending" blanks="first" order="1" type="string">
+              <text>
+                <xpath function="yesterday()"/>
+              </text>
+            </sort>
+          </field>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            sort_node_with_field_and_calculation,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[1]"
         )
 
     def test_calculated_property_as_sort_property(self):
