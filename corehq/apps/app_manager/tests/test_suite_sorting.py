@@ -223,6 +223,79 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
             "./detail[@id='m0_case_short']/field[1]"
         )
 
+    def test_multiple_sort_only_calculations(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        detail = app.modules[0].case_details.short
+
+        detail.sort_elements = [
+            SortElement(
+                field='',
+                type='string',
+                direction='descending',
+                blanks='first',
+                display={'en': 'First'},
+                sort_calculation='now()'
+            ),
+            SortElement(
+                field='',
+                type='string',
+                direction='descending',
+                blanks='first',
+                display={'en': 'Second'},
+                sort_calculation='tomorrow()'
+            )
+        ]
+
+        sort_node_with_calculation_only_1 = """
+        <partial>
+          <field>
+            <header width="0">
+              <text>
+                <locale id="m0.case_short.case__2.header"/>
+              </text>
+            </header>
+            <template width="0">
+              <text/>
+            </template>
+            <sort direction="descending" blanks="first" order="1" type="string">
+              <text>
+                <xpath function="now()"/>
+              </text>
+            </sort>
+           </field>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            sort_node_with_calculation_only_1,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[2]"
+        )
+
+        sort_node_with_calculation_only_2 = """
+        <partial>
+           <field>
+            <header width="0">
+              <text>
+                <locale id="m0.case_short.case__3.header"/>
+              </text>
+            </header>
+            <template width="0">
+              <text/>
+            </template>
+            <sort direction="descending" blanks="first" order="2" type="string">
+              <text>
+                <xpath function="tomorrow()"/>
+              </text>
+            </sort>
+           </field>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            sort_node_with_calculation_only_2,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[3]"
+        )
+
     def test_calculated_property_as_sort_property(self):
         factory = AppFactory(build_version='2.3.0')
         module, form = factory.new_basic_module("my_module", "person")
