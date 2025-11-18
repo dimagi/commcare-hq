@@ -13,7 +13,8 @@ class DurableTask(Task):
 
     def __init__(self):
         super().__init__()
-        # celery creates task class dynamically, setting custom options as attributes on the class
+        # celery creates task class dynamically, setting custom options
+        # as attributes on the class before __init__ is called
         self.durable = getattr(self, 'durable', False)
         if self.durable and self.serializer != 'json':
             raise UnsupportedSerializationError(
