@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import uuid
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 from copy import deepcopy
 
 from django.core.cache import cache
@@ -564,7 +564,18 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
     extracts out info about columns that are added as only sort fields and columns added as both
     sort and display fields
     """
-    sort_elements_by_field = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
+    sort_elements_by_calculation = {}
+    sort_elements_by_field = {}
+
+    for index, sort_element in enumerate(sort_elements):
+        # Assertion added for enforcing architecture decision & not for ensuring user behavior
+        # This should ideally never be false
+        assert (sort_element.field or sort_element.sort_calculation)
+        if sort_element.field:
+            sort_elements_by_field[sort_element.field] = (sort_element, index + 1)
+        elif sort_element.sort_calculation:
+            sort_elements_by_calculation[sort_element.sort_calculation] = (sort_element, index + 1)
+
     sort_columns = {}
     for column in detail_columns:
         sort_element, order = sort_elements_by_field.pop(column.field, (None, None))
@@ -591,6 +602,11 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
         SortOnlyElement(field, element, element_order)
         for field, (element, element_order) in sort_elements_by_field.items()
     ]
+
+    sort_only_elements.extend([
+        SortOnlyElement(element.field, element, element_order)
+        for sort_calculation, (element, element_order) in sort_elements_by_calculation.items()
+    ])
     return sort_only_elements, sort_columns
 
 
