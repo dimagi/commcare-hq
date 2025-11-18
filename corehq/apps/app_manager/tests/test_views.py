@@ -596,20 +596,25 @@ def apps_modules_setup(test_case):
 class TestViewGeneric(ViewsBase):
     domain = 'test-view-generic'
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.app = Application.new_app(cls.domain, "TestApp")
+        cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
+        cls.module = cls.app.add_module(Module.new_module("Module0", "en"))
+        cls.form = cls.app.new_form(
+            cls.module.id, "Form0", "en",
+            attachment=get_simple_form(xmlns='xmlns-0.0'))
+        cls.app.save()
+        app_adapter.index(cls.app, refresh=True)  # Send to ES
+
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
 
-        self.app = Application.new_app(self.domain, "TestApp")
-        self.app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        self.module = self.app.add_module(Module.new_module("Module0", "en"))
-        self.form = self.app.new_form(
-            self.module.id, "Form0", "en",
-            attachment=get_simple_form(xmlns='xmlns-0.0'))
-        self.app.save()
-        app_adapter.index(self.app, refresh=True)  # Send to ES
-
-    def tearDown(self):
-        self.app.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        super().tearDownClass()
 
     def test_view_app(self, mock1):
         url = reverse('view_app', kwargs={
