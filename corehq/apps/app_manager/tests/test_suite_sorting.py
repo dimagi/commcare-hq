@@ -74,28 +74,69 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
     def test_sort_calculation(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         detail = app.modules[0].case_details.short
-        detail.sort_elements.append(
+        detail.sort_elements.extend([
             SortElement(
                 field=detail.columns[0].field,
                 type='string',
                 direction='descending',
                 blanks='first',
                 sort_calculation='random()'
-            )
-        )
-        sort_node = """
+            ),
+            SortElement(
+                field='',
+                type='string',
+                direction='descending',
+                blanks='first',
+                sort_calculation='today()'
+            ),
+        ])
+        sort_node_with_field = """
         <partial>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_short.case_name_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="case_name"/>
+              </text>
+            </template>
             <sort direction="descending" blanks="first" order="1" type="string">
               <text>
                 <xpath function="random()"/>
               </text>
             </sort>
+          </field>
+        </partial>
+        """
+        sort_node_without_field = """
+        <partial>
+          <field>
+            <header width="0">
+              <text/>
+            </header>
+            <template width="0">
+              <text/>
+            </template>
+            <sort direction="descending" blanks="first" order="2" type="string">
+              <text>
+                <xpath function="today()"/>
+              </text>
+            </sort>
+           </field>
         </partial>
         """
         self.assertXmlPartialEqual(
-            sort_node,
+            sort_node_with_field,
             app.create_suite(),
-            "./detail[@id='m0_case_short']/field/sort"
+            "./detail[@id='m0_case_short']/field[1]"
+        )
+        self.assertXmlPartialEqual(
+            sort_node_without_field,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field[2]"
         )
 
     def test_calculated_property_as_sort_property(self):
