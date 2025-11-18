@@ -28,6 +28,9 @@ def valid_properties_dict(d):
         elif not isinstance(v, str):
             raise BadValueError(f"Error with case property '{k}'. "
                                 f"Values must be strings, received '{v}'")
+        elif k in CaseBlock._built_ins:
+            raise BadValueError(f"Error with case property '{k}'. "
+                                "This must be specified at the top level.")
 
 
 def valid_indices_dict(d):

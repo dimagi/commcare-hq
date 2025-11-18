@@ -22,7 +22,6 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 from no_exceptions.exceptions import Http403
 
-from casexml.apps.case import const
 from dimagi.utils.logging import notify_exception
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -41,6 +40,7 @@ from corehq.apps.data_dictionary.util import (
     is_case_type_deprecated,
 )
 from corehq.apps.data_interfaces.deduplication import (
+    CASE_UI_PROPERTIES,
     reset_and_backfill_deduplicate_rule,
 )
 from corehq.apps.data_interfaces.dispatcher import (
@@ -1125,7 +1125,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
     @classmethod
     def get_augmented_data_dict_props_by_case_type(cls, domain):
         return {
-            t: sorted(names.union({const.CASE_UI_NAME, const.CASE_UI_OWNER_ID})) for t, names in
+            t: sorted(names | CASE_UI_PROPERTIES) for t, names in
             get_data_dict_props_by_case_type(domain).items()
         }
 

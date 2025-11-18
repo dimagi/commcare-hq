@@ -74,7 +74,7 @@ jobs:
       run: scripts/docker down
     - name: Upload test artifacts
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: test-artifacts
         path: artifacts

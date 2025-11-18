@@ -1492,8 +1492,7 @@ class _UserFormSet(object):
         new_user_data = self.custom_data.get_data_to_save()
         new_profile_id = new_user_data.pop(PROFILE_SLUG, ...)
         changed = user_data.update(new_user_data, new_profile_id)
-        changed |= user_data.remove_unrecognized(
-            {f.slug for f in self.custom_data.model.get_fields()})
+        changed |= user_data.remove_unrecognized()
         return self.user_form.update_user(
             metadata_updated=changed,
             profile_updated=old_profile_id != new_profile_id

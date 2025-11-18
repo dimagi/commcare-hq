@@ -29,6 +29,7 @@ from corehq.apps.accounting.emails import (
     send_ending_reminder_email,
     send_renewal_reminder_email,
     send_subscription_ending_email,
+    send_subscription_renewed_email,
 )
 from corehq.apps.accounting.exceptions import (
     ActiveSubscriptionWithoutDomain,
@@ -42,12 +43,14 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
+    DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountWebUserHistory,
     CreditLine,
     Currency,
+    DefaultProductPlan,
     DomainUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
@@ -421,6 +424,58 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def auto_renew_subscriptions(domain_name=None):
+    """
+    Automatically renew eligible subscriptions 30 or fewer days from their end date.
+    """
+    ending_subscriptions = _get_auto_renewable_subscriptions(domain_name=domain_name)
+    for subscription in ending_subscriptions:
+        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain) and not subscription.is_renewed:
+            auto_renew_subscription(subscription)
+
+
+def _get_auto_renewable_subscriptions(domain_name=None):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=30)
+    auto_renewable_subscriptions = Subscription.visible_objects.filter(
+        date_end__gte=today,
+        date_end__lte=date_in_n_days,
+        service_type=SubscriptionType.PRODUCT,
+        auto_renew=True,
+    ).exclude(
+        account__is_customer_billing_account=True,
+    )
+    if domain_name:
+        auto_renewable_subscriptions.filter(subscriber__domain=domain_name)
+    return auto_renewable_subscriptions
+
+
+@transaction.atomic
+def auto_renew_subscription(subscription):
+    new_plan_version = DefaultProductPlan.get_default_plan_version(
+        edition=subscription.plan_version.plan.edition,
+        is_annual_plan=subscription.plan_version.plan.is_annual_plan,
+    )
+    next_subscription = subscription.renew_subscription(
+        adjustment_method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+        new_version=new_plan_version,
+    )
+    send_subscription_renewed_email(next_subscription)
+
+    if next_subscription.plan_version.plan.is_annual_plan:
+        invoice_factory = DomainWireInvoiceFactory(
+            next_subscription.subscriber.domain,
+            date_start=next_subscription.date_start,
+            date_end=next_subscription.date_end,
+        )
+        invoice_factory.create_subscription_credits_invoice(
+            next_subscription.plan_version,
+            next_subscription.date_start,
+            next_subscription.date_end,
+        )
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
@@ -549,6 +604,7 @@ def create_wire_credits_invoice(domain_name,
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
+        contact_emails = contact_emails or wire_invoice.get_contact_emails()
         try:
             for email in contact_emails:
                 record.send_email(contact_email=email, cc_emails=cc_emails)
@@ -735,7 +791,7 @@ def send_credits_on_hq_report():
     if settings.SAAS_REPORTING_EMAIL and settings.SERVER_ENVIRONMENT in [
         'production',
         'india',
-        'swiss'
+        'eu'
     ]:
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
         credits_report = CreditsAutomatedReport()
