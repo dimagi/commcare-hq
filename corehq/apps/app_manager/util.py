@@ -564,18 +564,18 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
     extracts out info about columns that are added as only sort fields and columns added as both
     sort and display fields
     """
-    sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
+    sort_elements_by_field = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
     sort_columns = {}
     for column in detail_columns:
-        sort_element, order = sort_elements.pop(column.field, (None, None))
+        sort_element, order = sort_elements_by_field.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)
 
     # pull out sort elements that refer to calculated columns
-    for field in list(sort_elements):
+    for field in list(sort_elements_by_field):
         match = re.match(CALCULATED_SORT_FIELD_RX, field)
         if match:
-            element, element_order = sort_elements.pop(field)
+            element, element_order = sort_elements_by_field.pop(field)
             column_index = int(match.group(1))
             try:
                 column = detail_columns[column_index]
@@ -589,7 +589,7 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
 
     sort_only_elements = [
         SortOnlyElement(field, element, element_order)
-        for field, (element, element_order) in sort_elements.items()
+        for field, (element, element_order) in sort_elements_by_field.items()
     ]
     return sort_only_elements, sort_columns
 
