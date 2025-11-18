@@ -1,15 +1,10 @@
-.icon-row {
-  display: flex;
-  align-items: center;
+.icon-stack.fa-stack {
+  font-size: 1.5em;
 
-  .fa-stack {
-    font-size: 1.5em;
-
-    > .fa-stack-2x {
-      opacity: 7.5%;
-    }
-    > .fcc.fa-stack-1x {
-      line-height: unset;
-    }
+  > .fa-stack-2x {
+    opacity: 7.5%;
+  }
+  > .fcc.fa-stack-1x {
+    line-height: unset;
   }
 }
