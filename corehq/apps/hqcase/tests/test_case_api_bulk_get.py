@@ -87,6 +87,41 @@ class TestCaseAPIBulkGet(TestCase):
         assert res.status_code == 200
         assert res.json()['case_id'] == self.case_ids[0]
 
+    def test_get_single_case_by_external_id(self):
+        case_id = '11111111-1111-4111-8111-111111111111'
+        external_id = 'ext-get-case'
+        case_block = CaseBlock(
+            case_id=case_id,
+            case_type='player',
+            case_name='Irina Levitina',
+            external_id=external_id,
+            owner_id=self.web_user.get_id,
+            create=True,
+        )
+        _, [case] = submit_case_blocks(case_block.as_text(), domain=self.domain)
+        populate_case_search_index([case])
+        es_doc = case_search_adapter.get(case_id)
+        expected = serialize_es_case(es_doc)
+
+        base_url = reverse('case_api', args=(self.domain,))
+        if not base_url.endswith('/'):
+            base_url += '/'
+        url = f"{base_url}ext/{external_id}/"
+        res = self.client.get(url)
+
+        assert res.status_code == 200
+        assert res.json() == expected
+
+    def test_get_case_by_external_id_not_found(self):
+        base_url = reverse('case_api', args=(self.domain,))
+        if not base_url.endswith('/'):
+            base_url += '/'
+        url = f"{base_url}ext/missing-external-id/"
+        res = self.client.get(url)
+
+        assert res.status_code == 404
+        assert res.json()['error'] == "Case 'missing-external-id' not found"
+
     def test_get_single_case_not_found(self):
         res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
         assert res.status_code == 404

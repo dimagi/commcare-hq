@@ -91,13 +91,17 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 @location_safe
-def case_api(request, domain, case_id=None):
+def case_api(request, domain, case_id=None, external_id=None):
     if request.method == 'GET' and case_id:
         return _handle_get(request, case_id)
+    if request.method == 'GET' and external_id:
+        return _handle_ext_get(request, external_id)
     if request.method == 'GET' and not case_id:
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request, is_creation=True)
+    if request.method == 'PUT' and external_id:
+        return _handle_ext_put(request, external_id)
     if request.method == 'PUT':
         return _handle_case_update(request, is_creation=False, case_id=case_id)
     return JsonResponse({'error': "Request method not allowed"}, status=405)
@@ -144,6 +148,25 @@ def _get_single_case(request, case_id):
     return JsonResponse(serialize_es_case(case))
 
 
+def _handle_ext_get(request, external_id):
+    try:
+        bulk_fetch_results_dict = get_bulk(
+            request.domain,
+            request.couch_user,
+            case_ids=[],
+            external_ids=[external_id],
+        )
+    except UserError as err:
+        return JsonResponse({'error': str(err)}, status=400)
+    case = bulk_fetch_results_dict['cases'][0]
+    if case.get('error') == 'not found':
+        return JsonResponse(
+            {'error': f"Case '{external_id}' not found"},
+            status=404,
+        )
+    return JsonResponse(case)
+
+
 def _handle_bulk_fetch(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
@@ -167,6 +190,10 @@ def _handle_list_view(request):
     if 'next' in res:
         res['next'] = reverse('case_api', args=[request.domain], params=res['next'], absolute=True)
     return JsonResponse(res)
+
+
+def _handle_ext_put(request, external_id):
+    pass  # TODO: ...
 
 
 def _handle_case_update(request, is_creation, case_id=None):
