@@ -82,18 +82,18 @@ class TestCaseAPIBulkGet(TestCase):
 
     def test_get_single_case(self):
         res = self.client.get(reverse('case_api', args=(self.domain, self.case_ids[0])))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json()['case_id'], self.case_ids[0])
+        assert res.status_code == 200
+        assert res.json()['case_id'] == self.case_ids[0]
 
     def test_get_single_case_not_found(self):
         res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
+        assert res.status_code == 404
+        assert res.json()['error'] == "Case 'fake_id' not found"
 
     def test_get_single_case_on_other_domain(self):
         res = self.client.get(reverse('case_api', args=(self.domain, self.other_domain_case_id)))
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(res.json()['error'], f"Case '{self.other_domain_case_id}' not found")
+        assert res.status_code == 404
+        assert res.json()['error'] == f"Case '{self.other_domain_case_id}' not found"
 
     def test_bulk_get(self):
         case_ids = self.case_ids[0:2]
@@ -102,13 +102,13 @@ class TestCaseAPIBulkGet(TestCase):
     def test_bulk_get_domain_filter(self):
         case_ids = self.case_ids[0:2] + [self.other_domain_case_id]
         result = self._call_get_api_check_results(case_ids, matching=2, missing=1)
-        self.assertEqual(result['cases'][2]['error'], 'not found')
+        assert result['cases'][2]['error'] == 'not found'
 
     def test_bulk_get_not_found(self):
         case_ids = ['missing1', self.case_ids[1], 'missing2']
         result = self._call_get_api_check_results(case_ids, matching=1, missing=2)
-        self.assertEqual(result['cases'][0]['error'], 'not found')
-        self.assertEqual(result['cases'][2]['error'], 'not found')
+        assert result['cases'][0]['error'] == 'not found'
+        assert result['cases'][2]['error'] == 'not found'
 
     def test_bulk_get_duplicate(self):
         """Duplicate case IDs in the request results in duplicates in the response"""
@@ -168,10 +168,10 @@ class TestCaseAPIBulkGet(TestCase):
 
     def _call_get_api_check_results(self, case_ids, matching=None, missing=None):
         res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         result = res.json()
         result_case_ids = [case['case_id'] for case in result['cases']]
-        self.assertEqual(result_case_ids, case_ids)
+        assert result_case_ids == case_ids
         self._check_matching_missing(result, matching, missing)
         return result
 
@@ -183,13 +183,13 @@ class TestCaseAPIBulkGet(TestCase):
         self._check_matching_missing(result, matching, missing)
 
         total_expected = len(case_ids or []) + len(external_ids or [])
-        self.assertEqual(len(cases), total_expected)
+        assert len(cases) == total_expected
 
         # check for results as well as result order
         if case_ids:
             # case_id results are always at the front
             result_case_ids = [case.get('case_id') for case in cases]
-            self.assertEqual(case_ids, result_case_ids[:len(case_ids)])
+            assert case_ids == result_case_ids[:len(case_ids)]
 
         if external_ids:
             # external_id results are always at the end so reverse the lists and compare
@@ -197,7 +197,7 @@ class TestCaseAPIBulkGet(TestCase):
             result_external_ids = list(reversed([
                 case.get('external_id') for case in cases
             ]))
-            self.assertEqual(external_ids, result_external_ids[:len(external_ids)])
+            assert external_ids == result_external_ids[:len(external_ids)]
 
         return result
 
@@ -209,12 +209,12 @@ class TestCaseAPIBulkGet(TestCase):
             data['external_ids'] = external_ids
         url = reverse('case_api_bulk_fetch', args=(self.domain,))
         res = self.client.post(url, data=data, content_type="application/json")
-        self.assertEqual(res.status_code, expected_status, res.json())
+        assert res.status_code == expected_status, res.json()
         return res
 
     def _check_matching_missing(self, result, matching=None, missing=None):
         if matching is not None:
-            self.assertEqual(result['matching_records'], matching)
+            assert result['matching_records'] == matching
 
         if missing is not None:
-            self.assertEqual(result['missing_records'], missing)
+            assert result['missing_records'] == missing
