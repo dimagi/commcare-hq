@@ -182,33 +182,6 @@ def handle_case_update(domain, data, user, device_id, is_creation, xmlns=None):
 
 
 def _get_individual_update(domain, data, user, is_creation):
-    if 'create' in data:
-        # `data['create']` is required for bulk updates, and can be used
-        # in bulk and individual updates to override `is_creation` for
-        # upsert on external_id when `data['create']` is `None` and
-        # `data["external_id"]` is set and data["case_id"] is not set.
-        if data['create'] is None:
-            # Allow upsert on external_id
-            data.pop('create')
-            if not data.get('case_id') and data.get('external_id'):
-                case = CommCareCase.objects.get_case_by_external_id(
-                    domain,
-                    data['external_id'],
-                    raise_multiple=True,
-                )  # Raises CommCareCase.MultipleObjectsReturned
-                if case:
-                    is_creation = False
-                    data['case_id'] = case.case_id
-                else:
-                    is_creation = True
-            else:
-                raise UserError(
-                    'UPSERT operation requires a value for "external_id" and no '
-                    'value for "case_id".'
-                )
-        else:
-            is_creation = data.pop('create')
-
     update_class = JsonCaseCreation if is_creation else JsonCaseUpdate
     data['user_id'] = user.user_id
     try:
@@ -219,6 +192,8 @@ def _get_individual_update(domain, data, user, is_creation):
 
 
 def _get_bulk_updates(domain, all_data, user):
+    from .get_bulk import get_bulk
+
     if len(all_data) > CASEBLOCK_CHUNKSIZE:
         raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
@@ -228,7 +203,27 @@ def _get_bulk_updates(domain, all_data, user):
         try:
             if 'create' not in data:
                 raise UserError("A 'create' flag is required for each update.")
-            updates.append(_get_individual_update(domain, data, user, is_creation=True))
+            is_creation = data.pop('create')
+            if is_creation is None:
+                if not data.get('case_id') and data.get('external_id'):
+                    bulk_fetch_results_dict = get_bulk(
+                        domain,
+                        user,
+                        case_ids=[],
+                        external_ids=[data['external_id']],
+                    )  # raises UserError
+                    case = bulk_fetch_results_dict['cases'][0]
+                    if case.get('error') == 'not found':
+                        is_creation = True
+                    else:
+                        is_creation = False
+                        data['case_id'] = case['case_id']
+                else:
+                    raise UserError(
+                        'UPSERT operation requires "create": null, '
+                        '"external_id" set and "case_id" not set.'
+                    )
+            updates.append(_get_individual_update(domain, data, user, is_creation))
         except UserError as e:
             errors.append(f'Error in row {i}: {e}')
 
