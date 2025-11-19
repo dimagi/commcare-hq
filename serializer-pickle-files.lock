@@ -4,6 +4,7 @@
 # As we remove usages, this file will be updated to reflect that and prevent unintended backsliding.
 
   1 corehq/apps/aggregate_ucrs/tasks.py
+  1 corehq/apps/celery/tests/test_durable_task.py
   8 corehq/apps/data_interfaces/tasks.py
   1 corehq/apps/dropbox/tasks.py
   1 corehq/apps/enterprise/tasks.py
