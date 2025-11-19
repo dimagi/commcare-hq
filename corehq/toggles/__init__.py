@@ -1702,10 +1702,11 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     [NAMESPACE_USER]
 )
 
-CUSTOM_ICON_BADGES = StaticToggle(
-    'custom_icon_badges',
-    'Custom Icon Badges for modules and forms',
-    TAG_SOLUTIONS_LIMITED,
+CUSTOM_ICON_BADGES = FrozenPrivilegeToggle(
+    privilege_slug=privileges.CUSTOM_ICON_BADGES,
+    slug='custom_icon_badges',
+    label='Custom Icon Badges for modules and forms',
+    tag=TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
