@@ -5047,7 +5047,6 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "Нам буде цікаво дізнатися більше! Будь ласка, уточніть -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
@@ -5057,6 +5056,26 @@ msgid ""
 msgstr ""
 "\n"
 "      Натискаючи цю кнопку, ви погоджуєтеся з\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами надання послуг</a> та\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
+"    "
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"      By clicking Submit Request, you agree to Dimagi's\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      Натискаючи «Надіслати запит», ви погоджуєтеся з\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами надання послуг</a> та\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
 "    "
@@ -9674,16 +9693,6 @@ msgid "Custom Icon"
 msgstr "Власна іконка"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
-#| msgid ""
-#| "\n"
-#| "          The form will not appear in the menu unless this condition is met.\n"
-#| "          Read more on the\n"
-#| "          <a\n"
-#| "            target=\"_blank\"\n"
-#| "            href=\"https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions\"\n"
-#| "            >Help Site</a\n"
-#| "          >.\n"
-#| "        "
 msgid ""
 "\n"
 "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
@@ -16238,10 +16247,6 @@ msgstr ""
 #: corehq/apps/cloudcare/views.py
 msgid "No corresponding application found in this project."
 msgstr "У цьому проєкті не знайдено відповідного додатку."
-
-#: corehq/apps/cloudcare/views.py
-msgid "This user cannot access this link."
-msgstr "Цей користувач не має доступу до цього посилання."
 
 #: corehq/apps/cloudcare/views.py
 #, python-brace-format
@@ -28086,7 +28091,6 @@ msgid "Custom Path"
 msgstr "Користувацький шлях"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#| msgid "Set case property"
 msgid "GPS case property"
 msgstr "Властивість кейсу GPS"
 
@@ -32426,12 +32430,10 @@ msgstr ""
 "проєкт можуть бути в іншому розташуванні."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Open"
 msgid "Open chat"
 msgstr "Відкрити чат"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Start Date"
 msgid "Start new chat"
 msgstr "Почати новий чат"
 
@@ -32444,12 +32446,10 @@ msgid "Exit fullscreen"
 msgstr "Вийти з повноекранного режиму"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Attachments"
 msgid "Attach files"
 msgstr "Долучити файли"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Remove filter"
 msgid "Remove file"
 msgstr "Видалити файл"
 
@@ -32458,7 +32458,6 @@ msgid "File attached"
 msgstr "Файл долучено"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Setting as default..."
 msgid "Starting chat..."
 msgstr "Запуск чату..."
 
@@ -32472,7 +32471,6 @@ msgid "Uploading"
 msgstr "Завантаження"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Start Date"
 msgid "Start New Chat"
 msgstr "Почати новий чат"
 
@@ -32481,42 +32479,34 @@ msgid "Starting a new chat will clear your current conversation. Continue?"
 msgstr "Початок нового чату очистить вашу поточну розмову. Продовжити?"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Test SMS Message"
 msgid "Type a message..."
 msgstr "Введіть повідомлення..."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Send Message"
 msgid "Send message"
 msgstr "Надіслати повідомлення"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "File Downloader"
 msgid "File too large"
 msgstr "Файл завеликий"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Could not send email: file size is too large."
 msgid "Total file size too large"
 msgstr "Загальний розмір файлів завеликий"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Unsupported Report"
 msgid "Unsupported file type"
 msgstr "Непідтримуваний тип файлу"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "An error occurred. Please try again"
 msgid "Connection error. Please try again."
 msgstr "Помилка з'єднання. Будь ласка, спробуйте ще раз."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "That session does not exist. Please start a new session."
 msgid "Session expired. Please start a new chat."
 msgstr "Сесія завершена. Будь ласка, почніть новий чат."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Verified by"
 msgid "Powered by"
 msgstr "Працює на базі"
 
@@ -32856,8 +32846,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
+#: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr "Запланувати демонстрацію"
 
@@ -37530,28 +37519,39 @@ msgid "Organization or Company"
 msgstr "Організація або компанія"
 
 #: corehq/apps/registration/forms.py
+#| msgid ""
+#| "I have read and agree to Dimagi's\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+#| "               target=\"_blank\">Privacy Policy</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+#| "               target=\"_blank\">Terms of Service</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+#| "               target=\"_blank\">Business Agreement</a>, and\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
+#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Privacy Policy</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Terms of Service</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Business Agreement</a>, and\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Acceptable Use Policy</a>.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Privacy Policy</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Terms of Service</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Business Agreement</a>, and\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Acceptable Use Policy</a>.\n"
+"                "
 msgstr ""
-"Я прочитав(ла) і погоджуюся з\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Політикою конфіденційності</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Умовами використання</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Діловою угодою</a> та\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Політикою прийнятного використання</a> Dimagi.\n"
-"            "
+"Я прочитав(-ла) та погоджуюся з\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Політикою конфіденційності</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Умовами надання послуг</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Бізнес-угодою</a> та\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Політикою прийнятного використання</a> Dimagi.\n"
+"                "
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -37953,40 +37953,6 @@ msgstr ""
 "                    Зверніть увагу: Проєкти <strong>не можна</strong> переносити\n"
 "                    між хмарними розташуваннями після створення.\n"
 "                  "
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Create an Account"
-msgstr "Створити обліковий запис"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-#: corehq/apps/users/views/web.py
-msgid "Create Account"
-msgstr "Створити обліковий запис"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Name Project"
-msgstr "Назва проєкту"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Loading...just a second!"
-msgstr "Завантаження... одну мить!"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid ""
-"\n"
-"                Want to learn more before signing up?\n"
-"              "
-msgstr ""
-"\n"
-"                Хочете дізнатися більше перед реєстрацією?\n"
-"              "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
 msgid ""
@@ -38554,6 +38520,35 @@ msgstr ""
 "      Ваш обліковий запис буде створено після наступного кроку.\n"
 "    "
 
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "Create an Account"
+msgstr "Створити обліковий запис"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
+msgid "Create Account"
+msgstr "Створити обліковий запис"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Name Project"
+msgstr "Назва проєкту"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Loading...just a second!"
+msgstr "Завантаження... одну мить!"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid ""
+"\n"
+"                Want to learn more before signing up?\n"
+"              "
+msgstr ""
+"\n"
+"                Хочете дізнатися більше перед реєстрацією?\n"
+"              "
+
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
 msgstr "Відвідайте CommCareHQ на своєму комп'ютері!"
@@ -38580,12 +38575,11 @@ msgstr "поточний"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-msgid ""
-"This email is already registered in the {location} cloud location. Please <a"
-" href=\"{login_link}\">sign in here</a>."
-msgstr ""
-"Цей email вже зареєстрований у хмарному розташуванні {location}. Будь ласка,"
-" <a href=\"{login_link}\">увійдіть тут</a>."
+#| msgid ""
+#| "This email is already registered in the {location} cloud location. Please <a"
+#| " href=\"{login_link}\">sign in here</a>."
+msgid "This email is already registered in the {location} cloud location. "
+msgstr "Цей email вже зареєстровано у хмарному розташуванні {location}. "
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -58979,6 +58973,9 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "This user cannot access this link."
+#~ msgstr "Цей користувач не має доступу до цього посилання."
 
 #~ msgid "Please enter either text body or xpath for custom icon"
 #~ msgstr "Будь ласка, введіть або текстове тіло, або xpath для власної іконки"

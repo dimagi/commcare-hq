@@ -5091,7 +5091,6 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "Ci piacerebbe saperne di più! Specifica -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
@@ -5103,6 +5102,26 @@ msgstr ""
 "      Facendo clic su questo pulsante, accetti i\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Termini di servizio</a> e la\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a> di Dimagi.\n"
+"    "
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"      By clicking Submit Request, you agree to Dimagi's\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      Facendo clic su Invia richiesta, accetti i\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Termini di servizio</a> e la\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Politica sulla privacy</a> di Dimagi.\n"
 "    "
 
 #: corehq/apps/analytics/views.py
@@ -9736,16 +9755,6 @@ msgid "Custom Icon"
 msgstr "Icona personalizzata"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
-#| msgid ""
-#| "\n"
-#| "          The form will not appear in the menu unless this condition is met.\n"
-#| "          Read more on the\n"
-#| "          <a\n"
-#| "            target=\"_blank\"\n"
-#| "            href=\"https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions\"\n"
-#| "            >Help Site</a\n"
-#| "          >.\n"
-#| "        "
 msgid ""
 "\n"
 "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
@@ -16358,10 +16367,6 @@ msgstr ""
 #: corehq/apps/cloudcare/views.py
 msgid "No corresponding application found in this project."
 msgstr "Nessuna applicazione corrispondente trovata in questo progetto."
-
-#: corehq/apps/cloudcare/views.py
-msgid "This user cannot access this link."
-msgstr "Questo utente non può accedere a questo collegamento."
 
 #: corehq/apps/cloudcare/views.py
 #, python-brace-format
@@ -28254,7 +28259,6 @@ msgid "Custom Path"
 msgstr "Percorso personalizzato"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-#| msgid "Set case property"
 msgid "GPS case property"
 msgstr "Proprietà caso GPS"
 
@@ -32623,12 +32627,10 @@ msgstr ""
 "potrebbero trovarsi in una posizione diversa."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Open"
 msgid "Open chat"
 msgstr "Apri chat"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Start Date"
 msgid "Start new chat"
 msgstr "Avvia nuova chat"
 
@@ -32641,12 +32643,10 @@ msgid "Exit fullscreen"
 msgstr "Esci dalla modalità schermo intero"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Attachments"
 msgid "Attach files"
 msgstr "Allega file"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Remove filter"
 msgid "Remove file"
 msgstr "Rimuovi file"
 
@@ -32655,7 +32655,6 @@ msgid "File attached"
 msgstr "File allegato"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Setting as default..."
 msgid "Starting chat..."
 msgstr "Avvio chat..."
 
@@ -32669,7 +32668,6 @@ msgid "Uploading"
 msgstr "Caricamento in corso"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Start Date"
 msgid "Start New Chat"
 msgstr "Avvia Nuova Chat"
 
@@ -32679,42 +32677,34 @@ msgstr ""
 "Iniziare una nuova chat cancellerà la conversazione attuale. Continuare?"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Test SMS Message"
 msgid "Type a message..."
 msgstr "Scrivi un messaggio..."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Send Message"
 msgid "Send message"
 msgstr "Invia messaggio"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "File Downloader"
 msgid "File too large"
 msgstr "File troppo grande"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Could not send email: file size is too large."
 msgid "Total file size too large"
 msgstr "Dimensione totale dei file troppo grande"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Unsupported Report"
 msgid "Unsupported file type"
 msgstr "Tipo di file non supportato"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "An error occurred. Please try again"
 msgid "Connection error. Please try again."
 msgstr "Errore di connessione. Riprova."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "That session does not exist. Please start a new session."
 msgid "Session expired. Please start a new chat."
 msgstr "Sessione scaduta. Avvia una nuova chat."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
-#| msgid "Verified by"
 msgid "Powered by"
 msgstr "Powered by"
 
@@ -33057,8 +33047,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
+#: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr "Prenota una demo"
 
@@ -37753,28 +37742,39 @@ msgid "Organization or Company"
 msgstr "Organizzazione o Azienda"
 
 #: corehq/apps/registration/forms.py
+#| msgid ""
+#| "I have read and agree to Dimagi's\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+#| "               target=\"_blank\">Privacy Policy</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+#| "               target=\"_blank\">Terms of Service</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+#| "               target=\"_blank\">Business Agreement</a>, and\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
+#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Privacy Policy</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Terms of Service</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Business Agreement</a>, and\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Acceptable Use Policy</a>.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Privacy Policy</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Terms of Service</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Business Agreement</a>, and\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Acceptable Use Policy</a>.\n"
+"                "
 msgstr ""
 "Ho letto e accetto la\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Informativa sulla Privacy</a>,\n"
-"            i <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Termini di Servizio</a>,\n"
-"            l'<a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Accordo Commerciale</a> e la\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Politica di Uso Accettabile</a> di Dimagi.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Politica sulla privacy</a>,\n"
+"                i <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Termini di servizio</a>,\n"
+"                il <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Contratto commerciale</a> e la\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Politica di uso accettabile</a> di Dimagi.\n"
+"                "
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -38177,40 +38177,6 @@ msgstr ""
 "                    Nota: I progetti <strong>non possono</strong> essere trasferiti\n"
 "                    tra posizioni cloud dopo la creazione.\n"
 "                  "
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Create an Account"
-msgstr "Crea un account"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-#: corehq/apps/users/views/web.py
-msgid "Create Account"
-msgstr "Crea account"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Name Project"
-msgstr "Dai un nome al progetto"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Loading...just a second!"
-msgstr "Caricamento... solo un secondo!"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid ""
-"\n"
-"                Want to learn more before signing up?\n"
-"              "
-msgstr ""
-"\n"
-"                Vuoi saperne di più prima di registrarti?\n"
-"              "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
 msgid ""
@@ -38780,6 +38746,35 @@ msgstr ""
 "      Il tuo account verrà creato dopo il prossimo passaggio.\n"
 "    "
 
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "Create an Account"
+msgstr "Crea un account"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
+msgid "Create Account"
+msgstr "Crea account"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Name Project"
+msgstr "Dai un nome al progetto"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Loading...just a second!"
+msgstr "Caricamento... solo un secondo!"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid ""
+"\n"
+"                Want to learn more before signing up?\n"
+"              "
+msgstr ""
+"\n"
+"                Vuoi saperne di più prima di registrarti?\n"
+"              "
+
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
 msgstr "Visita CommCareHQ dal tuo computer!"
@@ -38806,12 +38801,11 @@ msgstr "corrente"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-msgid ""
-"This email is already registered in the {location} cloud location. Please <a"
-" href=\"{login_link}\">sign in here</a>."
-msgstr ""
-"Questa email è già registrata nella posizione cloud {location}. Per favore "
-"<a href=\"{login_link}\">accedi qui</a>."
+#| msgid ""
+#| "This email is already registered in the {location} cloud location. Please <a"
+#| " href=\"{login_link}\">sign in here</a>."
+msgid "This email is already registered in the {location} cloud location. "
+msgstr "Questa email è già registrata nella posizione cloud {location}. "
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -59332,6 +59326,9 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#~ msgid "This user cannot access this link."
+#~ msgstr "Questo utente non può accedere a questo collegamento."
 
 #~ msgid "Please enter either text body or xpath for custom icon"
 #~ msgstr "Inserisci il corpo del testo o xpath per l'icona personalizzata"
