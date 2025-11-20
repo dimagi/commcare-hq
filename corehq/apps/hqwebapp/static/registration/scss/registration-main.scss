@@ -204,6 +204,18 @@ p.sso-message-block {
   justify-content: space-evenly;
 }
 
+.cloud-choice {
+  color: $text-muted;
+  font-weight: $font-weight-normal !important;
+
+  &.selected {
+    color: $blue-800;
+    font-weight: $font-weight-semibold !important;
+    border-color: $blue-200;
+    background-color: $blue-100;
+  }
+}
+
 .form-bubble {
   padding: 20px;
   margin: 10px 0;
