@@ -18,6 +18,9 @@
     <button
       class="cloud-choice col btn btn-lg btn-light border-1 shadow-sm mx-2 {% if server.country_code == server_display.country_code %}selected{% endif %}"
       type="button"
+      data-bind="
+        click: selectCloud.bind($data, '{{ server.subdomain }}');
+      "
     >
       <span class="fi fi-{{ server.country_code }} fs-1 my-3"></span>
       <div class="fs-4 lh-sm mb-2">
