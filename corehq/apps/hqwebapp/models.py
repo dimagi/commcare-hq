@@ -134,18 +134,30 @@ class ServerLocation:
             'long_name': _("European Union"),
             'short_name': _("EU"),
             'subdomain': 'eu',
+            'user_facing_description': _(
+                "For organizations needing to adhere to grant or partner-mandated EU data residency or preferring "
+                "to host data in the EU."
+            )
         },
         INDIA: {
             'country_code': 'in',
             'long_name': _("India"),
             'short_name': _("India"),
             'subdomain': 'india',
+            'user_facing_description': _(
+                "For organizations looking to scale across Indian states, working with Indian goverment partners, "
+                "or needing to align with internal policies around Indian data residency requirements."
+            )
         },
         PRODUCTION: {
             'country_code': 'us',
             'long_name': _("United States"),
             'short_name': _("US"),
             'subdomain': 'www',
+            'user_facing_description': _(
+                "For organizations looking for a reliable, well-established data center with global "
+                "accessibility. Most projects are housed here."
+            )
         },
     }
 
@@ -155,6 +167,7 @@ class ServerLocation:
             'long_name': _("Staging"),
             'short_name': _("Staging"),
             'subdomain': 'staging',
+            'user_facing_description': "",
         }
     }
 
