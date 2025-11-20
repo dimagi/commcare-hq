@@ -17,7 +17,7 @@ from corehq.apps.app_manager.models import (
     FormLink,
     Module,
     ReportModule,
-    ShadowModule,
+    ShadowModule, SortElement,
 )
 from corehq.apps.app_manager.tests.util import add_build, get_simple_form
 from corehq.apps.app_manager.views import (
@@ -596,20 +596,25 @@ def apps_modules_setup(test_case):
 class TestViewGeneric(ViewsBase):
     domain = 'test-view-generic'
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.app = Application.new_app(cls.domain, "TestApp")
+        cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
+        cls.module = cls.app.add_module(Module.new_module("Module0", "en"))
+        cls.form = cls.app.new_form(
+            cls.module.id, "Form0", "en",
+            attachment=get_simple_form(xmlns='xmlns-0.0'))
+        cls.app.save()
+        app_adapter.index(cls.app, refresh=True)  # Send to ES
+
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
 
-        self.app = Application.new_app(self.domain, "TestApp")
-        self.app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        self.module = self.app.add_module(Module.new_module("Module0", "en"))
-        self.form = self.app.new_form(
-            self.module.id, "Form0", "en",
-            attachment=get_simple_form(xmlns='xmlns-0.0'))
-        self.app.save()
-        app_adapter.index(self.app, refresh=True)  # Send to ES
-
-    def tearDown(self):
-        self.app.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        super().tearDownClass()
 
     def test_view_app(self, mock1):
         url = reverse('view_app', kwargs={
@@ -749,6 +754,154 @@ class TestViewGeneric(ViewsBase):
         'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
         'form_submit_history_url', 'btn_style', 'ACCOUNTS_EMAIL', 'CHATBOT_ID', 'CHATBOT_TOKEN'
     }
+
+
+class TestModuleViews(ViewsBase):
+    domain = 'test-module-views'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        factory = AppFactory(domain=cls.domain)
+        cls.app = factory.app
+        cls.module = factory.new_basic_module('open_case', 'house', with_form=False)
+        cls.app.save()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.username, password=self.password)
+
+    def test_edit_module_detail_screens(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": ""
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": "now()"
+                }
+            ])
+        }
+
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property_validations(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": ""
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode('utf-8'), 'Sort property needs a property or a calculation')
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property_translations_retention(self):
+        self.app = Application.get(self.app._id)
+        self.app.modules[0].case_details.short.sort_elements = [
+            SortElement(
+                field='name',
+                type='string',
+                direction='ascending',
+                blanks='first',
+                display={'en': 'Name', 'hin': 'Naam'},
+                sort_calculation=''
+            ),
+            SortElement(
+                field='',
+                type='int',
+                direction='descending',
+                blanks='last',
+                display={'en': 'Age', 'hin': 'Umar'},
+                sort_calculation='if(age>5,1,2)'
+            )
+        ]
+        self.app.save()
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "name",
+                    "type": "string",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "Nameeee",
+                    "sort_calculation": ""
+                },
+                {
+                    "field": "",
+                    "type": "int",
+                    "direction": "descending",
+                    "blanks": "first",
+                    "display": "Ageee",
+                    "sort_calculation": "if(age>5,1,2)"
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+        app = Application.get(self.app._id)
+        new_sort_elements = app.modules[0].case_details.short.sort_elements
+        self.assertEqual(
+            new_sort_elements[0].display,
+            {'en': 'Nameeee', 'hin': 'Naam'}
+        )
+        self.assertEqual(
+            new_sort_elements[1].display,
+            {'en': 'Ageee', 'hin': 'Umar'}
+        )
 
 
 class TestDownloadCaseSummaryViewByAPIKey(TestCase):

@@ -190,7 +190,7 @@
                     {% trans "Sort Property" %}
                     <span
                       class="hq-help-template"
-                      data-title="{% trans "Sort Properties" %}"
+                      data-title="{% trans 'Sort Properties' %}"
                       data-content="{% blocktrans %}
                         Properties in this list determine how cases are ordered
                         in your case list. This is useful if for example you
@@ -207,7 +207,7 @@
                       {% trans "Display Blanks" %}
                       <span
                         class="hq-help-template"
-                        data-title="{% trans "Display Blanks" %}"
+                        data-title="{% trans 'Display Blanks' %}"
                         data-content="{% blocktrans %}
                           Should cases that don't have a value for the sort
                           property appear at the top or the bottom of the case
@@ -217,15 +217,12 @@
                       </span>
                     </th>
                   {% endif %}
-                  {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-                    <th>{% trans "Sort Calculation" %}</th>
-                  {% endif %}
                   <th>{% trans "Format" %}</th>
                   <th>
                     {% trans "Display Text" %}
                     <span
                       class="hq-help-template"
-                      data-title="{% trans "Display Text" %}"
+                      data-title="{% trans 'Display Text' %}"
                       data-content="{% blocktrans %}
                         The 'Display Text' is used for properties that are only
                         listed as Sort Properties and not as Display Properties
@@ -249,15 +246,30 @@
                     class="form-group col-sm-2"
                     data-bind="css: {'has-error': showWarning}"
                   >
+                    <!-- ko ifnot: useSortCalculation -->
                     <div data-bind="jqueryElement: selectField.ui"></div>
                     <div data-bind="visible: showWarning">
                       <span
                         class="help-block"
-                        data-bind="
-                                        text: warningText
-                                    "
+                        data-bind="text: warningText"
                       ></span>
                     </div>
+                    <!-- /ko -->
+                    {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                      <!-- ko if: useSortCalculation -->
+                      <input
+                        class="form-control"
+                        type="text"
+                        data-bind="value: sortCalculation"
+                      />
+                      <div class="label label-default">
+                        {% trans "Sort Calculation" %}&nbsp;(#<span
+                          data-bind="text: $index() + 1"
+                        ></span
+                        >)
+                      </div>
+                      <!-- /ko -->
+                    {% endif %}
                   </td>
                   <td>
                     <select class="form-control" data-bind="value: direction">
@@ -271,7 +283,6 @@
                       ></option>
                     </select>
                   </td>
-
                   {% if app.enable_case_list_sort_blanks %}
                     <td>
                       <select class="form-control" data-bind="value: blanks">
@@ -282,17 +293,6 @@
                       </select>
                     </td>
                   {% endif %}
-
-                  {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-                    <td>
-                      <input
-                        class="form-control"
-                        type="text"
-                        data-bind="value: sortCalculation"
-                      />
-                    </td>
-                  {% endif %}
-
                   <td>
                     <select class="form-control" data-bind="value: type">
                       <option value="plain">{% trans "Plain" %}</option>
@@ -326,14 +326,43 @@
             </table>
           </div>
           <div class="form-group">
-            <button
-              class="btn btn-default btn-sm"
-              data-bind="
-                    click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
-            >
-              <i class="fa fa-plus"></i>
-              {% trans "Add sort property" %}
-            </button>
+            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+              <div class="btn-group">
+                <button
+                  class="btn btn-default"
+                  data-bind="click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
+                >
+                  <i class="fa fa-plus"></i>
+                  {% trans "Add Sort Property" %}
+                </button>
+                <button
+                  class="btn btn-default dropdown-toggle"
+                  data-toggle="dropdown"
+                >
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li
+                    data-bind="click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
+                  >
+                    <a>{% trans "Sort Property" %}</a>
+                  </li>
+                  <li
+                    data-bind="click: function(data){data.addSortRow('', '', '', '', '', true, '', true);}"
+                  >
+                    <a>{% trans "Sort Calculation" %}</a>
+                  </li>
+                </ul>
+              </div>
+            {% else %}
+              <button
+                class="btn btn-default btn-sm"
+                data-bind="click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
+              >
+                <i class="fa fa-plus"></i>
+                {% trans "Add sort property" %}
+              </button>
+            {% endif %}
           </div>
         {% endif %}
       </div>
