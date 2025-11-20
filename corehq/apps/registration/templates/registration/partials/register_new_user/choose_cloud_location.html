@@ -11,6 +11,9 @@
   {% for server in server_choices %}
     <div
       class="cloud-choice col btn btn-light border-2 shadow-sm mx-2 {% if server.selected %}selected{% endif %}"
+      data-bind="
+        click: selectCloud.bind($data, '{{ server.subdomain }}');
+      "
     >
       <span class="fi fi-{{ server.country_code }} fs-1 my-3"></span>
       <br />

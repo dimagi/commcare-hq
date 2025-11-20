@@ -45,6 +45,17 @@ var formViewModel = function (defaults, containerSelector, steps) {
     var _rateLimit = { rateLimit: { method: "notifyWhenChangesStop", timeout: 400 } };
 
     // ---------------------------------------------------------------------
+    // Choose Cloud Buttons
+    // ---------------------------------------------------------------------
+    self.selectedCloudSubdomain = ko.observable();
+    self.selectCloud = function (subdomain, data, event) {
+        self.selectedCloudSubdomain(subdomain);
+        const $prevSelected = $('.cloud-choice.selected');
+        $prevSelected.removeClass('selected');
+        $(event.currentTarget).addClass('selected');
+    };
+
+    // ---------------------------------------------------------------------
     // Create User Account Fields
     // ---------------------------------------------------------------------
     self.fullName = ko.observable(defaults.full_name)
