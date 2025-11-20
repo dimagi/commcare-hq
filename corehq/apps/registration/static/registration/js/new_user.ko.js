@@ -36,7 +36,7 @@ module.onModuleLoad = function () {
     throw new Error("overwrite onModule load to remove loading indicators");
 };
 
-var formViewModel = function (defaults, containerSelector, steps) {
+var formViewModel = function (defaults, containerSelector, steps, initialStep) {
     var self = {};
 
     module.onModuleLoad();
@@ -222,7 +222,7 @@ var formViewModel = function (defaults, containerSelector, steps) {
     // Form Functionality
     // ---------------------------------------------------------------------
     self.steps = ko.observableArray(steps);
-    self.currentStep = ko.observable(0);
+    self.currentStep = ko.observable(initialStep);
 
     var _getDataForSubmission = function () {
         var password = self.password();
@@ -291,7 +291,8 @@ var formViewModel = function (defaults, containerSelector, steps) {
     });
 
     self.navigateSubdomain = function (subdomain) {
-        const newUrl = `https://${subdomain}.commcarehq.org${window.location.pathname}`;
+        const skipParam = 'skipCloudStep=true';
+        const newUrl = `https://${subdomain}.commcarehq.org${window.location.pathname}?${skipParam}`;
         window.location.href = newUrl;
     };
 
