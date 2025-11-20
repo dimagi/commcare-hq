@@ -1258,8 +1258,6 @@ def _update_sort_elements(domain, lang, detail, sort_elements):
             item.sort_calculation = sort_element['sort_calculation']
             if not item.field and not item.sort_calculation:
                 return HttpResponseBadRequest(_("Sort property needs a property or a calculation"))
-        else:
-            item.sort_calculation = ""
         if item.sort_calculation in old_elements_by_calculation:
             item.display = old_elements_by_calculation[item.sort_calculation].display
         elif item.field in old_elements_by_field:
