@@ -844,6 +844,7 @@ class TestModuleViews(ViewsBase):
 
     @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
     def test_sort_property_translations_retention(self):
+        self.app = Application.get(self.app._id)
         self.app.modules[0].case_details.short.sort_elements = [
             SortElement(
                 field='name',
