@@ -2286,6 +2286,14 @@ class SortElement(IndexedSchema):
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
 
+    def valid(self):
+        """
+        returns if object is valid; along with an error message in case invalid
+        """
+        if not self.field and not self.sort_calculation:
+            return False, _("Sort property needs a property or a calculation")
+        return True, None
+
 
 class CaseListLookupMixin(DocumentSchema):
     """
