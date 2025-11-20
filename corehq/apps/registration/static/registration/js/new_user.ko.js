@@ -224,12 +224,6 @@ var formViewModel = function (defaults, containerSelector, steps) {
     self.steps = ko.observableArray(steps);
     self.currentStep = ko.observable(0);
 
-    self.currentStep.subscribe(function (newValue) {
-        if (newValue === 1) {
-            noopMetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
-        }
-    });
-
     var _getDataForSubmission = function () {
         var password = self.password();
         var data = {
