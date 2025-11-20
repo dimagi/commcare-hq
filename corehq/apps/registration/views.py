@@ -299,6 +299,9 @@ class UserRegistrationView(BasePageView):
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
                 ab_tests.DEMO_WORKFLOW_V2, self.request).context
+        if settings.SERVER_ENVIRONMENT in ServerLocation.get_envs():
+            context['server_choices'] = [server for __, server in ServerLocation.get_envs().items()]
+
         return context
 
     @property

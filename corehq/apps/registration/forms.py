@@ -148,7 +148,9 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Fieldset(
                     _('Choose Your Cloud Location'),
                     hqcrispy.FormStepNumber(1, 3),
-                    # TODO: cloud location selection
+                    crispy.HTML(
+                        "{% include 'registration/partials/register_new_user/choose_cloud_location.html' %}"
+                    ),
                     crispy.Div(
                         twbscrispy.StrictButton(
                             gettext("Back"),
