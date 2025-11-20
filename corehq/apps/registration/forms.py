@@ -89,6 +89,7 @@ class RegisterWebUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
+        self.can_select_cloud = kwargs.pop('can_select_cloud', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
 
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
@@ -233,7 +234,7 @@ class RegisterWebUserForm(forms.Form):
                         twbscrispy.StrictButton(
                             gettext("Back"),
                             css_class="btn btn-outline-primary btn-lg",
-                            data_bind="click: previousStep"
+                            data_bind="click: previousStep" if self.can_select_cloud else "disable: true",
                         ),
                         twbscrispy.StrictButton(
                             gettext("Next"),

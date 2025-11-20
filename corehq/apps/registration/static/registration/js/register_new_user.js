@@ -7,11 +7,8 @@ import "registration/js/bootstrap5/login";
 const formSteps = ['cloud-step', 'user-step', 'project-step', 'final-step'];
 
 let initialStepNumber = 0;
-if (window.location.search) {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('skipCloudStep')) {
-        initialStepNumber = 1;
-    }
+if (initialPageData.get('skipCloudStep')) {
+    initialStepNumber = 1;
 }
 
 newUser.setOnModuleLoad(function () {

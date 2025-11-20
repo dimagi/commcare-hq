@@ -286,20 +286,29 @@ class UserRegistrationView(BasePageView):
         return self.request.GET.get('internal', False)
 
     @property
+    def can_select_cloud(self):
+        return settings.SERVER_ENVIRONMENT in ServerLocation.get_envs()
+
+    @property
+    def skip_cloud_step(self):
+        return self.request.GET.get('skipCloudStep', not self.can_select_cloud)
+
+    @property
     def page_context(self):
         prefills = {
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
         context = {
-            'reg_form': RegisterWebUserForm(initial=prefills),
+            'reg_form': RegisterWebUserForm(initial=prefills, can_select_cloud=self.can_select_cloud),
             'reg_form_defaults': prefills,
             'hide_password_feedback': has_custom_clean_password(),
+            'skip_cloud_step': self.skip_cloud_step,
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
                 ab_tests.DEMO_WORKFLOW_V2, self.request).context
-        if settings.SERVER_ENVIRONMENT in ServerLocation.get_envs():
+        if self.can_select_cloud:
             context['server_choices'] = [server for __, server in ServerLocation.get_envs().items()]
 
         return context
