@@ -1,0 +1,38 @@
+{% load i18n %}
+
+<p class="text-center text-muted">
+  {% blocktrans %}
+    Select the cloud region where your CommCare account and project space will
+    be hosted.
+  {% endblocktrans %}
+</p>
+
+<div class="row">
+  {% for server in server_choices %}
+    <div
+      class="cloud-choice col btn btn-light border-2 shadow-sm mx-2 {% if server.selected %}selected{% endif %}"
+      data-bind="
+        click: selectCloud.bind($data, '{{ server.subdomain }}');
+      "
+    >
+      <span class="fi fi-{{ server.country_code }} fs-1 my-3"></span>
+      <br />
+      <h4>
+        {% blocktrans with server.short_name as server_name %}
+          {{ server_name }}
+          Cloud
+        {% endblocktrans %}
+      </h4>
+      <p class="text-muted small">{% trans server.user_facing_description %}</p>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="alert alert-warning mt-3 small">
+  {% blocktrans %}
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <strong>Important:</strong> Your cloud location choice cannot be changed
+    after account creation. This affects where your data is stored and may
+    impact compliance requirements.
+  {% endblocktrans %}
+</div>
