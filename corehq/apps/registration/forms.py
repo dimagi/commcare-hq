@@ -173,6 +173,10 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Fieldset(
                     _('Create Your Account'),
                     hqcrispy.FormStepNumber(2, 3),
+                    crispy.HTML(
+                        "{% include 'registration/partials/register_new_user/chosen_cloud_location.html' %}"
+                        if self.can_select_cloud else ""
+                    ),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'full_name',
