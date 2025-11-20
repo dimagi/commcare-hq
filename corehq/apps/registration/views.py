@@ -316,7 +316,8 @@ class UserRegistrationView(BasePageView):
             server_choices = []
             for env, server in ServerLocation.get_envs().items():
                 server['selected'] = env == settings.SERVER_ENVIRONMENT
-                server_choices.append(server)
+                if env != ServerLocation.STAGING:
+                    server_choices.append(server)
             context['server_choices'] = server_choices
 
         return context
