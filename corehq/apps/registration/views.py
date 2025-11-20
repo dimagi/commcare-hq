@@ -313,7 +313,10 @@ class UserRegistrationView(BasePageView):
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
                 ab_tests.DEMO_WORKFLOW_V2, self.request).context
         if self.can_select_cloud:
-            context['server_choices'] = [server for __, server in ServerLocation.get_envs().items()]
+            context['server_choices'] = [
+                server for env, server in ServerLocation.get_envs().items()
+                if env != ServerLocation.STAGING
+            ]
 
         return context
 
