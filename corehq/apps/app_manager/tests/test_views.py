@@ -17,7 +17,7 @@ from corehq.apps.app_manager.models import (
     FormLink,
     Module,
     ReportModule,
-    ShadowModule,
+    ShadowModule, SortElement,
 )
 from corehq.apps.app_manager.tests.util import add_build, get_simple_form
 from corehq.apps.app_manager.views import (
@@ -841,6 +841,66 @@ class TestModuleViews(ViewsBase):
         response = self.client.post(url, update_params)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content.decode('utf-8'), 'Sort property needs a property or a calculation')
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property_translations_retention(self):
+        self.app.modules[0].case_details.short.sort_elements = [
+            SortElement(
+                field='name',
+                type='string',
+                direction='ascending',
+                blanks='first',
+                display={'en': 'Name', 'hin': 'Naam'},
+                sort_calculation=''
+            ),
+            SortElement(
+                field='',
+                type='int',
+                direction='descending',
+                blanks='last',
+                display={'en': 'Age', 'hin': 'Umar'},
+                sort_calculation='if(age>5,1,2)'
+            )
+        ]
+        self.app.save()
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "name",
+                    "type": "string",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "Nameeee",
+                    "sort_calculation": ""
+                },
+                {
+                    "field": "",
+                    "type": "int",
+                    "direction": "descending",
+                    "blanks": "first",
+                    "display": "Ageee",
+                    "sort_calculation": "if(age>5,1,2)"
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+        app = Application.get(self.app._id)
+        new_sort_elements = app.modules[0].case_details.short.sort_elements
+        self.assertEqual(
+            new_sort_elements[0].display,
+            {'en': 'Nameeee', 'hin': 'Naam'}
+        )
+        self.assertEqual(
+            new_sort_elements[1].display,
+            {'en': 'Ageee', 'hin': 'Umar'}
+        )
 
 
 class TestDownloadCaseSummaryViewByAPIKey(TestCase):
