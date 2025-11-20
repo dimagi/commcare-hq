@@ -299,8 +299,13 @@ class UserRegistrationView(BasePageView):
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
                 ab_tests.DEMO_WORKFLOW_V2, self.request).context
-        if settings.SERVER_ENVIRONMENT in ServerLocation.get_envs():
-            context['server_choices'] = [server for __, server in ServerLocation.get_envs().items()]
+        current_env = settings.SERVER_ENVIRONMENT
+        if current_env in ServerLocation.get_envs():
+            server_choices = []
+            for env, server in ServerLocation.get_envs().items():
+                server['selected'] = env == current_env
+                server_choices.append(server)
+            context['server_choices'] = server_choices
 
         return context
 
