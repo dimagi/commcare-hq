@@ -304,6 +304,10 @@ class UserRegistrationView(BasePageView):
             'reg_form_defaults': prefills,
             'hide_password_feedback': has_custom_clean_password(),
             'skip_cloud_step': self.skip_cloud_step,
+            'initial_subdomain': (
+                ServerLocation.get_subdomains()[settings.SERVER_ENVIRONMENT]
+                if self.can_select_cloud else ''
+            )
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(

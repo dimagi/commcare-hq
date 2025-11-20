@@ -36,7 +36,7 @@ module.onModuleLoad = function () {
     throw new Error("overwrite onModule load to remove loading indicators");
 };
 
-var formViewModel = function (defaults, containerSelector, steps, initialStep) {
+var formViewModel = function (defaults, containerSelector, steps, initialStep, initialSubdomain) {
     var self = {};
 
     module.onModuleLoad();
@@ -47,7 +47,7 @@ var formViewModel = function (defaults, containerSelector, steps, initialStep) {
     // ---------------------------------------------------------------------
     // Choose Cloud Buttons
     // ---------------------------------------------------------------------
-    self.selectedCloudSubdomain = ko.observable();
+    self.selectedCloudSubdomain = ko.observable(initialSubdomain);
     self.selectCloud = function (subdomain, data, event) {
         self.selectedCloudSubdomain(subdomain);
         const $prevSelected = $('.cloud-choice.selected');
@@ -290,6 +290,11 @@ var formViewModel = function (defaults, containerSelector, steps, initialStep) {
         return !self.isProjectStepValid();
     });
 
+    self.navigateOnNextStep = ko.pureComputed(function () {
+        return self.selectedCloudSubdomain() !== initialSubdomain
+            && self.currentStep() === 0;
+    });
+
     self.navigateSubdomain = function (subdomain) {
         const skipParam = 'skipCloudStep=true';
         const newUrl = `https://${subdomain}.commcarehq.org${window.location.pathname}?${skipParam}`;
@@ -297,7 +302,7 @@ var formViewModel = function (defaults, containerSelector, steps, initialStep) {
     };
 
     self.nextStep = function () {
-        if (self.selectedCloudSubdomain() && self.currentStep() === 0) {
+        if (self.navigateOnNextStep()) {
             self.navigateSubdomain(self.selectedCloudSubdomain());
             _getFormStepUi(self.currentStep()).hide("slide", {}, 300);
             return;

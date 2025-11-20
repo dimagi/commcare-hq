@@ -26,6 +26,7 @@ var regForm = newUser.formViewModel(
     '#registration-form-container',
     formSteps,
     initialStepNumber,
+    initialPageData.get('initialSubdomain'),
 );
 $('#registration-form-container').koApplyBindings(regForm);
 
