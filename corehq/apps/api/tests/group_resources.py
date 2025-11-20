@@ -77,8 +77,8 @@ class TestGroupResource(APIResourceTest):
             "reporting": True,
         }
         response = self._assert_auth_post_resource(self.list_endpoint,
-                                    json.dumps(group_json),
-                                    content_type='application/json')
+                                                   json.dumps(group_json),
+                                                   content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [group_back] = Group.by_domain(self.domain.name)
         self.addCleanup(group_back.delete)
@@ -86,6 +86,32 @@ class TestGroupResource(APIResourceTest):
         self.assertTrue(group_back.reporting)
         self.assertTrue(group_back.case_sharing)
         self.assertEqual(group_back.metadata["localization"], "Ghana")
+
+    def test_create_multiple(self):
+        group_json = {"objects": [
+            {
+                "case_sharing": True,
+                "metadata": {"localization": "Ghana"},
+                "name": "test group",
+                "reporting": True,
+            }, {
+                "case_sharing": True,
+                "metadata": {"localization": "Mali"},
+                "name": "test group 2",
+                "reporting": True,
+            }
+
+        ]}
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(group_json),
+                                                   content_type='application/json',
+                                                   method='PATCH')
+        self.assertEqual(response.status_code, 202, response.content)
+        groups = Group.by_domain(self.domain.name)
+        self.assertEqual({g._id for g in groups}, set(json.loads(response.content)))
+        self.assertEqual({g.name for g in groups}, {"test group", "test group 2"})
+        self.assertEqual({g.metadata["localization"] for g in groups}, {"Ghana", "Mali"})
 
     def test_update(self):
 
