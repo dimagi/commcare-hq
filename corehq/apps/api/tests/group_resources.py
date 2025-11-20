@@ -109,6 +109,8 @@ class TestGroupResource(APIResourceTest):
                                                    method='PATCH')
         self.assertEqual(response.status_code, 202, response.content)
         groups = Group.by_domain(self.domain.name)
+        for group in groups:
+            self.addCleanup(group.delete)
         self.assertEqual({g._id for g in groups}, set(json.loads(response.content)))
         self.assertEqual({g.name for g in groups}, {"test group", "test group 2"})
         self.assertEqual({g.metadata["localization"] for g in groups}, {"Ghana", "Mali"})
