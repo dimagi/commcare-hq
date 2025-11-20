@@ -655,12 +655,15 @@ class GroupResource(v0_4.GroupResource):
         always_return_data = True
 
     def serialize(self, request, data, format, options=None):
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) and not self._is_list(request, data):
             if 'error_message' in data.data:
                 data = {'error_message': data.data['error_message']}
             elif request.method == 'POST':
                 data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
+
+    def _is_list(self, request, data):
+        return request.method == 'PATCH' and isinstance(data, list)
 
     def patch_list(self, request=None, **kwargs):
         return super().patch_list_replica(self.obj_create, request, **kwargs)
