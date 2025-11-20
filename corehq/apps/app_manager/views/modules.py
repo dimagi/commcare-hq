@@ -1256,8 +1256,9 @@ def _update_sort_elements(domain, lang, detail, sort_elements):
         item = _init_new_sort_element(sort_element)
         if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
             item.sort_calculation = sort_element['sort_calculation']
-            if not item.field and not item.sort_calculation:
-                return HttpResponseBadRequest(_("Sort property needs a property or a calculation"))
+            is_valid, error_message = item.valid()
+            if not is_valid:
+                return HttpResponseBadRequest(error_message)
         if item.sort_calculation in old_elements_by_calculation:
             item.display = old_elements_by_calculation[item.sort_calculation].display
         elif item.field in old_elements_by_field:
