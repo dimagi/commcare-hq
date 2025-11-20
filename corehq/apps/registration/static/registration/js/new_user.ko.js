@@ -296,7 +296,17 @@ var formViewModel = function (defaults, containerSelector, steps) {
         return !self.isProjectStepValid();
     });
 
+    self.navigateSubdomain = function (subdomain) {
+        const newUrl = `https://${subdomain}.commcarehq.org${window.location.pathname}`;
+        window.location.href = newUrl;
+    };
+
     self.nextStep = function () {
+        if (self.selectedCloudSubdomain() && self.currentStep() === 0) {
+            self.navigateSubdomain(self.selectedCloudSubdomain());
+            _getFormStepUi(self.currentStep()).hide("slide", {}, 300);
+            return;
+        }
         var _nextStep = self.currentStep() + 1;
         if (_nextStep >= self.steps().length) {
             return;
