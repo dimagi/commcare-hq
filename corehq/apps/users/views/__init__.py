@@ -693,6 +693,8 @@ class ListRolesView(BaseRoleAccessView):
             role_data = role.to_json()
             role_view_data.append(role_data)
 
+            if self.can_edit_roles:
+                role_data["editUrl"] = reverse(EditRoleView.urlname, kwargs={'domain': self.domain, 'uuid': role_data.get('_id')})
             if role.is_commcare_user_default:
                 role_data["preventRoleDelete"] = True
             else:
@@ -790,6 +792,23 @@ class ListRolesView(BaseRoleAccessView):
                 get_application_access_for_domain(self.domain).restrict
                 and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
             ),
+        }
+
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class EditRoleView(BaseRoleAccessView):
+    urlname = "edit_role"
+    template_name = 'users/edit_role.html'
+    page_title = gettext_lazy("Edit Role")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, kwargs={'domain': self.domain, 'uuid': self.kwargs.get('uuid')})
+
+    @property
+    def page_context(self):
+        return {
         }
 
 
