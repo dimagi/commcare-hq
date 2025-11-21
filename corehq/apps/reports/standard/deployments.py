@@ -18,7 +18,8 @@ from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
 from phonelog.models import UserErrorEntry
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
@@ -362,10 +363,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @memoized
     def _include_primary_locations_hierarchy(self):
-        toggle = toggles.LOCATION_COLUMNS_APP_STATUS_REPORT
         return (
             (
-                toggle.enabled(self.request.domain, toggles.NAMESPACE_DOMAIN)
+                domain_has_privilege(self.request.domain, privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT)
                 and self.rendered_as in ['export']
             )
         )
