@@ -204,9 +204,19 @@ p.sso-message-block {
   justify-content: space-evenly;
 }
 
-.cloud-choice.selected {
-  border: 2px solid $primary;
-  background-color: $blue-100;
+.cloud-choice {
+  p {
+    color: $text-muted;
+  }
+
+  &.selected {
+    border: 2px solid $primary;
+    background-color: $blue-100;
+
+    p {
+      color: $blue-800;
+    }
+  }
 }
 
 .form-bubble {

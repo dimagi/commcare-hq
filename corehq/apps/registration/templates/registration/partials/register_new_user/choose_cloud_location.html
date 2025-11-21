@@ -21,13 +21,13 @@
       <div>
         <span class="fi fi-{{ server.country_code }} fs-1 my-3"></span>
         <br />
-        <h4>
+        <h4 class="text-dark">
           {% blocktrans with server.short_name as server_name %}
             {{ server_name }}
             Cloud
           {% endblocktrans %}
         </h4>
-        <p class="text-muted small fw-normal">
+        <p class="small fw-normal">
           {% trans server.user_facing_description %}
         </p>
       </div>
