@@ -134,6 +134,8 @@ SHOW_ENABLE_ALL_ADD_ONS = 'show_enable_all_add_ons'
 
 CUSTOM_ICON_BADGES = 'custom_icon_badges'
 
+LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT = 'location_columns_in_user_last_activity_report'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -204,6 +206,7 @@ MAX_PRIVILEGES = [
     DATA_DICT_TYPES,
     GEOJSON_EXPORT,
     CUSTOM_ICON_BADGES,
+    LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -289,4 +292,7 @@ class Titles(object):
             DATA_DICT_TYPES: _("Data Dictionary case properties have data types"),
             GEOJSON_EXPORT: _("Case Export supports exporting geolocated data in GeoJSON format"),
             CUSTOM_ICON_BADGES: _('Add text or xpath based custom icon badges to menus and forms'),
+            LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT: _(
+                "Add primary location's hierarchy to excel export in User Last Activity Report"
+            ),
         }.get(privilege, privilege)

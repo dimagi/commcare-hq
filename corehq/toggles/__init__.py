@@ -1866,11 +1866,12 @@ ENABLE_UCR_MIRRORS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
-    'location_columns_app_status_report',
-    'Enables location columns to app status report',
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
+LOCATION_COLUMNS_APP_STATUS_REPORT = FrozenPrivilegeToggle(
+    privilege_slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
+    slug='location_columns_app_status_report',
+    label='Enables location columns to app status report',
+    tag=TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
