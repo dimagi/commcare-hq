@@ -629,14 +629,17 @@ class ModuleDetailValidatorMixin(object):
     def validate_details_for_build(self):
         errors = []
         for sort_element in self.module.detail_sort_elements:
-            try:
-                self._validate_detail_screen_field(sort_element.field)
-            except ValueError:
-                errors.append({
-                    'type': 'invalid sort field',
-                    'field': sort_element.field,
-                    'module': self.get_module_info(),
-                })
+            # validate field if no sort calculation
+            if not sort_element.sort_calculation:
+                try:
+                    self._validate_detail_screen_field(sort_element.field)
+                except ValueError:
+                    errors.append({
+                        'type': 'invalid sort field',
+                        'field': sort_element.field,
+                        'module': self.get_module_info(),
+                    })
+        # ToDo: Add validation for sort calculation
         if self.module.case_list_filter:
             try:
                 # get_filter_xpath returns a filter like `[age > 5]`, so prefix it
