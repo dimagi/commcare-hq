@@ -16,7 +16,11 @@
 <div class="row">
   {% for server in server_choices %}
     <button
-      class="cloud-choice col btn btn-lg btn-light border-1 shadow-sm mx-2 {% if server.country_code == server_display.country_code %}selected{% endif %}"
+      class="
+        cloud-choice 
+        {% if server.country_code == server_display.country_code %}selected{% endif %}
+        col btn btn-lg btn-light border-1 shadow-sm mx-2
+      "
       type="button"
       data-bind="
         click: selectCloud.bind($data, '{{ server.subdomain }}');
