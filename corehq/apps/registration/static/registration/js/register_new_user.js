@@ -4,9 +4,16 @@ import newUser from "registration/js/new_user.ko";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "registration/js/bootstrap5/login";
 
+const formSteps = ['cloud-step', 'user-step', 'project-step', 'final-step'];
+
+let initialStepNumber = 0;
+if (initialPageData.get('skipCloudStep')) {
+    initialStepNumber = 1;
+}
+
 newUser.setOnModuleLoad(function () {
     $('.loading-form-step').fadeOut(500, function () {
-        $('.step-1').fadeIn(500);
+        $(`.${formSteps[initialStepNumber]}`).fadeIn(500);
     });
 });
 newUser.initRMI(initialPageData.reverse('process_registration'));
@@ -17,7 +24,9 @@ if (!initialPageData.get('hide_password_feedback')) {
 var regForm = newUser.formViewModel(
     initialPageData.get('reg_form_defaults'),
     '#registration-form-container',
-    ['step-1', 'step-2', 'final-step'],
+    formSteps,
+    initialStepNumber,
+    initialPageData.get('initialSubdomain'),
 );
 $('#registration-form-container').koApplyBindings(regForm);
 
