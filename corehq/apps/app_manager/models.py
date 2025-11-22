@@ -2269,6 +2269,13 @@ class DetailColumn(IndexedSchema):
 
 
 class SortElement(IndexedSchema):
+    """
+    A sort entry for case list
+
+    It should either have a field or a sort calculation to sort by.
+    Having sort calculation makes field redundant.
+    For legacy sort element entries that have both present, sort calculation is considered.
+    """
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
@@ -2278,6 +2285,14 @@ class SortElement(IndexedSchema):
 
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
+
+    def valid(self):
+        """
+        returns if object is valid; along with an error message in case invalid
+        """
+        if not self.field and not self.sort_calculation:
+            return False, _("Sort property needs a property or a calculation")
+        return True, None
 
 
 class CaseListLookupMixin(DocumentSchema):
