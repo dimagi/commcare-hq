@@ -1,0 +1,47 @@
+{% load i18n %}
+
+<p class="text-center text-muted">
+  {% blocktrans %}
+    Select the cloud region where your CommCare account and project space will
+    be hosted.
+    <a
+      href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Hosting+Locations"
+      target="_blank"
+      ><b>Learn more</b></a
+    >
+    about our cloud locations.
+  {% endblocktrans %}
+</p>
+
+<div class="row">
+  {% for server in server_choices %}
+    <button
+      class="
+        cloud-choice 
+        {% if server.country_code == server_display.country_code %}selected{% endif %}
+        col btn btn-lg btn-light border-1 shadow-sm mx-2
+      "
+      type="button"
+      data-bind="
+        click: selectCloud.bind($data, '{{ server.subdomain }}');
+      "
+    >
+      <span class="fi fi-{{ server.country_code }} fs-1 my-3"></span>
+      <div class="fs-4 lh-sm mb-2">
+        {% blocktrans with server.short_name as server_name %}
+          {{ server_name }}
+          Cloud
+        {% endblocktrans %}
+      </div>
+    </button>
+  {% endfor %}
+</div>
+
+<div class="alert alert-warning mt-3 small">
+  {% blocktrans %}
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <strong>Important:</strong> Your cloud location choice cannot be changed
+    after account creation. This affects where your data is stored and may
+    impact compliance requirements.
+  {% endblocktrans %}
+</div>

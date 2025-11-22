@@ -83,6 +83,8 @@
 {% block content %}
   {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
   {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
+  {% initial_page_data 'skipCloudStep' skip_cloud_step %}
+  {% initial_page_data 'initialSubdomain' initial_subdomain %}
   {% registerurl 'process_registration' %}
 
   <div class="container">
@@ -90,8 +92,11 @@
       <div class="col-sm-12">
         <div id="registration-form-container" class="reg-form-container">
           <ul class="form-step-progress">
-            <li class="active">{% trans "Create Account" %}</li>
+            <li class="active">{% trans "Choose Cloud" %}</li>
             <li data-bind="css: { active: currentStep() > 0 }">
+              {% trans "Create Account" %}
+            </li>
+            <li data-bind="css: { active: currentStep() > 1 }">
               {% trans "Name Project" %}
             </li>
           </ul>
