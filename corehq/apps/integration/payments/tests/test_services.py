@@ -758,8 +758,7 @@ class TestRequestPaymentsStatusForCases(TestCase):
         """
 
         def _side_effect(case, *args, **kwargs):
-            case_id = getattr(case, 'case_id', None)
-            resp = mock_responses.get(case_id)
+            resp = mock_responses[case.case_id]
             if isinstance(resp, Exception):
                 raise resp
             return resp
