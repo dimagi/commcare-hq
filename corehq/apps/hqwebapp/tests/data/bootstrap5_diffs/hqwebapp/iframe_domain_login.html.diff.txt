@@ -15,8 +15,12 @@
      <div class="bg-overlay"></div>
    </div>
  {% endblock %}
-@@ -25,7 +24,7 @@
-     <link type="text/less"
+@@ -22,10 +21,10 @@
+         href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+ 
+   {% compress css %}
+-    <link type="text/less"
++    <link type="text/scss"
            rel="stylesheet"
            media="all"
 -          href="{% static 'registration/less/registration.less' %}" />
