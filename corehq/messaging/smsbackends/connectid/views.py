@@ -21,7 +21,7 @@ def receive_message(request, *args, **kwargs):
     channel_id = data["channel_id"]
     user_link = ConnectIDUserLink.objects.filter(channel_id=channel_id, is_active=True).first()
     if user_link is None:
-        return HttpResponseNotFound
+        return HttpResponseNotFound()
     username = user_link.commcare_user.username
     couch_user = CouchUser.get_by_username(username)
     phone_obj = ConnectMessagingNumber(couch_user)
@@ -60,7 +60,7 @@ def connectid_messaging_key(request, *args, **kwargs):
         is_active=True,
     ).first()
     if link is None:
-        return HttpResponseNotFound
+        return HttpResponseNotFound()
     messaging_key = link.messaging_key
     return JsonResponse({"key": messaging_key.key})
 
@@ -88,7 +88,7 @@ def messaging_callback_url(request, *args, **kwargs):
         return HttpResponseBadRequest("Channel ID is required.")
     user_link = ConnectIDUserLink.objects.filter(channel_id=channel_id, is_active=True).first()
     if user_link is None:
-        return HttpResponseNotFound
+        return HttpResponseNotFound()
     messages = data.get("messages", [])
     messages_to_update = []
     message_data = {message.get("message_id"): message.get("received_on") for message in messages}
