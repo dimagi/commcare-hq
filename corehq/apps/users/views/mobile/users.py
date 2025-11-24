@@ -3,6 +3,7 @@ import json
 import re
 import time
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -18,12 +19,14 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop, override
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, FormView
 
+import requests
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -1691,6 +1694,12 @@ def link_connectid_user(request, domain):
         connectid_username=connectid_username, commcare_user=request.user, domain=request.domain
     )
     if new:
+        if link.connectid_username != request.user.username and settings.CONNECTID_ADD_USER_ANALYTICS_URL:
+            requests.post(
+                settings.CONNECTID_ADD_USER_ANALYTICS_URL,
+                json={"hq_sso_date": now()},
+                auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
+            )
         return HttpResponse(status=201)
     else:
         return HttpResponse()
