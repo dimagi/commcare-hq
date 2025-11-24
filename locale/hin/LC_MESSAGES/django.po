@@ -32,9 +32,6 @@ msgstr ""
 
 #: corehq/apps/accounting/emails.py
 #, python-brace-format
-#| msgid ""
-#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
-#| "%(ending_on)s"
 msgid ""
 "CommCare Alert: {domain}'s subscription to {plan} automatically renewed for "
 "{date_start}"
@@ -53,9 +50,6 @@ msgstr "%s को।"
 
 #: corehq/apps/accounting/emails.py
 #, python-format
-#| msgid ""
-#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
-#| "%(ending_on)s"
 msgid ""
 "CommCare Alert: %(domain_or_account)s's subscription to %(plan_name)s ends "
 "%(ending_on)s"
@@ -723,22 +717,18 @@ msgid "Submit Request"
 msgstr "अनुरोध सबमिट करें"
 
 #: corehq/apps/accounting/forms.py
-#| msgid "Do Not Email Subscription Reminders"
 msgid "Subscription Reminder"
 msgstr "सदस्यता अनुस्मारक"
 
 #: corehq/apps/accounting/forms.py
-#| msgid "Reminder"
 msgid "Renewal Reminder"
 msgstr "नवीनीकरण अनुस्मारक"
 
 #: corehq/apps/accounting/forms.py
-#| msgid "Subscription Credit"
 msgid "Subscription Ending"
 msgstr "सदस्यता समाप्त हो रही है"
 
 #: corehq/apps/accounting/forms.py
-#| msgid "Do Not Email Subscription Reminders"
 msgid "Dimagi Contact Subscription Reminder"
 msgstr "Dimagi संपर्क सदस्यता अनुस्मारक"
 
@@ -1251,6 +1241,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -1494,27 +1485,20 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
-#| msgid "Subscription"
 msgid "Subscription plan"
 msgstr "सदस्यता प्लान"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
-#| msgid "Billing Statements"
 msgid "Billing date"
 msgstr "बिलिंग तिथि"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
-#| msgid "Invoice #%s"
 msgid "Invoice #"
 msgstr "चालान #"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
-#| msgid ""
-#| "\n"
-#| "    Please find attached the prepayment invoice for your CommCare subscription.\n"
-#| "  "
 msgid ""
 "\n"
 "    Please update your billing information to prevent disruption to your\n"
@@ -1554,10 +1538,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      If you believe this to be in error, please contact support.\n"
-#| "    "
 msgid ""
 "\n"
 "    If you have any questions, please contact %(support_email)s.\n"
@@ -1568,11 +1548,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
-#| msgid ""
-#| "\n"
-#| "    Thanks, <br />\n"
-#| "    CommCare Team\n"
-#| "  "
 msgid ""
 "\n"
 "    Thanks,<br />\n"
@@ -1585,9 +1560,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
-#| msgid ""
-#| "\n"
-#| "Hello,\n"
 msgid ""
 "\n"
 "Hello,"
@@ -1633,10 +1605,6 @@ msgstr ""
 "बिल किया गया: %(brand)s कार्ड, अंतिम चार अंक %(last4)s, समाप्ति तिथि %(exp_month)s/%(exp_year)s"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
-#| msgid ""
-#| "\n"
-#| "    Please find attached the prepayment invoice for your CommCare subscription.\n"
-#| "  "
 msgid ""
 "\n"
 "Please update your billing information to prevent disruption to your CommCare\n"
@@ -3039,11 +3007,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-#| "    %(invoice_num)s for your project %(project)s.\n"
-#| "  "
 msgid ""
 "\n"
 "      This email is a receipt for your payment of %(amount)s toward Invoice\n"
@@ -3057,11 +3020,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-#| "    %(invoice_num)s for your project %(project)s.\n"
-#| "  "
 msgid ""
 "\n"
 "      This email is a receipt for your payment of %(amount)s toward Invoice\n"
@@ -3097,7 +3055,6 @@ msgstr "देय तिथि"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
-#| msgid "Dear %(name)s,"
 msgid ""
 "\n"
 "Dear %(name)s,"
@@ -3107,11 +3064,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-#| "    %(invoice_num)s for your project %(project)s.\n"
-#| "  "
 msgid ""
 "\n"
 "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
@@ -3123,11 +3075,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-#| "    %(invoice_num)s for your project %(project)s.\n"
-#| "  "
 msgid ""
 "\n"
 "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
@@ -3139,14 +3086,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Invoices for project space %(domain)s are now marked as paid as of %(date_paid)s.\n"
-#| "\n"
-#| "Project Space: %(domain)s\n"
-#| "Amount Paid: %(amount)s\n"
-#| "Payment Date: %(date_paid)s\n"
-#| "Transaction No.: %(transaction_id)s"
 msgid ""
 "\n"
 "This invoice is now marked as paid as of %(date_paid)s.\n"
@@ -3189,18 +3128,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Thank you for using CommCare. If you have any questions, please don't\n"
-#| "hesitate to contact %(invoicing_contact_email)s.\n"
-#| "\n"
-#| "Best Regards,\n"
-#| "The CommCare Team\n"
-#| "www.commcarehq.org\n"
-#| "\n"
-#| "Email From:\n"
-#| "CommCare and the corporation Dimagi, Inc.\n"
-#| "245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
 msgid ""
 "\n"
 "Thank you for using CommCare. If you have any questions, please don't\n"
@@ -3549,7 +3476,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
-#| msgid "The CommCare Team"
 msgid ""
 "\n"
 "    The CommCare Team\n"
@@ -3657,10 +3583,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Dear %(name)s,\n"
-#| "  "
 msgid ""
 "\n"
 "    Dear %(dimagi_contact)s,\n"
@@ -3672,10 +3594,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    You have been added to the %(domain)s project on %(hq_name)s.\n"
-#| "  "
 msgid ""
 "\n"
 "    You have been identified as the Dimagi point of contact for\n"
@@ -3688,11 +3606,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Your <b>%(plan_name)s</b> subscription will automatically renew on\n"
-#| "        %(date_end)s.\n"
-#| "      "
 msgid ""
 "\n"
 "      This account has a %(plan)s subscription that is ending on\n"
@@ -3705,11 +3618,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Your <b>%(plan_name)s</b> subscription will automatically renew on\n"
-#| "        %(date_end)s.\n"
-#| "      "
 msgid ""
 "\n"
 "      This project space has a %(plan)s subscription that is ending on\n"
@@ -3721,13 +3629,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
-#| msgid ""
-#| "\n"
-#| "    Your 30 Day Trial for %(domain)s ends soon! If you do not\n"
-#| "    change your subscription before then, your subscription will be paused on\n"
-#| "    %(ending_on)s and you will lose access to all features until you\n"
-#| "    re-subscribe to a new paid plan.\n"
-#| "  "
 msgid ""
 "\n"
 "    After that date, the subscription will automatically pause and this space\n"
@@ -3741,10 +3642,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    To change or renew your subscription, please reach out to %(sales_email)s.\n"
-#| "  "
 msgid ""
 "\n"
 "    In case you would like to extend this subscription or have any questions,\n"
@@ -3757,7 +3654,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
-#| msgid "The CommCare Team"
 msgid ""
 "\n"
 "    The CommCare Team<br />\n"
@@ -3794,11 +3690,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Your <b>%(plan_name)s</b> subscription will automatically renew on\n"
-#| "        %(date_end)s.\n"
-#| "      "
 msgid ""
 "\n"
 "    This project space has a %(plan)s subscription that is ending on\n"
@@ -3888,10 +3779,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Thank you for using CommCare. If you have any questions, please don't hesitate to contact %(invoicing_contact_email)s.\n"
-#| "  "
 msgid ""
 "\n"
 "    In case you have any questions about your renewal, please don't hesitate to\n"
@@ -3914,26 +3801,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "Dear %(domain)s administrator,\n"
-#| "\n"
-#| "Your %(plan_name)s subscription for %(domain)s ends soon! If you do not\n"
-#| "renew your subscription before then, your subscription will be paused on\n"
-#| "%(ending_on)s and you will lose access to all features until you\n"
-#| "re-subscribe to a new paid plan.\n"
-#| "\n"
-#| "To change or renew your subscription, please log into your project on\n"
-#| "CommCare HQ and and navigate to the subscription page in your project\n"
-#| "settings: %(subscription_url)s\n"
-#| "\n"
-#| "If you have any questions, please don’t hesitate to contact %(invoicing_contact_email)s.\n"
-#| "Thank you for your use and support of CommCare.\n"
-#| "\n"
-#| "Best regards,\n"
-#| "\n"
-#| "The CommCare Team\n"
-#| "%(base_url)s\n"
 msgid ""
 "\n"
 "  Dear %(domain)s administrator,\n"
@@ -5142,7 +5009,6 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "हम और जानना चाहेंगे! कृपया स्पष्ट करें -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
@@ -5153,6 +5019,26 @@ msgstr ""
 "\n"
 "      इस बटन पर क्लिक करके, आप Dimagi की\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">सेवा की शर्तों</a> और\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">गोपनीयता नीति</a> से सहमत होते हैं।\n"
+"    "
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"      By clicking Submit Request, you agree to Dimagi's\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      सबमिट अनुरोध पर क्लिक करके, आप डिमागी की\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">सेवा की शर्तें</a> और\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">गोपनीयता नीति</a> से सहमत होते हैं।\n"
 "    "
 
@@ -5931,7 +5817,6 @@ msgstr "केस"
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -8561,6 +8446,7 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
@@ -9707,6 +9593,28 @@ msgstr "आप इस एप्लिकेशन को हटाने वा�
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Custom Icon"
 msgstr "कस्टम आइकन"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
+msgid ""
+"\n"
+"          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
+"          Learn more\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >here</a\n"
+"          >.\n"
+"        "
+msgstr ""
+"\n"
+"          कृपया डिस्प्ले टेक्स्ट या एक XPath फ़ंक्शन जोड़ें। यह संबंधित आइकन के बगल में एक बैज के रूप में दिखाई देगा।\n"
+"          अधिक जानें\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >यहाँ</a\n"
+"          >।\n"
+"        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Text Body"
@@ -14081,10 +13989,6 @@ msgid "Reverted to version {log.info['version']}"
 msgstr "{log.info['version']} संस्करण पर वापस लौटाया गया"
 
 #: corehq/apps/app_manager/views/utils.py
-msgid "Please enter either text body or xpath for custom icon"
-msgstr "कृपया कस्टम आइकन के लिए या तो टेक्स्ट बॉडी या xpath दर्ज करें"
-
-#: corehq/apps/app_manager/views/utils.py
 #, python-format
 msgid "Update Status for linked app %s"
 msgstr "लिंक्ड ऐप %s के लिए स्थिति अपडेट करें"
@@ -14477,6 +14381,7 @@ msgstr "क्या आप वाकई इस विजेट को हटा
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
@@ -14623,17 +14528,14 @@ msgid "Required format: YYYY-MM-DD (e.g. \"2021-12-31\")"
 msgstr "आवश्यक प्रारूप: YYYY-MM-DD (जैसे \"2021-12-31\")"
 
 #: corehq/apps/case_importer/exceptions.py
-#| msgid "Invalid user"
 msgid "Invalid Number"
 msgstr "अमान्य संख्या"
 
 #: corehq/apps/case_importer/exceptions.py
-#| msgid "The user is not a demo user."
 msgid "The given value is not a number"
 msgstr "दिया गया मान कोई संख्या नहीं है"
 
 #: corehq/apps/case_importer/exceptions.py
-#| msgid "Invalid"
 msgid "Invalid GPS"
 msgstr "अमान्य GPS"
 
@@ -14646,12 +14548,10 @@ msgstr ""
 "precision\""
 
 #: corehq/apps/case_importer/exceptions.py
-#| msgid "Add Phone Number"
 msgid "Invalid Phone Number"
 msgstr "अमान्य फोन नंबर"
 
 #: corehq/apps/case_importer/exceptions.py
-#| msgid "%s is an invalid phone number."
 msgid "The given value is not a valid phone number"
 msgstr "दिया गया मान एक मान्य फोन नंबर नहीं है"
 
@@ -16218,10 +16118,6 @@ msgid "No corresponding application found in this project."
 msgstr "इस प्रोजेक्ट में कोई संबंधित एप्लिकेशन नहीं मिला।"
 
 #: corehq/apps/cloudcare/views.py
-msgid "This user cannot access this link."
-msgstr "यह यूज़र इस लिंक तक पहुँच नहीं सकता।"
-
-#: corehq/apps/cloudcare/views.py
 #, python-brace-format
 msgid ""
 "You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile UCRs\n"
@@ -16478,7 +16374,6 @@ msgid "Unable to remove synced fields. You do not have the appropriate role"
 msgstr "सिंक किए गए फ़ील्ड हटाने में असमर्थ। आपके पास उपयुक्त भूमिका नहीं है"
 
 #: corehq/apps/custom_data_fields/edit_model.py
-#| msgid "Could not delete profile '{}' because it has users assigned."
 msgid "Could not delete profile '{}' because it has invitations assigned."
 msgstr ""
 "प्रोफ़ाइल '{}' को हटाया नहीं जा सका क्योंकि इससे निमंत्रण जुड़े हुए हैं।"
@@ -18663,7 +18558,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
-#| msgid "No Validation"
 msgid "Import Validation"
 msgstr "आयात मान्यता"
 
@@ -27330,11 +27224,8 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
 msgid ""
-"There are errors with your configuration. Please fix them before creating "
-"the export."
-msgstr ""
-"आपकी कॉन्फ़िगरेशन में त्रुटियाँ हैं। कृपया निर्यात बनाने से पहले उन्हें ठीक "
-"करें।"
+"A required field is incomplete or incorrect. Please check above for details."
+msgstr "एक आवश्यक फ़ील्ड अधूरी या गलत है। कृपया ऊपर विवरण देखें।"
 
 #: corehq/apps/export/templates/export/datasource_export_view.html
 #: corehq/apps/export/views/download.py
@@ -27958,8 +27849,21 @@ msgid "Custom Path"
 msgstr "कस्टम पथ"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select geo property"
-msgstr "भौगोलिक संपत्ति चुनें"
+msgid "GPS case property"
+msgstr "जीपीएस केस प्रॉपर्टी"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"            No case properties have the data type \"GPS\". To select a GPS case\n"
+"            property here, use the Data Dictionary to set the data type of one\n"
+"            or more case properties to \"GPS\".\n"
+"          "
+msgstr ""
+"\n"
+"            किसी भी केस प्रॉपर्टी का डेटा प्रकार \"GPS\" नहीं है। यहाँ GPS केस प्रॉपर्टी चुनने के लिए,\n"
+"            डेटा डिक्शनरी का उपयोग करके एक या अधिक केस प्रॉपर्टी का डेटा प्रकार \"GPS\" पर सेट करें।\n"
+"          "
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid ""
@@ -32242,6 +32146,111 @@ msgstr ""
 "दिए गए मेनू से सही क्लाउड स्थान चुना है। आपका खाता और प्रोजेक्ट किसी अन्य "
 "स्थान पर हो सकता है।"
 
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Open chat"
+msgstr "चैट खोलें"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start new chat"
+msgstr "नई चैट शुरू करें"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Enter fullscreen"
+msgstr "फुलस्क्रीन में जाएँ"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Exit fullscreen"
+msgstr "फुलस्क्रीन से बाहर निकलें"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Attach files"
+msgstr "फ़ाइलें संलग्न करें"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Remove file"
+msgstr "फ़ाइल हटाएँ"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File attached"
+msgstr "फ़ाइल संलग्न की गई"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting chat..."
+msgstr "चैट शुरू हो रही है..."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Finding the best answer"
+msgstr "सर्वश्रेष्ठ उत्तर खोजा जा रहा है"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
+msgid "Uploading"
+msgstr "अपलोड हो रहा है"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start New Chat"
+msgstr "नई चैट शुरू करें"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
+msgstr "नई चैट शुरू करने से आपकी वर्तमान बातचीत हट जाएगी। जारी रखें?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Type a message..."
+msgstr "संदेश लिखें..."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Send message"
+msgstr "संदेश भेजें"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File too large"
+msgstr "फ़ाइल बहुत बड़ी है"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Total file size too large"
+msgstr "कुल फ़ाइल आकार बहुत बड़ा है"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Unsupported file type"
+msgstr "असमर्थित फ़ाइल प्रकार"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Connection error. Please try again."
+msgstr "कनेक्शन त्रुटि। कृपया पुनः प्रयास करें।"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Session expired. Please start a new chat."
+msgstr "सत्र समाप्त हो गया है। कृपया नई चैट शुरू करें।"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Powered by"
+msgstr "द्वारा संचालित"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Need Help?"
+msgstr "मदद चाहिए?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+"नमस्ते! मैं CommCare साथी हूँ, CommCare के लिए आपका व्यक्तिगत मार्गदर्शक! आज"
+" मैं आपकी किस प्रकार सहायता कर सकता हूँ?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with building my CommCare application."
+msgstr "मुझे अपनी CommCare एप्लिकेशन बनाने में सहायता चाहिए।"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help troubleshooting my mobile application."
+msgstr "मुझे अपनी मोबाइल एप्लिकेशन की समस्या सुलझाने में सहायता चाहिए।"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with exporting or understanding my data."
+msgstr "मुझे अपने डेटा को निर्यात या समझने में सहायता चाहिए।"
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr "यूरोपीय संघ"
@@ -32552,8 +32561,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
+#: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr "डेमो शेड्यूल करें"
 
@@ -37178,28 +37186,39 @@ msgid "Organization or Company"
 msgstr "संगठन या कंपनी"
 
 #: corehq/apps/registration/forms.py
+#| msgid ""
+#| "I have read and agree to Dimagi's\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+#| "               target=\"_blank\">Privacy Policy</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+#| "               target=\"_blank\">Terms of Service</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+#| "               target=\"_blank\">Business Agreement</a>, and\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
+#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Privacy Policy</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Terms of Service</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Business Agreement</a>, and\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Acceptable Use Policy</a>.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Privacy Policy</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Terms of Service</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Business Agreement</a>, and\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Acceptable Use Policy</a>.\n"
+"                "
 msgstr ""
-"मैंने Dimagi की\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">गोपनीयता नीति</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">सेवा की शर्तें</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">व्यावसायिक समझौता</a>, और\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">स्वीकार्य उपयोग नीति</a> पढ़ ली है और सहमत हूँ।\n"
-"            "
+"मैंने डिमागी की\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">गोपनीयता नीति</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">सेवा की शर्तें</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">व्यावसायिक समझौता</a>, और\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">स्वीकार्य उपयोग नीति</a> पढ़ ली है और सहमत हूँ।\n"
+"                "
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -37601,40 +37620,6 @@ msgstr ""
 "\n"
 "                    कृपया ध्यान दें: प्रोजेक्ट्स को निर्माण के बाद <strong>स्थानांतरित नहीं</strong> किया जा सकता है।\n"
 "                  "
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Create an Account"
-msgstr "खाता बनाएँ"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-#: corehq/apps/users/views/web.py
-msgid "Create Account"
-msgstr "खाता बनाएँ"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Name Project"
-msgstr "प्रोजेक्ट का नाम"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Loading...just a second!"
-msgstr "लोड हो रहा है... बस एक सेकंड!"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid ""
-"\n"
-"                Want to learn more before signing up?\n"
-"              "
-msgstr ""
-"\n"
-"                साइन अप करने से पहले और जानना चाहते हैं?\n"
-"              "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
 msgid ""
@@ -38200,6 +38185,35 @@ msgstr ""
 "      अगला चरण पूरा होने के बाद आपका खाता बनाया जाएगा।\n"
 "    "
 
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "Create an Account"
+msgstr "खाता बनाएँ"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
+msgid "Create Account"
+msgstr "खाता बनाएँ"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Name Project"
+msgstr "प्रोजेक्ट का नाम"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Loading...just a second!"
+msgstr "लोड हो रहा है... बस एक सेकंड!"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid ""
+"\n"
+"                Want to learn more before signing up?\n"
+"              "
+msgstr ""
+"\n"
+"                साइन अप करने से पहले और जानना चाहते हैं?\n"
+"              "
+
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
 msgstr "अपने कंप्यूटर पर CommCareHQ देखें!"
@@ -38226,12 +38240,11 @@ msgstr "वर्तमान"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-msgid ""
-"This email is already registered in the {location} cloud location. Please <a"
-" href=\"{login_link}\">sign in here</a>."
-msgstr ""
-"यह ईमेल पहले से ही {location} क्लाउड लोकेशन में पंजीकृत है। कृपया <a "
-"href=\"{login_link}\">यहाँ साइन इन करें</a>।"
+#| msgid ""
+#| "This email is already registered in the {location} cloud location. Please <a"
+#| " href=\"{login_link}\">sign in here</a>."
+msgid "This email is already registered in the {location} cloud location. "
+msgstr "यह ईमेल पहले से ही {location} क्लाउड लोकेशन में पंजीकृत है। "
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -54707,10 +54720,6 @@ msgid "Insert Image"
 msgstr "छवि जोड़ें"
 
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
-msgid "Uploading"
-msgstr "अपलोड हो रहा है"
-
-#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert"
 msgstr "सम्मिलित करें"
 
@@ -57491,9 +57500,14 @@ msgid "Two-stage Mobile Worker Account Creation"
 msgstr "दो-चरणीय मोबाइल वर्कर खाता निर्माण"
 
 #: corehq/privileges.py
-#| msgid "Use the Data Dictionary to manage case types."
 msgid "Data Dictionary case properties have data types"
 msgstr "डेटा डिक्शनरी केस प्रॉपर्टीज के डेटा प्रकार हैं"
+
+#: corehq/privileges.py
+msgid "Case Export supports exporting geolocated data in GeoJSON format"
+msgstr ""
+"केस एक्सपोर्ट GeoJSON प्रारूप में जियोलोकेटेड डेटा का निर्यात करने का समर्थन"
+" करता है"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -57836,38 +57850,6 @@ msgstr "नमक"
 #: corehq/util/auth.py
 msgid "hash"
 msgstr "हैश"
-
-#: corehq/util/context_processors.py
-msgid "Need Help?"
-msgstr "मदद चाहिए?"
-
-#: corehq/util/context_processors.py
-msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
-msgstr ""
-"नमस्ते! मैं CommCare साथी हूँ, CommCare के लिए आपका व्यक्तिगत मार्गदर्शक! आज"
-" मैं आपकी किस प्रकार सहायता कर सकता हूँ?"
-
-#: corehq/util/context_processors.py
-msgid "I need help with building my CommCare application."
-msgstr "मुझे अपनी CommCare एप्लिकेशन बनाने में सहायता चाहिए।"
-
-#: corehq/util/context_processors.py
-msgid "I need help troubleshooting my mobile application."
-msgstr "मुझे अपनी मोबाइल एप्लिकेशन की समस्या सुलझाने में सहायता चाहिए।"
-
-#: corehq/util/context_processors.py
-msgid "I need help with exporting or understanding my data."
-msgstr "मुझे अपने डेटा को निर्यात या समझने में सहायता चाहिए।"
-
-#: corehq/util/context_processors.py
-msgid "Finding the best answer"
-msgstr "सर्वश्रेष्ठ उत्तर खोजा जा रहा है"
-
-#: corehq/util/context_processors.py
-msgid "Starting a new chat will clear your current conversation. Continue?"
-msgstr "नई चैट शुरू करने से आपकी वर्तमान बातचीत हट जाएगी। जारी रखें?"
 
 #: corehq/util/jsonattrs.py
 #, python-format
@@ -58541,6 +58523,22 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "This user cannot access this link."
+#~ msgstr "यह यूज़र इस लिंक तक पहुँच नहीं सकता।"
+
+#~ msgid "Please enter either text body or xpath for custom icon"
+#~ msgstr "कृपया कस्टम आइकन के लिए या तो टेक्स्ट बॉडी या xpath दर्ज करें"
+
+#~ msgid ""
+#~ "There are errors with your configuration. Please fix them before creating "
+#~ "the export."
+#~ msgstr ""
+#~ "आपकी कॉन्फ़िगरेशन में त्रुटियाँ हैं। कृपया निर्यात बनाने से पहले उन्हें ठीक "
+#~ "करें।"
+
+#~ msgid "Select geo property"
+#~ msgstr "भौगोलिक संपत्ति चुनें"
 
 #, python-format
 #~ msgid ""

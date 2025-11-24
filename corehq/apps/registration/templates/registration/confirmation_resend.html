@@ -1,0 +1,34 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Resend Confirmation Email" %}{% endblock title %}
+
+{% block registration-content %}
+  <form method="post" action="{% url "registration_resend_domain_confirmation" %}">
+    {% csrf_token %}
+    <h2 class="text-center mt-3">
+      {% trans "Resend Confirmation" %}
+    </h2>
+
+    <div class="mb-3">
+      <p class="form-label">{% trans "Email" %}</p>
+      <div>
+        <span class="form-control form-control-lg">{{ request.user.username }}</span>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <p class="form-label">{% trans "Pending Project Name" %}</p>
+      <div>
+        <span class="form-control form-control-lg">{{ requested_domain }}</span>
+      </div>
+    </div>
+
+    <div class="form-bubble-actions">
+      <button type="submit" class="btn btn-lg btn-outline-primary">
+        {% trans "Resend Confirmation" %}
+      </button>
+    </div>
+
+  </form>
+{% endblock %}

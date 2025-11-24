@@ -1,0 +1,288 @@
+// --------------------------------
+// Registration form styles
+// --------------------------------
+
+$reg-form-width: 480px;
+$reg-form-height: 375px;
+$reg-input-height: $input-height-lg;
+
+$reg-form-bubble-color: #f4f5fa;
+
+.reg-form-container {
+  width: 100%;
+  max-width: $reg-form-width;
+  margin: 0 auto;
+  margin-top: 10vh;
+  transition: margin-top 0.5s ease-in-out;
+
+  a.btn-primary {
+    color: white;
+  }
+
+  @media (max-height: 685px) {
+    margin-top: 5vh;
+  }
+
+  @media (max-height: 602px) {
+    margin-top: 0;
+  }
+}
+
+@include media-breakpoint-up(md) {
+  .reg-form-container {
+    width: $reg-form-width;
+  }
+}
+
+ul.form-step-progress li {
+  width: 50%;
+  &:before {
+    width: 80%;
+  }
+}
+
+.sign-in-container {
+  margin-top: 2vh;
+  margin-bottom: 2vh;
+
+  @media (max-height: 685px) {
+    margin-top: 5vh;
+  }
+
+  @media (max-height: 602px) {
+    margin-top: 0;
+  }
+}
+
+#div_id_eula_confirmed {
+  text-align: left;
+
+  .form-check .form-check-label {
+    margin-left: $spacer * 0.5;
+  }
+  > .form-check-label {
+    display: none;
+  }
+
+  input[type="checkbox"] {
+    /* Double-sized Checkboxes */
+    -ms-transform: scale(1.8); /* IE */
+    -moz-transform: scale(1.8); /* FF */
+    -webkit-transform: scale(1.8); /* Safari and Chrome */
+    -o-transform: scale(1.8); /* Opera */
+  }
+}
+
+.fake-autocomplete-fields {
+  display: none;
+}
+
+span.validationMessage {
+  text-align: left;
+  display: block;
+  margin: 0.5em;
+}
+
+p.validation-message-block {
+  margin: 0.5em;
+  text-align: left;
+  margin-top: -0.6em;
+  margin-bottom: 1.1em;
+}
+
+p.sso-message-block {
+  margin: 0.5em;
+  margin-bottom: 1.55em;
+  text-align: left;
+}
+
+.submit-errors {
+  p,
+  ul {
+    text-align: left;
+  }
+}
+
+.commcare-icon {
+  font-size: 3em;
+}
+
+.submit-info,
+.server-errors,
+.submit-success {
+  h2 {
+    margin: 0.5rem 0 1rem;
+  }
+}
+
+.server-errors,
+.submit-success {
+  text-align: left;
+}
+
+.initial-padding {
+  padding-top: 20px;
+}
+
+.intl-tel-input {
+  width: 100%;
+
+  .selected-flag {
+    color: $cc-text;
+    .selected-dial-code {
+      padding-left: 5px !important;
+    }
+  }
+}
+
+.intl-tel-input .country-list .country {
+  color: $cc-text;
+}
+
+.radio-select {
+  box-sizing: border-box;
+  border-radius: $input-border-radius-lg;
+  font-size: $font-size-lg;
+
+  &_options {
+    border-radius: $input-border-radius-lg;
+  }
+  &_expand {
+    &::after {
+      margin-top: 4px;
+      line-height: $input-height-lg;
+    }
+  }
+  &_items {
+    padding-top: $input-height-lg;
+  }
+  &_label {
+    line-height: $reg-input-height;
+    padding-left: $input-padding-y-lg;
+  }
+  &_expand:checked {
+    + .radio-select_closeLabel {
+      + .radio-select_options {
+        margin-top: $reg-input-height;
+        border: 1px solid $gray-300;
+        @include box-shadow($box-shadow-sm);
+
+        .radio-select_label {
+          height: $input-height;
+          line-height: $input-height;
+        }
+        .radio-select_label:last-child {
+          &:hover {
+            border-bottom-left-radius: $input-border-radius-lg;
+            border-bottom-right-radius: $input-border-radius-lg;
+          }
+        }
+      }
+    }
+  }
+  &_input:checked + .radio-select_label {
+    height: $input-height;
+  }
+}
+
+.radio-select,
+.radio-select_expand,
+.radio-select_expandLabel,
+.radio-select_label-placeholder {
+  height: $reg-input-height;
+  line-height: $reg-input-height;
+}
+
+.reg-form-container .other-options {
+  h4 {
+    text-align: center;
+  }
+}
+
+.server-location-buttons {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.form-bubble {
+  padding: 20px;
+  margin: 10px 0;
+
+  @include border-top-radius(5px);
+  @include border-bottom-radius(5px);
+
+  box-sizing: content-box;
+  background-color: $reg-form-bubble-color;
+
+  fieldset {
+    padding: 0.01em 0 0 0;
+  }
+
+  legend {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding: 0;
+    display: table;
+    text-align: center;
+    @include font-size($font-size-lg * 1.2);
+  }
+
+  .form-step-number {
+    @include font-size($font-size-lg * 0.9);
+  }
+
+  .help-block {
+    text-align: left;
+  }
+
+  .form-text {
+    text-align: left;
+    margin-bottom: 1em;
+  }
+}
+
+.form-bubble-actions {
+  text-align: center;
+  padding-bottom: 10px;
+}
+
+.form-bubble-lg {
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  span.form-control {
+    width: 100%;
+  }
+}
+
+.form-bubble-purple {
+  background-color: $color-purple-dark;
+  color: $color-purple-dark-inverse;
+  border: none;
+
+  a, a:active, a:hover, a:link {
+    color: $purple-100;
+  }
+
+  .btn-purple {
+    background-color: $color-purple-dark;
+    color: $color-purple-dark-inverse;;
+    border: 1px solid $color-purple-dark-inverse;;
+
+    &:hover {
+      background-color: lighten($color-purple-dark, 5);
+    }
+  }
+}
+
+.form-bubble {
+  position: relative;
+  margin-bottom: $spacer * 1.2;
+
+  .valid-feedback,
+  .invalid-feedback,
+  .ko-delayed-feedback,
+  .validating-feedback {
+    text-align: left;
+  }
+}

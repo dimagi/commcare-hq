@@ -828,7 +828,7 @@ const CaseListView = Marionette.CollectionView.extend({
     getConfigStorageId: function (user) {
         const urlObject = formplayerUtils.currentUrlToObject();
         const selectionsWithoutUuid = urlObject.selections.map(function (s) {
-            if (s.match('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$')) {
+            if (s.match('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')) {
                 return 'uuid';
             } else {
                 return s;

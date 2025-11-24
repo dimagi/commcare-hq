@@ -1166,6 +1166,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -4215,10 +4216,20 @@ msgid "We'd love to hear more! Please specify -"
 msgstr ""
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\">Terms of Service</a> and\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Privacy Policy</a>.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+msgid ""
+"\n"
+"      By clicking Submit Request, you agree to Dimagi's\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
 "target=\"_blank\">Terms of Service</a> and\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
@@ -4963,7 +4974,6 @@ msgstr ""
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -7326,6 +7336,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
@@ -8250,6 +8261,21 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Custom Icon"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
+msgid ""
+"\n"
+"          Please add display Text or an XPath function. This will appear as "
+"a badge next to the corresponding icon.\n"
+"          Learn more\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/"
+"pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >here</a\n"
+"          >.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
@@ -12185,10 +12211,6 @@ msgid "Reverted to version {log.info['version']}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
-msgid "Please enter either text body or xpath for custom icon"
-msgstr ""
-
-#: corehq/apps/app_manager/views/utils.py
 #, python-format
 msgid "Update Status for linked app %s"
 msgstr ""
@@ -12530,6 +12552,7 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
@@ -14073,10 +14096,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/views.py
 msgid "No corresponding application found in this project."
-msgstr ""
-
-#: corehq/apps/cloudcare/views.py
-msgid "This user cannot access this link."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
@@ -23894,8 +23913,7 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
 msgid ""
-"There are errors with your configuration. Please fix them before creating "
-"the export."
+"A required field is incomplete or incorrect. Please check above for details."
 msgstr ""
 
 #: corehq/apps/export/templates/export/datasource_export_view.html
@@ -24424,7 +24442,18 @@ msgid "Custom Path"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select geo property"
+msgid "GPS case property"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"            No case properties have the data type \"GPS\". To select a GPS "
+"case\n"
+"            property here, use the Data Dictionary to set the data type of "
+"one\n"
+"            or more case properties to \"GPS\".\n"
+"          "
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -28226,6 +28255,109 @@ msgid ""
 "be in a different location."
 msgstr ""
 
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Open chat"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start new chat"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Enter fullscreen"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Exit fullscreen"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Attach files"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Remove file"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File attached"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting chat..."
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Finding the best answer"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
+msgid "Uploading"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start New Chat"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Type a message..."
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Send message"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File too large"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Total file size too large"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Unsupported file type"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Connection error. Please try again."
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Session expired. Please start a new chat."
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Powered by"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Need Help?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with building my CommCare application."
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help troubleshooting my mobile application."
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with exporting or understanding my data."
+msgstr ""
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr ""
@@ -28486,8 +28618,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
+#: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr ""
 
@@ -32641,15 +32772,15 @@ msgstr ""
 #: corehq/apps/registration/forms.py
 msgid ""
 "I have read and agree to Dimagi's\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Privacy Policy</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Terms of Service</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Business Agreement</a>, and\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Acceptable Use Policy</a>.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Privacy Policy</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Terms of Service</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Business Agreement</a>, and\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Acceptable Use Policy</a>.\n"
+"                "
 msgstr ""
 
 #: corehq/apps/registration/forms.py
@@ -32971,37 +33102,6 @@ msgid ""
 "transferred\n"
 "                    between cloud locations after creation.\n"
 "                  "
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Create an Account"
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-#: corehq/apps/users/views/web.py
-msgid "Create Account"
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Name Project"
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Loading...just a second!"
-msgstr ""
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid ""
-"\n"
-"                Want to learn more before signing up?\n"
-"              "
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
@@ -33433,6 +33533,32 @@ msgid ""
 "    "
 msgstr ""
 
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "Create an Account"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
+msgid "Create Account"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Name Project"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Loading...just a second!"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid ""
+"\n"
+"                Want to learn more before signing up?\n"
+"              "
+msgstr ""
+
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
 msgstr ""
@@ -33457,9 +33583,7 @@ msgstr ""
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-msgid ""
-"This email is already registered in the {location} cloud location. Please <a "
-"href=\"{login_link}\">sign in here</a>."
+msgid "This email is already registered in the {location} cloud location. "
 msgstr ""
 
 #: corehq/apps/registration/views.py
@@ -48155,10 +48279,6 @@ msgid "Insert Image"
 msgstr ""
 
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
-msgid "Uploading"
-msgstr ""
-
-#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert"
 msgstr ""
 
@@ -50691,6 +50811,10 @@ msgstr ""
 msgid "Data Dictionary case properties have data types"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Case Export supports exporting geolocated data in GeoJSON format"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr ""
@@ -51028,36 +51152,6 @@ msgstr ""
 
 #: corehq/util/auth.py
 msgid "hash"
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "Need Help?"
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "I need help with building my CommCare application."
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "I need help troubleshooting my mobile application."
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "I need help with exporting or understanding my data."
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "Finding the best answer"
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "Starting a new chat will clear your current conversation. Continue?"
 msgstr ""
 
 #: corehq/util/jsonattrs.py

@@ -736,7 +736,7 @@ V1_SHADOW_MODULES = StaticToggle(
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Allow custom XML to define case lists (ex. for case tiles)',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
@@ -838,7 +838,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -936,7 +936,7 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
     'Display Settings To Get Hierarchical Location Fixture',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
         "Do not turn this feature flag.  It is only used for providing "
@@ -1102,7 +1102,7 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     'split_screen_case_search',
     "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
     " on the right.",
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
@@ -1112,7 +1112,7 @@ DYNAMICALLY_UPDATE_SEARCH_RESULTS = StaticToggle(
     'dynamically_update_search_results',
     "In case search with split screen case search enabled, search results update when a search field is updated"
     " without requiring the user to manually press a button to search.",
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SPLIT_SCREEN_CASE_SEARCH]
@@ -1484,7 +1484,7 @@ RICH_TEXT_EMAILS = StaticToggle(
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1543,7 +1543,7 @@ WHATSAPP_MESSAGING = StaticToggle(
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
-    TAG_INTERNAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1702,10 +1702,11 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     [NAMESPACE_USER]
 )
 
-CUSTOM_ICON_BADGES = StaticToggle(
-    'custom_icon_badges',
-    'Custom Icon Badges for modules and forms',
-    TAG_SOLUTIONS_LIMITED,
+CUSTOM_ICON_BADGES = FrozenPrivilegeToggle(
+    privilege_slug=privileges.CUSTOM_ICON_BADGES,
+    slug='custom_icon_badges',
+    label='Custom Icon Badges for modules and forms',
+    tag=TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1793,7 +1794,7 @@ SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
-    TAG_CUSTOM,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1825,7 +1826,7 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
     'Manage releases per location',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
@@ -2252,7 +2253,7 @@ COWIN_INTEGRATION = StaticToggle(
 EXPRESSION_REPEATER = StaticToggle(
     'expression_repeater',
     'Integrate with generic APIs using UCR expressions',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Configurable+Repeaters",
 )
@@ -2268,7 +2269,7 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
 ARCGIS_INTEGRATION = StaticToggle(
     'arcgis_integration',
     'Enable the ArcGIS Form Repeater integration. Used for forwarding form data to an ArcGIS account.',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2460,13 +2461,6 @@ RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
     'Limit which user profiles a web user can assign to other web users and mobile workers.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-WEB_USER_INVITE_ADDITIONAL_FIELDS = StaticToggle(
-    'web_user_invite_additional_fields',
-    'USH: Enable additional fields in web user invite form for enhanced user details',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 
@@ -2857,13 +2851,6 @@ APP_TESTING = StaticToggle(
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     description=''
-)
-
-SMART_LINKS_FOR_WEB_USERS = StaticToggle(
-    slug='smart_links_for_web_users',
-    label='USH: Allow web users to use smart links without logging in as before',
-    tag=TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 CSQL_FIXTURE = StaticToggle(
