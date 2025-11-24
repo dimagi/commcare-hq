@@ -12,7 +12,7 @@ $reg-form-bubble-color: #f4f5fa;
   width: 100%;
   max-width: $reg-form-width;
   margin: 0 auto;
-  margin-top: 10vh;
+  margin-top: 8vh;
   transition: margin-top 0.5s ease-in-out;
 
   a.btn-primary {
@@ -35,7 +35,7 @@ $reg-form-bubble-color: #f4f5fa;
 }
 
 ul.form-step-progress li {
-  width: 50%;
+  width: 33%;
   &:before {
     width: 80%;
   }
@@ -202,6 +202,18 @@ p.sso-message-block {
 .server-location-buttons {
   display: flex;
   justify-content: space-evenly;
+}
+
+.cloud-choice {
+  color: $text-muted;
+  font-weight: $font-weight-normal !important;
+
+  &.selected {
+    color: $blue-800;
+    font-weight: $font-weight-semibold !important;
+    border-color: $blue-200;
+    background-color: $blue-100;
+  }
 }
 
 .form-bubble {
