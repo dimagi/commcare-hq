@@ -1697,7 +1697,7 @@ def link_connectid_user(request, domain):
         if link.connectid_username != request.user.username and settings.CONNECTID_ADD_USER_ANALYTICS_URL:
             requests.post(
                 settings.CONNECTID_ADD_USER_ANALYTICS_URL,
-                json={"hq_sso_date": now()},
+                json={"username": connectid_username, "hq_sso_date": now().isoformat() + "Z"},
                 auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
             )
         return HttpResponse(status=201)
