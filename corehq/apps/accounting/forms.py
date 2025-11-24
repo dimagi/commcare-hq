@@ -67,6 +67,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
     SoftwareProductRate,
+    StripePaymentMethod,
     Subscription,
     SubscriptionType,
     WireBillingRecord,
@@ -1153,8 +1154,9 @@ class RemoveAutopayForm(forms.Form):
         )
 
     def remove_autopay_user_from_account(self):
-        self.account.auto_pay_user = None
-        self.account.save()
+        payment_method = StripePaymentMethod.objects.get(web_user=self.account.auto_pay_user)
+        autopay_card = payment_method.get_autopay_card()
+        payment_method.unset_autopay(autopay_card, self.account)
 
 
 class CancelForm(forms.Form):
