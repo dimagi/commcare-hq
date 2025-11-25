@@ -694,7 +694,7 @@ class ListRolesView(BaseRoleAccessView):
             role_view_data.append(role_data)
 
             if self.can_edit_roles:
-                role_data["editUrl"] = reverse(EditRoleView.urlname, kwargs={'domain': self.domain, 'uuid': role_data.get('_id')})
+                role_data["editUrl"] = reverse(EditRoleView.urlname, kwargs={'domain': self.domain, 'role_id': role_data.get('_id')})
             if role.is_commcare_user_default:
                 role_data["preventRoleDelete"] = True
             else:
@@ -804,12 +804,73 @@ class EditRoleView(BaseRoleAccessView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, kwargs={'domain': self.domain, 'uuid': self.kwargs.get('uuid')})
+        return reverse(self.urlname, kwargs={'domain': self.domain, 'role_id': self.kwargs.get('role_id')})
 
     @property
     def page_context(self):
+        role_data = self.role.to_json()
+        role_data["accessAreas"] = [
+            {
+                "showOption": True,
+                "editPermission": self.role.permissions.edit_web_users,
+                "viewPermission": self.role.permissions.view_web_users,
+                "text": _("<strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership"),
+                "showEditCheckbox": True,
+                "editCheckboxLabel": "edit-web-users-checkbox",
+                "showViewCheckbox": True,
+                "viewCheckboxLabel": "view-web-users-checkbox",
+                "screenReaderEditAndViewText": _("Edit & View Mobile Workers"),
+                "screenReaderViewOnlyText": _("View-Only Mobile Workers"),
+                "showAllowCheckbox": False,
+                "allowCheckboxText": None,
+                "allowCheckboxId": None,
+                "allowCheckboxPermission": None,
+            },
+            # tableau user
+            {
+                "showOption": True,
+                "editPermission": self.role.permissions.edit_commcare_users,
+                "viewPermission": self.role.permissions.view_commcare_users,
+                "text": _("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings, deactivate or delete mobile workers."),
+                "showEditCheckbox": True,
+                "editCheckboxLabel": "edit-commcare-users-checkbox",
+                "showViewCheckbox": True,
+                "viewCheckboxLabel": "view-commcare-users-checkbox",
+                "screenReaderEditAndViewText": _("Edit & View Web Users"),
+                "screenReaderViewOnlyText": _("View-Only Web Users"),
+                "showAllowCheckbox": False,
+                "allowCheckboxText": None,
+                "allowCheckboxId": None,
+                "allowCheckboxPermission": None,
+            },
+            {
+                "showOption": self.role.permissions.access_all_locations,
+                "editPermission": self.role.permissions.edit_groups,
+                "viewPermission": self.role.permissions.view_groups,
+                "text": _("<strong>Groups</strong> &mdash; manage groups of mobile workers"),
+                "showEditCheckbox": True,
+                "editCheckboxLabel": "edit-groups-checkbox",
+                "showViewCheckbox": True,
+                "viewCheckboxLabel": "view-groups-checkbox",
+                "screenReaderEditAndViewText": _("Edit & View Groups"),
+                "screenReaderViewOnlyText": _("View-Only Web Groups"),
+                "showAllowCheckbox": True,
+                "allowCheckboxText": _("Allow changing group membership (requires edit groups)."),
+                "allowCheckboxId": "edit-users-groups-checkbox",
+                "allowCheckboxPermission": self.role.permissions.edit_users_in_groups,
+            }
+        ]
         return {
+            "data": json.dumps(role_data)
         }
+
+    @property
+    def role(self):
+        role_id = self.kwargs.get("role_id")
+        try:
+            return UserRole.objects.by_couch_id(role_id, self.domain)
+        except UserRole.DoesNotExist:
+            return None
 
 
 def _commcare_analytics_roles_options():

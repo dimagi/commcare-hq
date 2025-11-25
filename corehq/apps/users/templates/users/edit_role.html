@@ -1,21 +1,24 @@
-{% extends "hqwebapp/bootstrap5/base_section.html" %} {% load hq_shared_tags %}
-{% load i18n %} {# use the `hqwebapp/js/htmx_and_alpine` entry point to get
-started with HTMX and Alpine without any extra javascript #} {% js_entry
-"hqwebapp/js/htmx_and_alpine" %} {% block page_content %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+{% block page_content %}
 <div class="container p-5">
-  <form>
+  <div>{{data}}</div>L
+  <form x-data="{{ data }}">
     <div class="row mb-4">
       <label class="col-sm-2 control-label" for="role-name">
         Role Name<span class="asteriskField">*</span>
       </label>
       <div class="col-sm-4 controls">
         <input
+          x-model="name"
           type="text"
           id="role-name"
           class="form-control"
-          placeholder="Enter role name"
-          required=""
-        />
+          pattern="\S.*"
+          title='{% trans_html_attr "The name must start with a valid character." %}'
+          required />
       </div>
     </div>
 
@@ -33,221 +36,91 @@ started with HTMX and Alpine without any extra javascript #} {% js_entry
       </legend>
       <div id="basic-permissions" class="card-body collapse show">
         <div class="row mb-2">
-          <div style="width: 80px"><strong>Can Edit</strong></div>
-          <div style="width: 80px"><strong>Can View</strong></div>
-          <div class="col"></div>
+          <div class="col-sm-1"><strong>Can Edit</strong></div>
+          <div class="col-sm-1"><strong>Can View</strong></div>
+          <div class="col-sm-10"></div>
         </div>
-
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-web-users-checkbox" />
-                  <label for="edit-web-users-checkbox">
-                    <span class="sr-only">Edit Web Users</span>
-                  </label>
-                </div>
+        <template x-for="area in accessAreas">
+          <div
+            class="row mb-2"
+            x-show="area.showOption"
+          >
+            <!-- edit checkbox or emdash -->
+            <div class="col-sm-1 controls" x-show="area.showEditCheckbox">
+              <div class="form-check">
+                <input
+                  type="checkbox"
+                  :id="area.editCheckboxLabel"
+                  x-model="area.editPermission"/>
+                <label :for="area.editCheckboxLabel">
+                  <span class="sr-only" x-text="area.screenReaderEditAndViewText">
+                  </span>
+                </label>
               </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-web-users-checkbox" />
-                  <label for="view-web-users-checkbox">
-                    <span class="sr-only">View Web Users</span>
-                  </label>
-                </div>
-              </div>
-              <div class="col">
-                <div>
-                  <strong>Web Users</strong> — invite new web users, manage
-                  account settings, remove membership
-                </div>
+            </div>
+            <div class="col-sm-1 controls" x-show="!area.showEditCheckbox">
+              <div class="form-check-placeholder">
+                <label></label>
               </div>
             </div>
 
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-mobile-workers-checkbox" />
-                  <label for="edit-mobile-workers-checkbox">
-                    <span class="sr-only">Edit Mobile Workers</span>
-                  </label>
-                </div>
+            <!-- view checkbox or emdash-->
+            <div class="col-sm-1 controls" x-show="area.showViewCheckbox">
+              {# PLACEHOLDER checkbox when editPermission() is true #}
+              <div class="form-check" x-show="area.editPermission">
+                <input type="checkbox" checked="checked" disabled="disabled" />
+                <label>
+                  <span class="sr-only" x-text="area.screenReaderViewOnlyText">
+                  </span>
+                </label>
               </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-mobile-workers-checkbox" />
-                  <label for="view-mobile-workers-checkbox">
-                    <span class="sr-only">View Mobile Workers</span>
-                  </label>
-                </div>
+              {# end PLACEHOLDER #}
+              {# REAL checkbox that controls viewPermission when editPermission() is false #}
+              <div class="form-check" x-show="!area.editPermission">
+                <input
+                  type="checkbox"
+                  :id="area.viewCheckboxLabel"
+                  x-model="area.viewPermission"/>
+                <label :for="area.viewCheckboxLabel">
+                  <span class="sr-only" x-text="area.screenReaderViewOnlyText">
+                  </span>
+                </label>
               </div>
-              <div class="col">
-                <div>
-                  <strong>Mobile Workers</strong> — create new accounts, manage
-                  account settings, deactivate or delete mobile workers
-                </div>
+              {# END REAL checkbox #}
+            </div>
+            <div class="col-sm-1 controls " x-show="!area.showViewCheckbox">
+              <div class="form-check-placeholder">
+                <label></label>
               </div>
             </div>
-
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-groups-checkbox" />
-                  <label for="edit-groups-checkbox">
-                    <span class="sr-only">Edit Groups</span>
-                  </label>
-                </div>
+            <div class="col-sm-10" >
+              <div x-html="area.text"></div>
+              {# PLACEHOLDER checkbox when edit_commcare_users and editPermission is true #}
+              <div class="form-check" x-show="permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox">
+                <input type="checkbox" checked="checked" disabled="disabled"/>
+                <label x-text="area.allowCheckboxText"></label>
               </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-groups-checkbox" />
-                  <label for="view-groups-checkbox">
-                    <span class="sr-only">View Groups</span>
-                  </label>
-                </div>
+              {# end PLACEHOLDER #}
+              {# REAL checkbox for allowCheckboxPermission #}
+              <div class="form-check" x-show="!permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox">
+                <input type="checkbox"
+                  :id="area.allowCheckboxId"
+                  x-model="area.allowCheckboxPermission" />
+                <label
+                  :for="area.allowCheckboxId"
+                  x-text="area.allowCheckboxText"></label>
               </div>
-              <div class="col">
-                <div>
-                  <strong>Groups</strong> — manage groups of mobile workers
-                </div>
-                <div class="form-check" style="padding-left: 0">
-                  <input type="checkbox" id="edit-users-groups-checkbox" />
-                  <label for="edit-users-groups-checkbox">
-                    Allow changing group membership (requires edit groups).
-                  </label>
-                </div>
+              {# end REAL #}
+              {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
+              <div class="form-check"
+                x-show="!area.editPermission && area.showAllowCheckbox">
+                <input type="checkbox" disabled="disabled"/>
+                <label x-text="area.allowCheckboxText"></label>
               </div>
+              {# end PLACEHOLDER #}
             </div>
-
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-locations-checkbox" />
-                  <label for="edit-locations-checkbox">
-                    <span class="sr-only">Edit Locations</span>
-                  </label>
-                </div>
-              </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-locations-checkbox" />
-                  <label for="view-locations-checkbox">
-                    <span class="sr-only">View Locations</span>
-                  </label>
-                </div>
-              </div>
-              <div class="col">
-                <div>
-                  <strong>Locations</strong> — manage locations in the
-                  Organization's Hierarchy
-                </div>
-                <div class="form-check" style="padding-left: 0">
-                  <input type="checkbox" id="edit-users-locations-checkbox" />
-                  <label for="edit-users-locations-checkbox">
-                    Allow changing workers at a location.
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-data-checkbox" />
-                  <label for="edit-data-checkbox">
-                    <span class="sr-only">Edit Data</span>
-                  </label>
-                </div>
-              </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-data-checkbox" />
-                  <label for="view-data-checkbox">
-                    <span class="sr-only">View Data</span>
-                  </label>
-                </div>
-              </div>
-              <div class="col">
-                <div>
-                  <strong>Data</strong> — view, export, and edit form and case
-                  data, reassign cases
-                </div>
-              </div>
-            </div>
-
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-apps-checkbox" />
-                  <label for="edit-apps-checkbox">
-                    <span class="sr-only">Edit Applications</span>
-                  </label>
-                </div>
-              </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-apps-checkbox" />
-                  <label for="view-apps-checkbox">
-                    <span class="sr-only">View Applications</span>
-                  </label>
-                </div>
-              </div>
-              <div class="col">
-                <div>
-                  <strong>Applications</strong> — modify or view the structure
-                  and configuration of all applications
-                </div>
-              </div>
-            </div>
-
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-messaging-checkbox" />
-                  <label for="edit-messaging-checkbox">
-                    <span class="sr-only">Access Messaging</span>
-                  </label>
-                </div>
-              </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-messaging-checkbox" />
-                  <label for="view-messaging-checkbox">
-                    <span class="sr-only">View Messaging</span>
-                  </label>
-                </div>
-              </div>
-              <div class="col">
-                <div>
-                  <strong>Messaging</strong> — configure and send conditional
-                  alerts
-                </div>
-              </div>
-            </div>
-
-            <div class="row mb-2">
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="edit-apis-checkbox" />
-                  <label for="edit-apis-checkbox">
-                    <span class="sr-only">Access APIs</span>
-                  </label>
-                </div>
-              </div>
-              <div style="width: 80px" class="controls">
-                <div class="form-check">
-                  <input type="checkbox" id="view-apis-checkbox" />
-                  <label for="view-apis-checkbox">
-                    <span class="sr-only">View APIs</span>
-                  </label>
-                </div>
-              </div>
-              <div class="col">
-                <div>
-                  <strong>Access APIs</strong> — use CommCare HQ APIs to read
-                  and update data
-                </div>
-              </div>
-            </div>
+          </div>
+        </template>
       </div>
     </fieldset>
 
