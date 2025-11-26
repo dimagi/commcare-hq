@@ -1,0 +1,100 @@
+{% load i18n %}
+
+<div class="accordion" id="autopay-tos">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="autopay-tos-header">
+      <button
+        class="accordion-button collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#autopay-tos-content"
+        aria-expanded="false"
+        aria-controls="autopay-tos-content"
+      >
+        {% trans "Autopay Terms and Conditions" %}
+      </button>
+    </h2>
+    <div
+      id="autopay-tos-content"
+      class="accordion-collapse collapse"
+      aria-labelledby="autopay-tos-header"
+      data-bs-parent="#autopay-tos"
+    >
+      <div class="accordion-body">
+        <h3>{% trans "1. Affirmative Consent and Authorization" %}</h3>
+        <p>
+          {% blocktrans %}
+            <strong>1.1. Enrollment:</strong> By enrolling in Autopay (AP), you
+            authorize Dimagi (referred to as "We," "Us," or "Our") to treat your
+            electronic agreement as evidence of your voluntary and knowing
+            consent to:
+          {% endblocktrans %}
+        </p>
+        <ul>
+          <li>
+            {% blocktrans %}
+              Save your designated debit card or credit card information.
+            {% endblocktrans %}
+          </li>
+          <li>
+            {% blocktrans %}
+              Initiate automatic electronic payment transactions from this
+              designated account.
+            {% endblocktrans %}
+          </li>
+        </ul>
+        <p>
+          {% blocktrans %}
+            This electronic authorization has the same legal effect as a
+            handwritten signature on a paper-formatted contract.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            <strong>1.2. Recurring Payment Authorization:</strong> You authorize
+            Us to automatically charge your designated credit card or debit card
+            each billing cycle for the Amount Due on your account statement.
+          {% endblocktrans %}
+        </p>
+
+        <h3>{% trans "2. Another Section" %}</h3>
+        <p>
+          {% blocktrans %}
+            <strong>2.1. Enrollment:</strong>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit.
+          {% endblocktrans %}
+        </p>
+        <ul>
+          <li>
+            {% blocktrans %}
+              Eos beatae et quam ea sunt odit numquam suscipit commodi veniam
+              tempore, optio porro sit!
+            {% endblocktrans %}
+          </li>
+          <li>
+            {% blocktrans %}
+              Quasi eum molestiae, alias commodi inventore ullam!
+            {% endblocktrans %}
+          </li>
+        </ul>
+        <p>
+          {% comment %} {% blocktrans %} {% endcomment %}
+            <strong>2.2. Another topic:</strong> {% lorem 1 b random %}
+          {% comment %} {% endblocktrans %} {% endcomment %}
+        </p>
+
+        <h3>{% trans "3. Section the third" %}</h3>
+        <p>
+          {% comment %} {% blocktrans %} {% endcomment %}
+            <strong>3.1. Subsection:</strong> {% lorem 1 b random %}
+          {% comment %} {% endblocktrans %} {% endcomment %}
+        </p>
+        <p>
+          {% comment %} {% blocktrans %} {% endcomment %}
+            <strong>3.2. Another subsection:</strong> {% lorem 1 b random %}
+          {% comment %} {% endblocktrans %} {% endcomment %}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
