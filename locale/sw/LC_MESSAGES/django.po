@@ -2846,6 +2846,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -4492,8 +4493,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/tabs/tabclasses.py
 msgid "Subscription"
 msgstr "Usajili"
@@ -5084,12 +5084,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
-#| msgid ""
-#| "\n"
-#| "      By clicking this button, you agree to Dimagi's\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-#| "    "
 msgid ""
 "\n"
 "      By clicking Submit Request, you agree to Dimagi's\n"
@@ -9719,23 +9713,33 @@ msgid "Custom Icon"
 msgstr "Ikoni Maalum"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
+#| msgid ""
+#| "\n"
+#| "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
+#| "          Learn more\n"
+#| "          <a\n"
+#| "            target='_blank'\n"
+#| "            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+#| "            >here</a\n"
+#| "          >.\n"
+#| "        "
 msgid ""
 "\n"
 "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
 "          Learn more\n"
 "          <a\n"
 "            target='_blank'\n"
-"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
 "            >here</a\n"
 "          >.\n"
 "        "
 msgstr ""
 "\n"
-"          Tafadhali ongeza Maandishi ya Kuonyesha au kazi ya XPath. Hii itaonekana kama beji karibu na ikoni husika.\n"
+"          Tafadhali ongeza Maandishi ya kuonyesha au kazi ya XPath. Hii itaonekana kama beji karibu na ikoni husika.\n"
 "          Jifunze zaidi\n"
 "          <a\n"
 "            target='_blank'\n"
-"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
 "            >hapa</a\n"
 "          >.\n"
 "        "
@@ -15027,8 +15031,7 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
 #: corehq/apps/domain/templates/error.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -20958,8 +20961,7 @@ msgstr "Tafadhali taja kikomo cha OData feeds."
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
@@ -21312,8 +21314,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/activate_transfer_domain.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 msgid "Accept"
 msgstr "Kubali"
@@ -22823,15 +22824,12 @@ msgstr "Miradi Yangu"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Accept All Invitations"
 msgstr "Kubali Mialiko Yote"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
 msgid "My Invitations"
 msgstr "Mialiko Yangu"
 
@@ -24273,71 +24271,7 @@ msgstr "Ingia"
 msgid "Log In :: CommCare HQ"
 msgstr "Ingia :: CommCare HQ"
 
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/urls.py
-msgid "Password Reset Confirmation"
-msgstr "Uthibitisho wa Kubadilisha Nenosiri"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
-#: corehq/apps/users/forms.py
-msgid "Reset Password"
-msgstr "Badilisha Nenosiri"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid "Reset Password Unsuccessful"
-msgstr "Kubadilisha Nenosiri Hakukufanikiwa"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"        The password reset link was invalid, possibly because it has already\n"
-"        been used.\n"
-"      "
-msgstr ""
-"\n"
-"        Kiungo cha kuweka upya nenosiri kilikuwa batili, huenda tayari kimetumika.\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"        Please request a new password reset.\n"
-"      "
-msgstr ""
-"\n"
-"        Tafadhali omba kubadilisha nenosiri upya.\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"          Request Password Reset\n"
-"        "
-msgstr ""
-"\n"
-"          Omba Kubadilisha Nenosiri\n"
-"        "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
-msgid "Password Reset"
-msgstr "Kubadilisha Nenosiri"
-
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
 msgid ""
 "\n"
 "                No account? Sign up today, it's free!\n"
@@ -24370,17 +24304,6 @@ msgstr "Omba Ufikiaji kwa %(hr_name)s"
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
 msgid "Sign Up"
 msgstr "Jisajili"
-
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-msgid ""
-"\n"
-"                We will email instructions to you for resetting your password.\n"
-"              "
-msgstr ""
-"\n"
-"                Tutakutumia maelekezo kupitia barua pepe kuhusu jinsi ya kuweka upya nenosiri lako.\n"
-"              "
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
@@ -24428,6 +24351,39 @@ msgstr ""
 "      > yetu.\n"
 "    "
 
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
+#| msgid ""
+#| "\n"
+#| "                No account? Sign up today, it's free!\n"
+#| "              "
+msgid ""
+"\n"
+"                  No account? Sign up today, it's free!\n"
+"                "
+msgstr ""
+"\n"
+"                  Huna akaunti? Jisajili leo, ni bure!\n"
+"                "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+msgid ""
+"\n"
+"                We will email instructions to you for resetting your password.\n"
+"              "
+msgstr ""
+"\n"
+"                Tutakutumia maelekezo kupitia barua pepe kuhusu jinsi ya kuweka upya nenosiri lako.\n"
+"              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/users/forms.py
+msgid "Reset Password"
+msgstr "Badilisha Nenosiri"
+
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
 #: corehq/apps/domain/urls.py
 msgid "Password Change Complete"
@@ -24451,6 +24407,46 @@ msgstr "Ingia"
 #: corehq/apps/domain/urls.py
 msgid "Password Reset Complete"
 msgstr "Uwekaji Upya wa Nenosiri Umekamilika"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/urls.py
+msgid "Password Reset Confirmation"
+msgstr "Uthibitisho wa Kubadilisha Nenosiri"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid "Reset Password Unsuccessful"
+msgstr "Kubadilisha Nenosiri Hakukufanikiwa"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"        The password reset link was invalid, possibly because it has already\n"
+"        been used.\n"
+"      "
+msgstr ""
+"\n"
+"        Kiungo cha kuweka upya nenosiri kilikuwa batili, huenda tayari kimetumika.\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"        Please request a new password reset.\n"
+"      "
+msgstr ""
+"\n"
+"        Tafadhali omba kubadilisha nenosiri upya.\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"          Request Password Reset\n"
+"        "
+msgstr ""
+"\n"
+"          Omba Kubadilisha Nenosiri\n"
+"        "
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_done.html
 msgid "Password Reset Requested"
@@ -24499,6 +24495,11 @@ msgstr "Asante kwa kutumia CommCare."
 #: corehq/apps/domain/templates/login_and_password/password_reset_email.html
 msgid "--The CommCare Team"
 msgstr "--Timu ya CommCare"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
+msgid "Password Reset"
+msgstr "Kubadilisha Nenosiri"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_forms.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_forms.html
@@ -33216,8 +33217,7 @@ msgstr "Toka"
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
 #: corehq/apps/registration/forms.py
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Cloud Location"
 msgstr "Eneo la Wingu"
 
@@ -37552,17 +37552,6 @@ msgid "Organization or Company"
 msgstr "Shirika au Kampuni"
 
 #: corehq/apps/registration/forms.py
-#| msgid ""
-#| "I have read and agree to Dimagi's\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-#| "               target=\"_blank\">Privacy Policy</a>,\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-#| "               target=\"_blank\">Terms of Service</a>,\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-#| "               target=\"_blank\">Business Agreement</a>, and\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
-#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
 "                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
@@ -37729,30 +37718,25 @@ msgstr "Kumbusho la Kuwasha mradi wako wa CommCare"
 msgid "Activate your CommCare project"
 msgstr "Washa mradi wako wa CommCare"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/registration/views.py
 msgid "Resend Confirmation Email"
 msgstr "Tuma Tena Barua Pepe ya Uthibitisho"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Resend Confirmation"
 msgstr "Tuma Tena Uthibitisho"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Pending Project Name"
 msgstr "Jina la Mradi Linasubiri"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #: corehq/apps/registration/views.py
 msgid "Confirmation Email Sent"
 msgstr "Barua Pepe ya Uthibitisho Imetumwa"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #, python-format
 msgid ""
 "\n"
@@ -37763,8 +37747,7 @@ msgstr ""
 "      Barua pepe imetumwa kwa %(username)s.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 msgid ""
 "\n"
 "      Please visit the link provided in the email to activate your account,\n"
@@ -37776,13 +37759,11 @@ msgstr ""
 "      ili uanze kutumia mradi wako mpya wa CommCare!\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid "Waiting for Confirmation"
 msgstr "Inasubiri Uthibitisho"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 #, python-format
 msgid ""
 "\n"
@@ -37795,8 +37776,7 @@ msgstr ""
 "      <strong>%(requested_domain)s</strong>.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid ""
 "\n"
 "      Before you can use this project, you must first confirm your account.\n"
@@ -37806,8 +37786,7 @@ msgstr ""
 "      Kabla ya kutumia mradi huu, lazima uthibitishe akaunti yako kwanza.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37818,8 +37797,7 @@ msgstr ""
 "            Karibu CommCare HQ, %(name)s!\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space to start using CommCare.\n"
@@ -37829,8 +37807,7 @@ msgstr ""
 "              Tafadhali kubali mwaliko au unda nafasi yako ya mradi ili kuanza kutumia CommCare.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Before you can view any of your own data from CommCare, you will need\n"
@@ -37842,8 +37819,7 @@ msgstr ""
 "              kuunda nafasi ya mradi.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37854,8 +37830,7 @@ msgstr ""
 "            Hebu tuongeze mradi mpya, %(name)s!\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space.\n"
@@ -37865,8 +37840,12 @@ msgstr ""
 "              Tafadhali kubali mwaliko au unda nafasi yako ya mradi.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
+#| msgid "Invitation"
+msgid "Invitations"
+msgstr "Mialiko"
+
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                You have been invited to the following project spaces:\n"
@@ -37876,13 +37855,11 @@ msgstr ""
 "                Umealikwa kwenye nafasi zifuatazo za mradi:\n"
 "              "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Your New Project Space"
 msgstr "Nafasi Yako Mpya ya Mradi"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "            A\n"
@@ -37906,8 +37883,7 @@ msgstr ""
 "            programu, kudhibiti watumiaji, kufuatilia data, na kusanidi mipangilio.\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37928,8 +37904,7 @@ msgstr ""
 "                    usajili wako.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37942,8 +37917,7 @@ msgstr ""
 "                      <strong>wingu la %(server_location)s</strong>.\n"
 "                    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                      This project will be hosted on a private cloud.\n"
@@ -37953,8 +37927,7 @@ msgstr ""
 "                      Mradi huu utawekwa kwenye wingu binafsi.\n"
 "                    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                    To create a project in a different\n"
@@ -37976,8 +37949,7 @@ msgstr ""
 "                    unda mradi.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                    Please note: Projects <strong>cannot</strong> be transferred\n"
@@ -37989,7 +37961,7 @@ msgstr ""
 "                    kati ya maeneo ya wingu baada ya kuundwa.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
+#: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>\n"
@@ -38000,84 +37972,6 @@ msgstr ""
 "            kwenye <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>\n"
 "            kwa kutumia anwani yako ya barua pepe.\n"
 "          "
-
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap5/_base.html
-msgid ""
-"\n"
-"            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
-"            with your email address.\n"
-"          "
-msgstr ""
-"\n"
-"            kwenye <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
-"            kwa kutumia anwani yako ya barua pepe.\n"
-"          "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset your password on CommCare!\n"
-"  "
-msgstr ""
-"\n"
-"    Weka upya nenosiri lako kwenye CommCare!\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset password for\n"
-"  "
-msgstr ""
-"\n"
-"    Weka upya nenosiri kwa\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset Password\n"
-"  "
-msgstr ""
-"\n"
-"    Weka Nenosiri Upya\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Someone requested a password reset for your email on CommCare.\n"
-"  "
-msgstr ""
-"\n"
-"    Mtu ameomba kuweka upya nenosiri la barua pepe yako kwenye CommCare.\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    If it wasn't you, feel free to ignore this email.\n"
-"  "
-msgstr ""
-"\n"
-"    Ikiwa haikuwa wewe, jisikie huru kupuuza barua pepe hii.\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    You received this message because we received a password reset request\n"
-"  "
-msgstr ""
-"\n"
-"    Umepewa ujumbe huu kwa sababu tumepokea ombi la kuweka upya nenosiri\n"
-"  "
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html
 #, python-format
@@ -38338,6 +38232,66 @@ msgstr "Asante,"
 #, python-format
 msgid "-The %(hq_name)s team"
 msgstr "-Timu ya %(hq_name)s"
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset your password on CommCare!\n"
+"  "
+msgstr ""
+"\n"
+"    Weka upya nenosiri lako kwenye CommCare!\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset password for\n"
+"  "
+msgstr ""
+"\n"
+"    Weka upya nenosiri kwa\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset Password\n"
+"  "
+msgstr ""
+"\n"
+"    Weka Nenosiri Upya\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Someone requested a password reset for your email on CommCare.\n"
+"  "
+msgstr ""
+"\n"
+"    Mtu ameomba kuweka upya nenosiri la barua pepe yako kwenye CommCare.\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    If it wasn't you, feel free to ignore this email.\n"
+"  "
+msgstr ""
+"\n"
+"    Ikiwa haikuwa wewe, jisikie huru kupuuza barua pepe hii.\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    You received this message because we received a password reset request\n"
+"  "
+msgstr ""
+"\n"
+"    Umepewa ujumbe huu kwa sababu tumepokea ombi la kuweka upya nenosiri\n"
+"  "
 
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 msgid "Reset Password on CommCare"
@@ -38612,9 +38566,6 @@ msgstr "ya sasa"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-#| msgid ""
-#| "This email is already registered in the {location} cloud location. Please <a"
-#| " href=\"{login_link}\">sign in here</a>."
 msgid "This email is already registered in the {location} cloud location. "
 msgstr ""
 "Barua pepe hii tayari imesajiliwa kwenye eneo la wingu la {location}. "
@@ -58011,6 +57962,11 @@ msgstr ""
 "Uhamishaji wa Kesi unasaidia kusafirisha data yenye eneo la kijiografia kwa "
 "muundo wa GeoJSON"
 
+#: corehq/privileges.py
+msgid "Add text or xpath based custom icon badges to menus and forms"
+msgstr ""
+"Ongeza beji maalum za ikoni kwa maandishi au xpath kwenye menyu na fomu"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Ripoti za Mjenzi wa Ripoti"
@@ -59028,6 +58984,17 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid ""
+#~ "\n"
+#~ "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
+#~ "            with your email address.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            kwenye <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
+#~ "            kwa kutumia anwani yako ya barua pepe.\n"
+#~ "          "
 
 #~ msgid "This user cannot access this link."
 #~ msgstr "Mtumiaji huyu hawezi kufikia kiungo hiki."
