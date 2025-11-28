@@ -17,6 +17,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != 11 ? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || (n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
 
+#: corehq/apps/accounting/emails.py
+#, python-brace-format
+msgid ""
+"CommCare Alert: {domain}'s subscription to {plan} automatically renewed for "
+"{date_start}"
+msgstr ""
+"Сповіщення CommCare: підписка {domain} на {plan} була автоматично поновлена "
+"з {date_start}"
+
+#: corehq/apps/accounting/emails.py corehq/apps/sso/utils/context_helpers.py
+msgid "tomorrow!"
+msgstr "завтра!"
+
+#: corehq/apps/accounting/emails.py
+#, python-format
+msgid "on %s."
+msgstr "на %s."
+
+#: corehq/apps/accounting/emails.py
+#, python-format
+msgid ""
+"CommCare Alert: %(domain_or_account)s's subscription to %(plan_name)s ends "
+"%(ending_on)s"
+msgstr ""
+"Сповіщення CommCare: підписка %(domain_or_account)s на %(plan_name)s "
+"закінчується %(ending_on)s"
+
 #: corehq/apps/accounting/filters.py
 msgid "Account Type"
 msgstr "Тип облікового запису"
@@ -678,6 +705,22 @@ msgid "Submit Request"
 msgstr "Надіслати запит"
 
 #: corehq/apps/accounting/forms.py
+msgid "Subscription Reminder"
+msgstr "Нагадування про підписку"
+
+#: corehq/apps/accounting/forms.py
+msgid "Renewal Reminder"
+msgstr "Нагадування про поновлення"
+
+#: corehq/apps/accounting/forms.py
+msgid "Subscription Ending"
+msgstr "Завершення підписки"
+
+#: corehq/apps/accounting/forms.py
+msgid "Dimagi Contact Subscription Reminder"
+msgstr "Нагадування про підписку для контакту Dimagi"
+
+#: corehq/apps/accounting/forms.py
 #, python-format
 msgid "Received invalid adjustment type: %s"
 msgstr "Отримано недійсний тип коригування: %s"
@@ -806,40 +849,6 @@ msgstr "Поштовий індекс"
 #: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr "Країна"
-
-#: corehq/apps/accounting/models.py corehq/apps/sso/utils/context_helpers.py
-msgid "tomorrow!"
-msgstr "завтра!"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "on %s."
-msgstr "на %s."
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
-msgstr ""
-"Сповіщення CommCare: підписка %(account_name)s на %(plan_name)s закінчується"
-" %(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
-msgstr ""
-"Сповіщення CommCare: 30-денний пробний період для '%(domain)s' закінчується "
-"%(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
-msgstr ""
-"Сповіщення CommCare: підписка %(domain)s на %(plan_name)s закінчується "
-"%(ending_on)s"
 
 #: corehq/apps/accounting/models.py
 #, python-format
@@ -1199,8 +1208,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -1223,6 +1231,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -1394,6 +1403,227 @@ msgstr ""
 "    Виписка від: CommCare та компанія Dimagi, Inc. 245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
 "  </p>\n"
 "\n"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
+msgid ""
+"\n"
+"    Hello,\n"
+"  "
+msgstr ""
+"\n"
+"    Вітаємо,\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for billing account %(domain_or_account)s was\n"
+"      declined. Please check to see if your billing information correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+"\n"
+"      Це повідомлення, щоб повідомити вас, що платіж вашою кредитною карткою за підписку CommCare для платіжного акаунта %(domain_or_account)s було відхилено. Будь ласка, перевірте, чи ваші платіжні дані правильно відповідають даним вашої кредитної картки.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for project space:\n"
+"      <a href=\"%(domain_url)s\">%(domain_or_account)s</a>\n"
+"      was declined. Please check to see if your billing information correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+"\n"
+"      Це повідомлення, щоб повідомити вас, що платіж вашою кредитною карткою за підписку CommCare для робочого простору:\n"
+"      <a href=\"%(domain_url)s\">%(domain_or_account)s</a>\n"
+"      було відхилено. Будь ласка, перевірте, чи ваші платіжні дані правильно відповідають даним вашої кредитної картки.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Here are the details of your declined payment:\n"
+"  "
+msgstr ""
+"\n"
+"    Ось деталі вашого відхиленого платежу:\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Billed To: %(brand)s card with the last four digits %(last4)s expiring\n"
+"      %(exp_month)s/%(exp_year)s\n"
+"    "
+msgstr ""
+"\n"
+"      Оплачено з: картка %(brand)s з останніми чотирма цифрами %(last4)s, термін дії до %(exp_month)s/%(exp_year)s\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid "Subscription plan"
+msgstr "Тарифний план"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid "Billing date"
+msgstr "Дата виставлення рахунку"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid "Invoice #"
+msgstr "Рахунок №"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Please update your billing information to prevent disruption to your\n"
+"    CommCare subscription.\n"
+"  "
+msgstr ""
+"\n"
+"    Будь ласка, оновіть свої платіжні дані, щоб уникнути переривання підписки на CommCare.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Please update your billing information at\n"
+"      <a href=\"%(billing_info_url)s\">%(billing_info_url)s</a>\n"
+"      to prevent disruption to your CommCare subscription.\n"
+"    "
+msgstr ""
+"\n"
+"      Будь ласка, оновіть свої платіжні дані за адресою\n"
+"      <a href=\"%(billing_info_url)s\">%(billing_info_url)s</a>\n"
+"      щоб уникнути переривання підписки на CommCare.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    You'll need to pay the prior invoice whose payment method was declined, but\n"
+"    future invoices will be paid via the updated billing information.\n"
+"  "
+msgstr ""
+"\n"
+"    Вам потрібно буде оплатити попередній рахунок, платіж за яким було відхилено, але майбутні рахунки будуть оплачені за оновленими платіжними даними.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"    If you have any questions, please contact %(support_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Якщо у вас виникли питання, будь ласка, звертайтеся до %(support_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Thanks,<br />\n"
+"    -Dimagi\n"
+"  "
+msgstr ""
+"\n"
+"    Дякуємо,<br />\n"
+"    -Dimagi\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid ""
+"\n"
+"Hello,"
+msgstr ""
+"\n"
+"Вітаємо,"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your CommCare\n"
+"subscription for billing account %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+"\n"
+"Це повідомлення, щоб повідомити вас, що платіж вашою кредитною карткою за підписку CommCare для платіжного акаунта %(domain_or_account)s було відхилено. Будь ласка, перевірте, чи ваші платіжні дані правильно відповідають даним вашої кредитної картки."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your CommCare\n"
+"subscription for project space %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+"\n"
+"Це повідомлення, щоб повідомити вас, що платіж вашою кредитною карткою за підписку CommCare для робочого простору %(domain_or_account)s було відхилено. Будь ласка, перевірте, чи ваші платіжні дані правильно відповідають даним вашої кредитної картки."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Here are the details of your declined payment:\n"
+"Billed To: %(brand)s card with last four digits %(last4)s expiring %(exp_month)s/%(exp_year)s"
+msgstr ""
+"\n"
+"Ось деталі вашого відхиленого платежу:\n"
+"Оплачено з: картка %(brand)s з останніми чотирма цифрами %(last4)s, термін дії до %(exp_month)s/%(exp_year)s"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid ""
+"\n"
+"Please update your billing information to prevent disruption to your CommCare\n"
+"subscription."
+msgstr ""
+"\n"
+"Будь ласка, оновіть свої платіжні дані, щоб уникнути переривання підписки на CommCare."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Please update your billing information at %(billing_info_url)s\n"
+"to prevent disruption to your CommCare subscription."
+msgstr ""
+"\n"
+"Будь ласка, оновіть свої платіжні дані за адресою %(billing_info_url)s, щоб уникнути переривання підписки на CommCare."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"You'll need to pay the\n"
+"prior invoice whose payment method was declined, but future invoices will be\n"
+"paid via the updated billing information.\n"
+"\n"
+"If you have any questions, please contact %(support_email)s.\n"
+"\n"
+"Thanks,\n"
+"-Dimagi"
+msgstr ""
+"\n"
+"Вам потрібно буде оплатити попередній рахунок, платіж за яким було відхилено, але майбутні рахунки будуть оплачені за оновленими платіжними даними.\n"
+"\n"
+"Якщо у вас виникли питання, будь ласка, звертайтеся до %(support_email)s.\n"
+"\n"
+"Дякуємо,\n"
+"-Dimagi"
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
@@ -2167,7 +2397,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/registry/templates/registry/email/access_granted.html
 #: corehq/apps/registry/templates/registry/email/access_granted.txt
 #: corehq/apps/registry/templates/registry/email/invitation.html
@@ -2219,8 +2448,11 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2236,7 +2468,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2280,6 +2511,9 @@ msgstr ""
 "%(base_url)s\n"
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #, python-format
 msgid ""
 "\n"
@@ -2776,14 +3010,25 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-"    %(invoice_num)s for your project %(project)s.\n"
-"  "
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your billing account %(domain_or_account)s.\n"
+"    "
 msgstr ""
 "\n"
-"    Цей лист є підтвердженням вашої оплати %(amount)s за рахунком №\n"
-"    %(invoice_num)s для вашого проєкту %(project)s.\n"
-"  "
+"      Це лист-підтвердження вашого платежу у розмірі %(amount)s за рахунком № %(invoice_num)s для вашого платіжного акаунта %(domain_or_account)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, python-format
+msgid ""
+"\n"
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your project %(domain_or_account)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Це лист-підтвердження вашого платежу у розмірі %(amount)s за рахунком № %(invoice_num)s для вашого проєкту %(domain_or_account)s.\n"
+"    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
@@ -2810,15 +3055,50 @@ msgstr "Термін оплати"
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
 msgid ""
-"Dear %(name)s,\n"
+"\n"
+"Dear %(name)s,"
+msgstr ""
+"\n"
+"Шановний(а) %(name)s,"
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+msgid ""
 "\n"
 "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-"%(invoice_num)s for your project %(project)s.\n"
+"%(invoice_num)s for your billing account %(domain_or_account)s."
 msgstr ""
-"Шановн(а/ий) %(name)s,\n"
 "\n"
-"Цей лист є підтвердженням вашої оплати %(amount)s за рахунком №\n"
-"%(invoice_num)s для вашого проєкту %(project)s.\n"
+"Цей лист є підтвердженням вашого платежу у розмірі %(amount)s за рахунком № %(invoice_num)s для вашого платіжного акаунта %(domain_or_account)s."
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+msgid ""
+"\n"
+"This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+"%(invoice_num)s for your project %(domain_or_account)s."
+msgstr ""
+"\n"
+"Цей лист є підтвердженням вашого платежу у розмірі %(amount)s за рахунком № %(invoice_num)s для вашого проєкту %(domain_or_account)s."
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+msgid ""
+"\n"
+"This invoice is now marked as paid as of %(date_paid)s.\n"
+"\n"
+"Invoice No.: %(invoice_num)s\n"
+"Amount Paid: %(amount)s\n"
+"Payment Date: %(date_paid)s\n"
+"Transaction No.: %(transaction_id)s"
+msgstr ""
+"\n"
+"Цей рахунок тепер позначено як оплачений станом на %(date_paid)s.\n"
+"\n"
+"Рахунок №: %(invoice_num)s\n"
+"Сплачена сума: %(amount)s\n"
+"Дата оплати: %(date_paid)s\n"
+"Номер транзакції: %(transaction_id)s"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
@@ -2856,11 +3136,10 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA"
 msgstr ""
 "\n"
-"Дякуємо, що користуєтеся CommCare. Якщо у вас виникли питання, будь ласка,\n"
-"звертайтеся до %(invoicing_contact_email)s.\n"
+"Дякуємо, що користуєтесь CommCare. Якщо у вас виникли питання, будь ласка, не вагайтеся звертатися до %(invoicing_contact_email)s.\n"
 "\n"
 "З найкращими побажаннями,\n"
 "Команда CommCare\n"
@@ -2868,7 +3147,7 @@ msgstr ""
 "\n"
 "Лист від:\n"
 "CommCare та компанія Dimagi, Inc.\n"
-"245 Main Street, 2-й поверх, Кембридж, MA 02142, США\n"
+"245 Main Street, 2-й поверх, Кембридж, MA 02142 США"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
@@ -3178,6 +3457,67 @@ msgstr ""
 "Команда CommCare\n"
 "www.commcarehq.org\n"
 
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Your subscription will pause %(ending_on)s In case you would like to\n"
+"    renew, please select auto-renewal <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    Ваша підписка буде призупинена %(ending_on)s. Якщо ви бажаєте поновити її, будь ласка, оберіть автопродовження <a href=\"%(subscription_url)s\">тут</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Please reach out to %(invoicing_contact_email)s if you have any questions.\n"
+"  "
+msgstr ""
+"\n"
+"    Якщо у вас виникли питання, будь ласка, звертайтеся до %(invoicing_contact_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+msgid ""
+"\n"
+"    The CommCare Team\n"
+"  "
+msgstr ""
+"\n"
+"    Команда CommCare\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(domain)s administrator,\n"
+"\n"
+"  Your subscription will pause %(ending_on)s In case you would like to\n"
+"  renew, please select auto-renewal here: %(subscription_url)s\n"
+"\n"
+"  Please reach out to %(invoicing_contact_email)s if you have any questions.\n"
+"\n"
+"  Best regards,\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Шановний(а) адміністраторе %(domain)s,\n"
+"\n"
+"  Ваша підписка буде призупинена %(ending_on)s. Якщо ви бажаєте поновити її, будь ласка, оберіть автопродовження тут: %(subscription_url)s\n"
+"\n"
+"  Якщо у вас виникли питання, будь ласка, звертайтеся до %(invoicing_contact_email)s.\n"
+"\n"
+"  З найкращими побажаннями,\n"
+"  Команда CommCare\n"
+"  %(base_url)s\n"
+
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
 #, python-format
 msgid ""
@@ -3249,52 +3589,227 @@ msgstr ""
 "Команда CommCare\n"
 "%(base_url)s\n"
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
 msgid ""
 "\n"
-"    Your 30 Day Trial for %(domain)s ends soon! If you do not\n"
-"    change your subscription before then, your subscription will be paused on\n"
-"    %(ending_on)s and you will lose access to all features until you\n"
-"    re-subscribe to a new paid plan.\n"
+"    Dear %(dimagi_contact)s,\n"
 "  "
 msgstr ""
 "\n"
-"    Ваш 30-денний пробний період для %(domain)s незабаром закінчується! Якщо ви не\n"
-"    зміните підписку до цього часу, вона буде призупинена %(ending_on)s, і ви втратите доступ до всіх функцій, доки не\n"
-"    оформите нову платну підписку.\n"
+"    Шановний(а) %(dimagi_contact)s,\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
 msgid ""
 "\n"
-"    To change your subscription, please log into your project on\n"
-"    CommCare HQ and navigate to the\n"
-"    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
-"    project settings.\n"
+"    You have been identified as the Dimagi point of contact for\n"
+"    %(account_or_domain)s.\n"
 "  "
 msgstr ""
 "\n"
-"    Щоб змінити підписку, увійдіть у свій проєкт на\n"
-"    CommCare HQ та перейдіть на\n"
-"    <a href=\"%(subscription_url)s\">сторінку підписки</a> у\n"
-"    налаштуваннях проєкту.\n"
+"    Вас визначено контактною особою Dimagi для\n"
+"    %(account_or_domain)s.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
 msgid ""
 "\n"
-"    If you have questions about our pricing plans,\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">you can review them here</a>.\n"
+"      This account has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Цей обліковий запис має підписку %(plan)s, яка закінчується\n"
+"      %(end_date)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+msgid ""
+"\n"
+"      This project space has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Цей проектний простір має підписку %(plan)s, яка закінчується\n"
+"      %(end_date)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+msgid ""
+"\n"
+"    After that date, the subscription will automatically pause and this space\n"
+"    will lose access to all features until it is re-subscribed to a new paid\n"
+"    plan.\n"
 "  "
 msgstr ""
 "\n"
-"    Якщо у вас є питання щодо тарифних планів,\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">ви можете переглянути їх тут</a>.\n"
+"    Після цієї дати підписка буде автоматично призупинена, і цей простір\n"
+"    втратить доступ до всіх функцій, доки не буде оформлено нову платну підписку.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+msgid ""
+"\n"
+"    In case you would like to extend this subscription or have any questions,\n"
+"    please reach out to %(accounts_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Якщо ви бажаєте продовжити цю підписку або маєте запитання,\n"
+"    будь ласка, зверніться до %(accounts_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+msgid ""
+"\n"
+"    The CommCare Team<br />\n"
+"  "
+msgstr ""
+"\n"
+"    Команда CommCare<br />\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(dimagi_contact)s,\n"
+"\n"
+"  You have been identified as the Dimagi point of contact for\n"
+"  %(account_or_domain)s.\n"
+msgstr ""
+"\n"
+"  Шановн(а/е/і) %(dimagi_contact)s,\n"
+"\n"
+"  Вас визначено контактною особою Dimagi для\n"
+"  %(account_or_domain)s.\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"    This account has a %(plan)s subscription that is ending on %(end_date)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Цей обліковий запис має підписку %(plan)s, яка закінчується %(end_date)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"    This project space has a %(plan)s subscription that is ending on\n"
+"    %(end_date)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Цей проектний простір має підписку %(plan)s, яка закінчується\n"
+"    %(end_date)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"  After that date, the subscription will automatically pause and this space will\n"
+"  lose access to all features until it is re-subscribed to a new paid plan.\n"
+"\n"
+"  In case you would like to extend this subscription or have any questions,\n"
+"  please reach out to %(accounts_email)s.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Після цієї дати підписка буде автоматично призупинена, і цей простір\n"
+"  втратить доступ до всіх функцій, доки не буде оформлено нову платну підписку.\n"
+"\n"
+"  Якщо ви бажаєте продовжити цю підписку або маєте запитання,\n"
+"  будь ласка, зверніться до %(accounts_email)s.\n"
+"\n"
+"  З найкращими побажаннями,\n"
+"\n"
+"  Команда CommCare\n"
+"  %(base_url)s\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"    ends soon!\n"
+"  "
+msgstr ""
+"\n"
+"    Нагадуємо, що ваша підписка %(plan_name)s для %(domain)s\n"
+"    закінчується незабаром!\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    Renewal: If you would like to renew, just ensure that you have auto-renewal\n"
+"    selected <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    Продовження: Якщо ви бажаєте продовжити, просто переконайтеся, що у вас обрано автопродовження\n"
+"    <a href=\"%(subscription_url)s\">тут</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    30 days prior to the renewal date, you will receive an invoice for the new\n"
+"    subscription term to renew you to the latest version of your current plan as\n"
+"    <a href=\"%(plan_info_url)s\">described here</a>. If you'd like to renew\n"
+"    sooner, you can self-renew <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    За 30 днів до дати продовження ви отримаєте рахунок за новий\n"
+"    термін підписки для оновлення до останньої версії вашого поточного плану, як\n"
+"    <a href=\"%(plan_info_url)s\">описано тут</a>. Якщо бажаєте продовжити раніше, ви можете зробити це самостійно <a href=\"%(subscription_url)s\">тут</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+msgid ""
+"\n"
+"    Cancellation: In case you decide you will not be renewing your subscription,\n"
+"    you can simply turn off auto-renew at any point during your subscription\n"
+"    term.\n"
+"  "
+msgstr ""
+"\n"
+"    Скасування: Якщо ви вирішите не продовжувати підписку,\n"
+"    ви можете просто вимкнути автопродовження в будь-який момент під час дії підписки.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    In case you have any questions about your renewal, please don't hesitate to\n"
+"    contact %(invoicing_contact_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Якщо у вас є запитання щодо продовження, будь ласка, не вагайтеся\n"
+"    звертатися до %(invoicing_contact_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
 msgid ""
 "\n"
 "    Thank you for your use and support of CommCare.\n"
@@ -3304,47 +3819,126 @@ msgstr ""
 "    Дякуємо за використання та підтримку CommCare.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.txt
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(domain)s administrator,\n"
+"\n"
+"  This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"  ends soon!\n"
+"\n"
+"  Renewal:\n"
+"  If you would like to renew, just ensure that you have auto-renewal selected\n"
+"  here: %(subscription_url)s\n"
+"\n"
+"  30 days prior to the renewal date, you will receive an invoice for the new\n"
+"  subscription term to renew you to the latest version of your current plan as\n"
+"  described here: %(plan_info_url)s.\n"
+"  If you'd like to renew sooner, you can self-renew here: %(subscription_url)s\n"
+"\n"
+"  Cancellation:\n"
+"  In case you decide you will not be renewing your subscription, you can simply\n"
+"  turn off auto-renew at any point during your subscription term.\n"
+"\n"
+"  In case you have any questions about your renewal,\n"
+"  please don't hesitate to contact %(invoicing_contact_email)s.\n"
+"\n"
+"  Thank you for your use and support of CommCare.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Шановн(а/е/і) адміністраторе %(domain)s,\n"
+"\n"
+"  Нагадуємо, що ваша підписка %(plan_name)s для %(domain)s\n"
+"  закінчується незабаром!\n"
+"\n"
+"  Продовження:\n"
+"  Якщо ви бажаєте продовжити, просто переконайтеся, що у вас обрано автопродовження\n"
+"  тут: %(subscription_url)s\n"
+"\n"
+"  За 30 днів до дати продовження ви отримаєте рахунок за новий\n"
+"  термін підписки для оновлення до останньої версії вашого поточного плану, як\n"
+"  описано тут: %(plan_info_url)s.\n"
+"  Якщо бажаєте продовжити раніше, ви можете зробити це самостійно тут: %(subscription_url)s\n"
+"\n"
+"  Скасування:\n"
+"  Якщо ви вирішите не продовжувати підписку, ви можете просто\n"
+"  вимкнути автопродовження в будь-який момент під час дії підписки.\n"
+"\n"
+"  Якщо у вас є запитання щодо продовження,\n"
+"  будь ласка, не вагайтеся звертатися до %(invoicing_contact_email)s.\n"
+"\n"
+"  Дякуємо за використання та підтримку CommCare.\n"
+"\n"
+"  З найкращими побажаннями,\n"
+"\n"
+"  Команда CommCare\n"
+"  %(base_url)s\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your subscription for project space %(domain)s on\n"
+"    %(plan)s is set to automatically renew on %(date_start)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Нагадуємо, що ваша підписка для проектного простору %(domain)s на\n"
+"    %(plan)s буде автоматично продовжена %(date_start)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    In case you would not like to renew your subscription, you can simply turn\n"
+"    off auto-renew <a href=\"%(subscription_url)s\">here</a> at any point during\n"
+"    your subscription term.\n"
+"  "
+msgstr ""
+"\n"
+"    Якщо ви не бажаєте продовжувати підписку, ви можете просто вимкнути\n"
+"    автопродовження <a href=\"%(subscription_url)s\">тут</a> у будь-який момент під час дії підписки.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.txt
 #, python-format
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
 "\n"
-"Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
-"change your subscription before then, your subscription will be paused on\n"
-"%(ending_on)s and you will lose access to all features until you\n"
-"re-subscribe to a new paid plan.\n"
+"This is a reminder that your subscription for project space %(domain)s on\n"
+"%(plan)s is set to automatically renew on %(date_start)s.\n"
 "\n"
-"To change your subscription, please log into your project on\n"
-"CommCare HQ and and navigate to the subscription page in your project\n"
-"settings: %(subscription_url)s\n"
-"\n"
-"If you have questions about our pricing plans, you can review them here:\n"
-"https://www.commcarehq.org/pricing/\n"
-"\n"
-"Thank you for your use and support of CommCare.\n"
+"In case you would not like to renew your subscription, you can simply turn\n"
+"off auto-renew here at any point during your subscription term:\n"
+"%(subscription_url)s\n"
 "\n"
 "Best regards,\n"
 "\n"
 "The CommCare Team\n"
-"%(base_url)s\n"
+"%(base_url)s"
 msgstr ""
 "\n"
-"Шановний(-а) адміністраторе %(domain)s,\n"
+"Шановн(а/е/і) адміністраторе %(domain)s,\n"
 "\n"
-"Термін дії вашого 30-денного пробного періоду для %(domain)s скоро закінчується! Якщо ви не зміните підписку до цього часу, вона буде призупинена %(ending_on)s, і ви втратите доступ до всіх функцій, доки не оформите нову платну підписку.\n"
+"Нагадуємо, що ваша підписка для проектного простору %(domain)s на\n"
+"%(plan)s буде автоматично продовжена %(date_start)s.\n"
 "\n"
-"Щоб змінити підписку, увійдіть у свій проєкт на CommCare HQ та перейдіть на сторінку підписки у налаштуваннях проєкту: %(subscription_url)s\n"
-"\n"
-"Якщо у вас є питання щодо наших тарифних планів, ви можете ознайомитися з ними тут:\n"
-"https://www.commcarehq.org/pricing/\n"
-"\n"
-"Дякуємо за використання та підтримку CommCare.\n"
+"Якщо ви не бажаєте продовжувати підписку, ви можете просто вимкнути\n"
+"автопродовження тут у будь-який момент під час дії підписки:\n"
+"%(subscription_url)s\n"
 "\n"
 "З найкращими побажаннями,\n"
 "\n"
 "Команда CommCare\n"
-"%(base_url)s\n"
+"%(base_url)s"
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
@@ -3944,6 +4538,26 @@ msgid "Card"
 msgstr "Картка"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+msgid "Use account autopay card"
+msgstr "Використовувати картку автосплати облікового запису"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Owner"
+msgstr "Власник"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a saved card"
 msgstr "Використати збережену картку"
 
@@ -3970,11 +4584,6 @@ msgid "Save card for later"
 msgstr "Зберегти картку для подальшого використання"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#| msgid ""
-#| "\n"
-#| "            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "            to process this transaction.\n"
-#| "          "
 msgid ""
 " We use\n"
 "          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
@@ -4438,7 +5047,6 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "Нам буде цікаво дізнатися більше! Будь ласка, уточніть -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
@@ -4448,6 +5056,26 @@ msgid ""
 msgstr ""
 "\n"
 "      Натискаючи цю кнопку, ви погоджуєтеся з\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами надання послуг</a> та\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
+"    "
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"      By clicking Submit Request, you agree to Dimagi's\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      Натискаючи «Надіслати запит», ви погоджуєтеся з\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами надання послуг</a> та\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
 "    "
@@ -4861,8 +5489,6 @@ msgstr "Останні 10 запусків"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -5223,7 +5849,6 @@ msgid "Please log in to the app to check for an update."
 msgstr "Будь ласка, увійдіть у додаток, щоб перевірити наявність оновлення."
 
 #: corehq/apps/app_manager/exceptions.py
-#| msgid "Restriction for profile {profile} set successfully."
 msgid "Form Actions Diff failed to be applied successfully"
 msgstr "Не вдалося успішно застосувати різницю дій форми"
 
@@ -5236,7 +5861,6 @@ msgstr "Справа"
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -7863,10 +8487,8 @@ msgstr "Встановити CommCare"
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
@@ -7880,6 +8502,7 @@ msgstr "Встановити CommCare"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
@@ -9068,6 +9691,28 @@ msgstr "Ви збираєтеся видалити цю програму"
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Custom Icon"
 msgstr "Власна іконка"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
+msgid ""
+"\n"
+"          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
+"          Learn more\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >here</a\n"
+"          >.\n"
+"        "
+msgstr ""
+"\n"
+"          Додайте текст для відображення або XPath-функцію. Це з'явиться як бейдж біля відповідної іконки.\n"
+"          Дізнайтеся більше\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >тут</a\n"
+"          >.\n"
+"        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Text Body"
@@ -11267,10 +11912,6 @@ msgid "Ignore Owners"
 msgstr "Ігнорувати власників"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
-#| "                "
 msgid ""
 "\n"
 "                  Example: instance('commcaresession')/session/context/userid or\n"
@@ -11291,12 +11932,6 @@ msgid "Load Additional Data Registry Cases"
 msgstr "Завантажити додаткові справи з реєстру даних"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
-#| "                        The case type of the case must be configured in the registry and in the module via the module's\n"
-#| "                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    Load additional cases from the Data Registry into the\n"
@@ -11332,14 +11967,6 @@ msgid "Custom Related Case Property"
 msgstr "Власна властивість пов’язаного кейсу"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                               Enter in the name of a case property that contains the ID of another\n"
-#| "                               case you'd like included in the results instance.  This is to allow\n"
-#| "                               you to configure your case list display to show properties of that\n"
-#| "                               related case. Read more on the\n"
-#| "                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    Enter in the name of a case property that contains the ID of\n"
@@ -11372,10 +11999,6 @@ msgid "Clearing search terms resets search results"
 msgstr "Очищення пошукових термінів скидає результати пошуку"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
-#| "            "
 msgid ""
 "\n"
 "              This is not a valid xpath expression. Check to make sure your\n"
@@ -13486,10 +14109,6 @@ msgid "Reverted to version {log.info['version']}"
 msgstr "Повернуто до версії {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
-msgid "Please enter either text body or xpath for custom icon"
-msgstr "Будь ласка, введіть або текстове тіло, або xpath для власної іконки"
-
-#: corehq/apps/app_manager/views/utils.py
 #, python-format
 msgid "Update Status for linked app %s"
 msgstr "Оновити статус для пов'язаного додатку %s"
@@ -13883,6 +14502,7 @@ msgstr "Ви впевнені, що хочете видалити цей від�
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
@@ -14026,6 +14646,32 @@ msgstr "Недійсна дата"
 #: corehq/apps/case_importer/exceptions.py
 msgid "Required format: YYYY-MM-DD (e.g. \"2021-12-31\")"
 msgstr "Необхідний формат: YYYY-MM-DD (наприклад, \"2021-12-31\")"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "Invalid Number"
+msgstr "Недійсний номер"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "The given value is not a number"
+msgstr "Вказане значення не є числом"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "Invalid GPS"
+msgstr "Недійсні GPS-координати"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid ""
+"Required format: \"latitude longitude\" or \"latitude longitude altitude "
+"precision\""
+msgstr "Необхідний формат: \"широта довгота\" або \"широта довгота висота точність\""
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "Invalid Phone Number"
+msgstr "Недійсний номер телефону"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "The given value is not a valid phone number"
+msgstr "Вказане значення не є дійсним номером телефону"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected multiple choice value"
@@ -15603,10 +16249,6 @@ msgid "No corresponding application found in this project."
 msgstr "У цьому проєкті не знайдено відповідного додатку."
 
 #: corehq/apps/cloudcare/views.py
-msgid "This user cannot access this link."
-msgstr "Цей користувач не має доступу до цього посилання."
-
-#: corehq/apps/cloudcare/views.py
 #, python-brace-format
 msgid ""
 "You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile UCRs\n"
@@ -15862,6 +16504,11 @@ msgstr "Не вдалося оновити '{}'. У вас немає відпо
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Unable to remove synced fields. You do not have the appropriate role"
 msgstr "Неможливо видалити синхронізовані поля. У вас немає відповідної ролі"
+
+#: corehq/apps/custom_data_fields/edit_model.py
+msgid "Could not delete profile '{}' because it has invitations assigned."
+msgstr ""
+"Не вдалося видалити профіль '{}' через наявність призначених запрошень."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Could not delete profile '{}' because it has users assigned."
@@ -17461,20 +18108,6 @@ msgid "Opened By"
 msgstr "Відкрито"
 
 #: corehq/apps/data_cleaning/utils/cases.py
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Owner"
-msgstr "Власник"
-
-#: corehq/apps/data_cleaning/utils/cases.py
 msgid "Closed By User ID"
 msgstr "ID користувача, який закрив"
 
@@ -18079,8 +18712,8 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
-msgid "Valid Values &amp; Formats"
-msgstr "Дійсні значення та формати"
+msgid "Import Validation"
+msgstr "Валідація імпорту"
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Case Property Group must have a name"
@@ -19921,12 +20554,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-#| msgid "Application Id"
 msgid "Application Add-Ons"
 msgstr "Додатки застосунку"
 
 #: corehq/apps/domain/forms.py
-#| msgid "Enable Call Center Application"
 msgid "Enable All Application Add-Ons"
 msgstr "Увімкнути всі додатки застосунку"
 
@@ -20343,15 +20974,6 @@ msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr ""
 "Схоже, цей номер телефону недійсний. Можливо, ви забули вказати код країни?"
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Subscribe to Plan"
-msgstr "Підписатися на тарифний план"
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -21793,6 +22415,15 @@ msgstr "Зв'яжіться з нами"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Subscribe to Plan"
+msgstr "Підписатися на тарифний план"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Upgrade Plan"
 msgstr "Оновити план"
 
@@ -22382,68 +23013,6 @@ msgstr "Поспілкуйтеся з нашою командою"
 msgid "Dismiss"
 msgstr "Відхилити"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Saved Credit Cards"
-msgstr "Збережені кредитні картки"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Add Card"
-msgstr "Додати картку"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Credit Card"
-msgstr "Кредитна картка"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Your request was successful!"
-msgstr "Ваш запит виконано успішно!"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Delete Card"
-msgstr "Видалити картку"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Processing your request"
-msgstr "Обробка вашого запиту"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          Дійсно видалити картку <strong><span data-bind='text: brand'></span></strong>\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Autopay card"
-msgstr "Картка для автосплати"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Remove Autopay"
-msgstr "Видалити автосплату"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-msgid "Set as autopay card"
-msgstr "Встановити як картку для автосплати"
-
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 #, python-format
 msgid ""
@@ -22454,20 +23023,6 @@ msgstr ""
 "\n"
 "        Заощаджуйте майже 20%%, сплачуючи щорічно.  \n"
 "      "
-
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove\n"
-"          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          Дійсно видалити\n"
-"          <strong><span data-bind=\\\"text: brand\\\"></span></strong> картку\n"
-"          ************<strong><span data-bind=\\\"text: last4\\\"></span></strong>?\n"
-"        "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #, python-format
@@ -22481,6 +23036,112 @@ msgstr ""
 "      Ви збираєтеся підписатися на <strong>%(p)s тарифний план програмного забезпечення</strong>.<br/>\n"
 "      Будь ласка, оновіть вашу платіжну інформацію нижче перед продовженням.\n"
 "    "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid "Loading autopay cards, please wait..."
+msgstr "Завантаження карток автосплати, будь ласка, зачекайте..."
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Confirmation"
+msgstr "Підтвердження"
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please complete the Basic Information section and select a card\n"
+"                for autopay before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                Будь ласка, заповніть розділ Основна інформація та оберіть картку\n"
+"                для автосплати перед продовженням.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please provide an autopay card before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                Будь ласка, надайте картку автосплати перед продовженням.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please complete the Basic Information section before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                Будь ласка, заповніть розділ Основна інформація перед продовженням.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this <strong>annual subscription</strong>, I acknowledge that\n"
+"                  the autopay card above will be charged on a monthly basis for any on-demand fees (excess users, SMS).\n"
+"                "
+msgstr ""
+"\n"
+"                  Оформлюючи підписку на цю <strong>річну підписку</strong>, я підтверджую, що\n"
+"                  вказана вище картка автосплати буде щомісяця списувати оплату за додаткові послуги (надлишкові користувачі, SMS).\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                    A separate annual invoice for the product cost will be generated and sent to the contact emails above.\n"
+"                    This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
+"                    The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Окремий річний рахунок за вартість продукту буде сформовано та надіслано на контактні електронні адреси вище.\n"
+"                    Цей рахунок має бути оплачений протягом %(days_date_due_annual)s днів, інакше підписку буде призупинено.\n"
+"                    Вибрана картка автосплати не буде автоматично використана для оплати цього рахунку — його потрібно оплатити напряму.\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.\n"
+"                "
+msgstr ""
+"\n"
+"                  Оформлюючи підписку на цю місячну підписку, я підтверджую, що моя картка автосплати буде щомісяця списувати оплату.\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that I understand an\n"
+"                   annual invoice for the product cost will be generated and sent to the contact emails above.\n"
+"                   This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
+"                "
+msgstr ""
+"\n"
+"                   Оформлюючи підписку на цю <strong>річну підписку</strong>, я підтверджую, що розумію:\n"
+"                   річний рахунок за вартість продукту буде сформовано та надіслано на контактні електронні адреси вище.\n"
+"                   Цей рахунок має бути оплачений протягом %(days_date_due_annual)s днів, інакше підписку буде призупинено.\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                    I also acknowledge that by not selecting an autopay card, I must manually pay for any on-demand fees\n"
+"                    (excess users, SMS) on a monthly basis or the subscription will be paused.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Я також підтверджую, що якщо не оберу картку автосплати, я повинен(-на) вручну оплачувати всі додаткові послуги\n"
+"                    (надлишкові користувачі, SMS) щомісяця, інакше підписку буде призупинено.\n"
+"                  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22734,17 +23395,6 @@ msgstr ""
 "    Щоб дізнатися більше про CommCare, відвідайте http://www.commcarehq.org/.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    Hello,\n"
-"  "
-msgstr ""
-"\n"
-"    Вітаємо,\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
 #, python-format
 msgid ""
 "\n"
@@ -22921,6 +23571,12 @@ msgstr "щоб обрати ліцензію Creative Commons."
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 msgid "Add New Credit Card"
 msgstr "Додати нову кредитну картку"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Processing your request"
+msgstr "Обробка вашого запиту"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -23442,17 +24098,14 @@ msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "Це не скопіює таблиці пошуку (також відомі як фікстури)."
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#| msgid "Add New Credit Card"
+msgid "Add Card"
+msgstr "Додати картку"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add New Payment Card"
 msgstr "Додати нову платіжну картку"
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#| msgid ""
-#| "\n"
-#| "                We use\n"
-#| "                <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                to process this transaction.\n"
-#| "              "
 msgid ""
 "\n"
 "              We use\n"
@@ -23467,15 +24120,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Autopay card"
 msgid "Account Autopay Card"
 msgstr "Картка для автосплати рахунку"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid ""
-#| "\n"
-#| "                You don't have any groups yet, please create a Group to get started.\n"
-#| "              "
 msgid ""
 "\n"
 "        You don't have an autopay card set for your account.\n"
@@ -23486,17 +24134,16 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Saved! Reloading, please wait.."
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Refreshing, please wait..."
 msgstr "Оновлення, будь ласка, зачекайте..."
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "My Saved Reports"
 msgid "My Saved Cards"
 msgstr "Мої збережені картки"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Autopay card"
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Autopay Card"
 msgstr "Картка для автосплати"
 
@@ -23505,7 +24152,11 @@ msgid "Autopay for Other Account"
 msgstr "Автосплата для іншого рахунку"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Removed"
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Set as autopay card"
+msgstr "Встановити як картку для автосплати"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Remove Card"
 msgstr "Видалити картку"
 
@@ -23515,11 +24166,6 @@ msgstr "Видалення картки..."
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                        Click to copy feeds for linking <strong>Parent</strong>\n"
-#| "                        and <strong>Child Cases</strong>:\n"
-#| "                      "
 msgid ""
 "\n"
 "                        Actually remove <strong>%(brand)s</strong>\n"
@@ -23532,11 +24178,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid ""
-#| "\n"
-#| "      Configure external Identity Providers associated with your Enterprise\n"
-#| "      Account below.\n"
-#| "    "
 msgid ""
 "\n"
 "        You do not have any saved cards associated with your user account.\n"
@@ -23546,18 +24187,45 @@ msgstr ""
 "        У вас немає збережених карток, пов’язаних із вашим обліковим записом користувача.\n"
 "      "
 
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Select Autopay Card"
+msgstr "Оберіть картку автосплати"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Remove autopay method"
+msgstr "Видалити спосіб автосплати"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Please add an autopay card before subscribing.\n"
+"        "
+msgstr ""
+"\n"
+"          Будь ласка, додайте картку автосплати перед оформленням підписки.\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
+"          pausing your subscription due to unpaid on-demand fees.\n"
+"        "
+msgstr ""
+"\n"
+"          Автосплата наразі не є обов'язковою для річних акаунтів, але її наявність зменшує ризик\n"
+"          призупинення підписки через несплачені додаткові послуги.\n"
+"        "
+
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Manage Billing Details"
 msgid "Billing Details"
 msgstr "Платіжні реквізити"
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Last Payment Method"
 msgid "Payment Methods"
 msgstr "Способи оплати"
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Updating Data, please wait..."
 msgid "Loading payment methods, please wait..."
 msgstr "Завантаження способів оплати, будь ласка, зачекайте..."
 
@@ -24330,8 +24998,6 @@ msgid "Billing contact information was successfully updated."
 msgstr "Платіжна контактна інформація успішно оновлена."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid ""
-#| "No downstream project spaces were selected. Please contact support."
 msgid "Unknown removing card. Please contact Support."
 msgstr ""
 "Невідома помилка при видаленні картки. Будь ласка, зверніться до служби "
@@ -24545,6 +25211,18 @@ msgid ""
 msgstr ""
 "Ви вже запланували перехід на тарифний план %(software_plan_name)s з "
 "%(downgrade_date)s. Якщо це помилка, зверніться до %(contact_email)s."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error unsetting autopay method. Please contact Support."
+msgstr ""
+"Невідома помилка при скасуванні способу автосплати. Будь ласка, зверніться "
+"до служби підтримки."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error setting autopay method. Please contact Support."
+msgstr ""
+"Невідома помилка при встановленні способу автосплати. Будь ласка, зверніться"
+" до служби підтримки."
 
 #: corehq/apps/domain/views/accounting.py
 #, python-brace-format
@@ -26782,11 +27460,10 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
 msgid ""
-"There are errors with your configuration. Please fix them before creating "
-"the export."
+"A required field is incomplete or incorrect. Please check above for details."
 msgstr ""
-"У вашій конфігурації є помилки. Будь ласка, виправте їх перед створенням "
-"експорту."
+"Обов'язкове поле не заповнено або заповнено некоректно. Будь ласка, "
+"перевірте деталі вище."
 
 #: corehq/apps/export/templates/export/datasource_export_view.html
 #: corehq/apps/export/views/download.py
@@ -27414,8 +28091,20 @@ msgid "Custom Path"
 msgstr "Користувацький шлях"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select geo property"
-msgstr "Виберіть гео-властивість"
+msgid "GPS case property"
+msgstr "Властивість кейсу GPS"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"            No case properties have the data type \"GPS\". To select a GPS case\n"
+"            property here, use the Data Dictionary to set the data type of one\n"
+"            or more case properties to \"GPS\".\n"
+"          "
+msgstr ""
+"\n"
+"            Жодна властивість кейсу не має типу даних \"GPS\". Щоб вибрати тут властивість кейсу GPS, скористайтеся словником даних для встановлення типу даних однієї або декількох властивостей кейсу як \"GPS\".\n"
+"          "
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid ""
@@ -31740,6 +32429,112 @@ msgstr ""
 "обрали правильне розташування хмари у меню вище. Ваш обліковий запис і "
 "проєкт можуть бути в іншому розташуванні."
 
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Open chat"
+msgstr "Відкрити чат"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start new chat"
+msgstr "Почати новий чат"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Enter fullscreen"
+msgstr "Увімкнути повноекранний режим"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Exit fullscreen"
+msgstr "Вийти з повноекранного режиму"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Attach files"
+msgstr "Долучити файли"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Remove file"
+msgstr "Видалити файл"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File attached"
+msgstr "Файл долучено"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting chat..."
+msgstr "Запуск чату..."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Finding the best answer"
+msgstr "Пошук найкращої відповіді"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
+msgid "Uploading"
+msgstr "Завантаження"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start New Chat"
+msgstr "Почати новий чат"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
+msgstr "Початок нового чату очистить вашу поточну розмову. Продовжити?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Type a message..."
+msgstr "Введіть повідомлення..."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Send message"
+msgstr "Надіслати повідомлення"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File too large"
+msgstr "Файл завеликий"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Total file size too large"
+msgstr "Загальний розмір файлів завеликий"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Unsupported file type"
+msgstr "Непідтримуваний тип файлу"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Connection error. Please try again."
+msgstr "Помилка з'єднання. Будь ласка, спробуйте ще раз."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Session expired. Please start a new chat."
+msgstr "Сесія завершена. Будь ласка, почніть новий чат."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Powered by"
+msgstr "Працює на базі"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Need Help?"
+msgstr "Потрібна допомога?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+"Вітаю! Я CommCare Companion, ваш особистий гід по CommCare! Чим я можу "
+"допомогти вам сьогодні?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with building my CommCare application."
+msgstr "Мені потрібна допомога зі створенням мого застосунку CommCare."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help troubleshooting my mobile application."
+msgstr ""
+"Мені потрібна допомога з усуненням несправностей мого мобільного застосунку."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with exporting or understanding my data."
+msgstr "Мені потрібна допомога з експортом або розумінням моїх даних."
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr "Європейський Союз"
@@ -32051,8 +32846,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
+#: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr "Запланувати демонстрацію"
 
@@ -33728,7 +34522,6 @@ msgstr ""
 "href=\"{}\" target=\"_blank\">документацію підтримки</a>."
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Phone Number"
 msgid "Phone Number Field"
 msgstr "Поле номера телефону"
 
@@ -36726,28 +37519,39 @@ msgid "Organization or Company"
 msgstr "Організація або компанія"
 
 #: corehq/apps/registration/forms.py
+#| msgid ""
+#| "I have read and agree to Dimagi's\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+#| "               target=\"_blank\">Privacy Policy</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+#| "               target=\"_blank\">Terms of Service</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+#| "               target=\"_blank\">Business Agreement</a>, and\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
+#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Privacy Policy</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Terms of Service</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Business Agreement</a>, and\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Acceptable Use Policy</a>.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Privacy Policy</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Terms of Service</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Business Agreement</a>, and\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Acceptable Use Policy</a>.\n"
+"                "
 msgstr ""
-"Я прочитав(ла) і погоджуюся з\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Політикою конфіденційності</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Умовами використання</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Діловою угодою</a> та\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Політикою прийнятного використання</a> Dimagi.\n"
-"            "
+"Я прочитав(-ла) та погоджуюся з\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Політикою конфіденційності</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Умовами надання послуг</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Бізнес-угодою</a> та\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Політикою прийнятного використання</a> Dimagi.\n"
+"                "
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -37150,40 +37954,6 @@ msgstr ""
 "                    між хмарними розташуваннями після створення.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Create an Account"
-msgstr "Створити обліковий запис"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-#: corehq/apps/users/views/web.py
-msgid "Create Account"
-msgstr "Створити обліковий запис"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Name Project"
-msgstr "Назва проєкту"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Loading...just a second!"
-msgstr "Завантаження... одну мить!"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid ""
-"\n"
-"                Want to learn more before signing up?\n"
-"              "
-msgstr ""
-"\n"
-"                Хочете дізнатися більше перед реєстрацією?\n"
-"              "
-
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
 msgid ""
 "\n"
@@ -37197,11 +37967,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap5/_base.html
-#| msgid ""
-#| "\n"
-#| "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>\n"
-#| "            with your email address.\n"
-#| "          "
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
@@ -37755,6 +38520,35 @@ msgstr ""
 "      Ваш обліковий запис буде створено після наступного кроку.\n"
 "    "
 
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "Create an Account"
+msgstr "Створити обліковий запис"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
+msgid "Create Account"
+msgstr "Створити обліковий запис"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Name Project"
+msgstr "Назва проєкту"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Loading...just a second!"
+msgstr "Завантаження... одну мить!"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid ""
+"\n"
+"                Want to learn more before signing up?\n"
+"              "
+msgstr ""
+"\n"
+"                Хочете дізнатися більше перед реєстрацією?\n"
+"              "
+
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
 msgstr "Відвідайте CommCareHQ на своєму комп'ютері!"
@@ -37781,12 +38575,11 @@ msgstr "поточний"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-msgid ""
-"This email is already registered in the {location} cloud location. Please <a"
-" href=\"{login_link}\">sign in here</a>."
-msgstr ""
-"Цей email вже зареєстрований у хмарному розташуванні {location}. Будь ласка,"
-" <a href=\"{login_link}\">увійдіть тут</a>."
+#| msgid ""
+#| "This email is already registered in the {location} cloud location. Please <a"
+#| " href=\"{login_link}\">sign in here</a>."
+msgid "This email is already registered in the {location} cloud location. "
+msgstr "Цей email вже зареєстровано у хмарному розташуванні {location}. "
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -38450,6 +39243,16 @@ msgstr "SMS-опитування"
 #: corehq/apps/reminders/forms.py
 msgid "No Response"
 msgstr "Відповіді немає"
+
+#: corehq/apps/reminders/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+#: corehq/messaging/scheduling/forms.py
+msgid "Connect Message"
+msgstr "Повідомлення Connect"
+
+#: corehq/apps/reminders/forms.py corehq/messaging/scheduling/forms.py
+msgid "Connect Survey"
+msgstr "Підключити опитування"
 
 #: corehq/apps/reminders/forms.py
 msgid "Mobile Worker Group"
@@ -40392,11 +41195,6 @@ msgstr "Відображає деталі для вказаної події о�
 #: corehq/apps/reports/standard/sms.py
 msgid "ConnectID"
 msgstr "ConnectID"
-
-#: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
-msgid "Connect Message"
-msgstr "Повідомлення Connect"
 
 #: corehq/apps/reports/standard/sms.py
 msgid "Survey Detail"
@@ -46488,14 +47286,28 @@ msgstr "Чому я не можу редагувати?"
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid ""
 "\n"
-"              You do not have permission to modify this flag. Please contact\n"
-"              support if any changes are needed.\n"
-"            "
+"                You do not have permission to modify this flag. Please contact\n"
+"                support if any changes are needed.\n"
+"              "
 msgstr ""
 "\n"
-"              У вас немає дозволу змінювати цей прапорець. Будь ласка, зверніться\n"
-"              до служби підтримки, якщо потрібні зміни.\n"
-"            "
+"                У вас немає дозволу змінювати цей прапорець. Будь ласка, зверніться\n"
+"                до служби підтримки, якщо потрібні зміни.\n"
+"              "
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, python-format
+msgid ""
+"\n"
+"                This feature is %(status)s for all users and domains, so the\n"
+"                individually toggled items are irrelevant. The toggle will soon\n"
+"                be removed.\n"
+"              "
+msgstr ""
+"\n"
+"                Ця функція %(status)s для всіх користувачів і доменів, тому\n"
+"                індивідуальні перемикачі не мають значення. Перемикач незабаром буде видалено.\n"
+"              "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "Enabled toggle items"
@@ -53409,10 +54221,6 @@ msgid "Form not found in latest released app build"
 msgstr "Форму не знайдено у останній опублікованій збірці застосунку"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Survey"
-msgstr "Підключити опитування"
-
-#: corehq/messaging/scheduling/forms.py
 #: corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "JSON"
@@ -53467,10 +54275,6 @@ msgid "Date of final occurrence:"
 msgstr "Дата останнього повторення:"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "\n"
-#| "                          Please upload any files relevant to your suggestion.\n"
-#| "                        "
 msgid ""
 "\n"
 "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
@@ -53538,8 +54342,6 @@ msgstr ""
 "користувача(ів) ще раз."
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "One or more users were unexpectedly not found. Please select user(s) again."
 msgid ""
 "One or more users did not have an active PersonalID link. Please select "
 "user(s) again."
@@ -53548,7 +54350,6 @@ msgstr ""
 "ласка, виберіть користувача(ів) ще раз."
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid "Connect Messaging Users"
 msgid "Connect Messages can only be sent to users."
 msgstr "Повідомлення Connect можна надсилати лише користувачам."
 
@@ -54339,10 +55140,6 @@ msgstr "очистити форматування"
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert Image"
 msgstr "Вставити зображення"
-
-#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
-msgid "Uploading"
-msgstr "Завантаження"
 
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert"
@@ -56559,11 +57356,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "Confirmation"
-msgstr "Підтвердження"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Are you sure?"
 msgstr "Ви впевнені?"
 
@@ -57155,6 +57947,15 @@ msgstr "Показати кнопку \"Увімкнути всі додатки
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "Двоетапне створення облікового запису мобільного працівника"
 
+#: corehq/privileges.py
+msgid "Data Dictionary case properties have data types"
+msgstr "Властивості кейсів у словнику даних мають типи даних"
+
+#: corehq/privileges.py
+msgid "Case Export supports exporting geolocated data in GeoJSON format"
+msgstr ""
+"Експорт кейсів підтримує експорт геолокаційних даних у форматі GeoJSON"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Звіти Конструктора Звітів"
@@ -57497,39 +58298,6 @@ msgstr "сіль"
 #: corehq/util/auth.py
 msgid "hash"
 msgstr "хеш"
-
-#: corehq/util/context_processors.py
-msgid "Need Help?"
-msgstr "Потрібна допомога?"
-
-#: corehq/util/context_processors.py
-msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
-msgstr ""
-"Вітаю! Я CommCare Companion, ваш особистий гід по CommCare! Чим я можу "
-"допомогти вам сьогодні?"
-
-#: corehq/util/context_processors.py
-msgid "I need help with building my CommCare application."
-msgstr "Мені потрібна допомога зі створенням мого застосунку CommCare."
-
-#: corehq/util/context_processors.py
-msgid "I need help troubleshooting my mobile application."
-msgstr ""
-"Мені потрібна допомога з усуненням несправностей мого мобільного застосунку."
-
-#: corehq/util/context_processors.py
-msgid "I need help with exporting or understanding my data."
-msgstr "Мені потрібна допомога з експортом або розумінням моїх даних."
-
-#: corehq/util/context_processors.py
-msgid "Finding the best answer"
-msgstr "Пошук найкращої відповіді"
-
-#: corehq/util/context_processors.py
-msgid "Starting a new chat will clear your current conversation. Continue?"
-msgstr "Початок нового чату очистить вашу поточну розмову. Продовжити?"
 
 #: corehq/util/jsonattrs.py
 #, python-format
@@ -58205,6 +58973,158 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "This user cannot access this link."
+#~ msgstr "Цей користувач не має доступу до цього посилання."
+
+#~ msgid "Please enter either text body or xpath for custom icon"
+#~ msgstr "Будь ласка, введіть або текстове тіло, або xpath для власної іконки"
+
+#~ msgid ""
+#~ "There are errors with your configuration. Please fix them before creating "
+#~ "the export."
+#~ msgstr ""
+#~ "У вашій конфігурації є помилки. Будь ласка, виправте їх перед створенням "
+#~ "експорту."
+
+#~ msgid "Select geo property"
+#~ msgstr "Виберіть гео-властивість"
+
+#, python-format
+#~ msgid ""
+#~ "CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
+#~ "%(ending_on)s"
+#~ msgstr ""
+#~ "Сповіщення CommCare: підписка %(account_name)s на %(plan_name)s закінчується"
+#~ " %(ending_on)s"
+
+#, python-format
+#~ msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
+#~ msgstr ""
+#~ "Сповіщення CommCare: 30-денний пробний період для '%(domain)s' закінчується "
+#~ "%(ending_on)s"
+
+#, python-format
+#~ msgid ""
+#~ "Dear %(name)s,\n"
+#~ "\n"
+#~ "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+#~ "%(invoice_num)s for your project %(project)s.\n"
+#~ msgstr ""
+#~ "Шановн(а/ий) %(name)s,\n"
+#~ "\n"
+#~ "Цей лист є підтвердженням вашої оплати %(amount)s за рахунком №\n"
+#~ "%(invoice_num)s для вашого проєкту %(project)s.\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    To change your subscription, please log into your project on\n"
+#~ "    CommCare HQ and navigate to the\n"
+#~ "    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
+#~ "    project settings.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Щоб змінити підписку, увійдіть у свій проєкт на\n"
+#~ "    CommCare HQ та перейдіть на\n"
+#~ "    <a href=\"%(subscription_url)s\">сторінку підписки</a> у\n"
+#~ "    налаштуваннях проєкту.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    If you have questions about our pricing plans,\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">you can review them here</a>.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Якщо у вас є питання щодо тарифних планів,\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">ви можете переглянути їх тут</a>.\n"
+#~ "  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "Dear %(domain)s administrator,\n"
+#~ "\n"
+#~ "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
+#~ "change your subscription before then, your subscription will be paused on\n"
+#~ "%(ending_on)s and you will lose access to all features until you\n"
+#~ "re-subscribe to a new paid plan.\n"
+#~ "\n"
+#~ "To change your subscription, please log into your project on\n"
+#~ "CommCare HQ and and navigate to the subscription page in your project\n"
+#~ "settings: %(subscription_url)s\n"
+#~ "\n"
+#~ "If you have questions about our pricing plans, you can review them here:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "Thank you for your use and support of CommCare.\n"
+#~ "\n"
+#~ "Best regards,\n"
+#~ "\n"
+#~ "The CommCare Team\n"
+#~ "%(base_url)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Шановний(-а) адміністраторе %(domain)s,\n"
+#~ "\n"
+#~ "Термін дії вашого 30-денного пробного періоду для %(domain)s скоро закінчується! Якщо ви не зміните підписку до цього часу, вона буде призупинена %(ending_on)s, і ви втратите доступ до всіх функцій, доки не оформите нову платну підписку.\n"
+#~ "\n"
+#~ "Щоб змінити підписку, увійдіть у свій проєкт на CommCare HQ та перейдіть на сторінку підписки у налаштуваннях проєкту: %(subscription_url)s\n"
+#~ "\n"
+#~ "Якщо у вас є питання щодо наших тарифних планів, ви можете ознайомитися з ними тут:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "Дякуємо за використання та підтримку CommCare.\n"
+#~ "\n"
+#~ "З найкращими побажаннями,\n"
+#~ "\n"
+#~ "Команда CommCare\n"
+#~ "%(base_url)s\n"
+
+#~ msgid "Valid Values &amp; Formats"
+#~ msgstr "Дійсні значення та формати"
+
+#~ msgid "Saved Credit Cards"
+#~ msgstr "Збережені кредитні картки"
+
+#~ msgid "Credit Card"
+#~ msgstr "Кредитна картка"
+
+#~ msgid "Your request was successful!"
+#~ msgstr "Ваш запит виконано успішно!"
+
+#~ msgid "Delete Card"
+#~ msgstr "Видалити картку"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Дійсно видалити картку <strong><span data-bind='text: brand'></span></strong>\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+
+#~ msgid "Autopay card"
+#~ msgstr "Картка для автосплати"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove\n"
+#~ "          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Дійсно видалити\n"
+#~ "          <strong><span data-bind=\\\"text: brand\\\"></span></strong> картку\n"
+#~ "          ************<strong><span data-bind=\\\"text: last4\\\"></span></strong>?\n"
+#~ "        "
 
 #~ msgid "Actually remove this card?"
 #~ msgstr "Дійсно видалити цю картку?"

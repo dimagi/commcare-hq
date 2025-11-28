@@ -19,6 +19,37 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
+#: corehq/apps/accounting/emails.py
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
+#| "%(ending_on)s"
+msgid ""
+"CommCare Alert: {domain}'s subscription to {plan} automatically renewed for "
+"{date_start}"
+msgstr ""
+"تنبيه CommCare: اشتراك %(domain)s في %(plan_name)s ينتهي في %(ending_on)s"
+
+#: corehq/apps/accounting/emails.py corehq/apps/sso/utils/context_helpers.py
+msgid "tomorrow!"
+msgstr "غدًا!"
+
+#: corehq/apps/accounting/emails.py
+#, python-format
+msgid "on %s."
+msgstr "في %s."
+
+#: corehq/apps/accounting/emails.py
+#, fuzzy, python-format
+#| msgid ""
+#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
+#| "%(ending_on)s"
+msgid ""
+"CommCare Alert: %(domain_or_account)s's subscription to %(plan_name)s ends "
+"%(ending_on)s"
+msgstr ""
+"تنبيه CommCare: اشتراك %(domain)s في %(plan_name)s ينتهي في %(ending_on)s"
+
 #: corehq/apps/accounting/filters.py
 msgid "Account Type"
 msgstr "نوع الحساب"
@@ -704,6 +735,30 @@ msgid "Submit Request"
 msgstr "إرسال الطلب"
 
 #: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Next Subscription Begins"
+msgid "Subscription Reminder"
+msgstr "بداية الاشتراك القادم"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Reminder"
+msgid "Renewal Reminder"
+msgstr "تذكير"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Subscription Credit"
+msgid "Subscription Ending"
+msgstr "رصيد الاشتراك"
+
+#: corehq/apps/accounting/forms.py
+#, fuzzy
+#| msgid "Next Subscription Begins"
+msgid "Dimagi Contact Subscription Reminder"
+msgstr "بداية الاشتراك القادم"
+
+#: corehq/apps/accounting/forms.py
 #, python-format
 msgid "Received invalid adjustment type: %s"
 msgstr "تم استلام نوع تعديل غير صالح: %s"
@@ -827,38 +882,6 @@ msgstr "الرمز البريدي"
 #: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr "الدولة"
-
-#: corehq/apps/accounting/models.py corehq/apps/sso/utils/context_helpers.py
-msgid "tomorrow!"
-msgstr "غدًا!"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "on %s."
-msgstr "في %s."
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
-msgstr ""
-"تنبيه CommCare: اشتراك %(account_name)s في %(plan_name)s ينتهي في "
-"%(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
-msgstr ""
-"تنبيه CommCare: تنتهي فترة التجربة المجانية لمدة 30 يومًا لـ '%(domain)s' في "
-"%(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(domain)s's subscription to %(plan_name)s ends %(ending_on)s"
-msgstr ""
-"تنبيه CommCare: اشتراك %(domain)s في %(plan_name)s ينتهي في %(ending_on)s"
 
 #: corehq/apps/accounting/models.py
 #, python-format
@@ -1213,8 +1236,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -1237,6 +1259,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -1462,6 +1485,230 @@ msgstr ""
 "Cambridge, MA 02139 USA\n"
 "  </p>\n"
 "\n"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
+msgid ""
+"\n"
+"    Hello,\n"
+"  "
+msgstr ""
+"\n"
+"    مرحبًا،\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for billing account %(domain_or_account)s was\n"
+"      declined. Please check to see if your billing information correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for project space:\n"
+"      <a href=\"%(domain_url)s\">%(domain_or_account)s</a>\n"
+"      was declined. Please check to see if your billing information "
+"correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Here are the details of your declined payment:\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Billed To: %(brand)s card with the last four digits %(last4)s "
+"expiring\n"
+"      %(exp_month)s/%(exp_year)s\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, fuzzy
+#| msgid "Subscription"
+msgid "Subscription plan"
+msgstr "الاشتراك"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, fuzzy
+#| msgid "Billing Statements"
+msgid "Billing date"
+msgstr "بيانات الفواتير"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, fuzzy
+#| msgid "Invoice #%s"
+msgid "Invoice #"
+msgstr "فاتورة رقم %s"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Please find attached the prepayment invoice for your CommCare "
+#| "subscription.\n"
+#| "  "
+msgid ""
+"\n"
+"    Please update your billing information to prevent disruption to your\n"
+"    CommCare subscription.\n"
+"  "
+msgstr ""
+"\n"
+"    يرجى العثور على فاتورة الدفع المسبق لاشتراكك في CommCare مرفقة.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Please update your billing information at\n"
+"      <a href=\"%(billing_info_url)s\">%(billing_info_url)s</a>\n"
+"      to prevent disruption to your CommCare subscription.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    You'll need to pay the prior invoice whose payment method was declined, "
+"but\n"
+"    future invoices will be paid via the updated billing information.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "      If you believe this to be in error, please contact support.\n"
+#| "    "
+msgid ""
+"\n"
+"    If you have any questions, please contact %(support_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"      إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع الدعم.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Thanks, <br />\n"
+#| "    CommCare HQ Team\n"
+#| "  "
+msgid ""
+"\n"
+"    Thanks,<br />\n"
+"    -Dimagi\n"
+"  "
+msgstr ""
+"\n"
+"    شكرًا، <br />\n"
+"    فريق CommCare HQ\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "Hello,\n"
+msgid ""
+"\n"
+"Hello,"
+msgstr ""
+"\n"
+"مرحبًا،\n"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your "
+"CommCare\n"
+"subscription for billing account %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your "
+"CommCare\n"
+"subscription for project space %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Here are the details of your declined payment:\n"
+"Billed To: %(brand)s card with last four digits %(last4)s expiring "
+"%(exp_month)s/%(exp_year)s"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Please find attached the prepayment invoice for your CommCare "
+#| "subscription.\n"
+#| "  "
+msgid ""
+"\n"
+"Please update your billing information to prevent disruption to your "
+"CommCare\n"
+"subscription."
+msgstr ""
+"\n"
+"    يرجى العثور على فاتورة الدفع المسبق لاشتراكك في CommCare مرفقة.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Please update your billing information at %(billing_info_url)s\n"
+"to prevent disruption to your CommCare subscription."
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"You'll need to pay the\n"
+"prior invoice whose payment method was declined, but future invoices will "
+"be\n"
+"paid via the updated billing information.\n"
+"\n"
+"If you have any questions, please contact %(support_email)s.\n"
+"\n"
+"Thanks,\n"
+"-Dimagi"
+msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
@@ -2342,7 +2589,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/registry/templates/registry/email/access_granted.html
 #: corehq/apps/registry/templates/registry/email/access_granted.txt
 #: corehq/apps/registry/templates/registry/email/invitation.html
@@ -2398,8 +2644,11 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2415,7 +2664,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2485,6 +2733,9 @@ msgstr ""
 "%(base_url)s\n"
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #, python-format
 msgid ""
 "\n"
@@ -3135,13 +3386,37 @@ msgstr ""
 "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice "
+#| "No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
 msgid ""
 "\n"
-"    This email is a receipt for your payment of %(amount)s toward Invoice "
-"No.\n"
-"    %(invoice_num)s for your project %(project)s.\n"
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your billing account %(domain_or_account)s.\n"
+"    "
+msgstr ""
+"\n"
+"    هذا البريد الإلكتروني هو إيصال بدفعك مبلغ %(amount)s مقابل الفاتورة رقم\n"
+"    %(invoice_num)s لمشروعك %(project)s.\n"
 "  "
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice "
+#| "No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
+msgid ""
+"\n"
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your project %(domain_or_account)s.\n"
+"    "
 msgstr ""
 "\n"
 "    هذا البريد الإلكتروني هو إيصال بدفعك مبلغ %(amount)s مقابل الفاتورة رقم\n"
@@ -3171,17 +3446,77 @@ msgid "Date Due"
 msgstr "تاريخ الاستحقاق"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
-#, python-format
+#, fuzzy, python-format
+#| msgid "Dear %(name)s,"
 msgid ""
-"Dear %(name)s,\n"
+"\n"
+"Dear %(name)s,"
+msgstr "عزيزي/عزيزتي %(name)s،"
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice "
+#| "No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
+msgid ""
 "\n"
 "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-"%(invoice_num)s for your project %(project)s.\n"
+"%(invoice_num)s for your billing account %(domain_or_account)s."
 msgstr ""
-"عزيزي/عزيزتي %(name)s،\n"
 "\n"
-"هذا البريد الإلكتروني هو إيصال بدفعك مبلغ %(amount)s مقابل الفاتورة رقم\n"
-"%(invoice_num)s لمشروعك %(project)s.\n"
+"    هذا البريد الإلكتروني هو إيصال بدفعك مبلغ %(amount)s مقابل الفاتورة رقم\n"
+"    %(invoice_num)s لمشروعك %(project)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    This email is a receipt for your payment of %(amount)s toward Invoice "
+#| "No.\n"
+#| "    %(invoice_num)s for your project %(project)s.\n"
+#| "  "
+msgid ""
+"\n"
+"This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+"%(invoice_num)s for your project %(domain_or_account)s."
+msgstr ""
+"\n"
+"    هذا البريد الإلكتروني هو إيصال بدفعك مبلغ %(amount)s مقابل الفاتورة رقم\n"
+"    %(invoice_num)s لمشروعك %(project)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Invoices for project space %(domain)s are now marked as paid as of "
+#| "%(date_paid)s.\n"
+#| "\n"
+#| "Project Space: %(domain)s\n"
+#| "Amount Paid: %(amount)s\n"
+#| "Payment Date: %(date_paid)s\n"
+#| "Transaction No.: %(transaction_id)s"
+msgid ""
+"\n"
+"This invoice is now marked as paid as of %(date_paid)s.\n"
+"\n"
+"Invoice No.: %(invoice_num)s\n"
+"Amount Paid: %(amount)s\n"
+"Payment Date: %(date_paid)s\n"
+"Transaction No.: %(transaction_id)s"
+msgstr ""
+"\n"
+"تم الآن وضع علامة مدفوعة على الفواتير الخاصة بمساحة المشروع %(domain)s "
+"اعتبارًا من %(date_paid)s.\n"
+"\n"
+"مساحة المشروع: %(domain)s\n"
+"المبلغ المدفوع: %(amount)s\n"
+"تاريخ الدفع: %(date_paid)s\n"
+"رقم المعاملة: %(transaction_id)s"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
@@ -3231,7 +3566,7 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA"
 msgstr ""
 "\n"
 "شكرًا لاستخدامك CommCare. إذا كان لديك أي أسئلة، لا تتردد في التواصل مع "
@@ -3644,6 +3979,53 @@ msgstr ""
 "فريق CommCare HQ\n"
 "www.commcarehq.org\n"
 
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Your subscription will pause %(ending_on)s In case you would like to\n"
+"    renew, please select auto-renewal <a href=\"%(subscription_url)s\">here</"
+"a>.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Please reach out to %(invoicing_contact_email)s if you have any "
+"questions.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, fuzzy
+#| msgid "The CommCare HQ Team"
+msgid ""
+"\n"
+"    The CommCare Team\n"
+"  "
+msgstr "فريق CommCare HQ"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(domain)s administrator,\n"
+"\n"
+"  Your subscription will pause %(ending_on)s In case you would like to\n"
+"  renew, please select auto-renewal here: %(subscription_url)s\n"
+"\n"
+"  Please reach out to %(invoicing_contact_email)s if you have any "
+"questions.\n"
+"\n"
+"  Best regards,\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
 #, python-format
 msgid ""
@@ -3740,15 +4122,72 @@ msgstr ""
 "فريق CommCare HQ\n"
 "%(base_url)s\n"
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Dear %(name)s,\n"
+#| "  "
+msgid ""
+"\n"
+"    Dear %(dimagi_contact)s,\n"
+"  "
+msgstr ""
+"\n"
+"    عزيزي/عزيزتي %(name)s،\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    You have been added to the %(domain)s project on %(hq_name)s.\n"
+#| "  "
+msgid ""
+"\n"
+"    You have been identified as the Dimagi point of contact for\n"
+"    %(account_or_domain)s.\n"
+"  "
+msgstr ""
+"\n"
+"    تمت إضافتك إلى مشروع %(domain)s على %(hq_name)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
 msgid ""
 "\n"
-"    Your 30 Day Trial for %(domain)s ends soon! If you do not\n"
-"    change your subscription before then, your subscription will be paused "
-"on\n"
-"    %(ending_on)s and you will lose access to all features until you\n"
-"    re-subscribe to a new paid plan.\n"
+"      This account has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+msgid ""
+"\n"
+"      This project space has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Your 30 Day Trial for %(domain)s ends soon! If you do not\n"
+#| "    change your subscription before then, your subscription will be "
+#| "paused on\n"
+#| "    %(ending_on)s and you will lose access to all features until you\n"
+#| "    re-subscribe to a new paid plan.\n"
+#| "  "
+msgid ""
+"\n"
+"    After that date, the subscription will automatically pause and this "
+"space\n"
+"    will lose access to all features until it is re-subscribed to a new "
+"paid\n"
+"    plan.\n"
 "  "
 msgstr ""
 "\n"
@@ -3757,37 +4196,142 @@ msgstr ""
 "وستفقد الوصول إلى جميع الميزات حتى تعيد الاشتراك في خطة مدفوعة جديدة.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    To change or renew your subscription, please reach out to "
+#| "%(sales_email)s.\n"
+#| "  "
+msgid ""
+"\n"
+"    In case you would like to extend this subscription or have any "
+"questions,\n"
+"    please reach out to %(accounts_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    لتغيير أو تجديد اشتراكك، يرجى التواصل مع %(sales_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, fuzzy
+#| msgid "The CommCare HQ Team"
+msgid ""
+"\n"
+"    The CommCare Team<br />\n"
+"  "
+msgstr "فريق CommCare HQ"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
 #, python-format
 msgid ""
 "\n"
-"    To change your subscription, please log into your project on\n"
-"    CommCare HQ and navigate to the\n"
-"    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
-"    project settings.\n"
-"  "
-msgstr ""
+"  Dear %(dimagi_contact)s,\n"
 "\n"
-"    لتغيير اشتراكك، يرجى تسجيل الدخول إلى مشروعك على CommCare HQ والانتقال "
-"إلى\n"
-"    <a href=\"%(subscription_url)s\">صفحة الاشتراك</a> في إعدادات مشروعك.\n"
-"  "
+"  You have been identified as the Dimagi point of contact for\n"
+"  %(account_or_domain)s.\n"
+msgstr ""
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
 msgid ""
 "\n"
-"    If you have questions about our pricing plans,\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">you can review "
-"them here</a>.\n"
+"    This account has a %(plan)s subscription that is ending on "
+"%(end_date)s.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"    This project space has a %(plan)s subscription that is ending on\n"
+"    %(end_date)s.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"  After that date, the subscription will automatically pause and this space "
+"will\n"
+"  lose access to all features until it is re-subscribed to a new paid plan.\n"
+"\n"
+"  In case you would like to extend this subscription or have any questions,\n"
+"  please reach out to %(accounts_email)s.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"    ends soon!\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    Renewal: If you would like to renew, just ensure that you have auto-"
+"renewal\n"
+"    selected <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    30 days prior to the renewal date, you will receive an invoice for the "
+"new\n"
+"    subscription term to renew you to the latest version of your current "
+"plan as\n"
+"    <a href=\"%(plan_info_url)s\">described here</a>. If you'd like to "
+"renew\n"
+"    sooner, you can self-renew <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+msgid ""
+"\n"
+"    Cancellation: In case you decide you will not be renewing your "
+"subscription,\n"
+"    you can simply turn off auto-renew at any point during your "
+"subscription\n"
+"    term.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Thank you for using CommCare. If you have any questions, please don't "
+#| "hesitate to contact %(invoicing_contact_email)s.\n"
+#| "  "
+msgid ""
+"\n"
+"    In case you have any questions about your renewal, please don't hesitate "
+"to\n"
+"    contact %(invoicing_contact_email)s.\n"
 "  "
 msgstr ""
 "\n"
-"    إذا كان لديك أسئلة حول خطط الأسعار لدينا،\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">يمكنك مراجعتها "
-"هنا</a>.\n"
+"    شكرًا لاستخدامك CommCare. إذا كان لديك أي أسئلة، لا تتردد في التواصل مع "
+"%(invoicing_contact_email)s.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
 msgid ""
 "\n"
 "    Thank you for your use and support of CommCare.\n"
@@ -3797,25 +4341,23 @@ msgstr ""
 "    شكرًا لاستخدامك ودعمك لـ CommCare.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.txt
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.txt
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
 #| "Dear %(domain)s administrator,\n"
 #| "\n"
-#| "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
-#| "change your subscription before then, your subscription will be paused "
-#| "on\n"
+#| "Your %(plan_name)s subscription for %(domain)s ends soon! If you do not\n"
+#| "renew your subscription before then, your subscription will be paused on\n"
 #| "%(ending_on)s and you will lose access to all features until you\n"
 #| "re-subscribe to a new paid plan.\n"
 #| "\n"
-#| "To change your subscription, please log into your project on\n"
+#| "To change or renew your subscription, please log into your project on\n"
 #| "CommCare HQ and and navigate to the subscription page in your project\n"
 #| "settings: %(subscription_url)s\n"
 #| "\n"
-#| "If you have questions about our pricing plans, you can review them here:\n"
-#| "https://www.commcarehq.org/pricing/\n"
-#| "\n"
+#| "If you have any questions, please don’t hesitate to contact "
+#| "%(invoicing_contact_email)s.\n"
 #| "Thank you for your use and support of CommCare.\n"
 #| "\n"
 #| "Best regards,\n"
@@ -3824,46 +4366,97 @@ msgstr ""
 #| "%(base_url)s\n"
 msgid ""
 "\n"
-"Dear %(domain)s administrator,\n"
+"  Dear %(domain)s administrator,\n"
 "\n"
-"Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
-"change your subscription before then, your subscription will be paused on\n"
-"%(ending_on)s and you will lose access to all features until you\n"
-"re-subscribe to a new paid plan.\n"
+"  This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"  ends soon!\n"
 "\n"
-"To change your subscription, please log into your project on\n"
-"CommCare HQ and and navigate to the subscription page in your project\n"
-"settings: %(subscription_url)s\n"
+"  Renewal:\n"
+"  If you would like to renew, just ensure that you have auto-renewal "
+"selected\n"
+"  here: %(subscription_url)s\n"
 "\n"
-"If you have questions about our pricing plans, you can review them here:\n"
-"https://www.commcarehq.org/pricing/\n"
+"  30 days prior to the renewal date, you will receive an invoice for the "
+"new\n"
+"  subscription term to renew you to the latest version of your current plan "
+"as\n"
+"  described here: %(plan_info_url)s.\n"
+"  If you'd like to renew sooner, you can self-renew here: "
+"%(subscription_url)s\n"
 "\n"
-"Thank you for your use and support of CommCare.\n"
+"  Cancellation:\n"
+"  In case you decide you will not be renewing your subscription, you can "
+"simply\n"
+"  turn off auto-renew at any point during your subscription term.\n"
 "\n"
-"Best regards,\n"
+"  In case you have any questions about your renewal,\n"
+"  please don't hesitate to contact %(invoicing_contact_email)s.\n"
 "\n"
-"The CommCare Team\n"
-"%(base_url)s\n"
+"  Thank you for your use and support of CommCare.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
 msgstr ""
 "\n"
 "عزيزي/عزيزتي مسؤول %(domain)s،\n"
 "\n"
-"ستنتهي فترة التجربة المجانية لمدة 30 يومًا لمساحة %(domain)s قريبًا! إذا لم "
-"تقم بتغيير اشتراكك قبل ذلك، سيتم إيقاف اشتراكك مؤقتًا في %(ending_on)s وستفقد "
+"اشتراكك في خطة %(plan_name)s لمساحة %(domain)s سينتهي قريبًا! إذا لم تقم "
+"بتجديد اشتراكك قبل ذلك، سيتم إيقاف اشتراكك مؤقتًا في %(ending_on)s وستفقد "
 "الوصول إلى جميع الميزات حتى تعيد الاشتراك في خطة مدفوعة جديدة.\n"
 "\n"
-"لتغيير اشتراكك، يرجى تسجيل الدخول إلى مشروعك على CommCare HQ والانتقال إلى "
-"صفحة الاشتراك في إعدادات مشروعك: %(subscription_url)s\n"
+"لتغيير أو تجديد اشتراكك، يرجى تسجيل الدخول إلى مشروعك على CommCare HQ "
+"والانتقال إلى صفحة الاشتراك في إعدادات مشروعك: %(subscription_url)s\n"
 "\n"
-"إذا كان لديك أسئلة حول خطط الأسعار لدينا، يمكنك مراجعتها هنا:\n"
-"https://www.commcarehq.org/pricing/\n"
-"\n"
+"إذا كان لديك أي أسئلة، لا تتردد في التواصل مع %(invoicing_contact_email)s.\n"
 "شكرًا لاستخدامك ودعمك لـ CommCare.\n"
 "\n"
 "مع أطيب التحيات،\n"
 "\n"
 "فريق CommCare HQ\n"
 "%(base_url)s\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your subscription for project space %(domain)s "
+"on\n"
+"    %(plan)s is set to automatically renew on %(date_start)s.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    In case you would not like to renew your subscription, you can simply "
+"turn\n"
+"    off auto-renew <a href=\"%(subscription_url)s\">here</a> at any point "
+"during\n"
+"    your subscription term.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.txt
+#, python-format
+msgid ""
+"\n"
+"Dear %(domain)s administrator,\n"
+"\n"
+"This is a reminder that your subscription for project space %(domain)s on\n"
+"%(plan)s is set to automatically renew on %(date_start)s.\n"
+"\n"
+"In case you would not like to renew your subscription, you can simply turn\n"
+"off auto-renew here at any point during your subscription term:\n"
+"%(subscription_url)s\n"
+"\n"
+"Best regards,\n"
+"\n"
+"The CommCare Team\n"
+"%(base_url)s"
+msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
@@ -4621,6 +5214,28 @@ msgid "Card"
 msgstr "بطاقة"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#, fuzzy
+#| msgid "Autopay card"
+msgid "Use account autopay card"
+msgstr "بطاقة الدفع التلقائي"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Owner"
+msgstr "المالك"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a saved card"
 msgstr "استخدم بطاقة محفوظة"
 
@@ -5115,10 +5730,36 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "نود أن نسمع المزيد! يرجى التوضيح -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\">Terms of Service</a> and\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Privacy Policy</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      بالنقر على هذا الزر، أنت توافق على\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+"target=\"_blank\">شروط الخدمة</a> و\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">سياسة الخصوصية</a> الخاصة بـ Dimagi.\n"
+"    "
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+#| "target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+#| "target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"      By clicking Submit Request, you agree to Dimagi's\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
 "target=\"_blank\">Terms of Service</a> and\n"
 "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
@@ -5545,8 +6186,6 @@ msgstr "آخر 10 عمليات تشغيل"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -5918,7 +6557,6 @@ msgstr "حالة"
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -8520,10 +9158,8 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
@@ -8537,6 +9173,7 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
@@ -10331,6 +10968,29 @@ msgstr "أنت على وشك حذف هذا التطبيق"
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Custom Icon"
 msgstr "أيقونة مخصصة"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
+#, fuzzy
+#| msgid ""
+#| "The form will not appear in the menu unless this condition is met. Read "
+#| "more on the <a target='_blank' href='https://confluence.dimagi.com/"
+#| "display/commcarepublic/Form+Display+Conditions'>Help Site</a>."
+msgid ""
+"\n"
+"          Please add display Text or an XPath function. This will appear as "
+"a badge next to the corresponding icon.\n"
+"          Learn more\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/"
+"pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >here</a\n"
+"          >.\n"
+"        "
+msgstr ""
+"لن يظهر النموذج في القائمة إلا إذا تحقق هذا الشرط. اقرأ المزيد على <a "
+"target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/"
+"Form+Display+Conditions'>موقع المساعدة</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Text Body"
@@ -14937,10 +15597,6 @@ msgid "Reverted to version {log.info['version']}"
 msgstr "تم الرجوع إلى الإصدار {old_version}"
 
 #: corehq/apps/app_manager/views/utils.py
-msgid "Please enter either text body or xpath for custom icon"
-msgstr "يرجى إدخال نص أو xpath لأيقونة مخصصة"
-
-#: corehq/apps/app_manager/views/utils.py
 #, python-format
 msgid "Update Status for linked app %s"
 msgstr "تحديث الحالة للتطبيق المرتبط %s"
@@ -15323,6 +15979,7 @@ msgstr "هل أنت متأكد أنك تريد حذف هذه الأداة؟"
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
@@ -15463,6 +16120,42 @@ msgstr "تاريخ غير صالح"
 #: corehq/apps/case_importer/exceptions.py
 msgid "Required format: YYYY-MM-DD (e.g. \"2021-12-31\")"
 msgstr "الصيغة المطلوبة: YYYY-MM-DD (مثال: \"2021-12-31\")"
+
+#: corehq/apps/case_importer/exceptions.py
+#, fuzzy
+#| msgid "Invalid user"
+msgid "Invalid Number"
+msgstr "مستخدم غير صالح"
+
+#: corehq/apps/case_importer/exceptions.py
+#, fuzzy
+#| msgid "The user is not a demo user."
+msgid "The given value is not a number"
+msgstr "المستخدم ليس مستخدمًا تجريبيًا."
+
+#: corehq/apps/case_importer/exceptions.py
+#, fuzzy
+#| msgid "Invalid"
+msgid "Invalid GPS"
+msgstr "غير صالح"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid ""
+"Required format: \"latitude longitude\" or \"latitude longitude altitude "
+"precision\""
+msgstr ""
+
+#: corehq/apps/case_importer/exceptions.py
+#, fuzzy
+#| msgid "Add Phone Number"
+msgid "Invalid Phone Number"
+msgstr "إضافة رقم هاتف"
+
+#: corehq/apps/case_importer/exceptions.py
+#, fuzzy
+#| msgid "%s is an invalid phone number."
+msgid "The given value is not a valid phone number"
+msgstr "%s رقم هاتف غير صالح."
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected multiple choice value"
@@ -17106,10 +17799,6 @@ msgid "No corresponding application found in this project."
 msgstr "لم يتم العثور على تطبيق مطابق في هذا المشروع."
 
 #: corehq/apps/cloudcare/views.py
-msgid "This user cannot access this link."
-msgstr "لا يمكن لهذا المستخدم الوصول إلى هذا الرابط."
-
-#: corehq/apps/cloudcare/views.py
 #, python-brace-format
 msgid ""
 "You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile "
@@ -17365,6 +18054,12 @@ msgstr "تعذر تحديث '{}'. ليس لديك الدور المناسب"
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Unable to remove synced fields. You do not have the appropriate role"
 msgstr "غير قادر على إزالة الحقول المتزامنة. ليس لديك الدور المناسب"
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, fuzzy
+#| msgid "Could not delete profile '{}' because it has users assigned."
+msgid "Could not delete profile '{}' because it has invitations assigned."
+msgstr "تعذر حذف الملف الشخصي '{}' لأنه تم تعيين مستخدمين له."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Could not delete profile '{}' because it has users assigned."
@@ -19125,20 +19820,6 @@ msgid "Opened By"
 msgstr "تم الفتح بواسطة"
 
 #: corehq/apps/data_cleaning/utils/cases.py
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Owner"
-msgstr "المالك"
-
-#: corehq/apps/data_cleaning/utils/cases.py
 msgid "Closed By User ID"
 msgstr "معرّف المستخدم الذي أغلق الحالة"
 
@@ -19965,8 +20646,10 @@ msgstr ""
 "                    "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
-msgid "Valid Values &amp; Formats"
-msgstr "القيم والتنسيقات الصالحة"
+#, fuzzy
+#| msgid "No Validation"
+msgid "Import Validation"
+msgstr "بدون تحقق"
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Case Property Group must have a name"
@@ -22294,15 +22977,6 @@ msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr "يبدو أن رقم الهاتف هذا غير صالح. هل نسيت رمز الدولة؟"
 
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Subscribe to Plan"
-msgstr "الاشتراك في الخطة"
-
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
 msgstr "تجديد الخطة"
@@ -23908,6 +24582,15 @@ msgstr "جهات الاتصال"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Subscribe to Plan"
+msgstr "الاشتراك في الخطة"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, fuzzy
 #| msgid "Change Plan"
 msgid "Upgrade Plan"
@@ -24558,72 +25241,6 @@ msgstr ""
 msgid "Dismiss"
 msgstr "تجاهل"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Saved Credit Cards"
-msgstr "بطاقات الائتمان المحفوظة"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Add Card"
-msgstr "إضافة بطاقة"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Credit Card"
-msgstr "بطاقة ائتمان"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Your request was successful!"
-msgstr "تمت معالجة طلبك بنجاح!"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Delete Card"
-msgstr "حذف البطاقة"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Processing your request"
-msgstr "جارٍ معالجة طلبك"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove <strong><span data-bind='text: brand'></span></"
-"strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></"
-"strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          هل تريد فعلاً إزالة بطاقة <strong><span data-bind='text: brand'></"
-"span></strong>\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></"
-"strong>؟\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Autopay card"
-msgstr "بطاقة الدفع التلقائي"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Remove Autopay"
-msgstr "إزالة الدفع التلقائي"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-msgid "Set as autopay card"
-msgstr "تعيين كبطاقة دفع تلقائي"
-
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 #, python-format
 msgid ""
@@ -24634,30 +25251,6 @@ msgstr ""
 "\n"
 "        وفر ما يقارب 20%% عند الدفع سنويًا.  \n"
 "      "
-
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "          Actually remove <strong><span data-bind='text: brand'></span></"
-#| "strong> card\n"
-#| "          ************<strong><span data-bind=\"text: last4\"></span></"
-#| "strong>?\n"
-#| "        "
-msgid ""
-"\n"
-"          Actually remove\n"
-"          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></"
-"strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          هل تريد فعلاً إزالة بطاقة <strong><span data-bind='text: brand'></"
-"span></strong>\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></"
-"strong>؟\n"
-"        "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #, python-format
@@ -24672,6 +25265,130 @@ msgstr ""
 "      أنت على وشك الاشتراك في <strong>خطة برامج %(p)s</strong>.<br/>\n"
 "      يرجى تحديث معلومات الفوترة أدناه قبل المتابعة.\n"
 "    "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, fuzzy
+#| msgid "Updating Data, please wait..."
+msgid "Loading autopay cards, please wait..."
+msgstr "جاري تحديث البيانات، يرجى الانتظار..."
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Confirmation"
+msgstr "تأكيد"
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Please note that this may take several minutes.\n"
+#| "              Thank you for your patience!\n"
+#| "            "
+msgid ""
+"\n"
+"                Please complete the Basic Information section and select a "
+"card\n"
+"                for autopay before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"              يرجى ملاحظة أن هذا قد يستغرق عدة دقائق.\n"
+"              شكرًا لصبركم!\n"
+"            "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Want to learn more before signing up?\n"
+#| "              "
+msgid ""
+"\n"
+"                Please provide an autopay card before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                هل ترغب في معرفة المزيد قبل التسجيل؟\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Want to learn more before signing up?\n"
+#| "              "
+msgid ""
+"\n"
+"                Please complete the Basic Information section before "
+"continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                هل ترغب في معرفة المزيد قبل التسجيل؟\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this <strong>annual subscription</"
+"strong>, I acknowledge that\n"
+"                  the autopay card above will be charged on a monthly basis "
+"for any on-demand fees (excess users, SMS).\n"
+"                "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                    A separate annual invoice for the product cost will be "
+"generated and sent to the contact emails above.\n"
+"                    This invoice must be paid within "
+"%(days_date_due_annual)s days or the subscription will be paused.\n"
+"                    The selected autopay card will not be automatically "
+"charged to pay this invoice&mdash;it must be paid directly.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    This subscription will be paused on %(next_date)s.\n"
+#| "                  "
+msgid ""
+"\n"
+"                  By subscribing to this monthly subscription, I acknowledge "
+"that my autopay card will be charged on a monthly basis.\n"
+"                "
+msgstr ""
+"\n"
+"                    سيتم إيقاف هذا الاشتراك مؤقتًا في %(next_date)s.\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                   By subscribing to this <strong>annual subscription</"
+"strong>, I acknowledge that I understand an\n"
+"                   annual invoice for the product cost will be generated and "
+"sent to the contact emails above.\n"
+"                   This invoice must be paid within %(days_date_due_annual)s "
+"days or the subscription will be paused.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                    I also acknowledge that by not selecting an autopay "
+"card, I must manually pay for any on-demand fees\n"
+"                    (excess users, SMS) on a monthly basis or the "
+"subscription will be paused.\n"
+"                  "
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -25014,17 +25731,6 @@ msgstr ""
 "    لمعرفة المزيد عن CommCare HQ قم بزيارة http://www.commcarehq.org/.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    Hello,\n"
-"  "
-msgstr ""
-"\n"
-"    مرحبًا،\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
 #, python-format
 msgid ""
 "\n"
@@ -25295,6 +26001,12 @@ msgstr "لاختيار رخصة Creative Commons."
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 msgid "Add New Credit Card"
 msgstr "إضافة بطاقة ائتمان جديدة"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Processing your request"
+msgstr "جارٍ معالجة طلبك"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -25886,6 +26598,10 @@ msgid "This will not copy lookup tables (aka fixtures)."
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Add Card"
+msgstr "إضافة بطاقة"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 #, fuzzy
 #| msgid "Add New Credit Card"
 msgid "Add New Payment Card"
@@ -25936,6 +26652,7 @@ msgstr ""
 "              "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 #, fuzzy
 #| msgid "Saved! Reloading, please wait.."
 msgid "Refreshing, please wait..."
@@ -25948,6 +26665,7 @@ msgid "My Saved Cards"
 msgstr "تقاريري المحفوظة"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 #, fuzzy
 #| msgid "Autopay card"
 msgid "Autopay Card"
@@ -25956,6 +26674,11 @@ msgstr "بطاقة الدفع التلقائي"
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Autopay for Other Account"
 msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Set as autopay card"
+msgstr "تعيين كبطاقة دفع تلقائي"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #, fuzzy
@@ -26002,6 +26725,43 @@ msgstr ""
 "\n"
 "      قم بإعداد موفري الهوية الخارجيين المرتبطين بحساب مؤسستك أدناه.\n"
 "    "
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#, fuzzy
+#| msgid "Autopay card"
+msgid "Select Autopay Card"
+msgstr "بطاقة الدفع التلقائي"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#, fuzzy
+#| msgid "Remove Autopay"
+msgid "Remove autopay method"
+msgstr "إزالة الدفع التلقائي"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                You don't have any groups yet, please create a Group to "
+#| "get started.\n"
+#| "              "
+msgid ""
+"\n"
+"          Please add an autopay card before subscribing.\n"
+"        "
+msgstr ""
+"\n"
+"                ليس لديك أي مجموعات بعد، يرجى إنشاء مجموعة للبدء.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Autopay is not required for annual accounts at this time, but "
+"having autopay enabled reduces the risk of\n"
+"          pausing your subscription due to unpaid on-demand fees.\n"
+"        "
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
 #, fuzzy
@@ -27023,6 +27783,18 @@ msgstr ""
 "لقد قمت بالفعل بجدولة تخفيض الاشتراك إلى خطة البرمجيات "
 "%(software_plan_name)s في %(downgrade_date)s. إذا كان هذا خطأ، يرجى التواصل "
 "مع %(contact_email)."
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid "No downstream project spaces were selected. Please contact support."
+msgid "Unknown error unsetting autopay method. Please contact Support."
+msgstr "لم يتم اختيار أي مساحات مشاريع فرعية. يرجى التواصل مع الدعم."
+
+#: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid "No downstream project spaces were selected. Please contact support."
+msgid "Unknown error setting autopay method. Please contact Support."
+msgstr "لم يتم اختيار أي مساحات مشاريع فرعية. يرجى التواصل مع الدعم."
 
 #: corehq/apps/domain/views/accounting.py
 #, python-brace-format
@@ -29318,9 +30090,8 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
 msgid ""
-"There are errors with your configuration. Please fix them before creating "
-"the export."
-msgstr "هناك أخطاء في الإعدادات الخاصة بك. يرجى تصحيحها قبل إنشاء التصدير."
+"A required field is incomplete or incorrect. Please check above for details."
+msgstr ""
 
 #: corehq/apps/export/templates/export/datasource_export_view.html
 #: corehq/apps/export/views/download.py
@@ -30008,8 +30779,21 @@ msgid "Custom Path"
 msgstr "مسار مخصص"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select geo property"
-msgstr "اختر خاصية جغرافية"
+#, fuzzy
+#| msgid "Set case property"
+msgid "GPS case property"
+msgstr "تعيين خاصية الحالة"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"            No case properties have the data type \"GPS\". To select a GPS "
+"case\n"
+"            property here, use the Data Dictionary to set the data type of "
+"one\n"
+"            or more case properties to \"GPS\".\n"
+"          "
+msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid ""
@@ -34461,6 +35245,139 @@ msgid ""
 "be in a different location."
 msgstr ""
 
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Open"
+msgid "Open chat"
+msgstr "مفتوح"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Start Date"
+msgid "Start new chat"
+msgstr "تاريخ البدء"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Enter fullscreen"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Exit fullscreen"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Attachments"
+msgid "Attach files"
+msgstr "المرفقات"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Remove filter"
+msgid "Remove file"
+msgstr "إزالة الفلتر"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File attached"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Setting as default..."
+msgid "Starting chat..."
+msgstr "يتم التعيين كافتراضي..."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Finding the best answer"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
+msgid "Uploading"
+msgstr "جاري الرفع"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Start Date"
+msgid "Start New Chat"
+msgstr "تاريخ البدء"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Test SMS Message"
+msgid "Type a message..."
+msgstr "اختبار رسالة SMS"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Send Message"
+msgid "Send message"
+msgstr "إرسال رسالة"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "File Downloader"
+msgid "File too large"
+msgstr "أداة تنزيل الملفات"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Could not send email: file size is too large."
+msgid "Total file size too large"
+msgstr "تعذر إرسال البريد الإلكتروني: حجم الملف كبير جدًا."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Unsupported Report"
+msgid "Unsupported file type"
+msgstr "تقرير غير مدعوم"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "An error occurred. Please try again"
+msgid "Connection error. Please try again."
+msgstr "حدث خطأ. يرجى المحاولة مرة أخرى"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "That session does not exist. Please start a new session."
+msgid "Session expired. Please start a new chat."
+msgstr "هذه الجلسة غير موجودة. يرجى بدء جلسة جديدة."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "Verified by"
+msgid "Powered by"
+msgstr "تم التحقق بواسطة"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Need Help?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#, fuzzy
+#| msgid "How to Create and Deploy a CommCare Application."
+msgid "I need help with building my CommCare application."
+msgstr "كيفية إنشاء ونشر تطبيق CommCare."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help troubleshooting my mobile application."
+msgstr ""
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with exporting or understanding my data."
+msgstr ""
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr ""
@@ -34821,8 +35738,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
+#: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr "جدولة عرض توضيحي"
 
@@ -39779,17 +40695,29 @@ msgid "Organization or Company"
 msgstr "المنظمة أو الشركة"
 
 #: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid ""
+#| "I have read and agree to Dimagi's\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+#| "               target=\"_blank\">Privacy Policy</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+#| "               target=\"_blank\">Terms of Service</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+#| "               target=\"_blank\">Business Agreement</a>, and\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
+#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Privacy Policy</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Terms of Service</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Business Agreement</a>, and\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Acceptable Use Policy</a>.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Privacy Policy</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Terms of Service</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Business Agreement</a>, and\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Acceptable Use Policy</a>.\n"
+"                "
 msgstr ""
 "لقد قرأت وأوافق على\n"
 "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
@@ -40276,40 +41204,6 @@ msgstr ""
 "                    سيتم حذف <strong>جميع</strong> إرساليات النماذج الخاصة "
 "بـ %(friendly_name)s.\n"
 "                  "
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Create an Account"
-msgstr "إنشاء حساب"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-#: corehq/apps/users/views/web.py
-msgid "Create Account"
-msgstr "إنشاء حساب"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Name Project"
-msgstr "تسمية المشروع"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Loading...just a second!"
-msgstr "جاري التحميل... لحظة فقط!"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid ""
-"\n"
-"                Want to learn more before signing up?\n"
-"              "
-msgstr ""
-"\n"
-"                هل ترغب في معرفة المزيد قبل التسجيل؟\n"
-"              "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
 msgid ""
@@ -40963,6 +41857,35 @@ msgstr ""
 "      سيتم إنشاء حسابك بعد الخطوة التالية.\n"
 "    "
 
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "Create an Account"
+msgstr "إنشاء حساب"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
+msgid "Create Account"
+msgstr "إنشاء حساب"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Name Project"
+msgstr "تسمية المشروع"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Loading...just a second!"
+msgstr "جاري التحميل... لحظة فقط!"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid ""
+"\n"
+"                Want to learn more before signing up?\n"
+"              "
+msgstr ""
+"\n"
+"                هل ترغب في معرفة المزيد قبل التسجيل؟\n"
+"              "
+
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
 msgstr "قم بزيارة CommCareHQ من جهاز الكمبيوتر الخاص بك!"
@@ -40988,9 +41911,7 @@ msgstr "الحالي"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-msgid ""
-"This email is already registered in the {location} cloud location. Please <a "
-"href=\"{login_link}\">sign in here</a>."
+msgid "This email is already registered in the {location} cloud location. "
 msgstr ""
 
 #: corehq/apps/registration/views.py
@@ -41646,6 +42567,16 @@ msgstr "استبيان الرسائل القصيرة"
 #: corehq/apps/reminders/forms.py
 msgid "No Response"
 msgstr "لا يوجد رد"
+
+#: corehq/apps/reminders/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+#: corehq/messaging/scheduling/forms.py
+msgid "Connect Message"
+msgstr "رسالة الاتصال"
+
+#: corehq/apps/reminders/forms.py corehq/messaging/scheduling/forms.py
+msgid "Connect Survey"
+msgstr "ربط الاستبيان"
 
 #: corehq/apps/reminders/forms.py
 msgid "Mobile Worker Group"
@@ -43604,11 +44535,6 @@ msgstr "يعرض التفاصيل لحدث مراسلة معين."
 #: corehq/apps/reports/standard/sms.py
 msgid "ConnectID"
 msgstr "معرّف الاتصال"
-
-#: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
-msgid "Connect Message"
-msgstr "رسالة الاتصال"
 
 #: corehq/apps/reports/standard/sms.py
 msgid "Survey Detail"
@@ -50029,15 +50955,27 @@ msgstr "لماذا لا أرى أي بيانات؟"
 #| "              "
 msgid ""
 "\n"
-"              You do not have permission to modify this flag. Please "
+"                You do not have permission to modify this flag. Please "
 "contact\n"
-"              support if any changes are needed.\n"
-"            "
+"                support if any changes are needed.\n"
+"              "
 msgstr ""
 "\n"
 "                ليس لديك إذن لتسجيل الدخول عبر تسجيل الدخول الموحد. إذا كان "
 "هذا خطأ، يرجى التواصل مع مسؤول مشروعك.\n"
 "              "
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, python-format
+msgid ""
+"\n"
+"                This feature is %(status)s for all users and domains, so "
+"the\n"
+"                individually toggled items are irrelevant. The toggle will "
+"soon\n"
+"                be removed.\n"
+"              "
+msgstr ""
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "Enabled toggle items"
@@ -57347,10 +58285,6 @@ msgstr "يرجى إنشاء إصدار منشور من التطبيق"
 msgid "Form not found in latest released app build"
 msgstr "النموذج غير موجود في أحدث إصدار منشور من التطبيق"
 
-#: corehq/messaging/scheduling/forms.py
-msgid "Connect Survey"
-msgstr "ربط الاستبيان"
-
 #: corehq/messaging/scheduling/forms.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "JSON"
@@ -58314,10 +59248,6 @@ msgstr "مسح التنسيق"
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert Image"
 msgstr "إدراج صورة"
-
-#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
-msgid "Uploading"
-msgstr "جاري الرفع"
 
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert"
@@ -60582,11 +61512,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "Confirmation"
-msgstr "تأكيد"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Are you sure?"
 msgstr "هل أنت متأكد؟"
 
@@ -61196,6 +62121,16 @@ msgstr ""
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "تعطيل قفل حساب العامل عبر الهاتف المحمول"
 
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Use the Data Dictionary to manage case types."
+msgid "Data Dictionary case properties have data types"
+msgstr "استخدم قاموس البيانات لإدارة أنواع القضايا."
+
+#: corehq/privileges.py
+msgid "Case Export supports exporting geolocated data in GeoJSON format"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "تقارير منشئ التقارير"
@@ -61538,38 +62473,6 @@ msgstr ""
 
 #: corehq/util/auth.py
 msgid "hash"
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "Need Help?"
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
-msgstr ""
-
-#: corehq/util/context_processors.py
-#, fuzzy
-#| msgid "How to Create and Deploy a CommCare Application."
-msgid "I need help with building my CommCare application."
-msgstr "كيفية إنشاء ونشر تطبيق CommCare."
-
-#: corehq/util/context_processors.py
-msgid "I need help troubleshooting my mobile application."
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "I need help with exporting or understanding my data."
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "Finding the best answer"
-msgstr ""
-
-#: corehq/util/context_processors.py
-msgid "Starting a new chat will clear your current conversation. Continue?"
 msgstr ""
 
 #: corehq/util/jsonattrs.py
@@ -62241,6 +63144,201 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "This user cannot access this link."
+#~ msgstr "لا يمكن لهذا المستخدم الوصول إلى هذا الرابط."
+
+#~ msgid "Please enter either text body or xpath for custom icon"
+#~ msgstr "يرجى إدخال نص أو xpath لأيقونة مخصصة"
+
+#~ msgid ""
+#~ "There are errors with your configuration. Please fix them before creating "
+#~ "the export."
+#~ msgstr "هناك أخطاء في الإعدادات الخاصة بك. يرجى تصحيحها قبل إنشاء التصدير."
+
+#~ msgid "Select geo property"
+#~ msgstr "اختر خاصية جغرافية"
+
+#, python-format
+#~ msgid ""
+#~ "CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
+#~ "%(ending_on)s"
+#~ msgstr ""
+#~ "تنبيه CommCare: اشتراك %(account_name)s في %(plan_name)s ينتهي في "
+#~ "%(ending_on)s"
+
+#, python-format
+#~ msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
+#~ msgstr ""
+#~ "تنبيه CommCare: تنتهي فترة التجربة المجانية لمدة 30 يومًا لـ '%(domain)s' "
+#~ "في %(ending_on)s"
+
+#, python-format
+#~ msgid ""
+#~ "Dear %(name)s,\n"
+#~ "\n"
+#~ "This email is a receipt for your payment of %(amount)s toward Invoice "
+#~ "No.\n"
+#~ "%(invoice_num)s for your project %(project)s.\n"
+#~ msgstr ""
+#~ "عزيزي/عزيزتي %(name)s،\n"
+#~ "\n"
+#~ "هذا البريد الإلكتروني هو إيصال بدفعك مبلغ %(amount)s مقابل الفاتورة رقم\n"
+#~ "%(invoice_num)s لمشروعك %(project)s.\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    To change your subscription, please log into your project on\n"
+#~ "    CommCare HQ and navigate to the\n"
+#~ "    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
+#~ "    project settings.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    لتغيير اشتراكك، يرجى تسجيل الدخول إلى مشروعك على CommCare HQ "
+#~ "والانتقال إلى\n"
+#~ "    <a href=\"%(subscription_url)s\">صفحة الاشتراك</a> في إعدادات "
+#~ "مشروعك.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    If you have questions about our pricing plans,\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">you can review "
+#~ "them here</a>.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    إذا كان لديك أسئلة حول خطط الأسعار لدينا،\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">يمكنك مراجعتها "
+#~ "هنا</a>.\n"
+#~ "  "
+
+#, fuzzy, python-format
+#~| msgid ""
+#~| "\n"
+#~| "Dear %(domain)s administrator,\n"
+#~| "\n"
+#~| "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
+#~| "change your subscription before then, your subscription will be paused "
+#~| "on\n"
+#~| "%(ending_on)s and you will lose access to all features until you\n"
+#~| "re-subscribe to a new paid plan.\n"
+#~| "\n"
+#~| "To change your subscription, please log into your project on\n"
+#~| "CommCare HQ and and navigate to the subscription page in your project\n"
+#~| "settings: %(subscription_url)s\n"
+#~| "\n"
+#~| "If you have questions about our pricing plans, you can review them "
+#~| "here:\n"
+#~| "https://www.commcarehq.org/pricing/\n"
+#~| "\n"
+#~| "Thank you for your use and support of CommCare.\n"
+#~| "\n"
+#~| "Best regards,\n"
+#~| "\n"
+#~| "The CommCare HQ Team\n"
+#~| "%(base_url)s\n"
+#~ msgid ""
+#~ "\n"
+#~ "Dear %(domain)s administrator,\n"
+#~ "\n"
+#~ "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
+#~ "change your subscription before then, your subscription will be paused "
+#~ "on\n"
+#~ "%(ending_on)s and you will lose access to all features until you\n"
+#~ "re-subscribe to a new paid plan.\n"
+#~ "\n"
+#~ "To change your subscription, please log into your project on\n"
+#~ "CommCare HQ and and navigate to the subscription page in your project\n"
+#~ "settings: %(subscription_url)s\n"
+#~ "\n"
+#~ "If you have questions about our pricing plans, you can review them here:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "Thank you for your use and support of CommCare.\n"
+#~ "\n"
+#~ "Best regards,\n"
+#~ "\n"
+#~ "The CommCare Team\n"
+#~ "%(base_url)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "عزيزي/عزيزتي مسؤول %(domain)s،\n"
+#~ "\n"
+#~ "ستنتهي فترة التجربة المجانية لمدة 30 يومًا لمساحة %(domain)s قريبًا! إذا لم "
+#~ "تقم بتغيير اشتراكك قبل ذلك، سيتم إيقاف اشتراكك مؤقتًا في %(ending_on)s "
+#~ "وستفقد الوصول إلى جميع الميزات حتى تعيد الاشتراك في خطة مدفوعة جديدة.\n"
+#~ "\n"
+#~ "لتغيير اشتراكك، يرجى تسجيل الدخول إلى مشروعك على CommCare HQ والانتقال "
+#~ "إلى صفحة الاشتراك في إعدادات مشروعك: %(subscription_url)s\n"
+#~ "\n"
+#~ "إذا كان لديك أسئلة حول خطط الأسعار لدينا، يمكنك مراجعتها هنا:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "شكرًا لاستخدامك ودعمك لـ CommCare.\n"
+#~ "\n"
+#~ "مع أطيب التحيات،\n"
+#~ "\n"
+#~ "فريق CommCare HQ\n"
+#~ "%(base_url)s\n"
+
+#~ msgid "Valid Values &amp; Formats"
+#~ msgstr "القيم والتنسيقات الصالحة"
+
+#~ msgid "Saved Credit Cards"
+#~ msgstr "بطاقات الائتمان المحفوظة"
+
+#~ msgid "Credit Card"
+#~ msgstr "بطاقة ائتمان"
+
+#~ msgid "Your request was successful!"
+#~ msgstr "تمت معالجة طلبك بنجاح!"
+
+#~ msgid "Delete Card"
+#~ msgstr "حذف البطاقة"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove <strong><span data-bind='text: brand'></span></"
+#~ "strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></"
+#~ "strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          هل تريد فعلاً إزالة بطاقة <strong><span data-bind='text: "
+#~ "brand'></span></strong>\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></"
+#~ "strong>؟\n"
+#~ "        "
+
+#~ msgid "Autopay card"
+#~ msgstr "بطاقة الدفع التلقائي"
+
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "          Actually remove <strong><span data-bind='text: brand'></span></"
+#~| "strong> card\n"
+#~| "          ************<strong><span data-bind=\"text: last4\"></span></"
+#~| "strong>?\n"
+#~| "        "
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove\n"
+#~ "          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></"
+#~ "strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          هل تريد فعلاً إزالة بطاقة <strong><span data-bind='text: "
+#~ "brand'></span></strong>\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></"
+#~ "strong>؟\n"
+#~ "        "
 
 #~ msgid "Actually remove this card?"
 #~ msgstr "هل تريد فعلاً إزالة هذه البطاقة؟"

@@ -694,3 +694,18 @@ class TestCaseAPI(TestCase):
             )
             # These requests should return a 400 because of the bad body, not a 301 redirect
             self.assertEqual(res.status_code, 400)
+
+    def test_case_name_twice(self):
+        case = self._make_case()
+        res = self._update_case(case.case_id, {
+            'case_name': 'Beth Harmon',
+            'owner_id': 'us_chess_federation',
+            'properties': {
+                'rank': '2100',
+                'case_name': 'Beth Harmon',  # ERROR
+                'champion': 'true',
+            },
+        })
+        self.assertEqual(res.status_code, 400)
+        msg = "Error with case property 'case_name'. This must be specified at the top level."
+        self.assertEqual(res.json()['error'], msg)

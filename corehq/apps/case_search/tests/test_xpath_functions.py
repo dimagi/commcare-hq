@@ -31,6 +31,9 @@ INVALID_TEST_CASES = [(
 ), (
     'within-distance("coords", "42.4402967 -71.1453275", "eight", "miles")',
     "The third argument to 'within-distance' must be a number, got 'eight'"
+), (
+    'starts-with("kpop-demon")',
+    "The 'starts-with' function accepts exactly 2 arguments, got 1"
 )]
 
 

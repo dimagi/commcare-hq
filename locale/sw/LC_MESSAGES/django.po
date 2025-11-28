@@ -20,6 +20,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: corehq/apps/accounting/emails.py
+#, python-brace-format
+msgid ""
+"CommCare Alert: {domain}'s subscription to {plan} automatically renewed for "
+"{date_start}"
+msgstr ""
+"Arifa ya CommCare: Usajili wa {domain} kwa {plan} umeongezwa kiotomatiki "
+"kuanzia {date_start}"
+
+#: corehq/apps/accounting/emails.py corehq/apps/sso/utils/context_helpers.py
+msgid "tomorrow!"
+msgstr "kesho!"
+
+#: corehq/apps/accounting/emails.py
+#, python-format
+msgid "on %s."
+msgstr "tarehe %s."
+
+#: corehq/apps/accounting/emails.py
+#, python-format
+msgid ""
+"CommCare Alert: %(domain_or_account)s's subscription to %(plan_name)s ends "
+"%(ending_on)s"
+msgstr ""
+"Arifa ya CommCare: Usajili wa %(domain_or_account)s kwa %(plan_name)s "
+"unamalizika %(ending_on)s"
+
 #: corehq/apps/accounting/filters.py
 msgid "Account Type"
 msgstr "Aina ya Akaunti"
@@ -678,6 +705,22 @@ msgid "Submit Request"
 msgstr "Tuma Ombi"
 
 #: corehq/apps/accounting/forms.py
+msgid "Subscription Reminder"
+msgstr "Kumbusho la Usajili"
+
+#: corehq/apps/accounting/forms.py
+msgid "Renewal Reminder"
+msgstr "Kumbusho la Upyaishaji"
+
+#: corehq/apps/accounting/forms.py
+msgid "Subscription Ending"
+msgstr "Usajili Unamalizika"
+
+#: corehq/apps/accounting/forms.py
+msgid "Dimagi Contact Subscription Reminder"
+msgstr "Kumbusho la Usajili wa Mawasiliano ya Dimagi"
+
+#: corehq/apps/accounting/forms.py
 #, python-format
 msgid "Received invalid adjustment type: %s"
 msgstr "Aina batili ya marekebisho imepokelewa: %s"
@@ -803,40 +846,6 @@ msgstr "Nambari ya Posta"
 #: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr "Nchi"
-
-#: corehq/apps/accounting/models.py corehq/apps/sso/utils/context_helpers.py
-msgid "tomorrow!"
-msgstr "kesho!"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "on %s."
-msgstr "tarehe %s."
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
-msgstr ""
-"Arifa ya CommCare: usajili wa %(account_name)s kwa %(plan_name)s unamalizika"
-" %(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
-msgstr ""
-"Arifa ya CommCare: majaribio ya siku 30 kwa '%(domain)s' yanamalizika "
-"%(ending_on)s"
-
-#: corehq/apps/accounting/models.py
-#, python-format
-msgid ""
-"CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
-"%(ending_on)s"
-msgstr ""
-"Arifa ya CommCare: usajili wa %(domain)s kwa %(plan_name)s unamalizika "
-"%(ending_on)s"
 
 #: corehq/apps/accounting/models.py
 #, python-format
@@ -1197,8 +1206,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
@@ -1221,6 +1229,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -1392,6 +1401,240 @@ msgstr ""
 "    Taarifa Kutoka: CommCare na kampuni ya Dimagi, Inc. 245 Main Street, Ghorofa ya 2, Cambridge, MA 02142 USA\n"
 "  </p>\n"
 "\n"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
+#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
+msgid ""
+"\n"
+"    Hello,\n"
+"  "
+msgstr ""
+"\n"
+"    Habari,\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for billing account %(domain_or_account)s was\n"
+"      declined. Please check to see if your billing information correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+"\n"
+"      Hii ni taarifa kukujulisha kwamba malipo yako ya kadi ya mkopo kwa ajili ya\n"
+"      usajili wa CommCare kwa akaunti ya malipo %(domain_or_account)s\n"
+"      yamekataliwa. Tafadhali hakikisha taarifa zako za malipo zinafanana\n"
+"      na kadi yako ya mkopo.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      This is a notice to inform you that your credit card payment for your\n"
+"      CommCare subscription for project space:\n"
+"      <a href=\"%(domain_url)s\">%(domain_or_account)s</a>\n"
+"      was declined. Please check to see if your billing information correctly\n"
+"      matches your credit card.\n"
+"    "
+msgstr ""
+"\n"
+"      Hii ni taarifa kukujulisha kwamba malipo yako ya kadi ya mkopo kwa ajili ya\n"
+"      usajili wa CommCare kwa nafasi ya mradi:\n"
+"      <a href=\"%(domain_url)s\">%(domain_or_account)s</a>\n"
+"      yamekataliwa. Tafadhali hakikisha taarifa zako za malipo zinafanana\n"
+"      na kadi yako ya mkopo.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Here are the details of your declined payment:\n"
+"  "
+msgstr ""
+"\n"
+"    Hapa kuna maelezo ya malipo yako yaliyokataliwa:\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Billed To: %(brand)s card with the last four digits %(last4)s expiring\n"
+"      %(exp_month)s/%(exp_year)s\n"
+"    "
+msgstr ""
+"\n"
+"      Imelipiwa kwa: kadi ya %(brand)s yenye namba nne za mwisho %(last4)s inayoisha\n"
+"      %(exp_month)s/%(exp_year)s\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid "Subscription plan"
+msgstr "Mpango wa usajili"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid "Billing date"
+msgstr "Tarehe ya malipo"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid "Invoice #"
+msgstr "Ankara #"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Please update your billing information to prevent disruption to your\n"
+"    CommCare subscription.\n"
+"  "
+msgstr ""
+"\n"
+"    Tafadhali sasisha taarifa zako za malipo ili kuepuka usumbufu kwenye\n"
+"    usajili wako wa CommCare.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"      Please update your billing information at\n"
+"      <a href=\"%(billing_info_url)s\">%(billing_info_url)s</a>\n"
+"      to prevent disruption to your CommCare subscription.\n"
+"    "
+msgstr ""
+"\n"
+"      Tafadhali sasisha taarifa zako za malipo kwenye\n"
+"      <a href=\"%(billing_info_url)s\">%(billing_info_url)s</a>\n"
+"      ili kuepuka usumbufu kwenye usajili wako wa CommCare.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    You'll need to pay the prior invoice whose payment method was declined, but\n"
+"    future invoices will be paid via the updated billing information.\n"
+"  "
+msgstr ""
+"\n"
+"    Utahitaji kulipa ankara ya awali ambayo njia yake ya malipo ilikataliwa, lakini\n"
+"    ankara zijazo zitalipwa kupitia taarifa mpya za malipo.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+#, python-format
+msgid ""
+"\n"
+"    If you have any questions, please contact %(support_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Ikiwa una maswali yoyote, tafadhali wasiliana na %(support_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
+msgid ""
+"\n"
+"    Thanks,<br />\n"
+"    -Dimagi\n"
+"  "
+msgstr ""
+"\n"
+"    Asante,<br />\n"
+"    -Dimagi\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid ""
+"\n"
+"Hello,"
+msgstr ""
+"\n"
+"Habari,"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your CommCare\n"
+"subscription for billing account %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+"\n"
+"Hii ni taarifa kukujulisha kwamba malipo yako ya kadi ya mkopo kwa usajili wako wa CommCare\n"
+"kwa akaunti ya malipo %(domain_or_account)s yamekataliwa. Tafadhali\n"
+"hakikisha taarifa zako za malipo zinafanana na kadi yako ya mkopo."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"This is a notice to inform you that your credit card payment for your CommCare\n"
+"subscription for project space %(domain_or_account)s was declined. Please\n"
+"check to see if your billing information correctly matches your credit card."
+msgstr ""
+"\n"
+"Hii ni taarifa kukujulisha kwamba malipo yako ya kadi ya mkopo kwa usajili wako wa CommCare\n"
+"kwa nafasi ya mradi %(domain_or_account)s yamekataliwa. Tafadhali\n"
+"hakikisha taarifa zako za malipo zinafanana na kadi yako ya mkopo."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Here are the details of your declined payment:\n"
+"Billed To: %(brand)s card with last four digits %(last4)s expiring %(exp_month)s/%(exp_year)s"
+msgstr ""
+"\n"
+"Hapa kuna maelezo ya malipo yako yaliyokataliwa:\n"
+"Imelipiwa kwa: kadi ya %(brand)s yenye namba nne za mwisho %(last4)s inayoisha %(exp_month)s/%(exp_year)s"
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+msgid ""
+"\n"
+"Please update your billing information to prevent disruption to your CommCare\n"
+"subscription."
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"Please update your billing information at %(billing_info_url)s\n"
+"to prevent disruption to your CommCare subscription."
+msgstr ""
+"\n"
+"Tafadhali sasisha taarifa zako za malipo kwenye %(billing_info_url)s\n"
+"ili kuepuka usumbufu kwenye usajili wako wa CommCare."
+
+#: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
+#, python-format
+msgid ""
+"\n"
+"You'll need to pay the\n"
+"prior invoice whose payment method was declined, but future invoices will be\n"
+"paid via the updated billing information.\n"
+"\n"
+"If you have any questions, please contact %(support_email)s.\n"
+"\n"
+"Thanks,\n"
+"-Dimagi"
+msgstr ""
+"\n"
+"Utahitaji kulipa\n"
+"ankara ya awali ambayo njia yake ya malipo ilikataliwa, lakini ankara zijazo zitalipwa\n"
+"kupitia taarifa mpya za malipo.\n"
+"\n"
+"Ikiwa una maswali yoyote, tafadhali wasiliana na %(support_email)s.\n"
+"\n"
+"Asante,\n"
+"-Dimagi"
 
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/credit_receipt.html
@@ -2163,7 +2406,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/registry/templates/registry/email/access_granted.html
 #: corehq/apps/registry/templates/registry/email/access_granted.txt
 #: corehq/apps/registry/templates/registry/email/invitation.html
@@ -2215,8 +2457,11 @@ msgstr ""
 "  "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2232,7 +2477,6 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/sso_deactivation_skip_notification.html
@@ -2278,6 +2522,9 @@ msgstr ""
 "%(base_url)s\n"
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
 #, python-format
 msgid ""
 "\n"
@@ -2774,14 +3021,27 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-"    %(invoice_num)s for your project %(project)s.\n"
-"  "
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your billing account %(domain_or_account)s.\n"
+"    "
 msgstr ""
 "\n"
-"    Barua pepe hii ni risiti ya malipo yako ya %(amount)s kwa ajili ya Ankara Na.\n"
-"    %(invoice_num)s ya mradi wako %(project)s.\n"
-"  "
+"      Barua pepe hii ni risiti ya malipo yako ya %(amount)s kwa ajili ya Ankara\n"
+"      Na. %(invoice_num)s kwa akaunti yako ya malipo %(domain_or_account)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
+#, python-format
+msgid ""
+"\n"
+"      This email is a receipt for your payment of %(amount)s toward Invoice\n"
+"      No. %(invoice_num)s for your project %(domain_or_account)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Barua pepe hii ni risiti ya malipo yako ya %(amount)s kwa ajili ya Ankara\n"
+"      Na. %(invoice_num)s kwa mradi wako %(domain_or_account)s.\n"
+"    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #, python-format
@@ -2808,15 +3068,52 @@ msgstr "Tarehe ya Malipo"
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
 msgid ""
-"Dear %(name)s,\n"
+"\n"
+"Dear %(name)s,"
+msgstr ""
+"\n"
+"Mpendwa %(name)s,"
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+msgid ""
 "\n"
 "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
-"%(invoice_num)s for your project %(project)s.\n"
+"%(invoice_num)s for your billing account %(domain_or_account)s."
 msgstr ""
-"Mpendwa %(name)s,\n"
 "\n"
 "Barua pepe hii ni risiti ya malipo yako ya %(amount)s kwa ajili ya Ankara Na.\n"
-"%(invoice_num)s ya mradi wako %(project)s.\n"
+"%(invoice_num)s kwa akaunti yako ya malipo %(domain_or_account)s."
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+msgid ""
+"\n"
+"This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+"%(invoice_num)s for your project %(domain_or_account)s."
+msgstr ""
+"\n"
+"Barua pepe hii ni risiti ya malipo yako ya %(amount)s kwa ajili ya Ankara Na.\n"
+"%(invoice_num)s kwa mradi wako %(domain_or_account)s."
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
+#, python-format
+msgid ""
+"\n"
+"This invoice is now marked as paid as of %(date_paid)s.\n"
+"\n"
+"Invoice No.: %(invoice_num)s\n"
+"Amount Paid: %(amount)s\n"
+"Payment Date: %(date_paid)s\n"
+"Transaction No.: %(transaction_id)s"
+msgstr ""
+"\n"
+"Ankara hii sasa imewekwa kama imelipwa kuanzia %(date_paid)s.\n"
+"\n"
+"Ankara Na.: %(invoice_num)s\n"
+"Kiasi Kilicholipwa: %(amount)s\n"
+"Tarehe ya Malipo: %(date_paid)s\n"
+"Nambari ya Muamala: %(transaction_id)s"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.txt
 #, python-format
@@ -2854,19 +3151,19 @@ msgid ""
 "\n"
 "Email From:\n"
 "CommCare and the corporation Dimagi, Inc.\n"
-"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
+"245 Main Street, 2nd Floor, Cambridge, MA 02142 USA"
 msgstr ""
 "\n"
 "Asante kwa kutumia CommCare. Ikiwa una maswali yoyote, tafadhali usisite\n"
 "kuwasiliana na %(invoicing_contact_email)s.\n"
 "\n"
-"Wako mwaminifu,\n"
+"Wako kwa dhati,\n"
 "Timu ya CommCare\n"
 "www.commcarehq.org\n"
 "\n"
 "Barua Pepe Kutoka:\n"
 "CommCare na kampuni ya Dimagi, Inc.\n"
-"245 Main Street, Ghorofa ya 2, Cambridge, MA 02142 USA\n"
+"245 Main Street, Ghorofa ya 2, Cambridge, MA 02142 USA"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
@@ -3175,6 +3472,69 @@ msgstr ""
 "Timu ya CommCare\n"
 "www.commcarehq.org\n"
 
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Your subscription will pause %(ending_on)s In case you would like to\n"
+"    renew, please select auto-renewal <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    Usajili wako utasimamishwa %(ending_on)s Iwapo ungependa\n"
+"    kuhuisha, tafadhali chagua upyaishaji otomatiki <a href=\"%(subscription_url)s\">hapa</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#, python-format
+msgid ""
+"\n"
+"    Please reach out to %(invoicing_contact_email)s if you have any questions.\n"
+"  "
+msgstr ""
+"\n"
+"    Tafadhali wasiliana na %(invoicing_contact_email)s ikiwa una maswali yoyote.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+msgid ""
+"\n"
+"    The CommCare Team\n"
+"  "
+msgstr ""
+"\n"
+"    Timu ya CommCare\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(domain)s administrator,\n"
+"\n"
+"  Your subscription will pause %(ending_on)s In case you would like to\n"
+"  renew, please select auto-renewal here: %(subscription_url)s\n"
+"\n"
+"  Please reach out to %(invoicing_contact_email)s if you have any questions.\n"
+"\n"
+"  Best regards,\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Mpendwa msimamizi wa %(domain)s,\n"
+"\n"
+"  Usajili wako utasimamishwa %(ending_on)s Iwapo ungependa\n"
+"  kuhuisha, tafadhali chagua upyaishaji otomatiki hapa: %(subscription_url)s\n"
+"\n"
+"  Tafadhali wasiliana na %(invoicing_contact_email)s ikiwa una maswali yoyote.\n"
+"\n"
+"  Wako kwa dhati,\n"
+"  Timu ya CommCare\n"
+"  %(base_url)s\n"
+
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
 #, python-format
 msgid ""
@@ -3249,51 +3609,228 @@ msgstr ""
 "Timu ya CommCare\n"
 "%(base_url)s\n"
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
 msgid ""
 "\n"
-"    Your 30 Day Trial for %(domain)s ends soon! If you do not\n"
-"    change your subscription before then, your subscription will be paused on\n"
-"    %(ending_on)s and you will lose access to all features until you\n"
-"    re-subscribe to a new paid plan.\n"
+"    Dear %(dimagi_contact)s,\n"
 "  "
 msgstr ""
 "\n"
-"    Majaribio yako ya Siku 30 ya %(domain)s yanakaribia kuisha! Ikiwa hutabadilisha\n"
-"    usajili wako kabla ya hapo, usajili wako utasitishwa tarehe %(ending_on)s na utapoteza\n"
-"    ufikiaji wa vipengele vyote hadi ujiandikishe tena kwenye mpango mpya wa kulipia.\n"
+"    Mpendwa %(dimagi_contact)s,\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
 #, python-format
 msgid ""
 "\n"
-"    To change your subscription, please log into your project on\n"
-"    CommCare HQ and navigate to the\n"
-"    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
-"    project settings.\n"
+"    You have been identified as the Dimagi point of contact for\n"
+"    %(account_or_domain)s.\n"
 "  "
 msgstr ""
 "\n"
-"    Ili kubadilisha usajili wako, tafadhali ingia kwenye mradi wako kwenye\n"
-"    CommCare HQ na nenda kwenye\n"
-"    <a href=\"%(subscription_url)s\">ukurasa wa usajili</a> kwenye mipangilio ya mradi wako.\n"
+"    Umetambuliwa kama mtu wa mawasiliano wa Dimagi kwa\n"
+"    %(account_or_domain)s.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
 msgid ""
 "\n"
-"    If you have questions about our pricing plans,\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">you can review them here</a>.\n"
+"      This account has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Akaunti hii ina usajili wa %(plan)s unaomalizika tarehe\n"
+"      %(end_date)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+msgid ""
+"\n"
+"      This project space has a %(plan)s subscription that is ending on\n"
+"      %(end_date)s.\n"
+"    "
+msgstr ""
+"\n"
+"      Nafasi hii ya mradi ina usajili wa %(plan)s unaomalizika tarehe\n"
+"      %(end_date)s.\n"
+"    "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+msgid ""
+"\n"
+"    After that date, the subscription will automatically pause and this space\n"
+"    will lose access to all features until it is re-subscribed to a new paid\n"
+"    plan.\n"
 "  "
 msgstr ""
 "\n"
-"    Ikiwa una maswali kuhusu mipango yetu ya bei,\n"
-"    <a href=\"http://www.commcarehq.org/software-plans/\">unaweza kuipitia hapa</a>.\n"
+"    Baada ya tarehe hiyo, usajili utasitishwa moja kwa moja na nafasi hii\n"
+"    itapoteza ufikiaji wa vipengele vyote hadi itakapojisajili tena kwenye mpango mpya wa kulipia.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+#, python-format
+msgid ""
+"\n"
+"    In case you would like to extend this subscription or have any questions,\n"
+"    please reach out to %(accounts_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Iwapo ungependa kuongeza muda wa usajili huu au una maswali yoyote,\n"
+"    tafadhali wasiliana na %(accounts_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.html
+msgid ""
+"\n"
+"    The CommCare Team<br />\n"
+"  "
+msgstr ""
+"\n"
+"    Timu ya CommCare<br />\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(dimagi_contact)s,\n"
+"\n"
+"  You have been identified as the Dimagi point of contact for\n"
+"  %(account_or_domain)s.\n"
+msgstr ""
+"\n"
+"  Mpendwa %(dimagi_contact)s,\n"
+"\n"
+"  Umetambuliwa kama mtu wa mawasiliano wa Dimagi kwa\n"
+"  %(account_or_domain)s.\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"    This account has a %(plan)s subscription that is ending on %(end_date)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Akaunti hii ina usajili wa %(plan)s unaomalizika tarehe %(end_date)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"    This project space has a %(plan)s subscription that is ending on\n"
+"    %(end_date)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Nafasi hii ya mradi ina usajili wa %(plan)s unaomalizika tarehe\n"
+"    %(end_date)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder_dimagi.txt
+#, python-format
+msgid ""
+"\n"
+"  After that date, the subscription will automatically pause and this space will\n"
+"  lose access to all features until it is re-subscribed to a new paid plan.\n"
+"\n"
+"  In case you would like to extend this subscription or have any questions,\n"
+"  please reach out to %(accounts_email)s.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Baada ya tarehe hiyo, usajili utasitishwa moja kwa moja na nafasi hii itapoteza\n"
+"  ufikiaji wa vipengele vyote hadi itakapojisajili tena kwenye mpango mpya wa kulipia.\n"
+"\n"
+"  Iwapo ungependa kuongeza muda wa usajili huu au una maswali yoyote,\n"
+"  tafadhali wasiliana na %(accounts_email)s.\n"
+"\n"
+"  Wako mwaminifu,\n"
+"\n"
+"  Timu ya CommCare\n"
+"  %(base_url)s\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"    ends soon!\n"
+"  "
+msgstr ""
+"\n"
+"    Hii ni kukukumbusha kuwa usajili wako wa %(plan_name)s kwa %(domain)s\n"
+"    unakaribia kuisha!\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    Renewal: If you would like to renew, just ensure that you have auto-renewal\n"
+"    selected <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    Upyaishaji: Ikiwa ungependa kusasisha, hakikisha tu umechagua upyaishaji otomatiki\n"
+"    <a href=\"%(subscription_url)s\">hapa</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    30 days prior to the renewal date, you will receive an invoice for the new\n"
+"    subscription term to renew you to the latest version of your current plan as\n"
+"    <a href=\"%(plan_info_url)s\">described here</a>. If you'd like to renew\n"
+"    sooner, you can self-renew <a href=\"%(subscription_url)s\">here</a>.\n"
+"  "
+msgstr ""
+"\n"
+"    Siku 30 kabla ya tarehe ya upyaishaji, utapokea ankara kwa kipindi kipya cha\n"
+"    usajili ili kukusasisha kwenye toleo jipya la mpango wako wa sasa kama\n"
+"    <a href=\"%(plan_info_url)s\">ilivyoelezwa hapa</a>. Ikiwa ungependa kusasisha mapema,\n"
+"    unaweza kujisasisha <a href=\"%(subscription_url)s\">hapa</a>.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+msgid ""
+"\n"
+"    Cancellation: In case you decide you will not be renewing your subscription,\n"
+"    you can simply turn off auto-renew at any point during your subscription\n"
+"    term.\n"
+"  "
+msgstr ""
+"\n"
+"    Kufuta: Iwapo utaamua hautasasisisha usajili wako,\n"
+"    unaweza kuzima upyaishaji otomatiki wakati wowote ndani ya kipindi chako cha usajili.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    In case you have any questions about your renewal, please don't hesitate to\n"
+"    contact %(invoicing_contact_email)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Iwapo una maswali yoyote kuhusu upyaishaji wako, tafadhali usisite\n"
+"    kuwasiliana na %(invoicing_contact_email)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.html
 msgid ""
 "\n"
 "    Thank you for your use and support of CommCare.\n"
@@ -3303,51 +3840,127 @@ msgstr ""
 "    Asante kwa matumizi na msaada wako wa CommCare.\n"
 "  "
 
-#: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.txt
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewal_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"  Dear %(domain)s administrator,\n"
+"\n"
+"  This is a reminder that your %(plan_name)s subscription for %(domain)s\n"
+"  ends soon!\n"
+"\n"
+"  Renewal:\n"
+"  If you would like to renew, just ensure that you have auto-renewal selected\n"
+"  here: %(subscription_url)s\n"
+"\n"
+"  30 days prior to the renewal date, you will receive an invoice for the new\n"
+"  subscription term to renew you to the latest version of your current plan as\n"
+"  described here: %(plan_info_url)s.\n"
+"  If you'd like to renew sooner, you can self-renew here: %(subscription_url)s\n"
+"\n"
+"  Cancellation:\n"
+"  In case you decide you will not be renewing your subscription, you can simply\n"
+"  turn off auto-renew at any point during your subscription term.\n"
+"\n"
+"  In case you have any questions about your renewal,\n"
+"  please don't hesitate to contact %(invoicing_contact_email)s.\n"
+"\n"
+"  Thank you for your use and support of CommCare.\n"
+"\n"
+"  Best regards,\n"
+"\n"
+"  The CommCare Team\n"
+"  %(base_url)s\n"
+msgstr ""
+"\n"
+"  Mpendwa msimamizi wa %(domain)s,\n"
+"\n"
+"  Hii ni kukukumbusha kuwa usajili wako wa %(plan_name)s kwa %(domain)s\n"
+"  unakaribia kuisha!\n"
+"\n"
+"  Upyaishaji:\n"
+"  Ikiwa ungependa kusasisha, hakikisha tu umechagua upyaishaji otomatiki\n"
+"  hapa: %(subscription_url)s\n"
+"\n"
+"  Siku 30 kabla ya tarehe ya upyaishaji, utapokea ankara kwa kipindi kipya cha\n"
+"  usajili ili kukusasisha kwenye toleo jipya la mpango wako wa sasa kama\n"
+"  ilivyoelezwa hapa: %(plan_info_url)s.\n"
+"  Ikiwa ungependa kusasisha mapema, unaweza kujisasisha hapa: %(subscription_url)s\n"
+"\n"
+"  Kufuta:\n"
+"  Iwapo utaamua hautasasisisha usajili wako, unaweza kuzima\n"
+"  upyaishaji otomatiki wakati wowote ndani ya kipindi chako cha usajili.\n"
+"\n"
+"  Iwapo una maswali yoyote kuhusu upyaishaji wako,\n"
+"  tafadhali usisite kuwasiliana na %(invoicing_contact_email)s.\n"
+"\n"
+"  Asante kwa kutumia na kuunga mkono CommCare.\n"
+"\n"
+"  Wako mwaminifu,\n"
+"\n"
+"  Timu ya CommCare\n"
+"  %(base_url)s\n"
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    This is a reminder that your subscription for project space %(domain)s on\n"
+"    %(plan)s is set to automatically renew on %(date_start)s.\n"
+"  "
+msgstr ""
+"\n"
+"    Hii ni kukukumbusha kuwa usajili wako wa nafasi ya mradi %(domain)s kwenye\n"
+"    %(plan)s umepangwa kusasishwa kiotomatiki tarehe %(date_start)s.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.html
+#, python-format
+msgid ""
+"\n"
+"    In case you would not like to renew your subscription, you can simply turn\n"
+"    off auto-renew <a href=\"%(subscription_url)s\">here</a> at any point during\n"
+"    your subscription term.\n"
+"  "
+msgstr ""
+"\n"
+"    Iwapo hutaki kusasisha usajili wako, unaweza kuzima\n"
+"    upyaishaji otomatiki <a href=\"%(subscription_url)s\">hapa</a> wakati wowote ndani ya\n"
+"    kipindi chako cha usajili.\n"
+"  "
+
+#: corehq/apps/accounting/templates/accounting/email/subscription_renewed.txt
 #, python-format
 msgid ""
 "\n"
 "Dear %(domain)s administrator,\n"
 "\n"
-"Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
-"change your subscription before then, your subscription will be paused on\n"
-"%(ending_on)s and you will lose access to all features until you\n"
-"re-subscribe to a new paid plan.\n"
+"This is a reminder that your subscription for project space %(domain)s on\n"
+"%(plan)s is set to automatically renew on %(date_start)s.\n"
 "\n"
-"To change your subscription, please log into your project on\n"
-"CommCare HQ and and navigate to the subscription page in your project\n"
-"settings: %(subscription_url)s\n"
-"\n"
-"If you have questions about our pricing plans, you can review them here:\n"
-"https://www.commcarehq.org/pricing/\n"
-"\n"
-"Thank you for your use and support of CommCare.\n"
+"In case you would not like to renew your subscription, you can simply turn\n"
+"off auto-renew here at any point during your subscription term:\n"
+"%(subscription_url)s\n"
 "\n"
 "Best regards,\n"
 "\n"
 "The CommCare Team\n"
-"%(base_url)s\n"
+"%(base_url)s"
 msgstr ""
 "\n"
 "Mpendwa msimamizi wa %(domain)s,\n"
 "\n"
-"Majaribio yako ya Siku 30 kwa %(domain)s yanakaribia kuisha! Ikiwa hutabadilisha\n"
-"usajili wako kabla ya hapo, usajili wako utasimamishwa tarehe\n"
-"%(ending_on)s na utapoteza ufikiaji wa vipengele vyote hadi\n"
-"ujiandikishe tena kwenye mpango mpya wa kulipia.\n"
+"Hii ni kukukumbusha kuwa usajili wako wa nafasi ya mradi %(domain)s kwenye\n"
+"%(plan)s umepangwa kusasishwa kiotomatiki tarehe %(date_start)s.\n"
 "\n"
-"Ili kubadilisha usajili wako, tafadhali ingia kwenye mradi wako kwenye\n"
-"CommCare HQ na uende kwenye ukurasa wa usajili kwenye mipangilio ya mradi wako: %(subscription_url)s\n"
-"\n"
-"Ikiwa una maswali kuhusu mipango yetu ya bei, unaweza kuipitia hapa:\n"
-"https://www.commcarehq.org/pricing/\n"
-"\n"
-"Asante kwa matumizi na msaada wako wa CommCare.\n"
+"Iwapo hutaki kusasisha usajili wako, unaweza kuzima\n"
+"upyaishaji otomatiki hapa wakati wowote ndani ya kipindi chako cha usajili:\n"
+"%(subscription_url)s\n"
 "\n"
 "Wako mwaminifu,\n"
 "\n"
 "Timu ya CommCare\n"
-"%(base_url)s\n"
+"%(base_url)s"
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
@@ -3950,6 +4563,26 @@ msgid "Card"
 msgstr "Kadi"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+msgid "Use account autopay card"
+msgstr "Tumia kadi ya malipo ya moja kwa moja ya akaunti"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
+#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Owner"
+msgstr "Mmiliki"
+
+#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use a saved card"
 msgstr "Tumia kadi iliyohifadhiwa"
 
@@ -3976,11 +4609,6 @@ msgid "Save card for later"
 msgstr "Hifadhi kadi kwa matumizi ya baadaye"
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-#| msgid ""
-#| "\n"
-#| "            We use <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "            to process this transaction.\n"
-#| "          "
 msgid ""
 " We use\n"
 "          <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
@@ -4442,7 +5070,6 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "Tungependa kusikia zaidi! Tafadhali fafanua -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
 "\n"
 "      By clicking this button, you agree to Dimagi's\n"
@@ -4454,6 +5081,26 @@ msgstr ""
 "      Kwa kubofya kitufe hiki, unakubali\n"
 "      <a href=\\\"http://www.dimagi.com/terms/latest/tos/\\\" target=\\\"_blank\\\">Sheria za Huduma</a> za Dimagi na\n"
 "      <a href=\\\"http://www.dimagi.com/terms/latest/privacy/\\\" target=\\\"_blank\\\">Sera ya Faragha</a>.\n"
+"    "
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking this button, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"\n"
+"      By clicking Submit Request, you agree to Dimagi's\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      Kwa kubofya Wasilisha Ombi, unakubali\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Sheria na Masharti ya Huduma</a> za Dimagi na\n"
+"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Sera ya Faragha</a>.\n"
 "    "
 
 #: corehq/apps/analytics/views.py
@@ -4863,8 +5510,6 @@ msgstr "Uendeshaji 10 wa Mwisho"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -5224,7 +5869,6 @@ msgid "Please log in to the app to check for an update."
 msgstr "Tafadhali ingia kwenye programu ili kuangalia kama kuna masasisho."
 
 #: corehq/apps/app_manager/exceptions.py
-#| msgid "Restriction for profile {profile} set successfully."
 msgid "Form Actions Diff failed to be applied successfully"
 msgstr "Tofauti ya Vitendo vya Fomu imeshindwa kutekelezwa kwa mafanikio"
 
@@ -5237,7 +5881,6 @@ msgstr "Kesi"
 #: corehq/apps/app_manager/fields.py
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -7876,10 +8519,8 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
@@ -7893,6 +8534,7 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
@@ -9075,6 +9717,28 @@ msgstr "Unakaribia kufuta programu hii"
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Custom Icon"
 msgstr "Ikoni Maalum"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
+msgid ""
+"\n"
+"          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
+"          Learn more\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >here</a\n"
+"          >.\n"
+"        "
+msgstr ""
+"\n"
+"          Tafadhali ongeza Maandishi ya Kuonyesha au kazi ya XPath. Hii itaonekana kama beji karibu na ikoni husika.\n"
+"          Jifunze zaidi\n"
+"          <a\n"
+"            target='_blank'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            >hapa</a\n"
+"          >.\n"
+"        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
 msgid "Text Body"
@@ -11281,10 +11945,6 @@ msgid "Ignore Owners"
 msgstr "Puuza Wamiliki"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                  Example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'\n"
-#| "                "
 msgid ""
 "\n"
 "                  Example: instance('commcaresession')/session/context/userid or\n"
@@ -11305,12 +11965,6 @@ msgid "Load Additional Data Registry Cases"
 msgstr "Pakia Kesi za Ziada kutoka kwenye Rekodi ya Data"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.\n"
-#| "                        The case type of the case must be configured in the registry and in the module via the module's\n"
-#| "                        case type or the module's 'Additional Case List and Case Search Types' configuration.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    Load additional cases from the Data Registry into the\n"
@@ -11347,14 +12001,6 @@ msgid "Custom Related Case Property"
 msgstr "Sifa Maalum ya Kesi Inayohusiana"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "                               Enter in the name of a case property that contains the ID of another\n"
-#| "                               case you'd like included in the results instance.  This is to allow\n"
-#| "                               you to configure your case list display to show properties of that\n"
-#| "                               related case. Read more on the\n"
-#| "                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    Enter in the name of a case property that contains the ID of\n"
@@ -11387,10 +12033,6 @@ msgid "Clearing search terms resets search results"
 msgstr "Kufuta maneno ya utafutaji kunaanza upya matokeo ya utafutaji"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#| msgid ""
-#| "\n"
-#| "              This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.\n"
-#| "            "
 msgid ""
 "\n"
 "              This is not a valid xpath expression. Check to make sure your\n"
@@ -13506,10 +14148,6 @@ msgid "Reverted to version {log.info['version']}"
 msgstr "Imerejeshwa kwenye toleo {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
-msgid "Please enter either text body or xpath for custom icon"
-msgstr "Tafadhali ingiza mwili wa maandishi au xpath kwa ikoni maalum"
-
-#: corehq/apps/app_manager/views/utils.py
 #, python-format
 msgid "Update Status for linked app %s"
 msgstr "Sasisha Hali kwa programu iliyounganishwa %s"
@@ -13904,6 +14542,7 @@ msgstr "Una uhakika unataka kufuta kijisehemu hiki?"
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
@@ -14047,6 +14686,34 @@ msgstr "Tarehe Batili"
 #: corehq/apps/case_importer/exceptions.py
 msgid "Required format: YYYY-MM-DD (e.g. \"2021-12-31\")"
 msgstr "Muundo unaohitajika: YYYY-MM-DD (mfano \"2021-12-31\")"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "Invalid Number"
+msgstr "Nambari Batili"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "The given value is not a number"
+msgstr "Thamani uliyopewa si nambari"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "Invalid GPS"
+msgstr "GPS Batili"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid ""
+"Required format: \"latitude longitude\" or \"latitude longitude altitude "
+"precision\""
+msgstr ""
+"Muundo unaotakiwa: \"latitude longitude\" au \"latitude longitude altitude "
+"precision\""
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "Invalid Phone Number"
+msgstr "Nambari ya Simu Batili"
+
+#: corehq/apps/case_importer/exceptions.py
+msgid "The given value is not a valid phone number"
+msgstr "Thamani uliyopewa si nambari halali ya simu"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected multiple choice value"
@@ -15631,10 +16298,6 @@ msgid "No corresponding application found in this project."
 msgstr "Hakuna programu inayolingana iliyopatikana kwenye mradi huu."
 
 #: corehq/apps/cloudcare/views.py
-msgid "This user cannot access this link."
-msgstr "Mtumiaji huyu hawezi kufikia kiungo hiki."
-
-#: corehq/apps/cloudcare/views.py
 #, python-brace-format
 msgid ""
 "You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile UCRs\n"
@@ -15888,6 +16551,10 @@ msgstr "Haikuweza kusasisha '{}'. Huna jukumu linalofaa"
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Unable to remove synced fields. You do not have the appropriate role"
 msgstr "Imeshindikana kuondoa sehemu zilizosanidiwa. Huna jukumu linalofaa"
+
+#: corehq/apps/custom_data_fields/edit_model.py
+msgid "Could not delete profile '{}' because it has invitations assigned."
+msgstr "Imeshindikana kufuta wasifu '{}' kwa sababu ina mialiko iliyopangiwa."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Could not delete profile '{}' because it has users assigned."
@@ -17482,20 +18149,6 @@ msgid "Opened By"
 msgstr "Iliyofunguliwa Na"
 
 #: corehq/apps/data_cleaning/utils/cases.py
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Owner"
-msgstr "Mmiliki"
-
-#: corehq/apps/data_cleaning/utils/cases.py
 msgid "Closed By User ID"
 msgstr "Kitambulisho cha Mtumiaji Aliyefunga"
 
@@ -18110,8 +18763,8 @@ msgstr ""
 "          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/valid_values_th_content.html
-msgid "Valid Values &amp; Formats"
-msgstr "Thamani na Miundo Sahihi"
+msgid "Import Validation"
+msgstr "Uhakiki wa Uingizaji"
 
 #: corehq/apps/data_dictionary/util.py
 msgid "Case Property Group must have a name"
@@ -19952,12 +20605,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-#| msgid "Application Id"
 msgid "Application Add-Ons"
 msgstr "Viongezi vya Programu"
 
 #: corehq/apps/domain/forms.py
-#| msgid "Enable Call Center Application"
 msgid "Enable All Application Add-Ons"
 msgstr "Wezesha Viongezi Vyote vya Programu"
 
@@ -20372,15 +21023,6 @@ msgstr "Sasisha Taarifa za Malipo"
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr "Inaonekana namba hii ya simu si sahihi. Je, umesahau msimbo wa nchi?"
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Subscribe to Plan"
-msgstr "Jiunge na Mpango"
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -21805,6 +22447,15 @@ msgstr "Wasiliana nasi"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/paused_plan_notice.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/paused_plan_notice.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Subscribe to Plan"
+msgstr "Jiunge na Mpango"
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Upgrade Plan"
 msgstr "Boresha Mpango"
 
@@ -22394,68 +23045,6 @@ msgstr "Zungumza na timu yetu"
 msgid "Dismiss"
 msgstr "Funga"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Saved Credit Cards"
-msgstr "Kadi za Mkopo Zilizohifadhiwa"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Add Card"
-msgstr "Ongeza Kadi"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Credit Card"
-msgstr "Kadi ya Mkopo"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Your request was successful!"
-msgstr "Ombi lako limefanikiwa!"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Delete Card"
-msgstr "Futa Kadi"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
-#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-msgid "Processing your request"
-msgstr "Inachakata ombi lako"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          Hakika unataka kuondoa kadi ya <strong><span data-bind='text: brand'></span></strong>\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Autopay card"
-msgstr "Kadi ya malipo ya moja kwa moja"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid "Remove Autopay"
-msgstr "Ondoa Malipo ya Moja kwa Moja"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/stripe_cards.html
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-#: corehq/apps/domain/templates/domain/partials/payment_methods.html
-msgid "Set as autopay card"
-msgstr "Weka kama kadi ya malipo ya moja kwa moja"
-
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 #, python-format
 msgid ""
@@ -22466,20 +23055,6 @@ msgstr ""
 "\n"
 "        Okoa karibu 20%% unapolipa kwa mwaka mzima.  \n"
 "      "
-
-#: corehq/apps/domain/templates/domain/bootstrap5/stripe_cards.html
-msgid ""
-"\n"
-"          Actually remove\n"
-"          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
-msgstr ""
-"\n"
-"          Kuondoa kabisa\n"
-"          <strong><span data-bind=\"text: brand\"></span></strong> kadi\n"
-"          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
-"        "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #, python-format
@@ -22493,6 +23068,111 @@ msgstr ""
 "      Unakaribia kujisajili kwenye <strong>Mpango wa Programu wa %(p)s</strong>.<br/>\n"
 "      Tafadhali sasisha taarifa zako za malipo hapa chini kabla ya kuendelea.\n"
 "    "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid "Loading autopay cards, please wait..."
+msgstr "Inapakia kadi za malipo ya moja kwa moja, tafadhali subiri..."
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Confirmation"
+msgstr "Uthibitisho"
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please complete the Basic Information section and select a card\n"
+"                for autopay before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                Tafadhali kamilisha sehemu ya Taarifa za Msingi na uchague kadi\n"
+"                ya malipo ya moja kwa moja kabla ya kuendelea.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please provide an autopay card before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                Tafadhali toa kadi ya malipo ya moja kwa moja kabla ya kuendelea.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                Please complete the Basic Information section before continuing.\n"
+"              "
+msgstr ""
+"\n"
+"                Tafadhali kamilisha sehemu ya Taarifa za Msingi kabla ya kuendelea.\n"
+"              "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this <strong>annual subscription</strong>, I acknowledge that\n"
+"                  the autopay card above will be charged on a monthly basis for any on-demand fees (excess users, SMS).\n"
+"                "
+msgstr ""
+"\n"
+"                  Kwa kujisajili kwenye <strong>usajili wa mwaka</strong> huu, nakubali kwamba\n"
+"                  kadi ya malipo ya moja kwa moja hapo juu itatozwa kila mwezi kwa ada yoyote ya ziada (watumiaji wa ziada, SMS).\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                    A separate annual invoice for the product cost will be generated and sent to the contact emails above.\n"
+"                    This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
+"                    The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Ankara tofauti ya mwaka kwa gharama ya bidhaa itatolewa na kutumwa kwa barua pepe za mawasiliano hapo juu.\n"
+"                    Ankara hii lazima ilipwe ndani ya siku %(days_date_due_annual)s au usajili utasitishwa.\n"
+"                    Kadi ya malipo ya moja kwa moja iliyochaguliwa haitatozwa moja kwa moja kulipia ankara hii&mdash;lazima ilipwe moja kwa moja.\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.\n"
+"                "
+msgstr ""
+"\n"
+"                  Kwa kujisajili kwenye usajili wa kila mwezi, nakubali kwamba kadi yangu ya malipo ya moja kwa moja itatozwa kila mwezi.\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
+msgid ""
+"\n"
+"                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that I understand an\n"
+"                   annual invoice for the product cost will be generated and sent to the contact emails above.\n"
+"                   This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
+"                "
+msgstr ""
+"\n"
+"                   Kwa kujisajili kwenye <strong>usajili wa mwaka</strong> huu, nakubali kwamba ninaelewa ankara ya mwaka kwa gharama ya bidhaa itatolewa na kutumwa kwa barua pepe za mawasiliano hapo juu.\n"
+"                   Ankara hii lazima ilipwe ndani ya siku %(days_date_due_annual)s au usajili utasitishwa.\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/confirm_billing_info.html
+msgid ""
+"\n"
+"                    I also acknowledge that by not selecting an autopay card, I must manually pay for any on-demand fees\n"
+"                    (excess users, SMS) on a monthly basis or the subscription will be paused.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Pia nakubali kwamba kwa kutokuchagua kadi ya malipo ya moja kwa moja, lazima nilipie mwenyewe ada yoyote ya ziada\n"
+"                    (watumiaji wa ziada, SMS) kila mwezi au usajili utasitishwa.\n"
+"                  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22746,17 +23426,6 @@ msgstr ""
 "    Kujua zaidi kuhusu CommCare tembelea http://www.commcarehq.org/.\n"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    Hello,\n"
-"  "
-msgstr ""
-"\n"
-"    Habari,\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
 #, python-format
 msgid ""
 "\n"
@@ -22933,6 +23602,12 @@ msgstr "kuchagua leseni ya Creative Commons."
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
 msgid "Add New Credit Card"
 msgstr "Ongeza Kadi Mpya ya Mkopo"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
+msgid "Processing your request"
+msgstr "Inachakata ombi lako"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -23454,17 +24129,14 @@ msgid "This will not copy lookup tables (aka fixtures)."
 msgstr "Hii haitanakili jedwali za lookup (pia zinajulikana kama fixtures)."
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#| msgid "Add New Credit Card"
+msgid "Add Card"
+msgstr "Ongeza Kadi"
+
+#: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
 msgid "Add New Payment Card"
 msgstr "Ongeza Kadi Mpya ya Malipo"
 
 #: corehq/apps/domain/templates/domain/partials/new_stripe_card_alpinejs.html
-#| msgid ""
-#| "\n"
-#| "                We use\n"
-#| "                <a href=\"http://www.stripe.com/\" target=\"_blank\">Stripe</a>\n"
-#| "                to process this transaction.\n"
-#| "              "
 msgid ""
 "\n"
 "              We use\n"
@@ -23479,15 +24151,10 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Autopay card"
 msgid "Account Autopay Card"
 msgstr "Kadi ya Malipo ya Moja kwa Moja ya Akaunti"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid ""
-#| "\n"
-#| "                You don't have any groups yet, please create a Group to get started.\n"
-#| "              "
 msgid ""
 "\n"
 "        You don't have an autopay card set for your account.\n"
@@ -23498,17 +24165,16 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Saved! Reloading, please wait.."
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Refreshing, please wait..."
 msgstr "Inafanywa upya, tafadhali subiri..."
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "My Saved Reports"
 msgid "My Saved Cards"
 msgstr "Kadi Zangu Zilizohifadhiwa"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Autopay card"
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
 msgid "Autopay Card"
 msgstr "Kadi ya Malipo ya Moja kwa Moja"
 
@@ -23517,7 +24183,11 @@ msgid "Autopay for Other Account"
 msgstr "Malipo ya Moja kwa Moja kwa Akaunti Nyingine"
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid "Removed"
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Set as autopay card"
+msgstr "Weka kama kadi ya malipo ya moja kwa moja"
+
+#: corehq/apps/domain/templates/domain/partials/payment_methods.html
 msgid "Remove Card"
 msgstr "Ondoa Kadi"
 
@@ -23527,11 +24197,6 @@ msgstr "Inaondoa kadi..."
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                        Click to copy feeds for linking <strong>Parent</strong>\n"
-#| "                        and <strong>Child Cases</strong>:\n"
-#| "                      "
 msgid ""
 "\n"
 "                        Actually remove <strong>%(brand)s</strong>\n"
@@ -23544,11 +24209,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
-#| msgid ""
-#| "\n"
-#| "      Configure external Identity Providers associated with your Enterprise\n"
-#| "      Account below.\n"
-#| "    "
 msgid ""
 "\n"
 "        You do not have any saved cards associated with your user account.\n"
@@ -23558,18 +24218,45 @@ msgstr ""
 "        Huna kadi zozote zilizohifadhiwa zinazohusishwa na akaunti yako ya mtumiaji.\n"
 "      "
 
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Select Autopay Card"
+msgstr "Chagua Kadi ya Malipo ya Moja kwa Moja"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid "Remove autopay method"
+msgstr "Ondoa njia ya malipo ya moja kwa moja"
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Please add an autopay card before subscribing.\n"
+"        "
+msgstr ""
+"\n"
+"          Tafadhali ongeza kadi ya malipo ya moja kwa moja kabla ya kujisajili.\n"
+"        "
+
+#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+msgid ""
+"\n"
+"          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
+"          pausing your subscription due to unpaid on-demand fees.\n"
+"        "
+msgstr ""
+"\n"
+"          Malipo ya moja kwa moja hayahitajiki kwa akaunti za mwaka kwa sasa, lakini kuwa na malipo ya moja kwa moja kunapunguza hatari ya\n"
+"          kusitishwa kwa usajili wako kutokana na ada za ziada ambazo hazijalipwa.\n"
+"        "
+
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Manage Billing Details"
 msgid "Billing Details"
 msgstr "Maelezo ya Bili"
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Last Payment Method"
 msgid "Payment Methods"
 msgstr "Njia za Malipo"
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
-#| msgid "Updating Data, please wait..."
 msgid "Loading payment methods, please wait..."
 msgstr "Inapakia njia za malipo, tafadhali subiri..."
 
@@ -24333,8 +25020,6 @@ msgid "Billing contact information was successfully updated."
 msgstr "Taarifa za mawasiliano ya malipo zimesasishwa kwa mafanikio."
 
 #: corehq/apps/domain/views/accounting.py
-#| msgid ""
-#| "No downstream project spaces were selected. Please contact support."
 msgid "Unknown removing card. Please contact Support."
 msgstr "Tatizo lisilojulikana la kuondoa kadi. Tafadhali wasiliana na Msaada."
 
@@ -24551,6 +25236,18 @@ msgstr ""
 "Umeshapanga kushusha hadhi hadi Mpango wa Programu ya %(software_plan_name)s"
 " tarehe %(downgrade_date)s. Ikiwa hii ni makosa, tafadhali wasiliana na "
 "%(contact_email)s."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error unsetting autopay method. Please contact Support."
+msgstr ""
+"Hitilafu isiyojulikana wakati wa kuondoa njia ya malipo ya moja kwa moja. "
+"Tafadhali wasiliana na Msaada."
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unknown error setting autopay method. Please contact Support."
+msgstr ""
+"Hitilafu isiyojulikana wakati wa kuweka njia ya malipo ya moja kwa moja. "
+"Tafadhali wasiliana na Msaada."
 
 #: corehq/apps/domain/views/accounting.py
 #, python-brace-format
@@ -26793,11 +27490,10 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/customize_export_new.html
 msgid ""
-"There are errors with your configuration. Please fix them before creating "
-"the export."
+"A required field is incomplete or incorrect. Please check above for details."
 msgstr ""
-"Kuna makosa kwenye usanidi wako. Tafadhali rekebisha kabla ya kuunda "
-"usafirishaji."
+"Sehemu inayotakiwa haijakamilika au si sahihi. Tafadhali angalia maelezo "
+"hapo juu."
 
 #: corehq/apps/export/templates/export/datasource_export_view.html
 #: corehq/apps/export/views/download.py
@@ -27425,8 +28121,20 @@ msgid "Custom Path"
 msgstr "Njia Maalum"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Select geo property"
-msgstr "Chagua sifa ya kijiografia"
+msgid "GPS case property"
+msgstr "Mali ya kesi ya GPS"
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid ""
+"\n"
+"            No case properties have the data type \"GPS\". To select a GPS case\n"
+"            property here, use the Data Dictionary to set the data type of one\n"
+"            or more case properties to \"GPS\".\n"
+"          "
+msgstr ""
+"\n"
+"            Hakuna mali ya kesi yenye aina ya data \"GPS\". Ili kuchagua mali ya kesi ya GPS hapa, tumia Kamusi ya Data kuweka aina ya data ya moja au zaidi ya mali za kesi kuwa \"GPS\".\n"
+"          "
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid ""
@@ -31759,6 +32467,111 @@ msgstr ""
 " la Wingu kutoka kwenye menyu hapo juu. Akaunti na mradi wako vinaweza kuwa "
 "kwenye eneo tofauti."
 
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Open chat"
+msgstr "Fungua gumzo"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start new chat"
+msgstr "Anza gumzo jipya"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Enter fullscreen"
+msgstr "Ingia kwenye skrini nzima"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Exit fullscreen"
+msgstr "Toka kwenye skrini nzima"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Attach files"
+msgstr "Ambatisha faili"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Remove file"
+msgstr "Ondoa faili"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File attached"
+msgstr "Faili imeambatishwa"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting chat..."
+msgstr "Inaanzisha gumzo..."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Finding the best answer"
+msgstr "Inatafuta jibu bora"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
+msgid "Uploading"
+msgstr "Inapakia"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Start New Chat"
+msgstr "Anza Gumzo Jipya"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Starting a new chat will clear your current conversation. Continue?"
+msgstr "Kuanza gumzo jipya kutafuta mazungumzo yako ya sasa. Endelea?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Type a message..."
+msgstr "Andika ujumbe..."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Send message"
+msgstr "Tuma ujumbe"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "File too large"
+msgstr "Faili kubwa mno"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Total file size too large"
+msgstr "Jumla ya ukubwa wa faili ni kubwa mno"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Unsupported file type"
+msgstr "Aina ya faili haiungwa mkono"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Connection error. Please try again."
+msgstr "Hitilafu ya muunganisho. Tafadhali jaribu tena."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Session expired. Please start a new chat."
+msgstr "Kipindi kimeisha. Tafadhali anza gumzo jipya."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Powered by"
+msgstr "Inaendeshwa na"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "Need Help?"
+msgstr "Unahitaji Msaada?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid ""
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+"I help you with today?"
+msgstr ""
+"Habari! Mimi ni CommCare Companion, mwongozo wako binafsi wa CommCare! "
+"Naweza kukusaidia na nini leo?"
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with building my CommCare application."
+msgstr "Nahitaji msaada wa kujenga programu yangu ya CommCare."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help troubleshooting my mobile application."
+msgstr "Nahitaji msaada wa kutatua matatizo ya programu yangu ya simu."
+
+#: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+msgid "I need help with exporting or understanding my data."
+msgstr "Nahitaji msaada wa kusafirisha au kuelewa data yangu."
+
 #: corehq/apps/hqwebapp/models.py
 msgid "European Union"
 msgstr "Umoja wa Ulaya"
@@ -32070,8 +32883,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
+#: corehq/apps/registration/templates/registration/register_new_user.html
 msgid "Schedule a Demo"
 msgstr "Panga Onyesho"
 
@@ -33746,7 +34558,6 @@ msgstr ""
 " href=\"{}\" target=\"_blank\">nyaraka zetu za msaada</a>."
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Phone Number"
 msgid "Phone Number Field"
 msgstr "Sehemu ya Nambari ya Simu"
 
@@ -36741,28 +37552,39 @@ msgid "Organization or Company"
 msgstr "Shirika au Kampuni"
 
 #: corehq/apps/registration/forms.py
+#| msgid ""
+#| "I have read and agree to Dimagi's\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+#| "               target=\"_blank\">Privacy Policy</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+#| "               target=\"_blank\">Terms of Service</a>,\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+#| "               target=\"_blank\">Business Agreement</a>, and\n"
+#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
+#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Privacy Policy</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Terms of Service</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Business Agreement</a>, and\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Acceptable Use Policy</a>.\n"
-"            "
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Privacy Policy</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Terms of Service</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Business Agreement</a>, and\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Acceptable Use Policy</a>.\n"
+"                "
 msgstr ""
-"Nimesoma na kukubaliana na\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-"               target=\"_blank\">Sera ya Faragha</a> ya Dimagi,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-"               target=\"_blank\">Masharti ya Huduma</a>,\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-"               target=\"_blank\">Makubaliano ya Biashara</a>, na\n"
-"            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-"               target=\"_blank\">Sera ya Matumizi Yanayokubalika</a>.\n"
-"            "
+"Nimesoma na kukubali\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
+"                target=\"_blank\">Sera ya Faragha</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
+"                target=\"_blank\">Sheria na Masharti ya Huduma</a>,\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
+"                target=\"_blank\">Makubaliano ya Biashara</a>, na\n"
+"                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
+"                target=\"_blank\">Sera ya Matumizi Yanayokubalika</a> za Dimagi.\n"
+"                "
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -37167,40 +37989,6 @@ msgstr ""
 "                    kati ya maeneo ya wingu baada ya kuundwa.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Create an Account"
-msgstr "Unda Akaunti"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-#: corehq/apps/users/templates/users/accept_invite.html
-#: corehq/apps/users/views/web.py
-msgid "Create Account"
-msgstr "Unda Akaunti"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Name Project"
-msgstr "Taja Mradi"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid "Loading...just a second!"
-msgstr "Inapakia...subiri kidogo!"
-
-#: corehq/apps/registration/templates/registration/bootstrap3/register_new_user.html
-#: corehq/apps/registration/templates/registration/bootstrap5/register_new_user.html
-msgid ""
-"\n"
-"                Want to learn more before signing up?\n"
-"              "
-msgstr ""
-"\n"
-"                Unataka kujifunza zaidi kabla ya kujisajili?\n"
-"              "
-
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
 msgid ""
 "\n"
@@ -37214,11 +38002,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/registration/templates/registration/email/base_templates/bootstrap5/_base.html
-#| msgid ""
-#| "\n"
-#| "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>\n"
-#| "            with your email address.\n"
-#| "          "
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
@@ -37774,6 +38557,35 @@ msgstr ""
 "      Akaunti yako itaundwa baada ya hatua inayofuata.\n"
 "    "
 
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+msgid "Create an Account"
+msgstr "Unda Akaunti"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
+msgid "Create Account"
+msgstr "Unda Akaunti"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Name Project"
+msgstr "Taja Mradi"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid "Loading...just a second!"
+msgstr "Inapakia...subiri kidogo!"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+msgid ""
+"\n"
+"                Want to learn more before signing up?\n"
+"              "
+msgstr ""
+"\n"
+"                Unataka kujifunza zaidi kabla ya kujisajili?\n"
+"              "
+
 #: corehq/apps/registration/utils.py
 msgid "Visit CommCareHQ on your computer!"
 msgstr "Tembelea CommCareHQ kwenye kompyuta yako!"
@@ -37800,12 +38612,12 @@ msgstr "ya sasa"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-msgid ""
-"This email is already registered in the {location} cloud location. Please <a"
-" href=\"{login_link}\">sign in here</a>."
+#| msgid ""
+#| "This email is already registered in the {location} cloud location. Please <a"
+#| " href=\"{login_link}\">sign in here</a>."
+msgid "This email is already registered in the {location} cloud location. "
 msgstr ""
 "Barua pepe hii tayari imesajiliwa kwenye eneo la wingu la {location}. "
-"Tafadhali <a href=\"{login_link}\">ingia hapa</a>."
 
 #: corehq/apps/registration/views.py
 msgid "CommCareHQ account request"
@@ -38469,6 +39281,16 @@ msgstr "Utafiti wa SMS"
 #: corehq/apps/reminders/forms.py
 msgid "No Response"
 msgstr "Hakuna Jibu"
+
+#: corehq/apps/reminders/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/sms/filters.py corehq/apps/sms/models.py
+#: corehq/messaging/scheduling/forms.py
+msgid "Connect Message"
+msgstr "Ujumbe wa Connect"
+
+#: corehq/apps/reminders/forms.py corehq/messaging/scheduling/forms.py
+msgid "Connect Survey"
+msgstr "Unganisha Utafiti"
 
 #: corehq/apps/reminders/forms.py
 msgid "Mobile Worker Group"
@@ -40415,11 +41237,6 @@ msgstr "Inaonyesha maelezo ya tukio fulani la ujumbe."
 #: corehq/apps/reports/standard/sms.py
 msgid "ConnectID"
 msgstr "ConnectID"
-
-#: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
-msgid "Connect Message"
-msgstr "Ujumbe wa Connect"
 
 #: corehq/apps/reports/standard/sms.py
 msgid "Survey Detail"
@@ -46502,14 +47319,28 @@ msgstr "Kwa nini siwezi hariri?"
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid ""
 "\n"
-"              You do not have permission to modify this flag. Please contact\n"
-"              support if any changes are needed.\n"
-"            "
+"                You do not have permission to modify this flag. Please contact\n"
+"                support if any changes are needed.\n"
+"              "
 msgstr ""
 "\n"
-"              Huna ruhusa ya kubadilisha bendera hii. Tafadhali wasiliana na\n"
-"              msaada ikiwa mabadiliko yoyote yanahitajika.\n"
-"            "
+"                Huna ruhusa ya kubadilisha bendera hii. Tafadhali wasiliana na\n"
+"                msaada ikiwa mabadiliko yanahitajika.\n"
+"              "
+
+#: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
+#, python-format
+msgid ""
+"\n"
+"                This feature is %(status)s for all users and domains, so the\n"
+"                individually toggled items are irrelevant. The toggle will soon\n"
+"                be removed.\n"
+"              "
+msgstr ""
+"\n"
+"                Kipengele hiki ni %(status)s kwa watumiaji na domeni zote, hivyo\n"
+"                vitu vilivyowashwa kibinafsi havina umuhimu. Uwezeshaji huu utaondolewa hivi karibuni.\n"
+"              "
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html
 msgid "Enabled toggle items"
@@ -53454,10 +54285,6 @@ msgstr ""
 "Fomu haijapatikana katika toleo la hivi karibuni la programu lililotolewa"
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Survey"
-msgstr "Unganisha Utafiti"
-
-#: corehq/messaging/scheduling/forms.py
 #: corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/repeater_generators.py
 msgid "JSON"
@@ -53512,10 +54339,6 @@ msgid "Date of final occurrence:"
 msgstr "Tarehe ya tukio la mwisho:"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "\n"
-#| "                          Please upload any files relevant to your suggestion.\n"
-#| "                        "
 msgid ""
 "\n"
 "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
@@ -53583,8 +54406,6 @@ msgstr ""
 "tena mtumiaji (watumiaji)."
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "One or more users were unexpectedly not found. Please select user(s) again."
 msgid ""
 "One or more users did not have an active PersonalID link. Please select "
 "user(s) again."
@@ -53593,7 +54414,6 @@ msgstr ""
 "chagua tena mtumiaji/watumiaji."
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid "Connect Messaging Users"
 msgid "Connect Messages can only be sent to users."
 msgstr "Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji."
 
@@ -54382,10 +55202,6 @@ msgstr "futa uundaji"
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert Image"
 msgstr "Weka Picha"
-
-#: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
-msgid "Uploading"
-msgstr "Inapakia"
 
 #: corehq/messaging/scheduling/templates/scheduling/partials/rich_text_editor.html
 msgid "Insert"
@@ -56593,11 +57409,6 @@ msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
-msgid "Confirmation"
-msgstr "Uthibitisho"
-
-#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
-#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Are you sure?"
 msgstr "Una uhakika?"
 
@@ -57190,6 +58001,16 @@ msgstr "Onyesha kitufe cha \"Washa Viongezeo Vyote\""
 msgid "Two-stage Mobile Worker Account Creation"
 msgstr "Uundaji wa Akaunti ya Mfanyakazi wa Simu kwa Hatua Mbili"
 
+#: corehq/privileges.py
+msgid "Data Dictionary case properties have data types"
+msgstr "Sifa za kesi za Kamusi ya Data zina aina za data"
+
+#: corehq/privileges.py
+msgid "Case Export supports exporting geolocated data in GeoJSON format"
+msgstr ""
+"Uhamishaji wa Kesi unasaidia kusafirisha data yenye eneo la kijiografia kwa "
+"muundo wa GeoJSON"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Ripoti za Mjenzi wa Ripoti"
@@ -57531,38 +58352,6 @@ msgstr "chumvi"
 #: corehq/util/auth.py
 msgid "hash"
 msgstr "hashi"
-
-#: corehq/util/context_processors.py
-msgid "Need Help?"
-msgstr "Unahitaji Msaada?"
-
-#: corehq/util/context_processors.py
-msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
-msgstr ""
-"Habari! Mimi ni CommCare Companion, mwongozo wako binafsi wa CommCare! "
-"Naweza kukusaidia na nini leo?"
-
-#: corehq/util/context_processors.py
-msgid "I need help with building my CommCare application."
-msgstr "Nahitaji msaada wa kujenga programu yangu ya CommCare."
-
-#: corehq/util/context_processors.py
-msgid "I need help troubleshooting my mobile application."
-msgstr "Nahitaji msaada wa kutatua matatizo ya programu yangu ya simu."
-
-#: corehq/util/context_processors.py
-msgid "I need help with exporting or understanding my data."
-msgstr "Nahitaji msaada wa kusafirisha au kuelewa data yangu."
-
-#: corehq/util/context_processors.py
-msgid "Finding the best answer"
-msgstr "Inatafuta jibu bora"
-
-#: corehq/util/context_processors.py
-msgid "Starting a new chat will clear your current conversation. Continue?"
-msgstr "Kuanza gumzo jipya kutafuta mazungumzo yako ya sasa. Endelea?"
 
 #: corehq/util/jsonattrs.py
 #, python-format
@@ -58239,6 +59028,161 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid "This user cannot access this link."
+#~ msgstr "Mtumiaji huyu hawezi kufikia kiungo hiki."
+
+#~ msgid "Please enter either text body or xpath for custom icon"
+#~ msgstr "Tafadhali ingiza mwili wa maandishi au xpath kwa ikoni maalum"
+
+#~ msgid ""
+#~ "There are errors with your configuration. Please fix them before creating "
+#~ "the export."
+#~ msgstr ""
+#~ "Kuna makosa kwenye usanidi wako. Tafadhali rekebisha kabla ya kuunda "
+#~ "usafirishaji."
+
+#~ msgid "Select geo property"
+#~ msgstr "Chagua sifa ya kijiografia"
+
+#, python-format
+#~ msgid ""
+#~ "CommCare Alert: %(account_name)s's subscription to %(plan_name)s ends "
+#~ "%(ending_on)s"
+#~ msgstr ""
+#~ "Arifa ya CommCare: usajili wa %(account_name)s kwa %(plan_name)s unamalizika"
+#~ " %(ending_on)s"
+
+#, python-format
+#~ msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
+#~ msgstr ""
+#~ "Arifa ya CommCare: majaribio ya siku 30 kwa '%(domain)s' yanamalizika "
+#~ "%(ending_on)s"
+
+#, python-format
+#~ msgid ""
+#~ "Dear %(name)s,\n"
+#~ "\n"
+#~ "This email is a receipt for your payment of %(amount)s toward Invoice No.\n"
+#~ "%(invoice_num)s for your project %(project)s.\n"
+#~ msgstr ""
+#~ "Mpendwa %(name)s,\n"
+#~ "\n"
+#~ "Barua pepe hii ni risiti ya malipo yako ya %(amount)s kwa ajili ya Ankara Na.\n"
+#~ "%(invoice_num)s ya mradi wako %(project)s.\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    To change your subscription, please log into your project on\n"
+#~ "    CommCare HQ and navigate to the\n"
+#~ "    <a href=\"%(subscription_url)s\">subscription page</a> in your\n"
+#~ "    project settings.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Ili kubadilisha usajili wako, tafadhali ingia kwenye mradi wako kwenye\n"
+#~ "    CommCare HQ na nenda kwenye\n"
+#~ "    <a href=\"%(subscription_url)s\">ukurasa wa usajili</a> kwenye mipangilio ya mradi wako.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    If you have questions about our pricing plans,\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">you can review them here</a>.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Ikiwa una maswali kuhusu mipango yetu ya bei,\n"
+#~ "    <a href=\"http://www.commcarehq.org/software-plans/\">unaweza kuipitia hapa</a>.\n"
+#~ "  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "Dear %(domain)s administrator,\n"
+#~ "\n"
+#~ "Your 30 Day Trial for %(domain)s is ending soon! If you do not\n"
+#~ "change your subscription before then, your subscription will be paused on\n"
+#~ "%(ending_on)s and you will lose access to all features until you\n"
+#~ "re-subscribe to a new paid plan.\n"
+#~ "\n"
+#~ "To change your subscription, please log into your project on\n"
+#~ "CommCare HQ and and navigate to the subscription page in your project\n"
+#~ "settings: %(subscription_url)s\n"
+#~ "\n"
+#~ "If you have questions about our pricing plans, you can review them here:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "Thank you for your use and support of CommCare.\n"
+#~ "\n"
+#~ "Best regards,\n"
+#~ "\n"
+#~ "The CommCare Team\n"
+#~ "%(base_url)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Mpendwa msimamizi wa %(domain)s,\n"
+#~ "\n"
+#~ "Majaribio yako ya Siku 30 kwa %(domain)s yanakaribia kuisha! Ikiwa hutabadilisha\n"
+#~ "usajili wako kabla ya hapo, usajili wako utasimamishwa tarehe\n"
+#~ "%(ending_on)s na utapoteza ufikiaji wa vipengele vyote hadi\n"
+#~ "ujiandikishe tena kwenye mpango mpya wa kulipia.\n"
+#~ "\n"
+#~ "Ili kubadilisha usajili wako, tafadhali ingia kwenye mradi wako kwenye\n"
+#~ "CommCare HQ na uende kwenye ukurasa wa usajili kwenye mipangilio ya mradi wako: %(subscription_url)s\n"
+#~ "\n"
+#~ "Ikiwa una maswali kuhusu mipango yetu ya bei, unaweza kuipitia hapa:\n"
+#~ "https://www.commcarehq.org/pricing/\n"
+#~ "\n"
+#~ "Asante kwa matumizi na msaada wako wa CommCare.\n"
+#~ "\n"
+#~ "Wako mwaminifu,\n"
+#~ "\n"
+#~ "Timu ya CommCare\n"
+#~ "%(base_url)s\n"
+
+#~ msgid "Valid Values &amp; Formats"
+#~ msgstr "Thamani na Miundo Sahihi"
+
+#~ msgid "Saved Credit Cards"
+#~ msgstr "Kadi za Mkopo Zilizohifadhiwa"
+
+#~ msgid "Credit Card"
+#~ msgstr "Kadi ya Mkopo"
+
+#~ msgid "Your request was successful!"
+#~ msgstr "Ombi lako limefanikiwa!"
+
+#~ msgid "Delete Card"
+#~ msgstr "Futa Kadi"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove <strong><span data-bind='text: brand'></span></strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Hakika unataka kuondoa kadi ya <strong><span data-bind='text: brand'></span></strong>\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+
+#~ msgid "Autopay card"
+#~ msgstr "Kadi ya malipo ya moja kwa moja"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Actually remove\n"
+#~ "          <strong><span data-bind=\"text: brand\"></span></strong> card\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Kuondoa kabisa\n"
+#~ "          <strong><span data-bind=\"text: brand\"></span></strong> kadi\n"
+#~ "          ************<strong><span data-bind=\"text: last4\"></span></strong>?\n"
+#~ "        "
 
 #~ msgid "Actually remove this card?"
 #~ msgstr "Kweli uondoe kadi hii?"

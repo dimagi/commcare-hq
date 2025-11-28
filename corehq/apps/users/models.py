@@ -10,6 +10,7 @@ from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -578,6 +579,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             user_data.update({}, profile_id=profile.id)
         if custom_user_data:
             user_data.update(custom_user_data)
+            user_data.remove_unrecognized()
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []
@@ -810,9 +812,7 @@ class DjangoUserMixin(DocumentSchema):
 
     def check_password(self, password):
         """ Currently just for debugging"""
-        dummy = User()
-        dummy.password = self.password
-        return dummy.check_password(password)
+        return check_password(password, self.password)
 
 
 class EulaMixin(DocumentSchema):
@@ -2816,7 +2816,12 @@ class Invitation(models.Model):
         super().delete()
 
     @classmethod
-    def by_domain(cls, domain, is_accepted=False, **filters):
+    def by_domain(cls, domain, is_accepted=False, expired=..., **filters):
+        one_month_ago = datetime.utcnow().date() - relativedelta(months=1)
+        if expired is True:
+            filters['invited_on__lt'] = one_month_ago
+        if expired is False:
+            filters['invited_on__gte'] = one_month_ago
         return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
 
     @classmethod

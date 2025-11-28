@@ -1,0 +1,14 @@
+{% load i18n %}
+
+{% blocktrans %}
+  Dear {{ domain }} administrator,
+
+  Your subscription will pause {{ ending_on }} In case you would like to
+  renew, please select auto-renewal here: {{ subscription_url }}
+
+  Please reach out to {{ invoicing_contact_email }} if you have any questions.
+
+  Best regards,
+  The CommCare Team
+  {{ base_url }}
+{% endblocktrans %}
