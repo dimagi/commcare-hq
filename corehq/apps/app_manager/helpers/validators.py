@@ -639,7 +639,6 @@ class ModuleDetailValidatorMixin(object):
                         'field': sort_element.field,
                         'module': self.get_module_info(),
                     })
-        # ToDo: Add validation for sort calculation
         if self.module.case_list_filter:
             try:
                 # get_filter_xpath returns a filter like `[age > 5]`, so prefix it
