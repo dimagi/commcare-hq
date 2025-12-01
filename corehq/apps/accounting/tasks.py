@@ -26,7 +26,6 @@ from dimagi.utils.couch.database import iter_docs
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from corehq.apps.accounting.emails import (
     send_dimagi_contact_ending_reminder_email,
-    send_ending_reminder_email,
     send_renewal_reminder_email,
     send_subscription_ending_email,
     send_subscription_renewed_email,
@@ -482,23 +481,12 @@ def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
-    # current reminders to be removed once auto-renewal is GA
-    send_subscription_reminder_emails(30)
-    send_subscription_reminder_emails(10)
-    send_subscription_reminder_emails(1)
-
     # new set of emails replaces existing reminders once auto-renewal is GA
     send_renewal_reminder_emails(90)
     send_renewal_reminder_emails(60)
     send_subscription_ending_emails(30)
     send_subscription_ending_emails(10)
     send_subscription_ending_emails(1)
-
-
-def send_subscription_reminder_emails(days_left):
-    ending_subscriptions = _filter_subscriptions_for_reminder_emails(days_left, is_trial=False)
-    for subscription in ending_subscriptions:
-        _try_send_subscription_email(subscription, days_left, send_ending_reminder_email)
 
 
 def send_renewal_reminder_emails(days_left):
