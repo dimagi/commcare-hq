@@ -431,6 +431,7 @@ $(function () {
                 keyboard: false,
                 backdrop: 'static',
             });
+            eulaModal.show();
             $("body").addClass("has-eula");
             $("#eula-agree").click(function () {
                 $(this).disableButton();
