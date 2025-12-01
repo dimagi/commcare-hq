@@ -4,6 +4,7 @@ from django.test import SimpleTestCase, TestCase
 import pytest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
@@ -13,7 +14,7 @@ from corehq.apps.integration.kyc.models import (
     KycVerificationStatus,
     UserDataStore,
 )
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
 from corehq.motech.models import ConnectionSettings
@@ -59,6 +60,18 @@ class TestGetConnectionSettings(TestCase):
 
 @es_test(requires=[case_search_adapter, user_adapter])
 class BaseKycUsersSetup(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.web_user = WebUser.create(
+            DOMAIN, 'web.user@{DOMAIN}.commcarehq.org', 'Passw0rd!', None, None, is_admin=True,
+
+        )
+        cls.web_user.save()
+        cls.addClassCleanup(cls.web_user.delete, DOMAIN, deleted_by=None)
+
     def setUp(self):
         super().setUp()
         self.commcare_user = CommCareUser.create(
@@ -284,10 +297,11 @@ class TestKycUser(BaseKycUsersSetup):
         assert kyc_user.kyc_provider is None
         assert kyc_user.kyc_verification_error_message is None
 
-    def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider):
+    def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider, expected_verified_by):
         assert kyc_user.kyc_verification_status == expected_status
         assert kyc_user.kyc_last_verified_at is not None
         assert kyc_user.kyc_provider == expected_provider
+        assert kyc_user.kyc_verified_by == expected_verified_by
 
     def test_update_verification_status_for_custom_user_data(self):
         config = KycConfig(
@@ -296,9 +310,14 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.commcare_user)
-        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED, verified_by=self.web_user.username)
 
-        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+        self._assert_for_verification_status(
+            kyc_user,
+            KycVerificationStatus.PASSED,
+            config.provider,
+            self.web_user.username
+        )
 
     def test_update_verification_status_for_user_case(self):
         config = KycConfig(
@@ -307,9 +326,14 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.user_case)
-        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED, verified_by=self.web_user.username)
 
-        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+        self._assert_for_verification_status(
+            kyc_user,
+            KycVerificationStatus.PASSED,
+            config.provider,
+            self.web_user.username
+        )
 
     def test_update_verification_status_for_other_case_type(self):
         config = KycConfig(
@@ -318,9 +342,14 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.other_case)
-        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED, verified_by=self.web_user.username)
 
-        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+        self._assert_for_verification_status(
+            kyc_user,
+            KycVerificationStatus.PASSED,
+            config.provider,
+            self.web_user.username
+        )
 
     def test_verification_status_invalid_value(self):
         config = KycConfig(
