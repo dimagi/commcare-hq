@@ -67,6 +67,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
     SoftwareProductRate,
+    StripePaymentMethod,
     Subscription,
     SubscriptionType,
     WireBillingRecord,
@@ -1153,8 +1154,9 @@ class RemoveAutopayForm(forms.Form):
         )
 
     def remove_autopay_user_from_account(self):
-        self.account.auto_pay_user = None
-        self.account.save()
+        payment_method = StripePaymentMethod.objects.get(web_user=self.account.auto_pay_user)
+        autopay_card = payment_method.get_autopay_card(self.account)
+        payment_method.unset_autopay(autopay_card, self.account)
 
 
 class CancelForm(forms.Form):
@@ -2878,6 +2880,36 @@ class TriggerAutopaymentsForm(forms.Form):
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Autopayments for Project",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+
+class TriggerAutoRenewalForm(forms.Form):
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Auto-Renewal',
+                crispy.Field(
+                    'domain',
+                    css_class="input-xxlarge accounting-async-select2",
+                    placeholder="Search for Project"
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Auto-Renewal for Project",
                     css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),

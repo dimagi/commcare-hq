@@ -29,6 +29,7 @@ def not_(node, context):
 
 
 def starts_with(node, context):
+    confirm_args_count(node, 2)
     property_name, search_value = node.args
     property_name = _property_name_to_string(property_name, node)
     return case_property_starts_with(property_name, search_value)

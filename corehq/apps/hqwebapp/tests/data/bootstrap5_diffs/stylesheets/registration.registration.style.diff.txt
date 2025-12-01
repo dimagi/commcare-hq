@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -1,7 +1,11 @@
+-@b3-import-variables: '../../../../../../../../node_modules/bootstrap/less/variables';
+-@b3-import-mixins: '../../../../../../../../node_modules/bootstrap/less/mixins';
++@import "functions";
++@import "../../hqwebapp/scss/commcarehq/variables";
++@import "variables";
++@import "variables-dark";
++@import "../../hqwebapp/scss/commcarehq/variables_bootstrap3";
++@import "maps";
++@import "mixins";
++@import "../../hqwebapp/scss/commcarehq/mixins";
++@import "forms";
+ 
+-@import '../../hqwebapp/less/_hq/includes/variables.less';
+-@import '../../hqwebapp/less/_hq/includes/mixins.less';
+-
+-@import 'registration-main';
++@import "registration-main";

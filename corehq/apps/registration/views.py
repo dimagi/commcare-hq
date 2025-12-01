@@ -17,6 +17,7 @@ from django.views.generic.base import TemplateView, View
 
 from memoized import memoized
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -220,8 +221,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             current_location = current_env_data['short_name'] if current_env_data else _("current")
             message = _(
                 'This email is already registered in the {location} cloud location. '
-                'Please <a href="{login_link}">sign in here</a>.'
-            ).format(location=current_location, login_link=reverse('login'))
+            ).format(location=current_location)
         else:
             domain = email[email.find("@") + 1:]
             for account in BillingAccount.get_enterprise_restricted_signup_accounts():
@@ -251,9 +251,10 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         return response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class UserRegistrationView(BasePageView):
     urlname = 'register_user'
-    template_name = 'registration/bootstrap3/register_new_user.html'
+    template_name = 'registration/register_new_user.html'
 
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
@@ -305,9 +306,10 @@ class UserRegistrationView(BasePageView):
         return reverse(self.urlname)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class RegisterDomainView(TemplateView):
 
-    template_name = 'registration/bootstrap3/domain_request.html'
+    template_name = 'registration/domain_request.html'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -322,7 +324,7 @@ class RegisterDomainView(TemplateView):
                     'requested_domain': pending_domains[0],
                     'current_page': {'page_name': _('Confirm Account')},
                 })
-                return render(request, 'registration/bootstrap3/confirmation_waiting.html', context)
+                return render(request, 'registration/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
     @property
@@ -389,7 +391,7 @@ class RegisterDomainView(TemplateView):
                 'current_page': {'page_name': _('Confirm Account')},
             })
             track_workflow_noop(self.request.user.email, "Created new project")
-            return render(request, 'registration/bootstrap3/confirmation_sent.html', context)
+            return render(request, 'registration/confirmation_sent.html', context)
 
         if nextpage:
             return HttpResponseRedirect(nextpage)
@@ -434,6 +436,7 @@ class RegisterDomainView(TemplateView):
 
 @transaction.atomic
 @login_required
+@use_bootstrap5
 def resend_confirmation(request):
     try:
         dom_req = RegistrationRequest.get_request_for_username(request.user.username)
@@ -458,7 +461,7 @@ def resend_confirmation(request):
                                   f'seconds before requesting again.'),
                 'current_page': {'page_name': default_page_name},
             }
-            return render(request, 'registration/bootstrap3/confirmation_error.html', context)
+            return render(request, 'registration/confirmation_error.html', context)
         try:
             dom_req.request_time = datetime.utcnow()
             dom_req.request_ip = get_ip(request)
@@ -478,17 +481,18 @@ def resend_confirmation(request):
                 'requested_domain': dom_req.domain,
                 'current_page': {'page_name': _('Confirmation Email Sent')},
             })
-            return render(request, 'registration/bootstrap3/confirmation_sent.html',
+            return render(request, 'registration/confirmation_sent.html',
                 context)
 
     context.update({
         'requested_domain': dom_req.domain,
         'current_page': {'page_name': default_page_name},
     })
-    return render(request, 'registration/bootstrap3/confirmation_resend.html', context)
+    return render(request, 'registration/confirmation_resend.html', context)
 
 
 @transaction.atomic
+@use_bootstrap5
 def confirm_domain(request, guid=''):
     with CriticalSection(['confirm_domain_' + guid]):
         error = None
@@ -510,7 +514,7 @@ def confirm_domain(request, guid=''):
                 'message_body': error,
                 'current_page': {'page_name': 'Account Not Activated'},
             }
-            return render(request, 'registration/bootstrap3/confirmation_error.html', context)
+            return render(request, 'registration/confirmation_error.html', context)
 
         requested_domain = Domain.get_by_name(req.domain)
         view_name = _confirm_domain_redirect()

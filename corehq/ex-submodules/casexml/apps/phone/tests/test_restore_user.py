@@ -32,8 +32,8 @@ def test_get_commtrack_location_id():
 ])
 @patch('corehq.apps.users.models._AuthorizableMixin.get_domain_membership',
        Mock(return_value=DomainMembership(domain=DOMAIN)))
+@patch_user_data_db_layer
 @use("db")
 def test_user_types(user, expected_type):
-    with patch_user_data_db_layer():
-        user_type = user.to_ota_restore_user(DOMAIN).user_session_data['commcare_user_type']
-        assert_equal(user_type, expected_type)
+    user_type = user.to_ota_restore_user(DOMAIN).user_session_data['commcare_user_type']
+    assert_equal(user_type, expected_type)

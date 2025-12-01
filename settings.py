@@ -1182,6 +1182,13 @@ MTN_KYC_CONNECTION_SETTINGS = {
     'client_secret': 'password',
 }
 
+#### Chatbot configuration
+# Override in localsettings.py
+# See https://docs.openchatstudio.com/chat_widget/
+
+# ID of the chatbot in Open Chat Studio
+AI_CHATBOT_ID = None
+AI_CHATBOT_TOKEN = None
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1306,7 +1313,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
                 'corehq.util.context_processors.server_location_display',
-                'corehq.util.context_processors.chat_widget_config',
+                'corehq.util.context_processors.ai_chat_widget',
             ],
             'debug': DEBUG,
             'loaders': [

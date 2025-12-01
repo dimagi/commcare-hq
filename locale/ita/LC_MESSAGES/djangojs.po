@@ -159,31 +159,38 @@ msgstr "Fatturato mensilmente"
 msgid "Please enter a valid email."
 msgstr "Inserisci un'email valida."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your first name."
 msgstr "Inserisci il tuo nome."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your last name."
 msgstr "Inserisci il tuo cognome."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your organization."
 msgstr "Inserisci la tua organizzazione."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your job title."
 msgstr "Inserisci la tua posizione lavorativa."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "Please enter your email address."
 msgstr "Inserisci il tuo indirizzo email."
 
-#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/cta_forms.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/cta_forms.js
 msgid "We are sorry, but something unexpected has occurred."
 msgstr "Siamo spiacenti, si è verificato un errore imprevisto."
 
-#: corehq/apps/analytics/static/analytix/js/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap3/hubspot.js
+#: corehq/apps/analytics/static/analytix/js/bootstrap5/hubspot.js
 msgid "Submit Request"
 msgstr "Invia richiesta"
 
