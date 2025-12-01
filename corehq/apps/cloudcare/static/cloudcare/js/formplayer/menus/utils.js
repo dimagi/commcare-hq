@@ -4,70 +4,11 @@ import toggles from "hqwebapp/js/toggles";
 import noopMetrics from "analytix/js/noopMetrics";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import constants from "cloudcare/js/formplayer/constants";
-import ProgressBar from "cloudcare/js/formplayer/layout/views/progress_bar";
 import view from "cloudcare/js/formplayer/menus/views/query";
 import UsersModels from "cloudcare/js/formplayer/users/models";
 import utils from "cloudcare/js/formplayer/utils/utils";
 import views from "cloudcare/js/formplayer/menus/views";
 import gtx from "cloudcare/js/gtx";
-
-var recordPosition = function (position) {
-    sessionStorage.locationLat = position.coords.latitude;
-    sessionStorage.locationLon = position.coords.longitude;
-    sessionStorage.locationAltitude = position.coords.altitude;
-    sessionStorage.locationAccuracy = position.coords.accuracy;
-};
-
-var handleLocationRequest = function (optionsFromLastRequest) {
-    var success = function (position) {
-        import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
-            FormplayerFrontend.regions.getRegion('loadingProgress').empty();
-            recordPosition(position);
-            MenusController.selectMenu(optionsFromLastRequest);
-        });
-    };
-
-    var error = function (err) {
-        FormplayerFrontend.regions.getRegion('loadingProgress').empty();
-        FormplayerFrontend.trigger('showError',
-            getErrorMessage(err) +
-            "Without access to your location, computations that rely on the here() function will show up blank.",
-            false, false,
-        );
-    };
-
-    var getErrorMessage = function (err) {
-        switch (err.code) {
-            case err.PERMISSION_DENIED:
-                return "You denied CommCare HQ permission to read your browser's current location. ";
-            case err.TIMEOUT:
-                return "Your connection was not strong enough to acquire your location. Please try again later. ";
-            case err.POSITION_UNAVAILABLE:
-            default:
-                return "Your browser location could not be determined. ";
-        }
-    };
-
-    if (navigator.geolocation) {
-        var progressView = ProgressBar({
-            progressMessage: gettext("Fetching your location..."),
-        });
-        FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView.render());
-        navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
-    }
-};
-
-var startOrStopLocationWatching = function (shouldWatchLocation) {
-    if (navigator.geolocation) {
-        var watching = Boolean(sessionStorage.lastLocationWatchId);
-        if (!watching && shouldWatchLocation) {
-            sessionStorage.lastLocationWatchId = navigator.geolocation.watchPosition(recordPosition);
-        } else if (watching && !shouldWatchLocation) {
-            navigator.geolocation.clearWatch(sessionStorage.lastLocationWatchId);
-            sessionStorage.lastLocationWatchId = '';
-        }
-    }
-};
 
 var showBreadcrumbs = function (breadcrumbs) {
     var detailCollection,
@@ -224,9 +165,7 @@ export default {
     getMenuView: getMenuView,
     getMenuData: getMenuData,
     getCaseListView: getCaseListView,
-    handleLocationRequest: handleLocationRequest,
     showBreadcrumbs: showBreadcrumbs,
     showMenuDropdown: showMenuDropdown,
-    startOrStopLocationWatching: startOrStopLocationWatching,
     isSidebarEnabled: isSidebarEnabled,
 };
