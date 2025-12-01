@@ -104,11 +104,14 @@
                     The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.
                   {% endblocktrans %}
                 </p>
-              {% else %}
-                {% blocktrans %}
-                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.
-                {% endblocktrans %}
               {% endif %}
+              {% blocktrans %}
+                By providing your payment information and clicking "Subscribe to
+                Plan", you are completing the Autopay enrollment process and
+                giving your affirmative consent to these recurring payment
+                terms. Please read them carefully.
+              {% endblocktrans %}
+              {% include "domain/partials/autopay_terms.html" %}
             </div>
 
             {% if is_annual_plan %}
