@@ -2,7 +2,6 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-
 {% js_entry 'domain/js/confirm_billing_info' %}
 
 {% block form_content %}
@@ -11,8 +10,9 @@
   {% registerurl "cards_view" domain %}
 
   <p class="lead text-center">
-    {% blocktrans with plan.name as p%}
-      You are about to subscribe to the <strong>{{ p }} Software Plan</strong>.<br/>
+    {% blocktrans with plan.name as p %}
+      You are about to subscribe to the
+      <strong>{{ p }} Software Plan</strong>.<br />
       Please update your billing information below before continuing.
     {% endblocktrans %}
   </p>
@@ -22,12 +22,15 @@
     method="post"
     x-data="requiredBillingDetails({{ is_autopay_required|BOOL }})"
   >
-
     <div class="card card-modern-gray card-form-only mb-3" id="billing-info">
       <div class="card-body">
         {% crispy billing_account_info_form %}
         {% if downgrade_email_note %}
-          <input type="hidden" name="downgrade_email_note" value="{{ downgrade_email_note }}" />
+          <input
+            type="hidden"
+            name="downgrade_email_note"
+            value="{{ downgrade_email_note }}"
+          />
         {% endif %}
       </div>
     </div>
@@ -41,7 +44,8 @@
           hx-trigger="load, refreshCards"
         >
           <div class="htmx-indicator mb-3 fs-4">
-            <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading autopay cards, please wait..." %}
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            {% trans "Loading autopay cards, please wait..." %}
           </div>
         </div>
         {% include "domain/partials/new_stripe_card_alpinejs.html" with card_container_id="manage-autopay-container" card_button_class="btn-outline-primary" %}
@@ -94,21 +98,28 @@
             >
               {% if is_annual_plan %}
                 {% blocktrans %}
-                  By subscribing to this <strong>annual subscription</strong>, I acknowledge that
-                  the autopay card above will be charged on a monthly basis for any on-demand fees (excess users, SMS).
+                  By subscribing to this <strong>annual subscription</strong>,
+                  you acknowledge that the autopay card above will be charged on
+                  a monthly basis for any on-demand fees (excess users, SMS).
                 {% endblocktrans %}
                 <p class="mt-2 mb-0">
                   {% blocktrans %}
-                    A separate annual invoice for the product cost will be generated and sent to the contact emails above.
-                    This invoice must be paid within {{ days_date_due_annual }} days or the subscription will be paused.
-                    The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.
+                    A separate annual invoice for the product cost will be
+                    generated and sent to the contact emails above. This invoice
+                    must be paid within {{ days_date_due_annual }} days or the
+                    subscription will be paused. The selected autopay card will
+                    not be automatically charged to pay this invoice&mdash;it
+                    must be paid directly.
                   {% endblocktrans %}
                 </p>
-              {% else %}
-                {% blocktrans %}
-                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.
-                {% endblocktrans %}
               {% endif %}
+              {% blocktrans %}
+                By providing your payment information and clicking "Subscribe to
+                Plan", you are completing the Autopay enrollment process and
+                giving your affirmative consent to these recurring payment
+                terms. Please read them carefully.
+              {% endblocktrans %}
+              {% include "domain/partials/autopay_terms.html" %}
             </div>
 
             {% if is_annual_plan %}
@@ -118,19 +129,22 @@
                 x-cloak=""
               >
                 {% blocktrans %}
-                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that I understand an
-                   annual invoice for the product cost will be generated and sent to the contact emails above.
-                   This invoice must be paid within {{ days_date_due_annual }} days or the subscription will be paused.
+                  By subscribing to this <strong>annual subscription</strong>,
+                  you acknowledge that you understand an annual invoice for the
+                  product cost will be generated and sent to the contact emails
+                  above. This invoice must be paid within
+                  {{ days_date_due_annual }} days or the subscription will be
+                  paused.
                 {% endblocktrans %}
                 <p class="mt-2 mb-0">
                   {% blocktrans %}
-                    I also acknowledge that by not selecting an autopay card, I must manually pay for any on-demand fees
-                    (excess users, SMS) on a monthly basis or the subscription will be paused.
+                    You also acknowledge that by not selecting an autopay card,
+                    you must manually pay for any on-demand fees (excess users,
+                    SMS) on a monthly basis or the subscription will be paused.
                   {% endblocktrans %}
                 </p>
               </div>
             {% endif %}
-
           </div>
 
           <div class="px-2 pt-2">
@@ -148,6 +162,5 @@
         </fieldset>
       </div>
     </div>
-
   </form>
 {% endblock form_content %}
