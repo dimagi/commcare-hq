@@ -96,7 +96,6 @@ from corehq.const import (
     USER_DATE_FORMAT,
     USER_MONTH_FORMAT,
 )
-from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
@@ -431,7 +430,7 @@ def auto_renew_subscriptions(domain_name=None):
     """
     ending_subscriptions = _get_auto_renewable_subscriptions(domain_name=domain_name)
     for subscription in ending_subscriptions:
-        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain) and not subscription.is_renewed:
+        if not subscription.is_renewed:
             auto_renew_subscription(subscription)
 
 
@@ -507,8 +506,7 @@ def send_renewal_reminder_emails(days_left):
         days_left, is_trial=False, service_type=SubscriptionType.PRODUCT
     ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
-        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, days_left, send_renewal_reminder_email)
+        _try_send_subscription_email(subscription, days_left, send_renewal_reminder_email)
 
 
 def send_subscription_ending_emails(days_left):
@@ -516,8 +514,7 @@ def send_subscription_ending_emails(days_left):
         days_left, is_trial=False, service_type=SubscriptionType.PRODUCT, auto_renew=False,
     ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
-        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, days_left, send_subscription_ending_email)
+        _try_send_subscription_email(subscription, days_left, send_subscription_ending_email)
 
 
 def _try_send_subscription_email(subscription, days_left, send_email_func):
