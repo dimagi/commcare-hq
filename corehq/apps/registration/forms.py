@@ -22,7 +22,6 @@ from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed,
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
@@ -33,25 +32,6 @@ from corehq.apps.users.models import CouchUser
 class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
-    _envs = ServerLocation.get_envs()
-    if settings.SERVER_ENVIRONMENT in _envs:
-        server_location = forms.ChoiceField(
-            label=_("Cloud Location"),
-            required=False,
-            widget=forms.RadioSelect,
-            choices=[
-                (server['subdomain'], _("{location_name} Cloud").format(location_name=server['long_name']))
-                for __, server in _envs.items()
-            ],
-            help_text=_(
-                "*You're creating an account and project space in the chosen cloud location.<br/>"
-                "These cannot be transferred between cloud locations. "
-                "<a href='{help_link}' target='_blank'>Learn more</a>."
-            ).format(
-                help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
-                           "CommCare+Cloud+Server+Locations")
-            ),
-        )
     full_name = forms.CharField(label=_("Full Name"))
     email = forms.CharField(label=_("Professional Email"))
     password = forms.CharField(
@@ -109,22 +89,11 @@ class RegisterWebUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
+        self.can_select_cloud = kwargs.pop('can_select_cloud', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
 
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
-
-        server_location_field = []
-        if self.fields.get('server_location'):
-            # safe to access because we only render the field if the current environment is in ServerLocation.ENVS
-            envs = ServerLocation.get_envs()
-            self.fields['server_location'].initial = envs[settings.SERVER_ENVIRONMENT]['subdomain']
-            server_location_field = [
-                hqcrispy.RadioSelect(
-                    'server_location',
-                    data_bind="checked: serverLocation"
-                ),
-            ]
 
         saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -178,9 +147,36 @@ class RegisterWebUserForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Fieldset(
+                    _('Choose Your Cloud Location'),
+                    hqcrispy.FormStepNumber(1, 3),
+                    crispy.HTML(
+                        "{% include 'registration/partials/register_new_user/choose_cloud_location.html' %}"
+                    ),
+                    crispy.Div(
+                        twbscrispy.StrictButton(
+                            gettext("Back"),
+                            css_id="back-to-start-btn",
+                            css_class="btn btn-outline-primary btn-lg d-none",
+                        ),
+                        twbscrispy.StrictButton(
+                            gettext("Next"),
+                            css_class="btn btn-primary btn-lg",
+                            data_bind="click: nextStep"
+                        ),
+                        css_class="mt-3",
+                    ),
+                ),
+                css_class="form-bubble form-step cloud-step",
+                style="display: none;"
+            ),
+            crispy.Div(
+                crispy.Fieldset(
                     _('Create Your Account'),
-                    hqcrispy.FormStepNumber(1, 2),
-                    *server_location_field,
+                    hqcrispy.FormStepNumber(2, 3),
+                    crispy.HTML(
+                        "{% include 'registration/partials/register_new_user/chosen_cloud_location.html' %}"
+                        if self.can_select_cloud else ""
+                    ),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'full_name',
@@ -241,26 +237,26 @@ class RegisterWebUserForm(forms.Form):
                     crispy.Div(
                         twbscrispy.StrictButton(
                             gettext("Back"),
-                            css_id="back-to-start-btn",
-                            css_class="btn btn-outline-primary btn-lg d-none",
+                            css_class="btn btn-outline-primary btn-lg",
+                            data_bind="click: previousStep" if self.can_select_cloud else "disable: true",
                         ),
                         twbscrispy.StrictButton(
                             gettext("Next"),
                             css_class="btn btn-primary btn-lg",
-                            data_bind="click: nextStep, disable: disableNextStepOne"
+                            data_bind="click: nextStep, disable: disableNextUserStep"
                         ),
                         css_class="mt-3",
                     ),
                     hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
                 ),
-                css_class="form-bubble form-step step-1",
+                css_class="form-bubble form-step user-step",
                 style="display: none;"
             ),
             crispy.Div(
                 crispy.Fieldset(
                     _('Name Your First Project'),
-                    hqcrispy.FormStepNumber(2, 2),
+                    hqcrispy.FormStepNumber(3, 3),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'project_name',
@@ -290,10 +286,10 @@ class RegisterWebUserForm(forms.Form):
                         gettext("Finish"),
                         css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
-                                  "disable: disableNextStepTwo"
+                                  "disable: disableNextProjectStep"
                     )
                 ),
-                css_class="form-bubble form-step step-2",
+                css_class="form-bubble form-step project-step",
                 style="display: none;"
             ),
         )
