@@ -100,7 +100,6 @@ class TestGroupResource(APIResourceTest):
                 "name": "test group 2",
                 "reporting": True,
             }
-
         ]}
 
         response = self._assert_auth_post_resource(self.list_endpoint,
