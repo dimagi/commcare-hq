@@ -22,6 +22,15 @@
     {% trans "Select Autopay Card" %}
     {% if has_autopay %}<span class="text-success ms-2"><i class="fa fa-check"></i></span>{% endif %}
   </legend>
+  <div class="alert alert-info">
+    {% blocktrans %}
+      By providing your payment information and selecting "Set as autopay card"
+      or "Use this card to autopay," you are completing the Autopay
+      enrollment process and giving your affirmative consent to these
+      recurring payment terms. Please read them carefully.
+    {% endblocktrans %}
+  </div>
+  {% include "domain/partials/autopay_terms.html" %}
   {% if available_cards %}
     <table
       class="table table-striped"

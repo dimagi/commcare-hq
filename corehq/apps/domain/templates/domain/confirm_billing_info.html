@@ -87,12 +87,12 @@
               {% endblocktrans %}
             </div>
 
-            <div
-              class="alert alert-info"
-              x-show="showAutopayConfirmNotice"
-              x-cloak=""
-            >
-              {% if is_annual_plan %}
+            {% if is_annual_plan %}
+              <div
+                class="alert alert-info"
+                x-show="showAutopayConfirmNotice"
+                x-cloak=""
+              >
                 {% blocktrans %}
                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that
                   the autopay card above will be charged on a monthly basis for any on-demand fees (excess users, SMS).
@@ -104,14 +104,8 @@
                     The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.
                   {% endblocktrans %}
                 </p>
-              {% else %}
-                {% blocktrans %}
-                  By subscribing to this monthly subscription, I acknowledge that my autopay card will be charged on a monthly basis.
-                {% endblocktrans %}
-              {% endif %}
-            </div>
+              </div>
 
-            {% if is_annual_plan %}
               <div
                 class="alert alert-info"
                 x-show="showAnnualConfirmNotice"
