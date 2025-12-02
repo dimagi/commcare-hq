@@ -119,7 +119,9 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
-EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+# Set these to the most up to date version of LicenseAgreements
+EULA_CURRENT_VERSION = '3.0'
+AUTOPAY_TERMS_CURRENT_VERSION = 'AP_1.0'
 
 
 def cached_property(method):
@@ -197,6 +199,7 @@ class CallCenterProperties(DocumentSchema):
 
 class LicenseAgreementType:
     EULA = "End User License Agreement"
+    AUTOPAY_TERMS = "Autopay Terms"
 
 
 class LicenseAgreement(DocumentSchema):
