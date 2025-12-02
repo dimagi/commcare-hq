@@ -6,7 +6,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/navigate_menu_start",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"offset\":null,\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"offset\":null,\"cases_per_page\":10,\"preview\":false,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
           }
         },
         "response": {
@@ -20,7 +20,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/navigate_menu",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{},\"cases_per_page\":10,\"preview\":false,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
           }
         },
         "response": {
@@ -34,7 +34,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/navigate_menu",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":null}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":null}},\"cases_per_page\":10,\"preview\":false,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
           }
         },
         "response": {
@@ -48,7 +48,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/navigate_menu",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"inputs\":{\"first_name\":\"Lucca\"},\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"]}},\"cases_per_page\":10,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"requestInitiatedByTag\":\"field_change\"}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"inputs\":{\"first_name\":\"Lucca\"},\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"]}},\"cases_per_page\":10,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"requestInitiatedByTag\":\"field_change\"}"
           }
         },
         "response": {
@@ -62,7 +62,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/navigate_menu",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"},\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"]}},\"cases_per_page\":10,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"requestInitiatedByTag\":\"field_change\"}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"},\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"]}},\"cases_per_page\":10,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"requestInitiatedByTag\":\"field_change\"}"
           }
         },
         "response": {
@@ -76,7 +76,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/navigate_menu",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
           }
         },
         "response": {
@@ -90,7 +90,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/get_details",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\",\"18e434037dae4d87b98e77687a2aeff4\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"isShortDetail\":false}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\",\"18e434037dae4d87b98e77687a2aeff4\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"isShortDetail\":false}"
           }
         },
         "response": {
@@ -104,7 +104,7 @@
           "method": "POST",
           "url": "https://www.commcarehq.org/formplayer/navigate_menu",
           "postData": {
-            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\",\"18e434037dae4d87b98e77687a2aeff4\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\",\"18e434037dae4d87b98e77687a2aeff4\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
           }
         },
         "response": {
