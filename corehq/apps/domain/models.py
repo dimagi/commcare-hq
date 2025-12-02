@@ -193,6 +193,10 @@ class CallCenterProperties(DocumentSchema):
         return pre != post
 
 
+class LicenseAgreementType:
+    EULA = "End User License Agreement"
+
+
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
     type = StringProperty()
