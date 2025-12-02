@@ -235,7 +235,6 @@ class FormplayerSession:
             **self.get_base_data(),
             "app_id": self.app_build_id,
             "locale": "en",
-            "geo_location": None,
             "cases_per_page": 10,
             "preview": False,
             "offset": 0,

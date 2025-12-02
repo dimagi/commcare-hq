@@ -119,7 +119,7 @@
     </header>
     <template form="{map[format]}" width="0">
       <text>
-        <xpath function="concat({map[xpath_function]}, if(here(), '', ''))"> <!-- Without the here() call sessionStorage.locationLat will not be populated -->
+        <xpath function="{map[xpath_function]}">
           {map[variables]}
         </xpath>
       </text>
