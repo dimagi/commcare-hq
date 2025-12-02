@@ -61,6 +61,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.domain.models import (
+    EULA_CURRENT_VERSION,
     Domain,
     LicenseAgreement,
     LicenseAgreementType,
@@ -121,8 +122,6 @@ COMMCARE_USER = 'commcare'
 
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
-
-EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
 
 
 def _add_to_list(list, obj, default):

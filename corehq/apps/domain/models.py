@@ -119,6 +119,8 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
+EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
+
 
 def cached_property(method):
     def find_cached(self):

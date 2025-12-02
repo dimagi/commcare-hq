@@ -39,6 +39,7 @@ from corehq.apps.domain.exceptions import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import (
+    EULA_CURRENT_VERSION,
     Domain,
     LicenseAgreement,
     LicenseAgreementType,
@@ -64,7 +65,6 @@ from corehq.apps.registration.utils import (
 )
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.users.models import (
-    EULA_CURRENT_VERSION,
     CouchUser,
     Invitation,
     WebUser,
