@@ -481,7 +481,6 @@ def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
-    # new set of emails replaces existing reminders once auto-renewal is GA
     send_renewal_reminder_emails(90)
     send_renewal_reminder_emails(60)
     send_subscription_ending_emails(30)
