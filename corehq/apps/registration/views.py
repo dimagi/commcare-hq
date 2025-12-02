@@ -38,7 +38,11 @@ from corehq.apps.domain.exceptions import (
     NameUnavailableException,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.domain.models import (
+    Domain,
+    LicenseAgreement,
+    LicenseAgreementType,
+)
 from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
@@ -582,7 +586,7 @@ def eula_agreement(request):
             agreement.date = datetime.utcnow()
             agreement.user_ip = get_ip(request)
         else:
-            new_agreement = LicenseAgreement(type="End User License Agreement", version=EULA_CURRENT_VERSION)
+            new_agreement = LicenseAgreement(type=LicenseAgreementType.EULA, version=EULA_CURRENT_VERSION)
             new_agreement.signed = True
             new_agreement.date = datetime.utcnow()
             new_agreement.user_ip = get_ip(request)

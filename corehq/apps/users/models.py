@@ -60,7 +60,11 @@ from dimagi.utils.web import get_static_url_prefix
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.domain.models import (
+    Domain,
+    LicenseAgreement,
+    LicenseAgreementType,
+)
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import (
     domain_restricts_superusers,
@@ -860,9 +864,9 @@ class EulaMixin(DocumentSchema):
     def eula(self, version=CURRENT_VERSION):
         current_eula = self.get_eula(version)
         if not current_eula:
-            current_eula = LicenseAgreement(type="End User License Agreement", version=version)
+            current_eula = LicenseAgreement(type=LicenseAgreementType.EULA, version=version)
             self.eulas.append(current_eula)
-        assert current_eula.type == "End User License Agreement"
+        assert current_eula.type == LicenseAgreementType.EULA
         return current_eula
 
 
