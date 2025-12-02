@@ -119,6 +119,10 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
+# Set these to the most up to date version of LicenseAgreements
+EULA_CURRENT_VERSION = '3.0'
+AUTOPAY_TERMS_CURRENT_VERSION = 'AP_1.0'
+
 
 def cached_property(method):
     def find_cached(self):
@@ -191,6 +195,11 @@ class CallCenterProperties(DocumentSchema):
         self.case_actions_datasource_enabled = config.cases_active.enabled
         post = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
         return pre != post
+
+
+class LicenseAgreementType:
+    EULA = "End User License Agreement"
+    AUTOPAY_TERMS = "Autopay Terms"
 
 
 class LicenseAgreement(DocumentSchema):
