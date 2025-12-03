@@ -452,25 +452,17 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
 def sign_autopay_terms(request):
     current_user = CouchUser.from_django_user(request.user)
-    if not _autopay_terms_signed(current_user):
-        new_agreement = LicenseAgreement(
+    autopay_terms = current_user.get_eula(AUTOPAY_TERMS_CURRENT_VERSION, LicenseAgreementType.AUTOPAY_TERMS)
+    if not autopay_terms:
+        autopay_terms = LicenseAgreement(
             type=LicenseAgreementType.AUTOPAY_TERMS,
             version=AUTOPAY_TERMS_CURRENT_VERSION,
             signed=True,
             date=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None),
             user_ip=get_ip(request),
         )
-        current_user.eulas.append(new_agreement)
+        current_user.eulas.append(autopay_terms)
         current_user.save()
-
-
-def _autopay_terms_signed(current_user):
-    return any(
-        eula.type == LicenseAgreementType.AUTOPAY_TERMS
-        and eula.version == AUTOPAY_TERMS_CURRENT_VERSION
-        and eula.signed
-        for eula in current_user.eulas
-    )
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
