@@ -3,7 +3,6 @@ import json
 import re
 import time
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -19,14 +18,12 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop, override
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView, FormView
+from django.views.generic import FormView, TemplateView
 
-import requests
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -36,8 +33,8 @@ from oauth2_provider.models import AccessToken, RefreshToken
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.web import json_response
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -54,15 +51,13 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import (
-    CUSTOM_DATA_FIELD_PREFIX,
-)
+from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
+    api_auth,
     domain_admin_required,
     login_and_domain_required,
     login_or_basic_ex,
-    api_auth,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -85,7 +80,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     can_edit_workers_location,
     location_safe,
-    user_can_access_other_user
+    user_can_access_other_user,
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
@@ -110,23 +105,26 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_can_use_filtered_user_download,
 )
-from corehq.apps.users.exceptions import InvalidRequestException, ModifyUserStatusException
+from corehq.apps.users.exceptions import (
+    InvalidRequestException,
+    ModifyUserStatusException,
+)
 from corehq.apps.users.forms import (
     CommCareUserFormSet,
     CommtrackUserForm,
     ConfirmExtraUserChargesForm,
     MultipleSelectionForm,
     NewMobileWorkerForm,
-    SetUserPasswordForm,
     SendCommCareUserPasswordResetEmailForm,
+    SetUserPasswordForm,
     UserFilterForm,
 )
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDUserLink,
     CouchUser,
     DeactivateMobileWorkerTrigger,
     check_and_send_limit_email,
-    ConnectIDUserLink
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -139,10 +137,10 @@ from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
     generate_mobile_username,
+    get_complete_username,
     log_user_change,
     raw_username,
     verify_modify_user_conditions,
-    get_complete_username,
 )
 from corehq.apps.users.views import (
     BaseEditUserView,
@@ -153,7 +151,8 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.apps.users.views.utils import (
-    filter_user_query_by_locations_accessible_to_user, get_user_location_info
+    filter_user_query_by_locations_accessible_to_user,
+    get_user_location_info,
 )
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
@@ -172,7 +171,7 @@ from corehq.util.workbook_json.excel import (
     get_workbook,
 )
 
-from ..utils import log_user_groups_change
+from ..utils import log_user_groups_change, send_hq_sso_date_metric
 from .custom_data_fields import CommcareUserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://dimagi.atlassian.net/wiki/spaces/commcarepublic"
@@ -1360,8 +1359,8 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         return self.get(request, *args, **kwargs)
 
     def _clear_users_data(self, request, user_docs_by_id):
-        from corehq.apps.users.model_log import UserModelAction
         from corehq.apps.hqwebapp.tasks import send_mail_async
+        from corehq.apps.users.model_log import UserModelAction
 
         cleared_count = 0
         for user_id, doc in user_docs_by_id.items():
@@ -1694,12 +1693,7 @@ def link_connectid_user(request, domain):
         connectid_username=connectid_username, commcare_user=request.user, domain=request.domain
     )
     if new:
-        if link.connectid_username != request.user.username and settings.CONNECTID_ADD_USER_ANALYTICS_URL:
-            requests.post(
-                settings.CONNECTID_ADD_USER_ANALYTICS_URL,
-                json={"username": connectid_username, "hq_sso_date": now().isoformat() + "Z"},
-                auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
-            )
+        send_hq_sso_date_metric(link)
         return HttpResponse(status=201)
     else:
         return HttpResponse()

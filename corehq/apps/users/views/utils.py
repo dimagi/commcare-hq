@@ -1,7 +1,12 @@
 from collections import defaultdict
 from itertools import chain
 
+from django.conf import settings
+from django.db.models import F, Q
+from django.utils.timezone import now
 from django.utils.translation import gettext as _
+
+import requests
 
 from corehq.apps.api.es import flatten_list
 from corehq.apps.es import filters
@@ -12,6 +17,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
+    ConnectIDUserLink,
     DomainMembershipError,
     StaticRole,
     UserRole,
@@ -218,3 +224,21 @@ def filter_user_query_by_locations_accessible_to_user(user_es, domain, couch_use
 def user_can_access_invite(domain, couch_user, invite):
     return (couch_user.has_permission(domain, 'access_all_locations')
         or invite.assigned_locations.all().accessible_to_user(domain, couch_user).exists())
+
+
+def send_hq_sso_date_metric(link: ConnectIDUserLink):
+    is_connect_user = (
+        ConnectIDUserLink.objects.filter(connectid_username=link.connectid_username)
+        .filter(
+            Q(commcare_user__username__icontains=F("connectid_username"))
+            | Q(domain__iregex='ccc|chc|connect|kangaroo|qa|test|world-vision-ethiopia|wellme')
+        ).exists()
+    )
+
+    if settings.CONNECTID_ADD_USER_ANALYTICS_URL:
+        hq_sso_date = now().isoformat() + "Z" if not is_connect_user else None
+        requests.post(
+            settings.CONNECTID_ADD_USER_ANALYTICS_URL,
+            json={"username": link.connectid_username, "hq_sso_date": hq_sso_date},
+            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
+        )
