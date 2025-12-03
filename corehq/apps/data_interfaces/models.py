@@ -1854,7 +1854,7 @@ class CaseRuleUndoer(object):
 
         for form_id_chunk in form_id_chunks:
             archived_form_ids = []
-            for form in XFormInstance.objects.iter_forms(form_id_chunk, self.domain):
+            for form in XFormInstance.objects.iter_forms(form_id_chunk):
                 result['processed'] += 1
 
                 if not form.is_normal or any([u.creates_case() for u in get_case_updates(form)]):

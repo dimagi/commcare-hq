@@ -88,13 +88,13 @@ class XFormInstanceManager(RequireDBManager):
             sort_with_id_list(forms, form_ids, 'form_id')
         return forms
 
-    def iter_forms(self, form_ids, domain=None):
+    def iter_forms(self, form_ids):
         """
         :param form_ids: list of form_ids.
         :param domain: See the same parameter of `get_forms`.
         """
         for chunk in chunked(form_ids, 100):
-            yield from self.get_forms([_f for _f in chunk if _f], domain)
+            yield from self.get_forms([_f for _f in chunk if _f])
 
     @staticmethod
     def get_attachments(form_id):
