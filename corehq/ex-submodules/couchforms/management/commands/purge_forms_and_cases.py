@@ -105,7 +105,7 @@ though deletion would be re-confirmed so dont panic
             _raise_xform_domain_mismatch(xform)
 
     def print_case_details(self):
-        for case in CommCareCase.objects.iter_cases(self.case_ids, self.domain):
+        for case in CommCareCase.objects.iter_cases(self.case_ids):
             _print_case_details(case, self.case_writer)
 
     def delete_permitted(self):

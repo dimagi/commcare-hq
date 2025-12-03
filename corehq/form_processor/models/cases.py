@@ -93,13 +93,12 @@ class CommCareCaseManager(RequireDBManager):
 
         return cases
 
-    def iter_cases(self, case_ids, domain=None):
+    def iter_cases(self, case_ids):
         """
         :param case_ids: case ids iterable.
-        :param domain: See the same parameter of `get_cases`.
         """
         for chunk in chunked((x for x in case_ids if x), 100, list):
-            yield from self.get_cases(chunk, domain)
+            yield from self.get_cases(chunk)
 
     def get_case_by_external_id(self, domain, external_id, case_type=None, raise_multiple=False):
         """Get case in domain with external id and optional case type
@@ -274,8 +273,9 @@ class CommCareCaseManager(RequireDBManager):
                 [domain, case_ids]
             )
             undeleted_count = sum(row[0] for row in cursor)
-        for case in self.iter_cases(case_ids, domain):
-            publish_case_saved(case)
+        for case in self.iter_cases(case_ids):
+            if case.domain == domain:
+                publish_case_saved(case)
         return undeleted_count
 
     def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):

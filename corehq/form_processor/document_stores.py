@@ -82,7 +82,8 @@ class CaseDocumentStore(DocumentStore):
         return iter_all_ids(accessor)
 
     def iter_documents(self, ids):
-        for wrapped_case in CommCareCase.objects.iter_cases(ids, self.domain):
+        """NOTE: unlike iter_document_ids, this does not enforce domain membership"""
+        for wrapped_case in CommCareCase.objects.iter_cases(ids):
             yield wrapped_case.to_json()
 
 

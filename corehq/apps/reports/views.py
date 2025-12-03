@@ -1629,8 +1629,8 @@ def _get_cases_with_other_forms(domain, xform):
     :returns: Dict of Case ID -> Case"""
     cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
     cases = {}
-    for case in CommCareCase.objects.iter_cases(cases_created, domain):
-        if not case.is_deleted and case.xform_ids != [xform.form_id]:
+    for case in CommCareCase.objects.iter_cases(cases_created):
+        if case.domain == domain and not case.is_deleted and case.xform_ids != [xform.form_id]:
             # case has other forms that need to be archived before this one
             cases[case.case_id] = case.name
     return cases
