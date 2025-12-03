@@ -35,7 +35,8 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser, HQApiKey,
 )
-from corehq.apps.users.views import _delete_user_role, _update_role_from_view, BaseUploadUser
+from corehq.apps.users.views import BaseUploadUser
+from corehq.apps.users.views.role import _delete_user_role, _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView, CommCareUserPasswordResetView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import (
