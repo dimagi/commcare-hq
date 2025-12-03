@@ -22,19 +22,88 @@
       </div>
     </div>
 
-    <fieldset class="active">
-      <legend>
-        <a
-          class="accordion-toggle"
-          data-bs-toggle="collapse"
-          href="#basic-permissions"
-          aria-expanded="true"
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-3" id="rolePermissionsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link active"
+          id="basic-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#basic-permissions"
+          type="button"
+          role="tab"
+          aria-controls="basic-permissions"
+          aria-selected="true"
         >
-          <i class="fa fa-angle-double-down"></i>
           Basic
-        </a>
-      </legend>
-      <div id="basic-permissions" class="card-body collapse show">
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="enterprise-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#enterprise-release-management"
+          type="button"
+          role="tab"
+          aria-controls="enterprise-release-management"
+          aria-selected="false"
+        >
+          Enterprise Release Management
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="reports-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#reports-permissions"
+          type="button"
+          role="tab"
+          aria-controls="reports-permissions"
+          aria-selected="false"
+        >
+          Reports
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="web-apps-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#web-apps-permissions"
+          type="button"
+          role="tab"
+          aria-controls="web-apps-permissions"
+          aria-selected="false"
+        >
+          Web Apps
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="other-settings-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#other-settings"
+          type="button"
+          role="tab"
+          aria-controls="other-settings"
+          aria-selected="false"
+        >
+          Other Settings
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="rolePermissionsTabContent">
+      <div
+        class="tab-pane fade show active"
+        id="basic-permissions"
+        role="tabpanel"
+        aria-labelledby="basic-tab"
+      >
         <div class="row mb-2">
           <div class="col-sm-1"><strong>Can Edit</strong></div>
           <div class="col-sm-1"><strong>Can View</strong></div>
@@ -122,74 +191,43 @@
           </div>
         </template>
       </div>
-    </fieldset>
 
-    <fieldset>
-      <legend>
-        <a
-          class="accordion-toggle"
-          data-bs-toggle="collapse"
-          href="#enterprise-release-management"
-          aria-expanded="false"
-        >
-          <i class="fa fa-angle-double-down"></i>
-          Enterprise Release Management
-        </a>
-      </legend>
-      <div id="enterprise-release-management" class="card-body collapse">
+      <div
+        class="tab-pane fade"
+        id="enterprise-release-management"
+        role="tabpanel"
+        aria-labelledby="enterprise-tab"
+      >
       </div>
-    </fieldset>
 
-    <fieldset>
-      <legend>
-        <a
-          class="accordion-toggle"
-          data-bs-toggle="collapse"
-          href="#reports-permissions"
-          aria-expanded="false"
-        >
-          <i class="fa fa-angle-double-down"></i>
-          Reports
-        </a>
-      </legend>
-      <div id="reports-permissions" class="card-body collapse">
+      <div
+        class="tab-pane fade"
+        id="reports-permissions"
+        role="tabpanel"
+        aria-labelledby="reports-tab"
+      >
       </div>
-    </fieldset>
 
-    <fieldset>
-      <legend>
-        <a
-          class="accordion-toggle"
-          data-bs-toggle="collapse"
-          href="#web-apps-permissions"
-          aria-expanded="false"
-        >
-          <i class="fa fa-angle-double-down"></i>
-          Web Apps
-        </a>
-      </legend>
-      <div id="web-apps-permissions" class="card-body collapse">
+      <div
+        class="tab-pane fade"
+        id="web-apps-permissions"
+        role="tabpanel"
+        aria-labelledby="web-apps-tab"
+      >
       </div>
-    </fieldset>
 
-    <fieldset>
-      <legend>
-        <a
-          class="accordion-toggle"
-          data-bs-toggle="collapse"
-          href="#other-settings"
-          aria-expanded="false"
-        >
-          <i class="fa fa-angle-double-down"></i>
-          Other Settings
-        </a>
-      </legend>
-      <div id="other-settings" class="card-body collapse">
+      <div
+        class="tab-pane fade"
+        id="other-settings"
+        role="tabpanel"
+        aria-labelledby="other-settings-tab"
+      >
       </div>
-    </fieldset>
-
-      <button type="submit" class="btn btn-primary">Save Role</button>
     </div>
+
+    <hr class="mt-0 mb-3">
+
+    <button type="submit" class="btn btn-primary">Save Role</button>
   </form>
 </div>
 {% endblock %}
