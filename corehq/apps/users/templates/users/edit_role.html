@@ -105,7 +105,121 @@
           id="basic-permissions"
           role="tabpanel"
           aria-labelledby="basic-tab"
-        ></div>
+        >
+          <div class="row mb-2">
+            <div class="col-sm-1"><strong>Can Edit</strong></div>
+            <div class="col-sm-1"><strong>Can View</strong></div>
+            <div class="col-sm-10"></div>
+          </div>
+          <template x-for="area in accessAreas">
+            <div class="row mb-2" x-show="area.showOption">
+              <!-- edit checkbox or emdash -->
+              <div class="col-sm-1 controls" x-show="area.showEditCheckbox">
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    :id="area.editCheckboxLabel"
+                    x-model="area.editPermission"
+                  />
+                  <label :for="area.editCheckboxLabel">
+                    <span
+                      class="sr-only"
+                      x-text="area.screenReaderEditAndViewText"
+                    >
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-1 controls" x-show="!area.showEditCheckbox">
+                <div class="form-check-placeholder">
+                  <label></label>
+                </div>
+              </div>
+
+              <!-- view checkbox or emdash-->
+              <div class="col-sm-1 controls" x-show="area.showViewCheckbox">
+                {# PLACEHOLDER checkbox when editPermission() is true #}
+                <div class="form-check" x-show="area.editPermission">
+                  <input
+                    type="checkbox"
+                    checked="checked"
+                    disabled="disabled"
+                  />
+                  <label>
+                    <span
+                      class="sr-only"
+                      x-text="area.screenReaderViewOnlyText"
+                    >
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+                {# REAL checkbox that controls viewPermission when editPermission() is false #}
+                <div class="form-check" x-show="!area.editPermission">
+                  <input
+                    type="checkbox"
+                    :id="area.viewCheckboxLabel"
+                    x-model="area.viewPermission"
+                  />
+                  <label :for="area.viewCheckboxLabel">
+                    <span
+                      class="sr-only"
+                      x-text="area.screenReaderViewOnlyText"
+                    >
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
+              </div>
+              <div class="col-sm-1 controls " x-show="!area.showViewCheckbox">
+                <div class="form-check-placeholder">
+                  <label></label>
+                </div>
+              </div>
+              <div class="col-sm-10">
+                <div x-html="area.text"></div>
+                {# PLACEHOLDER checkbox when edit_commcare_users and editPermission is true #}
+                <div
+                  class="form-check"
+                  x-show="permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox"
+                >
+                  <input
+                    type="checkbox"
+                    checked="checked"
+                    disabled="disabled"
+                  />
+                  <label x-text="area.allowCheckboxText"></label>
+                </div>
+                {# end PLACEHOLDER #}
+                {# REAL checkbox for allowCheckboxPermission #}
+                <div
+                  class="form-check"
+                  x-show="!permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox"
+                >
+                  <input
+                    type="checkbox"
+                    :id="area.allowCheckboxId"
+                    x-model="area.allowCheckboxPermission"
+                  />
+                  <label
+                    :for="area.allowCheckboxId"
+                    x-text="area.allowCheckboxText"
+                  ></label>
+                </div>
+                {# end REAL #}
+                {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
+                <div
+                  class="form-check"
+                  x-show="!area.editPermission && area.showAllowCheckbox"
+                >
+                  <input type="checkbox" disabled="disabled" />
+                  <label x-text="area.allowCheckboxText"></label>
+                </div>
+                {# end PLACEHOLDER #}
+              </div>
+            </div>
+          </template>
+        </div>
 
         <div
           class="tab-pane fade"
