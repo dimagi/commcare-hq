@@ -31,6 +31,7 @@ from .views import (
     WebUserUploadJobPollView,
 )
 from .views.role import (
+    EditRoleView,
     delete_user_role,
     ListRolesView,
     post_user_role,
@@ -149,6 +150,7 @@ urlpatterns = [
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
+    url(r'^roles/edit/(?P<role_id>[ \w-]+)', EditRoleView.as_view(), name=EditRoleView.urlname),
     url(r'^roles/delete/$', delete_user_role, name='delete_user_role'),
     url(
         r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
