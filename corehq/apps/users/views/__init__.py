@@ -807,6 +807,13 @@ class EditRoleView(BaseRoleAccessView):
         return reverse(self.urlname, kwargs={'domain': self.domain, 'role_id': self.kwargs.get('role_id')})
 
     @property
+    def parent_pages(self):
+        return [{
+            'title': ListRolesView.page_title,
+            'url': reverse(ListRolesView.urlname, args=[self.domain]),
+        }]
+
+    @property
     def page_context(self):
         role_data = self.role.to_json()
         role_data["accessAreas"] = [
