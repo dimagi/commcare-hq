@@ -3253,6 +3253,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -5256,8 +5257,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/tabs/tabclasses.py
 msgid "Subscription"
 msgstr "Підписка"
@@ -5288,6 +5288,7 @@ msgstr "Перейти на сторінку всіх рахунків для ц
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Export to Excel"
@@ -11191,8 +11192,8 @@ msgid ""
 "          Learn more\n"
 "          <a\n"
 "            target='_blank'\n"
-"            href='https://dimagi.atlassian.net/wiki/spaces/GS/"
-"pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
 "            >here</a\n"
 "          >.\n"
 "        "
@@ -16803,8 +16804,7 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
 #: corehq/apps/domain/templates/error.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -23338,8 +23338,7 @@ msgstr "Будь ласка, вкажіть обмеження для OData-ст
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
@@ -23717,8 +23716,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/activate_transfer_domain.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 msgid "Accept"
 msgstr "Прийняти"
@@ -25445,15 +25443,12 @@ msgstr "Мої проєкти"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Accept All Invitations"
 msgstr "Прийняти всі запрошення"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
 msgid "My Invitations"
 msgstr "Мої запрошення"
 
@@ -27279,79 +27274,7 @@ msgstr "Увійти"
 msgid "Log In :: CommCare HQ"
 msgstr "Увійти :: CommCare HQ"
 
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/urls.py
-msgid "Password Reset Confirmation"
-msgstr "Підтвердження скидання пароля"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
-#: corehq/apps/users/forms.py
-msgid "Reset Password"
-msgstr "Скинути пароль"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid "Reset Password Unsuccessful"
-msgstr "Скидання пароля не вдалося"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "        The password reset link was invalid, possibly because\n"
-#| "        it has already been used.\n"
-#| "      "
-msgid ""
-"\n"
-"        The password reset link was invalid, possibly because it has "
-"already\n"
-"        been used.\n"
-"      "
-msgstr ""
-"\n"
-"        Посилання для скидання пароля недійсне, можливо,\n"
-"        воно вже було використане.\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"        Please request a new password reset.\n"
-"      "
-msgstr ""
-"\n"
-"        Будь ласка, надішліть новий запит на скидання пароля.\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"          Request Password Reset\n"
-"        "
-msgstr ""
-"\n"
-"          Запитати скидання пароля\n"
-"        "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
-msgid "Password Reset"
-msgstr "Скидання пароля"
-
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
 msgid ""
 "\n"
 "                No account? Sign up today, it's free!\n"
@@ -27390,19 +27313,6 @@ msgstr "Запит на доступ до %(hr_name)s"
 msgid "Sign Up"
 msgstr "Зареєструватися"
 
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-msgid ""
-"\n"
-"                We will email instructions to you for resetting your "
-"password.\n"
-"              "
-msgstr ""
-"\n"
-"                Ми надішлемо вам інструкції для скидання пароля на "
-"електронну пошту.\n"
-"              "
-
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
 msgid ""
@@ -27413,6 +27323,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -27456,6 +27367,43 @@ msgstr ""
 "                target=\"_blank\">Довідковому сайті</a>.\n"
 "            "
 
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                No account? Sign up today, it's free!\n"
+#| "              "
+msgid ""
+"\n"
+"                  No account? Sign up today, it's free!\n"
+"                "
+msgstr ""
+"\n"
+"                Немає облікового запису? Зареєструйтеся сьогодні, це "
+"безкоштовно!\n"
+"              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+msgid ""
+"\n"
+"                We will email instructions to you for resetting your "
+"password.\n"
+"              "
+msgstr ""
+"\n"
+"                Ми надішлемо вам інструкції для скидання пароля на "
+"електронну пошту.\n"
+"              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/users/forms.py
+msgid "Reset Password"
+msgstr "Скинути пароль"
+
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
 #: corehq/apps/domain/urls.py
 msgid "Password Change Complete"
@@ -27479,6 +27427,54 @@ msgstr "Увійти"
 #: corehq/apps/domain/urls.py
 msgid "Password Reset Complete"
 msgstr "Скидання пароля завершено"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/urls.py
+msgid "Password Reset Confirmation"
+msgstr "Підтвердження скидання пароля"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid "Reset Password Unsuccessful"
+msgstr "Скидання пароля не вдалося"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        The password reset link was invalid, possibly because\n"
+#| "        it has already been used.\n"
+#| "      "
+msgid ""
+"\n"
+"        The password reset link was invalid, possibly because it has "
+"already\n"
+"        been used.\n"
+"      "
+msgstr ""
+"\n"
+"        Посилання для скидання пароля недійсне, можливо,\n"
+"        воно вже було використане.\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"        Please request a new password reset.\n"
+"      "
+msgstr ""
+"\n"
+"        Будь ласка, надішліть новий запит на скидання пароля.\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"          Request Password Reset\n"
+"        "
+msgstr ""
+"\n"
+"          Запитати скидання пароля\n"
+"        "
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_done.html
 msgid "Password Reset Requested"
@@ -27529,6 +27525,11 @@ msgstr "Дякуємо, що користуєтесь CommCare."
 #| msgid "--The CommCare HQ Team"
 msgid "--The CommCare Team"
 msgstr "--Команда CommCare HQ"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
+msgid "Password Reset"
+msgstr "Скидання пароля"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_forms.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_forms.html
@@ -36745,9 +36746,7 @@ msgstr "Вийти"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
-#: corehq/apps/registration/forms.py
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid "Child Locations"
 msgid "Cloud Location"
@@ -38269,6 +38268,11 @@ msgid "Last Verified"
 msgstr "Остання перевірка"
 
 #: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "Verified By"
+msgstr "Перевірено"
+
+#: corehq/apps/integration/kyc/tables.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_button.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
@@ -38642,10 +38646,6 @@ msgstr "Повідомлення від платника"
 #: corehq/apps/integration/payments/tables.py
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Verified"
-msgstr "Перевірено"
-
-#: corehq/apps/integration/payments/tables.py
-msgid "Verified By"
 msgstr "Перевірено"
 
 #: corehq/apps/integration/payments/tables.py
@@ -41381,20 +41381,6 @@ msgid "Edit Program"
 msgstr "Редагувати програму"
 
 #: corehq/apps/registration/forms.py
-#, fuzzy, python-brace-format
-#| msgid "Use location name"
-msgid "{location_name} Cloud"
-msgstr "Використовувати назву місця"
-
-#: corehq/apps/registration/forms.py
-#, python-brace-format
-msgid ""
-"*You're creating an account and project space in the chosen cloud location."
-"<br/>These cannot be transferred between cloud locations. <a "
-"href='{help_link}' target='_blank'>Learn more</a>."
-msgstr ""
-
-#: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
@@ -41480,6 +41466,12 @@ msgstr ""
 "               target=\"_blank\">Політикою прийнятного використання</a> "
 "Dimagi.\n"
 "            "
+
+#: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "Child Locations"
+msgid "Choose Your Cloud Location"
+msgstr "Дочірні місця"
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -41627,30 +41619,25 @@ msgstr "Нагадування про активацію вашого проєк
 msgid "Activate your CommCare project"
 msgstr "Активуйте ваш проєкт CommCare"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/registration/views.py
 msgid "Resend Confirmation Email"
 msgstr "Повторно надіслати лист підтвердження"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Resend Confirmation"
 msgstr "Повторно надіслати підтвердження"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Pending Project Name"
 msgstr "Очікувана назва проєкту"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #: corehq/apps/registration/views.py
 msgid "Confirmation Email Sent"
 msgstr "Лист підтвердження надіслано"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #, python-format
 msgid ""
 "\n"
@@ -41661,8 +41648,7 @@ msgstr ""
 "      Лист щойно надіслано %(username)s.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41682,13 +41668,11 @@ msgstr ""
 "      і ви зможете почати користуватися новим проєктом CommCare HQ!\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid "Waiting for Confirmation"
 msgstr "Очікується підтвердження"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41706,8 +41690,7 @@ msgstr ""
 "      <strong>%(requested_domain)s</strong>.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid ""
 "\n"
 "      Before you can use this project, you must first confirm your account.\n"
@@ -41718,8 +41701,7 @@ msgstr ""
 "обліковий запис.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41734,8 +41716,7 @@ msgstr ""
 "            Ласкаво просимо до CommCare HQ, %(first_name)s!\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space "
@@ -41747,8 +41728,7 @@ msgstr ""
 "почати користуватися CommCare.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Before you can view any of your own data from CommCare, you "
@@ -41761,8 +41741,7 @@ msgstr ""
 "              створити простір проєкту.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41777,8 +41756,7 @@ msgstr ""
 "            Додамо новий проєкт, %(first_name)s.\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space.\n"
@@ -41788,8 +41766,13 @@ msgstr ""
 "              Прийміть запрошення або створіть власний простір проєкту.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid "Invitation"
+msgid "Invitations"
+msgstr "Запрошення"
+
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                You have been invited to the following project spaces:\n"
@@ -41799,15 +41782,13 @@ msgstr ""
 "                Вас запрошено до таких просторів проєктів:\n"
 "              "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid "Create a New Project Space"
 msgid "Your New Project Space"
 msgstr "Створити новий простір проєкту"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41836,8 +41817,7 @@ msgstr ""
 "                target=\"_blank\">Довідковому сайті</a>.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41872,8 +41852,7 @@ msgstr ""
 "                    перед застаріванням цієї властивості кейсу.\n"
 "                    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41891,8 +41870,7 @@ msgstr ""
 "                  <strong>%(friendly_name)s</strong>?\n"
 "                "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41907,8 +41885,7 @@ msgstr ""
 "                    Ця підписка буде призупинена %(next_date)s.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41943,8 +41920,7 @@ msgstr ""
 "експорту.</p>\n"
 "                                 "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41964,7 +41940,7 @@ msgstr ""
 "%(friendly_name)s.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
+#: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
@@ -41979,108 +41955,6 @@ msgstr ""
 "weight: normal\">CommCare HQ</a>\n"
 "            з вашою електронною адресою.\n"
 "          "
-
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap5/_base.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
-#| "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
-#| "weight: normal\">CommCare HQ</a>\n"
-#| "            with your email address.\n"
-#| "          "
-msgid ""
-"\n"
-"            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
-"#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
-"weight: normal\">CommCare HQ</a>  \n"
-"            with your email address.\n"
-"          "
-msgstr ""
-"\n"
-"            на <a href=\"http://www.commcarehq.org/\" style=\"color: "
-"#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
-"weight: normal\">CommCare HQ</a>\n"
-"            з вашою електронною адресою.\n"
-"          "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    Reset your password on CommCare HQ!\n"
-#| "  "
-msgid ""
-"\n"
-"    Reset your password on CommCare!\n"
-"  "
-msgstr ""
-"\n"
-"    Скиньте свій пароль на CommCare HQ!\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset password for\n"
-"  "
-msgstr ""
-"\n"
-"    Скинути пароль для\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset Password\n"
-"  "
-msgstr ""
-"\n"
-"    Скидання пароля\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    Someone requested a password reset for your email on CommCare HQ.\n"
-#| "  "
-msgid ""
-"\n"
-"    Someone requested a password reset for your email on CommCare.\n"
-"  "
-msgstr ""
-"\n"
-"    Хтось надіслав запит на скидання пароля для вашої електронної пошти на "
-"CommCare HQ.\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    If it wasn't you, feel free to ignore this email.\n"
-"  "
-msgstr ""
-"\n"
-"    Якщо це були не ви, просто проігноруйте цей лист.\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    You received this message because we received a password reset request\n"
-"  "
-msgstr ""
-"\n"
-"    Ви отримали це повідомлення, оскільки ми отримали запит на скидання "
-"пароля\n"
-"  "
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html
 #, fuzzy, python-format
@@ -42374,6 +42248,78 @@ msgstr "Дякуємо,"
 msgid "-The %(hq_name)s team"
 msgstr "-Команда %(hq_name)s"
 
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Reset your password on CommCare HQ!\n"
+#| "  "
+msgid ""
+"\n"
+"    Reset your password on CommCare!\n"
+"  "
+msgstr ""
+"\n"
+"    Скиньте свій пароль на CommCare HQ!\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset password for\n"
+"  "
+msgstr ""
+"\n"
+"    Скинути пароль для\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset Password\n"
+"  "
+msgstr ""
+"\n"
+"    Скидання пароля\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Someone requested a password reset for your email on CommCare HQ.\n"
+#| "  "
+msgid ""
+"\n"
+"    Someone requested a password reset for your email on CommCare.\n"
+"  "
+msgstr ""
+"\n"
+"    Хтось надіслав запит на скидання пароля для вашої електронної пошти на "
+"CommCare HQ.\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    If it wasn't you, feel free to ignore this email.\n"
+"  "
+msgstr ""
+"\n"
+"    Якщо це були не ви, просто проігноруйте цей лист.\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    You received this message because we received a password reset request\n"
+"  "
+msgstr ""
+"\n"
+"    Ви отримали це повідомлення, оскільки ми отримали запит на скидання "
+"пароля\n"
+"  "
+
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 #, fuzzy
 #| msgid "Reset Password on CommCare HQ"
@@ -42421,6 +42367,77 @@ msgstr ""
 "Після підтвердження облікового запису ви зможете отримати доступ і надсилати "
 "дані в проєкті \"%(domain)s\" на %(hq_name)s.\n"
 "Ваше ім'я користувача для входу: %(username)s\n"
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"    Select the cloud region where your CommCare account and project space "
+"will\n"
+"    be hosted.\n"
+"    <a\n"
+"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/3101491209/CommCare+Cloud+Hosting+Locations\"\n"
+"      target=\"_blank\"\n"
+"      ><b>Learn more</b></a\n"
+"    >\n"
+"    about our cloud locations.\n"
+"  "
+msgstr ""
+"\n"
+"                Дізнайтеся більше про експорти на нашому <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">Довідковому сайті</a>.\n"
+"            "
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
+msgid ""
+"\n"
+"    <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"    <strong>Important:</strong> Your cloud location choice cannot be "
+"changed\n"
+"    after account creation. This affects where your data is stored and may\n"
+"    impact compliance requirements.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/chosen_cloud_location.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        %(entity_string)s Property\n"
+#| "      "
+msgid ""
+"\n"
+"      %(server_location)s\n"
+"      Cloud\n"
+"    "
+msgstr ""
+"\n"
+"        Властивість %(entity_string)s\n"
+"      "
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/chosen_cloud_location.html
+#, python-format
+msgid ""
+"\n"
+"      Your project will be hosted on the <b>%(server_location)s Cloud</b>\n"
+"      server.\n"
+"      <br />\n"
+"      Looking to create an account on another cloud?\n"
+"      <a href=\"#\" data-bind=\"click: previousStep\">\n"
+"        <b>Click here to go back</b></a\n"
+"      >.\n"
+"    "
+msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
 msgid "Oh, no!"
@@ -42632,6 +42649,12 @@ msgstr ""
 #: corehq/apps/users/templates/users/accept_invite.html
 msgid "Create an Account"
 msgstr "Створити обліковий запис"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#, fuzzy
+#| msgid "Case Closed"
+msgid "Choose Cloud"
+msgstr "Випадок закрито"
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -63324,6 +63347,10 @@ msgstr "Використовуйте словник даних для керув
 msgid "Case Export supports exporting geolocated data in GeoJSON format"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Add text or xpath based custom icon badges to menus and forms"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "Звіти Конструктора Звітів"
@@ -64343,6 +64370,34 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#, fuzzy, python-brace-format
+#~| msgid "Use location name"
+#~ msgid "{location_name} Cloud"
+#~ msgstr "Використовувати назву місця"
+
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
+#~| "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; "
+#~| "font-weight: normal\">CommCare HQ</a>\n"
+#~| "            with your email address.\n"
+#~| "          "
+#~ msgid ""
+#~ "\n"
+#~ "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
+#~ "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
+#~ "weight: normal\">CommCare HQ</a>  \n"
+#~ "            with your email address.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            на <a href=\"http://www.commcarehq.org/\" style=\"color: "
+#~ "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
+#~ "weight: normal\">CommCare HQ</a>\n"
+#~ "            з вашою електронною адресою.\n"
+#~ "          "
 
 #~ msgid "This user cannot access this link."
 #~ msgstr "Цей користувач не має доступу до цього посилання."
