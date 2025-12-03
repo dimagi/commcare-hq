@@ -3181,6 +3181,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -5145,8 +5146,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/tabs/tabclasses.py
 msgid "Subscription"
 msgstr "الاشتراك"
@@ -5177,6 +5177,7 @@ msgstr "انتقل إلى صفحة جميع الفواتير لمساحة الم
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Export to Excel"
@@ -10982,8 +10983,8 @@ msgid ""
 "          Learn more\n"
 "          <a\n"
 "            target='_blank'\n"
-"            href='https://dimagi.atlassian.net/wiki/spaces/GS/"
-"pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
 "            >here</a\n"
 "          >.\n"
 "        "
@@ -16475,8 +16476,7 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
 #: corehq/apps/domain/templates/error.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -22911,8 +22911,7 @@ msgstr "يرجى تحديد حد لتغذيات OData."
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
@@ -23282,8 +23281,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/activate_transfer_domain.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 msgid "Accept"
 msgstr "قبول"
@@ -24989,15 +24987,12 @@ msgstr "مشاريعي"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Accept All Invitations"
 msgstr "قبول جميع الدعوات"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
 msgid "My Invitations"
 msgstr "دعواتي"
 
@@ -26794,79 +26789,7 @@ msgstr "تسجيل الدخول"
 msgid "Log In :: CommCare HQ"
 msgstr "تسجيل الدخول :: CommCare HQ"
 
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/urls.py
-msgid "Password Reset Confirmation"
-msgstr "تأكيد إعادة تعيين كلمة المرور"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
-#: corehq/apps/users/forms.py
-msgid "Reset Password"
-msgstr "إعادة تعيين كلمة المرور"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid "Reset Password Unsuccessful"
-msgstr "فشل إعادة تعيين كلمة المرور"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "        The password reset link was invalid, possibly because\n"
-#| "        it has already been used.\n"
-#| "      "
-msgid ""
-"\n"
-"        The password reset link was invalid, possibly because it has "
-"already\n"
-"        been used.\n"
-"      "
-msgstr ""
-"\n"
-"        رابط إعادة تعيين كلمة المرور غير صالح، ربما لأنه\n"
-"        قد تم استخدامه بالفعل.\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"        Please request a new password reset.\n"
-"      "
-msgstr ""
-"\n"
-"        يرجى طلب إعادة تعيين كلمة مرور جديدة.\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"          Request Password Reset\n"
-"        "
-msgstr ""
-"\n"
-"          طلب إعادة تعيين كلمة المرور\n"
-"        "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
-msgid "Password Reset"
-msgstr "إعادة تعيين كلمة المرور"
-
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
 msgid ""
 "\n"
 "                No account? Sign up today, it's free!\n"
@@ -26903,19 +26826,6 @@ msgstr "طلب الوصول إلى %(hr_name)s"
 msgid "Sign Up"
 msgstr "إنشاء حساب"
 
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-msgid ""
-"\n"
-"                We will email instructions to you for resetting your "
-"password.\n"
-"              "
-msgstr ""
-"\n"
-"                سنرسل إليك تعليمات عبر البريد الإلكتروني لإعادة تعيين كلمة "
-"المرور الخاصة بك.\n"
-"              "
-
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
 msgid ""
@@ -26926,6 +26836,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -26969,6 +26880,42 @@ msgstr ""
 "                target=\"_blank\">موقع المساعدة</a>.\n"
 "            "
 
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                No account? Sign up today, it's free!\n"
+#| "              "
+msgid ""
+"\n"
+"                  No account? Sign up today, it's free!\n"
+"                "
+msgstr ""
+"\n"
+"                ليس لديك حساب؟ سجّل اليوم، التسجيل مجاني!\n"
+"              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+msgid ""
+"\n"
+"                We will email instructions to you for resetting your "
+"password.\n"
+"              "
+msgstr ""
+"\n"
+"                سنرسل إليك تعليمات عبر البريد الإلكتروني لإعادة تعيين كلمة "
+"المرور الخاصة بك.\n"
+"              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/users/forms.py
+msgid "Reset Password"
+msgstr "إعادة تعيين كلمة المرور"
+
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
 #: corehq/apps/domain/urls.py
 msgid "Password Change Complete"
@@ -26992,6 +26939,54 @@ msgstr "تسجيل الدخول"
 #: corehq/apps/domain/urls.py
 msgid "Password Reset Complete"
 msgstr "تمت إعادة تعيين كلمة المرور"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/urls.py
+msgid "Password Reset Confirmation"
+msgstr "تأكيد إعادة تعيين كلمة المرور"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid "Reset Password Unsuccessful"
+msgstr "فشل إعادة تعيين كلمة المرور"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        The password reset link was invalid, possibly because\n"
+#| "        it has already been used.\n"
+#| "      "
+msgid ""
+"\n"
+"        The password reset link was invalid, possibly because it has "
+"already\n"
+"        been used.\n"
+"      "
+msgstr ""
+"\n"
+"        رابط إعادة تعيين كلمة المرور غير صالح، ربما لأنه\n"
+"        قد تم استخدامه بالفعل.\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"        Please request a new password reset.\n"
+"      "
+msgstr ""
+"\n"
+"        يرجى طلب إعادة تعيين كلمة مرور جديدة.\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"          Request Password Reset\n"
+"        "
+msgstr ""
+"\n"
+"          طلب إعادة تعيين كلمة المرور\n"
+"        "
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_done.html
 msgid "Password Reset Requested"
@@ -27042,6 +27037,11 @@ msgstr "شكرًا لاستخدامك CommCare."
 #| msgid "--The CommCare HQ Team"
 msgid "--The CommCare Team"
 msgstr "--فريق CommCare HQ"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
+msgid "Password Reset"
+msgstr "إعادة تعيين كلمة المرور"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_forms.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_forms.html
@@ -36084,9 +36084,7 @@ msgstr "تسجيل الخروج"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
-#: corehq/apps/registration/forms.py
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid "Child Locations"
 msgid "Cloud Location"
@@ -37590,6 +37588,11 @@ msgid "Last Verified"
 msgstr "آخر تحقق"
 
 #: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "Verified By"
+msgstr "تم التحقق بواسطة"
+
+#: corehq/apps/integration/kyc/tables.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_button.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
@@ -37963,10 +37966,6 @@ msgstr "رسالة الدافع"
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Verified"
 msgstr "تم التحقق"
-
-#: corehq/apps/integration/payments/tables.py
-msgid "Verified By"
-msgstr "تم التحقق بواسطة"
 
 #: corehq/apps/integration/payments/tables.py
 #, fuzzy
@@ -40631,20 +40630,6 @@ msgid "Edit Program"
 msgstr "تعديل البرنامج"
 
 #: corehq/apps/registration/forms.py
-#, fuzzy, python-brace-format
-#| msgid "Use location name"
-msgid "{location_name} Cloud"
-msgstr "استخدم اسم الموقع"
-
-#: corehq/apps/registration/forms.py
-#, python-brace-format
-msgid ""
-"*You're creating an account and project space in the chosen cloud location."
-"<br/>These cannot be transferred between cloud locations. <a "
-"href='{help_link}' target='_blank'>Learn more</a>."
-msgstr ""
-
-#: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
@@ -40730,6 +40715,12 @@ msgstr ""
 "               target=\"_blank\">سياسة الاستخدام المقبول</a> الخاصة بـ "
 "Dimagi.\n"
 "            "
+
+#: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "Child Locations"
+msgid "Choose Your Cloud Location"
+msgstr "المواقع الفرعية"
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -40872,30 +40863,25 @@ msgstr "تذكير لتفعيل مشروعك على CommCare"
 msgid "Activate your CommCare project"
 msgstr "فعّل مشروعك على CommCare"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/registration/views.py
 msgid "Resend Confirmation Email"
 msgstr "إعادة إرسال بريد التأكيد الإلكتروني"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Resend Confirmation"
 msgstr "إعادة إرسال التأكيد"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Pending Project Name"
 msgstr "اسم المشروع المعلق"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #: corehq/apps/registration/views.py
 msgid "Confirmation Email Sent"
 msgstr "تم إرسال بريد التأكيد الإلكتروني"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #, python-format
 msgid ""
 "\n"
@@ -40906,8 +40892,7 @@ msgstr ""
 "      تم إرسال بريد إلكتروني للتو إلى %(username)s.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -40926,13 +40911,11 @@ msgstr ""
 "      حتى تتمكن من بدء استخدام مشروعك الجديد على CommCare HQ!\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid "Waiting for Confirmation"
 msgstr "بانتظار التأكيد"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -40950,8 +40933,7 @@ msgstr ""
 "      <strong>%(requested_domain)s</strong>.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid ""
 "\n"
 "      Before you can use this project, you must first confirm your account.\n"
@@ -40961,8 +40943,7 @@ msgstr ""
 "      قبل أن تتمكن من استخدام هذا المشروع، يجب عليك أولاً تأكيد حسابك.\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -40977,8 +40958,7 @@ msgstr ""
 "            مرحبًا بك في CommCare HQ، %(first_name)s!\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space "
@@ -40990,8 +40970,7 @@ msgstr ""
 "CommCare.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Before you can view any of your own data from CommCare, you "
@@ -41004,8 +40983,7 @@ msgstr ""
 "              إلى إنشاء مساحة مشروع.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41020,8 +40998,7 @@ msgstr ""
 "            لنقم بإضافة مشروع جديد، %(first_name)s.\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space.\n"
@@ -41031,8 +41008,13 @@ msgstr ""
 "              يرجى قبول دعوة أو إنشاء مساحة مشروع خاصة بك.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
+#, fuzzy
+#| msgid "Invitation"
+msgid "Invitations"
+msgstr "دعوة"
+
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                You have been invited to the following project spaces:\n"
@@ -41042,15 +41024,13 @@ msgstr ""
 "                لقد تمت دعوتك إلى مساحات المشاريع التالية:\n"
 "              "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid "Create a New Project Space"
 msgid "Your New Project Space"
 msgstr "إنشاء مساحة مشروع جديدة"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41079,8 +41059,7 @@ msgstr ""
 "                target=\"_blank\">موقع المساعدة</a>.\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41113,8 +41092,7 @@ msgstr ""
 "                    قبل إهمال خاصية الحالة هذه.\n"
 "                    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -41132,8 +41110,7 @@ msgstr ""
 "                  <strong>%(friendly_name)s</strong> بشكل دائم؟\n"
 "                "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41148,8 +41125,7 @@ msgstr ""
 "                    سيتم إيقاف هذا الاشتراك مؤقتًا في %(next_date)s.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41184,8 +41160,7 @@ msgstr ""
 "التصدير.</p>\n"
 "                                 "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -41205,7 +41180,7 @@ msgstr ""
 "بـ %(friendly_name)s.\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
+#: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
@@ -41220,106 +41195,6 @@ msgstr ""
 "weight: normal\">CommCare HQ</a>\n"
 "            باستخدام عنوان بريدك الإلكتروني.\n"
 "          "
-
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap5/_base.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
-#| "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
-#| "weight: normal\">CommCare HQ</a>\n"
-#| "            with your email address.\n"
-#| "          "
-msgid ""
-"\n"
-"            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
-"#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
-"weight: normal\">CommCare HQ</a>  \n"
-"            with your email address.\n"
-"          "
-msgstr ""
-"\n"
-"            على <a href=\"http://www.commcarehq.org/\" style=\"color: "
-"#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
-"weight: normal\">CommCare HQ</a>\n"
-"            باستخدام عنوان بريدك الإلكتروني.\n"
-"          "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    Reset your password on CommCare HQ!\n"
-#| "  "
-msgid ""
-"\n"
-"    Reset your password on CommCare!\n"
-"  "
-msgstr ""
-"\n"
-"    أعد تعيين كلمة المرور الخاصة بك على CommCare HQ!\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset password for\n"
-"  "
-msgstr ""
-"\n"
-"    إعادة تعيين كلمة المرور لـ\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset Password\n"
-"  "
-msgstr ""
-"\n"
-"    إعادة تعيين كلمة المرور\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    Someone requested a password reset for your email on CommCare HQ.\n"
-#| "  "
-msgid ""
-"\n"
-"    Someone requested a password reset for your email on CommCare.\n"
-"  "
-msgstr ""
-"\n"
-"    شخص ما طلب إعادة تعيين كلمة المرور لبريدك الإلكتروني على CommCare HQ.\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    If it wasn't you, feel free to ignore this email.\n"
-"  "
-msgstr ""
-"\n"
-"    إذا لم تكن أنت من طلب ذلك، يمكنك تجاهل هذه الرسالة.\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    You received this message because we received a password reset request\n"
-"  "
-msgstr ""
-"\n"
-"    لقد استلمت هذه الرسالة لأننا تلقينا طلبًا لإعادة تعيين كلمة المرور\n"
-"  "
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html
 #, fuzzy, python-format
@@ -41607,6 +41482,76 @@ msgstr "شكرًا،"
 msgid "-The %(hq_name)s team"
 msgstr "-فريق %(hq_name)s"
 
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Reset your password on CommCare HQ!\n"
+#| "  "
+msgid ""
+"\n"
+"    Reset your password on CommCare!\n"
+"  "
+msgstr ""
+"\n"
+"    أعد تعيين كلمة المرور الخاصة بك على CommCare HQ!\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset password for\n"
+"  "
+msgstr ""
+"\n"
+"    إعادة تعيين كلمة المرور لـ\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset Password\n"
+"  "
+msgstr ""
+"\n"
+"    إعادة تعيين كلمة المرور\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    Someone requested a password reset for your email on CommCare HQ.\n"
+#| "  "
+msgid ""
+"\n"
+"    Someone requested a password reset for your email on CommCare.\n"
+"  "
+msgstr ""
+"\n"
+"    شخص ما طلب إعادة تعيين كلمة المرور لبريدك الإلكتروني على CommCare HQ.\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    If it wasn't you, feel free to ignore this email.\n"
+"  "
+msgstr ""
+"\n"
+"    إذا لم تكن أنت من طلب ذلك، يمكنك تجاهل هذه الرسالة.\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    You received this message because we received a password reset request\n"
+"  "
+msgstr ""
+"\n"
+"    لقد استلمت هذه الرسالة لأننا تلقينا طلبًا لإعادة تعيين كلمة المرور\n"
+"  "
+
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 #, fuzzy
 #| msgid "Reset Password on CommCare HQ"
@@ -41653,6 +41598,77 @@ msgstr ""
 "بمجرد تأكيد حسابك، ستتمكن من الوصول إلى مشروع \"%(domain)s\" على %(hq_name)s "
 "وإرسال البيانات فيه.\n"
 "اسم المستخدم الخاص بك لتسجيل الدخول هو %(username)s\n"
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Learn more about exports on our <a\n"
+#| "                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143954661/Data+Exports\"\n"
+#| "                target=\"_blank\">Help Site</a>.\n"
+#| "            "
+msgid ""
+"\n"
+"    Select the cloud region where your CommCare account and project space "
+"will\n"
+"    be hosted.\n"
+"    <a\n"
+"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/3101491209/CommCare+Cloud+Hosting+Locations\"\n"
+"      target=\"_blank\"\n"
+"      ><b>Learn more</b></a\n"
+"    >\n"
+"    about our cloud locations.\n"
+"  "
+msgstr ""
+"\n"
+"                تعرف على المزيد حول التصديرات في <a\n"
+"                href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143954661/Data+Exports\"\n"
+"                target=\"_blank\">موقع المساعدة</a>.\n"
+"            "
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
+msgid ""
+"\n"
+"    <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"    <strong>Important:</strong> Your cloud location choice cannot be "
+"changed\n"
+"    after account creation. This affects where your data is stored and may\n"
+"    impact compliance requirements.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/chosen_cloud_location.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        %(entity_string)s Property\n"
+#| "      "
+msgid ""
+"\n"
+"      %(server_location)s\n"
+"      Cloud\n"
+"    "
+msgstr ""
+"\n"
+"        خاصية %(entity_string)s\n"
+"      "
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/chosen_cloud_location.html
+#, python-format
+msgid ""
+"\n"
+"      Your project will be hosted on the <b>%(server_location)s Cloud</b>\n"
+"      server.\n"
+"      <br />\n"
+"      Looking to create an account on another cloud?\n"
+"      <a href=\"#\" data-bind=\"click: previousStep\">\n"
+"        <b>Click here to go back</b></a\n"
+"      >.\n"
+"    "
+msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
 msgid "Oh, no!"
@@ -41861,6 +41877,12 @@ msgstr ""
 #: corehq/apps/users/templates/users/accept_invite.html
 msgid "Create an Account"
 msgstr "إنشاء حساب"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
+#, fuzzy
+#| msgid "Case Closed"
+msgid "Choose Cloud"
+msgstr "تم إغلاق الحالة"
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -62131,6 +62153,10 @@ msgstr "استخدم قاموس البيانات لإدارة أنواع الق�
 msgid "Case Export supports exporting geolocated data in GeoJSON format"
 msgstr ""
 
+#: corehq/privileges.py
+msgid "Add text or xpath based custom icon badges to menus and forms"
+msgstr ""
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "تقارير منشئ التقارير"
@@ -63144,6 +63170,34 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#, fuzzy, python-brace-format
+#~| msgid "Use location name"
+#~ msgid "{location_name} Cloud"
+#~ msgstr "استخدم اسم الموقع"
+
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
+#~| "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; "
+#~| "font-weight: normal\">CommCare HQ</a>\n"
+#~| "            with your email address.\n"
+#~| "          "
+#~ msgid ""
+#~ "\n"
+#~ "            on <a href=\"http://www.commcarehq.org/\" style=\"color: "
+#~ "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
+#~ "weight: normal\">CommCare HQ</a>  \n"
+#~ "            with your email address.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            على <a href=\"http://www.commcarehq.org/\" style=\"color: "
+#~ "#004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-"
+#~ "weight: normal\">CommCare HQ</a>\n"
+#~ "            باستخدام عنوان بريدك الإلكتروني.\n"
+#~ "          "
 
 #~ msgid "This user cannot access this link."
 #~ msgstr "لا يمكن لهذا المستخدم الوصول إلى هذا الرابط."
