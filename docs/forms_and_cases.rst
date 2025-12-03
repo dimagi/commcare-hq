@@ -86,7 +86,7 @@ name in order to know which DB needs to be queried.
 **Forms**
 
 - XFormInstance.objects.get_form(form_id, domain)
-- XFormInstance.objects.get_forms(form_ids, domain)
+- XFormInstance.objects.get_forms(form_ids)
 - XFormInstance.objects.iter_forms(form_ids)
 - XFormInstance.objects.save_new_form(form)
 

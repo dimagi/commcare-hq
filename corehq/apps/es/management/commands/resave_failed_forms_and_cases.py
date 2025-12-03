@@ -54,7 +54,7 @@ def perform_resave_on_xforms(domain, start_date, end_date, no_input):
             return
     get_forms = XFormInstance.objects.get_forms
     for xform_ids in chunked(with_progress_bar(xform_ids_missing_in_es), 100):
-        xforms = get_forms(list(xform_ids), domain)
+        xforms = get_forms(list(xform_ids))
         found_xform_ids = set()
 
         for xform in xforms:

@@ -73,10 +73,9 @@ class XFormInstanceManager(RequireDBManager):
             query = query.filter(domain=domain)
         return query.exists()
 
-    def get_forms(self, form_ids, domain=None, ordered=False):
+    def get_forms(self, form_ids, ordered=False):
         """
         :param form_ids: list of form_ids to fetch
-        :param domain: Currently unused, may be enforced in the future.
         :param ordered:  True if the list of returned forms should have the
                          same order as the list of form_ids passed in
         """
