@@ -230,8 +230,8 @@ def send_hq_sso_date_metric(link: ConnectIDUserLink):
     is_connect_user = (
         ConnectIDUserLink.objects.filter(connectid_username=link.connectid_username)
         .filter(
-            Q(commcare_user__username__icontains=F("connectid_username"))
-            | Q(domain__iregex='ccc|chc|connect|kangaroo|qa|test|world-vision-ethiopia|wellme')
+            Q(commcare_user__username__istartswith=F("connectid_username"))
+            | Q(domain__regex='ccc|chc|connect|kangaroo|qa|test|world-vision-ethiopia|wellme')
         ).exists()
     )
 
