@@ -844,10 +844,10 @@ class EulaMixin(DocumentSchema):
             return current_eula.signed
         return False
 
-    def get_eula(self, version):
+    def get_eula(self, version, eula_type):
         current_eula = None
         for eula in self.eulas:
-            if eula.version == version:
+            if eula.version == version and eula.type == eula_type:
                 if not current_eula or eula.date > current_eula.date:
                     current_eula = eula
         return current_eula
@@ -860,12 +860,12 @@ class EulaMixin(DocumentSchema):
         return eulas_json
 
     @property
-    def eula(self, version=CURRENT_VERSION):
-        current_eula = self.get_eula(version)
+    def eula(self, version=CURRENT_VERSION, eula_type=LicenseAgreementType.EULA):
+        current_eula = self.get_eula(version, eula_type)
         if not current_eula:
-            current_eula = LicenseAgreement(type=LicenseAgreementType.EULA, version=version)
+            current_eula = LicenseAgreement(type=eula_type, version=version)
             self.eulas.append(current_eula)
-        assert current_eula.type == LicenseAgreementType.EULA
+        assert current_eula.type == eula_type
         return current_eula
 
 
