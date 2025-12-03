@@ -20,7 +20,6 @@ from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import manager
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
-from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
@@ -134,10 +133,7 @@ def get_case_search_processor():
     Writes to:
       - Case Search ES index
     """
-    return CaseSearchPillowProcessor(
-        adapter=case_search_adapter,
-        change_filter_fn=is_couch_change_for_sql_domain
-    )
+    return CaseSearchPillowProcessor(adapter=case_search_adapter)
 
 
 def _fail_gracefully_and_tell_admins():
