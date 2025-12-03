@@ -15,7 +15,7 @@ from corehq.apps.accounting.utils.cards import (
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from dimagi.utils.web import json_response
+from dimagi.utils.web import get_ip, json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -113,6 +113,11 @@ from corehq.apps.domain.forms import (
     EditBillingAccountInfoForm,
     SelectSubscriptionTypeForm,
 )
+from corehq.apps.domain.models import (
+    AUTOPAY_TERMS_CURRENT_VERSION,
+    LicenseAgreement,
+    LicenseAgreementType,
+)
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
@@ -122,7 +127,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import HqPermissions
+from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.const import USER_DATE_FORMAT
 from corehq.toggles import SHOW_AUTO_RENEWAL
 
@@ -445,6 +450,21 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
 
 
+def sign_autopay_terms(request):
+    current_user = CouchUser.from_django_user(request.user)
+    autopay_terms = current_user.get_eula(AUTOPAY_TERMS_CURRENT_VERSION, LicenseAgreementType.AUTOPAY_TERMS)
+    if not autopay_terms:
+        autopay_terms = LicenseAgreement(
+            type=LicenseAgreementType.AUTOPAY_TERMS,
+            version=AUTOPAY_TERMS_CURRENT_VERSION,
+            signed=True,
+            date=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None),
+            user_ip=get_ip(request),
+        )
+        current_user.eulas.append(autopay_terms)
+        current_user.save()
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 class EditExistingBillingAccountView(HqHtmxActionMixin, DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/update_billing_contact_info.html'
@@ -555,6 +575,7 @@ class EditExistingBillingAccountView(HqHtmxActionMixin, DomainAccountingSettings
                 self.account,
                 self.domain,
             )
+            sign_autopay_terms(request)
         except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
             error = e.json_body.get('error', {}).get(
                 'message', _('Unknown error setting autopay. Please contact Support.')
@@ -1779,6 +1800,7 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
                 self.account,
                 self.domain,
             )
+            sign_autopay_terms(request)
         except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
             error = e.json_body.get('error', {}).get(
                 'message', _('Unknown error setting autopay method. Please contact Support.')
@@ -2037,6 +2059,8 @@ class CardsView(BaseCardView):
         autopay = request.POST.get('autopay') == 'true'
         try:
             self.payment_method.create_card(stripe_token, self.account, domain, autopay)
+            if autopay:
+                sign_autopay_terms(request)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
         except Exception:
