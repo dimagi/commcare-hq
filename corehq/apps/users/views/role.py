@@ -4,6 +4,7 @@ from django.http import (
     Http404,
     JsonResponse,
 )
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy, gettext as _, ngettext
@@ -16,6 +17,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.reports.util import get_possible_reports
@@ -71,6 +73,10 @@ class ListRolesView(BaseRoleAccessView):
         for role in self.non_admin_roles:
             role_data = role.to_json()
             role_view_data.append(role_data)
+
+            if self.can_edit_roles:
+                role_data["editUrl"] = reverse(EditRoleView.urlname,
+                    kwargs={'domain': self.domain, 'role_id': role_data.get('_id')})
 
             if role.is_commcare_user_default:
                 role_data["preventRoleDelete"] = True
@@ -286,3 +292,36 @@ def _delete_user_role(domain, role_data):
     role.delete()
     # return removed id in order to remove it from UI
     return {"_id": copy_id}
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class EditRoleView(BaseRoleAccessView):
+    urlname = "edit_role"
+    template_name = 'users/edit_role.html'
+    page_title = gettext_lazy("Edit Role")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, kwargs={'domain': self.domain, 'role_id': self.kwargs.get('role_id')})
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ListRolesView.page_title,
+            'url': reverse(ListRolesView.urlname, args=[self.domain]),
+        }]
+
+    @property
+    def page_context(self):
+        role_data = self.role.to_json()
+        return {
+            "data": json.dumps(role_data)
+        }
+
+    @property
+    def role(self):
+        role_id = self.kwargs.get("role_id")
+        try:
+            return UserRole.objects.by_couch_id(role_id, self.domain)
+        except UserRole.DoesNotExist:
+            return None
