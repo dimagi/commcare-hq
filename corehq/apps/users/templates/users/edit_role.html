@@ -3,12 +3,13 @@
 {% load i18n %}
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 {% block page_content %}
-  <div class="container p-5">
+  <div class="container mx-0">
     <!--<div>{{ data }}</div>-->
     <form x-data="{{ data }}">
+      <h1>{% trans "Edit Role" %}</h1>
       <div class="row mb-4">
         <label class="col-sm-2 control-label" for="role-name">
-          Role Name<span class="asteriskField">*</span>
+          {% trans "Role Name" %}<span class="asteriskField">*</span>
         </label>
         <div class="col-sm-4 controls">
           <input
