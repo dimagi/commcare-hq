@@ -19,7 +19,6 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username, SYSTEM_USER_ID
 from corehq.form_processor.models import CommCareCase
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED, NAMESPACE_DOMAIN
 from corehq.util.workbook_reading import make_worksheet
 
 PATH = os.path.dirname(__file__)
@@ -44,10 +43,8 @@ def _get_or_create_user(domain, create=True):
 
 
 def _import_cases(domain, user):
-    BULK_UPLOAD_DATE_OPENED.set(domain, True, NAMESPACE_DOMAIN)
     _import_case_type(domain, FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
     _import_case_type(domain, FOOD_CASE_TYPE, 'food_cases.csv', user)
-    BULK_UPLOAD_DATE_OPENED.set(domain, False, NAMESPACE_DOMAIN)
     _update_case_id_properties(domain, user)
 
 

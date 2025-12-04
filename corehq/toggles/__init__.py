@@ -1688,13 +1688,6 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
 
-BULK_UPLOAD_DATE_OPENED = StaticToggle(
-    'bulk_upload_date_opened',
-    "Allow updating of the date_opened field with the bulk uploader",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
