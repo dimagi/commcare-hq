@@ -75,7 +75,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.tasks import (
     send_renewal_reminder_emails,
     send_subscription_ending_emails,
-    send_subscription_reminder_emails,
     send_subscription_reminder_emails_dimagi_contact,
 )
 from corehq.apps.accounting.utils import (
@@ -2340,7 +2339,6 @@ class TestReminderEmailFrom(forms.Form):
     reminder_type = forms.ChoiceField(
         label="Type of Reminder to Trigger",
         choices=(
-            ('subscription_reminder', _("Subscription Reminder")),
             ('renewal_reminder', _("Renewal Reminder")),
             ('subscription_ending', _("Subscription Ending")),
             ('dimagi_contact', _("Dimagi Contact Subscription Reminder")),
@@ -2383,9 +2381,7 @@ class TestReminderEmailFrom(forms.Form):
     def send_emails(self):
         reminder_type = self.cleaned_data['reminder_type']
         days = int(self.cleaned_data['days'])
-        if reminder_type == 'subscription_reminder':
-            send_subscription_reminder_emails(days)
-        elif reminder_type == 'renewal_reminder':
+        if reminder_type == 'renewal_reminder':
             send_renewal_reminder_emails(days)
         elif reminder_type == 'subscription_ending':
             send_subscription_ending_emails(days)

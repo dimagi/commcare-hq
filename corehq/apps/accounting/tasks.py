@@ -26,7 +26,6 @@ from dimagi.utils.couch.database import iter_docs
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from corehq.apps.accounting.emails import (
     send_dimagi_contact_ending_reminder_email,
-    send_ending_reminder_email,
     send_renewal_reminder_email,
     send_subscription_ending_email,
     send_subscription_renewed_email,
@@ -96,7 +95,6 @@ from corehq.const import (
     USER_DATE_FORMAT,
     USER_MONTH_FORMAT,
 )
-from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
@@ -431,7 +429,7 @@ def auto_renew_subscriptions(domain_name=None):
     """
     ending_subscriptions = _get_auto_renewable_subscriptions(domain_name=domain_name)
     for subscription in ending_subscriptions:
-        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain) and not subscription.is_renewed:
+        if not subscription.is_renewed:
             auto_renew_subscription(subscription)
 
 
@@ -483,12 +481,6 @@ def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
-    # current reminders to be removed once auto-renewal is GA
-    send_subscription_reminder_emails(30)
-    send_subscription_reminder_emails(10)
-    send_subscription_reminder_emails(1)
-
-    # new set of emails replaces existing reminders once auto-renewal is GA
     send_renewal_reminder_emails(90)
     send_renewal_reminder_emails(60)
     send_subscription_ending_emails(30)
@@ -496,19 +488,12 @@ def remind_subscription_ending():
     send_subscription_ending_emails(1)
 
 
-def send_subscription_reminder_emails(days_left):
-    ending_subscriptions = _filter_subscriptions_for_reminder_emails(days_left, is_trial=False)
-    for subscription in ending_subscriptions:
-        _try_send_subscription_email(subscription, days_left, send_ending_reminder_email)
-
-
 def send_renewal_reminder_emails(days_left):
     ending_subscriptions = _filter_subscriptions_for_reminder_emails(
         days_left, is_trial=False, service_type=SubscriptionType.PRODUCT
     ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
-        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, days_left, send_renewal_reminder_email)
+        _try_send_subscription_email(subscription, days_left, send_renewal_reminder_email)
 
 
 def send_subscription_ending_emails(days_left):
@@ -516,8 +501,7 @@ def send_subscription_ending_emails(days_left):
         days_left, is_trial=False, service_type=SubscriptionType.PRODUCT, auto_renew=False,
     ).exclude(account__is_customer_billing_account=True)
     for subscription in ending_subscriptions:
-        if SHOW_AUTO_RENEWAL.enabled(subscription.subscriber.domain):
-            _try_send_subscription_email(subscription, days_left, send_subscription_ending_email)
+        _try_send_subscription_email(subscription, days_left, send_subscription_ending_email)
 
 
 def _try_send_subscription_email(subscription, days_left, send_email_func):

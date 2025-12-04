@@ -214,52 +214,6 @@ def _get_reminder_email_contacts(subscription, domain):
     return to, cc, bcc
 
 
-def send_ending_reminder_email(subscription, days_left):
-    """
-    Sends a reminder email to the emails specified in the accounting
-    contacts that the subscription will end on the specified end date.
-    """
-    domain_name = subscription.subscriber.domain
-    context = _ending_reminder_context(subscription, days_left)
-    subject = context['subject']
-
-    template = _ending_reminder_email_html(subscription)
-    template_plaintext = _ending_reminder_email_text(subscription)
-    email_html = render_to_string(template, context)
-    email_plaintext = render_to_string(template_plaintext, context)
-    bcc = [settings.ACCOUNTS_EMAIL] if not subscription.is_trial else []
-    if subscription.account.dimagi_contact:
-        bcc.append(subscription.account.dimagi_contact)
-    for email in _reminder_email_contacts(subscription, domain_name):
-        send_html_email_async.delay(
-            subject, email, email_html,
-            text_content=email_plaintext,
-            email_from=get_dimagi_from_email(),
-            bcc=bcc,
-        )
-        log_accounting_info(
-            "Sent %(days_left)s-day subscription reminder "
-            "email for %(domain)s" % {
-                'days_left': days_left,
-                'domain': domain_name,
-            }
-        )
-
-
-def _ending_reminder_email_html(subscription):
-    if subscription.account.is_customer_billing_account:
-        return 'accounting/email/customer_subscription_ending_reminder.html'
-    else:
-        return 'accounting/email/subscription_ending_reminder.html'
-
-
-def _ending_reminder_email_text(subscription):
-    if subscription.account.is_customer_billing_account:
-        return 'accounting/email/customer_subscription_ending_reminder.txt'
-    else:
-        return 'accounting/email/subscription_ending_reminder.txt'
-
-
 def _ending_reminder_context(subscription, days_left):
     from corehq.apps.domain.views.accounting import DomainSubscriptionView
 
@@ -353,29 +307,3 @@ def _dimagi_ending_reminder_context(subscription):
             'is_customer_account': False,
         })
     return context
-
-
-def _reminder_email_contacts(subscription, domain_name):
-    from corehq.apps.accounting.models import BillingContactInfo, WebUser
-
-    emails = {admin.get_email() for admin in WebUser.get_admins_by_domain(domain_name)}
-    emails |= {email for email in WebUser.get_dimagi_emails_by_domain(domain_name)}
-    if not subscription.is_trial:
-        billing_contact_emails = (
-            subscription.account.billingcontactinfo.email_list
-            if BillingContactInfo.objects.filter(account=subscription.account).exists() else []
-        )
-        if not billing_contact_emails:
-            from corehq.apps.accounting.views import ManageBillingAccountView
-            _soft_assert_contact_emails_missing(
-                False,
-                'Billing Account for project %s is missing client contact emails: %s' % (
-                    domain_name,
-                    absolute_reverse(ManageBillingAccountView.urlname, args=[subscription.account.id])
-                )
-            )
-        emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
-    if subscription.account.is_customer_billing_account:
-        enterprise_admin_emails = subscription.account.enterprise_admin_emails
-        emails |= {enterprise_admin_email for enterprise_admin_email in enterprise_admin_emails}
-    return emails

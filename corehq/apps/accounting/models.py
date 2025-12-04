@@ -80,7 +80,6 @@ from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
-from corehq.toggles import SHOW_AUTO_RENEWAL
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
@@ -1875,8 +1874,7 @@ class Subscription(models.Model):
     @property
     def can_auto_renew(self):
         return (
-            SHOW_AUTO_RENEWAL.enabled(self.subscriber.domain)
-            and self.service_type == SubscriptionType.PRODUCT
+            self.service_type == SubscriptionType.PRODUCT
             and self.date_end is not None
             and not self.account.is_customer_billing_account
         )
