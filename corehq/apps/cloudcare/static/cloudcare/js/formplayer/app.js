@@ -109,14 +109,6 @@ FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, app
     }
 });
 
-FormplayerFrontend.getChannel().reply('lastRecordedLocation', function () {
-    if (!sessionStorage.locationLat) {
-        return null;
-    } else {
-        var locationComponents = [sessionStorage.locationLat, sessionStorage.locationLon, sessionStorage.locationAltitude, sessionStorage.locationAccuracy];
-        return locationComponents.join();
-    }
-});
 
 FormplayerFrontend.on('clearBreadcrumbs', function () {
     $('#persistent-case-tile').html("");

@@ -23,7 +23,6 @@ let currentSelections = null,
 var API = {
     queryFormplayer: function (params, route) {
         var user = UsersModels.getCurrentUser(),
-            lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
             timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
             tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
             windowWidth = String(window.innerWidth),
@@ -197,7 +196,6 @@ var API = {
                 "isPersistent": params.isPersistent,
                 "sortIndex": params.sortIndex,
                 "preview": params.preview,
-                "geo_location": lastRecordedLocation,
                 "tz_offset_millis": timezoneOffsetMillis,
                 "tz_from_browser": tzFromBrowser,
                 "selected_values": params.selectedValues,
@@ -289,4 +287,3 @@ FormplayerFrontend.getChannel().reply("entity:get:details", function (options, i
 });
 
 export default API;
-
