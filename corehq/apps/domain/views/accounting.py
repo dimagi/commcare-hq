@@ -1707,6 +1707,8 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
                 messages.success(
                     request, message
                 )
+                if self.account.auto_pay_enabled:
+                    sign_autopay_terms(request)
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
             downgrade_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
