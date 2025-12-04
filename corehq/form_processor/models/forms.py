@@ -18,6 +18,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
@@ -131,8 +132,17 @@ class XFormInstanceManager(RequireDBManager):
             return []
         forms = list(self.get_forms(form_ids))
 
+        fetched_form_ids = [f.form_id for f in forms]
+        missing_form_ids = set(form_ids) - set(fetched_form_ids)
+        if missing_form_ids:
+            # depending on the calling context, this can represent an edge case where a case
+            # transaction references a form that does not exist. Until we understand how we
+            # get into this state, log an error to sentry and continue on with the form ids
+            # that reference valid forms (fetched_form_ids)
+            notify_exception(None, "Unknown form ids", details={'form_ids': missing_form_ids})
+
         attachments = sorted(
-            get_blob_db().metadb.get_for_parents(form_ids),
+            get_blob_db().metadb.get_for_parents(fetched_form_ids),
             key=lambda meta: meta.parent_id
         )
         forms_by_id = {form.form_id: form for form in forms}

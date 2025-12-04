@@ -7,6 +7,7 @@ from django.db import transaction
 from django.test import TestCase
 
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
@@ -145,6 +146,23 @@ class XFormInstanceManagerTest(TestCase):
             attachments = forms[1].get_attachments()
             self.assertEqual(1, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
+
+    def test_get_forms_with_attachments_meta_ignores_invalid_form_ids(self):
+        attachment_file = open('./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg', 'rb')
+        attachments = {
+            'pic.jpg': UploadedFile(attachment_file, 'pic.jpg', content_type='image/jpeg')
+        }
+        form_with_pic = create_form_for_test(DOMAIN, attachments=attachments)
+
+        meta_id = uuid.uuid4().hex
+        meta = BlobMeta(parent_id=meta_id, name='test-blob', type_code=1, content_length=100)
+        meta.save()
+
+        forms = XFormInstance.objects.get_forms_with_attachments_meta(
+            [form_with_pic.form_id, meta_id]
+        )
+        assert len(forms) == 1
+        assert forms[0].form_id == form_with_pic.form_id
 
     def test_get_forms_by_type(self):
         form1 = create_form_for_test(DOMAIN)
