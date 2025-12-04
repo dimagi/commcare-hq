@@ -125,11 +125,11 @@ class XFormInstanceManagerTest(TestCase):
         plain_form = create_form_for_test(DOMAIN)
 
         forms = XFormInstance.objects.get_forms_with_attachments_meta(
-            [form_with_pic.form_id, plain_form.form_id], ordered=True
+            [form_with_pic.form_id, plain_form.form_id]
         )
+
         self.assertEqual(2, len(forms))
-        form = forms[0]
-        self.assertEqual(form_with_pic.form_id, form.form_id)
+        form = [f for f in forms if f.form_id == form_with_pic.form_id][0]
         with self.assertNumQueries(0, using=form.db):
             expected = {
                 'form.xml': 'text/xml',
@@ -139,11 +139,12 @@ class XFormInstanceManagerTest(TestCase):
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-        with self.assertNumQueries(0, using=forms[1].db):
+        form = [f for f in forms if f.form_id == plain_form.form_id][0]
+        with self.assertNumQueries(0, using=form.db):
             expected = {
                 'form.xml': 'text/xml',
             }
-            attachments = forms[1].get_attachments()
+            attachments = form.get_attachments()
             self.assertEqual(1, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 

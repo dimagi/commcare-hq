@@ -126,7 +126,7 @@ class XFormInstanceManager(RequireDBManager):
         meta = self.get_attachment_by_name(form_id, attachment_name)
         return AttachmentContent(meta.content_type, meta.open(), meta.content_length)
 
-    def get_forms_with_attachments_meta(self, form_ids, ordered=False):
+    def get_forms_with_attachments_meta(self, form_ids):
         assert isinstance(form_ids, list)
         if not form_ids:
             return []
@@ -147,10 +147,6 @@ class XFormInstanceManager(RequireDBManager):
         )
         forms_by_id = {form.form_id: form for form in forms}
         attach_prefetch_models(forms_by_id, attachments, 'parent_id', 'attachments_list')
-
-        if ordered:
-            sort_with_id_list(forms, form_ids, 'form_id')
-
         return forms
 
     def modify_attachment_xml_and_metadata(self, form_data, form_attachment_new_xml):
