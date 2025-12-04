@@ -102,8 +102,7 @@
               {% endif %}
             </td>
             <td class="align-middle">
-              {# rollback when ops is ready to: not card.is_autopay and not card.other_autopay_domains #}
-              {% if True %}
+              {% if not card.is_autopay and not card.other_autopay_domains %}
                 <button
                   class="btn btn-outline-danger"
                   type="button"

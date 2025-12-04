@@ -1623,8 +1623,7 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
         )
 
     def is_autopay_required(self):
-        # rollback when ops is ready to: not self.is_annual_plan or self.account.require_auto_pay
-        return False
+        return not self.is_annual_plan or self.account.require_auto_pay
 
     @property
     def page_context(self):

@@ -46,7 +46,7 @@ def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
 
 
 def _get_unpaid_saas_invoices_in_reminder_daterange(today):
-    date_start = today + datetime.timedelta(days=1)
+    date_start = today
     date_end = today + datetime.timedelta(days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
     return _get_all_unpaid_saas_invoices().filter(
         date_due__gte=date_start,
@@ -88,7 +88,7 @@ def _get_oldest_invoice_over_threshold(domain, invoices):
 
 
 def get_accounts_with_customer_invoices_due_soon(today):
-    date_start = today + datetime.timedelta(days=1)
+    date_start = today
     date_end = today + datetime.timedelta(days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
     return _get_accounts_over_threshold_in_daterange(date_start, date_end)
 
