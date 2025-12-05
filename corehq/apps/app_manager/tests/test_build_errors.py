@@ -535,7 +535,7 @@ class BuildErrorsTest(TestCase):
             }]
         )
 
-        # do not valiate field if sort calculation present
+        # do not validate field if sort calculation present
         module.case_details.short.sort_elements = [
             SortElement(
                 field='',
