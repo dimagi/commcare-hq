@@ -45,7 +45,7 @@ from corehq.const import USER_CHANGE_VIA_INVITATION
 
 class UserInvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
-    template = "users/accept_invite.html"
+    template = "users/bootstrap3/accept_invite.html"
 
     def __call__(self, request, uuid, **kwargs):
         # add the correct parameters to this instance
