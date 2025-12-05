@@ -36,45 +36,34 @@ class Command(BaseCommand):
             print('resuming at: ', resume_id)
             rows = itertools.dropwhile(lambda row: row[INDEX_FORM_ID] != resume_id, rows)
 
-        if permanent:
-            self.hard_delete_forms(domain, rows)
-        else:
-            self.soft_delete_forms(domain, rows)
+        self.delete_forms(domain, rows, permanent)
 
-    def hard_delete_forms(self, domain, rows):
-        print('Starting hard form deletion')
+    def delete_forms(self, domain, rows, permanent):
+        print('Starting form deletion')
         num_deleted = 0
         for chunk in chunked(rows, CHUNK_SIZE):
             form_ids = [row[INDEX_FORM_ID] for row in chunk]
-
             try:
-                deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(domain, form_ids, return_ids=True))
-
-                for form_id in form_ids:
-                    if form_id in deleted_form_ids:
-                        print('Hard deleted: ', form_id)
-                    else:
-                        print('Not found:', form_id)
+                if permanent:
+                    num_deleted += self.hard_delete_forms(domain, form_ids)
+                else:
+                    num_deleted += self.soft_delete_forms(domain, form_ids)
             except Exception:
-                print('Failed while attempting to delete: ', form_ids)
+                print('Failed whilte attempting to delete:', form_ids)
                 raise
-
-            num_deleted += len(deleted_form_ids)
 
         print(f'Complete -- hard deleted {num_deleted} forms')
 
-    def soft_delete_forms(self, domain, rows):
-        print('Starting soft form deletion')
-        num_deleted = 0
-        for chunk in chunked(rows, CHUNK_SIZE):
-            form_ids = [row[INDEX_FORM_ID] for row in chunk]
-            try:
-                num_deleted += XFormInstance.objects.soft_delete_forms(
-                    domain, form_ids, deletion_id='delete_forms_cmd'
-                )
-                print("Soft deleted chunk: ", form_ids)
-            except Exception:
-                print('Failed whilte attempting to delete: ', form_ids)
-                raise
+    def hard_delete_forms(self, domain, form_ids):
+        deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(domain, form_ids, return_ids=True))
+        for form_id in form_ids:
+            if form_id in deleted_form_ids:
+                print('Hard deleted:', form_id)
+            else:
+                print('Not found:', form_id)
 
-        print(f'Complete -- soft deleted {num_deleted} forms')
+        return len(deleted_form_ids)
+
+    def soft_delete_forms(self, domain, form_ids):
+        print("Soft deleted chunk:", form_ids)
+        return XFormInstance.objects.soft_delete_forms(domain, form_ids, deletion_id='delete_forms_cmd')
