@@ -1390,7 +1390,7 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
     page_title = gettext_noop('Mobile Workers Bulk Lookup')
-    template_name = 'users/bulk_lookup.html'
+    template_name = 'users/bootstrap3/bulk_lookup.html'
 
     @property
     def page_context(self):
