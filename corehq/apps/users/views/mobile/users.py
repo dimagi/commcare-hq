@@ -195,7 +195,7 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def template_name(self):
         if self.editable_user.is_deleted():
-            return "users/deleted_account.html"
+            return "users/bootstrap3/deleted_account.html"
         else:
             return "users/bootstrap3/edit_commcare_user.html"
 
