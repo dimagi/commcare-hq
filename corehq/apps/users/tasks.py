@@ -127,7 +127,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     deleted_cases = deleted_cases or set()
     cases_to_rebuild = set()
 
-    for form in XFormInstance.objects.iter_forms(form_id_list, domain):
+    for form in XFormInstance.objects.iter_forms(form_id_list):
         if form.domain != domain or not form.is_normal:
             continue
 
@@ -170,7 +170,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         # all cases touched by this form are deleted
         return True
 
-    all_forms = XFormInstance.objects.iter_forms(form_ids_to_modify, domain)
+    all_forms = XFormInstance.objects.iter_forms(form_ids_to_modify)
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 

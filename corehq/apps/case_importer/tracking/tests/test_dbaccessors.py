@@ -156,7 +156,7 @@ class FormAndCaseIdsTest(TestCase):
         ]
         case_upload_record = self._import_rows(data)
         case_ids = list(get_case_ids_for_case_upload(case_upload_record))
-        cases = CommCareCase.objects.get_cases(case_ids, self.domain, ordered=True)
+        cases = CommCareCase.objects.get_cases(case_ids, ordered=True)
         self.assertEqual(case_ids, [case.case_id for case in cases])
         should_match_original_data_order = [['name']] + [[case.name] for case in cases]
         self.assertEqual(should_match_original_data_order, data)

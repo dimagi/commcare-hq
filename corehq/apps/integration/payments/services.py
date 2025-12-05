@@ -143,12 +143,14 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
 
 def _validate_payment_cases_for_verification(case_ids, domain):
     valid_statuses = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
-    for case in CommCareCase.objects.iter_cases(case_ids, domain):
-        _validate_payment_case_status(case, valid_statuses, operation=_("Verification"))
+    for case in CommCareCase.objects.iter_cases(case_ids):
+        _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification"))
         _validate_final_mobile_validation(case)
 
 
-def _validate_payment_case_status(case, valid_statuses, operation):
+def _validate_payment_case_status(case, domain, valid_statuses, operation):
+    if case.domain != domain:
+        raise PaymentRequestError(_("Case '{}' not in '{}' project").format(case.case_id, domain))
     payment_status = PaymentStatus.from_value(
         case.get_case_property(PaymentProperties.PAYMENT_STATUS)
     )
@@ -235,8 +237,8 @@ def revert_payment_verification(domain, case_ids: list):
 
 def _validate_payment_cases_for_revert(case_ids, domain):
     valid_statuses = [PaymentStatus.PENDING_SUBMISSION]
-    for case in CommCareCase.objects.iter_cases(case_ids, domain):
-        _validate_payment_case_status(case, valid_statuses, operation=_("Verification reversal"))
+    for case in CommCareCase.objects.iter_cases(case_ids):
+        _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification reversal"))
 
 
 def _update_payment_properties_for_revert(domain, case_ids: list):

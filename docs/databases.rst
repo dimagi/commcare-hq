@@ -213,7 +213,7 @@ In order to maintain the SQL function naming the new plproxy cluster must be in 
 
     # this will call the `get_cases_by_id` function on the 'standby' proxy which in turn
     # will query the shard standby nodes
-    cases = CommCareCase.objects.get_cases(case_ids, domain)
+    cases = CommCareCase.objects.get_cases(case_ids)
 
 These examples assume the standby routing is active as described in the `Routing queries to standbys`_
 section below.

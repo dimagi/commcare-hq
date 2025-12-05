@@ -480,7 +480,7 @@ class XFormManagementView(DataInterfaceSection):
         )
 
     def inaccessible_forms_accessed(self, xform_ids, domain, couch_user):
-        xforms = XFormInstance.objects.get_forms(xform_ids, domain)
+        xforms = XFormInstance.objects.get_forms(xform_ids)
         xforms_user_ids = set([xform.user_id for xform in xforms])
         accessible_user_ids = set(user_ids_at_accessible_locations(domain, couch_user))
         return xforms_user_ids - accessible_user_ids
