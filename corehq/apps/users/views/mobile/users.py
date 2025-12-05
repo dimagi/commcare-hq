@@ -588,7 +588,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
 
 
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
-    template_name = 'users/confirm_turn_off_demo_mode.html'
+    template_name = 'users/bootstrap3/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
     page_title = gettext_noop("Turn off Demo mode")
 
