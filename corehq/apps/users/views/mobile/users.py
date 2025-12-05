@@ -1263,7 +1263,7 @@ class UsernameUploadMixin(object):
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
     page_title = gettext_noop('Bulk Delete')
-    template_name = 'users/bulk_delete.html'
+    template_name = 'users/bootstrap3/bulk_delete.html'
 
     @property
     def page_context(self):
