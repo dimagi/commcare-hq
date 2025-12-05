@@ -1517,7 +1517,7 @@ def download_users(request, domain, user_type):
 
 @location_safe
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
-    template_name = "users/commcare_user_confirm_account.html"
+    template_name = "users/bootstrap3/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
     ONE_HOUR_IN_SECONDS = 60 * 60
@@ -1598,7 +1598,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 @method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION),
                 name="dispatch")
 class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
-    template_name = "users/commcare_user_confirm_account.html"
+    template_name = "users/bootstrap3/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
 
     @property
