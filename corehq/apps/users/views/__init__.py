@@ -1185,7 +1185,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 
 @location_safe
 class InviteWebUserView(BaseManageWebUserView):
-    template_name = "users/invite_web_user.html"
+    template_name = "users/bootstrap3/invite_web_user.html"
     urlname = 'invite_web_user'
     page_title = gettext_lazy("Invite Web User to Project")
 
