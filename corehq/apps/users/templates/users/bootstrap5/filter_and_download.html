@@ -1,0 +1,22 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% js_entry 'users/js/filtered_download' %}
+
+{% block page_content %}
+  {% initial_page_data 'count_users_url' count_users_url %}
+  <script type="text/html" id="ko-template-download-statistics">
+    <span class="badge text-bg-secondary">
+      <!-- ko if: areStatsLoading -->
+        <i class="fa fa-spinner fa-spin"></i> {% trans 'Calculating download size...' %}
+      <!-- /ko -->
+      <!-- ko if: haveStatsLoaded -->
+        <i class="fa fa-info-circle"></i>
+        <!-- ko text: statsText --><!-- /ko -->
+      <!-- /ko -->
+    </span>
+  </script>
+  {% crispy form %}  {# todo B5: crispy #}
+{% endblock %}
