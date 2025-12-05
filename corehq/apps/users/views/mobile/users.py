@@ -1620,7 +1620,7 @@ class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
 
 @location_safe
 class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
-    template_name = "users/commcare_user_account_confirmed.html"
+    template_name = "users/bootstrap3/commcare_user_account_confirmed.html"
     urlname = "commcare_user_account_confirmed"
     strict_domain_fetching = True
 
