@@ -419,7 +419,7 @@ $(function () {
     }
 
     // EULA modal
-    var eulaCookie = "gdpr_rollout";
+    var eulaCookie = "tos2025";
     if (!$.cookie(eulaCookie)) {
         var $modal = $("#eulaModal");
         if ($modal.length) {

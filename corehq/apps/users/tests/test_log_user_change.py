@@ -141,7 +141,7 @@ class TestLogUserChange(TestCase):
 def _get_expected_changes_json(user):
     user_json = user.to_json()
     return {
-        'CURRENT_VERSION': '3.0',
+        'CURRENT_VERSION': '4.0',
         'analytics_enabled': True,
         'announcements_seen': [],
         'assigned_location_ids': [],
