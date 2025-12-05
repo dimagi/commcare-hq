@@ -1,9 +1,10 @@
-from django.core.management.base import BaseCommand, CommandError
 import csv
 import itertools
-from dimagi.utils.chunked import chunked
-from corehq.form_processor.models import XFormInstance
 
+from dimagi.utils.chunked import chunked
+from django.core.management.base import BaseCommand, CommandError
+
+from corehq.form_processor.models import XFormInstance
 
 INDEX_FORM_ID = 0
 CHUNK_SIZE = 100
@@ -25,7 +26,7 @@ class Command(BaseCommand):
             self._process_rows(reader, domain, resume_id, permanent)
 
     def _process_rows(self, rows, domain, resume_id, permanent):
-        header_row = next(rows)   # skip header line
+        header_row = next(rows)  # skip header line
         if header_row[INDEX_FORM_ID] != 'Form ID':
             raise CommandError(
                 f'Expected Column {INDEX_FORM_ID} to be "Form ID", found "{header_row[INDEX_FORM_ID]}". Exiting'
@@ -47,8 +48,7 @@ class Command(BaseCommand):
             form_ids = [row[INDEX_FORM_ID] for row in chunk]
 
             try:
-                deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(
-                    domain, form_ids, return_ids=True))
+                deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(domain, form_ids, return_ids=True))
 
                 for form_id in form_ids:
                     if form_id in deleted_form_ids:
