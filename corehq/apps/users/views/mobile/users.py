@@ -197,7 +197,7 @@ class EditCommCareUserView(BaseEditUserView):
         if self.editable_user.is_deleted():
             return "users/deleted_account.html"
         else:
-            return "users/edit_commcare_user.html"
+            return "users/bootstrap3/edit_commcare_user.html"
 
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
