@@ -82,7 +82,8 @@ from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import get_complete_username
-from corehq.apps.users.views import BaseUserSettingsView, ListRolesView
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.users.views.role import ListRolesView
 from corehq.util.metrics import metrics_counter, metrics_histogram
 
 
