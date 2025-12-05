@@ -562,7 +562,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 @location_safe
 class ListWebUsersView(BaseRoleAccessView):
-    template_name = 'users/web_users.html'
+    template_name = 'users/bootstrap3/web_users.html'
     page_title = gettext_lazy("Web Users")
     urlname = 'web_users'
 
