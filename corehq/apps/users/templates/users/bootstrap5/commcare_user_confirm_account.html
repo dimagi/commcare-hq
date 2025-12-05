@@ -1,0 +1,79 @@
+{% extends login_template %}
+{% load i18n %}
+{% load field_tags %}
+{% load hq_shared_tags %}
+
+{% js_entry 'users/js/accept_invite' %}
+
+{% block title %}{% blocktrans %}Confirm your account to join the {{ domain_name }} project{% endblocktrans %}{% endblock title %}
+{% block tabs %}{% endblock %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="reg-form-container sign-in-container">
+          <div class="form-bubble form-bubble-lg">
+            {% if request.user.is_authenticated %}
+              <h3>
+                {% trans "You are already signed in." %}
+              </h3>
+              <h4>
+                {% blocktrans %}
+                  To accept this invitation, you must first sign out.
+                {% endblocktrans %}
+              </h4>
+              <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">{% trans "Sign Out" %}</button>
+              </form>
+            {% elif user.is_account_confirmed and user.is_active %}
+              <h3>
+                {% trans "Your account is already confirmed!" %}
+              </h3>
+              <h4>
+                {% url 'login' as login_url %}
+                {% blocktrans %}
+                  <a href="{{ login_url }}">Login</a> to access your account.
+                {% endblocktrans %}
+              </h4>
+            {% elif user.is_account_confirmed %}
+              <h3>
+                {% blocktrans %}
+                  It looks like your account has been deactivated.
+                  Contact your administrator if you think this is a mistake.
+                {% endblocktrans %}
+              </h3>
+            {% elif invite_expired %}
+              <h3>
+                {% blocktrans %}
+                  Invitation link has expired.
+                  Contact your project administrator to send new invite.
+                {% endblocktrans %}
+              </h3>
+            {% else %}
+              <h2>
+                {% blocktrans %}Confirm Your Account{% endblocktrans %}
+              </h2>
+              <div class="help-block">
+                {% blocktrans %}
+                  Fill in the details below to confirm your account.
+                {% endblocktrans %}
+              </div>
+              <form name="form" method="post" action="">
+                <h4>
+                  {% with user.raw_username as username %}
+                  {% blocktrans %}
+                    Your username <strong>{{ username }}</strong> was chosen by your project administrator.
+                  {% endblocktrans %}
+                  {% endwith %}
+                </h4>
+                {% include 'users/partials/bootstrap5/register_user_form_fields.html' %}
+              </form>
+          {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
