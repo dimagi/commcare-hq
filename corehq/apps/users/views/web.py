@@ -292,7 +292,7 @@ def delete_invitation(request, domain):
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
     page_title = gettext_lazy("Request Access")
-    template_name = "users/domain_request.html"
+    template_name = "users/bootstrap3/domain_request.html"
     request_form = None
 
     @property
