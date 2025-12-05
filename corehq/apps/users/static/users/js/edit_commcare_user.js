@@ -5,7 +5,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import googleAnalytics from "analytix/js/google";
 import multiselectUtils from "hqwebapp/js/multiselect_utils";
-import customDataFields from "users/js/custom_data_fields";
+import customDataFields from "users/js/bootstrap3/custom_data_fields";
 import "locations/js/widgets";
 import "jquery-textchange/jquery.textchange";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";

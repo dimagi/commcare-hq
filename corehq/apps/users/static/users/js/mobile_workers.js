@@ -26,7 +26,7 @@ import googleAnalytics from "analytix/js/google";
 import RMI from "jquery.rmi/jquery.rmi";
 import zxcvbn from "zxcvbn/dist/zxcvbn";
 import locationsWidgets from "locations/js/widgets";
-import customDataFields from "users/js/custom_data_fields";
+import customDataFields from "users/js/bootstrap3/custom_data_fields";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 import "hqwebapp/js/bootstrap3/validators.ko";  // email address validation

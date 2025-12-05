@@ -2,7 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import customDataFields from "users/js/custom_data_fields";
+import customDataFields from "users/js/bootstrap3/custom_data_fields";
 import "hqwebapp/js/bootstrap3/validators.ko";
 import "locations/js/widgets";
 
