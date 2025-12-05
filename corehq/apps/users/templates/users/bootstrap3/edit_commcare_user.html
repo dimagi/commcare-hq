@@ -2,7 +2,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% js_entry_b3 'users/js/edit_commcare_user' %}
+{% js_entry_b3 'users/js/bootstrap3/edit_commcare_user' %}
 
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
@@ -59,13 +59,13 @@
   <div class="tab-content" id="settings">
     <div class="tab-pane" id="basic-info">
       <div class="panel-body">
-        {% include 'users/partials/basic_info_form.html' with user_type="mobile" %}
+        {% include 'users/partials/bootstrap3/basic_info_form.html' with user_type="mobile" %}
       </div>
     </div>
 
     <div class="tab-pane" id="groups">
       <div class="panel-body">
-        {% include 'users/partials/commcare_user_groups.html' %}
+        {% include 'users/partials/bootstrap3/commcare_user_groups.html' %}
       </div>
     </div>
     {% if commtrack %}
@@ -80,7 +80,7 @@
               {% trans "User Location" %}
             </a>
           {% endif %}
-          {% include "users/partials/edit_commtrack_user_settings.html" %}
+          {% include "users/partials/bootstrap3/edit_commtrack_user_settings.html" %}
           {% if support_info.locations %}
             <h4>{% trans "[Support only] Assigned Locations" %}</h4>
             <div class="list-group">

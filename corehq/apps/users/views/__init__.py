@@ -394,7 +394,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
 @location_safe
 class EditWebUserView(BaseEditUserView):
-    template_name = "users/edit_web_user.html"
+    template_name = "users/bootstrap3/edit_web_user.html"
     urlname = "user_account"
     page_title = gettext_noop("Edit Web User")
 
@@ -562,7 +562,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 @location_safe
 class ListWebUsersView(BaseRoleAccessView):
-    template_name = 'users/web_users.html'
+    template_name = 'users/bootstrap3/web_users.html'
     page_title = gettext_lazy("Web Users")
     urlname = 'web_users'
 
@@ -653,7 +653,7 @@ class DownloadWebUsersStatusView(BaseUserSettingsView):
 
 
 class ListRolesView(BaseRoleAccessView):
-    template_name = 'users/roles_and_permissions.html'
+    template_name = 'users/bootstrap3/roles_and_permissions.html'
     page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 
@@ -1185,7 +1185,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 
 @location_safe
 class InviteWebUserView(BaseManageWebUserView):
-    template_name = "users/invite_web_user.html"
+    template_name = "users/bootstrap3/invite_web_user.html"
     urlname = 'invite_web_user'
     page_title = gettext_lazy("Invite Web User to Project")
 

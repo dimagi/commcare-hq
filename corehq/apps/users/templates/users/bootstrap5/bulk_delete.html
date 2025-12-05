@@ -1,0 +1,35 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% js_entry 'hqwebapp/js/bulk_upload_file' %}
+
+{% block page_content %}
+  {% blocktrans %}
+    <h2>
+      Bulk Delete Mobile Workers
+    </h2>
+
+    <div class="alert alert-warning">
+      <p>
+        <i class="fa fa-warning"></i>
+        This is a permanent action. Deleted users:
+      </p>
+      <ul>
+        <li>Will no longer be able to sync or submit any data from their mobile devices.</li>
+        <li>Cannot be recovered for any reason.</li>
+      </ul>
+      <p>
+        This page will not delete users who have submitted forms.
+      </p>
+    </div>
+
+    <p class="help-block">
+      To delete users in bulk, please upload an Excel file with a single <strong>username</strong> column.
+    </p>
+  {% endblocktrans %}
+
+  {% crispy bulk_upload_form %}  {# todo B5: crispy #}
+{% endblock page_content %}

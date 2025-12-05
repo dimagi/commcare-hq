@@ -11,6 +11,7 @@
 .project
 .pydevproject
 .idea
+.zed
 xforms/
 /artifacts/
 /data/

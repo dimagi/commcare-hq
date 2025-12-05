@@ -3,7 +3,7 @@
 {% load field_tags %}
 {% load hq_shared_tags %}
 
-{% js_entry_b3 'users/js/accept_invite' %}
+{% js_entry_b3 'users/js/bootstrap3/accept_invite' %}
 
 {% block title %}{% blocktrans %}Confirm your account to join the {{ domain_name }} project{% endblocktrans %}{% endblock title %}
 {% block tabs %}{% endblock %}
@@ -68,7 +68,7 @@
                   {% endblocktrans %}
                   {% endwith %}
                 </h4>
-                {% include 'users/partials/register_user_form_fields.html' %}
+                {% include 'users/partials/bootstrap3/register_user_form_fields.html' %}
               </form>
           {% endif %}
           </div>
