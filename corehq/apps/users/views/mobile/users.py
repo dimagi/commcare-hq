@@ -694,7 +694,7 @@ def update_user_groups(request, domain, couch_user_id):
 
 @location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
-    template_name = 'users/mobile_workers.html'
+    template_name = 'users/bootstrap3/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = gettext_noop("Mobile Workers")
 
