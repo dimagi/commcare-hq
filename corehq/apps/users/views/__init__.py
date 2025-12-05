@@ -653,7 +653,7 @@ class DownloadWebUsersStatusView(BaseUserSettingsView):
 
 
 class ListRolesView(BaseRoleAccessView):
-    template_name = 'users/roles_and_permissions.html'
+    template_name = 'users/bootstrap3/roles_and_permissions.html'
     page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 
