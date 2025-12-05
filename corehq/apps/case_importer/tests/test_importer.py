@@ -178,7 +178,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
         self.assertEqual(1, res['num_chunks'])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
+        cases = CommCareCase.objects.get_cases(case_ids)
         self.assertEqual(5, len(cases))
         properties_seen = set()
         for case in cases:
@@ -204,7 +204,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertCountEqual(
-            [case.external_id for case in CommCareCase.objects.get_cases(case_ids, self.domain)],
+            [case.external_id for case in CommCareCase.objects.get_cases(case_ids)],
             ['external_id-0', 'external_id-0', 'external_id-1']
         )
 
@@ -260,7 +260,7 @@ class ImporterTest(TestCase):
         # shouldn't create any more cases, just the one
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
-        [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
+        [case] = CommCareCase.objects.get_cases(case_ids)
         for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
 
@@ -424,7 +424,7 @@ class ImporterTest(TestCase):
         # should just create the one case
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
-        [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
+        [case] = CommCareCase.objects.get_cases(case_ids)
         self.assertEqual(external_id, case.external_id)
         for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
@@ -488,7 +488,7 @@ class ImporterTest(TestCase):
         extension_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain, [parent_case.case_id])
         self.assertEqual(len(extension_case_ids), 2)
-        extension_cases = CommCareCase.objects.get_cases(extension_case_ids, self.domain)
+        extension_cases = CommCareCase.objects.get_cases(extension_case_ids)
         # Check that identifier is set correctly
         self.assertEqual(
             {'host', 'mother'},
@@ -526,7 +526,7 @@ class ImporterTest(TestCase):
             ['', 'non-case-owning-name', '', improper_loc.name],
         ])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
 
         self.assertEqual(cases['location-owner-id'].owner_id, location.location_id)
         self.assertEqual(cases['location-owner-code'].owner_id, location.location_id)
@@ -631,7 +631,7 @@ class ImporterTest(TestCase):
             ])
             self.assertEqual(res['errors'], {})
             case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-            cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+            cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
             self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
             self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
             self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
@@ -648,7 +648,7 @@ class ImporterTest(TestCase):
             ])
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.location_id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
@@ -670,7 +670,7 @@ class ImporterTest(TestCase):
             ])
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa_owner._id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
@@ -853,7 +853,7 @@ class MultipleDomainImporterTest(TestCase):
 
         # Asserting current domain
         cur_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cur_cases = CommCareCase.objects.get_cases(cur_case_ids, self.domain)
+        cur_cases = CommCareCase.objects.get_cases(cur_case_ids)
         self.assertEqual(3, len(cur_cases))
         #Asserting current domain case property
         cases = {c.name: c for c in cur_cases}
@@ -861,7 +861,7 @@ class MultipleDomainImporterTest(TestCase):
 
         # Asserting subdomain 1
         s1_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain1.name)
-        s1_cases = CommCareCase.objects.get_cases(s1_case_ids, self.domain)
+        s1_cases = CommCareCase.objects.get_cases(s1_case_ids)
         self.assertEqual(1, len(s1_cases))
         # Asserting subdomain 1 case property
         s1_cases_pro = {c.name: c for c in s1_cases}
@@ -869,7 +869,7 @@ class MultipleDomainImporterTest(TestCase):
 
         # Asserting subdomain 2
         s2_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain2.name)
-        s2_cases = CommCareCase.objects.get_cases(s2_case_ids, self.domain)
+        s2_cases = CommCareCase.objects.get_cases(s2_case_ids)
         self.assertEqual(1, len(s2_cases))
         # Asserting subdomain 2 case property
         s2_cases_pro = {c.name: c for c in s2_cases}
@@ -898,7 +898,7 @@ class MultipleDomainImporterTest(TestCase):
         self.assertEqual(0, res['failed_count'])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         # Asserting current domain
-        cur_cases = CommCareCase.objects.get_cases(case_ids, self.domain)
+        cur_cases = CommCareCase.objects.get_cases(case_ids)
         self.assertEqual(6, len(cur_cases))
         # Asserting domain case property
         cases = {c.name: c for c in cur_cases}

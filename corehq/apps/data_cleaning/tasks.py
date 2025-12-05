@@ -120,7 +120,7 @@ def _create_case_blocks(session, records):
     blocks = []
     errored_doc_ids = []
     case_ids = [rec.doc_id for rec in records]
-    cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids, session.domain)}
+    cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids)}
     for record in records:
         case = cases[record.doc_id]
         try:

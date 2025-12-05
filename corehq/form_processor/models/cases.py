@@ -66,10 +66,9 @@ class CommCareCaseManager(RequireDBManager):
         except CommCareCase.DoesNotExist:
             raise CaseNotFound(case_id)
 
-    def get_cases(self, case_ids, domain=None, ordered=False, prefetched_indices=None):
+    def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
         """
         :param case_ids: List of case IDs to fetch
-        :param domain: Currently unused, may be enforced in the future.
         :param ordered: Return cases in the same order as ``case_ids``
         :param prefetched_indices: If not None this must be a dict
             containing ALL the indices for ALL the cases being fetched.
@@ -461,7 +460,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             ix.referenced_id for ix in self.reverse_indices
             if (index_identifier is None or ix.identifier == index_identifier)
         ]
-        return type(self).objects.get_cases(subcase_ids, self.domain)
+        return type(self).objects.get_cases(subcase_ids)
 
     def get_reverse_index_map(self):
         return self.get_index_map(True)

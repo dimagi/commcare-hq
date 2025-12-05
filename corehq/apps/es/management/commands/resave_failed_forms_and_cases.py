@@ -76,7 +76,7 @@ def perform_resave_on_cases(domain, start_date, end_date, no_input):
             print("No changes made")
             return
     for case_ids in chunked(with_progress_bar(case_ids_missing_in_es), 100, list):
-        cases = CommCareCase.objects.get_cases(case_ids, domain)
+        cases = CommCareCase.objects.get_cases(case_ids)
         found_case_ids = set()
 
         for case in cases:

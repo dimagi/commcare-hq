@@ -351,7 +351,7 @@ def get_paginated_cases_or_users(request, domain):
     if case_or_user == 'user':
         data = _get_paginated_users_without_gps(domain, page, limit, query)
     else:
-        data = GetPaginatedCases(request, domain).get_paginated_cases_without_gps(domain, page, limit)
+        data = GetPaginatedCases(request, domain).get_paginated_cases_without_gps(page, limit)
     return JsonResponse(data)
 
 
@@ -372,14 +372,14 @@ class GetPaginatedCases(CaseListMixin):
             .domain(self.domain)
         )
 
-    def get_paginated_cases_without_gps(self, domain, page, limit):
+    def get_paginated_cases_without_gps(self, page, limit):
         show_cases_with_missing_gps_data_only = True
 
         if GPSDataFilter(self.request, self.domain).show_all:
             show_cases_with_missing_gps_data_only = False
 
         cases_query = self._build_query()
-        location_prop_name = get_geo_case_property(domain)
+        location_prop_name = get_geo_case_property(self.domain)
         if show_cases_with_missing_gps_data_only:
             cases_query = cases_query.case_property_missing(location_prop_name)
 
@@ -392,7 +392,7 @@ class GetPaginatedCases(CaseListMixin):
 
         paginator = Paginator(case_ids, limit)
         case_ids_page = list(paginator.get_page(page))
-        cases = CommCareCase.objects.get_cases(case_ids_page, domain, ordered=True)
+        cases = CommCareCase.objects.get_cases(case_ids_page, ordered=True)
         case_data = []
         for case_obj in cases:
             lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
