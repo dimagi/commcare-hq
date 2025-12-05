@@ -1188,7 +1188,7 @@ class FilteredUserDownload(BaseUserSettingsView):
         context.update({'form': form, 'count_users_url': reverse(self.count_view, args=[domain])})
         return render(
             request,
-            "users/filter_and_download.html",
+            "users/bootstrap3/filter_and_download.html",
             context
         )
 
