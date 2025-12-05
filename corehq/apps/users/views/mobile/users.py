@@ -1337,7 +1337,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
 class ClearCommCareUsers(DeleteCommCareUsers):
     urlname = 'clear_commcare_users'
     page_title = gettext_noop('Bulk Clear')
-    template_name = 'users/bulk_clear.html'
+    template_name = 'users/bootstrap3/bulk_clear.html'
 
     def post(self, request, *args, **kwargs):
         usernames = self._get_usernames(request)
