@@ -420,7 +420,7 @@ class EditCommCareUserView(BaseEditUserView):
 
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
     urlname = 'extra_users_confirm_billing'
-    template_name = 'users/extra_users_confirm_billing.html'
+    template_name = 'users/bootstrap3/extra_users_confirm_billing.html'
     page_title = gettext_noop("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
