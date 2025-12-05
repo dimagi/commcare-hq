@@ -16,6 +16,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.reports.util import get_possible_reports
@@ -31,8 +32,9 @@ from corehq.apps.users.views import BaseRoleAccessView, _commcare_analytics_role
 from corehq.util.view_utils import json_error
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ListRolesView(BaseRoleAccessView):
-    template_name = 'users/bootstrap3/roles_and_permissions.html'
+    template_name = 'users/bootstrap5/roles_and_permissions.html'
     page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 
@@ -179,6 +181,7 @@ class ListRolesView(BaseRoleAccessView):
 @json_error
 @domain_admin_required
 @require_POST
+@use_bootstrap5
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
@@ -245,6 +248,7 @@ def _update_role_from_view(domain, role_data):
 
 @domain_admin_required
 @require_POST
+@use_bootstrap5
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
