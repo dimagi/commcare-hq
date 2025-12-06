@@ -571,6 +571,11 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
         # Assertion added for enforcing architecture decision & not for ensuring user behavior
         # This should ideally never be false
         assert (sort_element.field or sort_element.sort_calculation)
+
+        # If there is a field present we use that so we can club it with the display property in Suite file.
+        # This is true for sort elements sorting by display properties and legacy elements that had both
+        # field and sort calculation even for sort calculations.
+        # The order here is not functionally relevant and does not impact sorting indices/order.
         if sort_element.field:
             sort_elements_by_field[sort_element.field] = (sort_element, index + 1)
         elif sort_element.sort_calculation:
