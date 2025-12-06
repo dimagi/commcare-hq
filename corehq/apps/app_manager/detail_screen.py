@@ -138,7 +138,7 @@ class FormattedDetailColumn(object):
     @property
     def template(self):
         template = sx.Template(
-            text=sx.Text(xpath_function=self.xpath_function),
+            text=(sx.Text(xpath_function=self.xpath_function) if self.xpath_function else sx.Text()),
             form=self.template_form,
             width=self.template_width,
         )

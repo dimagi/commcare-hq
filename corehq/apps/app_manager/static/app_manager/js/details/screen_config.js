@@ -168,6 +168,12 @@ const module = function (spec) {
                 );
             }
         }
+        // Subscribe here for changes to sort rows after they have been initialized,
+        // though we do manually fire change where possible.
+        // This was added for sorting/reordering that is handled via sortableList knockout binding
+        self.sortRows.sortRows.subscribe(function () {
+            self.shortScreen.saveButton.fire("change");
+        });
         self.customXMLViewModel = {
             enabled: toggles.toggleEnabled('CASE_LIST_CUSTOM_XML'),
             xml: ko.observable(spec.state.short.custom_xml || ""),
