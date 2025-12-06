@@ -1259,9 +1259,9 @@ def _update_sort_elements(domain, lang, detail, sort_elements):
             is_valid, error_message = item.valid()
             if not is_valid:
                 return HttpResponseBadRequest(error_message)
-        if item.sort_calculation in old_elements_by_calculation:
+        if item.sort_calculation and item.sort_calculation in old_elements_by_calculation:
             item.display = old_elements_by_calculation[item.sort_calculation].display
-        elif item.field in old_elements_by_field:
+        elif item.field and item.field in old_elements_by_field:
             item.display = old_elements_by_field[item.field].display
         item.display[lang] = sort_element['display']
         detail.short.sort_elements.append(item)
