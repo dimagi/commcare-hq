@@ -769,6 +769,11 @@ class TestModuleViewsBase(ViewsBase):
         cls.module = factory.new_basic_module('open_case', 'house', with_form=False)
         cls.app.save()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        super().tearDownClass()
+
     def setUp(self):
         super().setUp()
         self.client.login(username=self.username, password=self.password)
