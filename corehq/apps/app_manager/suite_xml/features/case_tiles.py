@@ -21,15 +21,7 @@ CUSTOM = "custom"
 
 class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
-    ONE_ONE_TWO = ("one_one_two", _("Title row, subtitle row, third row with two cells, and map"))
-    ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
-    ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
-                                            "fourth rows, and map"))
-    ONE_3X_TWO_4X_ONE_2X = ("one_3X_two_4X_one_2X", _("Three upper rows, four rows with two cells, two lower rows "
-                                                      "and map"))
-    ONE_TWO_TWO = ("one_two_two", _("Title row, second row with two cells, third row with two cells"))
     ICON_TEXT_GRID = ("icon_text_grid", _("2 x 3 grid of image and text"))
-    BHA_REFERRALS = ("bha_referrals", _("BHA Referrals"))
 
 
 @dataclass
