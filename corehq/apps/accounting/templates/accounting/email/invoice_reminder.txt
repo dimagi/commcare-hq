@@ -22,7 +22,7 @@
 {% if autopay_required and not autopay_enabled %}
 {% blocktrans %}
   Our records indicate that you have not added an autopay card to your
-  account. Providing an autopay method is now a requirement for all monthly
+  account. Providing an autopay method is a requirement for all monthly
   subscriptions. If an autopay card is not added by
   {{ overdue_invoice_limit_days }} days beyond {{ date_due }} and the Billing
   Statement remains unpaid, we will automatically pause your subscription.
