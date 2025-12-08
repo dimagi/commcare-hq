@@ -1,0 +1,52 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<form id="user_information"
+      name="user_information"
+      class="form form-horizontal"
+      method="post">
+  <input type="hidden" name="form_type" value="update-user" />
+  <fieldset>
+    <legend>{{ edit_user_form_title }}</legend>
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="form-label col-md-3 col-lg-2">{% trans 'Username' %}</label>
+      <div class="col-md-9 col-lg-8 col-xl-6">
+        <p class="form-control-static">{{ couch_user.html_username }}</p>
+      </div>
+    </div>
+    {% crispy form_user_update.user_form %}  {# todo B5: crispy #}
+    {% if data_fields_form.fields or data_fields_form.data %}
+      {% crispy data_fields_form %}  {# todo B5: crispy #}
+    {% endif %}
+    {% if not request.is_view_only %}
+      <div class="form-actions">
+        <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
+          <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
+        </div>
+      </div>
+    {% endif %}
+  </fieldset>
+</form>
+
+{% include 'users/partials/bootstrap5/manage_phone_numbers.html' %}
+
+{% if update_form %}
+  <form id="commtrack_form" class="form form-horizontal" name="" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="commtrack" />
+    <fieldset>
+      {% if commtrack_enabled %}
+        <legend>{% trans 'CommCare Supply Settings' %}</legend>
+      {% else %}
+        <legend>{% trans 'Location Settings' %}</legend>
+      {% endif %}
+      {% crispy update_form %}  {# todo B5: crispy #}
+    </fieldset>
+    <div class="form-actions">
+      <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
+        <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommCare Supply Settings' %}</button>
+      </div>
+    </div>
+  </form>
+{% endif %}

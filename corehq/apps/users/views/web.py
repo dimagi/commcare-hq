@@ -45,7 +45,7 @@ from corehq.const import USER_CHANGE_VIA_INVITATION
 
 class UserInvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
-    template = "users/accept_invite.html"
+    template = "users/bootstrap3/accept_invite.html"
 
     def __call__(self, request, uuid, **kwargs):
         # add the correct parameters to this instance
@@ -292,7 +292,7 @@ def delete_invitation(request, domain):
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
     page_title = gettext_lazy("Request Access")
-    template_name = "users/domain_request.html"
+    template_name = "users/bootstrap3/domain_request.html"
     request_form = None
 
     @property
@@ -329,7 +329,7 @@ class DomainRequestView(BasePageView):
                     domain_request.send_request_email()
                     domain_request.save()
                     domain_obj = Domain.get_by_name(domain_request.domain)
-                    return render(request, "users/confirmation_sent.html", {
+                    return render(request, "users/bootstrap3/confirmation_sent.html", {
                         'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain,
                     })
         return self.get(request, *args, **kwargs)

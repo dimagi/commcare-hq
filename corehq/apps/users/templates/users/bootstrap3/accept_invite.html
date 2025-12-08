@@ -1,0 +1,133 @@
+{% extends login_template %}
+{% load i18n %}
+{% load field_tags %}
+{% load hq_shared_tags %}
+
+{% js_entry_b3 'users/js/bootstrap3/accept_invite' %}
+
+{% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
+
+{% block tabs %}{% endblock %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="reg-form-container sign-in-container">
+          {% if request.user.is_authenticated %}
+            <div class="form-bubble form-bubble-lg">
+              {% if not mobile_user %}
+                <form name="form" method="post" action="">
+                  <h2>
+                    {% blocktrans %}
+                      Accept Invitation?
+                    {% endblocktrans %}
+                  </h2>
+                  {% csrf_token %}
+                  {{ form.as_table }}
+
+                  {% if invited_user %}
+                    <p class="lead">
+                      You are signed in with an email different from the
+                      invited email, {{ invited_user }}.
+                    </p>
+                    <p>
+                      {% blocktrans with user.username as username %}
+                        Are you sure you want to accept the invitation
+                        to join the CommCare HQ {{ invite_type }}
+                        <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?
+                      {% endblocktrans %}
+                    </p>
+                  {% else %}
+                    <p class="lead">
+                      {% blocktrans with user.username as username %}
+                        Would you like to accept the invitation
+                        to join the CommCare HQ {{ invite_type }}
+                        <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?
+                      {% endblocktrans %}
+                    </p>
+                  {% endif %}
+
+
+                  <div class="form-bubble-actions">
+                    <button type="submit" class="btn btn-lg btn-primary">
+                      {% trans "Accept Invitation" %}
+                    </button>
+                  </div>
+
+                </form>
+              {% else %}
+                <p>
+                  <strong>{% trans 'Note' %}:</strong>
+                  {% trans "You are signed in as a mobile user, but to accept this invitation, you must be a web user." %}
+                </p>
+                <p>
+                  {% trans 'Please' %}
+                  <a href="?switch=true" class="btn btn-default">{% trans 'switch accounts' %}</a>
+                  {% trans 'or' %}
+                  <a href="?create=true" class="btn btn-default">{% trans "create a web account" %}</a>
+                </p>
+              {% endif %}
+            </div>
+            <div class="well sign-up-bubble form-bubble-purple">
+              <h2 class="text-center break-all-words">
+                {% blocktrans with formatted_username as username %}
+                  Not {{ username }}?
+                {% endblocktrans %}
+              </h2>
+              <p class="text-center">
+                <a href="?create=true" class="btn btn-purple btn-lg">
+                  {% trans 'Create an Account' %}
+                </a> or
+                <a href="?switch=true" class="btn btn-purple btn-lg">
+                  {% trans 'Switch Accounts' %}
+                </a>
+              </p>
+            </div>
+          {% else %}
+            <div class="form-bubble form-bubble-lg">
+              <h2>
+                {% blocktrans %}Create Account{% endblocktrans %}
+              </h2>
+              {% if is_sso %}
+                <p class="help-block">
+                  {% blocktrans %}
+                    Your email is managed by {{ idp_name }}.
+                    You will be asked to authenticate with Single Sign-On
+                    in the next step.
+                  {% endblocktrans %}
+                </p>
+              {% else %}
+                <p class="help-block">
+                  {% blocktrans with invite_type|lower as invite_type_lower %}
+                    To accept this {{ invite_type_lower }} invitation, you must create an account.
+                  {% endblocktrans %}
+                </p>
+              {% endif %}
+              <form name="form" method="post" action="">
+                {% if is_sso %}
+                  <div class="form-group">
+                    <label class="control-label">{% trans "Username" %}</label>
+                    <p class="lead">
+                      {{ invited_user }}
+                    </p>
+                  </div>
+                {% endif %}
+                {% include 'users/partials/bootstrap3/register_user_form_fields.html' %}
+              </form>
+            </div>
+            <div class="well sign-up-bubble form-bubble-purple">
+              <h2 class="text-center">{% trans 'Already have an account?' %}</h2>
+              <p class="text-center">
+                <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-purple btn-lg">
+                  {% trans 'Sign In Now' %}
+                </a>
+              </p>
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
