@@ -63,50 +63,79 @@ def add_columns_for_case_details(_module):
     ]
 
 
-def add_columns_for_one_one_two_case_details(_module):
+def add_columns_for_icon_text_grid_details(_module):
     _module.case_details.short.columns = [
         DetailColumn(
             header={'en': 'a'},
             model='case',
             field='a',
             format='plain',
-            case_tile_field='title'
+            case_tile_field='top_left_image'
         ),
         DetailColumn(
             header={'en': 'b'},
             model='case',
             field='b',
             format='plain',
-            case_tile_field='top'
+            case_tile_field='top_left_text'
         ),
         DetailColumn(
             header={'en': 'c'},
             model='case',
             field='c',
             format='address',
-            case_tile_field='bottom_left'
+            case_tile_field='top_right_image'
         ),
         DetailColumn(
             header={'en': 'd'},
             model='case',
             field='d',
             format='date',
-            case_tile_field='bottom_right'
+            case_tile_field='top_right_text'
         ),
         DetailColumn(
             header={'en': 'e'},
             model='case',
             field='e',
             format='address',
-            case_tile_field='map'
+            case_tile_field='middle_left_image'
         ),
         DetailColumn(
             header={'en': 'e'},
             model='case',
             field='e',
             format='address-popup',
-            case_tile_field='map_popup'
+            case_tile_field='middle_left_text'
         ),
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='middle_right_image'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='middle_right_text'
+        ),
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='bottom_left_image'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='bottom_left_text'
+        ),
+
     ]
 
 
@@ -540,9 +569,9 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     def test_case_tile_with_sorting(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module("my_module", "person")
-        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.case_tile_template = CaseTileTemplates.ICON_TEXT_GRID.value
         module.case_details.short.display = 'short'
-        add_columns_for_one_one_two_case_details(module)
+        add_columns_for_icon_text_grid_details(module)
         sort_elements = [
             SortElement(field='b', direction='ascending', type='plain'),
             SortElement(field='a', direction='ascending', type='plain')
@@ -595,9 +624,9 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     def test_case_tile_with_register_from_case_list(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module("my_module", "person")
-        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.case_tile_template = CaseTileTemplates.ICON_TEXT_GRID.value
         module.case_details.short.display = 'short'
-        add_columns_for_one_one_two_case_details(module)
+        add_columns_for_icon_text_grid_details(module)
 
         reg_form = factory.new_form(module)
         reg_form.actions.open_case.condition.type = 'always'
