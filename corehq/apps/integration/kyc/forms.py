@@ -29,6 +29,7 @@ class KycConfigureForm(forms.ModelForm):
             'provider',
             'api_field_to_user_data_map',
             'phone_number_field',
+            'passing_threshold',
         ]
 
     user_data_store = forms.ChoiceField(
@@ -61,6 +62,13 @@ class KycConfigureForm(forms.ModelForm):
         required=False,
         help_text=_('The case property or user data field that contains the phone number. '
                     'Leave blank if it’s not used for KYC verification.'),
+    )
+    passing_threshold = JsonField(
+        label=_('Passing Threshold'),
+        required=True,
+        expected_type=dict,
+        # TODO: Update help text to link to documentation about passing thresholds once it is created
+        help_text=_('The minimum score required to pass KYC verification.'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -95,6 +103,11 @@ class KycConfigureForm(forms.ModelForm):
                 ),
                 crispy.Div(
                     'phone_number_field',
+                ),
+                crispy.Div(
+                    'passing_threshold',
+                    x_init='passing_threshold = $el.value',
+                    css_id='passing-threshold',
                 ),
                 twbscrispy.StrictButton(
                     _('Save'),
