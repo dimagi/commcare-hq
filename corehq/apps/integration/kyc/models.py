@@ -45,6 +45,7 @@ class KycConfig(models.Model):
         default=KycProviders.MTN_KYC,
     )
     phone_number_field = models.CharField(max_length=126, null=True, blank=True)
+    passing_threshold = jsonfield.JSONField(default=dict)
 
     class Meta:
         constraints = [
