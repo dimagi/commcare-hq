@@ -16,7 +16,7 @@
         <div class="modal-body">
           <div class="form form-horizontal">
             <fieldset data-bind="enable: isEditable">
-            <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="row">
               <label class="col-md-4 form-label" for="role-name">
                 {% trans "Role Name" %}<span class="asteriskField">*</span>
               </label>
@@ -34,7 +34,7 @@
             <legend>
               {% trans "Area Access" %}
             </legend>
-            <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="row">
               <div class="col-md-2">
                 {% trans "Can Edit" %}
               </div>
@@ -43,12 +43,12 @@
               </div>
             </div>
             <div data-bind="foreach: accessAreas">
-              <div class="form-group" data-bind="visible: showOption">  {# todo B5: css-form-group #}
+              <div class="row" data-bind="visible: showOption">
                 <div class="col-md-2 controls" data-bind="visible: showEditCheckbox">
                   <div class="form-check">
-                    <input type="checkbox"  {# todo B5: css-checkbox #}
+                    <input class="form-check-input" type="checkbox"
                            data-bind="attr: {id: editCheckboxLabel}, checked: editPermission" />
-                    <label data-bind="attr: {for: editCheckboxLabel}">
+                    <label class="form-check-label" data-bind="attr: {for: editCheckboxLabel}">
                       <span class="sr-only" data-bind="text: screenReaderEditAndViewText">
                       </span>
                     </label>
@@ -60,25 +60,25 @@
                   </div>
                 </div>
                 <div class="col-md-2 controls" data-bind="visible: showViewCheckbox">
-                  {# PLACEHOLDER checkbox when editPermission() is true #}  {# todo B5: css-checkbox #}
+                  {# PLACEHOLDER checkbox when editPermission() is true #}
                   <div class="form-check" data-bind="visible: editPermission()">
-                    <input type="checkbox" checked="checked" disabled="disabled" />  {# todo B5: css-checkbox #}
-                    <label>
+                    <input class="form-check-input" type="checkbox" checked="checked" disabled="disabled" />
+                    <label class="form-check-label">
                       <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
                       </span>
                     </label>
                   </div>
                   {# end PLACEHOLDER #}
-                  {# REAL checkbox that controls viewPermission when editPermission() is false #}  {# todo B5: css-checkbox #}
+                  {# REAL checkbox that controls viewPermission when editPermission() is false #}
                   <div class="form-check" data-bind="visible: !editPermission()">
-                    <input type="checkbox"  {# todo B5: css-checkbox #}
+                    <input class="form-check-input" type="checkbox"
                            data-bind="attr: {id: viewCheckboxLabel}, checked: viewPermission" />
-                    <label data-bind="attr: {for: viewCheckboxLabel}">
+                    <label class="form-check-label" data-bind="attr: {for: viewCheckboxLabel}">
                       <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
                       </span>
                     </label>
                   </div>
-                  {# END REAL checkbox #}  {# todo B5: css-checkbox #}
+                  {# END REAL checkbox #}
                 </div>
                   <div class="col-md-2 controls " data-bind="visible: !showViewCheckbox">
                     <div class="form-check-placeholder">
@@ -87,23 +87,23 @@
                   </div>
                 <div class="col-md-8 form-label">
                   <div data-bind="html: text"></div>
-                  {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}  {# todo B5: css-checkbox #}
+                  {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
                   <div class="form-check" data-bind="visible: $parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
-                    <input type="checkbox" checked="checked" disabled="disabled"/>  {# todo B5: css-checkbox #}
-                    <label data-bind="text: allowCheckboxText"></label>
+                    <input class="form-check-input" type="checkbox" checked="checked" disabled="disabled"/>
+                    <label class="form-check-label" data-bind="text: allowCheckboxText"></label>
                   </div>
                   {# end PLACEHOLDER #}
-                  {# REAL checkbox for allowCheckboxPermission #}  {# todo B5: css-checkbox #}
+                  {# REAL checkbox for allowCheckboxPermission #}
                   <div class="form-check" data-bind="visible: !$parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
-                    <input type="checkbox"  {# todo B5: css-checkbox #}
+                    <input class="form-check-input" type="checkbox"
                            data-bind="attr: {id: allowCheckboxId}, checked: allowCheckboxPermission" />
-                    <label data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
+                    <label class="form-check-label" data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
                   </div>
                   {# end REAL #}
-                  {# PLACEHOLDER checkbox when showAllowCheckbox is false #}  {# todo B5: css-checkbox #}
+                  {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
                   <div class="form-check" data-bind="visible: !editPermission() && showAllowCheckbox">
-                    <input type="checkbox" disabled="disabled"/>  {# todo B5: css-checkbox #}
-                    <label data-bind="text: allowCheckboxText"></label>
+                    <input class="form-check-input" type="checkbox" disabled="disabled"/>
+                    <label class="form-check-label" data-bind="text: allowCheckboxText"></label>
                   </div>
                   {# end PLACEHOLDER #}
               </div>
