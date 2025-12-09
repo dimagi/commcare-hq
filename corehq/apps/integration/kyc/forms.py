@@ -68,8 +68,12 @@ class KycConfigureForm(forms.ModelForm):
         label=_('Passing Threshold'),
         required=True,
         expected_type=dict,
-        # TODO: Update help text to link to documentation about passing thresholds once it is created
-        help_text=_('The minimum score required to pass KYC verification.'),
+        help_text=format_html_lazy(
+            _('Maps API field for the KYC provider to the minimum score required to pass KYC verification.'
+              ' To learn more about this, please have a look at our '
+              '<a href="{}" target="_blank">support documentation</a>.'),
+            'https://commcare-hq.readthedocs.io/integrations/kyc.html#passing-threshold-for-kyc-verification'
+        ),
     )
 
     def __init__(self, *args, **kwargs):

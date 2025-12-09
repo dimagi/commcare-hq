@@ -75,3 +75,30 @@ Let’s take a closer look at the Phone Number field in the above example:
 - **phoneNumber**: The field name required by the MTN provider.
 - **data_field:phone_number**: The field in the recipient data store from which the user’s phone number will be retrieved.
 - **is_sensitive:true**: The phone number is considered sensitive and should be hidden in the UI.
+
+Passing Threshold for KYC Verification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This field allows you to set the minimum score in percentage required for each field for a user to pass the KYC verification.
+The score is provided by the KYC provider as part of the verification response and should be an integer value.
+
+Here is a sample configuration for the MTN provider.
+::
+
+    {
+      "firstName": 90,
+      "lastName": 90,
+      "phoneNumber": 100,
+      "emailAddress": 100,
+      "nationalIdNumber": 100,
+      "streetAddress": 80,
+      "city": 100,
+      "postCode": 100,
+      "country": 100
+    }
+
+Each key in the JSON corresponds to a field name expected by the KYC provider. All keys are mandatory for MTN.
+The value for each key indicates the minimum score required for that field for the user to pass the KYC verification.
+Let’s take a closer look at the Phone Number field in the above example:
+
+- **phoneNumber**: The field name required by the MTN provider.
+- **100**: The value indicates that the user must have a score of 100 percent for the phone number field to pass the KYC verification.
