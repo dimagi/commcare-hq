@@ -2,7 +2,6 @@ from collections import defaultdict
 from itertools import chain
 
 from django.conf import settings
-from django.db.models import F, Q
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 
@@ -227,18 +226,24 @@ def user_can_access_invite(domain, couch_user, invite):
 
 
 def send_hq_sso_date_metric(link: ConnectIDUserLink):
-    is_connect_user = (
+    # Check if the user has only this link and the link is not for a
+    # connect user or for a domain that is excluded for this metric.
+    has_other_links = (
         ConnectIDUserLink.objects.filter(connectid_username=link.connectid_username)
-        .filter(
-            Q(commcare_user__username__istartswith=F("connectid_username"))
-            | Q(domain__regex='ccc|chc|connect|kangaroo|qa|test|world-vision-ethiopia|wellme')
-        ).exists()
+        .exclude(id=link.id)
+        .exists()
     )
+    excluded_domains = ["ccc", "chc", "connect", "kangaroo", "qa", "test", "world-vision-ethiopia", "wellme"]
+    is_connect_user = link.commcare_user.username.startswith(link.connectid_username.lower())
+    is_domain_excluded = any(domain in link.domain for domain in excluded_domains)
+    is_valid = not (has_other_links or is_connect_user or is_domain_excluded)
 
-    if settings.CONNECTID_ADD_USER_ANALYTICS_URL:
-        hq_sso_date = now().isoformat() + "Z" if not is_connect_user else None
+    if settings.CONNECTID_ADD_USER_ANALYTICS_URL and is_valid:
         requests.post(
             settings.CONNECTID_ADD_USER_ANALYTICS_URL,
-            json={"username": link.connectid_username, "hq_sso_date": hq_sso_date},
-            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
+            json={
+                "username": link.connectid_username,
+                "hq_sso_date": now().isoformat() + "Z",
+            },
+            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
         )
