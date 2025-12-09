@@ -339,15 +339,17 @@ ko.bindingHandlers.multirow_sortable = {
 
 ko.bindingHandlers.modal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-        viewModel.binding_modal = new Modal(element);
+        // Store the modal instance on the element itself to avoid collisions
+        // when multiple modals share the same viewModel
+        element._knockoutModal = new Modal(element);
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         let value = ko.utils.unwrapObservable(valueAccessor());
         if (value) {
-            viewModel.binding_modal.show();
+            element._knockoutModal.show();
         } else {
-            viewModel.binding_modal.hide();
+            element._knockoutModal.hide();
         }
     },
 };
