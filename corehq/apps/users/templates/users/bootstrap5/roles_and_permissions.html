@@ -429,8 +429,7 @@
   </div>
 {% endblock %}
 
-{% block modals %}{{ block.super }}
-
-{% include 'users/partials/bootstrap5/linked_roles_modal.html' %}
-
+{% block modals %}
+  {{ block.super }}
+  {% include 'users/partials/bootstrap5/linked_roles_modal.html' %}
 {% endblock %}
