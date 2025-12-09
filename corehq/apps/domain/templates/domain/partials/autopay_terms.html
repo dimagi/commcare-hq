@@ -1,0 +1,231 @@
+{% load i18n %}
+{% url 'domain_update_billing_info' domain as billing_info_url %}
+{% url 'domain_select_plan' domain as select_plan_url %}
+
+<div class="accordion mb-3" id="autopay-tos">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="autopay-tos-header">
+      <button
+        class="accordion-button collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#autopay-tos-content"
+        aria-expanded="false"
+        aria-controls="autopay-tos-content"
+      >
+        {% trans "Autopay Terms and Conditions" %}
+      </button>
+    </h2>
+    <div
+      id="autopay-tos-content"
+      class="accordion-collapse collapse"
+      aria-labelledby="autopay-tos-header"
+      data-bs-parent="#autopay-tos"
+    >
+      <div class="accordion-body">
+        <h3>1. {% trans "Affirmative Consent and Authorization" %}</h3>
+        <p>
+          <strong>1.1. {% trans "Enrollment" %}:</strong>
+          {% blocktrans %}
+            By enrolling in Autopay, you authorize Dimagi (referred to as "We",
+            "Us", or "Our") to treat your electronic agreement as evidence of
+            your voluntary and knowing consent to:
+          {% endblocktrans %}
+        </p>
+        <ul>
+          <li>
+            {% blocktrans %}
+              Save your designated debit card or credit card information.
+            {% endblocktrans %}
+          </li>
+          <li>
+            {% blocktrans %}
+              Initiate automatic electronic payment transactions from this
+              designated account.
+            {% endblocktrans %}
+          </li>
+        </ul>
+        <p>
+          {% blocktrans %}
+            You agree that this electronic authorization constitutes an
+            electronic signature and is intended to have the same force and
+            effect as a written signature for purposes of authorizing recurring
+            payments under these terms.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong>1.2. {% trans "Recurring Payment Authorization" %}:</strong>
+          {% blocktrans %}
+            You authorize Us to automatically charge your designated credit card
+            or debit card each billing cycle for the
+            <strong>Amount Due</strong> on your account statement.
+          {% endblocktrans %}
+        </p>
+
+        <h3>2. {% trans "Disclosure of Recurring Charges" %}</h3>
+        <p>
+          <strong>2.1. {% trans "Charge Amount and Frequency" %}:</strong>
+          {% blocktrans %}
+            Your recurring charge will be for the full, current balance of your
+            monthly service fees, including applicable taxes and surcharges.
+            This charge will occur <strong>monthly</strong> on a recurring
+            basis.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong>2.2. {% trans "Payment Date" %}:</strong>
+          {% blocktrans %}
+            The first charge will occur on your next invoice due date.
+            Thereafter, the automatic payment will be initiated on each
+            subsequent invoice due date.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong>2.3. {% trans "Advance Notice of Payment" %}:</strong>
+          {% blocktrans %}
+            We will provide you with an electronic notice and invoice (via
+            email) at least <strong>ten (10) days</strong> before your scheduled
+            payment is processed, confirming the <strong>Amount Due</strong> and
+            the exact <strong>Payment Date</strong>.
+          {% endblocktrans %}
+        </p>
+
+        <h3>3. {% trans "Updates and Returned Payments" %}</h3>
+        <p>
+          <strong>3.1. {% trans "Payment Information Update" %}:</strong>
+          {% blocktrans %}
+            You are responsible for ensuring your payment information (including
+            the card number and expiration date) remains current.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong>3.2. {% trans "Returned Payments" %}:</strong>
+          {% blocktrans %}
+            If an automatic payment toward an invoice is rejected or refused by
+            our payment processor for any reason, you will receive a
+            notification at the email address on your user account. If the
+            invoice is not paid by 10 calendar days following the invoice due
+            date, your Subscription
+            <a
+              href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pause-Your-Subscription"
+              target="_blank"
+              >will automatically pause</a
+            >. Reinstatement will occur promptly upon our receipt of the full
+            payment.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong
+            >3.3. {% trans "Customer Dispute/Chargeback Policy" %}:</strong
+          >
+          {% blocktrans %}
+            If you believe a charge is incorrect, you agree to contact us
+            directly via email within thirty (30) days of the charge date to
+            attempt to resolve the issue before initiating a chargeback or
+            payment dispute with your financial institution. If you initiate a
+            chargeback that results in fees or penalties to us, you will be
+            responsible for reimbursing us for all such fees.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong>3.4. {% trans "Refund Policy" %}:</strong>
+          {% blocktrans %}
+            Except as otherwise required by law, all payments made via Autopay
+            are non-refundable. If we determine that a charge was made in error,
+            we will initiate a credit or refund to the designated payment method
+            within 5 business days of such determination.
+          {% endblocktrans %}
+        </p>
+
+        <h3>4. {% trans "Cancellation Mechanism" %}</h3>
+        <p>
+          <strong>4.1. {% trans "Easy Cancellation" %}:</strong>
+          {% blocktrans %}
+            You may cancel your Autopay enrollment at any time and for any
+            reason.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong>4.2. {% trans "Cancellation Process" %}:</strong>
+        </p>
+        <ul>
+          <li>
+            {% blocktrans %}
+              If you are on a Pay Monthly Software Plan, you may cancel Autopay
+              by canceling your Subscription in your
+              <a href="{{ select_plan_url }}" target="_blank"
+                >project software plan options</a
+              >: select "Pause Subscription". The existing Subscription will be
+              canceled, and at the end of the billing period you will receive a
+              final invoice for any unbilled usage. We will attempt to
+              automatically pay this invoice on its due date.
+            {% endblocktrans %}
+          </li>
+          <li>
+            {% blocktrans %}
+              If you are on a Pay Annually software plan, you may cancel Autopay
+              by removing your autopay card from your
+              <a href="{{ billing_info_url }}" target="_blank"
+                >project billing information</a
+              >
+              at least 5 business days before your next scheduled Autopay date.
+            {% endblocktrans %}
+          </li>
+        </ul>
+
+        <h3>5. {% trans "Amendment Policy" %}</h3>
+        <p>
+          <strong>5.1 {% trans "Notification of Changes to Terms" %}:</strong>
+          {% blocktrans %}
+            We may revise these Autopay Terms and Conditions from time to time.
+            We will provide notice of any material revisions by posting them
+            under your
+            <a href="{{ billing_info_url }}" target="_blank"
+              >project billing information</a
+            >. Material revisions shall be effective no sooner than
+            <strong>thirty (30) days</strong> after being posted. If you do not
+            agree to the revisions, you must terminate your Autopay enrollment
+            immediately, as described in Section 4.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <strong
+            >5.2
+            {% trans "Notification of Changes to Recurring Charge" %}:</strong
+          >
+          {% blocktrans %}
+            If the fundamental frequency of the charge changes (e.g., from
+            monthly to weekly) or if the method for calculating the recurring
+            charge is altered, we will notify you at least
+            <strong>thirty (30) days</strong> in advance of such change taking
+            effect.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            By continuing to use Autopay after revisions are in effect, you
+            accept and agree to all revisions.
+          {% endblocktrans %}
+        </p>
+
+        <h3>6. {% trans "Contact and Billing Inquiries" %}</h3>
+        <p>
+          {% blocktrans %}
+            For any questions or concerns regarding these Autopay Terms and
+            Conditions, your recurring charges, or if you wish to dispute a
+            transaction, please contact us immediately:
+          {% endblocktrans %}
+        </p>
+        <ul>
+          <li><strong>{% trans "Email" %}:</strong> {{ ACCOUNTS_EMAIL }}</li>
+        </ul>
+        <p>
+          {% blocktrans %}
+            Please allow us a reasonable time to investigate and respond to your
+            inquiry before taking any further action.
+          {% endblocktrans %}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

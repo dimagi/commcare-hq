@@ -195,9 +195,9 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def template_name(self):
         if self.editable_user.is_deleted():
-            return "users/deleted_account.html"
+            return "users/bootstrap3/deleted_account.html"
         else:
-            return "users/edit_commcare_user.html"
+            return "users/bootstrap3/edit_commcare_user.html"
 
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
@@ -420,7 +420,7 @@ class EditCommCareUserView(BaseEditUserView):
 
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
     urlname = 'extra_users_confirm_billing'
-    template_name = 'users/extra_users_confirm_billing.html'
+    template_name = 'users/bootstrap3/extra_users_confirm_billing.html'
     page_title = gettext_noop("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
@@ -588,7 +588,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
 
 
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
-    template_name = 'users/confirm_turn_off_demo_mode.html'
+    template_name = 'users/bootstrap3/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
     page_title = gettext_noop("Turn off Demo mode")
 
@@ -694,7 +694,7 @@ def update_user_groups(request, domain, couch_user_id):
 
 @location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
-    template_name = 'users/mobile_workers.html'
+    template_name = 'users/bootstrap3/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = gettext_noop("Mobile Workers")
 
@@ -1188,7 +1188,7 @@ class FilteredUserDownload(BaseUserSettingsView):
         context.update({'form': form, 'count_users_url': reverse(self.count_view, args=[domain])})
         return render(
             request,
-            "users/filter_and_download.html",
+            "users/bootstrap3/filter_and_download.html",
             context
         )
 
@@ -1263,7 +1263,7 @@ class UsernameUploadMixin(object):
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
     page_title = gettext_noop('Bulk Delete')
-    template_name = 'users/bulk_delete.html'
+    template_name = 'users/bootstrap3/bulk_delete.html'
 
     @property
     def page_context(self):
@@ -1337,7 +1337,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
 class ClearCommCareUsers(DeleteCommCareUsers):
     urlname = 'clear_commcare_users'
     page_title = gettext_noop('Bulk Clear')
-    template_name = 'users/bulk_clear.html'
+    template_name = 'users/bootstrap3/bulk_clear.html'
 
     def post(self, request, *args, **kwargs):
         usernames = self._get_usernames(request)
@@ -1390,7 +1390,7 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
     page_title = gettext_noop('Mobile Workers Bulk Lookup')
-    template_name = 'users/bulk_lookup.html'
+    template_name = 'users/bootstrap3/bulk_lookup.html'
 
     @property
     def page_context(self):
@@ -1517,7 +1517,7 @@ def download_users(request, domain, user_type):
 
 @location_safe
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
-    template_name = "users/commcare_user_confirm_account.html"
+    template_name = "users/bootstrap3/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
     ONE_HOUR_IN_SECONDS = 60 * 60
@@ -1598,7 +1598,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 @method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION),
                 name="dispatch")
 class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
-    template_name = "users/commcare_user_confirm_account.html"
+    template_name = "users/bootstrap3/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
 
     @property
@@ -1620,7 +1620,7 @@ class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
 
 @location_safe
 class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
-    template_name = "users/commcare_user_account_confirmed.html"
+    template_name = "users/bootstrap3/commcare_user_account_confirmed.html"
     urlname = "commcare_user_account_confirmed"
     strict_domain_fetching = True
 

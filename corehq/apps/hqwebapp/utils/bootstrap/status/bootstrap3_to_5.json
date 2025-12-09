@@ -229,5 +229,8 @@
   },
   "userreports": {
     "in_progress": true
+  },
+  "users": {
+    "in_progress": true
   }
 }

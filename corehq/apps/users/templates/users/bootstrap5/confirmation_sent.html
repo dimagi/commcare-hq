@@ -1,0 +1,19 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Request Sent" %}{% endblock title %}
+
+{% block content %}
+  {% blocktrans %}
+    <div class="container">
+      <div class="page-header">  {# todo B5: css-page-header #}
+        <h1>Request Access</h1>
+      </div>
+
+      <div class="alert alert-info">
+        <p>A request has been sent to the administrators of <strong>{{ hr_name }}</strong>.</p>
+        <p>You will receive an email when the request is approved.</p>
+      </div>
+    </div>
+  {% endblocktrans %}
+{% endblock content %}

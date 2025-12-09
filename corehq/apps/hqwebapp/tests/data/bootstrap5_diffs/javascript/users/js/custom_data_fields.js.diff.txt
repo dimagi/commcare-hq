@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -5,7 +5,7 @@
+ import _ from "underscore";
+ import assertProperties from "hqwebapp/js/assert_properties";
+ import "hqwebapp/js/select2_knockout_bindings.ko";  // selects2 for fields
+-import "hqwebapp/js/bootstrap3/widgets";  // select2 for user fields profile
++import "hqwebapp/js/bootstrap5/widgets";  // select2 for user fields profile
+ 
+ var fieldModel = function (options) {
+     return {

@@ -2837,6 +2837,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -4431,8 +4432,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/credits_tab.html
 #: corehq/apps/accounting/templates/accounting/subscriptions.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/tabs/tabclasses.py
 msgid "Subscription"
 msgstr "सदस्यता"
@@ -4464,6 +4464,7 @@ msgstr "इस प्रोजेक्ट स्पेस के लिए स�
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Export to Excel"
@@ -5023,12 +5024,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
-#| msgid ""
-#| "\n"
-#| "      By clicking this button, you agree to Dimagi's\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-#| "    "
 msgid ""
 "\n"
 "      By clicking Submit Request, you agree to Dimagi's\n"
@@ -9595,23 +9590,33 @@ msgid "Custom Icon"
 msgstr "कस्टम आइकन"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/custom_icon.html
+#| msgid ""
+#| "\n"
+#| "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
+#| "          Learn more\n"
+#| "          <a\n"
+#| "            target='_blank'\n"
+#| "            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+#| "            >here</a\n"
+#| "          >.\n"
+#| "        "
 msgid ""
 "\n"
 "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
 "          Learn more\n"
 "          <a\n"
 "            target='_blank'\n"
-"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
 "            >here</a\n"
 "          >.\n"
 "        "
 msgstr ""
 "\n"
-"          कृपया डिस्प्ले टेक्स्ट या एक XPath फ़ंक्शन जोड़ें। यह संबंधित आइकन के बगल में एक बैज के रूप में दिखाई देगा।\n"
-"          अधिक जानें\n"
+"          कृपया डिस्प्ले टेक्स्ट या XPath फ़ंक्शन जोड़ें। यह संबंधित आइकन के बगल में एक बैज के रूप में दिखाई देगा।\n"
+"          और जानें\n"
 "          <a\n"
 "            target='_blank'\n"
-"            href='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2242183241/Custom+Icon+Badges+for+modules+and+forms'\n"
+"            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
 "            >यहाँ</a\n"
 "          >।\n"
 "        "
@@ -14863,8 +14868,7 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
 #: corehq/apps/domain/templates/error.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
 #: corehq/apps/export/templates/export/customize_export_new.html
@@ -20747,8 +20751,7 @@ msgstr "कृपया OData फ़ीड्स के लिए एक सी�
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
@@ -21100,8 +21103,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/activate_transfer_domain.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 msgid "Accept"
 msgstr "स्वीकार करें"
@@ -22597,15 +22599,12 @@ msgstr "मेरे प्रोजेक्ट्स"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Accept All Invitations"
 msgstr "सभी निमंत्रण स्वीकार करें"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
 msgid "My Invitations"
 msgstr "मेरे निमंत्रण"
 
@@ -24025,71 +24024,7 @@ msgstr "लॉग इन करें"
 msgid "Log In :: CommCare HQ"
 msgstr "लॉग इन :: CommCare HQ"
 
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/urls.py
-msgid "Password Reset Confirmation"
-msgstr "पासवर्ड रीसेट पुष्टि"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
-#: corehq/apps/users/forms.py
-msgid "Reset Password"
-msgstr "पासवर्ड रीसेट करें"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid "Reset Password Unsuccessful"
-msgstr "पासवर्ड रीसेट असफल"
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"        The password reset link was invalid, possibly because it has already\n"
-"        been used.\n"
-"      "
-msgstr ""
-"\n"
-"        पासवर्ड रीसेट लिंक अमान्य था, संभवतः क्योंकि इसका पहले ही उपयोग किया जा चुका है।\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"        Please request a new password reset.\n"
-"      "
-msgstr ""
-"\n"
-"        कृपया नया पासवर्ड रीसेट अनुरोध करें।\n"
-"      "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_confirm.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_confirm.html
-msgid ""
-"\n"
-"          Request Password Reset\n"
-"        "
-msgstr ""
-"\n"
-"          पासवर्ड रीसेट का अनुरोध करें\n"
-"        "
-
-#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_reset_form.html
-#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_reset_form.html
-#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
-msgid "Password Reset"
-msgstr "पासवर्ड रीसेट"
-
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
 msgid ""
 "\n"
 "                No account? Sign up today, it's free!\n"
@@ -24123,17 +24058,6 @@ msgstr "%(hr_name)s तक पहुँच का अनुरोध करे�
 msgid "Sign Up"
 msgstr "साइन अप करें"
 
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/password_reset_form_only.html
-#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/password_reset_form_only.html
-msgid ""
-"\n"
-"                We will email instructions to you for resetting your password.\n"
-"              "
-msgstr ""
-"\n"
-"                हम आपको पासवर्ड रीसेट करने के लिए निर्देश ईमेल करेंगे।\n"
-"              "
-
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
 msgid ""
@@ -24147,6 +24071,7 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/server_location_select.html
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/server_location_select.html
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
 #, python-format
 msgid ""
 "\n"
@@ -24180,6 +24105,39 @@ msgstr ""
 "      के बारे में अधिक जानें।\n"
 "    "
 
+#: corehq/apps/domain/templates/login_and_password/partials/bootstrap5/login_full.html
+#| msgid ""
+#| "\n"
+#| "                No account? Sign up today, it's free!\n"
+#| "              "
+msgid ""
+"\n"
+"                  No account? Sign up today, it's free!\n"
+"                "
+msgstr ""
+"\n"
+"                  कोई खाता नहीं है? आज ही साइन अप करें, यह मुफ़्त है!\n"
+"                "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+msgid ""
+"\n"
+"                We will email instructions to you for resetting your password.\n"
+"              "
+msgstr ""
+"\n"
+"                हम आपको पासवर्ड रीसेट करने के लिए निर्देश ईमेल करेंगे।\n"
+"              "
+
+#: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/users/forms.py
+msgid "Reset Password"
+msgstr "पासवर्ड रीसेट करें"
+
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html
 #: corehq/apps/domain/urls.py
 msgid "Password Change Complete"
@@ -24203,6 +24161,46 @@ msgstr "साइन इन करें"
 #: corehq/apps/domain/urls.py
 msgid "Password Reset Complete"
 msgstr "पासवर्ड रीसेट पूर्ण"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+#: corehq/apps/domain/urls.py
+msgid "Password Reset Confirmation"
+msgstr "पासवर्ड रीसेट पुष्टि"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid "Reset Password Unsuccessful"
+msgstr "पासवर्ड रीसेट असफल"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"        The password reset link was invalid, possibly because it has already\n"
+"        been used.\n"
+"      "
+msgstr ""
+"\n"
+"        पासवर्ड रीसेट लिंक अमान्य था, संभवतः क्योंकि इसका पहले ही उपयोग किया जा चुका है।\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"        Please request a new password reset.\n"
+"      "
+msgstr ""
+"\n"
+"        कृपया नया पासवर्ड रीसेट अनुरोध करें।\n"
+"      "
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_confirm.html
+msgid ""
+"\n"
+"          Request Password Reset\n"
+"        "
+msgstr ""
+"\n"
+"          पासवर्ड रीसेट का अनुरोध करें\n"
+"        "
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_done.html
 msgid "Password Reset Requested"
@@ -24253,6 +24251,11 @@ msgstr "CommCare का उपयोग करने के लिए धन्�
 #: corehq/apps/domain/templates/login_and_password/password_reset_email.html
 msgid "--The CommCare Team"
 msgstr "--CommCare टीम"
+
+#: corehq/apps/domain/templates/login_and_password/password_reset_form.html
+#: corehq/apps/domain/urls.py corehq/apps/hqwebapp/urls.py
+msgid "Password Reset"
+msgstr "पासवर्ड रीसेट"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_forms.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_forms.html
@@ -32891,9 +32894,7 @@ msgstr "साइन आउट"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/global_navigation_bar.html
-#: corehq/apps/registration/forms.py
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Cloud Location"
 msgstr "क्लाउड स्थान"
 
@@ -34295,6 +34296,11 @@ msgid "Last Verified"
 msgstr "अंतिम सत्यापन"
 
 #: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "Verified By"
+msgstr "सत्यापित किया गया द्वारा"
+
+#: corehq/apps/integration/kyc/tables.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_button.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
@@ -34605,10 +34611,6 @@ msgstr "भुगतानकर्ता संदेश"
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Verified"
 msgstr "सत्यापित"
-
-#: corehq/apps/integration/payments/tables.py
-msgid "Verified By"
-msgstr "सत्यापित किया गया द्वारा"
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Submitted At"
@@ -37120,22 +37122,6 @@ msgid "Edit Program"
 msgstr "प्रोग्राम संपादित करें"
 
 #: corehq/apps/registration/forms.py
-#, python-brace-format
-msgid "{location_name} Cloud"
-msgstr "{location_name} क्लाउड"
-
-#: corehq/apps/registration/forms.py
-#, python-brace-format
-msgid ""
-"*You're creating an account and project space in the chosen cloud "
-"location.<br/>These cannot be transferred between cloud locations. <a "
-"href='{help_link}' target='_blank'>Learn more</a>."
-msgstr ""
-"*आप चुने गए क्लाउड स्थान में एक खाता और प्रोजेक्ट स्पेस बना रहे "
-"हैं।<br/>इन्हें क्लाउड स्थानों के बीच स्थानांतरित नहीं किया जा सकता। <a "
-"href='{help_link}' target='_blank'>और जानें</a>।"
-
-#: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
@@ -37186,17 +37172,6 @@ msgid "Organization or Company"
 msgstr "संगठन या कंपनी"
 
 #: corehq/apps/registration/forms.py
-#| msgid ""
-#| "I have read and agree to Dimagi's\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
-#| "               target=\"_blank\">Privacy Policy</a>,\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/tos/\"\n"
-#| "               target=\"_blank\">Terms of Service</a>,\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/ba/\"\n"
-#| "               target=\"_blank\">Business Agreement</a>, and\n"
-#| "            <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
-#| "               target=\"_blank\">Acceptable Use Policy</a>.\n"
-#| "            "
 msgid ""
 "I have read and agree to Dimagi's\n"
 "                <a href=\"http://www.dimagi.com/terms/latest/privacy/\"\n"
@@ -37219,6 +37194,11 @@ msgstr ""
 "                <a href=\"http://www.dimagi.com/terms/latest/aup/\"\n"
 "                target=\"_blank\">स्वीकार्य उपयोग नीति</a> पढ़ ली है और सहमत हूँ।\n"
 "                "
+
+#: corehq/apps/registration/forms.py
+#| msgid "Cloud Location"
+msgid "Choose Your Cloud Location"
+msgstr "अपना क्लाउड स्थान चुनें"
 
 #: corehq/apps/registration/forms.py
 msgid "Create Your Account"
@@ -37365,30 +37345,25 @@ msgstr "अपने CommCare प्रोजेक्ट को सक्रि
 msgid "Activate your CommCare project"
 msgstr "अपने CommCare प्रोजेक्ट को सक्रिय करें"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/registration/views.py
 msgid "Resend Confirmation Email"
 msgstr "पुष्टिकरण ईमेल पुनः भेजें"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Resend Confirmation"
 msgstr "पुष्टिकरण पुनः भेजें"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_resend.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_resend.html
+#: corehq/apps/registration/templates/registration/confirmation_resend.html
 msgid "Pending Project Name"
 msgstr "लंबित प्रोजेक्ट नाम"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #: corehq/apps/registration/views.py
 msgid "Confirmation Email Sent"
 msgstr "पुष्टिकरण ईमेल भेजा गया"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 #, python-format
 msgid ""
 "\n"
@@ -37399,8 +37374,7 @@ msgstr ""
 "      एक ईमेल अभी-अभी %(username)s को भेजा गया है।\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_sent.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_sent.html
+#: corehq/apps/registration/templates/registration/confirmation_sent.html
 msgid ""
 "\n"
 "      Please visit the link provided in the email to activate your account,\n"
@@ -37412,13 +37386,11 @@ msgstr ""
 "      ताकि आप अपना नया CommCare प्रोजेक्ट उपयोग करना शुरू कर सकें!\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid "Waiting for Confirmation"
 msgstr "पुष्टिकरण की प्रतीक्षा कर रहे हैं"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 #, python-format
 msgid ""
 "\n"
@@ -37431,8 +37403,7 @@ msgstr ""
 "      <strong>%(requested_domain)s</strong>।\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/confirmation_waiting.html
-#: corehq/apps/registration/templates/registration/bootstrap5/confirmation_waiting.html
+#: corehq/apps/registration/templates/registration/confirmation_waiting.html
 msgid ""
 "\n"
 "      Before you can use this project, you must first confirm your account.\n"
@@ -37442,8 +37413,7 @@ msgstr ""
 "      इस प्रोजेक्ट का उपयोग करने से पहले, आपको अपना खाता पुष्टिकृत करना होगा।\n"
 "    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37454,8 +37424,7 @@ msgstr ""
 "            CommCare HQ में आपका स्वागत है, %(name)s!\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space to start using CommCare.\n"
@@ -37465,8 +37434,7 @@ msgstr ""
 "              कृपया निमंत्रण स्वीकार करें या CommCare उपयोग शुरू करने के लिए अपना स्वयं का प्रोजेक्ट स्पेस बनाएं।\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Before you can view any of your own data from CommCare, you will need\n"
@@ -37478,8 +37446,7 @@ msgstr ""
 "              आपको एक प्रोजेक्ट स्पेस बनाना होगा।\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37490,8 +37457,7 @@ msgstr ""
 "            चलिए एक नया प्रोजेक्ट जोड़ते हैं, %(name)s!\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "              Please accept an invitation or create your own project space.\n"
@@ -37501,8 +37467,12 @@ msgstr ""
 "              कृपया निमंत्रण स्वीकार करें या अपना स्वयं का प्रोजेक्ट स्पेस बनाएं।\n"
 "            "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
+#| msgid "Invitation"
+msgid "Invitations"
+msgstr "आमंत्रण"
+
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                You have been invited to the following project spaces:\n"
@@ -37512,13 +37482,11 @@ msgstr ""
 "                आपको निम्नलिखित प्रोजेक्ट स्पेस में आमंत्रित किया गया है:\n"
 "              "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid "Your New Project Space"
 msgstr "आपका नया प्रोजेक्ट स्पेस"
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "            A\n"
@@ -37541,8 +37509,7 @@ msgstr ""
 "            CommCare में आपका शीर्ष-स्तरीय वातावरण है। यहीं आप एप्लिकेशन बनाते हैं, उपयोगकर्ताओं का प्रबंधन करते हैं, डेटा ट्रैक करते हैं, और सेटिंग्स कॉन्फ़िगर करते हैं।\n"
 "          "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37562,8 +37529,7 @@ msgstr ""
 "                    कर सकते हैं।\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 #, python-format
 msgid ""
 "\n"
@@ -37576,8 +37542,7 @@ msgstr ""
 "                      <strong>%(server_location)s क्लाउड</strong> पर होस्ट किया जाएगा।\n"
 "                    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                      This project will be hosted on a private cloud.\n"
@@ -37587,8 +37552,7 @@ msgstr ""
 "                      यह प्रोजेक्ट एक निजी क्लाउड पर होस्ट किया जाएगा।\n"
 "                    "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                    To create a project in a different\n"
@@ -37609,8 +37573,7 @@ msgstr ""
 "                    > में प्रोजेक्ट बनाने के लिए, पहले उस क्लाउड लोकेशन के लिए एक खाता बनाएं, फिर प्रोजेक्ट बनाएं।\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/bootstrap3/domain_request.html
-#: corehq/apps/registration/templates/registration/bootstrap5/domain_request.html
+#: corehq/apps/registration/templates/registration/domain_request.html
 msgid ""
 "\n"
 "                    Please note: Projects <strong>cannot</strong> be transferred\n"
@@ -37621,7 +37584,7 @@ msgstr ""
 "                    कृपया ध्यान दें: प्रोजेक्ट्स को निर्माण के बाद <strong>स्थानांतरित नहीं</strong> किया जा सकता है।\n"
 "                  "
 
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap3/_base.html
+#: corehq/apps/registration/templates/registration/email/base_templates/_base.html
 msgid ""
 "\n"
 "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>\n"
@@ -37632,84 +37595,6 @@ msgstr ""
 "            <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>\n"
 "            पर अपने ईमेल पते के साथ।\n"
 "          "
-
-#: corehq/apps/registration/templates/registration/email/base_templates/bootstrap5/_base.html
-msgid ""
-"\n"
-"            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
-"            with your email address.\n"
-"          "
-msgstr ""
-"\n"
-"            <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a> पर\n"
-"            अपने ईमेल पते के साथ।\n"
-"          "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset your password on CommCare!\n"
-"  "
-msgstr ""
-"\n"
-"    CommCare पर अपना पासवर्ड रीसेट करें!\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset password for\n"
-"  "
-msgstr ""
-"\n"
-"    पासवर्ड रीसेट करें\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Reset Password\n"
-"  "
-msgstr ""
-"\n"
-"    पासवर्ड रीसेट करें\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    Someone requested a password reset for your email on CommCare.\n"
-"  "
-msgstr ""
-"\n"
-"    किसी ने CommCare पर आपके ईमेल के लिए पासवर्ड रीसेट का अनुरोध किया है।\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    If it wasn't you, feel free to ignore this email.\n"
-"  "
-msgstr ""
-"\n"
-"    यदि यह आपने नहीं किया है, तो इस ईमेल को अनदेखा करें।\n"
-"  "
-
-#: corehq/apps/registration/templates/registration/email/bootstrap3/password_reset_email_hq.html
-#: corehq/apps/registration/templates/registration/email/bootstrap5/password_reset_email_hq.html
-msgid ""
-"\n"
-"    You received this message because we received a password reset request\n"
-"  "
-msgstr ""
-"\n"
-"    आपको यह संदेश इसलिए प्राप्त हुआ क्योंकि हमें पासवर्ड रीसेट अनुरोध प्राप्त हुआ है\n"
-"  "
 
 #: corehq/apps/registration/templates/registration/email/confirm_account.html
 #, python-format
@@ -37969,6 +37854,66 @@ msgstr "धन्यवाद,"
 msgid "-The %(hq_name)s team"
 msgstr "-%(hq_name)s टीम"
 
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset your password on CommCare!\n"
+"  "
+msgstr ""
+"\n"
+"    CommCare पर अपना पासवर्ड रीसेट करें!\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset password for\n"
+"  "
+msgstr ""
+"\n"
+"    पासवर्ड रीसेट करें\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Reset Password\n"
+"  "
+msgstr ""
+"\n"
+"    पासवर्ड रीसेट करें\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    Someone requested a password reset for your email on CommCare.\n"
+"  "
+msgstr ""
+"\n"
+"    किसी ने CommCare पर आपके ईमेल के लिए पासवर्ड रीसेट का अनुरोध किया है।\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    If it wasn't you, feel free to ignore this email.\n"
+"  "
+msgstr ""
+"\n"
+"    यदि यह आपने नहीं किया है, तो इस ईमेल को अनदेखा करें।\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/email/password_reset_email_hq.html
+msgid ""
+"\n"
+"    You received this message because we received a password reset request\n"
+"  "
+msgstr ""
+"\n"
+"    आपको यह संदेश इसलिए प्राप्त हुआ क्योंकि हमें पासवर्ड रीसेट अनुरोध प्राप्त हुआ है\n"
+"  "
+
 #: corehq/apps/registration/templates/registration/email/password_reset_subject_hq.txt
 msgid "Reset Password on CommCare"
 msgstr "CommCare पर पासवर्ड रीसेट करें"
@@ -38009,6 +37954,92 @@ msgstr ""
 "\n"
 "एक बार जब आप अपना खाता पुष्टि कर लेंगे, तो आप \"%(domain)s\" प्रोजेक्ट में %(hq_name)s पर डेटा एक्सेस और सबमिट कर सकेंगे।\n"
 "लॉगिन करने के लिए आपका उपयोगकर्ता नाम है %(username)s\n"
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
+#| msgid ""
+#| "\n"
+#| "      Learn more about our\n"
+#| "      <a\n"
+#| "        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+#| "        target=\"_blank\"\n"
+#| "        >cloud environments</a\n"
+#| "      >.\n"
+#| "    "
+msgid ""
+"\n"
+"    Select the cloud region where your CommCare account and project space will\n"
+"    be hosted.\n"
+"    <a\n"
+"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Hosting+Locations\"\n"
+"      target=\"_blank\"\n"
+"      ><b>Learn more</b></a\n"
+"    >\n"
+"    about our cloud locations.\n"
+"  "
+msgstr ""
+"\n"
+"    उस क्लाउड क्षेत्र का चयन करें जहाँ आपका CommCare खाता और प्रोजेक्ट स्पेस होस्ट किया जाएगा।\n"
+"    <a\n"
+"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/CommCare+Cloud+Hosting+Locations\"\n"
+"      target=\"_blank\"\n"
+"      ><b>और जानें</b></a\n"
+"    >\n"
+"    हमारे क्लाउड स्थानों के बारे में।\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/choose_cloud_location.html
+msgid ""
+"\n"
+"    <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"    <strong>Important:</strong> Your cloud location choice cannot be changed\n"
+"    after account creation. This affects where your data is stored and may\n"
+"    impact compliance requirements.\n"
+"  "
+msgstr ""
+"\n"
+"    <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"    <strong>महत्वपूर्ण:</strong> खाता बनाने के बाद आपका क्लाउड स्थान बदला नहीं जा सकता। यह निर्धारित करता है कि आपका डेटा कहाँ संग्रहीत होगा और अनुपालन आवश्यकताओं को प्रभावित कर सकता है।\n"
+"  "
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/chosen_cloud_location.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "        %(server_location)s Cloud\n"
+#| "      "
+msgid ""
+"\n"
+"      %(server_location)s\n"
+"      Cloud\n"
+"    "
+msgstr ""
+"\n"
+"      %(server_location)s\n"
+"      क्लाउड\n"
+"    "
+
+#: corehq/apps/registration/templates/registration/partials/register_new_user/chosen_cloud_location.html
+#, python-format
+msgid ""
+"\n"
+"      Your project will be hosted on the <b>%(server_location)s Cloud</b>\n"
+"      server.\n"
+"      <br />\n"
+"      Looking to create an account on another cloud?\n"
+"      <a href=\"#\" data-bind=\"click: previousStep\">\n"
+"        <b>Click here to go back</b></a\n"
+"      >.\n"
+"    "
+msgstr ""
+"\n"
+"      आपका प्रोजेक्ट <b>%(server_location)s क्लाउड</b>\n"
+"      सर्वर पर होस्ट किया जाएगा।\n"
+"      <br />\n"
+"      क्या आप किसी अन्य क्लाउड पर खाता बनाना चाहते हैं?\n"
+"      <a href=\"#\" data-bind=\"click: previousStep\">\n"
+"        <b>वापस जाने के लिए यहाँ क्लिक करें</b></a\n"
+"      >।\n"
+"    "
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/server_errors.html
 msgid "Oh, no!"
@@ -38191,6 +38222,11 @@ msgid "Create an Account"
 msgstr "खाता बनाएँ"
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
+#| msgid "Case Closed"
+msgid "Choose Cloud"
+msgstr "क्लाउड चुनें"
+
+#: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
 #: corehq/apps/users/views/web.py
 msgid "Create Account"
@@ -38240,9 +38276,6 @@ msgstr "वर्तमान"
 
 #: corehq/apps/registration/views.py
 #, python-brace-format
-#| msgid ""
-#| "This email is already registered in the {location} cloud location. Please <a"
-#| " href=\"{login_link}\">sign in here</a>."
 msgid "This email is already registered in the {location} cloud location. "
 msgstr "यह ईमेल पहले से ही {location} क्लाउड लोकेशन में पंजीकृत है। "
 
@@ -57509,6 +57542,10 @@ msgstr ""
 "केस एक्सपोर्ट GeoJSON प्रारूप में जियोलोकेटेड डेटा का निर्यात करने का समर्थन"
 " करता है"
 
+#: corehq/privileges.py
+msgid "Add text or xpath based custom icon badges to menus and forms"
+msgstr "मेनू और फ़ॉर्म में टेक्स्ट या xpath आधारित कस्टम आइकन बैज जोड़ें"
+
 #: corehq/reports.py
 msgid "Report Builder Reports"
 msgstr "रिपोर्ट बिल्डर रिपोर्ट्स"
@@ -58523,6 +58560,31 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#, python-brace-format
+#~ msgid "{location_name} Cloud"
+#~ msgstr "{location_name} क्लाउड"
+
+#, python-brace-format
+#~ msgid ""
+#~ "*You're creating an account and project space in the chosen cloud "
+#~ "location.<br/>These cannot be transferred between cloud locations. <a "
+#~ "href='{help_link}' target='_blank'>Learn more</a>."
+#~ msgstr ""
+#~ "*आप चुने गए क्लाउड स्थान में एक खाता और प्रोजेक्ट स्पेस बना रहे "
+#~ "हैं।<br/>इन्हें क्लाउड स्थानों के बीच स्थानांतरित नहीं किया जा सकता। <a "
+#~ "href='{help_link}' target='_blank'>और जानें</a>।"
+
+#~ msgid ""
+#~ "\n"
+#~ "            on <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a>  \n"
+#~ "            with your email address.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            <a href=\"http://www.commcarehq.org/\" style=\"color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal\">CommCare HQ</a> पर\n"
+#~ "            अपने ईमेल पते के साथ।\n"
+#~ "          "
 
 #~ msgid "This user cannot access this link."
 #~ msgstr "यह यूज़र इस लिंक तक पहुँच नहीं सकता।"

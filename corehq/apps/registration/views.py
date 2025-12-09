@@ -38,7 +38,12 @@ from corehq.apps.domain.exceptions import (
     NameUnavailableException,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.domain.models import (
+    EULA_CURRENT_VERSION,
+    Domain,
+    LicenseAgreement,
+    LicenseAgreementType,
+)
 from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
@@ -60,7 +65,6 @@ from corehq.apps.registration.utils import (
 )
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.users.models import (
-    EULA_CURRENT_VERSION,
     CouchUser,
     Invitation,
     WebUser,
@@ -286,19 +290,38 @@ class UserRegistrationView(BasePageView):
         return self.request.GET.get('internal', False)
 
     @property
+    def can_select_cloud(self):
+        return settings.SERVER_ENVIRONMENT in ServerLocation.get_envs()
+
+    @property
+    def skip_cloud_step(self):
+        return self.request.GET.get('skipCloudStep', not self.can_select_cloud)
+
+    @property
     def page_context(self):
         prefills = {
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
         context = {
-            'reg_form': RegisterWebUserForm(initial=prefills),
+            'reg_form': RegisterWebUserForm(initial=prefills, can_select_cloud=self.can_select_cloud),
             'reg_form_defaults': prefills,
             'hide_password_feedback': has_custom_clean_password(),
+            'skip_cloud_step': self.skip_cloud_step,
+            'initial_subdomain': (
+                ServerLocation.get_subdomains()[settings.SERVER_ENVIRONMENT]
+                if self.can_select_cloud else ''
+            )
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
                 ab_tests.DEMO_WORKFLOW_V2, self.request).context
+        if self.can_select_cloud:
+            context['server_choices'] = [
+                server for env, server in ServerLocation.get_envs().items()
+                if env != ServerLocation.STAGING
+            ]
+
         return context
 
     @property
@@ -563,7 +586,7 @@ def eula_agreement(request):
             agreement.date = datetime.utcnow()
             agreement.user_ip = get_ip(request)
         else:
-            new_agreement = LicenseAgreement(type="End User License Agreement", version=EULA_CURRENT_VERSION)
+            new_agreement = LicenseAgreement(type=LicenseAgreementType.EULA, version=EULA_CURRENT_VERSION)
             new_agreement.signed = True
             new_agreement.date = datetime.utcnow()
             new_agreement.user_ip = get_ip(request)
