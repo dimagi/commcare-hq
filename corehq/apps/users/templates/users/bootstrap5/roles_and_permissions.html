@@ -126,7 +126,6 @@
   {% endif %}
 
   <div class="card  ko-template" id="user-roles-table">
-    {# todo B5: css-panel #}
     <div class="card-header">
       <h3 class="card-title">{% trans 'Roles' %}</h3>
     </div>
@@ -394,16 +393,14 @@
           <div data-bind="with: roleBeingDeleted" class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
+                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
                 <button
                   type="button"
                   class="btn-close"
-                  {# todo B5: css-close #}
                   data-bind="click: $root.unsetRoleBeingDeleted"
                 >
-                  <span aria-hidden="true">&times;</span>
                   <span class="sr-only">{% trans "Close" %}</span>
                 </button>
-                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
               </div>
               <div class="modal-body">
                 <h4 data-bind="text: modalConfirmation"></h4>
