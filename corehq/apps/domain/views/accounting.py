@@ -129,7 +129,6 @@ from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.const import USER_DATE_FORMAT
-from corehq.toggles import SHOW_AUTO_RENEWAL
 
 PAYMENT_ERROR_MESSAGES = {
     400: gettext_lazy('Your request was not formatted properly.'),
@@ -226,10 +225,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return self.request.couch_user.can_edit_billing()
 
     def can_set_auto_renew(self):
-        can_access_auto_renewal = (
-            SHOW_AUTO_RENEWAL.enabled(self.request.domain)
-            and self.request.couch_user.can_edit_billing()
-        )
+        can_access_auto_renewal = self.request.couch_user.can_edit_billing()
         subscription_eligible_for_auto_renewal = (
             self.current_subscription.service_type == SubscriptionType.PRODUCT
             and self.current_subscription.date_end is not None
