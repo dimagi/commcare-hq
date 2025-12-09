@@ -113,10 +113,11 @@
   "hqwebapp": {
     "in_progress": true,
     "templates": [
-      "maintenance_alerts.html",
       "close_window.html",
       "crispy/field/multifield.html",
-      "includes/create_item_form.html"
+      "includes/create_item_form.html",
+      "includes/modal_eula.html",
+      "maintenance_alerts.html"
     ]
   },
   "integration": {

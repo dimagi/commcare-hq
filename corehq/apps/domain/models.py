@@ -120,7 +120,7 @@ LICENSE_LINKS = {
 }
 
 # Set these to the most up to date version of LicenseAgreements
-EULA_CURRENT_VERSION = '3.0'
+EULA_CURRENT_VERSION = '4.0'
 AUTOPAY_TERMS_CURRENT_VERSION = '1.0'
 
 
