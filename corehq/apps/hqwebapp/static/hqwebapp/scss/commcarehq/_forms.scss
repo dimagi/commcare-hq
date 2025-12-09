@@ -17,8 +17,8 @@
   padding-left: ($grid-gutter-width - $spacer) / 2;
 }
 
-.row > div > .form-check:first-child,
-.row > div > .input-group > .form-check:first-child {
+.row > div > .form-check,
+.row > div > .input-group > .form-check {
   padding-top: add($input-padding-y, $input-border-width);
   margin-bottom: 0;
 }
