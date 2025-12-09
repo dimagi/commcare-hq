@@ -429,43 +429,8 @@
   </div>
 {% endblock %}
 
-{% block modals %}
-  {{ block.super }}
-  <div id="modal-deletion" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button
-            type="button"
-            class="btn-close"
-            {# todo B5: css-close #}
-            data-bind="click: $root.unsetRoleBeingDeleted"
-          >
-            <span aria-hidden="true">&times;</span>
-            <span class="sr-only">{% trans "Close" %}</span>
-          </button>
-          <h4 class="modal-title"></h4>
-        </div>
-        <div class="modal-body"></div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-outline-primary"
-            data-bs-dismiss="modal"
-          >
-            {% trans "Cancel" %}
-          </button>
-          <button
-            type="button"
-            class="btn btn-outline-danger"
-            id="confirm-delete"
-          >
-            {% trans "Delete" %}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+{% block modals %}{{ block.super }}
 
-  {% include 'users/partials/bootstrap5/linked_roles_modal.html' %}
+{% include 'users/partials/bootstrap5/linked_roles_modal.html' %}
+
 {% endblock %}
