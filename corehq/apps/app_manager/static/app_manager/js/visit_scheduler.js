@@ -3,7 +3,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import "jquery-textchange/jquery.textchange";
-import appManager from "app_manager/js/app_manager";
+import appManager from "app_manager/js/bootstrap3/app_manager";
 import caseConfigUtils from "app_manager/js/case_config_utils";
 import main from "hqwebapp/js/bootstrap3/main";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";

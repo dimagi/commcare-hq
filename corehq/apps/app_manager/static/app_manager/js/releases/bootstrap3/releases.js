@@ -5,7 +5,7 @@ import google from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
 import downloadAsyncModal from "app_manager/js/download_async_modal";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import appManager from "app_manager/js/app_manager";
+import appManager from "app_manager/js/bootstrap3/app_manager";
 import menu from "app_manager/js/menu";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // openModal binding
 
