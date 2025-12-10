@@ -3,7 +3,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% js_entry 'app_manager/js/download_index_main' %}
+{% js_entry 'app_manager/js/bootstrap5/download_index_main' %}
 
 {% block page_title %}
   {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
