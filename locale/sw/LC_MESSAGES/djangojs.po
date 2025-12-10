@@ -1105,22 +1105,6 @@ msgstr "Lugha inaonekana mara mbili"
 msgid "This conflicts with a current language"
 msgstr "Hii inakinzana na lugha iliyopo sasa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "{path} is not a valid data parent"
-msgstr "{path} si mzazi halali wa data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "createXML"
-msgstr "undaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "getData"
-msgstr "pataData"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
 msgid "New Form"
 msgstr "Fomu Mpya"
@@ -1164,6 +1148,22 @@ msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ANY of the expressions are true."
 msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} si mzazi halali wa data"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "createXML"
+msgstr "undaXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "getData"
+msgstr "pataData"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
@@ -1656,7 +1656,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Issue communicating with server. Try again."
 msgstr "Tatizo la kuwasiliana na seva. Jaribu tena."
 
@@ -2860,7 +2861,8 @@ msgstr "Tafadhali ingiza jina lako."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
-#: corehq/apps/users/static/users/js/invite_web_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/invite_web_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/invite_web_user.js
 msgid "Please specify an email."
 msgstr "Tafadhali weka barua pepe."
 
@@ -3113,7 +3115,8 @@ msgstr "Saa"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "Chagua lugha..."
 
@@ -3565,89 +3568,151 @@ msgstr "Chanzo cha Data"
 msgid "Unknown error"
 msgstr "Hitilafu isiyojulikana"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr "Nenosiri limebadilishwa kwa mafanikio."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password is not strong enough. Try making your password more complex."
 msgstr ""
 "Nenosiri halina nguvu ya kutosha. Jaribu kufanya nenosiri lako liwe tata "
 "zaidi."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "The two password fields didn't match."
 msgstr "Sehemu mbili za nenosiri hazikulingana."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password was not changed. "
 msgstr "Nenosiri halijabadilishwa. "
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Available Groups"
 msgstr "Makundi Yanayopatikana"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Groups with this User"
 msgstr "Makundi yenye Mtumiaji huyu"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Search Group..."
 msgstr "Tafuta Kundi..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Group membership has changed."
 msgstr "Uanachama wa kundi umebadilika."
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "<%- user_count %> user"
 msgstr "<%- user_count %> mtumiaji"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "<%- user_count %> users"
 msgstr "<%- user_count %> watumiaji"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid " and <%- group_count %> group"
 msgstr " na <%- group_count %> kundi"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid " and <%- group_count %> groups"
 msgstr " na <%- group_count %> makundi"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "Error determining number of matching users"
 msgstr "Hitilafu katika kubaini idadi ya watumiaji wanaolingana"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Unavailable"
 msgstr "Haipatikani"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "<%- minutes %> minutes remaining"
 msgstr "Dakika <%- minutes %> zimebaki"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Tafadhali ingiza anwani halali ya barua pepe."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Phone number is required when users confirm their own accounts by sms."
 msgstr ""
 "Nambari ya simu inahitajika wakati watumiaji wanathibitisha akaunti zao kwa "
 "sms."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Phone number should contain only digits 0-9."
 msgstr "Nambari ya simu inapaswa kuwa na tarakimu 0-9 pekee."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Checking availability..."
 msgstr "Inaangalia upatikanaji..."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Issue connecting to server. Check Internet connection."
 msgstr "Tatizo la kuunganisha na seva. Hakikisha una muunganisho wa intaneti."
+
+#: corehq/apps/users/static/users/js/bootstrap3/roles_and_permissions.js
+#: corehq/apps/users/static/users/js/bootstrap5/roles_and_permissions.js
+msgid "View Only"
+msgstr "Angalia Pekee"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "<%- days %> days remaining"
+msgstr "Siku <%- days %> zimebaki"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Unable to delete invitation, please try again later."
+msgstr "Imeshindikana kufuta mwaliko, tafadhali jaribu tena baadaye."
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Unable to resend invitation, please try again later."
+msgstr "Imeshindikana kutuma tena mwaliko, tafadhali jaribu tena baadaye."
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Delete request"
+msgstr "Futa ombi"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Are you sure you want to delete this request?"
+msgstr "Je, una uhakika unataka kufuta ombi hili?"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid ""
+"We have sent the invitation email to this user but the user's email server "
+"rejected it. This usually means either the email address is incorrect or "
+"your organization is blocking emails from our address (<%- fromAddress %>)."
+msgstr ""
+"Tumepeleka barua pepe ya mwaliko kwa mtumiaji huyu lakini seva ya barua pepe"
+" ya mtumiaji imeikataa. Hii mara nyingi inamaanisha ama anwani ya barua pepe"
+" si sahihi au shirika lako linazuia barua pepe kutoka kwa anwani yetu (<%- "
+"fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "No Access"
@@ -4016,41 +4081,6 @@ msgstr "Una uhakika unataka kufuta jukumu <%- role %>?"
 #: corehq/apps/users/static/users/js/roles.js
 msgid "An error occurred, please try again."
 msgstr "Hitilafu imetokea, tafadhali jaribu tena."
-
-#: corehq/apps/users/static/users/js/roles_and_permissions.js
-msgid "View Only"
-msgstr "Angalia Pekee"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "<%- days %> days remaining"
-msgstr "Siku <%- days %> zimebaki"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Unable to delete invitation, please try again later."
-msgstr "Imeshindikana kufuta mwaliko, tafadhali jaribu tena baadaye."
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Unable to resend invitation, please try again later."
-msgstr "Imeshindikana kutuma tena mwaliko, tafadhali jaribu tena baadaye."
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Delete request"
-msgstr "Futa ombi"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Are you sure you want to delete this request?"
-msgstr "Je, una uhakika unataka kufuta ombi hili?"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid ""
-"We have sent the invitation email to this user but the user's email server "
-"rejected it. This usually means either the email address is incorrect or "
-"your organization is blocking emails from our address (<%- fromAddress %>)."
-msgstr ""
-"Tumepeleka barua pepe ya mwaliko kwa mtumiaji huyu lakini seva ya barua pepe"
-" ya mtumiaji imeikataa. Hii mara nyingi inamaanisha ama anwani ya barua pepe"
-" si sahihi au shirika lako linazuia barua pepe kutoka kwa anwani yetu (<%- "
-"fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
