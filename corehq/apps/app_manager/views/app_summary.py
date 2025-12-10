@@ -118,7 +118,7 @@ class AppFormSummaryView(AppSummaryView):
 
 class FormSummaryDiffView(AppSummaryView):
     urlname = "app_form_summary_diff"
-    template_name = 'app_manager/form_summary_diff.html'
+    template_name = 'app_manager/bootstrap3/form_summary_diff.html'
 
     @property
     def app(self):
