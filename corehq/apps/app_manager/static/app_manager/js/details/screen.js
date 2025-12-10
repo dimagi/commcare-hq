@@ -15,7 +15,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import Utils from "app_manager/js/details/utils";
-import ColumnModel from "app_manager/js/details/column";
+import ColumnModel from "app_manager/js/details/bootstrap3/column";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import uiMapList from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list";
 import main from "hqwebapp/js/bootstrap3/main";
