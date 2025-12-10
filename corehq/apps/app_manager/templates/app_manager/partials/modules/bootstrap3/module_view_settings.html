@@ -257,7 +257,7 @@
             {% if session_endpoints_enabled %}
               {% include "app_manager/partials/bootstrap3/module_session_endpoint.html" with module=module %}
               {% if not module.is_surveys %}
-                {% include "app_manager/partials/case_list_session_endpoint.html" with module=module %}
+                {% include "app_manager/partials/bootstrap3/case_list_session_endpoint.html" with module=module %}
               {% endif %}
             {% endif %}
 
