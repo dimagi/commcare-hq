@@ -50,7 +50,7 @@
              data-bind="click: toggleLinkedRoles"
            >
              <i class="fa fa-link"></i>
-@@ -125,11 +125,12 @@
+@@ -125,11 +125,11 @@
      </div>
    {% endif %}
  
@@ -58,7 +58,6 @@
 -    <div class="panel-heading">
 -      <h3 class="panel-title">{% trans 'Roles' %}</h3>
 +  <div class="card  ko-template" id="user-roles-table">
-+    {# todo B5: css-panel #}
 +    <div class="card-header">
 +      <h3 class="card-title">{% trans 'Roles' %}</h3>
      </div>
@@ -67,7 +66,7 @@
        <table class="table table-striped table-responsive">
          <thead>
            <tr>
-@@ -275,7 +276,7 @@
+@@ -275,7 +275,7 @@
                  <strong>{% trans "Only" %}</strong><br />
                  <span data-bind="foreach: reportPermissions.specific">
                    <span
@@ -76,7 +75,7 @@
                      data-bind="text: name, visible: value"
                    ></span
                    ><br data-bind="visible: value" />
-@@ -303,7 +304,7 @@
+@@ -303,7 +303,7 @@
                      data-bind="foreach: manageRegistryPermission.filteredSpecific"
                    >
                      <span
@@ -85,7 +84,7 @@
                        data-bind="text: name"
                      ></span
                      ><br />
-@@ -321,7 +322,7 @@
+@@ -321,7 +321,7 @@
                      data-bind="foreach: viewRegistryContentsPermission.filteredSpecific"
                    >
                      <span
@@ -94,7 +93,7 @@
                        data-bind="text: name"
                      ></span
                      ><br />
-@@ -341,7 +342,7 @@
+@@ -341,7 +341,7 @@
              {% endif %}
              <td>
                <button
@@ -103,7 +102,7 @@
                  data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null"
                >
                  <span
-@@ -358,7 +359,7 @@
+@@ -358,7 +358,7 @@
                  </span>
                </button>
                <button
@@ -112,7 +111,7 @@
                  data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
                  click: $data._id ? $root.setRoleBeingDeleted : null"
                >
-@@ -378,19 +379,25 @@
+@@ -378,25 +378,29 @@
        </table>
        {% if can_edit_roles %}
          <button
@@ -133,15 +132,21 @@
            <div data-bind="with: roleBeingDeleted" class="modal-dialog">
              <div class="modal-content">
                <div class="modal-header">
++                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
                  <button
                    type="button"
 -                  class="close"
 +                  class="btn-close"
-+                  {# todo B5: css-close #}
                    data-bind="click: $root.unsetRoleBeingDeleted"
                  >
-                   <span aria-hidden="true">&times;</span>
-@@ -404,7 +411,7 @@
+-                  <span aria-hidden="true">&times;</span>
+                   <span class="sr-only">{% trans "Close" %}</span>
+                 </button>
+-                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+               </div>
+               <div class="modal-body">
+                 <h4 data-bind="text: modalConfirmation"></h4>
+@@ -404,7 +408,7 @@
                <div class="modal-footer">
                  <button
                    type="button"
@@ -150,7 +155,7 @@
                    data-bind="click: $root.unsetRoleBeingDeleted"
                  >
                    {% trans "Cancel" %}
-@@ -417,12 +424,12 @@
+@@ -417,12 +421,12 @@
            </div>
          </div>
        {% endif %}
