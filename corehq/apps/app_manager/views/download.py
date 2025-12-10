@@ -373,7 +373,7 @@ def download_index(request, domain, app_id):
         enabled_build_profiles = [_id for _id, version in latest_enabled_build_profiles.items()
                                   if version == request.app.version]
 
-    return render(request, "app_manager/download_index.html", {
+    return render(request, "app_manager/bootstrap3/download_index.html", {
         'app': request.app,
         'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'build_profiles': build_profiles,
