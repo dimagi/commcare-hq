@@ -9,7 +9,7 @@ import languageProfiles from "app_manager/js/releases/language_profiles";
 import previewApp from "app_manager/js/preview_app";
 import noopMetrics from "analytix/js/noopMetrics";
 import google from "analytix/js/google";
-import "app_manager/js/releases/update_prompt";
+import "app_manager/js/releases/bootstrap3/update_prompt";
 import "hqwebapp/js/bootstrap3/widgets";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
