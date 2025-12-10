@@ -113,27 +113,27 @@
             <div data-bind="if: erm.visible">
               <legend data-bind="text: erm.title"></legend>
 
-              <div class="form-group" data-bind="using: erm.access_release_management">  {# todo B5: css-form-group #}
-                <label class="col-md-4 form-label" data-bind="text: text"></label>
+              <div class="row" data-bind="using: erm.access_release_management">
+                <label class="col-md-4 form-label fw-bold" data-bind="text: text"></label>
                 <div class="col-md-8 controls">
-                  <div class="form-check">
-                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />  {# todo B5: css-checkbox #}
-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
+                  <div class="form-check pt-0">
+                    <input class="form-check-input" type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
+                    <label class="form-check-label" data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
                   </div>
                 </div>
               </div>
 
-              <div class="form-group" data-bind="using: erm.edit_linked_configs">  {# todo B5: css-form-group #}
-                <label class="col-md-4 form-label" data-bind="text: text"></label>
+              <div class="row" data-bind="using: erm.edit_linked_configs">
+                <label class="col-md-4 form-label fw-bold" data-bind="text: text"></label>
                 <div class="col-md-8 controls">
-                  <div class="form-check">
+                  <div class="form-check pt-0">
                     <!-- ko if: $parent.erm.access_release_management.checkboxPermission -->
-                    <input type="checkbox" checked disabled />  {# todo B5: css-checkbox #}
+                    <input class="form-check-input" type="checkbox" checked disabled />
                     <!-- /ko -->
                     <!-- ko ifnot: $parent.erm.access_release_management.checkboxPermission -->
-                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />  {# todo B5: css-checkbox #}
+                    <input class="form-check-input" type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
                     <!-- /ko -->
-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
+                    <label class="form-check-label" data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
                   </div>
                 </div>
               </div>
@@ -144,33 +144,33 @@
             </legend>
 
             <div data-bind="foreach: reports">
-              <div class="form-group" data-bind="visible: visibilityRestraint">  {# todo B5: css-form-group #}
-                <label class="col-md-4 form-label" data-bind="text: text"></label>
+              <div class="row" data-bind="visible: visibilityRestraint">
+                <label class="col-md-4 form-label fw-bold" data-bind="text: text"></label>
                 <div class="col-md-8 controls">
-                  <div class="form-check">
-                    <input type="checkbox"  {# todo B5: css-checkbox #}
+                  <div class="form-check pt-0">
+                    <input class="form-check-input" type="checkbox"
                            data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
+                    <label class="form-check-label" data-bind="attr:{for: checkboxLabel}, text: checkboxText">
                     </label>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="form-group" data-bind="visible: !reportPermissions.all()">  {# todo B5: css-form-group #}
-              <label class="col-md-4 form-label">
+            <div class="row" data-bind="visible: !reportPermissions.all()">
+              <label class="col-md-4 form-label fw-bold">
                 {% trans "Access Specific Reports" %}
               </label>
               <div class="col-md-8 controls">
-                <div class="card ">  {# todo B5: css-panel #}
+                <div class="card">
                   <div class="card-header">
                     {% trans "Select which reports the role can access:" %}
                   </div>
                   <div class="card-body"
                        data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
                     <div class="form-check">
-                      <input type="checkbox"  {# todo B5: css-checkbox #}
+                      <input class="form-check-input" type="checkbox"
                              data-bind="checked: value, attr: { 'id': slug() + '-checkbox' }" />
-                      <label data-bind="attr: { 'for': slug() + '-checkbox' }">
+                      <label class="form-check-label" data-bind="attr: { 'for': slug() + '-checkbox' }">
                         <span data-bind="text: name"></span>
                       </label>
                     </div>
@@ -180,21 +180,21 @@
             </div>
 
             {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
-              <div class="form-group" data-bind="visible: !tableauPermissions.all()">  {# todo B5: css-form-group #}
-                <label class="col-md-4 form-label">
+              <div class="row mt-2" data-bind="visible: !tableauPermissions.all()">
+                <label class="col-md-4 form-label fw-bold">
                   {% trans "Access Specific Tableau Reports" %}
                 </label>
                 <div class="col-md-8 controls">
-                  <div class="card ">  {# todo B5: css-panel #}
+                  <div class="card">
                     <div class="card-header">
                       {% trans "Select which Tableau reports the role can access:" %}
                     </div>
                     <div class="card-body"
                          data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">
                       <div class="form-check">
-                        <input type="checkbox"  {# todo B5: css-checkbox #}
+                        <input class="form-check-input" type="checkbox"
                                data-bind="checked: value, attr: { 'id': 'tableau-' + slug() + '-checkbox' }" />
-                        <label data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
+                        <label class="form-check-label" data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
                           <span data-bind="text: name"></span>
                         </label>
                       </div>
@@ -575,8 +575,8 @@
 </div>
 
 <script type="text/html" id="permission_all_selected_none">
-  <div class="form-group" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">  {# todo B5: css-form-group #}
-    <div class="col-md-4 form-label">
+  <div class="row" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">
+    <div class="col-md-4 form-label fw-bold">
       <label data-bind="text: text"></label>
       <!-- ko if: id === 'access_web_apps' && hasRestrictedApplicationAccess -->
         <span class='help-block'>
@@ -589,7 +589,7 @@
       <!-- /ko -->
     </div>
     <div class="col-md-8 controls">
-      <select class="form-select" data-bind="
+      <select class="form-select mb-2" data-bind="
         attr: { 'id': id },
         options: options,
         optionsText: 'text',
@@ -599,20 +599,20 @@
         <option value="all" data-bind="text: accessAllText"></option>
         <option value="selected" data-bind="text: accessSelectedText"></option>
       </select>
-      <div class="card "data-bind="visible: showItems, css: {'has-error': hasError()}" style="margin-top: 15px;">  {# todo B5: css-has-error, css-panel, inline-style #}
+      <div class="card mb-2"data-bind="visible: showItems, css: {'has-error': hasError()}">
         <div class="card-header" data-bind="text: listHeading"></div>
         <div class="card-body">
           <div data-bind="foreach: specific, slideVisible: showItems">
-            <div class="form-check">
-              <input type="checkbox"  {# todo B5: css-checkbox #}
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="checkbox"
                      data-bind="checked: value, attr: { 'id': $parent.id + slug() + '-checkbox' },
                                 disable: !$root.allowEdit" />
-              <label data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
+              <label class="form-check-label" data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
                 <span data-bind="text: name"></span>
               </label>
             </div>
           </div>
-          <span class='help-block' data-bind="visible: hasError">
+          <span class='form-text text-danger' data-bind="visible: hasError">
             {% trans "Please select at least one item." %}
           </span>
         </div>
