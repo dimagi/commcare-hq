@@ -338,7 +338,7 @@ ko.bindingHandlers.multirow_sortable = {
 };
 
 ko.bindingHandlers.modal = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
+    init: function (element) {
         // Store the modal instance on the element itself to avoid collisions
         // when multiple modals share the same viewModel
         element._knockoutModal = new Modal(element);
