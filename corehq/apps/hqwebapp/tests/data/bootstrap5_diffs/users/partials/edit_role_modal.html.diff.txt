@@ -1,21 +1,25 @@
 --- 
 +++ 
-@@ -7,7 +7,7 @@
+@@ -6,22 +6,21 @@
+     <form data-bind="submit: $root.submitNewRole">
        <div class="modal-content">
          <div class="modal-header">
++          <h4 class="modal-title" data-bind="text: modalTitle"></h4>
            <button type="button"
 -                  class="close"
-+                  class="btn-close"  {# todo B5: css-close #}
++                  class="btn-close"
                    data-bind="click: $root.unsetRoleBeingEdited">
-             <span aria-hidden="true">&times;</span>
+-            <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
-@@ -17,11 +17,11 @@
+           </button>
+-          <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+         </div>
          <div class="modal-body">
            <div class="form form-horizontal">
              <fieldset data-bind="enable: isEditable">
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label" for="role-name">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="row">
 +              <label class="col-md-4 form-label" for="role-name">
                  {% trans "Role Name" %}<span class="asteriskField">*</span>
                </label>
@@ -24,13 +28,13 @@
                  <input data-bind="value: name"
                         type="text"
                         id="role-name"
-@@ -35,19 +35,19 @@
+@@ -35,36 +34,38 @@
              <legend>
                {% trans "Area Access" %}
              </legend>
 -            <div class="form-group">
 -              <div class="col-sm-2">
-+            <div class="form-group">  {# todo B5: css-form-group #}
++            <div class="row">
 +              <div class="col-md-2">
                  {% trans "Can Edit" %}
                </div>
@@ -38,19 +42,22 @@
 +              <div class="col-md-2">
                  {% trans "Can View" %}
                </div>
++              <div class="col-md-8">
++              </div>
              </div>
              <div data-bind="foreach: accessAreas">
 -              <div class="form-group" data-bind="visible: showOption">
 -                <div class="col-sm-2 controls" data-bind="visible: showEditCheckbox">
-+              <div class="form-group" data-bind="visible: showOption">  {# todo B5: css-form-group #}
++              <div class="row" data-bind="visible: showOption">
 +                <div class="col-md-2 controls" data-bind="visible: showEditCheckbox">
                    <div class="form-check">
 -                    <input type="checkbox"
-+                    <input type="checkbox"  {# todo B5: css-checkbox #}
++                    <input class="form-check-input" type="checkbox"
                             data-bind="attr: {id: editCheckboxLabel}, checked: editPermission" />
-                     <label data-bind="attr: {for: editCheckboxLabel}">
+-                    <label data-bind="attr: {for: editCheckboxLabel}">
++                    <label class="form-check-label" data-bind="attr: {for: editCheckboxLabel}">
                        <span class="sr-only" data-bind="text: screenReaderEditAndViewText">
-@@ -55,55 +55,55 @@
+                       </span>
                      </label>
                    </div>
                  </div>
@@ -61,34 +68,32 @@
                    </div>
                  </div>
 -                <div class="col-sm-2 controls" data-bind="visible: showViewCheckbox">
--                  {# PLACEHOLDER checkbox when editPermission() is true #}
 +                <div class="col-md-2 controls" data-bind="visible: showViewCheckbox">
-+                  {# PLACEHOLDER checkbox when editPermission() is true #}  {# todo B5: css-checkbox #}
+                   {# PLACEHOLDER checkbox when editPermission() is true #}
                    <div class="form-check" data-bind="visible: editPermission()">
 -                    <input type="checkbox" checked="checked" disabled="disabled" />
-+                    <input type="checkbox" checked="checked" disabled="disabled" />  {# todo B5: css-checkbox #}
-                     <label>
+-                    <label>
++                    <input class="form-check-input" type="checkbox" checked="checked" disabled="disabled" />
++                    <label class="form-check-label">
                        <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
                        </span>
                      </label>
-                   </div>
+@@ -72,39 +73,39 @@
                    {# end PLACEHOLDER #}
--                  {# REAL checkbox that controls viewPermission when editPermission() is false #}
-+                  {# REAL checkbox that controls viewPermission when editPermission() is false #}  {# todo B5: css-checkbox #}
+                   {# REAL checkbox that controls viewPermission when editPermission() is false #}
                    <div class="form-check" data-bind="visible: !editPermission()">
 -                    <input type="checkbox"
-+                    <input type="checkbox"  {# todo B5: css-checkbox #}
++                    <input class="form-check-input" type="checkbox"
                             data-bind="attr: {id: viewCheckboxLabel}, checked: viewPermission" />
-                     <label data-bind="attr: {for: viewCheckboxLabel}">
+-                    <label data-bind="attr: {for: viewCheckboxLabel}">
++                    <label class="form-check-label" data-bind="attr: {for: viewCheckboxLabel}">
                        <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
                        </span>
                      </label>
                    </div>
--                  {# END REAL checkbox #}
--                </div>
+                   {# END REAL checkbox #}
+                 </div>
 -                  <div class="col-sm-2 controls " data-bind="visible: !showViewCheckbox">
-+                  {# END REAL checkbox #}  {# todo B5: css-checkbox #}
-+                </div>
 +                  <div class="col-md-2 controls " data-bind="visible: !showViewCheckbox">
                      <div class="form-check-placeholder">
                        <label></label>
@@ -97,97 +102,110 @@
 -                <div class="col-sm-8 control-label">
 +                <div class="col-md-8 form-label">
                    <div data-bind="html: text"></div>
--                  {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
-+                  {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}  {# todo B5: css-checkbox #}
+                   {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
                    <div class="form-check" data-bind="visible: $parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
 -                    <input type="checkbox" checked="checked" disabled="disabled"/>
-+                    <input type="checkbox" checked="checked" disabled="disabled"/>  {# todo B5: css-checkbox #}
-                     <label data-bind="text: allowCheckboxText"></label>
+-                    <label data-bind="text: allowCheckboxText"></label>
++                    <input class="form-check-input" type="checkbox" checked="checked" disabled="disabled"/>
++                    <label class="form-check-label" data-bind="text: allowCheckboxText"></label>
                    </div>
                    {# end PLACEHOLDER #}
--                  {# REAL checkbox for allowCheckboxPermission #}
-+                  {# REAL checkbox for allowCheckboxPermission #}  {# todo B5: css-checkbox #}
+                   {# REAL checkbox for allowCheckboxPermission #}
                    <div class="form-check" data-bind="visible: !$parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
 -                    <input type="checkbox"
-+                    <input type="checkbox"  {# todo B5: css-checkbox #}
++                    <input class="form-check-input" type="checkbox"
                             data-bind="attr: {id: allowCheckboxId}, checked: allowCheckboxPermission" />
-                     <label data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
+-                    <label data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
++                    <label class="form-check-label" data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
                    </div>
                    {# end REAL #}
--                  {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
-+                  {# PLACEHOLDER checkbox when showAllowCheckbox is false #}  {# todo B5: css-checkbox #}
+                   {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
                    <div class="form-check" data-bind="visible: !editPermission() && showAllowCheckbox">
 -                    <input type="checkbox" disabled="disabled"/>
-+                    <input type="checkbox" disabled="disabled"/>  {# todo B5: css-checkbox #}
-                     <label data-bind="text: allowCheckboxText"></label>
+-                    <label data-bind="text: allowCheckboxText"></label>
++                    <input class="form-check-input" type="checkbox" disabled="disabled"/>
++                    <label class="form-check-label" data-bind="text: allowCheckboxText"></label>
                    </div>
                    {# end PLACEHOLDER #}
-@@ -114,25 +114,25 @@
+               </div>
+@@ -114,27 +115,27 @@
              <div data-bind="if: erm.visible">
                <legend data-bind="text: erm.title"></legend>
  
 -              <div class="form-group" data-bind="using: erm.access_release_management">
 -                <label class="col-sm-4 control-label" data-bind="text: text"></label>
 -                <div class="col-sm-8 controls">
-+              <div class="form-group" data-bind="using: erm.access_release_management">  {# todo B5: css-form-group #}
-+                <label class="col-md-4 form-label" data-bind="text: text"></label>
-+                <div class="col-md-8 controls">
-                   <div class="form-check">
+-                  <div class="form-check">
 -                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
-+                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />  {# todo B5: css-checkbox #}
-                     <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
-                   </div>
-                 </div>
-               </div>
- 
+-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
+-                  </div>
+-                </div>
+-              </div>
+-
 -              <div class="form-group" data-bind="using: erm.edit_linked_configs">
 -                <label class="col-sm-4 control-label" data-bind="text: text"></label>
 -                <div class="col-sm-8 controls">
-+              <div class="form-group" data-bind="using: erm.edit_linked_configs">  {# todo B5: css-form-group #}
-+                <label class="col-md-4 form-label" data-bind="text: text"></label>
+-                  <div class="form-check">
++              <div class="row" data-bind="using: erm.access_release_management">
++                <label class="col-md-4 form-label fw-bold" data-bind="text: text"></label>
 +                <div class="col-md-8 controls">
-                   <div class="form-check">
++                  <div class="form-check pt-0">
++                    <input class="form-check-input" type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
++                    <label class="form-check-label" data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
++                  </div>
++                </div>
++              </div>
++
++              <div class="row" data-bind="using: erm.edit_linked_configs">
++                <label class="col-md-4 form-label fw-bold" data-bind="text: text"></label>
++                <div class="col-md-8 controls">
++                  <div class="form-check pt-0">
                      <!-- ko if: $parent.erm.access_release_management.checkboxPermission -->
 -                    <input type="checkbox" checked disabled />
-+                    <input type="checkbox" checked disabled />  {# todo B5: css-checkbox #}
++                    <input class="form-check-input" type="checkbox" checked disabled />
                      <!-- /ko -->
                      <!-- ko ifnot: $parent.erm.access_release_management.checkboxPermission -->
 -                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
-+                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />  {# todo B5: css-checkbox #}
++                    <input class="form-check-input" type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
                      <!-- /ko -->
-                     <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
+-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
++                    <label class="form-check-label" data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
                    </div>
-@@ -145,11 +145,11 @@
+                 </div>
+               </div>
+@@ -145,33 +146,33 @@
              </legend>
  
              <div data-bind="foreach: reports">
 -              <div class="form-group" data-bind="visible: visibilityRestraint">
 -                <label class="col-sm-4 control-label" data-bind="text: text"></label>
 -                <div class="col-sm-8 controls">
-+              <div class="form-group" data-bind="visible: visibilityRestraint">  {# todo B5: css-form-group #}
-+                <label class="col-md-4 form-label" data-bind="text: text"></label>
-+                <div class="col-md-8 controls">
-                   <div class="form-check">
+-                  <div class="form-check">
 -                    <input type="checkbox"
-+                    <input type="checkbox"  {# todo B5: css-checkbox #}
++              <div class="row" data-bind="visible: visibilityRestraint">
++                <label class="col-md-4 form-label fw-bold" data-bind="text: text"></label>
++                <div class="col-md-8 controls">
++                  <div class="form-check pt-0">
++                    <input class="form-check-input" type="checkbox"
                             data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
-                     <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
+-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
++                    <label class="form-check-label" data-bind="attr:{for: checkboxLabel}, text: checkboxText">
                      </label>
-@@ -157,19 +157,19 @@
+                   </div>
                  </div>
                </div>
              </div>
 -            <div class="form-group" data-bind="visible: !reportPermissions.all()">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group" data-bind="visible: !reportPermissions.all()">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row" data-bind="visible: !reportPermissions.all()">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Access Specific Reports" %}
                </label>
 -              <div class="col-sm-8 controls">
 -                <div class="panel panel-default">
 -                  <div class="panel-heading">
 +              <div class="col-md-8 controls">
-+                <div class="card ">  {# todo B5: css-panel #}
++                <div class="card">
 +                  <div class="card-header">
                      {% trans "Select which reports the role can access:" %}
                    </div>
@@ -196,25 +214,28 @@
                         data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
                      <div class="form-check">
 -                      <input type="checkbox"
-+                      <input type="checkbox"  {# todo B5: css-checkbox #}
++                      <input class="form-check-input" type="checkbox"
                               data-bind="checked: value, attr: { 'id': slug() + '-checkbox' }" />
-                       <label data-bind="attr: { 'for': slug() + '-checkbox' }">
+-                      <label data-bind="attr: { 'for': slug() + '-checkbox' }">
++                      <label class="form-check-label" data-bind="attr: { 'for': slug() + '-checkbox' }">
                          <span data-bind="text: name"></span>
-@@ -181,19 +181,19 @@
+                       </label>
+                     </div>
+@@ -181,21 +182,21 @@
              </div>
  
              {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
 -              <div class="form-group" data-bind="visible: !tableauPermissions.all()">
 -                <label class="col-sm-4 control-label">
-+              <div class="form-group" data-bind="visible: !tableauPermissions.all()">  {# todo B5: css-form-group #}
-+                <label class="col-md-4 form-label">
++              <div class="row mt-2" data-bind="visible: !tableauPermissions.all()">
++                <label class="col-md-4 form-label fw-bold">
                    {% trans "Access Specific Tableau Reports" %}
                  </label>
 -                <div class="col-sm-8 controls">
 -                  <div class="panel panel-default">
 -                    <div class="panel-heading">
 +                <div class="col-md-8 controls">
-+                  <div class="card ">  {# todo B5: css-panel #}
++                  <div class="card">
 +                    <div class="card-header">
                        {% trans "Select which Tableau reports the role can access:" %}
                      </div>
@@ -223,18 +244,21 @@
                           data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">
                        <div class="form-check">
 -                        <input type="checkbox"
-+                        <input type="checkbox"  {# todo B5: css-checkbox #}
++                        <input class="form-check-input" type="checkbox"
                                 data-bind="checked: value, attr: { 'id': 'tableau-' + slug() + '-checkbox' }" />
-                         <label data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
+-                        <label data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
++                        <label class="form-check-label" data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
                            <span data-bind="text: name"></span>
-@@ -222,13 +222,13 @@
+                         </label>
+                       </div>
+@@ -222,37 +223,37 @@
              <legend>
                {% trans "CommCare Analytics" %}
              </legend>
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "All CommCare Analytics Roles" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -242,26 +266,28 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="commcare-analytics-all-roles-checkbox"
                           data-bind="checked: commcareAnalyticsRoles.all" />
-                   <label for="commcare-analytics-all-roles-checkbox">
-@@ -237,20 +237,20 @@
+-                  <label for="commcare-analytics-all-roles-checkbox">
++                  <label class="form-check-label" for="commcare-analytics-all-roles-checkbox">
+                     {% trans "Assign all commcare analytics roles to users with this role" %}
+                   </label>
                  </div>
                </div>
              </div>
 -            <div class="form-group"
-+            <div class="form-group"  {# todo B5: css-form-group #}
++            <div class="row"
                   data-bind="visible: !commcareAnalyticsRoles.all()">
 -              <label class="col-sm-4 control-label">
-+              <label class="col-md-4 form-label">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "CommCare Analytics Roles" %}
                </label>
 -              <div class="col-sm-8 controls">
 -                <div class="panel panel-default">
 -                  <div class="panel-heading">
 +              <div class="col-md-8 controls">
-+                <div class="card ">  {# todo B5: css-panel #}
++                <div class="card mt-2">
 +                  <div class="card-header">
                      {% trans "Commcare Analytics Roles:" %}
                    </div>
@@ -270,36 +296,42 @@
                         data-bind="foreach: commcareAnalyticsRoles.specific, slideVisible: !commcareAnalyticsRoles.all()">
                      <div class="form-check">
 -                      <input type="checkbox"
-+                      <input type="checkbox"  {# todo B5: css-checkbox #}
++                      <input class="form-check-input" type="checkbox"
                               data-bind="checked: value, attr: { 'id': 'cca-role-' + slug() + '-checkbox' }" />
-                       <label data-bind="attr: { 'for': 'cca-role-' + slug() + '-checkbox' }">
+-                      <label data-bind="attr: { 'for': 'cca-role-' + slug() + '-checkbox' }">
++                      <label class="form-check-label" data-bind="attr: { 'for': 'cca-role-' + slug() + '-checkbox' }">
                          <span data-bind="text: name"></span>
-@@ -266,13 +266,13 @@
+                       </label>
+                     </div>
+@@ -266,69 +267,69 @@
              </legend>
  
              {% if show_integration %}
 -              <div class="form-group">
 -                <label class="col-sm-4 control-label">
-+              <div class="form-group">  {# todo B5: css-form-group #}
-+                <label class="col-md-4 form-label">
++              <div class="row">
++                <label class="col-md-4 form-label fw-bold">
                    {% trans "Integration Access" %}
                  </label>
 -                <div class="col-sm-8 controls">
 +                <div class="col-md-8 controls">
                    <div class="form-check">
 -                    <input type="checkbox"
-+                    <input type="checkbox"  {# todo B5: css-checkbox #}
++                    <input class="form-check-input" type="checkbox"
                             id="edit-motech-checkbox"
                             data-bind="checked: permissions.edit_motech, disable: !$root.allowEdit" />
-                     <label for="edit-motech-checkbox">
-@@ -282,13 +282,13 @@
+-                    <label for="edit-motech-checkbox">
++                    <label class="form-check-label" for="edit-motech-checkbox">
+                       {% trans "Allow role to manage integration with other systems." %}
+                     </label>
+                   </div>
                  </div>
                </div>
              {% endif %}
 -            <div class="form-group" data-bind="visible: permissions.access_all_locations">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group" data-bind="visible: permissions.access_all_locations">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row" data-bind="visible: permissions.access_all_locations">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Manage Subscription Info" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -307,22 +339,23 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="edit-billing-checkbox"
                           data-bind="checked: permissions.edit_billing" />
-                   <label for="edit-billing-checkbox">
-@@ -297,16 +297,16 @@
+-                  <label for="edit-billing-checkbox">
++                  <label class="form-check-label" for="edit-billing-checkbox">
+                     {% trans "Allow role to manage subscription information." %}
+                   </label>
                  </div>
                </div>
              </div>
 -            <div class="form-group"
--                 data-bind="css: { 'has-error': hasUnpermittedLocationRestriction || unrestrictedButRestrictedRoleCanAssign,
-+            <div class="form-group"  {# todo B5: css-form-group #}
-+                 data-bind="css: { 'has-error': hasUnpermittedLocationRestriction || unrestrictedButRestrictedRoleCanAssign,  {# todo B5: css-has-error #}
++            <div class="row w-100"
+                  data-bind="css: { 'has-error': hasUnpermittedLocationRestriction || unrestrictedButRestrictedRoleCanAssign,
                                     'has-warning': cantAccessAllLocations },
                              visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction">
 -              <label class="col-sm-4 control-label">
-+              <label class="col-md-4 form-label">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Full Organization Access" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -330,18 +363,44 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="allow-data-all-access-checkbox"
                           data-bind="checked: permissions.access_all_locations,
                                      disable: hasUnpermittedLocationRestriction" />
-@@ -336,13 +336,13 @@
+-                  <label for="allow-data-all-access-checkbox">
++                  <label class="form-check-label" for="allow-data-all-access-checkbox">
+                     {% trans "Allow role to access data from all locations." %}
+                   </label>
+                 </div>
+-                <div class="help-block"
++                <div class="form-text"
+                      data-bind="visible: cantAccessAllLocations">
+                   {% blocktrans %}
+                     Make sure any users assigned this role also have a location assigned to them.
+                     Users without assigned locations will not be permitted to log in.
+                   {% endblocktrans %}
+                 </div>
+-                <div class="help-block" data-bind="visible: hasUnpermittedLocationRestriction">
++                <div class="form-text" data-bind="visible: hasUnpermittedLocationRestriction">
+                   {% blocktrans %}
+                     Organization-based data access restrictions are only available
+                     on the Pro plan and above. Saving this role will enable
+                     full organization access for the assigned users.
+                   {% endblocktrans %}
+                 </div>
+-                <div class="help-block" data-bind="visible: unrestrictedButRestrictedRoleCanAssign">
++                <div class="form-text" data-bind="visible: unrestrictedButRestrictedRoleCanAssign">
+                   {% blocktrans %}
+                     With the current configuration, this role will have full organization access and roles that can assign it will not.
+                     This is not recommended.
+@@ -336,91 +337,91 @@
                  </div>
                </div>
              </div>
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Login-As All Users" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -349,18 +408,21 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="login-as-all-users-checkbox"
                           data-bind="checked: permissions.login_as_all_users" />
-                   <label for="login-as-all-users-checkbox">
-@@ -352,21 +352,21 @@
+-                  <label for="login-as-all-users-checkbox">
++                  <label class="form-check-label" for="login-as-all-users-checkbox">
+                     {% trans "Allow the user to log in as any mobile worker in Web Apps." %}
+                   </label>
+                 </div>
                </div>
              </div>
              {% if request|toggle_enabled:"RESTRICT_LOGIN_AS" %}
 -              <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+              <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++              <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Limit Login-As" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -368,55 +430,60 @@
                  {# PLACEHOLDER WHEN login_as_all_users IS TRUE #}
                  <div class="form-check" data-bind="visible: permissions.login_as_all_users()">
 -                  <input type="checkbox" disabled="disabled" />
-+                  <input type="checkbox" disabled="disabled" />  {# todo B5: css-checkbox #}
-                   <label for="limited-login-as-checkbox">
+-                  <label for="limited-login-as-checkbox">
++                  <input class="form-check-input" type="checkbox" disabled="disabled" />
++                  <label class="form-check-label" for="limited-login-as-checkbox">
                      {% trans "Allow the user to log in as only specified users in Web Apps." %}
                    </label>
                  </div>
                  {# REAL CHECKBOX WHEN login_as_all_users IS FALSE #}
                  <div class="form-check" data-bind="visible: !permissions.login_as_all_users()">
 -                  <input type="checkbox"
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="limited-login-as-checkbox"
                           data-bind="checked: permissions.limited_login_as" />
-                   <label for="limited-login-as-checkbox">
-@@ -375,21 +375,21 @@
+-                  <label for="limited-login-as-checkbox">
++                  <label class="form-check-label" for="limited-login-as-checkbox">
+                     {% trans "Allow the user to log in as only specified users in Web Apps." %}
+                   </label>
                  </div>
                </div>
                </div>
 -              <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+              <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++              <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Login-As Default User" %}
                </label>
 -              <div class="col-sm-8 controls">
--                {# Placeholder disabled checkbox when not using limited log in as #}
 +              <div class="col-md-8 controls">
-+                {# Placeholder disabled checkbox when not using limited log in as #}  {# todo B5: css-checkbox #}
+                 {# Placeholder disabled checkbox when not using limited log in as #}
                  <div class="form-check" data-bind="visible: permissions.login_as_all_users() || !permissions.limited_login_as()">
 -                  <input type="checkbox" disabled="disabled" data-bind="checked: permissions.login_as_all_users()" />
-+                  <input type="checkbox" disabled="disabled" data-bind="checked: permissions.login_as_all_users()" />  {# todo B5: css-checkbox #}
-                   <label for="default-login-as-checkbox">
+-                  <label for="default-login-as-checkbox">
++                  <input class="form-check-input" type="checkbox" disabled="disabled" data-bind="checked: permissions.login_as_all_users()" />
++                  <label class="form-check-label" for="default-login-as-checkbox">
                      {% trans "Allow the user to log in as the default user in Web Apps." %}
                    </label>
                  </div>
--                {# Real checkbox #}
-+                {# Real checkbox #}  {# todo B5: css-checkbox #}
+                 {# Real checkbox #}
                  <div class="form-check" data-bind="visible: !permissions.login_as_all_users() && permissions.limited_login_as()">
 -                  <input type="checkbox"
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="default-login-as-checkbox"
                           data-bind="checked: permissions.access_default_login_as_user" />
-                   <label for="default-login-as-checkbox">
-@@ -399,13 +399,13 @@
+-                  <label for="default-login-as-checkbox">
++                  <label class="form-check-label" for="default-login-as-checkbox">
+                     {% trans "Allow the user to log in as the default user in Web Apps." %}
+                   </label>
+                 </div>
                </div>
                </div>
              {% endif %}
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Mobile App Access" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -424,36 +491,38 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="edit-mobile-checkbox"
                           data-bind="checked: permissions.access_mobile_endpoints" />
-                   <label for="edit-mobile-checkbox">
-@@ -414,13 +414,13 @@
+-                  <label for="edit-mobile-checkbox">
++                  <label class="form-check-label" for="edit-mobile-checkbox">
+                     {% trans "Allow mobile users access to offline mobile application" %}
+                   </label>
                  </div>
                </div>
              </div>
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label"
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label"
++            <div class="row">
++              <label class="col-md-4 form-label fw-bold"
                       for="landing-page">
                  {% trans "Default Landing Page" %}
                </label>
 -              <div class="col-sm-8 controls">
 -                <select class="form-control" id="landing-page"
 +              <div class="col-md-8 controls">
-+                <select class="form-select" id="landing-page"
++                <select class="form-select my-2" id="landing-page"
                          data-bind="options: $root.landingPageChoices,
                                    optionsText: 'name',
                                    optionsValue: 'id',
-@@ -428,13 +428,13 @@
+@@ -428,58 +429,59 @@
                  </select>
                </div>
              </div>
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Allow Reporting Issues" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -461,18 +530,20 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="report-issue-checkbox"
                           data-bind="checked: permissions.report_an_issue" />
-                   <label for="report-issue-checkbox">
-@@ -443,13 +443,13 @@
+-                  <label for="report-issue-checkbox">
++                  <label class="form-check-label" for="report-issue-checkbox">
+                     {% trans "Allow this role to report issues." %}
+                   </label>
                  </div>
                </div>
              </div>
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Non-admin Editable" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -480,73 +551,90 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" type="checkbox"
                           id="non-admin-edit-checkbox"
                           data-bind="checked: manageRoleAssignments.all" />
-                   <label for="non-admin-edit-checkbox">
-@@ -458,20 +458,20 @@
+-                  <label for="non-admin-edit-checkbox">
++                  <label class="form-check-label" class="form-check-input" for="non-admin-edit-checkbox">
+                     {% trans "Allow all non-admins to assign this role to other users." %}
+                   </label>
                  </div>
                </div>
              </div>
 -            <div class="form-group"
-+            <div class="form-group"  {# todo B5: css-form-group #}
++            <div class="row"
                   data-bind="visible: !manageRoleAssignments.all()">
 -              <label class="col-sm-4 control-label">
-+              <label class="col-md-4 form-label">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Manage Role Assignment" %}
                </label>
 -              <div class="col-sm-8 controls", data-bind="css: { 'has-error': showRestrictedLocationRoleAssignmentWarning }">
 -                <div class="panel panel-default">
 -                  <div class="panel-heading">
-+              <div class="col-md-8 controls", data-bind="css: { 'has-error': showRestrictedLocationRoleAssignmentWarning }">  {# todo B5: css-has-error #}
-+                <div class="card ">  {# todo B5: css-panel #}
++              <div class="col-md-8 controls", data-bind="css: { 'has-error': showRestrictedLocationRoleAssignmentWarning }">
++                <div class="card my-2">
 +                  <div class="card-header">
                      {% trans "Select which other roles can assign this role:" %}
                    </div>
 -                  <div class="panel-body"
 +                  <div class="card-body"
                         data-bind="foreach: manageRoleAssignments.specific, slideVisible: !manageRoleAssignments.all()">
-                     <div class="form-check" data-bind="css: {'bg-danger': !access_all_locations() && $parent.permissions.access_all_locations()}">
+-                    <div class="form-check" data-bind="css: {'bg-danger': !access_all_locations() && $parent.permissions.access_all_locations()}">
 -                      <input type="checkbox"
-+                      <input type="checkbox"  {# todo B5: css-checkbox #}
++                    <div class="form-check">
++                      <input class="form-check-input" type="checkbox"
                               data-bind="checked: value, attr: { 'id': 'role-' + path() + '-checkbox' }" />
-                       <label data-bind="attr: { 'for': 'role-' + path() + '-checkbox' }">
-                         <span data-bind="text: name"></span>
-@@ -488,14 +488,14 @@
+-                      <label data-bind="attr: { 'for': 'role-' + path() + '-checkbox' }">
+-                        <span data-bind="text: name"></span>
++                      <label class="form-check-label" data-bind="attr: { 'for': 'role-' + path() + '-checkbox' }">
++                        <!--<span data-bind="text: name"></span>-->
++                        <span data-bind="text: name, class: !access_all_locations() && $parent.permissions.access_all_locations() ? 'text-danger': ''"></span>
+                       </label>
+                     </div>
+                   </div>
+                 </div>
+-                <div class="help-block" data-bind="visible: showRestrictedLocationRoleAssignmentWarning">
++                <div class="form-text text-danger" data-bind="visible: showRestrictedLocationRoleAssignmentWarning">
+                   {% blocktrans %}
+                     If the highlighted roles are selected, this role will have full organization access and be assignable
+                     by a role that does not. This is not recommended configuration.
+@@ -488,38 +490,38 @@
                </div>
              </div>
              {% if request|request_has_privilege:"APP_USER_PROFILES" %}
 -              <div class="form-group"
-+              <div class="form-group"  {# todo B5: css-form-group #}
++              <div class="row"
                  data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()">
 -                <label class="col-sm-4 control-label">
-+                <label class="col-md-4 form-label">
++                <label class="col-md-4 form-label fw-bold">
                    {% trans "Assign All User Profiles" %}
                  </label>
 -                <div class="col-sm-8 controls">
 +                <div class="col-md-8 controls">
                    <div class="form-check">
 -                    <input type="checkbox"
-+                    <input type="checkbox"  {# todo B5: css-checkbox #}
++                    <input class="form-check-input" type="checkbox"
                            id="assign-profiles-checkbox"
                            data-bind="checked: profilePermissions.all" />
-                     <label for="assign-profiles-checkbox">
-@@ -504,20 +504,20 @@
+-                    <label for="assign-profiles-checkbox">
++                    <label class="form-check-label" for="assign-profiles-checkbox">
+                       {% trans "Allow role to access all user profiles while setting up mobile workers and web users." %}
+                     </label>
                    </div>
                  </div>
                </div>
 -              <div class="form-group"
-+              <div class="form-group"  {# todo B5: css-form-group #}
++              <div class="row"
                  data-bind="visible: !profilePermissions.all() && (permissions.edit_web_users() || permissions.edit_commcare_users())">
 -                <label class="col-sm-4 control-label">
-+                <label class="col-md-4 form-label">
++                <label class="col-md-4 form-label fw-bold">
                    {% trans "Assign Specific User Profiles" %}
                  </label>
 -                <div class="col-sm-8 controls">
 -                  <div class="panel panel-default">
 -                    <div class="panel-heading">
 +                <div class="col-md-8 controls">
-+                  <div class="card ">  {# todo B5: css-panel #}
++                  <div class="card">
 +                    <div class="card-header">
                        {% trans "Select which user profiles the role can assign to mobile workers and web users:" %}
                      </div>
@@ -555,18 +643,21 @@
                        data-bind="foreach: profilePermissions.specific, slideVisible: !profilePermissions.all()">
                        <div class="form-check">
 -                        <input type="checkbox"
-+                        <input type="checkbox"  {# todo B5: css-checkbox #}
++                        <input class="form-check-input" type="checkbox"
                          data-bind="checked: value, attr: { 'id': 'profile-' + slug() + '-checkbox' }" />
-                         <label data-bind="attr: { 'for': 'profile-' + slug() + '-checkbox' }">
+-                        <label data-bind="attr: { 'for': 'profile-' + slug() + '-checkbox' }">
++                        <label class="form-check-label" data-bind="attr: { 'for': 'profile-' + slug() + '-checkbox' }">
                            <span data-bind="text: name"></span>
-@@ -529,13 +529,13 @@
+                         </label>
+                       </div>
+@@ -529,16 +531,16 @@
                </div>
              {% endif %}
              {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
 -            <div class="form-group">
 -              <label class="col-sm-4 control-label">
-+            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="col-md-4 form-label">
++            <div class="row">
++              <label class="col-md-4 form-label fw-bold">
                  {% trans "Manage Project Alerts" %}
                </label>
 -              <div class="col-sm-8 controls">
@@ -574,11 +665,15 @@
 -                  <input type="checkbox"
 +              <div class="col-md-8 controls">
 +                <div class="form-check">
-+                  <input type="checkbox"  {# todo B5: css-checkbox #}
++                  <input class="form-check-input" class="form-check-input" type="checkbox"
                           id="manage-domain-alerts-checkbox"
                           data-bind="checked: permissions.manage_domain_alerts" />
-                   <label for="manage-domain-alerts-checkbox">
-@@ -549,10 +549,10 @@
+-                  <label for="manage-domain-alerts-checkbox">
++                  <label class="form-check-label" for="manage-domain-alerts-checkbox">
+                     {% trans "Allow this role to manage project alerts." %}
+                   </label>
+                 </div>
+@@ -549,10 +551,10 @@
            </div>
          </div>
  
@@ -591,7 +686,7 @@
                      data-bind="click: $root.clearRoleForm">
                {% trans "Cancel" %}
              </button>
-@@ -564,7 +564,7 @@
+@@ -564,7 +566,7 @@
            </div>
            <div data-bind="ifnot: isEditable">
              <button type="button"
@@ -600,42 +695,53 @@
                      data-bind="click: $root.unsetRoleBeingEdited">
                {% trans "Close" %}
              </button>
-@@ -576,8 +576,8 @@
+@@ -576,8 +578,8 @@
  </div>
  
  <script type="text/html" id="permission_all_selected_none">
 -  <div class="form-group" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">
 -    <div class="col-sm-4 control-label">
-+  <div class="form-group" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">  {# todo B5: css-form-group #}
-+    <div class="col-md-4 form-label">
++  <div class="row" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">
++    <div class="col-md-4 form-label fw-bold">
        <label data-bind="text: text"></label>
        <!-- ko if: id === 'access_web_apps' && hasRestrictedApplicationAccess -->
          <span class='help-block'>
-@@ -589,8 +589,8 @@
+@@ -589,8 +591,8 @@
          </span>
        <!-- /ko -->
      </div>
 -    <div class="col-sm-8 controls">
 -      <select class="form-control" data-bind="
 +    <div class="col-md-8 controls">
-+      <select class="form-select" data-bind="
++      <select class="form-select mb-2" data-bind="
          attr: { 'id': id },
          options: options,
          optionsText: 'text',
-@@ -600,12 +600,12 @@
+@@ -600,20 +602,20 @@
          <option value="all" data-bind="text: accessAllText"></option>
          <option value="selected" data-bind="text: accessSelectedText"></option>
        </select>
 -      <div class="panel panel-default"data-bind="visible: showItems, css: {'has-error': hasError()}" style="margin-top: 15px;">
 -        <div class="panel-heading" data-bind="text: listHeading"></div>
 -        <div class="panel-body">
-+      <div class="card "data-bind="visible: showItems, css: {'has-error': hasError()}" style="margin-top: 15px;">  {# todo B5: css-has-error, css-panel, inline-style #}
++      <div class="card mb-2"data-bind="visible: showItems, css: {'has-error': hasError()}">
 +        <div class="card-header" data-bind="text: listHeading"></div>
 +        <div class="card-body">
            <div data-bind="foreach: specific, slideVisible: showItems">
-             <div class="form-check">
+-            <div class="form-check">
 -              <input type="checkbox"
-+              <input type="checkbox"  {# todo B5: css-checkbox #}
++            <div class="form-check mt-1">
++              <input class="form-check-input" type="checkbox"
                       data-bind="checked: value, attr: { 'id': $parent.id + slug() + '-checkbox' },
                                  disable: !$root.allowEdit" />
-               <label data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
+-              <label data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
++              <label class="form-check-label" data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
+                 <span data-bind="text: name"></span>
+               </label>
+             </div>
+           </div>
+-          <span class='help-block' data-bind="visible: hasError">
++          <span class='form-text text-danger' data-bind="visible: hasError">
+             {% trans "Please select at least one item." %}
+           </span>
+         </div>
