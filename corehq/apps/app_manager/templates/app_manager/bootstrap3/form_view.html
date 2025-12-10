@@ -281,7 +281,7 @@
 
       {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
         {% if module.has_schedule %}
-          {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
+          {% include "app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html" %}
         {% endif %}
       {% endif %}
       {% if form.form_type != "shadow_form" %}
