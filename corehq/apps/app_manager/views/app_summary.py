@@ -102,7 +102,7 @@ class AppCaseSummaryView(AppSummaryView):
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    template_name = 'app_manager/form_summary.html'
+    template_name = 'app_manager/bootstrap3/form_summary.html'
 
     @property
     def page_context(self):
