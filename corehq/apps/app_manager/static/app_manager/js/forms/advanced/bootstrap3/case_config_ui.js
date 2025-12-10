@@ -9,7 +9,7 @@ import google from "analytix/js/google";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import main from "hqwebapp/js/bootstrap3/main";
 import appManager from "app_manager/js/bootstrap3/app_manager";
-import visitSchedulerModel from "app_manager/js/visit_scheduler";
+import visitSchedulerModel from "app_manager/js/bootstrap3/visit_scheduler";
 
 $(function () {
     if (initialPageData.get('module_doc_type') !== "AdvancedModule") {
