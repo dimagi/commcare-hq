@@ -512,10 +512,11 @@ class Command(BaseCommand):
             file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
         )
         self.stdout.write("\nUpdating references...")
-        references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
+        references = update_and_get_references(app_name, short_path, bootstrap3_short_path, is_template)
         if not is_template:
             # also check extension-less references for javascript files
             references.extend(update_and_get_references(
+                app_name,
                 get_requirejs_reference(short_path),
                 get_requirejs_reference(bootstrap3_short_path),
                 is_template=False
@@ -562,12 +563,14 @@ class Command(BaseCommand):
             new_reference = get_short_path(app_name, file_path, is_template)
             old_reference = new_reference.replace("/bootstrap3/", "/")
             references = update_and_get_references(
+                app_name,
                 old_reference,
                 new_reference,
                 is_template
             )
             if not is_template:
                 references.extend(update_and_get_references(
+                    app_name,
                     get_requirejs_reference(old_reference),
                     get_requirejs_reference(new_reference),
                     is_template=False

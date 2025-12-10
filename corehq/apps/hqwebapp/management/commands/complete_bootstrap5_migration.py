@@ -227,11 +227,11 @@ class Command(BaseCommand):
         bootstrap5_path.rename(destination_path)
 
     def do_bootstrap3_references_exist(self, app_name, bootstrap3_short_path, is_template):
-        bootstrap3_references = get_references(bootstrap3_short_path, is_template=True)
+        bootstrap3_references = get_references(app_name, bootstrap3_short_path, is_template=True)
         if not is_template:
             requirejs_reference = get_requirejs_reference(bootstrap3_short_path)
-            bootstrap3_references.extend(get_references(requirejs_reference, is_template=True))
-            js_refs = get_references(requirejs_reference, is_template=False)
+            bootstrap3_references.extend(get_references(app_name, requirejs_reference, is_template=True))
+            js_refs = get_references(app_name, requirejs_reference, is_template=False)
             # make sure the bootstrap3 version of the file isn't a reference
             js_refs = [r for r in js_refs if not str(r).endswith(bootstrap3_short_path)]
             bootstrap3_references.extend(js_refs)
@@ -250,9 +250,15 @@ class Command(BaseCommand):
 
     def update_references_and_print_summary(self, app_name, bootstrap5_short_path,
                                             destination_short_path, is_template):
-        references = update_and_get_references(bootstrap5_short_path, destination_short_path, is_template)
+        references = update_and_get_references(
+            app_name,
+            bootstrap5_short_path,
+            destination_short_path,
+            is_template,
+        )
         if not is_template:
             references.extend(update_and_get_references(
+                app_name,
                 get_requirejs_reference(bootstrap5_short_path),
                 get_requirejs_reference(destination_short_path),
                 False
