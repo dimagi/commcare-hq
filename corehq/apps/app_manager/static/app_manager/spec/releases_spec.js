@@ -4,7 +4,7 @@ import _ from "underscore";
 import sinon from "sinon";
 
 import initialPageData from "hqwebapp/js/initial_page_data";
-import releasesModels from "app_manager/js/releases/releases";
+import releasesModels from "app_manager/js/releases/bootstrap3/releases";
 
 import "commcarehq";
 
