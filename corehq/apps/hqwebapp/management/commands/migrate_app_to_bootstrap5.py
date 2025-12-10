@@ -331,7 +331,7 @@ class Command(BaseCommand):
                 if self.no_split:
                     self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
                     if is_template:
-                        self.show_next_steps_after_migrating_file_in_place(short_path)
+                        self.show_next_steps_after_migrating_file_in_place(app_name, short_path)
                 elif is_split_path(file_path):
                     self.migrate_file_again(app_name, file_path, new_lines, is_template)
                 else:
@@ -408,19 +408,21 @@ class Command(BaseCommand):
         if not confirm:
             self.write_response("ok, discarding changes...")
 
-        has_changes = has_pending_git_changes()
+        working_directory = get_working_directory(app_name)
+        has_changes = has_pending_git_changes(working_directory)
         if has_changes:
             self.prompt_user_to_commit_changes()
-            has_changes = has_pending_git_changes()
+            has_changes = has_pending_git_changes(working_directory)
 
         with open(file_path, 'w') as file:
             file.writelines(bootstrap5_lines)
         self.suggest_commit_message(
             f"initial auto-migration for {short_path}, migrated in-place",
-            show_apply_commit=not has_changes
+            show_apply_commit=not has_changes,
+            working_directory=working_directory,
         )
 
-    def show_next_steps_after_migrating_file_in_place(self, short_path):
+    def show_next_steps_after_migrating_file_in_place(self, app_name, short_path):
         self.stdout.write(self.style.MIGRATE_LABEL(
             "\n\nPlease take a moment now to search for all views referencing\n"
         ))
@@ -435,12 +437,14 @@ class Command(BaseCommand):
             "See: https://www.commcarehq.org/styleguide/b5/migration/#migrating-views"
         )
         enter_to_continue()
-        if has_pending_git_changes():
+        working_directory = get_working_directory(app_name)
+        if has_pending_git_changes(working_directory):
             self.stdout.write(self.style.WARNING(
                 "\n\nDon't forget to commit these changes!"
             ))
             self.suggest_commit_message(
-                f"added use_bootstrap5 decorator to views referencing {short_path}"
+                f"added use_bootstrap5 decorator to views referencing {short_path}",
+                working_directory=working_directory,
             )
 
     def migrate_file_again(self, app_name, file_path, bootstrap5_lines, is_template):
@@ -460,21 +464,23 @@ class Command(BaseCommand):
             self.write_response("ok, skipping save...")
             return
 
-        has_changes = has_pending_git_changes()
+        working_directory = get_working_directory(app_name)
+        has_changes = has_pending_git_changes(working_directory)
         if has_changes:
             self.prompt_user_to_commit_changes()
-            has_changes = has_pending_git_changes()
+            has_changes = has_pending_git_changes(working_directory)
 
         with open(bootstrap5_path, 'w') as bootstrap5_file:
             bootstrap5_file.writelines(bootstrap5_lines)
 
-        if has_pending_git_changes():
+        if has_pending_git_changes(working_directory):
             self.stdout.write(
                 f"\nChanges applied to {bootstrap5_short_path}."
             )
             self.suggest_commit_message(
                 f"re-ran migration for {migrated_file_short_path}",
-                show_apply_commit=not has_changes
+                show_apply_commit=not has_changes,
+                working_directory=working_directory,
             )
         else:
             self.stdout.write("\nNo changes were necessary!\n")
@@ -490,10 +496,11 @@ class Command(BaseCommand):
                 self.write_response("ok, canceling split and rolling back changes...")
                 return
 
-        has_changes = has_pending_git_changes()
+        working_directory = get_working_directory(app_name)
+        has_changes = has_pending_git_changes(working_directory)
         if has_changes:
             self.prompt_user_to_commit_changes()
-            has_changes = has_pending_git_changes()
+            has_changes = has_pending_git_changes(working_directory)
 
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
         bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
@@ -520,7 +527,8 @@ class Command(BaseCommand):
             self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
         self.suggest_commit_message(
             f"initial auto-migration for {short_path}, splitting templates",
-            show_apply_commit=not has_changes
+            show_apply_commit=not has_changes,
+            working_directory=working_directory,
         )
 
     @staticmethod
@@ -569,7 +577,11 @@ class Command(BaseCommand):
                     f"\n\nUpdated references to {old_reference} in these files:"
                 ))
                 self.stdout.write("\n".join(references))
-                self.suggest_commit_message(f"updated path references to '{references}'")
+                working_directory = get_working_directory(app_name)
+                self.suggest_commit_message(
+                    f"updated path references to '{references}'",
+                    working_directory=working_directory,
+                )
         self.stdout.write("\n\nDone.\n\n")
 
     @staticmethod

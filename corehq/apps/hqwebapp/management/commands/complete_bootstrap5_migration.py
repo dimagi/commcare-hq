@@ -3,6 +3,7 @@ from django.core.management import BaseCommand
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     apply_commit,
     get_commit_string,
+    get_working_directory,
     has_pending_git_changes,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
@@ -43,7 +44,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, app_name, **options):
-        if has_pending_git_changes():
+        working_directory = get_working_directory(app_name)
+        working_changes = has_pending_git_changes(working_directory)
+        main_changes = has_pending_git_changes()
+        if working_changes or main_changes:
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
@@ -82,7 +86,10 @@ class Command(BaseCommand):
         )
 
     def mark_file_as_complete(self, app_name, filename, is_template):
+        working_directory = get_working_directory(app_name)
+        has_changes_app_working_directory = has_pending_git_changes(working_directory)
         has_changes = has_pending_git_changes()
+
         file_type = "template" if is_template else "js file"
         if is_template:
             relevant_paths = get_all_template_paths_for_app(app_name)
@@ -111,10 +118,21 @@ class Command(BaseCommand):
             mark_template_as_complete(app_name, destination_short_path)
         else:
             mark_javascript_as_complete(app_name, destination_short_path)
-        self.suggest_commit_message(
-            f"Marked {file_type} '{destination_short_path}' as complete and un-split files.",
-            show_apply_commit=not has_changes
-        )
+        if working_directory:
+            self.suggest_commit_message(
+                f"Un-split files: {file_type} '{destination_short_path}' when marking as complete.",
+                show_apply_commit=not has_changes_app_working_directory,
+                working_directory=working_directory
+            )
+            self.suggest_commit_message(
+                f"Marked {file_type} '{destination_short_path}' as complete.",
+                show_apply_commit=not has_changes
+            )
+        else:
+            self.suggest_commit_message(
+                f"Marked {file_type} '{destination_short_path}' as complete and un-split files.",
+                show_apply_commit=not has_changes
+            )
         self.show_next_steps(app_name)
 
     def verify_filename_and_get_paths(self, app_name, filename, relevant_paths, is_template):
