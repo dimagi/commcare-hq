@@ -30,7 +30,7 @@
         <!-- TODO: Use the b5 flexbox utilities when migrating to bootstrap 5 -->
         <div class="new-module-modal-flex-container">
           {% include 'app_manager/partials/module_options/bootstrap3/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
-          {% include 'app_manager/partials/module_options/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
+          {% include 'app_manager/partials/module_options/bootstrap3/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
           {% if show_biometric %}
             {% include 'app_manager/partials/module_options/bootstrap3/module_option_biometrics.html' with module_type="biometrics" icon_class="fcc fcc-app-biometrics" %}
           {% endif %}
