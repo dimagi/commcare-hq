@@ -4,6 +4,7 @@ import corehq
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
 CUSTOM_BASE_DIR = COREHQ_BASE_DIR.parent / "custom"
+SUBMODULES_BASE_DIR = COREHQ_BASE_DIR.parent / "submodules"
 TRACKED_JS_FOLDERS = ["js", "spec"]
 PARENT_PATHS = {
     "corehq": COREHQ_BASE_DIR,
@@ -12,6 +13,7 @@ PARENT_PATHS = {
     "motech": COREHQ_BASE_DIR / "motech",
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
+    "vellum": SUBMODULES_BASE_DIR / "formdesigner/src",
 }
 SUBMODULE_APPS = [
     "vellum",
