@@ -395,7 +395,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     if ajax and "blank form" in [error.get('type') for error in errors]:
         response_html = ""
     else:
-        response_html = render_to_string("app_manager/partials/build_errors.html", {
+        response_html = render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
             'app': app,
             'build_errors': errors,
             'not_actual_build': True,
