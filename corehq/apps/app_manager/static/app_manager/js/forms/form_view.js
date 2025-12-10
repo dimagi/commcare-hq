@@ -12,7 +12,7 @@ import "app_manager/js/nav_menu_media";
 import "app_manager/js/forms/copy_form_to_app";
 import "app_manager/js/forms/case_knockout_bindings";  // casePropertyAutocomplete and questionsSelect
 import "app_manager/js/forms/case_config_ui";  // non-advanced modules only
-import "app_manager/js/forms/advanced/case_config_ui";  // advanced modules only
+import "app_manager/js/forms/advanced/bootstrap3/case_config_ui";  // advanced modules only
 import "app_manager/js/xpathValidator";
 import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/pagination";
