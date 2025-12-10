@@ -23,6 +23,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     update_gruntfile,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    get_working_directory,
     has_pending_git_changes,
     get_commit_string,
     apply_commit,
@@ -91,6 +92,7 @@ class Command(BaseCommand):
         selected_filename = options.get('filename')
 
         is_app_migration_complete = is_app_completed(app_name)
+        working_directory = get_working_directory(app_name)
 
         if is_app_migration_complete and not selected_filename:
             self.show_completed_message(app_name)
@@ -130,10 +132,14 @@ class Command(BaseCommand):
             )
             return
 
-        if self.skip_all and has_pending_git_changes():
+        if self.skip_all and has_pending_git_changes(working_directory):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
+            if working_directory:
+                self.stdout.write(self.style.MIGRATE_HEADING(
+                    f"[FYI] For the app '{app_name}', the working directory is: {working_directory}\n"
+                ))
             ensure_no_pending_changes_before_continuing()
 
         spec = get_spec('bootstrap_3_to_5')
