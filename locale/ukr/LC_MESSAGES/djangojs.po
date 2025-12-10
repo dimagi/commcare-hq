@@ -1105,22 +1105,6 @@ msgstr "Мова вказана двічі"
 msgid "This conflicts with a current language"
 msgstr "Це конфліктує з поточною мовою"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "{path} is not a valid data parent"
-msgstr "{path} не є дійсним батьківським елементом даних"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "createXML"
-msgstr "createXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "getData"
-msgstr "getData"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
 msgid "New Form"
 msgstr "Нова форма"
@@ -1164,6 +1148,22 @@ msgstr "Правда, якщо ВСІ вирази істинні."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ANY of the expressions are true."
 msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} не є дійсним батьківським елементом даних"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "createXML"
+msgstr "createXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "getData"
+msgstr "getData"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
@@ -1657,7 +1657,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Issue communicating with server. Try again."
 msgstr "Проблема з’єднання із сервером. Спробуйте ще раз."
 
@@ -2863,7 +2864,8 @@ msgstr "Будь ласка, введіть своє ім'я."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
-#: corehq/apps/users/static/users/js/invite_web_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/invite_web_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/invite_web_user.js
 msgid "Please specify an email."
 msgstr "Будь ласка, вкажіть електронну адресу."
 
@@ -3112,7 +3114,8 @@ msgstr "Час"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "Оберіть мову..."
 
@@ -3566,88 +3569,151 @@ msgstr "Джерело даних"
 msgid "Unknown error"
 msgstr "Невідома помилка"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr "Пароль успішно змінено."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password is not strong enough. Try making your password more complex."
 msgstr "Пароль недостатньо надійний. Спробуйте зробити пароль складнішим."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "The two password fields didn't match."
 msgstr "Два поля пароля не співпадають."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password was not changed. "
 msgstr "Пароль не було змінено."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Available Groups"
 msgstr "Доступні групи"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Groups with this User"
 msgstr "Групи з цим користувачем"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Search Group..."
 msgstr "Пошук групи..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Group membership has changed."
 msgstr "Членство в групі змінено."
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "<%- user_count %> user"
 msgstr "<%- user_count %> користувач"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "<%- user_count %> users"
 msgstr "<%- user_count %> користувачів"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid " and <%- group_count %> group"
 msgstr " та <%- group_count %> група"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid " and <%- group_count %> groups"
 msgstr " та <%- group_count %> груп"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "Error determining number of matching users"
 msgstr "Помилка при визначенні кількості відповідних користувачів"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Unavailable"
 msgstr "Недоступно"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "<%- minutes %> minutes remaining"
 msgstr "Залишилось <%- minutes %> хвилин"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Будь ласка, введіть дійсну електронну адресу."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Phone number is required when users confirm their own accounts by sms."
 msgstr ""
 "Номер телефону обов'язковий, якщо користувачі підтверджують свої облікові "
 "записи через sms."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Phone number should contain only digits 0-9."
 msgstr "Номер телефону повинен містити лише цифри 0-9."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Checking availability..."
 msgstr "Перевірка доступності..."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Проблема з підключенням до сервера. Перевірте підключення до Інтернету."
+
+#: corehq/apps/users/static/users/js/bootstrap3/roles_and_permissions.js
+#: corehq/apps/users/static/users/js/bootstrap5/roles_and_permissions.js
+msgid "View Only"
+msgstr "Лише перегляд"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "<%- days %> days remaining"
+msgstr "Залишилося <%- days %> днів"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Unable to delete invitation, please try again later."
+msgstr "Не вдалося видалити запрошення, будь ласка, спробуйте пізніше."
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Unable to resend invitation, please try again later."
+msgstr ""
+"Не вдалося повторно надіслати запрошення, будь ласка, спробуйте пізніше."
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Delete request"
+msgstr "Видалити запит"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Are you sure you want to delete this request?"
+msgstr "Ви впевнені, що хочете видалити цей запит?"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid ""
+"We have sent the invitation email to this user but the user's email server "
+"rejected it. This usually means either the email address is incorrect or "
+"your organization is blocking emails from our address (<%- fromAddress %>)."
+msgstr ""
+"Ми надіслали лист-запрошення цьому користувачу, але поштовий сервер "
+"користувача його відхилив. Зазвичай це означає, що або електронна адреса "
+"вказана неправильно, або ваша організація блокує листи з нашої адреси (<%- "
+"fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "No Access"
@@ -4020,42 +4086,6 @@ msgstr "Ви впевнені, що хочете видалити роль <%- r
 #: corehq/apps/users/static/users/js/roles.js
 msgid "An error occurred, please try again."
 msgstr "Виникла помилка, будь ласка, спробуйте ще раз."
-
-#: corehq/apps/users/static/users/js/roles_and_permissions.js
-msgid "View Only"
-msgstr "Лише перегляд"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "<%- days %> days remaining"
-msgstr "Залишилося <%- days %> днів"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Unable to delete invitation, please try again later."
-msgstr "Не вдалося видалити запрошення, будь ласка, спробуйте пізніше."
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Unable to resend invitation, please try again later."
-msgstr ""
-"Не вдалося повторно надіслати запрошення, будь ласка, спробуйте пізніше."
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Delete request"
-msgstr "Видалити запит"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Are you sure you want to delete this request?"
-msgstr "Ви впевнені, що хочете видалити цей запит?"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid ""
-"We have sent the invitation email to this user but the user's email server "
-"rejected it. This usually means either the email address is incorrect or "
-"your organization is blocking emails from our address (<%- fromAddress %>)."
-msgstr ""
-"Ми надіслали лист-запрошення цьому користувачу, але поштовий сервер "
-"користувача його відхилив. Зазвичай це означає, що або електронна адреса "
-"вказана неправильно, або ваша організація блокує листи з нашої адреси (<%- "
-"fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
