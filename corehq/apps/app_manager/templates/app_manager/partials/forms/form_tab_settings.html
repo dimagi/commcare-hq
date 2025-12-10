@@ -68,7 +68,7 @@
           </div>
 
           {% if form.doc_type == "ShadowForm" %}
-            {% include "app_manager/partials/forms/shadow_parent_select.html" %}
+            {% include "app_manager/partials/forms/bootstrap3/shadow_parent_select.html" %}
           {% endif %}
 
           {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
