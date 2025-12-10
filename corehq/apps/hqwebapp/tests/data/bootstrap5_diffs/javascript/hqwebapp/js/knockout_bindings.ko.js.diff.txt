@@ -8,16 +8,14 @@
  import "jquery-ui/ui/widgets/sortable";
  import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
  import "langcodes/js/langcodes";  // $.langcodes
-@@ -337,20 +338,18 @@
- };
+@@ -338,19 +339,17 @@
  
  ko.bindingHandlers.modal = {
--    init: function (element) {
+     init: function (element) {
 -        $(element).addClass('modal fade').modal({
 -            show: false,
 -        });
 -        //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-+    init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
 +        // Store the modal instance on the element itself to avoid collisions
 +        // when multiple modals share the same viewModel
 +        element._knockoutModal = new Modal(element);
