@@ -1,0 +1,50 @@
+--- 
++++ 
+@@ -6,7 +6,7 @@
+   {% if module.user_deletable %}
+     {# Don't show the delete button for child-shadow modules #}
+     <a href="#module_confirm_delete_{{ module.unique_id }}"
+-       data-toggle="modal"
++       data-bs-toggle="modal"
+        class="appnav-delete">
+       <i class="fa-regular fa-trash-can"></i>
+     </a>
+@@ -33,14 +33,14 @@
+           <i class="fa fa-folder-open appnav-primary-icon"
+         {% endif %}
+             title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with module.id as index %}This is menu {{ index }}{% endblocktrans %}{% endif %}"
+-            data-toggle="tooltip"
++            data-bs-toggle="tooltip"
+             data-placement="right"
+             data-container="body"></i>
+         <span
+           {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}
+           {% if module.case_type %}
+             title="{% blocktrans  with module.case_type as case_type %}case type: {{case_type}}{% endblocktrans %}"
+-            data-toggle="tooltip"
++            data-bs-toggle="tooltip"
+             data-placement="right"
+             data-container="body"
+           {% endif %}
+@@ -70,7 +70,7 @@
+       <div class="modal-dialog" role="document">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
+             {% if module.module_type == 'basic' %}
+               {% if module.is_surveys %}
+                 {% trans "Survey Menu" as menu %}
+@@ -107,10 +107,10 @@
+               </p>
+             </div>
+             <div class="modal-footer">
+-              <button type="button" class="btn btn-default" data-dismiss="modal">
++              <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+                 {% trans "Cancel" %}
+               </button>
+-              <button type="submit" class="disable-on-submit btn btn-danger">
++              <button type="submit" class="disable-on-submit btn btn-outline-danger">
+                   <i class="fa-regular fa-trash-can"></i>
+                   {% trans "Delete" %} {{ module.name|html_trans:langs }}
+               </button>

@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import _ from "underscore";
+-import appManager from "app_manager/js/bootstrap3/app_manager";
++import appManager from "app_manager/js/bootstrap5/app_manager";
+ import sectionChanger from "app_manager/js/section_changer";
+-import main from "hqwebapp/js/bootstrap3/main";
++import main from "hqwebapp/js/bootstrap5/main";
+ import appLogos from "app_manager/js/settings/app_logos";
+ 
+ function CommcareSettings(options) {

@@ -1,0 +1,538 @@
+--- 
++++ 
+@@ -9,44 +9,44 @@
+     {% trans "Add at least one search property to activate case search for this case list" %}
+   </div>
+   <form>
+-    <div class="panel panel-appmanager">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">
++    <div class="card panel-appmanager">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">
+           {% trans "Search Properties" %}
+         </h4>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <p>{% trans "Search against the following case properties." %}</p>
+         <table class="table table-condensed">
+           <thead data-bind="visible: search_properties().length > 0">
+             <tr>
+-              <th class="col-sm-1"></th>
+-              <th class="col-sm-4">{% trans "Case Property" %}</th>
+-              <th class="col-sm-4">{% trans "Display Text" %}</th>
++              <th class="col-md-1"></th>
++              <th class="col-md-4">{% trans "Case Property" %}</th>
++              <th class="col-md-4">{% trans "Display Text" %}</th>
+               {% if js_options.search_prompt_appearance_enabled or js_options.default_value_expression_enabled %}
+-                <th class="col-sm-2">{% trans "Other Options" %}</th>
++                <th class="col-md-2">{% trans "Other Options" %}</th>
+               {% endif %}
+-              <th class="col-sm-1"></th>
++              <th class="col-md-1"></th>
+             </tr>
+           </thead>
+           <tbody
+             data-bind="foreach: search_properties, sortableList: search_properties"
+           >
+-            {% include "app_manager/partials/modules/bootstrap3/case_search_property.html" %}
++            {% include "app_manager/partials/modules/bootstrap5/case_search_property.html" %}
+           </tbody>
+         </table>
+         <div class="btn-group">
+           <button
+             type="button"
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             data-bind="click: addProperty"
+           >
+             <i class="fa fa-plus"></i> {% trans "Add Search Property" %}
+           </button>
+           {% if app.supports_grouped_case_search_properties %}
+             <button
+-              class="btn btn-default dropdown-toggle"
+-              data-toggle="dropdown"
++              class="btn btn-outline-primary dropdown-toggle"
++              data-bs-toggle="dropdown"  {# todo B5: css-dropdown #}
+             >
+               <span class="caret"></span>
+             </button>
+@@ -59,29 +59,29 @@
+         </div>
+       </div>
+     </div>
+-    <div class="panel panel-appmanager">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">
++    <div class="card panel-appmanager">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">
+           {% trans "Default Search Filters" %}
+         </h4>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <p>
+           {% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}
+         </p>
+         <table class="table table-condensed">
+           <thead data-bind="visible: default_properties().length > 0">
+             <tr>
+-              <th class="col-sm-5">{% trans "Case Property" %}</th>
+-              <th class="col-sm-6">{% trans "Value (XPath expression)" %}</th>
+-              <th class="col-sm-1">&nbsp;</th>
++              <th class="col-md-5">{% trans "Case Property" %}</th>
++              <th class="col-md-6">{% trans "Value (XPath expression)" %}</th>
++              <th class="col-md-1">&nbsp;</th>
+             </tr>
+           </thead>
+           <tbody data-bind="foreach: default_properties">
+             <tr>
+               <td
+-                class="col-sm-4"
+-                data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(property()))}"
++                class="col-md-4"
++                data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(property()))}"  {# todo B5: css-has-error #}
+               >
+                 <input
+                   class="form-control"
+@@ -95,7 +95,7 @@
+                   {% trans "A property is not allowed both here and Search Properties. Please remove from one of the lists" %}
+                 </div>
+               </td>
+-              <td class="col-sm-6">
++              <td class="col-md-6">
+                 <textarea
+                   class="form-control vertical-resize"
+                   rows="1"
+@@ -103,9 +103,9 @@
+                   spellcheck="false"
+                 ></textarea>
+               </td>
+-              <td class="col-sm-2">
++              <td class="col-md-2">
+                 <i
+-                  style="cursor: pointer;"
++                  style="cursor: pointer;"  {# todo B5: inline-style #}
+                   class="fa fa-remove"
+                   data-bind="click: $parent.removeDefaultProperty"
+                 ></i>
+@@ -116,7 +116,7 @@
+         <p>
+           <button
+             type="button"
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             data-bind="click: addDefaultProperty"
+           >
+             <i class="fa fa-plus"></i> {% trans "Add default search property" %}
+@@ -124,13 +124,13 @@
+         </p>
+       </div>
+     </div>
+-    <div class="panel panel-appmanager">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">
++    <div class="card panel-appmanager">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">
+           {% trans "Custom Sort Properties" %}
+         </h4>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <p>
+           {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
+         </p>
+@@ -152,7 +152,7 @@
+               <td>
+                 <i class="grip fa-solid fa-up-down icon-blue"></i>
+               </td>
+-              <td class="form-group">
++              <td class="form-group">  {# todo B5: css-form-group #}
+                 <input
+                   class="form-control"
+                   type="text"
+@@ -160,14 +160,14 @@
+                 />
+               </td>
+               <td>
+-                <select class="form-control" data-bind="value: sort_type">
++                <select class="form-select" data-bind="value: sort_type">
+                   <option value="exact">{% trans "Exact" %}</option>
+                   <option value="date">{% trans "Date" %}</option>
+                   <option value="numeric">{% trans "Numeric" %}</option>
+                 </select>
+               </td>
+               <td>
+-                <select class="form-control" data-bind="value: direction">
++                <select class="form-select" data-bind="value: direction">
+                   <option value="ascending">{% trans "Ascending" %}</option>
+                   <option value="descending">{% trans "Descending" %}</option>
+                 </select>
+@@ -180,9 +180,9 @@
+             </tr>
+           </tbody>
+         </table>
+-        <div class="form-group">
++        <div class="form-group">  {# todo B5: css-form-group #}
+           <button
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             data-bind="click: addCustomSortProperty"
+           >
+             <i class="fa fa-plus"></i>
+@@ -191,19 +191,19 @@
+         </div>
+       </div>
+     </div>
+-    <div class="panel panel-appmanager" data-bind="visible: isEnabled">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">
++    <div class="card panel-appmanager" data-bind="visible: isEnabled">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">
+           {% trans "Search and Claim Options" %}
+         </h4>
+       </div>
+-      <div class="panel-body" data-bind="with: searchConfig">
++      <div class="card-body" data-bind="with: searchConfig">
+         <div class="form-horizontal">
+-          <div class="form-group">
++          <div class="form-group">  {# todo B5: css-form-group #}
+             {% if show_search_workflow %}
+-              <div class="form-group">
++              <div class="form-group">  {# todo B5: css-form-group #}
+                 <label
+-                  class="control-label {% css_label_class %}"
++                  class="form-label {% css_label_class %}"
+                   for="search-workflow"
+                   data-bind="hidden: restrictWorkflowForDataRegistry"
+                 >
+@@ -216,7 +216,7 @@
+                   </span>
+                 </label>
+                 <label
+-                  class="control-label {% css_label_class %}"
++                  class="form-label {% css_label_class %}"
+                   for="search-workflow"
+                   data-bind="visible: restrictWorkflowForDataRegistry"
+                 >
+@@ -229,7 +229,7 @@
+                   </span>
+                 </label>
+                 <div class="{% css_field_class %}">
+-                  <select
++                  <select  {# todo B5: css-select-form-control #}
+                     class="form-control"
+                     data-bind="value: workflow"
+                     id="search-workflow"
+@@ -259,10 +259,10 @@
+           </div>
+           {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
+             <div
+-              class="form-group"
++              class="form-group"  {# todo B5: css-form-group #}
+               data-bind="slideVisible: inlineSearchVisible"
+             >
+-              <label class="control-label {% css_label_class %}">
++              <label class="form-label {% css_label_class %}">
+                 {% trans "Make search input available after search" %}
+                 <span
+                   class="hq-help-template"
+@@ -271,9 +271,9 @@
+                 >
+                 </span>
+               </label>
+-              <div class="{% css_field_class %} checkbox">
++              <div class="{% css_field_class %} checkbox">  {# todo B5: css-checkbox #}
+                 <label>
+-                  <input type="checkbox" data-bind="checked: inline_search" />
++                  <input type="checkbox" data-bind="checked: inline_search" />  {# todo B5: css-checkbox #}
+                   <input
+                     type="hidden"
+                     name="search-input"
+@@ -285,8 +285,8 @@
+                 </p>
+               </div>
+             </div>
+-            <div class="form-group" data-bind="visible: inlineSearchActive">
+-              <label class="control-label {% css_label_class %}">
++            <div class="form-group" data-bind="visible: inlineSearchActive">  {# todo B5: css-form-group #}
++              <label class="form-label {% css_label_class %}">
+                 {% trans "Search Input Instance Name" %}
+                 <span
+                   class="hq-help-template"
+@@ -306,10 +306,10 @@
+             </div>
+           {% endif %}
+           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+-            <div class="form-group" data-bind="hidden: inlineSearchActive">
++            <div class="form-group" data-bind="hidden: inlineSearchActive">  {# todo B5: css-form-group #}
+               <label
+                 for="search_label"
+-                class="{% css_label_class %} control-label"
++                class="{% css_label_class %} form-label"
+               >
+                 {% trans "Label for Searching" %}
+                 <span
+@@ -330,14 +330,14 @@
+               <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+               <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+               <!-- ko stopBinding: true -->
+-              {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
++              {% include "app_manager/partials/bootstrap5/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
+               <!-- /ko -->
+             </div>
+             {% if not request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' %}
+-              <div class="form-group" data-bind="hidden: inlineSearchActive">
++              <div class="form-group" data-bind="hidden: inlineSearchActive">  {# todo B5: css-form-group #}
+                 <label
+                   for="search_again_label"
+-                  class="{% css_label_class %} control-label"
++                  class="{% css_label_class %} form-label"
+                 >
+                   {% trans "Label for Searching Again" %}
+                   <span
+@@ -358,20 +358,20 @@
+                 <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+                 <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+                 <!-- ko stopBinding: true -->
+-                {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
++                {% include "app_manager/partials/bootstrap5/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+                 <!-- /ko -->
+               </div>
+             {% endif %}
+-            <div class="form-group">
++            <div class="form-group">  {# todo B5: css-form-group #}
+               <label
+                 for="search_screen_title"
+-                class="{% css_label_class %} control-label"
++                class="{% css_label_class %} form-label"
+               >
+                 {% trans "Search Screen Title" %}
+                 <span
+                   class="hq-help-template"
+                   data-title="{% trans "Search Screen Title Translation" %}"
+-                  data-content="{% trans_html_attr "Define the title label displayed on the search screen." %}"
++                  data-content="{% trans_html_attr "Define the title badge displayed on the search screen." %}"
+                 >
+                 </span>
+               </label>
+@@ -379,10 +379,10 @@
+                 {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: title_label" %}
+               </div>
+             </div>
+-            <div class="form-group">
++            <div class="form-group">  {# todo B5: css-form-group #}
+               <label
+                 for="description"
+-                class="{% css_label_class %} control-label"
++                class="{% css_label_class %} form-label"
+               >
+                 {% trans "Search Screen Subtitle" %}
+                 <span
+@@ -397,10 +397,10 @@
+               </div>
+             </div>
+           {% endif %}
+-          <div class="form-group" data-bind="slideVisible: !auto_launch()">
++          <div class="form-group" data-bind="slideVisible: !auto_launch()">  {# todo B5: css-form-group #}
+             <label
+               for="search-display-condition"
+-              class="control-label {% css_label_class %}"
++              class="form-label {% css_label_class %}"
+             >
+               {% trans "Display Condition" %}
+               <span
+@@ -427,10 +427,10 @@
+             </div>
+           </div>
+           {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
+-            <div class="form-group">
++            <div class="form-group">  {# todo B5: css-form-group #}
+               <label
+                 for="search-filter"
+-                class="control-label {% css_label_class %}"
++                class="form-label {% css_label_class %}"
+               >
+                 {% trans "Search Filter" %}
+                 <span
+@@ -455,7 +455,7 @@
+                 ></textarea>
+                 <p class="help-block">
+                   <button
+-                    class="pull-right btn-xs btn btn-default"
++                    class="float-end btn-sm btn btn-outline-primary"
+                     data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter"
+                   >
+                     <i class="fa-solid fa-reply"></i>
+@@ -466,10 +466,10 @@
+               </div>
+             </div>
+           {% endif %}
+-          <div class="form-group">
++          <div class="form-group">  {# todo B5: css-form-group #}
+             <label
+               for="claim-relevant-condition"
+-              class="control-label {% css_label_class %}"
++              class="form-label {% css_label_class %}"
+             >
+               {% trans "Claim Condition" %}
+               <span
+@@ -494,10 +494,10 @@
+               ></textarea>
+             </div>
+           </div>
+-          <div class="form-group">
++          <div class="form-group">  {# todo B5: css-form-group #}
+             <label
+               for="blacklisted-user-ids"
+-              class="control-label {% css_label_class %}"
++              class="form-label {% css_label_class %}"
+             >
+               {% trans "Don't search cases owned by the following ids" %}
+               <span
+@@ -530,10 +530,10 @@
+             </div>
+           </div>
+           {% if data_registry_enabled %}
+-            <div class="form-group">
++            <div class="form-group">  {# todo B5: css-form-group #}
+               <label
+                 for="data-registry"
+-                class="{% css_label_class %} control-label"
++                class="{% css_label_class %} form-label"
+               >
+                 {% trans "Data Registry" %}
+                 <span
+@@ -544,7 +544,7 @@
+                 </span>
+               </label>
+               <div class="{% css_field_class %}">
+-                <select
++                <select  {# todo B5: css-select-form-control #}
+                   class="form-control"
+                   id="data-registry"
+                   data-bind="value: data_registry"
+@@ -558,15 +558,15 @@
+                 </select>
+               </div>
+             </div>
+-            <div class="form-group" data-bind="slideVisible: data_registry()">
++            <div class="form-group" data-bind="slideVisible: data_registry()">  {# todo B5: css-form-group #}
+               <label
+                 for="data-registry"
+-                class="{% css_label_class %} control-label"
++                class="{% css_label_class %} form-label"
+               >
+                 {% trans "Data Registry Workflow" %}
+               </label>
+               <div class="{% css_field_class %}">
+-                <select
++                <select  {# todo B5: css-select-form-control #}
+                   class="form-control"
+                   data-bind="value: data_registry_workflow"
+                 >
+@@ -577,12 +577,12 @@
+               </div>
+             </div>
+             <div
+-              class="form-group"
++              class="form-group"  {# todo B5: css-form-group #}
+               data-bind="visible: data_registry_workflow() == 'load_case'"
+             >
+               <label
+                 for="data-registry"
+-                class="{% css_label_class %} control-label"
++                class="{% css_label_class %} form-label"
+               >
+                 {% trans "Load Additional Data Registry Cases" %}
+                 <span
+@@ -604,8 +604,8 @@
+                     data-bind="visible: additional_registry_cases().length > 0"
+                   >
+                     <tr>
+-                      <th class="col-sm-12">{% trans "Case ID XPath" %}</th>
+-                      <th class="col-sm-1"></th>
++                      <th class="col-md-12">{% trans "Case ID XPath" %}</th>
++                      <th class="col-md-1"></th>
+                     </tr>
+                   </thead>
+                   <tbody
+@@ -627,7 +627,7 @@
+                       </td>
+                       <td>
+                         <i
+-                          style="cursor: pointer;"
++                          style="cursor: pointer;"  {# todo B5: inline-style #}
+                           class="fa fa-remove"
+                           data-bind="click: $parent.removeRegistryQuery"
+                         ></i>
+@@ -637,7 +637,7 @@
+                 </table>
+                 <button
+                   type="button"
+-                  class="btn btn-default"
++                  class="btn btn-outline-primary"
+                   data-bind="click: addRegistryQuery"
+                 >
+                   <i class="fa fa-plus"></i>
+@@ -647,10 +647,10 @@
+             </div>
+           {% endif %}
+           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+-            <div class="form-group">
++            <div class="form-group">  {# todo B5: css-form-group #}
+               <label
+                 for="custom-related-case-property"
+-                class="{% css_label_class %} control-label"
++                class="{% css_label_class %} form-label"
+               >
+                 {% trans "Case property with additional case id to add to results" %}
+                 <span
+@@ -678,15 +678,15 @@
+                 />
+               </div>
+             </div>
+-            <div class="form-group">
+-              <label class="control-label {% css_label_class %}">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label {% css_label_class %}">
+                 {% trans "Include all related cases in search results" %}
+               </label>
+               <div>
+-                <div class="{% css_field_class %} checkbox">
++                <div class="{% css_field_class %} checkbox">  {# todo B5: css-checkbox #}
+                   <label>
+                     <input
+-                      type="checkbox"
++                      type="checkbox"  {# todo B5: css-checkbox #}
+                       data-bind="checked: include_all_related_cases"
+                     />
+                   </label>
+@@ -695,18 +695,18 @@
+             </div>
+           {% endif %}
+           {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search %}
+-            <div class="form-group">
+-              <label class="control-label {% css_label_class %}">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label {% css_label_class %}">
+                 {% trans "Clearing search terms resets search results" %}
+               </label>
+-              <div class="{% css_field_class %} checkbox">
++              <div class="{% css_field_class %} checkbox">  {# todo B5: css-checkbox #}
+                 <label>
+-                  <input type="checkbox" data-bind="checked: search_on_clear" />
++                  <input type="checkbox" data-bind="checked: search_on_clear" />  {# todo B5: css-checkbox #}
+                 </label>
+               </div>
+             </div>
+           {% endif %}
+-          <span class="hide" id="searchFilterXpathErrorHtml">
++          <span class="d-none" id="searchFilterXpathErrorHtml">
+             {% blocktrans %}
+               This is not a valid xpath expression. Check to make sure your
+               parentheses match and you are referencing case properties

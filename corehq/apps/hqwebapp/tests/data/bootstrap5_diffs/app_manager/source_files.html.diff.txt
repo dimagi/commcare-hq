@@ -1,0 +1,51 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/full_screen.html" %}
++{% extends "hqwebapp/bootstrap5/full_screen.html" %}
+ 
+ {% load hq_shared_tags %}
+ {% load compress %}
+@@ -10,7 +10,7 @@
+   {% registerurl 'get_multimedia_sizes_for_build_profile' app.domain '---' '---' %}
+   {% initial_page_data 'current_version' app.built_with.build_number %}
+ 
+-  <p class="form-inline" id="compare-form">
++  <p class="form-inline" id="compare-form">  {# todo B5: css-form-inline #}
+     See
+     <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
+       current app
+@@ -18,7 +18,7 @@
+ 
+     {% if not other_app %}
+       Or compare with another version:
+-      <select class="app-manager-version-dropdown form-control"></select>
++      <select class="app-manager-version-dropdown form-select"></select>
+       <button class="btn btn-primary btn-sm">Compare</button>
+     {% endif %}
+   </p>
+@@ -34,7 +34,7 @@
+       {% if section %}<tr><th>{{ section }}</th></tr>{% endif %}
+       {% for file in files %}
+         <tr>
+-          <td class="col-sm-3">
++          <td class="col-md-3">
+             {% if file.source %}
+               <a class="toggle-next" href="#">{{ file.name }}</a>
+             {% else %}
+@@ -44,13 +44,13 @@
+               {{ file.readable_name }}
+             {% endif %}
+           </td>
+-          <td class="col-sm-9">
++          <td class="col-md-9">
+             {% block file_description %}{% endblock %}
+           </td>
+         </tr>
+ 
+         {% if file.source %}
+-          <tr class="hide">
++          <tr class="d-none">
+             <td colspan="2">
+               {% block file_source %}{% endblock %}
+             </td>

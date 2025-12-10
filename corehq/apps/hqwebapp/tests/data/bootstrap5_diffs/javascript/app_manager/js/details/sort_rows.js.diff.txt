@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -6,7 +6,7 @@
+  * sorting-related attributes like direction.
+  */
+ import ko from "knockout";
+-import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
++import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
+ import Utils from "app_manager/js/details/utils";
+ 
+ var sortRow = function (params, saveButton) {

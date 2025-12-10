@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -3,8 +3,8 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
++import hqMain from "hqwebapp/js/bootstrap5/main";
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
+ 
+ function Language(langcode, languages) {
+     var self = {};

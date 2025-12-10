@@ -1,0 +1,18 @@
+--- 
++++ 
+@@ -2,11 +2,11 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import "jquery-textchange/jquery.textchange";
+-import main from "hqwebapp/js/bootstrap3/main";
++import main from "hqwebapp/js/bootstrap5/main";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import appManager from "app_manager/js/bootstrap3/app_manager";
+-import graphConfigModule from "app_manager/js/details/bootstrap3/graph_config";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable
++import appManager from "app_manager/js/bootstrap5/app_manager";
++import graphConfigModule from "app_manager/js/details/bootstrap5/graph_config";
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // sortable
+ 
+ var graphConfigModel = function (reportId, reportName, availableReportIds, reportCharts, graphConfigs,
+     columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {

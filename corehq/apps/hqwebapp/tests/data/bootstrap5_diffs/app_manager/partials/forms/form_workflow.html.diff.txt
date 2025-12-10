@@ -1,0 +1,126 @@
+--- 
++++ 
+@@ -1,6 +1,6 @@
+ {% load i18n %}
+-<div class="form-group">
+-  <label class="control-label col-sm-2">
++<div class="form-group">  {# todo B5: css-form-group #}
++  <label class="form-label col-md-2">
+     {% trans "End of Form Navigation" %}
+     <span class="hq-help-template"
+           data-title="{% trans "End of Form Navigation" %}"
+@@ -8,9 +8,9 @@
+               Here you can set the application to navigate automatically to a different location in the app.{% endblocktrans %}"
+     ></span>
+   </label>
+-  <div id="form-workflow" class="col-sm-4 commcare-feature" data-since-version="2.10">
+-    <div class="form-group" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">
+-      <select name="post_form_workflow" class="form-control" data-bind="
++  <div id="form-workflow" class="col-md-4 commcare-feature" data-since-version="2.10">
++    <div class="form-group" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">  {# todo B5: css-form-group, css-has-error #}
++      <select name="post_form_workflow" class="form-select" data-bind="
+                 optstr: workflowOptions(),
+                 value: workflow,
+                 staticSelect2: {},
+@@ -41,12 +41,12 @@
+                 }
+                 ">
+       </div>
+-      <div class="form-group">
++      <div class="form-group">  {# todo B5: css-form-group #}
+         <strong>
+           {% trans "Navigation Fallback" %}
+         </strong>
+         <div>
+-          <select name="post_form_workflow_fallback" class="form-control" data-bind="
++          <select name="post_form_workflow_fallback" class="form-select" data-bind="
+                         optstr: workflowFallbackOptions(),
+                         value: workflowfallback,
+                         optionsCaption: gettext('Choose a fallback option...'),
+@@ -54,8 +54,8 @@
+                     "></select>
+         </div>
+       </div>
+-      <div class="form-group">
+-        <button class="btn btn-default" data-bind="click: onAddFormLink">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <button class="btn btn-outline-primary" data-bind="click: onAddFormLink">
+           <i class="fa fa-plus"></i>
+           {% trans "Add link" %}
+         </button>
+@@ -66,9 +66,9 @@
+ </div>
+ 
+ <script type="text/html" id="form-link-template">
+-  <div class="well">
++  <div class="card">  {# todo B5: css-well #}
+     <div>
+-      <div class="form-group">
++      <div class="form-group">  {# todo B5: css-form-group #}
+         <textarea name="form_links_xpath_expressions"
+                   placeholder="{% trans "XPath Expression" %}"
+                   rows="1"
+@@ -77,8 +77,8 @@
+                   spellcheck="false"
+         ></textarea>
+       </div>
+-      <div class="form-group">
+-        <select class="form-control" name="form_links_form_ids" data-bind="
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <select class="form-select" name="form_links_form_ids" data-bind="
+                   options: $parent.forms,
+                   optionsText: 'name',
+                   optionsValue: 'uniqueId',
+@@ -92,18 +92,18 @@
+             {% trans "This form requires manual linking." %}
+           </div>
+           <div class="help-block" data-bind="visible: formLink.autoLink() && !formLink.manualDatums()">
+-            <span data-bind="click: enableManualDatums" class="btn btn-default btn-xs">
++            <span data-bind="click: enableManualDatums" class="btn btn-outline-primary btn-sm">
+               {% trans "Enable manual linking" %}
+             </span>
+           </div>
+           <div class="help-block" data-bind="visible: formLink.manualDatums">
+-            <span data-bind="click: disableManualDatums" class="btn btn-danger btn-xs">
++            <span data-bind="click: disableManualDatums" class="btn btn-outline-danger btn-sm">
+               {% trans "Disable manual linking" %}
+             </span>
+           </div>
+           <!-- ko ifnot: formLink.advancedMode -->
+             <div class="help-block" data-bind="visible: formLink.showLinkDatums()">
+-              <button class="btn btn-default btn-xs" data-bind="click: formLink.fetchDatums">
++              <button class="btn btn-outline-primary btn-sm" data-bind="click: formLink.fetchDatums">
+                 <!-- ko if: formLink.datumsFetched() -->
+                 {% trans "Refresh" %}
+                 <!-- /ko -->
+@@ -119,15 +119,15 @@
+               {% trans "Error fetching link data." %}
+             </div>
+             <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
+-              <div class="form-group">
+-                <div class="panel panel-appmanager">
+-                  <div class="panel-heading">
+-                    <h4 class="panel-title panel-title-nolink">
++              <div class="form-group">  {# todo B5: css-form-group #}
++                <div class="card panel-appmanager">  {# todo B5: css-panel #}
++                  <div class="card-header">
++                    <h4 class="card-title card-title-nolink">
+                       <span data-bind="text: name"></span>
+-                      <span class="label label-primary" data-bind="text: caseType"></span>
++                      <span class="badge text-bg-primary" data-bind="text: caseType"></span>
+                     </h4>
+                   </div>
+-                  <div class="panel-body">
++                  <div class="card-body">
+                     <div class="controls">
+                       <textarea name="_xpath"
+                         placeholder="XPath Expression"
+@@ -155,7 +155,7 @@
+       </ul>
+     </div>
+ 
+-    <button class="btn btn-danger btn-xs"
++    <button class="btn btn-outline-danger btn-sm"
+             data-bind="click: $parent.onDestroyFormLink.bind($parent)">
+       <i class="fa fa-remove"></i>
+       {% trans "Remove this link" %}
