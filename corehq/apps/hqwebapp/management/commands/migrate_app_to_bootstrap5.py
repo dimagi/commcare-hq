@@ -30,6 +30,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.git import (
     ensure_no_pending_changes_before_continuing,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
+    SUBMODULE_APPS,
     get_app_template_folder,
     get_app_static_folder,
     get_short_path,
@@ -125,8 +126,19 @@ class Command(BaseCommand):
                     show_apply_commit=not has_changes
                 )
 
+        is_submodule_app = app_name in SUBMODULE_APPS
+        if not self.no_split and is_submodule_app:
+            self.stdout.write(self.style.ERROR(
+                f"\n--no-split must be used when migrating submodule apps like '{app_name}'.\n"
+            ))
+            self.stdout.write(
+                "\nThis is because it is very challenging to keep split files in sync outside of the main repo.\n"
+                "Please re-run the command with --no-split.\n\n"
+            )
+            return
+
         self.skip_all = options.get('skip_all')
-        if self.skip_all and self.no_split:
+        if self.skip_all and self.no_split and not is_submodule_app:
             self.stderr.write(
                 "\n--skip-all and --no-split cannot be used at the same time.\n"
             )
@@ -155,12 +167,13 @@ class Command(BaseCommand):
         app_javascript = self.get_js_files_for_migration(app_name, selected_filename)
         self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
-        mocha_paths = [path for path in migrated_templates
-                       if f'{app_name}/spec/' in str(path)]
-        if mocha_paths:
-            mocha_paths = [get_short_path(app_name, path, True)
-                           for path in mocha_paths]
-            self.make_updates_to_gruntfile(app_name, mocha_paths)
+        if not is_submodule_app:
+            mocha_paths = [path for path in migrated_templates
+                        if f'{app_name}/spec/' in str(path)]
+            if mocha_paths:
+                mocha_paths = [get_short_path(app_name, path, True)
+                            for path in mocha_paths]
+                self.make_updates_to_gruntfile(app_name, mocha_paths)
 
         self.show_next_steps(app_name)
 
@@ -189,13 +202,15 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             self.format_header(f"All done with Step 2 of migrating {app_name}!")
         ))
-        self.stdout.write(self.style.WARNING(
-            "IMPORTANT: If this is the first time running this command, "
-            "it's recommended to re-run the command\nat least one more "
-            "time in the event of nested dependencies / inheritance "
-            "in split files.\n\n"
-        ))
         if not self.no_split:
+            self.stdout.write(self.style.WARNING(
+                "IMPORTANT: If this is the first time running this command, "
+                "it's recommended to re-run the command\nat least one more "
+                "time in the event of nested dependencies / inheritance "
+                "in split files.\n\n"
+            ))
+        is_submodule_app = app_name in SUBMODULE_APPS
+        if not self.no_split and not is_submodule_app:
             self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
                               "using the command below and follow the next steps after.\n\n")
             self.stdout.write(self.style.MIGRATE_HEADING(
@@ -314,7 +329,12 @@ class Command(BaseCommand):
                 saved_line, line_changelog = self.confirm_and_get_line_changes(
                     line_number, old_line, new_line, renames, flags, review_changes
                 )
-                saved_line = add_todo_comments_for_flags(flags, saved_line, is_template)
+                saved_line = add_todo_comments_for_flags(
+                    flags,
+                    saved_line,
+                    is_template,
+                    is_submodule_app=app_name in SUBMODULE_APPS,
+                )
 
                 new_lines.append(saved_line)
                 if saved_line != old_line or flags:
@@ -404,9 +424,12 @@ class Command(BaseCommand):
 
     def migrate_file_in_place(self, app_name, file_path, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
-        confirm = get_confirmation(f"Apply changes to '{short_path}'?", default='y')
-        if not confirm:
-            self.write_response("ok, discarding changes...")
+        is_submodule_app = app_name in SUBMODULE_APPS
+        if not is_submodule_app:
+            confirm = get_confirmation(f"Apply changes to '{short_path}'?", default='y')
+            if not confirm:
+                self.write_response("ok, discarding changes...")
+                return
 
         working_directory = get_working_directory(app_name)
         has_changes = has_pending_git_changes(working_directory)
@@ -423,6 +446,8 @@ class Command(BaseCommand):
         )
 
     def show_next_steps_after_migrating_file_in_place(self, app_name, short_path):
+        if app_name in SUBMODULE_APPS:
+            return
         self.stdout.write(self.style.MIGRATE_LABEL(
             "\n\nPlease take a moment now to search for all views referencing\n"
         ))
