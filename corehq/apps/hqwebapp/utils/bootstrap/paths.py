@@ -110,6 +110,8 @@ def get_app_static_folder_for_submodule(app_name, parent_path):
 
 
 def get_short_path(app_name, full_path, is_template):
+    if app_name in SUBMODULE_APPS:
+        return get_short_path_for_submodule(app_name, full_path, is_template)
     parent_path = get_parent_path(app_name)
     _, app_name = get_app_name_and_slug(app_name)
     if is_template:
@@ -120,6 +122,24 @@ def get_short_path(app_name, full_path, is_template):
         str(replace_path) + '/',
         ''
     )
+
+
+def get_short_path_for_submodule(app_name, full_path, is_template):
+    if app_name == "vellum":
+        if is_template:
+            parent_path = get_parent_path(app_name)
+            replace_path = parent_path / "templates"
+            return str(full_path).replace(
+                str(replace_path) + '/',
+                ''
+            )
+        else:
+            parent_path = get_parent_path(app_name)
+            return str(full_path).replace(
+                str(parent_path) + '/',
+                ''
+            )
+    raise ValueError(f"Unknown submodule app: {app_name}")
 
 
 def get_all_template_paths_for_app(app_name):
