@@ -254,14 +254,14 @@ class Command(BaseCommand):
             self.stdout.write("\n".join(list_to_display))
             self.stdout.write("\n\n")
 
-    def suggest_commit_message(self, message, show_apply_commit=False):
+    def suggest_commit_message(self, message, show_apply_commit=False, working_directory=None):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
         if show_apply_commit:
             confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
             if confirm:
-                apply_commit(message)
+                apply_commit(message, working_directory)
                 return
-        commit_string = get_commit_string(message)
+        commit_string = get_commit_string(message, working_directory)
         self.stdout.write("\n\nSuggested command:\n")
         self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")
