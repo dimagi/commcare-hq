@@ -365,8 +365,8 @@
 -
 -.controls-text {
 -  padding-top: 7px;
-+.row > div > .form-check:first-child,
-+.row > div > .input-group > .form-check:first-child {
++.row > div > .form-check,
++.row > div > .input-group > .form-check {
 +  padding-top: add($input-padding-y, $input-border-width);
 +  margin-bottom: 0;
  }
