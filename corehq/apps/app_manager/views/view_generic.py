@@ -240,7 +240,7 @@ def _handle_bad_states(
     if app.application_version == APP_V1:
         _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, "app_manager/no_longer_supported.html", {
+        return render(request, "app_manager/bootstrap3/no_longer_supported.html", {
             'domain': domain,
             'app': app,
         })
