@@ -9,7 +9,6 @@ from .views import (
     InviteWebUserView,
     UploadWebUsers,
     WebUserUploadStatusView,
-    ListRolesView,
     ListWebUsersView,
     add_domain_membership,
     change_password,
@@ -17,12 +16,10 @@ from .views import (
     delete_request,
     check_sso_trust,
     deactivate_web_user,
-    delete_user_role,
     domain_accounts,
     make_phone_number_default,
     paginate_enterprise_users,
     paginate_web_users,
-    post_user_role,
     reactivate_web_user,
     register_fcm_device_token,
     remove_web_user,
@@ -32,6 +29,11 @@ from .views import (
     download_web_users,
     DownloadWebUsersStatusView,
     WebUserUploadJobPollView,
+)
+from .views.role import (
+    delete_user_role,
+    ListRolesView,
+    post_user_role,
 )
 from .views.web import (
     accept_invitation,
