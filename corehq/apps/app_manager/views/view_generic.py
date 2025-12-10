@@ -116,7 +116,7 @@ def view_generic(
         })
 
     if form:
-        template = "app_manager/form_view.html"
+        template = "app_manager/bootstrap3/form_view.html"
         context.update(get_form_view_context(
             request,
             domain,
