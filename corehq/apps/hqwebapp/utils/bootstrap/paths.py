@@ -13,6 +13,9 @@ PARENT_PATHS = {
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
 }
+SUBMODULE_APPS = [
+    "vellum",
+]
 GRUNTFILE_PATH = COREHQ_BASE_DIR.parent / "Gruntfile.js"
 IGNORED_PATHS_BY_APP = {
     "hqwebapp": [
@@ -63,6 +66,8 @@ def is_mocha_path(path):
 
 
 def get_app_name_and_slug(app_name):
+    if app_name in SUBMODULE_APPS:
+        return app_name, app_name
     app_parts = app_name.split(".")
     if len(app_parts) == 2:
         return app_parts[0], app_parts[1]
