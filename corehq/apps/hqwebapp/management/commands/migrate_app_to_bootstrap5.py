@@ -517,8 +517,8 @@ class Command(BaseCommand):
             # also check extension-less references for javascript files
             references.extend(update_and_get_references(
                 app_name,
-                get_requirejs_reference(short_path),
-                get_requirejs_reference(bootstrap3_short_path),
+                get_requirejs_reference(app_name, short_path),
+                get_requirejs_reference(app_name, bootstrap3_short_path),
                 is_template=False
             ))
         if references:
@@ -571,8 +571,8 @@ class Command(BaseCommand):
             if not is_template:
                 references.extend(update_and_get_references(
                     app_name,
-                    get_requirejs_reference(old_reference),
-                    get_requirejs_reference(new_reference),
+                    get_requirejs_reference(app_name, old_reference),
+                    get_requirejs_reference(app_name, new_reference),
                     is_template=False
                 ))
             if references:

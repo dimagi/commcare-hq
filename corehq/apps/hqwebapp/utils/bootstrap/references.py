@@ -9,6 +9,9 @@ def update_and_get_references(app_name, old_reference, new_reference, is_templat
     if app_name == "vellum" and old_reference.endswith(".html"):
         old_reference = f"vellum/templates/{old_reference}"
         new_reference = f"vellum/templates/{new_reference}"
+    elif app_name == "vellum" and old_reference.endswith(".js"):
+        old_reference = f"vellum/{old_reference}"
+        new_reference = f"vellum/{new_reference}"
 
     references = []
     for file_path, filedata in get_references_data(app_name, old_reference, is_template):
@@ -24,7 +27,10 @@ def update_and_get_references(app_name, old_reference, new_reference, is_templat
     return references
 
 
-def get_requirejs_reference(short_path):
+def get_requirejs_reference(app_name, short_path):
+    if app_name == "vellum":
+        short_path = short_path.replace('.js', '')
+        return f"vellum/{short_path}"
     return short_path.replace('.js', '')
 
 

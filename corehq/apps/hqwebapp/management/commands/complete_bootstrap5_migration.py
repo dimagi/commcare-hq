@@ -229,7 +229,7 @@ class Command(BaseCommand):
     def do_bootstrap3_references_exist(self, app_name, bootstrap3_short_path, is_template):
         bootstrap3_references = get_references(app_name, bootstrap3_short_path, is_template=True)
         if not is_template:
-            requirejs_reference = get_requirejs_reference(bootstrap3_short_path)
+            requirejs_reference = get_requirejs_reference(app_name, bootstrap3_short_path)
             bootstrap3_references.extend(get_references(app_name, requirejs_reference, is_template=True))
             js_refs = get_references(app_name, requirejs_reference, is_template=False)
             # make sure the bootstrap3 version of the file isn't a reference
@@ -259,8 +259,8 @@ class Command(BaseCommand):
         if not is_template:
             references.extend(update_and_get_references(
                 app_name,
-                get_requirejs_reference(bootstrap5_short_path),
-                get_requirejs_reference(destination_short_path),
+                get_requirejs_reference(app_name, bootstrap5_short_path),
+                get_requirejs_reference(app_name, destination_short_path),
                 False
             ))
         self.stdout.write(self.style.SUCCESS(
