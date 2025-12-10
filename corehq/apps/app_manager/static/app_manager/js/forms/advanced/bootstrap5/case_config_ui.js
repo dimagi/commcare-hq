@@ -4,7 +4,7 @@ import _ from "underscore";
 import "jquery-textchange/jquery.textchange";
 import caseConfigUtils from "app_manager/js/case_config_utils";
 import casePropertiesModels from "app_manager/js/forms/advanced/case_properties";
-import actions from "app_manager/js/forms/advanced/actions";
+import actions from "app_manager/js/forms/advanced/bootstrap5/actions";
 import google from "analytix/js/google";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import main from "hqwebapp/js/bootstrap5/main";
