@@ -1,0 +1,9 @@
+<button type="button" class="new-module-option" data-type="{{ module_type }}">
+  <div class="card ">  {# todo B5: css-panel #}
+    <div class="card-header">{% block heading %}{% endblock %}</div>
+    <div class="card-body">
+      <i class="{{ icon_class }}"></i>
+      <p>{% block description %}{% endblock %}</p>
+    </div>
+  </div>
+</button>
