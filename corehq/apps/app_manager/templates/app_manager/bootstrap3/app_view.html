@@ -47,5 +47,5 @@
   {% for uploader in uploaders %}
     {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
   {% endfor %}
-  {% include 'app_manager/partials/toggle_diff_modal.html' %}
+  {% include 'app_manager/partials/bootstrap3/toggle_diff_modal.html' %}
 {% endblock %}
