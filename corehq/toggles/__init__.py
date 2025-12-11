@@ -853,7 +853,7 @@ GRAPH_CREATION = StaticToggle(
 IS_CONTRACTOR = StaticToggle(
     'is_contractor',
     'Is contractor',
-    TAG_DEPRECATED,
+    TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )
 
