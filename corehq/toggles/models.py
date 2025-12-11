@@ -52,6 +52,13 @@ class Toggle(Document):
             docid = generate_toggle_id(docid)
         return super(Toggle, cls).get(docid, rev=None, db=None, dynamic_properties=True)
 
+    @classmethod
+    def get_or_create(cls, docid, **kwargs):
+        try:
+            return Toggle.get(docid)
+        except ResourceNotFound:
+            return Toggle(slug=docid, **kwargs)
+
     def add(self, item):
         """
         Adds an item to the toggle. Only saves if necessary.
