@@ -1,0 +1,35 @@
+{# styleguide/htmx_next_action_simple/main.html #}
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{# Use the standard HTMX + Alpine entry point; no extra JS is required. #}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block content %}
+  <div class="container py-4">
+    <h1 class="mb-3">
+      Favorite Fruit (Next Action Demo)
+    </h1>
+    <p class="text-muted">
+      This demo shows a small multi-step flow using a single view and the <code>next_action</code> pattern.
+    </p>
+
+    <div
+      id="{{ container_id }}"
+      hx-trigger="load"
+      hx-get="{{ request.path_info }}"
+      hq-hx-action="load_first_step"
+    >
+      <div class="htmx-indicator">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Loading...
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

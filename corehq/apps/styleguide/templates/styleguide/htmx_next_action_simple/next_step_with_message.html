@@ -1,0 +1,29 @@
+{# styleguide/htmx_next_action_simple/next_action_form.html #}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<div id="{{ container_id }}" hx-swap="outerHTML">
+  {% if message %}
+    <div
+      class="alert alert-success alert-dismissible fade show mb-3"
+      role="alert"
+    >
+      {{ message }}
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="{% trans "Close" %}"
+      ></button>
+    </div>
+  {% endif %}
+
+  <form
+    hx-post="{{ request.path_info }}"
+    hx-target="#{{ container_id }}"
+    hx-disabled-elt="find button"
+    hq-hx-action="{{ next_action }}"
+  >
+    {% crispy form %}
+  </form>
+</div>
