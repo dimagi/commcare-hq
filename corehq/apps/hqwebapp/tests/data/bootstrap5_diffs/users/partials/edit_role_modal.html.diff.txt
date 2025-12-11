@@ -515,7 +515,7 @@
 @@ -488,14 +488,14 @@
                </div>
              </div>
-             {% if request|request_has_privilege:"APP_USER_PROFILES" and request|toggle_enabled:"RESTRICT_USER_PROFILE_ASSIGNMENT" %}
+             {% if request|request_has_privilege:"APP_USER_PROFILES" %}
 -              <div class="form-group"
 +              <div class="form-group"  {# todo B5: css-form-group #}
                  data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()">
