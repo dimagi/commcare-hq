@@ -1878,7 +1878,7 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 PROCESS_REPEATERS = FeatureRelease(
     'process_repeaters',
     'Process repeaters instead of processing repeat records independently',
-    TAG_DEPRECATED,
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     owner='Norman Hooper',
     description="""
