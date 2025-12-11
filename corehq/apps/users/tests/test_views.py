@@ -316,7 +316,7 @@ class TestDeleteRole(TestCase):
             _delete_user_role(self.domain, {"_id": role.get_id})
 
     def setUp(self):
-        user_count_patcher = patch('corehq.apps.users.views.get_role_user_count', return_value=0)
+        user_count_patcher = patch('corehq.apps.users.views.role.get_role_user_count', return_value=0)
         self.user_count_mock = user_count_patcher.start()
         self.addCleanup(user_count_patcher.stop)
 
