@@ -1249,6 +1249,7 @@ toggles
  0001_toggle_edit_permission
  0002_assign_permissions_superusers
  0003_delete_web_usercase_toggle
+ 0004_alter_toggleeditpermission_tag_slug
 translations
  0001_initial
  0002_transifexblacklist
