@@ -159,6 +159,10 @@ def styleguide_htmx_and_alpine(request):
                 code=get_example_context('styleguide/htmx_todo/item_done.html'),
                 language="Django",
             ),
+            'htmx_debug_mixin_usage': CodeForDisplay(
+                code=get_python_example_context('htmx_debug_mixin_usage.py'),
+                language="Python",
+            ),
             'loading_button': CodeForDisplayWithPartial(
                 code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_button.html'),
                 partial="styleguide/bootstrap5/examples/htmx_loading_button.html",
