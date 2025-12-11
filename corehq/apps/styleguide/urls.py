@@ -4,7 +4,7 @@ from corehq.apps.styleguide.examples.bootstrap5.example_urls import urlpatterns 
 from corehq.apps.styleguide.examples.bootstrap5.htmx_alpine_form_views import (
     HtmxAlpineFormDemoView,
 )
-from corehq.apps.styleguide.examples.bootstrap5.htmx_hq_hx_action import TodoListDemoView
+from corehq.apps.styleguide.examples.bootstrap5.htmx_todo_list import TodoListDemoView
 from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_host_view import HtmxPaginationView
 from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_table_view import ExamplePaginatedTableView
 from corehq.apps.styleguide.views import (
