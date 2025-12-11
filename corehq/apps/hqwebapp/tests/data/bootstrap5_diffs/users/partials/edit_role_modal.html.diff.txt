@@ -3,7 +3,7 @@
 @@ -1,571 +1,858 @@
  {% load i18n %}
  {% load hq_shared_tags %}
-
+ 
 -<div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog" class="modal fade">
 +<div
 +  data-bind="modal: roleBeingEdited"
@@ -1238,7 +1238,7 @@
 +                  </div>
 +                </div>
 +              </div>
-+              {% if request|request_has_privilege:"APP_USER_PROFILES" and request|toggle_enabled:"RESTRICT_USER_PROFILE_ASSIGNMENT" %}
++              {% if request|request_has_privilege:"APP_USER_PROFILES" %}
 +                <div
 +                  class="row"
 +                  data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()"
