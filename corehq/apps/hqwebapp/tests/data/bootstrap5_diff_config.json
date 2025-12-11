@@ -1010,15 +1010,6 @@
       "file_type": "template",
       "label": "registration/partials",
       "compare_all_files": true
-    },
-    {
-      "directories": [
-        "spec/bootstrap3",
-        "spec/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "registration/spec",
-      "compare_all_files": true
     }
   ],
   "apps/users/static/users/js": [
