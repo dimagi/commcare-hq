@@ -24,6 +24,7 @@ from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_errors import Error
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout import KnockoutCrispyExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout_validation import \
     KnockoutValidationCrispyExampleForm
+from corehq.apps.styleguide.examples.bootstrap5.datepicker_alpine_crispy import DatepickerAlpineForm
 from corehq.apps.styleguide.examples.bootstrap5.disabled_fields import DisabledFieldsExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.multiselect_form import MultiselectDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.placeholder_help_text import PlaceholderHelpTextExampleForm
@@ -572,6 +573,12 @@ def styleguide_molecules_dates_times(request):
             'time_only_24': HtmlWithJsDemo(
                 code_html=get_html_example_context('time_only_24.html'),
                 code_js=get_js_example_context('time_only_24.js'),
+            ),
+            'datepicker_alpine_simple': get_html_example_context('datepicker_alpine_simple.html'),
+            'datepicker_alpine_datetime': get_html_example_context('datepicker_alpine_datetime.html'),
+            'datepicker_alpine_crispy': CrispyFormsDemo(
+                DatepickerAlpineForm(),
+                get_python_example_context('datepicker_alpine_crispy.py'),
             ),
         }
     })
