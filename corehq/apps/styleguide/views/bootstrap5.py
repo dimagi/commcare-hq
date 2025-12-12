@@ -352,19 +352,11 @@ def styleguide_molecules_selections(request):
                     code_python=get_python_example_context('select2_manual_form.py'),
                     code_js=get_js_example_context('select2_manual_crispy.js'),
                 ),
-                'select2_css_class': get_example_context('styleguide/bootstrap5/examples/select2_css_class.html'),
-                'select2_alpine_basic': get_example_context(
-                    'styleguide/bootstrap5/examples/select2_alpine_basic.html'
-                ),
-                'select2_alpine_with_options': get_example_context(
-                    'styleguide/bootstrap5/examples/select2_alpine_with_options.html'
-                ),
-                'select2_alpine_select2change': get_example_context(
-                    'styleguide/bootstrap5/examples/select2_alpine_select2change.html'
-                ),
-                'select2_css_class_multiple': get_example_context(
-                    'styleguide/bootstrap5/examples/select2_css_class_multiple.html'
-                ),
+                'select2_css_class': get_html_example_context('select2_css_class.html'),
+                'select2_alpine_basic': get_html_example_context('select2_alpine_basic.html'),
+                'select2_alpine_with_options': get_html_example_context('select2_alpine_with_options.html'),
+                'select2_alpine_select2change': get_html_example_context('select2_alpine_select2change.html'),
+                'select2_css_class_multiple': get_html_example_context('select2_css_class_multiple.html'),
                 'select2_css_class_crispy': CrispyFormsDemo(
                     Select2CssClassDemoForm(),
                     get_python_example_context('select2_css_class_form.py'),
