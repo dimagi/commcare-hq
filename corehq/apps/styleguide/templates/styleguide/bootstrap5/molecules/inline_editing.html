@@ -29,6 +29,24 @@
 {% block content %}
   <h2 id="overview">Overview</h2>
   {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
+  <div class="alert alert-primary">
+    <strong>To see an Alpine + HTMX version of inline editing, please check out
+    the <a href="{% url "styleguide_htmx_and_alpine_b5" %}#example-todo">HTMX To-Do list example</a>.
+    </strong>
+    <p>
+      A nice item to add to that To-Do list is updating this
+      page to include a drop-in Alpine inline editing widget via an
+      <a
+        href="https://alpinejs.dev/advanced/extending#custom-directives"
+        target="_blank"
+      >Alpine directive</a> and/or reusable
+      <a
+        href="https://alpinejs.dev/globals/alpine-data"
+        target="_blank"
+      >Alpine.data model</a>.
+      What do you think? :)
+    </p>
+  </div>
   <p>
     HQ has a custom component for inline editing, based on
     <a href="https://knockoutjs.com/documentation/component-overview.html"
