@@ -195,6 +195,8 @@ def _get_individual_update(domain, data, user, is_creation):
 
 
 def _get_bulk_updates(domain, all_data, user):
+    from .get_bulk import get_bulk
+
     if len(all_data) > CASEBLOCK_CHUNKSIZE:
         raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
@@ -202,9 +204,28 @@ def _get_bulk_updates(domain, all_data, user):
     errors = []
     for i, data in enumerate(all_data, start=1):
         try:
-            is_creation = data.pop('create', None)
-            if is_creation is None:
+            if 'create' not in data:
                 raise UserError("A 'create' flag is required for each update.")
+            is_creation = data.pop('create')
+            if is_creation is None:
+                if not data.get('case_id') and data.get('external_id'):
+                    bulk_fetch_results_dict = get_bulk(
+                        domain,
+                        user,
+                        case_ids=[],
+                        external_ids=[data['external_id']],
+                    )  # raises UserError
+                    case = bulk_fetch_results_dict['cases'][0]
+                    if case.get('error') == 'not found':
+                        is_creation = True
+                    else:
+                        is_creation = False
+                        data['case_id'] = case['case_id']
+                else:
+                    raise UserError(
+                        'UPSERT operation requires "create": null, '
+                        '"external_id" set and "case_id" not set.'
+                    )
             updates.append(_get_individual_update(domain, data, user, is_creation))
         except UserError as e:
             errors.append(f'Error in row {i}: {e}')
