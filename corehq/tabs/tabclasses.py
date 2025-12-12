@@ -2671,9 +2671,10 @@ class AdminTab(UITab):
                 {'title': _('Manage Notifications'),
                  'url': reverse(ManageNotificationView.urlname),
                  'icon': 'fa fa-bell'},
-                {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email'),
-                 'icon': 'fa fa-envelope'},
+                # Disabled until https://dimagi.atlassian.net/browse/SAAS-19006 is addressed
+                # {'title': _('Mass Email Users'),
+                #  'url': reverse('mass_email'),
+                #  'icon': 'fa fa-envelope'},
                 {'title': _('Maintenance Alerts'),
                  'url': reverse('alerts'),
                  'icon': 'fa fa-warning'},

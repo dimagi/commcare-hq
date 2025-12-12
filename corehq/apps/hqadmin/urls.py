@@ -6,7 +6,6 @@ from corehq.apps.hqadmin.views.data import doc_in_es, download_blob, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
     ReprocessMessagingCaseUpdatesView,
-    mass_email,
 )
 from corehq.apps.hqadmin.views.reports import (
     DownloadGIRView,
@@ -42,7 +41,8 @@ urlpatterns = [
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
     url(r'^global_thresholds/$', GlobalThresholds.as_view(), name=GlobalThresholds.urlname),
-    url(r'^mass_email/$', mass_email, name="mass_email"),
+    # Disabled until https://dimagi.atlassian.net/browse/SAAS-19006 is addressed
+    # url(r'^mass_email/$', mass_email, name="mass_email"),
     # Same view supported with three possible urls to support tracking
     # username and domain in the url via audit
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
