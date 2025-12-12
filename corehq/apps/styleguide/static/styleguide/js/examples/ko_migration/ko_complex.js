@@ -11,7 +11,7 @@ $(function () {
     };
     var complexModel = function (initialData) {
         let self = {};
-        self.keyValuePairs = ko.observableArray(initialData.map(function(item) {
+        self.keyValuePairs = ko.observableArray(initialData.map(function (item) {
             return kvModel(item.key, item.value);
         }));
         self.addKeyValuePair = function () {
