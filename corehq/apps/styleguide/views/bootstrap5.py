@@ -28,6 +28,7 @@ from corehq.apps.styleguide.examples.bootstrap5.disabled_fields import DisabledF
 from corehq.apps.styleguide.examples.bootstrap5.multiselect_form import MultiselectDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.placeholder_help_text import PlaceholderHelpTextExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_ajax_form import Select2AjaxDemoForm
+from corehq.apps.styleguide.examples.bootstrap5.select2_alpine_crispy import Select2AlpineForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_autocomplete_ko_form import Select2AutocompleteKoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_css_class_form import Select2CssClassDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_dynamic_ko_form import Select2DynamicKoForm
@@ -352,6 +353,15 @@ def styleguide_molecules_selections(request):
                     code_js=get_js_example_context('select2_manual_crispy.js'),
                 ),
                 'select2_css_class': get_example_context('styleguide/bootstrap5/examples/select2_css_class.html'),
+                'select2_alpine_basic': get_example_context(
+                    'styleguide/bootstrap5/examples/select2_alpine_basic.html'
+                ),
+                'select2_alpine_with_options': get_example_context(
+                    'styleguide/bootstrap5/examples/select2_alpine_with_options.html'
+                ),
+                'select2_alpine_select2change': get_example_context(
+                    'styleguide/bootstrap5/examples/select2_alpine_select2change.html'
+                ),
                 'select2_css_class_multiple': get_example_context(
                     'styleguide/bootstrap5/examples/select2_css_class_multiple.html'
                 ),
@@ -398,6 +408,10 @@ def styleguide_molecules_selections(request):
                 'select2_ajax_crispy': CrispyFormsDemo(
                     Select2AjaxDemoForm(),
                     get_python_example_context('select2_ajax_form.py'),
+                ),
+                'select2_alpine_crispy': CrispyFormsDemo(
+                    Select2AlpineForm(),
+                    get_python_example_context('select2_alpine_crispy.py'),
                 ),
             }
         }

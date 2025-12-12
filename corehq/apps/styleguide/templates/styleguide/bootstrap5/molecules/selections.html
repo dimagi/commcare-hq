@@ -33,6 +33,12 @@
               <li><a href="#select2-css-class-crispy">With Crispy Forms</a></li>
             </ul>
           </li>
+          <li>
+            <a href="#select2-alpine">Alpine <code>x-select2</code> Directive</a>
+            <ul>
+              <li><a href="#select2-alpine-crispy">With Crispy Forms</a></li>
+            </ul>
+          </li>
           <li><a href="#select2-ko-dynamic">Dynamic Knockout Binding</a>
             <ul>
               <li><a href="#select2-ko-dynamic-crispy">With Crispy Forms</a></li>
@@ -137,8 +143,10 @@
     the <a href='https://select2.org/' target='_blank'>full documentation</a> for details.
   </p>
   <p>
-    We instantiate select2 in a number of different ways: manually with javascript, via knockout bindings,
-    and by using CSS classes that certain javascript modules search for.
+    We instantiate <code>select2</code> in a few different ways:
+    manually with JavaScript, via Knockout bindings, via an Alpine
+    directive (<code>x-select2</code>), and by using CSS classes that
+    certain JavaScript modules search for.
   </p>
   <p>
     We also have a <code>select2</code> options for common behaviors like validating email addresses and displaying form
@@ -187,6 +195,98 @@
     <code>crispy.Field</code>'s <code>css_class</code> argument instead.
   </p>
   {% include 'styleguide/bootstrap5/form_example.html' with content=examples.select2_css_class_crispy %}
+
+  <h3 id="select2-alpine" class="pt-3">
+    Alpine <code>x-select2</code> Directive
+  </h3>
+  <p>
+    On Bootstrap 5 pages using Alpine, the preferred way to initialize
+    <code>select2</code> is via the
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/select2.js"
+      target="_blank"
+    ><code>x-select2</code> Alpine directive</a>. This directive:
+  </p>
+  <ul>
+    <li>initializes <code>select2</code> on the <code>&lt;select&gt;</code>,</li>
+    <li>
+      accepts a JSON configuration object (same options you would pass
+      to <code>$(el).select2({...})</code>),
+    </li>
+    <li>
+      dispatches a custom <code>select2change</code> event when the value
+      changes so Alpine can react, and
+    </li>
+    <li>
+      cleans up <code>select2</code> when the element is removed (e.g., when
+      HTMX replaces a partial).
+    </li>
+  </ul>
+
+  <p>
+    At a minimum, you can add <code>x-select2</code> to any
+    <code>&lt;select&gt;</code>:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.select2_alpine_basic %}
+
+  <p>
+    The directive expression is parsed as JSON, so you can pass
+    <code>select2</code> options directly. For example:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.select2_alpine_with_options %}
+
+  <p>
+    The directive also dispatches a custom
+    <code>select2change</code> event whenever the value changes. In Alpine,
+    you can listen to that event with <code>@select2change</code>:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.select2_alpine_select2change %}
+
+  <div class="alert alert-primary mt-3">
+    <p class="mb-1">
+      <strong>HTMX tip:</strong> <code>x-select2</code> plays nicely with
+      HTMX form submissions.
+    </p>
+    <p class="mb-0">
+      The directive listens for the
+      <code>htmx:afterSettle</code> event and re-applies the
+      <code>select2</code> styles and validation classes after a partial
+      is swapped back into the DOM. This prevents the “stacked native
+      &lt;select&gt; + select2” bug and keeps <code>is-valid</code> /
+      <code>is-invalid</code> in sync with the select2 container when
+      forms are re-rendered via HTMX.
+    </p>
+  </div>
+
+  <h4 id="select2-alpine-crispy" class="pt-2">
+    Alpine <code>x-select2</code> with Crispy Forms
+  </h4>
+  <p>
+    In crispy forms, you pass the directive via the <code>x_select2</code>
+    keyword argument on <code>crispy.Field</code>. The value should be
+    <code>json.dumps</code> of the <code>select2</code> config you want to use.
+    You can also attach Alpine event handlers like
+    <code>@select2change</code>.
+  </p>
+  {% include "styleguide/bootstrap5/form_example.html" with content=examples.select2_alpine_crispy %}
+  <p>
+    In this pattern:
+  </p>
+  <ul>
+    <li>
+      <code>x_select2</code> becomes the Alpine
+      <code>x-select2</code> directive on the rendered
+      <code>&lt;select&gt;</code>,
+    </li>
+    <li>
+      the config is parsed as JSON inside the directive and passed to
+      <code>$(el).select2(config)</code>, and
+    </li>
+    <li>
+      <code>@select2change</code> updates Alpine state using the new value
+      from <code>$event.detail</code>.
+    </li>
+  </ul>
 
   <h3 id="select2-ko-dynamic" class="pt-3">
     Dynamic Knockout Binding
