@@ -139,8 +139,8 @@ def styleguide_htmx_and_alpine(request):
                 code=get_python_example_context('htmx_alpine_form_demo.py'),
                 language="Python",
             ),
-            'htmx_hq_hx_action': CodeForDisplay(
-                code=get_python_example_context('htmx_hq_hx_action.py'),
+            'htmx_todo_list_view': CodeForDisplay(
+                code=get_python_example_context('htmx_todo_list.py'),
                 language="Python",
             ),
             'htmx_todo_main': CodeForDisplay(
@@ -157,6 +157,22 @@ def styleguide_htmx_and_alpine(request):
             ),
             'htmx_todo_item_done': CodeForDisplay(
                 code=get_example_context('styleguide/htmx_todo/item_done.html'),
+                language="Django",
+            ),
+            'htmx_next_action_simple_forms': CodeForDisplay(
+                code=get_python_example_context('htmx_next_action_simple_forms.py'),
+                language="Python",
+            ),
+            'htmx_next_action_simple_view': CodeForDisplay(
+                code=get_python_example_context('htmx_next_action_simple_view.py'),
+                language="Python",
+            ),
+            'htmx_next_action_simple_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_next_action_simple/main.html'),
+                language="Django",
+            ),
+            'htmx_next_action_simple_form_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_next_action_simple/next_step_with_message.html'),
                 language="Django",
             ),
             'htmx_debug_mixin_usage': CodeForDisplay(
@@ -181,6 +197,40 @@ def styleguide_htmx_and_alpine(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/htmx_and_alpine.html', context)
+
+
+@use_bootstrap5
+def styleguide_knockout_to_alpine_guide(request):
+    context = get_navigation_context("styleguide_knockout_to_alpine_guide_b5")
+    context.update({
+        'examples': {
+            'ko_simple': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/ko_simple.html'),
+                code_js=get_js_example_context('ko_migration/ko_simple.js'),
+            ),
+            'alpine_simple': get_html_example_context('ko_migration/alpine_simple.html'),
+            'ko_complex': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/ko_complex.html'),
+                code_js=get_js_example_context('ko_migration/ko_complex.js'),
+            ),
+            'alpine_complex': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/alpine_complex.html'),
+                code_js=get_js_example_context('ko_migration/alpine_complex.js'),
+            ),
+            'alpine_complex_reusable': CodeForDisplay(
+                code=get_js_example_context('ko_migration/alpine_complex_reusable.js'),
+                language='JS',
+            ),
+            'use_alpine_complex_reusable': CodeForDisplay(
+                code=get_js_example_context('ko_migration/use_alpine_complex_reusable.js'),
+                language='JS',
+            ),
+        },
+        'complex_initial_value': [
+            {'key': 'color', 'value': 'Purple'},
+        ],
+    })
+    return render(request, 'styleguide/bootstrap5/knockout_to_alpine.html', context)
 
 
 @use_bootstrap5
