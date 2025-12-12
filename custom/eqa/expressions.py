@@ -40,8 +40,8 @@ def get_yes_no(val):
 @ucr_context_cache(vary_on=('domain', 'case_id', 'xmlns',))
 def get_two_last_forms(domain, case_id, xmlns, evaluation_context):
     xforms_ids = CommCareCase.objects.get_case_xform_ids(case_id)
-    forms = XFormInstance.objects.get_forms(xforms_ids, domain)
-    f_forms = [f for f in forms if f.xmlns == xmlns]
+    forms = XFormInstance.objects.get_forms(xforms_ids)
+    f_forms = [f for f in forms if f.xmlns == xmlns and f.domain == domain]
     s_forms = sorted(f_forms, key=lambda x: x.received_on)
 
     if len(s_forms) >= 2:
@@ -88,8 +88,8 @@ class EQAActionItemSpec(JsonObject):
 
     def __call__(self, item, evaluation_context=None):
         xforms_ids = CommCareCase.objects.get_case_xform_ids(item['_id'])
-        forms = XFormInstance.objects.get_forms(xforms_ids, item['domain'])
-        f_forms = [f for f in forms if f.xmlns == self.xmlns]
+        forms = XFormInstance.objects.get_forms(xforms_ids)
+        f_forms = [f for f in forms if f.xmlns == self.xmlns and f.domain == item['domain']]
         s_forms = sorted(f_forms, key=lambda x: x.received_on)
 
         if len(s_forms) > 0:

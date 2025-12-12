@@ -46,7 +46,7 @@ class TestDeleteESDocsForDomain(TestCase):
         # assert that docs are no longer in ES, but are still in SQL/couch
         manager.index_refresh(form_adapter.index_name)
         self.assertEqual(0, FormES().domain(domain_name).count())
-        self.assertEqual(1, len(XFormInstance.objects.get_forms([form.form_id], domain_name)))
+        self.assertEqual(1, len(XFormInstance.objects.get_forms([form.form_id])))
 
     def test_es_docs_are_cleaned_up_for_nonexistant_domain(self):
         # create an  and sync with ES
@@ -63,7 +63,7 @@ class TestDeleteESDocsForDomain(TestCase):
         # assert that docs are no longer in ES, but are still in SQL/couch
         manager.index_refresh(form_adapter.index_name)
         self.assertEqual(0, FormES().domain('obliterated-domain').count())
-        self.assertEqual(1, len(XFormInstance.objects.get_forms([form.form_id], 'obliterated-domain')))
+        self.assertEqual(1, len(XFormInstance.objects.get_forms([form.form_id])))
 
     def test_es_docs_for_other_domains_are_not_impacted(self):
         domain_name = self.active_domain.name
@@ -81,7 +81,7 @@ class TestDeleteESDocsForDomain(TestCase):
         # assert that docs are no longer in ES, but are still in SQL/couch
         manager.index_refresh(form_adapter.index_name)
         self.assertEqual(1, FormES().domain(domain_name).count())
-        self.assertEqual(1, len(XFormInstance.objects.get_forms([form.form_id], domain_name)))
+        self.assertEqual(1, len(XFormInstance.objects.get_forms([form.form_id])))
 
     def test_fails_on_active_domain(self):
         with self.assertRaises(CommandError):

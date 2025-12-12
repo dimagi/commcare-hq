@@ -626,7 +626,9 @@ class ChatOverSMSView(BaseMessagingSectionView):
 
 def get_case_contact_info(domain_obj, case_ids):
     data = {}
-    for case in CommCareCase.objects.iter_cases(case_ids, domain_obj.name):
+    for case in CommCareCase.objects.iter_cases(case_ids):
+        if case.domain != domain_obj.name:
+            continue
         if domain_obj.custom_case_username:
             name = case.get_case_property(domain_obj.custom_case_username)
         else:
