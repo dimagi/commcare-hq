@@ -200,40 +200,6 @@ def styleguide_htmx_and_alpine(request):
 
 
 @use_bootstrap5
-def styleguide_knockout_to_alpine_guide(request):
-    context = get_navigation_context("styleguide_knockout_to_alpine_guide_b5")
-    context.update({
-        'examples': {
-            'ko_simple': HtmlWithJsDemo(
-                code_html=get_html_example_context('ko_migration/ko_simple.html'),
-                code_js=get_js_example_context('ko_migration/ko_simple.js'),
-            ),
-            'alpine_simple': get_html_example_context('ko_migration/alpine_simple.html'),
-            'ko_complex': HtmlWithJsDemo(
-                code_html=get_html_example_context('ko_migration/ko_complex.html'),
-                code_js=get_js_example_context('ko_migration/ko_complex.js'),
-            ),
-            'alpine_complex': HtmlWithJsDemo(
-                code_html=get_html_example_context('ko_migration/alpine_complex.html'),
-                code_js=get_js_example_context('ko_migration/alpine_complex.js'),
-            ),
-            'alpine_complex_reusable': CodeForDisplay(
-                code=get_js_example_context('ko_migration/alpine_complex_reusable.js'),
-                language='JS',
-            ),
-            'use_alpine_complex_reusable': CodeForDisplay(
-                code=get_js_example_context('ko_migration/use_alpine_complex_reusable.js'),
-                language='JS',
-            ),
-        },
-        'complex_initial_value': [
-            {'key': 'color', 'value': 'Purple'},
-        ],
-    })
-    return render(request, 'styleguide/bootstrap5/knockout_to_alpine.html', context)
-
-
-@use_bootstrap5
 def styleguide_atoms_accessibility(request):
     return render(request, 'styleguide/bootstrap5/atoms/accessibility.html',
                   get_navigation_context("styleguide_atoms_accessibility_b5"))
