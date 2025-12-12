@@ -200,6 +200,84 @@ def styleguide_htmx_and_alpine(request):
 
 
 @use_bootstrap5
+def styleguide_knockout_to_alpine_guide(request):
+    context = get_navigation_context("styleguide_knockout_to_alpine_guide_b5")
+    context.update({
+        'examples': {
+            'ko_simple': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/ko_simple.html'),
+                code_js=get_js_example_context('ko_migration/ko_simple.js'),
+            ),
+            'alpine_simple': get_html_example_context('ko_migration/alpine_simple.html'),
+            'ko_complex': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/ko_complex.html'),
+                code_js=get_js_example_context('ko_migration/ko_complex.js'),
+            ),
+            'alpine_complex': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/alpine_complex.html'),
+                code_js=get_js_example_context('ko_migration/alpine_complex.js'),
+            ),
+            'alpine_complex_reusable': CodeForDisplay(
+                code=get_js_example_context('ko_migration/alpine_complex_reusable.js'),
+                language='JS',
+            ),
+            'use_alpine_complex_reusable': CodeForDisplay(
+                code=get_js_example_context('ko_migration/use_alpine_complex_reusable.js'),
+                language='JS',
+            ),
+            'htmx_complex_view': CodeForDisplay(
+                code=get_python_example_context('htmx_key_value_view.py'),
+                language="Python",
+            ),
+            'htmx_complex_store': CodeForDisplay(
+                code=get_python_example_context('htmx_complex_store.py'),
+                language="Python",
+            ),
+            'htmx_complex_partial': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_key_values/partial.html'),
+                language='Django',
+            ),
+            'htmx_complex_main': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_key_values/main.html'),
+                language='Django',
+            ),
+            'htmx_complex_error': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_key_values/field_with_error.html'),
+                language='Django',
+            ),
+            'prompt_start': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_start.md'),
+                language='Markdown',
+            ),
+            'prompt_simple': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_simple.md'),
+                language='Markdown',
+            ),
+            'prompt_modules': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_modules.md'),
+                language='Markdown',
+            ),
+            'prompt_htmx_alpine': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_htmx_alpine.md'),
+                language='Markdown',
+            ),
+            'prompt_one_liner': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_one_liner.md'),
+                language='Markdown',
+            ),
+            'prompt_review': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_review.md'),
+                language='Markdown',
+            ),
+        },
+        'complex_initial_value': [
+            {'key': 'color', 'value': 'Purple'},
+        ],
+    })
+    return render(request, 'styleguide/bootstrap5/knockout_to_alpine.html', context)
+
+
+@use_bootstrap5
 def styleguide_atoms_accessibility(request):
     return render(request, 'styleguide/bootstrap5/atoms/accessibility.html',
                   get_navigation_context("styleguide_atoms_accessibility_b5"))
