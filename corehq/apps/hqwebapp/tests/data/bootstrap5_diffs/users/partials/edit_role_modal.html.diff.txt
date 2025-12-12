@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,571 +1,858 @@
+@@ -1,571 +1,857 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -1334,7 +1334,6 @@
 +          class="modal-footer"
 +          data-bind="css: {'has-error': $root.roleError }"
 +        >
-+          {# todo B5: css-has-error #}
            <div data-bind="if: isEditable">
 -            <button type="button"
 -                    class="btn btn-default"
@@ -1352,7 +1351,7 @@
                {% trans "Save" %}
              </button>
 -            <span class='help-block' data-bind="text: $root.roleError"></span>
-+            <span class="help-block" data-bind="text: $root.roleError"></span>
++            <span class="form-text text-danger" data-bind="text: $root.roleError"></span>
            </div>
            <div data-bind="ifnot: isEditable">
 -            <button type="button"
@@ -1366,7 +1365,7 @@
                {% trans "Close" %}
              </button>
            </div>
-@@ -576,44 +863,61 @@
+@@ -576,44 +862,62 @@
  </div>
  
  <script type="text/html" id="permission_all_selected_none">
@@ -1387,13 +1386,14 @@
 -          {% endblocktrans %}
 -        </span>
 +      <span class="help-block">
-+        {% url "cloudcare_app_settings" domain as
-+        manage_web_apps_permissions_url %} {% blocktrans %} This permission is
-+        already configured via
-+        <a target="_blank" href="{{ manage_web_apps_permissions_url }}"
-+          >Manage Web Apps Permissions</a
-+        >. Please remove this configuration before updating access here. {%
-+        endblocktrans %}
++        {% url "cloudcare_app_settings" domain as manage_web_apps_permissions_url %}
++        {% blocktrans %}
++          This permission is already configured via
++          <a target="_blank" href="{{ manage_web_apps_permissions_url }}">
++            Manage Web Apps Permissions
++          </a>
++          . Please remove this configuration before updating access here.
++        {% endblocktrans %}
 +      </span>
        <!-- /ko -->
      </div>
