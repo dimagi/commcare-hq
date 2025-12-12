@@ -833,7 +833,6 @@
           class="modal-footer"
           data-bind="css: {'has-error': $root.roleError }"
         >
-          {# todo B5: css-has-error #}
           <div data-bind="if: isEditable">
             <button
               type="button"
@@ -845,7 +844,7 @@
             <button type="submit" class="btn btn-primary disable-on-submit">
               {% trans "Save" %}
             </button>
-            <span class="help-block" data-bind="text: $root.roleError"></span>
+            <span class="form-text text-danger" data-bind="text: $root.roleError"></span>
           </div>
           <div data-bind="ifnot: isEditable">
             <button
