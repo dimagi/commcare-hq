@@ -54,6 +54,7 @@
           <li><a href="#form-loading">Forms</a></li>
         </ul>
       </li>
+      <li><a href="#htmx-django-tables">Table Pagination with HTMX and Django Tables</a></li>
     </ul>
   </nav>
 {% endblock toc %}
@@ -642,4 +643,33 @@
   </p>
   {% include "styleguide/bootstrap5/code_display.html" with content=examples.loading_form %}
 
+  <h3 id="htmx-django-tables" class="pt-4">
+    Table Pagination with HTMX and Django Tables
+  </h3>
+  <p>
+    For paginated tables, HTMX pairs nicely with
+    <a href="https://django-tables2.readthedocs.io/en/latest/" target="_blank">django-tables2</a>:
+    Django renders each page of results as a partial, and HTMX swaps that partial into the page
+    as the user clicks through pages or changes page size.
+  </p>
+  <p>
+    We have a separate styleguide example that walks through this pattern end-to-end
+    (table definition, paginated view, and “host” HTMX view), plus a live demo:
+  </p>
+  <ul>
+    <li>
+      <a href="{% url "styleguide_molecules_pagination_b5" %}#using-pagination-htmx">
+        Pagination with HTMX and Django Tables (documentation)
+      </a>
+    </li>
+    <li>
+      <a href="{% url "styleguide_b5_htmx_pagination_view" %}">
+        Simple Pagination: HTMX + Django Tables2 (demo)
+      </a>
+    </li>
+  </ul>
+  <p>
+    If you're building or migrating any paginated tables, start there for concrete patterns you
+    can copy into your own views.
+  </p>
 {% endblock content %}
