@@ -711,6 +711,7 @@ integration
  0011_remove_kycconfig_connection_settings
  0012_momoconfig
  0013_kycconfig_phone_number_field
+ 0014_kycconfig_passing_threshold
 ip_access
  0001_initial
 ivr

@@ -31,7 +31,33 @@ class KycProviders(models.TextChoices):
     # When adding a new provider:
     # 1. Add connection settings to `settings.py` if necessary
     # 2. Add it to `KycConfig.get_connections_settings()`
+    # 3. Add required threshold fields to `KycProviderThresholdFields`
     MTN_KYC = 'mtn_kyc', _('MTN KYC')
+
+
+class KycProviderThresholdFields:
+    """
+    Defines the required threshold fields for each KYC provider.
+    When adding a new provider, add its required fields here.
+    """
+    MTN_KYC_REQUIRED_FIELDS = [
+        'firstName',
+        'lastName',
+        'phoneNumber',
+        'emailAddress',
+        'nationalIdNumber',
+        'streetAddress',
+        'city',
+        'postCode',
+        'country',
+    ]
+
+    @classmethod
+    def get_required_fields(cls, provider):
+        if provider == KycProviders.MTN_KYC:
+            return cls.MTN_KYC_REQUIRED_FIELDS
+        else:
+            raise ValueError(f'Unable to determine required threshold fields for KYC provider {provider!r}.')
 
 
 class KycConfig(models.Model):
@@ -45,6 +71,7 @@ class KycConfig(models.Model):
         default=KycProviders.MTN_KYC,
     )
     phone_number_field = models.CharField(max_length=126, null=True, blank=True)
+    passing_threshold = jsonfield.JSONField(default=dict)
 
     class Meta:
         constraints = [
@@ -81,6 +108,14 @@ class KycConfig(models.Model):
         # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
         else:
             raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
+
+    def get_required_threshold_fields(self):
+        """
+        Returns the list of required threshold fields for the configured provider.
+
+        :return: List of required field names
+        """
+        return KycProviderThresholdFields.get_required_fields(self.provider)
 
     def get_kyc_users_query(self):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
