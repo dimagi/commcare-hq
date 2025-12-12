@@ -330,72 +330,78 @@ def styleguide_molecules_buttons(request):
 @use_bootstrap5
 def styleguide_molecules_selections(request):
     context = get_navigation_context("styleguide_molecules_selections_b5")
-    context.update({
-        'examples': {
-            'toggles': get_example_context('styleguide/bootstrap5/examples/toggles.html'),
-            'toggles_crispy': CrispyFormsDemo(
-                SelectToggleDemoForm(), get_python_example_context('select_toggle_form.py'),
-            ),
-            'select2_manual': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_manual.html'),
-                code_js=get_js_example_context('select2_manual.js'),
-            ),
-            'select2_manual_allow_clear': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_manual_allow_clear.html'),
-                code_js=get_js_example_context('select2_manual_allow_clear.js'),
-            ),
-            'select2_manual_crispy': CrispyFormsWithJsDemo(
-                form=Select2ManualDemoForm(),
-                code_python=get_python_example_context('select2_manual_form.py'),
-                code_js=get_js_example_context('select2_manual_crispy.js'),
-            ),
-            'select2_css_class': get_example_context('styleguide/bootstrap5/examples/select2_css_class.html'),
-            'select2_css_class_multiple': get_example_context(
-                'styleguide/bootstrap5/examples/select2_css_class_multiple.html'),
-            'select2_css_class_crispy': CrispyFormsDemo(
-                Select2CssClassDemoForm(), get_python_example_context('select2_css_class_form.py'),
-            ),
-            'select2_ko_dynamic': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_ko_dynamic.html'),
-                code_js=get_js_example_context('select2_ko_dynamic.js'),
-            ),
-            'select2_ko_dynamic_crispy': CrispyFormsWithJsDemo(
-                form=Select2DynamicKoForm(),
-                code_python=get_python_example_context('select2_dynamic_ko_form.py'),
-                code_js=get_js_example_context('select2_dynamic_ko_crispy.js'),
-            ),
-            'select2_ko_static': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_ko_static.html'),
-                code_js=get_js_example_context('select2_ko_static.js'),
-            ),
-            'select2_ko_static_crispy': CrispyFormsWithJsDemo(
-                form=Select2StaticKoForm(),
-                code_python=get_python_example_context('select2_static_ko_form.py'),
-                code_js=get_js_example_context('select2_static_ko_crispy.js'),
-            ),
-            'select2_ko_autocomplete': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_ko_autocomplete.html'),
-                code_js=get_js_example_context('select2_ko_autocomplete.js'),
-            ),
-            'select2_ko_autocomplete_crispy': CrispyFormsWithJsDemo(
-                form=Select2AutocompleteKoForm(),
-                code_python=get_python_example_context('select2_autocomplete_ko_form.py'),
-                code_js=get_js_example_context('select2_autocomplete_ko_crispy.js'),
-            ),
-            'multiselect': HtmlWithJsDemo(
-                code_html=get_html_example_context('multiselect.html'),
-                code_js=get_js_example_context('multiselect.js'),
-            ),
-            'multiselect_crispy': CrispyFormsWithJsDemo(
-                form=MultiselectDemoForm(),
-                code_python=get_python_example_context('multiselect_form.py'),
-                code_js=get_js_example_context('multiselect_crispy.js'),
-            ),
-            'select2_ajax_crispy': CrispyFormsDemo(
-                Select2AjaxDemoForm(), get_python_example_context('select2_ajax_form.py'),
-            ),
+    context.update(
+        {
+            'examples': {
+                'toggles': get_example_context('styleguide/bootstrap5/examples/toggles.html'),
+                'toggles_crispy': CrispyFormsDemo(
+                    SelectToggleDemoForm(),
+                    get_python_example_context('select_toggle_form.py'),
+                ),
+                'select2_manual': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_manual.html'),
+                    code_js=get_js_example_context('select2_manual.js'),
+                ),
+                'select2_manual_allow_clear': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_manual_allow_clear.html'),
+                    code_js=get_js_example_context('select2_manual_allow_clear.js'),
+                ),
+                'select2_manual_crispy': CrispyFormsWithJsDemo(
+                    form=Select2ManualDemoForm(),
+                    code_python=get_python_example_context('select2_manual_form.py'),
+                    code_js=get_js_example_context('select2_manual_crispy.js'),
+                ),
+                'select2_css_class': get_example_context('styleguide/bootstrap5/examples/select2_css_class.html'),
+                'select2_css_class_multiple': get_example_context(
+                    'styleguide/bootstrap5/examples/select2_css_class_multiple.html'
+                ),
+                'select2_css_class_crispy': CrispyFormsDemo(
+                    Select2CssClassDemoForm(),
+                    get_python_example_context('select2_css_class_form.py'),
+                ),
+                'select2_ko_dynamic': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_ko_dynamic.html'),
+                    code_js=get_js_example_context('select2_ko_dynamic.js'),
+                ),
+                'select2_ko_dynamic_crispy': CrispyFormsWithJsDemo(
+                    form=Select2DynamicKoForm(),
+                    code_python=get_python_example_context('select2_dynamic_ko_form.py'),
+                    code_js=get_js_example_context('select2_dynamic_ko_crispy.js'),
+                ),
+                'select2_ko_static': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_ko_static.html'),
+                    code_js=get_js_example_context('select2_ko_static.js'),
+                ),
+                'select2_ko_static_crispy': CrispyFormsWithJsDemo(
+                    form=Select2StaticKoForm(),
+                    code_python=get_python_example_context('select2_static_ko_form.py'),
+                    code_js=get_js_example_context('select2_static_ko_crispy.js'),
+                ),
+                'select2_ko_autocomplete': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_ko_autocomplete.html'),
+                    code_js=get_js_example_context('select2_ko_autocomplete.js'),
+                ),
+                'select2_ko_autocomplete_crispy': CrispyFormsWithJsDemo(
+                    form=Select2AutocompleteKoForm(),
+                    code_python=get_python_example_context('select2_autocomplete_ko_form.py'),
+                    code_js=get_js_example_context('select2_autocomplete_ko_crispy.js'),
+                ),
+                'multiselect': HtmlWithJsDemo(
+                    code_html=get_html_example_context('multiselect.html'),
+                    code_js=get_js_example_context('multiselect.js'),
+                ),
+                'multiselect_crispy': CrispyFormsWithJsDemo(
+                    form=MultiselectDemoForm(),
+                    code_python=get_python_example_context('multiselect_form.py'),
+                    code_js=get_js_example_context('multiselect_crispy.js'),
+                ),
+                'select2_ajax_crispy': CrispyFormsDemo(
+                    Select2AjaxDemoForm(),
+                    get_python_example_context('select2_ajax_form.py'),
+                ),
+            }
         }
-    })
+    )
     return render(request, 'styleguide/bootstrap5/molecules/selections.html', context)
 
 
