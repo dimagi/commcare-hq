@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
-
-from corehq.apps.app_manager.exceptions import SuiteValidationError
+from corehq.apps.app_manager.exceptions import AppMisconfigurationError, SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -10,7 +9,11 @@ from corehq.apps.app_manager.models import (
     Module,
     SortElement,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates, case_tile_template_config
+from corehq.apps.app_manager.suite_xml.features.case_tiles import (
+    CUSTOM,
+    CaseTileTemplates,
+    case_tile_template_config
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -155,6 +158,18 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
                     message = "Number of columns in template '{}' " \
                         "exceeds the limit of 12".format(template_name)
                     raise AssertionError(message)
+
+    def test_case_tile_template_does_not_exist(self):
+        with self.assertRaises(AppMisconfigurationError):
+            case_tile_template_config("unknow")
+
+    def test_case_tile_template_custom(self):
+        self.assertEqual([], case_tile_template_config(CUSTOM).fields)
+
+    # only passes if the person simple file is renamed
+    # def test_case_tile_template_file_does_not_exist(self):
+    #     with self.assertRaises(FileNotFoundError):
+    #         case_tile_template_config(CaseTileTemplates.PERSON_SIMPLE.value)
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
         suite = factory.app.create_suite()
