@@ -13,10 +13,11 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 @method_decorator(use_bootstrap5, name='dispatch')
 class TodoListDemoView(HqHtmxActionMixin, BasePageView):
     """
-    This view demonstrates how we use HqHtmxActionMixin with a view to provide
-    HTMX responses when HTMX interacts with this view using the `hq-hx-action` attribute.
+    Demonstrates using HqHtmxActionMixin with a view to provide
+    HTMX responses for multiple actions via the `hq-hx-action` attribute.
     """
-    urlname = "sg_htmx_todo_list_example"
+
+    urlname = 'sg_htmx_todo_list_example'
     template_name = 'styleguide/htmx_todo/main.html'
 
     @property
@@ -25,8 +26,9 @@ class TodoListDemoView(HqHtmxActionMixin, BasePageView):
 
     @property
     def page_context(self):
+        # Initial page context: all items (done + not done)
         return {
-            "items": self.get_items(),
+            'items': self.get_items(),
         }
 
     def get_items(self):
@@ -36,31 +38,39 @@ class TodoListDemoView(HqHtmxActionMixin, BasePageView):
         TodoListStore(self.request).set(items)
 
     def update_item(self, item_id, name=None, is_done=None):
+        """
+        Update a single item by ID, optionally changing its name and/or done flag.
+        Returns the updated item.
+        """
         items = self.get_items()
         for item in items:
-            if item["id"] == item_id:
-                item["name"] = name if name is not None else item["name"]
-                item["is_done"] = is_done if is_done is not None else item["is_done"]
-                TodoListStore(self.request).set(items)
+            if item['id'] == item_id:
+                item['name'] = name if name is not None else item['name']
+                item['is_done'] = is_done if is_done is not None else item['is_done']
+                self.save_items(items)
                 return item
 
     def render_item_response(self, request, item):
-        template = ("styleguide/htmx_todo/item_done_oob_swap.html" if item["is_done"]
-                    else "styleguide/htmx_todo/item.html")
-        context = {
-            'item': item,
-        }
+        """
+        Return the appropriate partial template for a single item,
+        based on whether it's done or not.
+        """
+        template = (
+            'styleguide/htmx_todo/item_done_oob_swap.html' if item['is_done']
+            else 'styleguide/htmx_todo/item.html'
+        )
+        context = {'item': item}
         return self.render_htmx_partial_response(request, template, context)
 
-    # we can now reference `hq-hx-action="create_new_item"`
-    # alongside a `hx-post` to this view URL
+    # We can now reference `hq-hx-action="create_new_item"`
+    # alongside an `hx-post` to this view URL.
     @hq_hx_action('post')
     def create_new_item(self, request, *args, **kwargs):
         items = self.get_items()
         new_item = {
-            "id": len(items) + 1,
-            "name": _("New Item"),
-            "is_done": False,
+            'id': len(items) + 1,
+            'name': _('New Item'),
+            'is_done': False,
         }
         items.insert(0, new_item)
         self.save_items(items)
@@ -90,21 +100,22 @@ class TodoListStore(CacheStore):
 
     Caution: Please don't use this for real features.
     """
+
     slug = 'styleguide-todo-list'
     initial_value = [
         {
-            "id": 1,
-            "name": "get coat hangers",
-            "is_done": False,
+            'id': 1,
+            'name': 'get coat hangers',
+            'is_done': False,
         },
         {
-            "id": 2,
-            "name": "water plants",
-            "is_done": False,
+            'id': 2,
+            'name': 'water plants',
+            'is_done': False,
         },
         {
-            "id": 3,
-            "name": "Review PRs",
-            "is_done": False,
+            'id': 3,
+            'name': 'Review PRs',
+            'is_done': False,
         },
     ]

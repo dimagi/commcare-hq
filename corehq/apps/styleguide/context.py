@@ -26,6 +26,7 @@ def get_navigation_context(current_page):
                     Page("Javascript Guide", 'styleguide_javascript_guide_b5'),
                     Page("HTML Guide", 'styleguide_html_guide_b5'),
                     Page("HTMX + Alpine.JS", 'styleguide_htmx_and_alpine_b5'),
+                    Page("Knockout to Alpine Migration", 'styleguide_knockout_to_alpine_guide_b5'),
                 ],
             ),
             NavigationGroup(

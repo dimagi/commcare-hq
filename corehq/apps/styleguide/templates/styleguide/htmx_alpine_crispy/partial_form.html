@@ -4,27 +4,29 @@
 <div id="add-filter-form-container">
   {% if show_success %}
     <div
-        class="alert alert-success alert-dismissible fade show"
-        role="alert"
+      class="alert alert-success alert-dismissible fade show"
+      role="alert"
     >
       {% blocktrans %}
         Added filter!
       {% endblocktrans %}
       <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-          aria-label="{% trans "Close" %}"
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="{% trans "Close" %}"
       ></button>
     </div>
   {% endif %}
 
   <form
-      hx-post="{{ request.path_info }}"
-      hx-target="#add-filter-form-container"
-      hx-swap="outerHTML"
-      hx-disabled-elt="find button"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="submit_form"
+    hx-target="#add-filter-form-container"
+    hx-swap="outerHTML"
+    hx-disabled-elt="find button"
   >
+    {# Crispy Forms renders the fields and Alpine attributes defined in FilterDemoForm. #}
     {% crispy filter_form %}
   </form>
 </div>

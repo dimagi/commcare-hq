@@ -52,12 +52,12 @@
     Pagination with HTMX and Django Tables
   </h2>
   <p>
-    As covered in the <a href="{% url "styleguide_htmx_and_alpine_b5" %}">HTMX + Alpine.JS</a> guide,
-    HTMX works by sending partial HTML responses to asynchronous requests triggered by special <code>hx-</code>
-    attributes added to buttons, forms, links, and other elements.
+    As covered in the <a href="{% url "styleguide_htmx_and_alpine_b5" %}">HTMX + Alpine.js</a> guide,
+    HTMX works by sending partial HTML responses to asynchronous requests triggered by special
+    <code>hx-</code> attributes added to buttons, forms, links, and other elements.
   </p>
   <p>
-    To assist with rendering this partial HTML template, we use
+    To assist with rendering these partial HTML responses, we use
     <a href="https://django-tables2.readthedocs.io/en/latest/" target="_blank">django-tables2</a> to paginate,
     sort, and format tabular data.
   </p>
@@ -67,75 +67,91 @@
   </h3>
   <p>
     <a href="{% url "styleguide_b5_htmx_pagination_view" %}">Here is an example</a> of what this solution
-    looks like. We will go over its components in the sections below. Please make sure to also review the
-    comments within the code.
+    looks like in practice. We’ll go over its components in the sections below. Please also review the
+    inline comments in the code examples.
   </p>
 
   <h4 id="htmx-pagination-definition" class="pt-3">
     Table Definition
   </h4>
   <p>
-    First, we begin with the Table Definition&mdash;<code>ExampleFakeDataTable</code> in this example.
-    It subclasses <code>BaseHtmxTable</code>, which inherits from <code>django-tables2</code>'s <code>Table</code>.
-    This object defines the table's visual style, template, and sets up the column structure and typing.
-    The template and default styling are already taken care of by <code>BaseHtmxTable.Meta</code>,
-    so most use cases just need to specify the columns when starting from <code>BaseHtmxTable</code>.
+    First, we begin with the table definition&mdash;<code>ExampleFakeDataTable</code> in this example.
+    It subclasses <code>BaseHtmxTable</code>, which itself inherits from
+    <code>django-tables2</code>'s <code>Table</code>.
+    This class defines the table's columns, their display names, and the template / styling used to render rows.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_pagination_table %}
+  <p>
+    The column attribute names match the keys provided by
+    <code>generate_example_pagination_data()</code> (see below), and the
+    <code>verbose_name</code> specifies the label shown to the user.
+    The template and default styling are provided by <code>BaseHtmxTable.Meta</code>, so most
+    use cases only need to define columns when starting from <code>BaseHtmxTable</code>.
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_pagination_table %}
 
   <h4 id="htmx-pagination-table-view" class="pt-3">
     Table View
   </h4>
   <p>
-    Next we have the Table View, <code>ExamplePaginatedTableView</code> . This view renders a page of the
+    Next we have the table view, <code>ExamplePaginatedTableView</code>. This view renders a single page of
     <code>ExampleFakeDataTable</code> based on <code>GET</code> parameters and a <code>queryset</code>.
   </p>
   <p>
-    Since we are using HTMX, <code>ExamplePaginatedTableView</code> only returns a partial template response
-    that is just the table itself, page navigation, and page size selection&mdash;nothing else.
-    The <code>SelectablePaginatedTableView</code> parent class handles page size selection and saving that choice
-    in a cookie. It inherits from <code>django-tables2</code>'s classes and mixins, which handle pagination
-    within a given queryset.
+    Since we are using HTMX, <code>ExamplePaginatedTableView</code> only returns a partial template: the
+    table itself plus page navigation and page size selection&mdash;no outer layout or navigation.
+    The <code>SelectablePaginatedTableView</code> parent class handles page size selection and saving that
+    choice in a cookie. It inherits from <code>django-tables2</code>'s classes and mixins, which handle
+    pagination within a given queryset.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_pagination_table_view %}
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_pagination_table_view %}
   <p>
-    The queryset in this example is just an in-memory list of dicts for simplicity (seen below).
-    However, <code>django-tables2</code> also has support for Django QuerySets. We will be adding
-    support for <code>elasticsearch</code> queries soon.
+    For this styleguide example, the queryset is just an in-memory list of dicts
+    (generated below). In a real project you would typically return a Django <code>QuerySet</code>
+    here instead.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_pagination_data %}
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_pagination_data %}
 
   <h4 id="htmx-pagination-host" class="pt-3">
     Host View
   </h4>
   <p>
-    Lastly, we have the host view, <code>HtmxPaginationView</code>. This view "hosts" the partial template
-    HTML returned from HTMX requests to <code>ExamplePaginatedTableView</code>.
+    Lastly, we have the host view, <code>HtmxPaginationView</code>. This view renders the full page shell
+    (navigation, layout, scripts) and “hosts” the partial HTML returned by
+    <code>ExamplePaginatedTableView</code>.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_pagination_host_view %}
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_pagination_host_view %}
   <p>
-    Its template (seen below) sets up the JavaScript context and inherits from the appropriate
-    CommCare HQ base template. A <code>div</code> makes the initial <code>hx-get</code> request to
+    Its template (shown below) sets up the JavaScript context and inherits from the appropriate
+    CommCare HQ base template. A <code>&lt;div&gt;</code> issues an initial <code>hx-get</code> request to
     <code>ExamplePaginatedTableView</code> on page load (<code>hx-trigger="load"</code>). Subsequent
-    requests are controlled by <code>hx-</code> attributes within the table's template.
+    requests (page links, page size, etc.) are driven by <code>hx-</code> attributes inside the table
+    template generated by <code>BaseHtmxTable</code>.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_pagination_template %}
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_pagination_template %}
   <p>
-    The host view can also interact with the table from outside the original <code>div</code>
-    that contains the partial HTML responses from <code>ExamplePaginatedTableView</code>. This example demonstrates
-    sending a refresh event to the table using the <code>hq-hx-refresh-after</code> attribute placed
-    on a <code>button</code>. After this button's own HTMX request completes, the table is reloaded.
-    This example is very simple, but you can imagine chaining a refresh event to a <code>form</code>
-    (perhaps a column filter form) that triggers table refresh after submission.
+    The host view can also interact with the table from outside the original container
+    that receives partial HTML from <code>ExamplePaginatedTableView</code>. In this example, the
+    “Refresh Table After Request” button:
+  </p>
+  <ul>
+    <li>
+      performs its own HTMX <code>hx-get</code> to a separate URL, and
+    </li>
+    <li>
+      uses <code>hq-hx-refresh-after="#ExampleFakeDataTable"</code> to trigger an
+      <code>hqRefresh</code> event on the table after that request completes.
+    </li>
+  </ul>
+  <p>
+    The table listens for this event and reloads itself via HTMX. In a real page, you could use
+    the same pattern to refresh the table after submitting a filter form, applying bulk actions,
+    or changing configuration elsewhere on the page.
   </p>
 
   <h2 id="using-knockout-pagination" class="pt-4">
     Using Knockout Pagination
   </h2>
-  <div class="alert alert-warning">
-    Note that these steps will be deprecated in 2025, and the section will be here for reference with older
-    code, until it is no longer needed.
-  </div>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     The best way to understand the different ways of using pagination is to see its use in HQ directly. The best
     sources for this are the Web Users and Mobile Workers pages.

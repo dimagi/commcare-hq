@@ -1,0 +1,23 @@
+{% load hq_shared_tags %}
+<div id="pair-{{ pair.id }}-value">
+  <input
+    type="text"
+    name="value"
+    class="form-control {% if error %}is-invalid{% endif %}"
+    value="{{ pair.value }}"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="update_pair"
+    hx-vals='{
+      "id": "{{ pair.id }}",
+      "field": "value",
+      "error": {{ error|BOOL }}
+    }'
+    hx-trigger="change, blur"
+    hx-swap="none"
+  >
+  {% if error %}
+    <div class="invalid-feedback">
+      {{ error }}
+    </div>
+  {% endif %}
+</div>

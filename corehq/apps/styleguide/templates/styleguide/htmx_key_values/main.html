@@ -1,0 +1,38 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+
+{# No page-specific JS needed; use the shared HTMX + Alpine entry point #}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block content %}
+  <div class="container py-4">
+    <h1 class="mb-3">
+      Key / Value Pairs (HTMX version)
+    </h1>
+    <p class="text-muted mb-2">
+      This example manages key/value pairs entirely on the server. HTMX sends
+      small requests when you add, edit, or delete a row, and the view returns
+      an updated HTML partial.
+    </p>
+    <p class="text-muted mb-4">
+      TIP: leave a value field blank to trigger an error response.
+    </p>
+
+    <div
+      id="kv-list-container"
+      hx-get="{{ request.path_info }}"
+      hq-hx-action="load_pairs"
+      hx-trigger="load"
+    >
+      <div class="htmx-indicator">
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading...
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block modals %}
+  {# Standard HTMX error modal #}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
