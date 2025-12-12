@@ -62,7 +62,7 @@
     The <code>hqwebapp/js/bootstrap5/widgets</code> module when loaded to a page will look for <code>input</code> fields
     with the <code>date-picker</code> CSS class, and apply the Tempus Dominus plugin to that field.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.datepicker_widget %}
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.datepicker_widget %}
 
   <h2 id="advanced-date-picker" class="pt-4">
     Advanced Date Picker
@@ -72,7 +72,7 @@
     the clock component. See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for additional guidance.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.date_only %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.date_only %}
 
   <h2 id="date-and-time" class="pt-4">
     Date &amp; Time
@@ -82,7 +82,7 @@
     See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for additional guidance.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.tempus_dominus %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.tempus_dominus %}
 
   <h2 id="time-only" class="pt-4">
     Time Only
@@ -97,11 +97,11 @@
     <code>bootstrap-timepicker</code> plugin. The example below should be a good starting point to use as a drop-in
     replacement for that widget.
   </div>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.time_only %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.time_only %}
   <p>
     If you want a time-picker in 24-hour format, the example below provides a good starting point.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.time_only_24 %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.time_only_24 %}
 
   <h2 id="date-range" class="pt-4">
     Date Range
@@ -114,5 +114,5 @@
     For additional guidance, see the <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for Tempus Dominus.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.date_range %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.date_range %}
 {% endblock content %}
