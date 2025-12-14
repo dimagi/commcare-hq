@@ -845,7 +845,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1407,7 +1407,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN],
 )
 
