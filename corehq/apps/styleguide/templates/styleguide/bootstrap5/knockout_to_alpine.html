@@ -1,0 +1,1097 @@
+{% extends "styleguide/bootstrap5/base.html" %}
+{% load hq_shared_tags %}
+
+{% js_entry "styleguide/js/ko_migration" %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Migrating Knockout to Alpine (+HTMX)</h1>
+  <p class="sg-lead">
+    Some tips, examples, and strategies for how to migrate pages from Knockout to Alpine.js (+HTMX).
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li>
+        <a href="#overview">Overview</a>
+      </li>
+      <li>
+        <a href="#step-1">Step 1: Update Your Mental Model</a>
+        <ul>
+          <li><a href="#step-1-the-players">Meet the players</a></li>
+          <li><a href="#step-1-concept-mapping">Concept mapping: where things live now</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#step-2">Step 2: Mapping Knockout Bindings to Alpine</a>
+        <ul>
+          <li><a href="#step-2-example-1">Example 1: Simple Model, Keep it Local</a></li>
+          <li><a href="#step-2-example-2">Example 2: Complex Model Approaches</a></li>
+          <li><a href="#step-2-example-2-knockout">Example 2: Knockout source</a></li>
+          <li><a href="#step-2-example-2-alpine">Example 2: Migration to Alpine</a></li>
+          <li><a href="#step-2-example-2-alpine-reusable">Example 2: Make it reusable</a></li>
+          <li><a href="#step-2-example-2-htmx">Migration to HTMX?</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#step-3">Step 3: When to Stop at Alpine vs Move to HTMX</a>
+        <ul>
+          <li><a href="#step-3-when-alpine">Stay with Alpine when…</a></li>
+          <li><a href="#step-3-when-htmx">Reach for HTMX when…</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#ai-assist">Using AI to Help with Migrations (Safely)</a>
+        <ul>
+          <li><a href="#ai-assist-where-helpful">Where AI is especially helpful</a></li>
+          <li><a href="#ai-assist-how-to-prompt">How to prompt in the HQ context</a></li>
+          <li><a href="#ai-assist-guardrails">Guardrails: things to watch out for</a></li>
+          <li><a href="#step-4-ai-snippets">Copy-paste prompt snippets</a>
+            <ul>
+              <li><a href="#step-4-ai-snippets-general">General HQ migration context</a></li>
+              <li><a href="#step-4-ai-snippets-inline-alpine">KO → inline Alpine</a></li>
+              <li><a href="#step-4-ai-snippets-alpine-module">KO → Alpine module</a></li>
+              <li><a href="#step-4-ai-snippets-htmx">KO → HTMX (+ Alpine)</a></li>
+              <li><a href="#step-4-ai-snippets-short">Super-short “one-liner” context</a></li>
+              <li><a href="#step-4-ai-snippets-review">Review this AI-generated migration</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a href="#step-5">Step 5: Before / After Checklists</a>
+        <ul>
+          <li><a href="#step-5-before-start">Before you start refactoring</a></li>
+          <li><a href="#step-5-before-merge">Before you merge: behavior &amp; UX checks</a></li>
+          <li><a href="#step-5-code-cleanup">Before you merge: code &amp; dependency cleanup</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#example-commits">Commits from previous migrations</a>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview" class="pt-4">
+    Overview
+  </h2>
+  <p>
+    HQ is slowly moving away from
+    <a href="https://knockoutjs.com/" target="_blank">Knockout.js</a>. Knockout is largely
+    unmaintained, community support is dwindling, and we now have better options.
+    Going forward, we are standardizing on
+    <a href="https://alpinejs.dev/" target="_blank">Alpine.js</a> for lightweight interactivity
+    and <a href="https://htmx.org/" target="_blank">HTMX</a> to take better advantage of Django’s
+    server-side rendering.
+  </p>
+
+  <div class="alert alert-primary mt-3">
+    <p class="mb-1">
+      <strong>This is a living guide.</strong>
+    </p>
+    <p class="mb-0">
+      As we discover new migration patterns, refine prompts, and run into new edge cases,
+      this page will need updates. Whenever you learn something useful while working on a
+      Knockout → Alpine (+HTMX) migration, please add or adjust examples, notes, or links
+      here so the guide stays current and helpful for everyone.
+    </p>
+  </div>
+
+  <div class="alert alert-primary">
+    <a href="{% url "styleguide_htmx_and_alpine_b5" %}" target="_blank">
+      Read the HTMX + Alpine.js guide
+    </a>
+    for patterns and examples of using HTMX and Alpine in the HQ codebase.
+  </div>
+
+  <p>
+    At a high level, our long-term goals for JavaScript are:
+  </p>
+  <ul>
+    <li>Reduce JS complexity and avoid duplicating server-side logic in the browser</li>
+    <li>Rely on Django templates for most HTML and layout</li>
+    <li>Use Alpine for light, local interactivity</li>
+    <li>Use HTMX for server-coordinated interactions (forms, tables, filtering, pagination)</li>
+  </ul>
+
+  <p>
+    These are <strong>north star</strong> goals. Applying all of them everywhere during the
+    Knockout migration would make the migration take far too long. For existing pages,
+    it is acceptable to migrate in steps. For <em>new</em> JavaScript and new features,
+    we should follow these goals more strictly.
+  </p>
+
+  <div class="alert alert-primary">
+    <p class="mb-1">
+      For the Knockout → Alpine (+HTMX) migration, prefer a pragmatic approach:
+    </p>
+    <ul class="mb-0">
+      <li>
+        <strong>First priority:</strong> remove Knockout and replace it with Alpine in a
+        mostly one-to-one fashion, keeping existing behavior intact.
+      </li>
+      <li>
+        <strong>When it’s feasible (and worth the effort):</strong> move complex or
+        business-critical logic from JavaScript into Django, using templates and HTMX.
+        Treat the goals above as guidance, not a hard requirement for every migration.
+      </li>
+      <li>
+        Use this guide as a starting point when approaching a migration, and update it as
+        new patterns, shortcuts, or pitfalls are discovered.
+      </li>
+    </ul>
+  </div>
+
+  <h2 id="step-1" class="pt-4">
+    Step 1: Update Your Mental Model
+  </h2>
+  <p>
+    Before changing any code, it helps to update how you think about state and rendering
+    on HQ pages. In the Knockout era, most state lived in the browser. In the Alpine + HTMX
+    world we are moving toward, <strong>Django</strong> is the primary source of truth, and
+    the browser is mostly a thin layer of interactivity on top.
+  </p>
+
+  <div class="alert alert-primary">
+    You can think of <strong>HTMX as “data-binding to the server”</strong>.
+    Alpine handles small, local UI state. Django and HTMX work together to keep real data
+    and HTML in sync.
+  </div>
+
+  <h3 id="step-1-the-players" class="mt-3">
+    Meet the players
+  </h3>
+
+  <div class="card mt-2">
+    <div class="card-header">
+      Knockout (before)
+    </div>
+    <div class="card-body">
+      <p class="card-text mb-2">
+        Client-side MVVM. State lives in <code>ko.observable</code>s and
+        <code>ko.computed</code>s. HTML is generated or updated in the browser.
+      </p>
+      <ul class="mb-0">
+        <li>Browser owns most state</li>
+        <li><code>data-bind</code> everywhere</li>
+        <li>Templates often live in JS or inline script tags</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card mt-2">
+    <div class="card-header">
+      Alpine (now)
+    </div>
+    <div class="card-body">
+      <p class="card-text mb-2">
+        Lightweight component state in <code>x-data</code>. Uses plain JS objects
+        and getters instead of observables.
+      </p>
+      <ul class="mb-0">
+        <li>Small, page-local state</li>
+        <li>
+          <a href="https://alpinejs.dev/directives/model" target="_blank"><code>x-model</code></a>,
+          <a href="https://alpinejs.dev/directives/show" target="_blank"><code>x-show</code></a>,
+          <a href="https://alpinejs.dev/directives/on#shorthand-syntax" target="_blank"><code>@click</code></a>
+        </li>
+        <li>
+          Primarily for transient UI behavior rather than core business logic
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card mt-2">
+    <div class="card-header">
+      HTMX (now)
+    </div>
+    <div class="card-body">
+      <p class="card-text mb-2">
+        Server-driven updates. Django renders HTML; HTMX swaps it into the page
+        in response to user actions.
+      </p>
+      <ul class="mb-0">
+        <li>Django is the source of truth</li>
+        <li>
+          <a href="https://htmx.org/attributes/hx-get/" target="_blank"><code>hx-get</code></a>,
+          <a href="https://htmx.org/attributes/hx-post/" target="_blank"><code>hx-post</code></a>,
+          <a href="https://htmx.org/attributes/hx-target/" target="_blank"><code>hx-target</code></a>
+        </li>
+        <li>Great for tables, filters, forms, and actions</li>
+        <li>
+          Send <code>hx-get</code> and <code>hx-post</code> actions to view methods
+          using
+          <a href="{% url "styleguide_htmx_and_alpine_b5" %}#using-hqhtmxactionmixin" target="_blank">
+            HqHtmxActionMixin
+          </a>
+          and <code>hq-hx-action</code>.
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 id="step-1-concept-mapping" class="mt-3">
+    Concept mapping: where things live now
+  </h3>
+  <p>
+    This table maps familiar Knockout ideas to the new Alpine + HTMX patterns. The main shift is that
+    business rules <em>ideally</em> move back into Django, while Alpine and HTMX focus on wiring up
+    interactions. During migration, it is fine for some logic to stay in JavaScript as an
+    intermediate step.
+  </p>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Concept</th>
+          <th scope="col">Knockout</th>
+          <th scope="col">Alpine</th>
+          <th scope="col">HTMX / Django</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Source of truth</th>
+          <td>JS view model (objects with observables)</td>
+          <td>
+            Small JS objects inside
+            <a href="https://alpinejs.dev/directives/data" target="_blank"><code>x-data</code></a>
+          </td>
+          <td>
+            Django view + DB.<br />
+            Templates render HTML partials.
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Data model</th>
+          <td>
+            <code>ko.observable</code>, <code>ko.observableArray</code>, <code>ko.computed</code>
+          </td>
+          <td>
+            Plain properties and getters on the
+            <a href="https://alpinejs.dev/directives/data" target="_blank"><code>x-data</code></a>
+            object;
+            <a href="https://alpinejs.dev/magics/watch" target="_blank"><code>$watch</code></a>
+            for side effects
+          </td>
+          <td>
+            Context variables passed from Django to templates
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Bindings / templating</th>
+          <td>
+            <code>data-bind="text: name"</code>, KO templates
+            (<code>&lt;!-- ko if --&gt;</code>)
+          </td>
+          <td>
+            <a href="https://alpinejs.dev/directives/text" target="_blank"><code>x-text</code></a>,
+            <a href="https://alpinejs.dev/directives/model" target="_blank"><code>x-model</code></a>,
+            <a href="https://alpinejs.dev/directives/show" target="_blank"><code>x-show</code></a>,
+            <a href="https://alpinejs.dev/directives/for" target="_blank"><code>x-for</code></a>,
+            <a href="https://alpinejs.dev/directives/on#shorthand-syntax" target="_blank"><code>@click</code></a>,
+            and
+            <a href="https://alpinejs.dev/advanced/extending#custom-directives" target="_blank">
+              custom directives
+            </a>
+            like
+            <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/select2.js" target="_blank"><code>x-select2</code></a>
+            and
+            <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js" target="_blank"><code>x-datepicker</code></a>
+            (<a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives" target="_blank">and more</a>).
+          </td>
+          <td>
+            Django templates for base rendering.<br />
+            HTMX endpoints (via
+            <a href="{% url "styleguide_htmx_and_alpine_b5" %}#using-hqhtmxactionmixin" target="_blank">
+              HqHtmxActionMixin
+            </a>)
+            return partials for updates.
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Where business logic lives</th>
+          <td>
+            Often inside the KO view model (JS)
+          </td>
+          <td>
+            Ideally: only light UI logic.<br />
+            In practice (for migration): it is fine for existing business logic to live in an
+            <a href="https://alpinejs.dev/globals/alpine-data" target="_blank"><code>Alpine.data</code></a>
+            model, especially for more complex or shared models in JS files.
+          </td>
+          <td>
+            Django views, forms, and template conditionals
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">How state changes</th>
+          <td>
+            Update observables<br />
+            → Knockout re-renders bindings
+          </td>
+          <td>
+            Update <a href="https://alpinejs.dev/directives/data" target="_blank"><code>x-data</code></a> properties<br />
+            → Alpine re-runs effects
+          </td>
+          <td>
+            User action triggers an HTMX request (e.g. <a href="https://htmx.org/attributes/hx-post/" target="_blank"><code>hx-post</code></a>)<br />
+            → Django returns new HTML<br />
+            → HTMX swaps it into the DOM
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Typical use cases</th>
+          <td>
+            Rich client-side apps, custom widgets, lots of in-browser logic
+          </td>
+          <td>
+            Small, local UI behavior and glue code:<br />
+            toggles, dialogs, complex form validation, “isLoading” flags,
+            simple multi-step forms, shared components/interactions.<br />
+            Alpine is fully capable of richer client-side interactions, but our default
+            pattern is to keep long-lived business state in Django.
+          </td>
+          <td>
+            Anything where the real state lives in the database/backend:<br />
+            tables/reports, search/filter forms, create/edit flows,
+            complex multi-step forms (taking advantage of Django form validation).
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="step-2" class="pt-4">
+    Step 2: Mapping Knockout Bindings to Alpine
+  </h2>
+  <p>
+    This section shows a few different ways to translate a Knockout model into an
+    Alpine model, starting from the simplest case and building up.
+  </p>
+
+  <h3 id="step-2-example-1" class="pt-3">
+    Example 1: Simple Model, Keep it Local
+  </h3>
+  <p>
+    This example shows a very small model where the logic is simple enough that it
+    doesn't need its own JavaScript file. Everything can live directly in the HTML
+    via <code>x-data</code> and <code>x-model</code>.
+  </p>
+
+  <h4 id="step-2-example-1-knockout" class="pt-3">
+    Knockout Source
+  </h4>
+  {% initial_page_data "ko_simple_name" "Fred" %}{# this could come from template context #}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.ko_simple %}
+
+  <h4 id="step-2-example-1-alpine" class="pt-3">
+    Migration to Alpine
+  </h4>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.alpine_simple %}
+  <p>
+    All of the state that used to live in a Knockout view model now lives in a tiny
+    Alpine component attached directly to the markup.
+  </p>
+  <p>
+    Look, ma, no extra JavaScript file!
+  </p>
+
+  <h3 id="step-2-example-2" class="pt-3">
+    Example 2: Complex Model Approaches
+  </h3>
+  <p>
+    This example covers a slightly richer model where it's more reasonable to keep
+    the state and behavior in a JavaScript module instead of inline in the template.
+  </p>
+  <p>
+    The example is deliberately much simpler than real "complex" models in HQ. It's
+    mainly a placeholder to illustrate the core Alpine patterns involved in splitting
+    a model out into separate JavaScript files.
+  </p>
+
+  <h4 id="step-2-example-2-knockout" class="pt-3">
+    Knockout Source
+  </h4>
+  {% initial_page_data "complex_initial_value" complex_initial_value|JSON %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.ko_complex %}
+
+  <h4 id="step-2-example-2-alpine" class="pt-3">
+    Migration to Alpine
+  </h4>
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.alpine_complex %}
+
+  <h4 id="step-2-example-2-alpine-reusable" class="pt-3">
+    Migration to Alpine... but make it reusable!
+  </h4>
+  <p>
+    If we want to make the above model reusable, we first define a module like this:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.alpine_complex_reusable %}
+  <p>
+    Then we can use it in one or more modules / <code>js_entry</code> points as follows:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.use_alpine_complex_reusable %}
+  <p>
+    When using this model in a template, the HTML is the same as
+    <a href="#step-2-example-2-alpine">the Alpine example above</a>.
+  </p>
+
+  <h4 id="step-2-example-2-htmx" class="pt-3">
+    Migration to HTMX?
+  </h4>
+  <p>
+    The Alpine version keeps the key/value pairs entirely in the browser: the
+    <code>keyValuePairs</code> array lives in JavaScript, and changes are only
+    persisted when you explicitly save them somewhere. For some flows, that's
+    exactly what you want.
+  </p>
+  <p>
+    But if you'd rather have Django own the state — and immediately persist
+    changes — you can move this example to HTMX. Instead of maintaining a JS
+    array, the server stores the list of pairs and responds to HTMX requests when
+    you add, edit, or delete a row.
+  </p>
+  <p>
+    <a href="{% url "sg_htmx_key_value_demo" %}">For this demo</a>, we use a
+    small <code>CacheStore</code> (similar to the
+    <a href="{% url "styleguide_htmx_and_alpine_b5" %}#example-todo">
+      To-Do List example
+    </a>) to simulate server-side storage:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_complex_store %}
+
+  <p>
+    The view, <code>HtmxKeyValuePairsDemoView</code>, mixes in
+    <code>HqHtmxActionMixin</code> and exposes four HTMX actions:
+  </p>
+  <ul>
+    <li><code>load_pairs</code> &mdash; load the current list of key/value pairs</li>
+    <li><code>add_pair</code> &mdash; append a new empty row</li>
+    <li><code>update_pair</code> &mdash; update the <code>key</code> or <code>value</code> of a row</li>
+    <li><code>delete_pair</code> &mdash; remove a row</li>
+  </ul>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_complex_view %}
+
+  <p>
+    The main template just sets up the JS entry point (the standard
+    <code>hqwebapp/js/htmx_and_alpine</code> entry is fine) and defines a
+    container that loads the list via HTMX:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_complex_main %}
+
+  <p>
+    The partial template renders the list of pairs and wires each input and button
+    to one of the HTMX actions above:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_complex_partial %}
+
+  <div class="alert alert-primary">
+    <p>
+      <strong>Pattern:</strong> inputs that are already showing the latest value don't
+      need new HTML on every change. In the key/value demo, each input uses
+      <code>hx-swap="none"</code> and the view's <code>update_pair</code> action
+      returns <code>render_htmx_no_response()</code>. This saves to the server
+      <em>without</em> replacing any DOM, so focus and keyboard navigation stay
+      exactly where the user left them.
+    </p>
+    <p>
+      Be careful if you need to handle input validation or if
+      <code>update_pair</code> can hit database errors. In those cases you have two
+      main options:
+    </p>
+    <ul>
+      <li>
+        Listen for
+        <a href="https://htmx.org/events/#htmx:afterRequest" target="_blank">
+          <code>htmx:afterRequest</code>
+        </a>
+        and show a global or inline error (for example, using the response status or
+        a custom header), or
+      </li>
+      <li>
+        Return a small error partial and override <code>hx-swap</code> /
+        <code>hx-target</code> for that response using the
+        <a href="https://htmx.org/reference/#response_headers" target="_blank">
+          <code>HX-Reswap</code>
+        </a>
+        and
+        <a href="https://htmx.org/reference/#response_headers" target="_blank">
+          <code>HX-Retarget</code>
+        </a>
+        response headers.<br />
+        <strong>Note:</strong> We do this in the example if you leave the field blank.
+        {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_complex_error %}
+      </li>
+    </ul>
+  </div>
+
+  <p>
+    Concretely, each input:
+  </p>
+  <ul>
+    <li>posts to the same view URL,</li>
+    <li>
+      sends the row <code>id</code> and which field changed
+      (<code>field="key"</code> or <code>"value"</code>) via <code>hx-vals</code>,
+    </li>
+    <li>triggers on <code>change</code>/<code>blur</code>, and</li>
+    <li>sets <code>hx-swap="none"</code> so HTMX never re-renders the input markup.</li>
+  </ul>
+
+  <p>
+    The <code>update_pair</code> handler then:
+  </p>
+  <ul>
+    <li>looks up the matching pair in the <code>CacheStore</code>,</li>
+    <li>updates just that one field on the server, and</li>
+    <li>returns <code>self.render_htmx_no_response()</code> (no HTML body).</li>
+  </ul>
+
+  <p>
+    Compared to the Alpine version:
+  </p>
+  <ul>
+    <li>There is no client-side array at all.</li>
+    <li>Each change (typing into a field, adding, deleting) immediately updates the
+      server-side list via HTMX.</li>
+    <li>The source of truth lives entirely in Django; the DOM is just a
+      reflection of that state.</li>
+    <li>
+      Because updates use <code>hx-swap="none"</code>, keyboard users can tab
+      between fields while requests are in flight without losing focus.
+    </li>
+  </ul>
+  <p>
+    This is a good fit when the "real" model is on the server and you want
+    instant saves without introducing extra JavaScript state or explicit "Save"
+    buttons.
+  </p>
+
+  <h2 id="step-3" class="pt-4">
+    Step 3: When to Stop at Alpine vs Move to HTMX
+  </h2>
+  <p>
+    Once you've translated a Knockout model into Alpine, the next question is:
+    <strong>do we stop here, or should this really live on the server with HTMX?</strong>
+  </p>
+  <p>
+    There isn't a single "right" answer, but there are some good rules of thumb that can
+    help keep both the migration and long-term maintenance sane.
+  </p>
+
+  <h3 id="step-3-when-alpine" class="pt-3">
+    Stay with Alpine when...
+  </h3>
+  <ul>
+    <li>
+      The state is <strong>purely UI-level</strong>:
+      show/hide, tabs, accordions, steps in a wizard, “isLoading” flags,
+      inline edit mode, etc.
+    </li>
+    <li>
+      The data is <strong>derived from what's already on the page</strong>:
+      filters that only affect what's rendered, client-side sort order, small
+      in-memory lists that don't need to sync to the server immediately.
+    </li>
+    <li>
+      The logic is <strong>simple and local</strong>:
+      one page, one small component, no other views need to know about it.
+    </li>
+    <li>
+      A brief delay to save is okay, or a single explicit “Save” button is fine.
+    </li>
+    <li>
+      You're doing a <strong>first-pass Knockout → Alpine migration</strong> and
+      just want to remove KO without reshaping the whole feature yet.
+    </li>
+  </ul>
+
+  <h3 id="step-3-when-htmx" class="pt-3">
+    Reach for HTMX when...
+  </h3>
+  <ul>
+    <li>
+      The <strong>real source of truth</strong> is in the database or external systems,
+      and you don't want to duplicate that model in JavaScript.
+    </li>
+    <li>
+      Multiple users or processes may change the data, so the browser needs to pull
+      fresh HTML from the server to stay in sync.
+    </li>
+    <li>
+      The logic involves <strong>permissions, complex validation, or side effects</strong>
+      (e.g. saving to multiple tables, enqueueing tasks, audit logs).
+    </li>
+    <li>
+      The Knockout code is already re-implementing a lot of Django logic
+      (form validation, choice lists, business rules) that you'd rather move back
+      to Django.
+    </li>
+    <li>
+      You want <strong>"instant save" semantics</strong>—each change should be persisted
+      immediately, not just when someone remembers to press "Save".
+    </li>
+  </ul>
+
+  <div class="alert alert-primary mt-3">
+    <p class="mb-1">
+      <strong>Migration-friendly rule of thumb:</strong>
+    </p>
+    <ul class="mb-0">
+      <li>
+        For existing Knockout pages, it's fine to <strong>stop at Alpine</strong> if the
+        logic is working and not clearly painful. You've already won by removing KO.
+      </li>
+      <li>
+        Reach for <strong>HTMX + Django</strong> when the Knockout code is clearly duplicating
+        backend rules, or when bugs keep appearing because the browser and server have
+        drifted apart.
+      </li>
+    </ul>
+  </div>
+
+  <p>
+    The <a href="#step-2-example-2-htmx">key/value example above</a> shows this spectrum
+    in practice:
+  </p>
+  <ul>
+    <li>
+      The Alpine version keeps a local <code>keyValuePairs</code> array in JavaScript and
+      only saves when you decide to.
+    </li>
+    <li>
+      The HTMX version drops the array entirely; the server owns the list, and each change
+      is persisted via HTMX calls (using <code>hx-swap="none"</code> so focus isn't lost).
+    </li>
+  </ul>
+  <p>
+    Both are valid patterns. The main question is where you want the <strong>long-lived
+    model</strong> to live: Alpine for small, local UI state; HTMX + Django for data that
+    really belongs on the server.
+  </p>
+
+  <h2 id="ai-assist" class="pt-4">
+    Using AI to Help with Migrations (Safely)
+  </h2>
+  <p>
+    Migrating Knockout to Alpine (+HTMX) is very pattern-heavy. That makes
+    it a great fit for code assistants / AI tools&mdash;as long as we keep
+    tight guardrails and review changes carefully.
+  </p>
+
+  <h3 id="ai-assist-where-helpful" class="pt-3">
+    Where AI is especially helpful
+  </h3>
+  <ul>
+    <li>
+      <strong>Mechanical translation of bindings:</strong> turning
+      <code>data-bind</code> expressions into <code>x-model</code>,
+      <code>x-text</code>, <code>x-show</code>, and small Alpine methods.
+    </li>
+    <li>
+      <strong>Creating Alpine skeletons:</strong> building out an
+      <code>x-data</code> model from an existing Knockout view model
+      (properties, computed values, event handlers).
+    </li>
+    <li>
+      <strong>HTMX wiring:</strong> stubbing out <code>hx-get</code> / <code>hx-post</code>
+      attributes, <code>hx-target</code> containers, and
+      <code>hq-hx-action</code> names for a view that uses
+      <code>HqHtmxActionMixin</code>.
+    </li>
+    <li>
+      <strong>Docs and comments:</strong> summarizing what a Knockout model
+      does and turning that into docstrings, inline comments, or
+      styleguide text (if you want to document some more adventures here).
+    </li>
+  </ul>
+
+  <h3 id="ai-assist-how-to-prompt" class="pt-3">
+    How to prompt in the HQ context
+  </h3>
+  <p>
+    When asking an AI tool to help with a migration, give it enough context
+    so it can follow HQ patterns:
+  </p>
+  <ul>
+    <li>
+      Include the <strong>Knockout JS</strong> and the relevant
+      <strong>template snippet</strong> together (bindings + markup).
+    </li>
+    <li>
+      Mention that you are using <strong>Alpine + HTMX + Django</strong>,
+      and that the page is on <strong>Bootstrap 5</strong>.
+    </li>
+    <li>
+      Be explicit about the target pattern, for example:
+      <ul>
+        <li>
+          “Translate these <code>data-bind</code> attributes to Alpine
+          (<code>x-model</code>, <code>x-text</code>, <code>x-show</code>).
+          Keep the HTML structure and CSS classes the same.”
+        </li>
+        <li>
+          “Create a <code>HqHtmxActionMixin</code>-based view and HTMX
+          attributes for these actions. Use <code>hq-hx-action</code>
+          names that match the method names.”
+        </li>
+      </ul>
+    </li>
+    <li>
+      Ask for <strong>small, focused changes</strong>:
+      “only migrate this one widget” or “just the bindings, no visual
+      redesign.”
+    </li>
+  </ul>
+
+  <h3 id="ai-assist-guardrails" class="pt-3">
+    Guardrails: things to watch out for
+  </h3>
+  <ul>
+    <li>
+      <strong>Behavior must stay the same.</strong> For migration work, treat
+      the AI output as a <em>proposal</em>. Review it like a PR from a new
+      teammate: does it really match the old behavior, including edge cases?
+    </li>
+    <li>
+      <strong>Don't accept giant rewrites.</strong> If an AI tool tries to
+      “modernize” the entire page (rename everything, split files, change
+      semantics), back up and ask for a smaller, narrower transformation.
+    </li>
+    <li>
+      <strong>Keep a tight diff:</strong> prefer migrations where the HTML
+      and structure stay mostly the same and only bindings / models change.
+      That makes it much easier to review and debug.
+    </li>
+    <li>
+      <strong>Run the tests (and the UI).</strong> After applying AI-generated
+      changes, run existing tests and click through the page with both
+      old and new flows in mind (including keyboard-only navigation).
+    </li>
+    <li>
+      <strong>Watch for subtle regressions:</strong> lost accessibility
+      attributes, missing <code>required</code> flags, changed defaults, or
+      behavior that depended on Knockout quirks.
+    </li>
+  </ul>
+
+  <div class="alert alert-primary">
+    <p class="mb-1">
+      <strong>Practical workflow:</strong>
+    </p>
+    <ul class="mb-0">
+      <li>
+        Pick one widget / panel / form at a time.
+      </li>
+      <li>
+        Paste the Knockout model + template into your code assistant and ask
+        for an Alpine (or HTMX) version that preserves behavior.
+      </li>
+      <li>
+        Review, trim, and adapt the suggestion to fit HQ patterns
+        (<code>js_entry</code> usage, <code>HqHtmxActionMixin</code>,
+        Bootstrap 5).
+      </li>
+      <li>
+        Test locally, then commit as a small, reviewable change.
+      </li>
+    </ul>
+  </div>
+
+  <h3 id="step-4-ai-snippets" class="pt-3">
+    Copy-paste prompt snippets
+  </h3>
+  <p>
+    You don't have to rewrite the same context every time you ask an AI tool for help.
+    Below are some "starter" snippets you can copy/paste into your prompts and then
+    follow with the specific code you're working on.
+  </p>
+
+  <h4 id="step-4-ai-snippets-general" class="pt-3">
+    General HQ migration context (use this in most prompts)
+  </h4>
+  <p>
+    Paste this once at the start of a conversation to set the scene:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.prompt_start %}
+
+  <h4 id="step-4-ai-snippets-inline-alpine" class="pt-3">
+    KO → inline Alpine (simple widget, no extra JS file)
+  </h4>
+  <p>
+    Use this when you just want to move a small KO widget into inline Alpine:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.prompt_simple %}
+
+  <h4 id="step-4-ai-snippets-alpine-module" class="pt-3">
+    KO → Alpine module (<code>Alpine.data</code>, reusable model)
+  </h4>
+  <p>
+    Use this for larger models that deserve their own JS module:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.prompt_modules %}
+
+  <h4 id="step-4-ai-snippets-htmx" class="pt-3">
+    KO → HTMX (+ Alpine for small UI state)
+  </h4>
+  <p>
+    Use this when you want to move the “real” state to the server and keep Alpine just for UI sugar:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.prompt_htmx_alpine %}
+
+  <h4 id="step-4-ai-snippets-short" class="pt-3">
+    Super-short “one-liner” context
+  </h4>
+  <p>
+    When you're in a hurry, prepend this to a quick question:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.prompt_one_liner %}
+
+  <h4 id="step-4-ai-snippets-review" class="pt-3">
+    Review this AI-generated migration
+  </h4>
+  <p>
+    Use this when you already have a KO→Alpine/HTMX change (maybe generated by AI)
+    and want a second-pass sanity check.
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.prompt_review %}
+
+  <h2 id="step-5" class="pt-4">
+    Step 5: Before / After Checklists
+  </h2>
+  <p>
+    Before merging a Knockout → Alpine (+HTMX) migration, it helps to run through a few
+    quick sanity checks. The goal is simple: same behaviour, less complexity, no surprises.
+  </p>
+
+  <h3 id="step-5-before-start" class="pt-3">
+    Before you start refactoring
+  </h3>
+  <p>
+    These are lightweight prep steps that make the migration and review much easier:
+  </p>
+  <ul>
+    <li>
+      <strong>Capture current behaviour.</strong> Take short notes or screenshots/GIFs:
+      what does the page do today? What are the main interactions?
+    </li>
+    <li>
+      <strong>Find the Knockout entry points.</strong> Locate:
+      <ul>
+        <li>where <code>ko.applyBindings</code> is called, and</li>
+        <li>which templates use <code>data-bind</code> or KO comments
+          (<code>&lt;!-- ko if --&gt;</code>, etc.).
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>Identify server-side helpers.</strong> Note which Django views, forms,
+      and template tags/filters the page already uses. These are often good candidates
+      for HTMX endpoints later.
+    </li>
+    <li>
+      <strong>Decide your scope.</strong> Are you doing a “KO → Alpine only” pass for now,
+      or are you also moving state/validation to HTMX in this PR?
+    </li>
+  </ul>
+
+  <h3 id="step-5-before-merge" class="pt-3">
+    Before you merge: behavior &amp; UX checks
+  </h3>
+  <p>
+    Once you've migrated the code, run through these checks to make sure the page still
+    behaves as expected.
+  </p>
+  <ul>
+    <li>
+      <strong>Basic interactions still work.</strong> Click through:
+      <ul>
+        <li>create / edit / delete flows,</li>
+        <li>filters, pagination, sorting, tab switches, dialogs, etc.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Edge cases still work.</strong> Try:
+      <ul>
+        <li>invalid input / required fields,</li>
+        <li>cancel / reset flows,</li>
+        <li>empty states and “no results” states.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Keyboard navigation feels sane.</strong> Check that:
+      <ul>
+        <li>
+          you can tab through interactive elements in a sensible order,
+        </li>
+        <li>
+          inline-edit widgets (like the key/value or to-do demos) don’t “lose” focus
+          when HTMX requests fire, and
+        </li>
+        <li>
+          buttons/checkboxes disable correctly while requests are in flight
+          (<code>hx-disabled-elt</code>).
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>Loading and error states are clear.</strong>
+      <ul>
+        <li>Buttons show a spinner or disabled state when submitting (where appropriate).</li>
+        <li>
+          HTMX errors are surfaced via the shared error modal or a clear inline message
+          (no silent 500s).
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>Translations and template tags survived.</strong>
+      <ul>
+        <li>No lost <code>{% verbatim %}{% trans %}{% endverbatim %}</code> /
+          <code>{% verbatim %}{% blocktrans %}{% endverbatim %}</code> blocks.</li>
+        <li>
+          Template tags, filters, and context variables are still used correctly in the
+          new markup.
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>Analytics / tracking still fire (if present).</strong>
+      If the page has GTM events or other tracking, confirm they still fire on
+      the expected interactions.
+    </li>
+  </ul>
+
+  <h3 id="step-5-code-cleanup" class="pt-3">
+    Before you merge: code &amp; dependency cleanup
+  </h3>
+  <p>
+    These are the “don't leave crumbs behind” checks:
+  </p>
+  <ul>
+    <li>
+      <strong>No remaining Knockout bindings on this page.</strong>
+      <ul>
+        <li>No <code>data-bind</code> attributes.</li>
+        <li>No KO comment templates (<code>&lt;!-- ko ... --&gt;</code>).</li>
+        <li>No <code>ko.observable</code>, <code>ko.applyBindings</code>, or KO imports
+          in related JS files.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Alpine and/or HTMX wiring is clear.</strong>
+      <ul>
+        <li>
+          Inline Alpine: <code>x-data</code>, <code>x-model</code>, <code>x-show</code>,
+          <code>x-for</code>, etc., are small and local.
+        </li>
+        <li>
+          Reusable models: <code>Alpine.data("name", ...)</code> or a shared
+          <code>export default (initial) =&gt; ({ ... })</code> module is in place.
+        </li>
+        <li>
+          HTMX: <code>hx-get</code>/<code>hx-post</code>, <code>hx-target</code>,
+          <code>hx-swap</code>, and <code>hq-hx-action</code> all point to real
+          view methods.
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>View and template structure is still sane.</strong>
+      <ul>
+        <li>
+          Class-based views still inherit from the expected base classes
+          (e.g. <code>BasePageView</code>, <code>TemplateView</code>).
+        </li>
+        <li>
+          If using <code>HqHtmxActionMixin</code>, HTMX handlers are small, focused
+          methods decorated with <code>@hq_hx_action</code>.
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>Tests and linting pass.</strong>
+      <ul>
+        <li>Any existing tests for this page still pass.</li>
+        <li>
+          If you added new HTMX endpoints or forms, consider at least one small
+          view test or form test that exercises them.
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>Dead code is gone.</strong>
+      <ul>
+        <li>
+          Old Knockout modules or RequireJS entries used only by this page are removed
+          or flagged for removal.
+        </li>
+        <li>
+          Inline scripts that only existed to bootstrap KO are gone.
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2 id="example-commits" class="pt-4">
+    Commits from previous migrations
+  </h2>
+  <p>
+    Here is a starting list of migration commits you can refer to when planning or reviewing
+    your own Knockout → Alpine (+HTMX) work. As our patterns improve, please update this
+    section&mdash;add better examples, remove outdated ones, and keep the list focused on
+    migrations that reflect our current best practices.
+  </p>
+  <ul>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/pull/37040/commits/efa1c2bce56561582d679a180374909f50d0f45c"
+        target="_blank"
+      ><strong>Migrating the Stripe card manager</strong></a><br />
+      Shows a reusable <code>Alpine.data</code> model that wraps the Stripe JS API. Useful for:
+      <ul>
+        <li>Replacing a Knockout view model that talks to a third-party JS library</li>
+        <li>Keeping all Stripe-specific logic in a dedicated JS module instead of the template</li>
+        <li>Exposing a small, declarative API to the template via <code>x-data</code> / <code>@click</code></li>
+      </ul>
+    </li>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/pull/37055/commits/91b9c422e05dc208f0fcfbcb889455b77a9349d7"
+        target="_blank"
+      ><strong>Move autopay card management to HTMX + Alpine JS</strong></a><br />
+      Example of moving logic that used to live entirely in JavaScript back into Django views
+      and templates, with HTMX handling updates and Alpine handling light UI state. Patterns to
+      look for:
+      <ul>
+        <li>Using <code>HqHtmxActionMixin</code> + <code>hq-hx-action</code> instead of multiple KO
+          endpoints or big conditional blocks
+        </li>
+        <li>Returning small partials to refresh just the “select autopay card” UI</li>
+        <li>Letting Alpine manage only local concerns (toggling loaders, showing/hiding bits of UI)</li>
+      </ul>
+    </li>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/pull/37055/commits/cb1dcfbda2baffb93a1ff219870bb2b643f8ead3"
+        target="_blank"
+      ><strong>Introducing Alpine to the Billing Information form</strong></a><br />
+      Not really a Knockout to Alpine migration, but an example of layering Alpine on top of a Django
+      form to handle UI-only behavior. Helpful for:
+      <ul>
+        <li>Toggling informational messages / hints based on form field state</li>
+        <li>Using a small <code>Alpine.data</code> model alongside crispy-forms output</li>
+        <li>Keeping validation and business rules in Django while Alpine manages visibility and text</li>
+      </ul>
+    </li>
+  </ul>
+
+{% endblock content %}
