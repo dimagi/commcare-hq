@@ -9,7 +9,7 @@ function getCardElementPromise(key) {
             console.warn("Cannot load Stripe, key not provided");
             return;
         }
-        self.stripePromise = loadStripe(key);
+        self.stripePromise = self.stripePromise || loadStripe(key);
         self.stripePromise.then(function (stripe) {
             self.cardElement = stripe.elements().create('card', {
                 hidePostalCode: true,
