@@ -33,6 +33,7 @@ class KycProviders(models.TextChoices):
     # 2. Add it to `KycConfig.get_connections_settings()`
     # 3. Add required threshold fields to `KycProviderThresholdFields`
     MTN_KYC = 'mtn_kyc', _('MTN KYC')
+    ORANGE_CAMEROON_KYC = 'orange_cameroon_kyc', _('Orange Cameroon KYC')
 
 
 class KycProviderThresholdFields:
@@ -51,11 +52,17 @@ class KycProviderThresholdFields:
         'postCode',
         'country',
     ]
+    ORANGE_CAMEROON_KYC_REQUIRED_FIELDS = [
+        'firstName',
+        'lastName',
+    ]
 
     @classmethod
     def get_required_fields(cls, provider):
         if provider == KycProviders.MTN_KYC:
             return cls.MTN_KYC_REQUIRED_FIELDS
+        elif provider == KycProviders.ORANGE_CAMEROON_KYC:
+            return cls.ORANGE_CAMEROON_KYC_REQUIRED_FIELDS
         else:
             raise ValueError(f'Unable to determine required threshold fields for KYC provider {provider!r}.')
 
