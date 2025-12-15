@@ -132,20 +132,15 @@ var paymentMethodHandler = function (formId, opts) {
     self.cardElementPromise = function () {
         return getCardElementPromise(initialPageData.get("stripe_public_key"));
     };
-    self.cardElementMounted = false;
     self.showOrHideStripeUI = function (show) {
-        self.cardElementPromise().then(function (cardElement) {
-            const stripeSelector = '#' + formId + ' .stripe-card-container';
-            if (show) {
-                if ($(stripeSelector).length && !self.cardElementMounted) {
+        if (show) {
+            self.cardElementPromise().then(function (cardElement) {
+                const stripeSelector = '#' + formId + ' .stripe-card-container';
+                if ($(stripeSelector).length) {
                     cardElement.mount(stripeSelector);
-                    self.cardElementMounted = true;
                 }
-            } else {
-                cardElement.unmount();
-                self.cardElementMounted = false;
-            }
-        });
+            });
+        }
     };
 
     self.savedCards = ko.observableArray();
@@ -236,9 +231,7 @@ var paymentMethodHandler = function (formId, opts) {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
         self.newCard().reset();
-        if (self.cardElementMounted) {
-            self.cardElementPromise();
-        }
+        self.showOrHideStripeUI();
     };
 
     self.processPayment = function () {
