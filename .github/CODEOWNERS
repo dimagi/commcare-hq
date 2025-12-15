@@ -36,10 +36,10 @@
 /corehq/apps/accounting/ @dannyroberts @biyeun @nospame
 /corehq/apps/analytics/ @biyeun
 /corehq/apps/callcenter/ @snopoke
-/corehq/apps/case_search/ @MartinRiese @esoergel @stephherbers @Robert-Costello @Jtang-1
+/corehq/apps/case_search/ @MartinRiese @esoergel @stephherbers @Robert-Costello
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py @millerdev
-/corehq/apps/cloudcare/ @MartinRiese @stephherbers @Robert-Costello @Jtang-1 @nospame
+/corehq/apps/cloudcare/ @MartinRiese @stephherbers @Robert-Costello @nospame
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/data_dictionary/ @esoergel @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
