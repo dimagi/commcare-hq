@@ -129,10 +129,12 @@ var paymentMethodHandler = function (formId, opts) {
     // Its container is removed and re-added from the DOM depending on the user's
     // selections, so mount and unmount it as needed. This is called in a number
     // of places because several different observables affect the visiblity of the card UI.
-    self.cardElementPromise = getCardElementPromise(initialPageData.get("stripe_public_key"));
+    self.cardElementPromise = function () {
+        return getCardElementPromise(initialPageData.get("stripe_public_key"));
+    };
     self.cardElementMounted = false;
     self.showOrHideStripeUI = function (show) {
-        self.cardElementPromise.then(function (cardElement) {
+        self.cardElementPromise().then(function (cardElement) {
             const stripeSelector = '#' + formId + ' .stripe-card-container';
             if (show) {
                 if ($(stripeSelector).length && !self.cardElementMounted) {
