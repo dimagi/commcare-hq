@@ -237,9 +237,7 @@ var paymentMethodHandler = function (formId, opts) {
         self.serverErrorMsg('');
         self.newCard().reset();
         if (self.cardElementMounted) {
-            self.cardElementPromise.then(function (cardElement) {
-                cardElement.clear();
-            });
+            self.cardElementPromise();
         }
     };
 
