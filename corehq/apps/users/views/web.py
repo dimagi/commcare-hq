@@ -22,11 +22,7 @@ from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_EXISTING_USER_INVITE_FORM,
-    send_hubspot_form,
-    track_workflow_noop,
-)
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import BasePageView, logout
@@ -137,7 +133,6 @@ class UserInvitationView(object):
                 track_workflow_noop(request.couch_user.get_email(),
                                     "Current user accepted a project invitation",
                                     {"Current user accepted a project invitation": "yes"})
-                send_hubspot_form(HUBSPOT_EXISTING_USER_INVITE_FORM, request)
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
