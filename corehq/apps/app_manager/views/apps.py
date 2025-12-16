@@ -21,11 +21,7 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_APP_TEMPLATE_FORM_ID,
-    send_hubspot_form,
-    track_workflow_noop,
-)
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager import add_ons, id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_layout,
@@ -146,7 +142,6 @@ def default_new_app(request, domain):
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
     """
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
     track_workflow_noop(request.couch_user.username, "User created a new blank application")
 
     lang = 'en'
@@ -496,7 +491,6 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
     track_workflow_noop(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
