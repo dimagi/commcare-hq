@@ -18,34 +18,40 @@
       <li><a href="#overview">Overview</a></li>
       <li><a href="#select-toggle">Select-Toggle</a>
           <ul>
-            <a href="#select-toggle-crispy">Usage in Crispy Forms</a></li>
+            <li><a href="#select-toggle-crispy">Usage in Crispy Forms</a></li>
           </ul>
         </li>
       <li><a href="#select2">Select2</a>
         <ul>
           <li><a href="#select2-manual">Manual Setup</a>
             <ul>
-              <a href="#select2-manual-crispy">With Crispy Forms</a></li>
+              <li><a href="#select2-manual-crispy">With Crispy Forms</a></li>
             </ul>
           </li>
           <li><a href="#select2-css-class">Referencing a CSS Class</a>
             <ul>
-              <a href="#select2-css-class-crispy">With Crispy Forms</a></li>
+              <li><a href="#select2-css-class-crispy">With Crispy Forms</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#select2-alpine">Alpine <code>x-select2</code> Directive</a>
+            <ul>
+              <li><a href="#select2-alpine-crispy">With Crispy Forms</a></li>
             </ul>
           </li>
           <li><a href="#select2-ko-dynamic">Dynamic Knockout Binding</a>
             <ul>
-              <a href="#select2-ko-dynamic-crispy">With Crispy Forms</a></li>
+              <li><a href="#select2-ko-dynamic-crispy">With Crispy Forms</a></li>
             </ul>
           </li>
           <li><a href="#select2-ko-static">Static Knockout Binding</a>
             <ul>
-              <a href="#select2-ko-static-crispy">With Crispy Forms</a></li>
+              <li><a href="#select2-ko-static-crispy">With Crispy Forms</a></li>
             </ul>
           </li>
           <li><a href="#select2-ko-autocomplete">Autocomplete Knockout Binding</a>
             <ul>
-              <a href="#select2-ko-autocomplete-crispy">With Crispy Forms</a></li>
+              <li><a href="#select2-ko-autocomplete-crispy">With Crispy Forms</a></li>
             </ul>
           </li>
           <li><a href="#select2-crispy-select2Ajax-widget">Crispy Forms Select2Ajax Widget</a></li>
@@ -90,6 +96,7 @@
   <h2 id="select-toggle" class="pt-4">
     Select-Toggle
   </h2>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     On the occasions when a list is guaranteed to be short (2-5 items), consider displaying it as a toggle.
     This shows all options and only takes one click to select.
@@ -137,8 +144,10 @@
     the <a href='https://select2.org/' target='_blank'>full documentation</a> for details.
   </p>
   <p>
-    We instantiate select2 in a number of different ways: manually with javascript, via knockout bindings,
-    and by using CSS classes that certain javascript modules search for.
+    We instantiate <code>select2</code> in a few different ways:
+    manually with JavaScript, via Knockout bindings, via an Alpine
+    directive (<code>x-select2</code>), and by using CSS classes that
+    certain JavaScript modules search for.
   </p>
   <p>
     We also have a <code>select2</code> options for common behaviors like validating email addresses and displaying form
@@ -188,9 +197,102 @@
   </p>
   {% include 'styleguide/bootstrap5/form_example.html' with content=examples.select2_css_class_crispy %}
 
+  <h3 id="select2-alpine" class="pt-3">
+    Alpine <code>x-select2</code> Directive
+  </h3>
+  <p>
+    On Bootstrap 5 pages using Alpine, the preferred way to initialize
+    <code>select2</code> is via the
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/select2.js"
+      target="_blank"
+    ><code>x-select2</code> Alpine directive</a>. This directive:
+  </p>
+  <ul>
+    <li>initializes <code>select2</code> on the <code>&lt;select&gt;</code>,</li>
+    <li>
+      accepts a JSON configuration object (same options you would pass
+      to <code>$(el).select2({...})</code>),
+    </li>
+    <li>
+      dispatches a custom <code>select2change</code> event when the value
+      changes so Alpine can react, and
+    </li>
+    <li>
+      cleans up <code>select2</code> when the element is removed (e.g., when
+      HTMX replaces a partial).
+    </li>
+  </ul>
+
+  <p>
+    At a minimum, you can add <code>x-select2</code> to any
+    <code>&lt;select&gt;</code>:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.select2_alpine_basic %}
+
+  <p>
+    The directive expression is parsed as JSON, so you can pass
+    <code>select2</code> options directly. For example:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.select2_alpine_with_options %}
+
+  <p>
+    The directive also dispatches a custom
+    <code>select2change</code> event whenever the value changes. In Alpine,
+    you can listen to that event with <code>@select2change</code>:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.select2_alpine_select2change %}
+
+  <div class="alert alert-primary mt-3">
+    <p class="mb-1">
+      <strong>HTMX tip:</strong> <code>x-select2</code> plays nicely with
+      HTMX form submissions.
+    </p>
+    <p class="mb-0">
+      The directive listens for the
+      <code>htmx:afterSettle</code> event and re-applies the
+      <code>select2</code> styles and validation classes after a partial
+      is swapped back into the DOM. This prevents the “stacked native
+      &lt;select&gt; + select2” bug and keeps <code>is-valid</code> /
+      <code>is-invalid</code> in sync with the select2 container when
+      forms are re-rendered via HTMX.
+    </p>
+  </div>
+
+  <h4 id="select2-alpine-crispy" class="pt-2">
+    Alpine <code>x-select2</code> with Crispy Forms
+  </h4>
+  <p>
+    In crispy forms, you pass the directive via the <code>x_select2</code>
+    keyword argument on <code>crispy.Field</code>. The value should be
+    <code>json.dumps</code> of the <code>select2</code> config you want to use.
+    You can also attach Alpine event handlers like
+    <code>@select2change</code>.
+  </p>
+  {% include "styleguide/bootstrap5/form_example.html" with content=examples.select2_alpine_crispy %}
+  <p>
+    In this pattern:
+  </p>
+  <ul>
+    <li>
+      <code>x_select2</code> becomes the Alpine
+      <code>x-select2</code> directive on the rendered
+      <code>&lt;select&gt;</code>,
+    </li>
+    <li>
+      the config is parsed as JSON inside the directive and passed to
+      <code>$(el).select2(config)</code>, and
+    </li>
+    <li>
+      <code>@select2change</code> updates Alpine state using the new value
+      from <code>$event.detail</code>.
+    </li>
+  </ul>
+
   <h3 id="select2-ko-dynamic" class="pt-3">
     Dynamic Knockout Binding
   </h3>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     We can also use the knockout binding <code>select2</code> to initialize a <code>select2</code>, with options
     provided by Knockout.
@@ -200,6 +302,7 @@
   <h4 id="select2-ko-dynamic-crispy" class="pt-2">
     Dynamic Knockout Binding with Crispy Forms
   </h4>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     This is similar to the HTML-based setups above, except that an external script applies <code>koApplyBindings</code>
     to the <code>&lt;form&gt; id</code> (<code>&lt;form&gt;</code> can also be wrapped with a <code>&lt;div&gt;</code> with the same
@@ -211,6 +314,7 @@
   <h3 id="select2-ko-static" class="pt-3">
     Static Knockout Binding
   </h3>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     We can also initialize a <code>select2</code> with the <code>staticSelect2</code> Knockout Binding, where the options
     are pulled from <code>HTML</code> instead of Knockout. This is useful for <code>select2s</code> that have
@@ -222,6 +326,7 @@
   <h4 id="select2-ko-static-crispy" class="pt-2">
     Static Knockout Binding with Crispy Forms
   </h4>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     This is similar to the HTML-based setups above, except that an external script applies <code>koApplyBindings</code>
     to the <code>&lt;form&gt; id</code> (<code>&lt;form&gt;</code> can also be wrapped with a <code>&lt;div&gt;</code> with the same
@@ -232,6 +337,7 @@
   <h3 id="select2-ko-autocomplete" class="pt-3">
     Autocomplete Knockout Binding
   </h3>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     To initialize a <code>select2</code> to autocomplete select suggestions, use the <code>autocompleteSelect2</code>
     Knockout binding. The difference between this binding and the original <code>select2</code>, is the ability to
@@ -242,6 +348,7 @@
   <h4 id="select2-ko-autocomplete-crispy" class="pt-2">
     Autocomplete Knockout Binding with Crispy Forms
   </h4>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     This is similar to the HTML-based setups above, except that an external script applies <code>koApplyBindings</code>
     to the <code>&lt;form&gt; id</code> (<code>&lt;form&gt;</code> can also be wrapped with a <code>&lt;div&gt;</code> with the same
@@ -266,6 +373,7 @@
   <h2 id="multiselect" class="pt-4">
     Multiselect
   </h2>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     This is a custom widget we built. It can be useful in situations where the user is adding and removing
     items from one list to another and wants to be able to see both the included and excluded items.
@@ -298,6 +406,7 @@
   <h4 id="multiselect-crispy" class="pt-2">
     Use in Crispy Forms
   </h4>
+  {% include "styleguide/bootstrap5/partials/ko_migration_alert.html" %}
   <p>
     This is similar to the manual setup above, but using crispy forms to provide the form HTML.
   </p>
