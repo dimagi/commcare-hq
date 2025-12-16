@@ -1109,7 +1109,7 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     'split_screen_case_search',
     "Split screen case search: In case search, show the search filters in a sidebar on the left and the results"
     " on the right.",
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     help_link='https://confluence.dimagi.com/display/USH/Split+Screen+Case+Search',
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
