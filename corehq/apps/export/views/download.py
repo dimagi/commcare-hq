@@ -29,9 +29,6 @@ from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
 
-from corehq.apps.analytics.tasks import (
-    track_workflow_noop,
-)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, ALL_CASE_TYPE_EXPORT
@@ -102,12 +99,6 @@ class DownloadExportViewHelper(object):
 
     def get_export(self, id):
         raise NotImplementedError()
-
-    def send_preparation_analytics(self, export_instances, export_filters):
-        track_workflow_noop(self.request.couch_user.username, 'Downloaded {} Exports With {}Data'.format(
-            self.model[0].upper() + self.model[1:],
-            '' if any(get_export_size(instance, export_filters) > 0 for instance in export_instances) else 'No ',
-        ))
 
     def get_filter_form(self, filter_form_data):
         domain_object = Domain.get_by_name(self.domain)
@@ -360,8 +351,6 @@ def prepare_custom_export(request, domain):
         owner_id=request.couch_user.get_id,
         filename=filename,
     )
-
-    view_helper.send_preparation_analytics(export_instances, export_filters)
 
     return json_response({
         'success': True,
