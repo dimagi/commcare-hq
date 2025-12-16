@@ -158,6 +158,37 @@ class JsonCaseUpdate(BaseJsonCaseChange):
         return case_db.get_by_external_id(self.external_id)
 
 
+class JsonCaseUpsert(BaseJsonCaseChange):
+    """Handles UPSERT operations where create/update is determined at lookup time."""
+    external_id = jsonobject.StringProperty(required=True)
+
+    # Required because we might create
+    case_name = jsonobject.StringProperty(required=True)
+    case_type = jsonobject.StringProperty(required=True)
+    owner_id = jsonobject.StringProperty(required=True)
+
+    _is_case_creation = None  # Determined when get_case_id() is called
+
+    @classmethod
+    def wrap(cls, data):
+        if 'case_id' in data:
+            raise UserError("UPSERT does not allow case_id to be specified")
+        return super().wrap(data)
+
+    def get_case_id(self, case_db):
+        if self.case_id:
+            return self.case_id
+
+        existing_case_id = case_db.get_upsert_case_id(self.external_id)
+        if existing_case_id:
+            self._is_case_creation = False
+            self.case_id = existing_case_id
+        else:
+            self._is_case_creation = True
+            self.case_id = str(uuid.uuid4())
+        return self.case_id
+
+
 def handle_case_update(domain, data, user, device_id, is_creation, xmlns=None):
     is_bulk = isinstance(data, list)
     if is_bulk:
@@ -191,9 +222,19 @@ def _get_individual_update(domain, data, user, is_creation):
     return update
 
 
-def _get_bulk_updates(domain, all_data, user):
-    from .get_bulk import get_bulk
+def _get_upsert_update(domain, data, user):
+    if 'case_id' in data:
+        raise UserError("UPSERT does not allow case_id to be specified")
+    if not data.get('external_id'):
+        raise UserError("UPSERT requires external_id to be specified")
+    data['user_id'] = user.user_id
+    try:
+        return JsonCaseUpsert.wrap(data)
+    except BadValueError as err:
+        raise UserError(str(err))
 
+
+def _get_bulk_updates(domain, all_data, user):
     if len(all_data) > CASEBLOCK_CHUNKSIZE:
         raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
@@ -203,27 +244,11 @@ def _get_bulk_updates(domain, all_data, user):
         try:
             if 'create' not in data:
                 raise UserError("A 'create' flag is required for each update.")
-            is_creation = data.pop('create')
-            if is_creation is None:
-                if not data.get('case_id') and data.get('external_id'):
-                    bulk_fetch_results_dict = get_bulk(
-                        domain,
-                        user,
-                        case_ids=[],
-                        external_ids=[data['external_id']],
-                    )  # raises UserError
-                    case = bulk_fetch_results_dict['cases'][0]
-                    if case.get('error') == 'not found':
-                        is_creation = True
-                    else:
-                        is_creation = False
-                        data['case_id'] = case['case_id']
-                else:
-                    raise UserError(
-                        'UPSERT operation requires "create": null, '
-                        '"external_id" set and "case_id" not set.'
-                    )
-            updates.append(_get_individual_update(domain, data, user, is_creation))
+            create_flag = data.pop('create')
+            if create_flag is None:
+                updates.append(_get_upsert_update(domain, data, user))
+            else:
+                updates.append(_get_individual_update(domain, data, user, create_flag))
         except UserError as e:
             errors.append(f'Error in row {i}: {e}')
 
@@ -263,6 +288,10 @@ class CaseIDLookerUpper:
         except KeyError:
             raise UserError(f"Could not find a case with external_id '{key}'")
 
+    def get_upsert_case_id(self, external_id):
+        """Returns case_id if found, None if not found (indicating creation)."""
+        return self._by_external_id.get(external_id)
+
     @cached_property
     def _by_external_id(self):
         ids_in_request = {
@@ -272,7 +301,7 @@ class CaseIDLookerUpper:
 
         ids_to_find = {
             update.external_id for update in self.updates
-            if not update._is_case_creation and not update.case_id
+            if update._is_case_creation is not True and not update.case_id
         } | {
             index.external_id for update in self.updates for index in update.indices.values()
         }
