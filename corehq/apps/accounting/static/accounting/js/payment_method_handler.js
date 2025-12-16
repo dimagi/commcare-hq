@@ -229,7 +229,6 @@ var paymentMethodHandler = function (formId, opts) {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
         self.newCard().reset();
-        self.resetStripeCardUI();
     };
 
     self.processPayment = function () {
