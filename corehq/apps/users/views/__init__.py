@@ -50,11 +50,7 @@ from memoized import memoized
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import always_allow_project_access, requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_INVITATION_SENT_FORM,
-    send_hubspot_form,
-    track_workflow_noop,
-)
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -1340,7 +1336,6 @@ class InviteWebUserView(BaseManageWebUserView):
                 track_workflow_noop(request.couch_user.get_email(),
                                     "Sent a project invitation",
                                     {"Sent a project invitation": "yes"})
-                send_hubspot_form(HUBSPOT_INVITATION_SENT_FORM, request)
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:
