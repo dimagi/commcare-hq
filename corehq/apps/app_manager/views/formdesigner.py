@@ -15,10 +15,6 @@ from dimagi.utils.logging import notify_exception
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_FORM_BUILDER_FORM_ID,
-    send_hubspot_form,
-)
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema, get_registry_schema
@@ -147,8 +143,6 @@ def _get_form_designer_view(request, domain, app, module, form):
             "upstream version."
         ))
         return back_to_main(request, domain, app_id=app.id)
-
-    send_hubspot_form(HUBSPOT_FORM_BUILDER_FORM_ID, request)
 
     context = get_apps_base_context(request, domain, app)
     context.update(locals())

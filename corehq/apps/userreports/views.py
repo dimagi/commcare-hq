@@ -44,8 +44,6 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 from corehq import toggles
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import (
-    HUBSPOT_SAVED_UCR_FORM_ID,
-    send_hubspot_form,
     track_workflow_noop,
     update_hubspot_properties,
 )
@@ -725,7 +723,6 @@ class ConfigureReport(ReportBuilderView):
                 else:
                     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
             self._delete_temp_data_source(report_data)
-            send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
                 'report_url': reverse(ConfigurableReportView.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,

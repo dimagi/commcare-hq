@@ -7,12 +7,7 @@ from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.users.util import log_user_change
 from dimagi.utils.web import get_ip
 
-from corehq.apps.analytics.tasks import (
-    track_workflow_noop,
-    track_web_user_registration_hubspot,
-    send_hubspot_form,
-    HUBSPOT_NEW_USER_INVITE_FORM,
-)
+from corehq.apps.analytics.tasks import track_web_user_registration_hubspot
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
 from corehq.apps.sso.utils.session_helpers import (
@@ -143,14 +138,6 @@ class SsoBackend(ModelBackend):
         :param async_signup: AsyncSignupRequest
         """
         if not async_signup:
-            if settings.IS_SAAS_ENVIRONMENT:
-                track_workflow_noop(
-                    new_web_user.username,
-                    "Requested New Account via SSO (Bypassed Signup Form)",
-                    {
-                        'environment': settings.SERVER_ENVIRONMENT,
-                    }
-                )
             return
 
         if async_signup.invitation:
@@ -161,31 +148,11 @@ class SsoBackend(ModelBackend):
             new_web_user.save()
 
         if settings.IS_SAAS_ENVIRONMENT:
-            track_workflow_noop(
-                new_web_user.username,
-                "Requested New Account via SSO",
-                {
-                    'environment': settings.SERVER_ENVIRONMENT,
-                }
-            )
             if async_signup.persona:
-                track_workflow_noop(
-                    new_web_user.username,
-                    "Persona Field Filled Out via SSO",
-                    {
-                        'personachoice': async_signup.persona,
-                        'personaother': async_signup.persona_other,
-                    }
-                )
                 track_web_user_registration_hubspot(
                     request,
                     new_web_user,
                     async_signup.additional_hubspot_data,
-                )
-            else:
-                track_workflow_noop(
-                    new_web_user.username,
-                    "New User created through SSO, but Persona info missing"
                 )
 
     @staticmethod
@@ -209,16 +176,3 @@ class SsoBackend(ModelBackend):
                 invitation.domain,
             )
         )
-
-        if settings.IS_SAAS_ENVIRONMENT and is_new_user:
-            track_workflow_noop(
-                web_user.username,
-                "New User Accepted a project invitation with SSO",
-                {"New User Accepted a project invitation": "yes"}
-            )
-        if settings.ANALYTICS_IDS.get("HUBSPOT_API_ID") and is_new_user:
-            send_hubspot_form(
-                HUBSPOT_NEW_USER_INVITE_FORM,
-                request,
-                user=web_user
-            )
