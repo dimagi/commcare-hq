@@ -16,3 +16,10 @@ import "styleguide/js/examples/select2_manual";
 import "styleguide/js/examples/select2_manual_allow_clear";
 import "styleguide/js/examples/select2_manual_crispy";
 import "styleguide/js/examples/select2_static_ko_crispy";
+
+import 'hqwebapp/js/htmx_base';
+
+import Alpine from 'alpinejs';
+import 'hqwebapp/js/alpinejs/directives/select2';
+
+Alpine.start();
