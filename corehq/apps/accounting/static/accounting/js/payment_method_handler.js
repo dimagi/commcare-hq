@@ -130,13 +130,11 @@ var paymentMethodHandler = function (formId, opts) {
     // selections, so create stripe card elements as needed. This is called in a number
     // of places because several different observables affect the visiblity of the card UI.
     self.stripeKey = initialPageData.get("stripe_public_key");
-    self.resetStripeCardUI = function (show) {
-        if (show) {
-            getCardElementPromise(self.stripeKey).then(function (cardElement) {
-                const stripeSelector = '#' + formId + ' .stripe-card-container';
-                if ($(stripeSelector).length) {
-                    cardElement.mount(stripeSelector);
-                }
+    self.resetStripeCardUI = function (shouldCreateElement) {
+        const stripeSelector = '#' + formId + ' .stripe-card-container';
+        if (shouldCreateElement && $(stripeSelector).length) {
+            getCardElementPromise(self.stripeKey).then(cardElement => {
+                cardElement.mount(stripeSelector);
             });
         }
     };
