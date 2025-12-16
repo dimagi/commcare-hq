@@ -21,13 +21,6 @@ from corehq.apps.analytics.utils import (
 )
 
 
-class HubspotClickDeployView(View):
-    urlname = 'hubspot_click_deploy'
-
-    def post(self, request, *args, **kwargs):
-        return HttpResponse()
-
-
 class GreenhouseCandidateView(View):
     urlname = 'greenhouse_candidate'
 
