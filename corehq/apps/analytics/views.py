@@ -13,11 +13,9 @@ from django.views.generic import View
 
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
-    track_clicked_deploy_on_hubspot,
     track_job_candidate_on_hubspot,
 )
 from corehq.apps.analytics.utils import (
-    get_meta,
     get_client_ip_from_request,
     log_response,
 )
@@ -27,10 +25,6 @@ class HubspotClickDeployView(View):
     urlname = 'hubspot_click_deploy'
 
     def post(self, request, *args, **kwargs):
-        meta = get_meta(request)
-        if hasattr(request, 'couch_user'):
-            track_clicked_deploy_on_hubspot.delay(request.couch_user.get_id,
-                                                  request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return HttpResponse()
 
 
