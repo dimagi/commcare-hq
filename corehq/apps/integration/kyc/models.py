@@ -112,7 +112,17 @@ class KycConfig(models.Model):
                 client_secret=kyc_settings['client_secret'],
                 token_url=kyc_settings['token_url'],
             )
-        # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
+        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
+            kyc_settings = settings.ORANGE_CAMEROON_CONNECTION_SETTINGS
+            return ConnectionSettings(
+                domain=self.domain,
+                name=KycProviders.ORANGE_CAMEROON_KYC.label,
+                url=kyc_settings['url'],
+                auth_type=OAUTH2_CLIENT,
+                client_id=kyc_settings['client_id'],
+                client_secret=kyc_settings['client_secret'],
+                token_url=kyc_settings['token_url'],
+            )
         else:
             raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
 
