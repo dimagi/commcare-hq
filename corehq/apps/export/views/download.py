@@ -30,8 +30,6 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
 
 from corehq.apps.analytics.tasks import (
-    HUBSPOT_DOWNLOADED_EXPORT_FORM_ID,
-    send_hubspot_form,
     track_workflow_noop,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -106,8 +104,6 @@ class DownloadExportViewHelper(object):
         raise NotImplementedError()
 
     def send_preparation_analytics(self, export_instances, export_filters):
-        send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
-
         track_workflow_noop(self.request.couch_user.username, 'Downloaded {} Exports With {}Data'.format(
             self.model[0].upper() + self.model[1:],
             '' if any(get_export_size(instance, export_filters) > 0 for instance in export_instances) else 'No ',
