@@ -27,7 +27,6 @@ from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_confirmed_account_on_hubspot,
     track_web_user_registration_hubspot,
-    track_workflow_noop,
 )
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import (
@@ -120,14 +119,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
             persona = reg_form.cleaned_data['persona']
             persona_other = reg_form.cleaned_data['persona_other']
-
-            track_workflow_noop(email, "Requested New Account", {
-                'environment': settings.SERVER_ENVIRONMENT,
-            })
-            track_workflow_noop(email, "Persona Field Filled Out", {
-                'personachoice': persona,
-                'personaother': persona_other,
-            })
 
             if not additional_hubspot_data:
                 additional_hubspot_data = {}
@@ -406,7 +397,6 @@ class RegisterDomainView(TemplateView):
                 'requested_domain': domain_name,
                 'current_page': {'page_name': _('Confirm Account')},
             })
-            track_workflow_noop(self.request.user.email, "Created new project")
             return render(request, 'registration/confirmation_sent.html', context)
 
         if nextpage:
@@ -557,7 +547,6 @@ def confirm_domain(request, guid=''):
                 'Your account has been successfully activated.  Thank you for taking '
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
-        track_workflow_noop(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot.delay(requesting_user.get_id)
         request.session['CONFIRM'] = True
 
