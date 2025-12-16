@@ -24,7 +24,6 @@ from dimagi.utils.couch import CriticalSection
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.analytics.tasks import (
     HUBSPOT_EXISTING_USER_INVITE_FORM,
-    HUBSPOT_NEW_USER_INVITE_FORM,
     send_hubspot_form,
     track_workflow_noop,
 )
@@ -198,7 +197,6 @@ class UserInvitationView(object):
                     track_workflow_noop(request.POST['email'],
                                         "New User Accepted a project invitation",
                                         {"New User Accepted a project invitation": "yes"})
-                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
                 if (CouchUser.get_by_username(invitation.email)

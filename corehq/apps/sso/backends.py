@@ -10,8 +10,6 @@ from dimagi.utils.web import get_ip
 from corehq.apps.analytics.tasks import (
     track_workflow_noop,
     track_web_user_registration_hubspot,
-    send_hubspot_form,
-    HUBSPOT_NEW_USER_INVITE_FORM,
 )
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
@@ -215,10 +213,4 @@ class SsoBackend(ModelBackend):
                 web_user.username,
                 "New User Accepted a project invitation with SSO",
                 {"New User Accepted a project invitation": "yes"}
-            )
-        if settings.ANALYTICS_IDS.get("HUBSPOT_API_ID") and is_new_user:
-            send_hubspot_form(
-                HUBSPOT_NEW_USER_INVITE_FORM,
-                request,
-                user=web_user
             )
