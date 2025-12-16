@@ -38,7 +38,10 @@ IGNORED_PATHS_BY_APP = {
         "hqwebapp/crispy/multi_inline_field.html",
         "hqwebapp/crispy/field/hidden_with_errors.html",
         "hqwebapp/js/daterangepicker.config.js",  # Todo B5: delete me after migration
-    ]
+    ],
+    "app_manager": [
+        "app_manager/js/vellum",
+    ],
 }
 
 
