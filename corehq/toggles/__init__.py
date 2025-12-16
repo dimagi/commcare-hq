@@ -51,6 +51,13 @@ TAG_DEPRECATED = Tag(
     description="This feature flag is being removed. "
                 "Do not add any new projects to this list.",
 )
+TAG_FROZEN = Tag(
+    name='Frozen',
+    slug='frozen',
+    css_class='danger',
+    description="This feature flag will be removed with an alternative solution in future. "
+                "Do not add new projects to this list."
+)
 TAG_PRODUCT = Tag(
     name='Product',
     slug='product',
@@ -121,7 +128,7 @@ TAG_INTERNAL = Tag(
     description="These are tools for our engineering team to use to manage the product",
 )
 # Order roughly corresponds to how much we want you to use it
-ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_RELEASE, TAG_DEPRECATED]
+ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_RELEASE, TAG_DEPRECATED, TAG_FROZEN]
 ALL_TAGS = [
     TAG_SOLUTIONS_OPEN,
     TAG_SOLUTIONS_CONDITIONAL,
@@ -328,8 +335,8 @@ def was_user_created_after(username, checkpoint):
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
-    A special toggle to represent a legacy toggle that should't be
-    edited via the UI or the code and its new associated privilege.
+    A special toggle to represent a legacy toggle that shouldn't be
+    edited via the UI or the code and has a new associated privilege.
 
     This can be used when releasing a domain-only Toggle to general
     availability as a new paid privilege to support domains that
@@ -753,7 +760,7 @@ CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'REC/USH: Case tile templates',
-    TAG_CUSTOM,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
               'spaceKey=saas&title=Allow+Configuration+of+Case+List+Tiles',
@@ -797,7 +804,7 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
 FORM_LINK_ADVANCED_MODE = StaticToggle(
     'form_link_advanced_mode',
     'USH: Form linking advanced mode',
-    TAG_CUSTOM,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN],
     description=(
         "Switches manual datum configuration for form linking to a UI where app "
@@ -838,7 +845,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -976,7 +983,7 @@ DISABLE_WEB_APPS = StaticToggle(
 WEB_APPS_DOMAIN_BANNER = StaticToggle(
     'web_apps_domain_banner',
     'USH: Show current domain in web apps Log In As banner',
-    TAG_CUSTOM,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
@@ -1018,7 +1025,7 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
-    TAG_CUSTOM,
+    TAG_FROZEN,
     help_link='https://confluence.dimagi.com/display/USH/Case+Search+Configuration',
     namespaces=[NAMESPACE_DOMAIN],
     description="""
@@ -1074,7 +1081,7 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
 USH_SEARCH_FILTER = StaticToggle(
     'case_search_filter',
     "USH Specific toggle to use Search Filter in case search options.",
-    TAG_CUSTOM,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
@@ -1082,7 +1089,7 @@ USH_SEARCH_FILTER = StaticToggle(
 USH_INLINE_SEARCH = StaticToggle(
     'inline_case_search',
     "USH Specific toggle to making case search user input available to other parts of the app.",
-    TAG_CUSTOM,
+    TAG_FROZEN,
     help_link='https://docs.google.com/document/d/1Mmx1FrYZrcEmWidqSkNjC_gWSJ6xzRFKoP3Rn_xSaj4/edit#',
     namespaces=[NAMESPACE_DOMAIN],
     description="""
@@ -1304,7 +1311,7 @@ MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
      'through the app builder'),
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
@@ -1400,7 +1407,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1543,7 +1550,7 @@ WHATSAPP_MESSAGING = StaticToggle(
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1574,7 +1581,7 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
 OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER = StaticToggle(
     'override_expanded_column_limit_in_report_builder',
     'USH: Override the limit for expanded columns in report builder from 10 to 50',
-    TAG_CUSTOM,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1639,7 +1646,7 @@ DISABLE_MOBILE_ENDPOINTS = StaticToggle(
 OPEN_SUBMISSION_ENDPOINT = StaticToggle(
     'open_submission_endpoint',
     'Leave submission endpoint open to let old APIs keep working',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1722,7 +1729,7 @@ SESSION_ENDPOINTS = StaticToggle(
 CASE_LIST_CLICKABLE_ICON = StaticToggle(
     'case_list_clickable_icon',
     'USH: Allow use of clickable icons in the case list in Web Apps to trigger auto submitting forms',
-    TAG_CUSTOM,
+    TAG_FROZEN,
     [NAMESPACE_DOMAIN],
     parent_toggles=[SESSION_ENDPOINTS]
 )
@@ -1819,7 +1826,7 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
     'Manage releases per location',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Manage+Releases+per+Location',
 )
@@ -2430,7 +2437,7 @@ APPLICATION_RELEASE_LOGS = StaticToggle(
 TABLEAU_USER_SYNCING = StaticToggle(
     'tableau_user_syncing',
     'Automatically sync HQ users with users on Tableau',
-    TAG_INTERNAL,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
@@ -2570,7 +2577,7 @@ ES_QUERY_PREFERENCE = StaticToggle(
 RESTORE_ACCESSIBLE_REPORTS_ONLY = StaticToggle(
     'restore_accessible_reports_only',
     'Only restore reports in apps that are accessible to the restoring user',
-    tag=TAG_INTERNAL,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     This is an optimization for web apps restores that limits the number of mobile reports included in the restore
@@ -2784,7 +2791,7 @@ USE_PROMINENT_PROGRESS_BAR = StaticToggle(
 INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     slug='increased_max_search_results',
     label='Increases the maximum number of Elasticsearch results from 500 to 1500',
-    tag=TAG_CUSTOM,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Temporary increase of the max number of search results.',
 )
@@ -2833,7 +2840,7 @@ APP_TESTING = StaticToggle(
 CSQL_FIXTURE = StaticToggle(
     slug='module_badges',
     label='USH: CSQL Fixture (FKA Module Badges)',
-    tag=TAG_CUSTOM,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
         'Configure fixture containing indicators specified as CSQL expressions, where each '
@@ -2853,14 +2860,14 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
 KYC_VERIFICATION = StaticToggle(
     slug='kyc_verification',
     label='Enable KYC verification',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
 MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
     slug='mtn_mobile_worker_verification',
     label='Enable user verification using MTN Mobile Money',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
