@@ -1,8 +1,13 @@
+import uuid
+
 from django.test import TestCase
 
 import pytest
 
+from casexml.apps.case.mock import CaseBlock
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
@@ -11,6 +16,7 @@ from ..api.updates import (
     JsonCaseUpsert,
     _get_bulk_updates,
     _get_individual_update,
+    handle_case_update,
 )
 
 
@@ -201,3 +207,137 @@ class TestBulkUpdates(TestCase):
         error_message = str(excinfo.value)
         assert "Error in row 1" in error_message
         assert "owner_id" in error_message
+
+
+@sharded
+class TestUpsertIntegration(TestCase):
+    """End-to-end tests for UPSERT through handle_case_update()."""
+    domain = "test-upsert-integration"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.web_user = WebUser.create(
+            cls.domain, "testuser", "password", None, None
+        )
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases(self.domain)
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_user.delete(cls.domain, deleted_by=None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def test_upsert_creates_case_when_external_id_not_found(self):
+        data = [
+            {
+                "create": None,
+                "case_type": "patient",
+                "case_name": "New Patient",
+                "external_id": "new-ext-id",
+                "owner_id": self.web_user.user_id,
+            }
+        ]
+
+        xform, cases = handle_case_update(
+            self.domain,
+            data,
+            self.web_user,
+            device_id="test",
+            is_creation=None,
+        )
+
+        assert len(cases) == 1
+        case = cases[0]
+        assert case.name == "New Patient"
+        assert case.external_id == "new-ext-id"
+        assert case.type == "patient"
+
+    def test_upsert_updates_case_when_external_id_exists(self):
+        existing_case_id = str(uuid.uuid4())
+        case_block = CaseBlock(
+            case_id=existing_case_id,
+            case_type="patient",
+            case_name="Original Name",
+            external_id="existing-ext-id",
+            owner_id=self.web_user.user_id,
+            create=True,
+        )
+        submit_case_blocks(case_block.as_text(), domain=self.domain)
+
+        data = [
+            {
+                "create": None,
+                "case_type": "patient",
+                "case_name": "Updated Name",
+                "external_id": "existing-ext-id",
+                "owner_id": self.web_user.user_id,
+                "properties": {"status": "updated"},
+            }
+        ]
+
+        xform, cases = handle_case_update(
+            self.domain,
+            data,
+            self.web_user,
+            device_id="test",
+            is_creation=None,
+        )
+
+        assert len(cases) == 1
+        case = cases[0]
+        assert case.case_id == existing_case_id
+        assert case.name == "Updated Name"
+        assert case.get_case_property("status") == "updated"
+
+    def test_bulk_upsert_mixed_creates_and_updates(self):
+        existing_case_id = str(uuid.uuid4())
+        case_block = CaseBlock(
+            case_id=existing_case_id,
+            case_type="patient",
+            case_name="Existing Patient",
+            external_id="ext-existing",
+            owner_id=self.web_user.user_id,
+            create=True,
+        )
+        submit_case_blocks(case_block.as_text(), domain=self.domain)
+
+        data = [
+            {
+                "create": None,
+                "case_type": "patient",
+                "case_name": "Updated Existing",
+                "external_id": "ext-existing",
+                "owner_id": self.web_user.user_id,
+            },
+            {
+                "create": None,
+                "case_type": "patient",
+                "case_name": "Brand New",
+                "external_id": "ext-new",
+                "owner_id": self.web_user.user_id,
+            },
+        ]
+
+        xform, cases = handle_case_update(
+            self.domain,
+            data,
+            self.web_user,
+            device_id="test",
+            is_creation=None,
+        )
+
+        assert len(cases) == 2
+
+        updated_case = next(c for c in cases if c.external_id == "ext-existing")
+        new_case = next(c for c in cases if c.external_id == "ext-new")
+
+        assert updated_case.case_id == existing_case_id
+        assert updated_case.name == "Updated Existing"
+
+        assert new_case.case_id != existing_case_id
+        assert new_case.name == "Brand New"

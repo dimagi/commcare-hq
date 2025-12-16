@@ -1,6 +1,8 @@
+from unittest.mock import Mock
+
 from django.test import SimpleTestCase
 
-from corehq.apps.hqcase.api.updates import JsonCaseCreation
+from corehq.apps.hqcase.api.updates import JsonCaseCreation, JsonCaseUpsert
 
 
 class GetCaseBlockTests(SimpleTestCase):
@@ -48,3 +50,77 @@ class GetCaseBlockTests(SimpleTestCase):
         self.assertIn('<owner_id>abc123</owner_id>', case_block)
         self.assertIn('<external_id>Ewan McGregor</external_id>', case_block)
         self.assertIn('<age>26</age>', case_block)
+
+
+class JsonCaseUpsertTests(SimpleTestCase):
+
+    def setUp(self):
+        self.data = {
+            'case_name': 'John Doe',
+            'case_type': 'patient',
+            'external_id': 'ext-123',
+            'owner_id': 'owner-abc',
+            'user_id': 'user-xyz',
+            'properties': {'status': 'active'},
+        }
+
+    def test_get_case_id_when_case_exists(self):
+        upsert = JsonCaseUpsert(self.data)
+        case_db = Mock()
+        case_db.get_upsert_case_id.return_value = 'existing-case-id'
+
+        case_id = upsert.get_case_id(case_db)
+
+        self.assertEqual(case_id, 'existing-case-id')
+        self.assertFalse(upsert._is_case_creation)
+        case_db.get_upsert_case_id.assert_called_once_with('ext-123')
+
+    def test_get_case_id_when_case_does_not_exist(self):
+        upsert = JsonCaseUpsert(self.data)
+        case_db = Mock()
+        case_db.get_upsert_case_id.return_value = None
+
+        case_id = upsert.get_case_id(case_db)
+
+        self.assertIsNotNone(case_id)
+        self.assertEqual(len(case_id), 36)  # UUID format
+        self.assertTrue(upsert._is_case_creation)
+
+    def test_get_case_id_is_idempotent(self):
+        upsert = JsonCaseUpsert(self.data)
+        case_db = Mock()
+        case_db.get_upsert_case_id.return_value = None
+
+        case_id_1 = upsert.get_case_id(case_db)
+        case_id_2 = upsert.get_case_id(case_db)
+
+        self.assertEqual(case_id_1, case_id_2)
+        # Should only call case_db once due to caching
+        case_db.get_upsert_case_id.assert_called_once()
+
+    def test_get_caseblock_for_creation(self):
+        upsert = JsonCaseUpsert(self.data)
+        case_db = Mock()
+        case_db.get_upsert_case_id.return_value = None
+
+        case_block = upsert.get_caseblock(case_db)
+
+        self.assertIn('<create>', case_block)
+        self.assertIn('<case_type>patient</case_type>', case_block)
+        self.assertIn('<case_name>John Doe</case_name>', case_block)
+        self.assertIn('<owner_id>owner-abc</owner_id>', case_block)
+
+    def test_get_caseblock_for_update(self):
+        upsert = JsonCaseUpsert(self.data)
+        case_db = Mock()
+        case_db.get_upsert_case_id.return_value = 'existing-case-id'
+
+        case_block = upsert.get_caseblock(case_db)
+
+        self.assertNotIn('<create>', case_block)
+        self.assertIn('<update>', case_block)
+        self.assertIn('<status>active</status>', case_block)
+
+    def test_is_new_case_initially_none(self):
+        upsert = JsonCaseUpsert(self.data)
+        self.assertIsNone(upsert.is_new_case)
