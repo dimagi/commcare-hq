@@ -65,7 +65,6 @@ logger.setLevel('DEBUG')
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
-HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
@@ -368,23 +367,6 @@ def track_job_candidate_on_hubspot(user_email):
         'job_candidate': True
     }
     _track_on_hubspot_by_email(user_email, properties=properties)
-
-
-@analytics_task()
-def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
-    data = {'lifecyclestage': 'subscriber'}
-    number = deterministic_random(email + 'a_b_test_variable_newsletter')
-    if number < 0.33:
-        data['a_b_test_variable_newsletter'] = 'A'
-    elif number < 0.67:
-        data['a_b_test_variable_newsletter'] = 'B'
-    else:
-        data['a_b_test_variable_newsletter'] = 'C'
-    if email:
-        _send_form_to_hubspot(
-            HUBSPOT_CLICKED_SIGNUP_FORM, None, hubspot_cookie,
-            meta, extra_fields=data, email=email
-        )
 
 
 def track_workflow_noop(email, event, properties=None):

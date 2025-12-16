@@ -25,13 +25,10 @@ from dimagi.utils.web import get_ip
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
-    HUBSPOT_COOKIE,
-    track_clicked_signup_on_hubspot,
     track_confirmed_account_on_hubspot,
     track_web_user_registration_hubspot,
     track_workflow_noop,
 )
-from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import (
     ErrorInitializingDomain,
@@ -275,10 +272,6 @@ class UserRegistrationView(BasePageView):
         return response
 
     def post(self, request, *args, **kwargs):
-        if self.prefilled_email:
-            meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(
-                self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
