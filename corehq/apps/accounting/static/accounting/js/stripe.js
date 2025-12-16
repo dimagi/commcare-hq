@@ -11,6 +11,9 @@ function getCardElementPromise(key) {
         }
         self.stripePromise = self.stripePromise || loadStripe(key);
         self.stripePromise.then(function (stripe) {
+            if (self.cardElement) {
+                self.cardElement.unmount();
+            }
             self.cardElement = stripe.elements().create('card', {
                 hidePostalCode: true,
             });
