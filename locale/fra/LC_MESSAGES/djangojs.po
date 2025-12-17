@@ -555,6 +555,15 @@ msgstr "Décroissant (3, 2, 1)"
 msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr "Décroissant (1.3, 1.2, 1.1)"
 
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+#| msgid "Fetching your location..."
+msgid "Missing sort calculation."
+msgstr "Calcul du tri manquant."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Missing sort property."
+msgstr "Propriété de tri manquante."
+
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
@@ -1473,10 +1482,6 @@ msgstr ""
 msgid "Loading..."
 msgstr "Téléchargement en cours..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
-msgid "Fetching your location..."
-msgstr "Recherche de votre position..."
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Please perform a search."
 msgstr "Veuillez effectuer une recherche."
@@ -1496,10 +1501,6 @@ msgid ""
 msgstr ""
 "Vous avez sélectionné plus que la limite maximale de sélection de <%- value "
 "%> . Veuillez décocher certaines valeurs pour continuer."
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-msgid "Your location"
-msgstr "Votre position"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid ""
@@ -4368,6 +4369,9 @@ msgstr "Échec ! La réponse est : "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ n'a pas pu effectuer la requête : "
+
+#~ msgid "Your location"
+#~ msgstr "Votre position"
 
 #~ msgid "Could not enable user properties, please try again later."
 #~ msgstr ""

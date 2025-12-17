@@ -2813,14 +2813,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    You have selected to automatically pay this invoice using a credit card\n"
-#| "    with the last four digits %(last_4)s. Your credit card will automatically\n"
-#| "    be charged on %(date_due)s. You can alter this\n"
-#| "    setting by logging into your project space on CommCare HQ and navigating to\n"
-#| "    <a href=\"%(statements_url)s\">Billing Statements</a>.\n"
-#| "  "
 msgid ""
 "\n"
 "    You have selected to automatically pay this invoice using a credit card\n"
@@ -2864,13 +2856,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    You have selected to automatically pay this invoice using a credit card\n"
-#| "    with the last four digits %(last_4)s. Your credit card will automatically\n"
-#| "    be charged on %(date_due)s. You can alter this\n"
-#| "    setting by logging into your project space on CommCare HQ and navigating to\n"
-#| "    Billing Statements.\n"
 msgid ""
 "\n"
 "    You have selected to automatically pay this invoice using a credit card\n"
@@ -3071,12 +3056,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Dear %(domain_or_account)s administrator, this is a reminder that your\n"
-#| "    %(plan_name)s Billing Statement for %(month_name)s is due in\n"
-#| "    %(days_until_due)s days.\n"
-#| "  "
 msgid ""
 "\n"
 "      Dear %(domain_or_account)s administrator, this is a reminder that\n"
@@ -3107,12 +3086,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Dear %(domain_or_account)s administrator, this is a reminder that your\n"
-#| "    %(plan_name)s Billing Statement for %(month_name)s is due in\n"
-#| "    %(days_until_due)s days.\n"
-#| "  "
 msgid ""
 "\n"
 "      Dear %(domain_or_account)s administrator, this is a reminder that your\n"
@@ -3172,14 +3145,12 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#| msgid "You can pay this bill by credit card or by wire:"
 msgid "You can also pay this bill sooner by credit card or by wire:"
 msgstr ""
 "आप इस बिल का भुगतान क्रेडिट कार्ड या वायर द्वारा भी जल्दी कर सकते हैं:"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#| msgid "You can pay this bill by credit card:"
 msgid "You can also pay this bill sooner by credit card:"
 msgstr "आप इस बिल का भुगतान क्रेडिट कार्ड द्वारा भी जल्दी कर सकते हैं:"
 
@@ -3251,12 +3222,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Dear %(domain_or_account)s administrator, this is a reminder that your\n"
-#| "    %(plan_name)s Billing Statement for %(month_name)s is due in\n"
-#| "    %(days_until_due)s days.\n"
-#| "  "
 msgid ""
 "\n"
 "  Dear %(domain_or_account)s administrator, this is a reminder that your\n"
@@ -3283,18 +3248,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
-#| msgid ""
-#| "\n"
-#| "%(greeting)s\n"
-#| "\n"
-#| "Your %(plan_name)s Billing Statement is now available for %(month_name)s.\n"
-#| "\n"
-#| "Statement No.: %(statement_number)s\n"
-#| "Project Space: %(domain)s\n"
-#| "Software Plan: %(plan_name)s\n"
-#| "Status: %(payment_status)s\n"
-#| "Amount Due this Month: %(amount_due)s\n"
-#| "Total Balance: %(total_balance)s\n"
 msgid ""
 "\n"
 "Statement No.: %(statement_number)s\n"
@@ -4345,17 +4298,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        CommCare is billed on a monthly basis, and all subscriptions require a\n"
-#| "        30 day minimum commitment. You should expect your first invoice on\n"
-#| "        %(invoice_date)s, or you can prepay for your subscription by following\n"
-#| "        the instructions\n"
-#| "        <a\n"
-#| "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
-#| "          >here</a\n"
-#| "        >.\n"
-#| "      "
 msgid ""
 "\n"
 "        CommCare is billed on a monthly basis, and all subscriptions require a\n"
@@ -4771,8 +4713,6 @@ msgstr "USD %s"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
-#| msgid ""
-#| "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} days"
@@ -6278,6 +6218,10 @@ msgstr "यह फॉर्म एक {} बंद करता है"
 #: corehq/apps/app_manager/models.py
 msgid "This form updates a {}"
 msgstr "यह फॉर्म एक {} अपडेट करता है"
+
+#: corehq/apps/app_manager/models.py
+msgid "Sort property needs a property or a calculation"
+msgstr "सॉर्ट प्रॉपर्टी के लिए एक प्रॉपर्टी या गणना आवश्यक है"
 
 #: corehq/apps/app_manager/models.py
 #, python-brace-format
@@ -11238,10 +11182,6 @@ msgstr ""
 "                        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Sort Calculation"
-msgstr "छँटाई गणना"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -11277,6 +11217,10 @@ msgstr ""
 "                      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Sort Calculation"
+msgstr "छँटाई गणना"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Bottom of list"
 msgstr "सूची का नीचे भाग"
 
@@ -11308,8 +11252,9 @@ msgid "Cache and Index"
 msgstr "कैश और अनुक्रमणिका"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Add sort property"
-msgstr "छँटाई गुण जोड़ें"
+#| msgid "Add sort property"
+msgid "Add Sort Property"
+msgstr "सॉर्ट प्रॉपर्टी जोड़ें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Parent Child Selection"
@@ -14801,14 +14746,6 @@ msgid ""
 msgstr ""
 "इस फ़ील्ड का उपयोग केस बंद करने के लिए किया जाएगा। इस कॉलम में 'yes' वाले "
 "किसी भी केस को बंद कर दिया जाएगा।"
-
-#: corehq/apps/case_importer/suggested_fields.py
-msgid ""
-"The date opened property for this case will be changed. Please do not use "
-"unless you know what you are doing"
-msgstr ""
-"इस केस के लिए date opened प्रॉपर्टी बदली जाएगी। कृपया तब तक उपयोग न करें जब "
-"तक आप जानते न हों कि आप क्या कर रहे हैं।"
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid ""
@@ -22790,10 +22727,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-#| msgid ""
-#| "\n"
-#| "              You will no longer be billed.\n"
-#| "            "
 msgid ""
 "\n"
 "              Autopay enrollment will be canceled.\n"
@@ -22905,11 +22838,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      You are about to subscribe to the <strong>%(p)s Software Plan</strong>.<br/>\n"
-#| "      Please update your billing information below before continuing.\n"
-#| "    "
 msgid ""
 "\n"
 "      You are about to subscribe to the\n"
@@ -22965,11 +22893,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#| msgid ""
-#| "\n"
-#| "                  By subscribing to this <strong>annual subscription</strong>, I acknowledge that\n"
-#| "                  the autopay card above will be charged on a monthly basis for any on-demand fees (excess users, SMS).\n"
-#| "                "
 msgid ""
 "\n"
 "                  By subscribing to this <strong>annual subscription</strong>,\n"
@@ -22983,12 +22906,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    A separate annual invoice for the product cost will be generated and sent to the contact emails above.\n"
-#| "                    This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
-#| "                    The selected autopay card will not be automatically charged to pay this invoice&mdash;it must be paid directly.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    A separate annual invoice for the product cost will be\n"
@@ -23005,12 +22922,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                   By subscribing to this <strong>annual subscription</strong>, I acknowledge that I understand an\n"
-#| "                   annual invoice for the product cost will be generated and sent to the contact emails above.\n"
-#| "                   This invoice must be paid within %(days_date_due_annual)s days or the subscription will be paused.\n"
-#| "                "
 msgid ""
 "\n"
 "                  By subscribing to this <strong>annual subscription</strong>,\n"
@@ -23026,11 +22937,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#| msgid ""
-#| "\n"
-#| "                    I also acknowledge that by not selecting an autopay card, I must manually pay for any on-demand fees\n"
-#| "                    (excess users, SMS) on a monthly basis or the subscription will be paused.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    You also acknowledge that by not selecting an autopay card,\n"
@@ -23455,7 +23361,6 @@ msgid "Load Property"
 msgstr "प्रॉपर्टी लोड करें"
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "Open Condition"
 msgid "Autopay Terms and Conditions"
 msgstr "ऑटोपे नियम और शर्तें"
 
@@ -23464,7 +23369,6 @@ msgid "Affirmative Consent and Authorization"
 msgstr "सकारात्मक सहमति और प्राधिकरण"
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "Environment"
 msgid "Enrollment"
 msgstr "नामांकन"
 
@@ -23481,10 +23385,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid ""
-#| "\n"
-#| "              Preparing your case data for exploration...\n"
-#| "            "
 msgid ""
 "\n"
 "              Save your designated debit card or credit card information.\n"
@@ -23495,11 +23395,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid ""
-#| "\n"
-#| "              You must filter to a specific repeater or payload in order to take\n"
-#| "              an action on the entire table.\n"
-#| "            "
 msgid ""
 "\n"
 "              Initiate automatic electronic payment transactions from this\n"
@@ -23524,7 +23419,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "Wire Payment Information"
 msgid "Recurring Payment Authorization"
 msgstr "आवर्ती भुगतान प्राधिकरण"
 
@@ -23545,7 +23439,6 @@ msgid "Disclosure of Recurring Charges"
 msgstr "आवर्ती शुल्क का प्रकटीकरण"
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "Auto Update Frequency"
 msgid "Charge Amount and Frequency"
 msgstr "शुल्क राशि और आवृत्ति"
 
@@ -23596,7 +23489,6 @@ msgid "Updates and Returned Payments"
 msgstr "अपडेट्स और लौटाए गए भुगतान"
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "Wire Payment Information"
 msgid "Payment Information Update"
 msgstr "भुगतान जानकारी अपडेट करें"
 
@@ -23612,23 +23504,10 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "Bulk Wire Payment"
 msgid "Returned Payments"
 msgstr "लौटाए गए भुगतान"
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid ""
-#| "\n"
-#| "                Dimagi accepts wire payments via ACH and wire transfer. You will\n"
-#| "                receive an invoice via email with bank information and\n"
-#| "                instructions for wire payment. Please include the Invoice # in\n"
-#| "                the wire payment memo or note field.\n"
-#| "                <a\n"
-#| "                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
-#| "                  target=\"_blank\"\n"
-#| "                  >More information...</a\n"
-#| "                >\n"
-#| "              "
 msgid ""
 "\n"
 "            If an automatic payment toward an invoice is rejected or refused by\n"
@@ -23694,16 +23573,10 @@ msgid "Cancellation Mechanism"
 msgstr "रद्दीकरण तंत्र"
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "app translation"
 msgid "Easy Cancellation"
 msgstr "आसान रद्दीकरण"
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid ""
-#| "\n"
-#| "          Would you like to edit roles and add new,\n"
-#| "          custom roles?\n"
-#| "        "
 msgid ""
 "\n"
 "            You may cancel your Autopay enrollment at any time and for any\n"
@@ -23715,7 +23588,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid "Integration Access"
 msgid "Cancellation Process"
 msgstr "रद्दीकरण प्रक्रिया"
 
@@ -23742,15 +23614,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                    All new projects start on CommCare's free edition. Once you\n"
-#| "                    create a new project, you can\n"
-#| "                    <a href=\"%(pricing_page_url)s\" target=\"_blank\"\n"
-#| "                      ><b>upgrade</b></a\n"
-#| "                    >\n"
-#| "                    your subscription.\n"
-#| "                  "
 msgid ""
 "\n"
 "              If you are on a Pay Annually software plan, you may cancel Autopay\n"
@@ -23845,11 +23708,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
-#| msgid ""
-#| "\n"
-#| "            Default time to wait between sending updated mobile report data to users.\n"
-#| "            Can be overridden on a per user basis.\n"
-#| "            "
 msgid ""
 "\n"
 "            Please allow us a reasonable time to investigate and respond to your\n"
@@ -33952,10 +33810,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_eula.html
-#| msgid ""
-#| "\n"
-#| "              Thank you for your feedback! We appreciate it.\n"
-#| "            "
 msgid ""
 "\n"
 "            Thank you for being a part of the CommCare community.\n"
@@ -33966,7 +33820,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_eula.html
-#| msgid "The CommCare Team"
 msgid "The Dimagi Team"
 msgstr "Dimagi टीम"
 
@@ -52574,19 +52427,6 @@ msgstr "एडमिन ईमेल कॉपी और पेस्ट कर�
 
 #: corehq/apps/users/templates/users/bootstrap5/confirmation_sent.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    <div class=\"container\">\n"
-#| "      <div class=\"page-header\">\n"
-#| "        <h1>Request Access</h1>\n"
-#| "      </div>\n"
-#| "\n"
-#| "      <div class=\"alert alert-info\">\n"
-#| "        <p>A request has been sent to the administrators of <strong>%(hr_name)s</strong>.</p>\n"
-#| "        <p>You will receive an email when the request is approved.</p>\n"
-#| "      </div>\n"
-#| "    </div>\n"
-#| "  "
 msgid ""
 "\n"
 "    <div class=\"container\">\n"
@@ -52615,13 +52455,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "            <strong>There was an issue contacting the server.</strong>\n"
-#| "            Please check your internet connection. If this issue continues,\n"
-#| "            please\n"
-#| "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
@@ -58730,10 +58563,6 @@ msgid "Manage Notifications"
 msgstr "सूचनाएँ प्रबंधित करें"
 
 #: corehq/tabs/tabclasses.py
-msgid "Mass Email Users"
-msgstr "उपयोगकर्ताओं को सामूहिक ईमेल भेजें"
-
-#: corehq/tabs/tabclasses.py
 msgid "Check Call Center UCR tables"
 msgstr "कॉल सेंटर UCR तालिकाएँ जांचें"
 
@@ -59461,6 +59290,16 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid ""
+#~ "The date opened property for this case will be changed. Please do not use "
+#~ "unless you know what you are doing"
+#~ msgstr ""
+#~ "इस केस के लिए date opened प्रॉपर्टी बदली जाएगी। कृपया तब तक उपयोग न करें जब "
+#~ "तक आप जानते न हों कि आप क्या कर रहे हैं।"
+
+#~ msgid "Mass Email Users"
+#~ msgstr "उपयोगकर्ताओं को सामूहिक ईमेल भेजें"
 
 #~ msgid "Subscription Reminder"
 #~ msgstr "सदस्यता अनुस्मारक"

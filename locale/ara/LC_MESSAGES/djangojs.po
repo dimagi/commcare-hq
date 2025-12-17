@@ -527,6 +527,15 @@ msgstr "تنازلي (3، 2، 1)"
 msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr "تنازلي (1.3، 1.2، 1.1)"
 
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+#| msgid "Fetching your location..."
+msgid "Missing sort calculation."
+msgstr "حساب الترتيب مفقود."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Missing sort property."
+msgstr "خاصية الترتيب مفقودة."
+
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
@@ -1412,10 +1421,6 @@ msgstr ""
 msgid "Loading..."
 msgstr "جارٍ التحميل..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
-msgid "Fetching your location..."
-msgstr "جارٍ تحديد موقعك..."
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Please perform a search."
 msgstr "يرجى إجراء بحث."
@@ -1435,10 +1440,6 @@ msgid ""
 msgstr ""
 "لقد قمت بتحديد أكثر من الحد الأقصى المسموح به وهو <%- value %> . يرجى إلغاء "
 "تحديد بعض القيم للمتابعة."
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-msgid "Your location"
-msgstr "موقعك"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid ""
@@ -4213,6 +4214,9 @@ msgstr "فشل! الاستجابة هي: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
+
+#~ msgid "Your location"
+#~ msgstr "موقعك"
 
 #~ msgid "Could not enable user properties, please try again later."
 #~ msgstr "تعذر تفعيل خصائص المستخدم، يرجى المحاولة مرة أخرى لاحقًا."

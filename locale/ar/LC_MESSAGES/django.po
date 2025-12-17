@@ -6955,6 +6955,10 @@ msgid "This form updates a {}"
 msgstr "يحدّث هذا النموذج {}"
 
 #: corehq/apps/app_manager/models.py
+msgid "Sort property needs a property or a calculation"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
 #, python-brace-format
 msgid "Could not find form with ID='{unique_id}' in module '{module_name}'."
 msgstr "تعذر العثور على نموذج بالمعرف='{unique_id}' في الوحدة '{module_name}'."
@@ -12614,10 +12618,6 @@ msgstr ""
 "                        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Sort Calculation"
-msgstr "حساب الترتيب"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -12662,6 +12662,10 @@ msgstr ""
 "                      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Sort Calculation"
+msgstr "حساب الترتيب"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Bottom of list"
 msgstr "أسفل القائمة"
 
@@ -12693,7 +12697,9 @@ msgid "Cache and Index"
 msgstr "التخزين المؤقت والفهرسة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Add sort property"
+#, fuzzy
+#| msgid "Add sort property"
+msgid "Add Sort Property"
 msgstr "إضافة خاصية ترتيب"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
@@ -16337,14 +16343,6 @@ msgid ""
 msgstr ""
 "سيتم استخدام هذا الحقل لإغلاق الحالات. سيتم إغلاق أي حالة تحتوي على 'نعم' في "
 "هذا العمود."
-
-#: corehq/apps/case_importer/suggested_fields.py
-msgid ""
-"The date opened property for this case will be changed. Please do not use "
-"unless you know what you are doing"
-msgstr ""
-"سيتم تغيير خاصية تاريخ الفتح لهذه الحالة. يرجى عدم الاستخدام إلا إذا كنت "
-"تعرف ما تفعله"
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid ""
@@ -63289,10 +63287,6 @@ msgid "Manage Notifications"
 msgstr "إدارة الإشعارات"
 
 #: corehq/tabs/tabclasses.py
-msgid "Mass Email Users"
-msgstr "إرسال بريد إلكتروني جماعي للمستخدمين"
-
-#: corehq/tabs/tabclasses.py
 msgid "Check Call Center UCR tables"
 msgstr "التحقق من جداول مركز الاتصال UCR"
 
@@ -64019,6 +64013,16 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid ""
+#~ "The date opened property for this case will be changed. Please do not use "
+#~ "unless you know what you are doing"
+#~ msgstr ""
+#~ "سيتم تغيير خاصية تاريخ الفتح لهذه الحالة. يرجى عدم الاستخدام إلا إذا كنت "
+#~ "تعرف ما تفعله"
+
+#~ msgid "Mass Email Users"
+#~ msgstr "إرسال بريد إلكتروني جماعي للمستخدمين"
 
 #, fuzzy
 #~| msgid "Next Subscription Begins"
