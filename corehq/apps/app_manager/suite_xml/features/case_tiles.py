@@ -43,14 +43,11 @@ def case_tile_template_config(template):
         return CaseTileTemplateConfig()
     if template not in CaseTileTemplates.values:
         raise CaseTileMisconfigurationError(f"'{template}' is not a valid case tile template")
-    try:
-        with open(
-            TILE_DIR / (template + '.json'),
-            encoding='utf-8'
-        ) as f:
-            data = json.loads(f.read())
-    except FileNotFoundError as e:
-        raise e
+    with open(
+        TILE_DIR / (template + '.json'),
+        encoding='utf-8'
+    ) as f:
+        data = json.loads(f.read())
     return CaseTileTemplateConfig(**data)
 
 
