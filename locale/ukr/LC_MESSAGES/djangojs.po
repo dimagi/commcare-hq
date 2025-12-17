@@ -536,6 +536,15 @@ msgstr "Спадання (3, 2, 1)"
 msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr "Спадання (1.3, 1.2, 1.1)"
 
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+#| msgid "Fetching your location..."
+msgid "Missing sort calculation."
+msgstr "Відсутній розрахунок сортування."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Missing sort property."
+msgstr "Відсутня властивість сортування."
+
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
@@ -1435,10 +1444,6 @@ msgstr ""
 msgid "Loading..."
 msgstr "Завантаження..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
-msgid "Fetching your location..."
-msgstr "Визначення вашого місцезнаходження..."
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Please perform a search."
 msgstr "Будь ласка, виконайте пошук."
@@ -1458,10 +1463,6 @@ msgid ""
 msgstr ""
 "Ви вибрали більше, ніж максимальна дозволена кількість — <%- value %>. Будь "
 "ласка, зніміть позначку з деяких значень, щоб продовжити."
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-msgid "Your location"
-msgstr "Ваше місцезнаходження"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid ""
@@ -4295,6 +4296,9 @@ msgstr "Помилка! Відповідь: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ не вдалося виконати запит: "
+
+#~ msgid "Your location"
+#~ msgstr "Ваше місцезнаходження"
 
 #~ msgid "Could not enable user properties, please try again later."
 #~ msgstr "Не вдалося увімкнути властивості користувача, спробуйте пізніше."

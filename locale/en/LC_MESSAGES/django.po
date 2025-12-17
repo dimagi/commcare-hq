@@ -5355,6 +5355,10 @@ msgid "This form updates a {}"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py
+msgid "Sort property needs a property or a calculation"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
 #, python-brace-format
 msgid "Could not find form with ID='{unique_id}' in module '{module_name}'."
 msgstr ""
@@ -9696,10 +9700,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Sort Calculation"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -9735,6 +9735,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Sort Calculation"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Bottom of list"
 msgstr ""
 
@@ -9766,7 +9770,7 @@ msgid "Cache and Index"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Add sort property"
+msgid "Add Sort Property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
@@ -12890,12 +12894,6 @@ msgstr ""
 msgid ""
 "This field will be used to close cases. Any case with 'yes' in this column "
 "will be closed."
-msgstr ""
-
-#: corehq/apps/case_importer/suggested_fields.py
-msgid ""
-"The date opened property for this case will be changed. Please do not use "
-"unless you know what you are doing"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
@@ -51836,10 +51834,6 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage Notifications"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
-msgid "Mass Email Users"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py

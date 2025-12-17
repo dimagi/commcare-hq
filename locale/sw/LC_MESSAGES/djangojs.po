@@ -537,6 +537,15 @@ msgstr "Inapungua (3, 2, 1)"
 msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr "Inapungua (1.3, 1.2, 1.1)"
 
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+#| msgid "Fetching your location..."
+msgid "Missing sort calculation."
+msgstr "Hesabu ya upangaji haipo."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Missing sort property."
+msgstr "Sifa ya upangaji haipo."
+
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
@@ -1433,10 +1442,6 @@ msgstr ""
 msgid "Loading..."
 msgstr "Inapakia..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
-msgid "Fetching your location..."
-msgstr "Inachukua eneo lako..."
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Please perform a search."
 msgstr "Tafadhali fanya utafutaji."
@@ -1456,10 +1461,6 @@ msgid ""
 msgstr ""
 "Umechagua zaidi ya kikomo cha juu cha chaguo cha <%- value %> . Tafadhali "
 "ondoa baadhi ya chaguo ili kuendelea."
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-msgid "Your location"
-msgstr "Eneo lako"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid ""
@@ -4290,6 +4291,9 @@ msgstr "Imeshindikana! Majibu ni: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
+
+#~ msgid "Your location"
+#~ msgstr "Eneo lako"
 
 #~ msgid "Could not enable user properties, please try again later."
 #~ msgstr ""

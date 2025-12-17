@@ -7071,6 +7071,10 @@ msgid "This form updates a {}"
 msgstr "Ця форма оновлює {}"
 
 #: corehq/apps/app_manager/models.py
+msgid "Sort property needs a property or a calculation"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
 #, python-brace-format
 msgid "Could not find form with ID='{unique_id}' in module '{module_name}'."
 msgstr "Не вдалося знайти форму з ID='{unique_id}' у модулі '{module_name}'."
@@ -12849,10 +12853,6 @@ msgstr ""
 "                        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Sort Calculation"
-msgstr "Обчислення сортування"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
@@ -12902,6 +12902,10 @@ msgstr ""
 "                      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
+msgid "Sort Calculation"
+msgstr "Обчислення сортування"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 msgid "Bottom of list"
 msgstr "Кінець списку"
 
@@ -12933,7 +12937,9 @@ msgid "Cache and Index"
 msgstr "Кешування та індексація"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-msgid "Add sort property"
+#, fuzzy
+#| msgid "Add sort property"
+msgid "Add Sort Property"
 msgstr "Додати властивість сортування"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
@@ -16653,14 +16659,6 @@ msgid ""
 msgstr ""
 "Це поле буде використано для закриття справ. Будь-яка справа з 'yes' у цьому "
 "стовпці буде закрита."
-
-#: corehq/apps/case_importer/suggested_fields.py
-msgid ""
-"The date opened property for this case will be changed. Please do not use "
-"unless you know what you are doing"
-msgstr ""
-"Властивість дати відкриття для цієї справи буде змінено. Будь ласка, не "
-"використовуйте, якщо ви не впевнені у своїх діях"
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html
 msgid ""
@@ -64477,10 +64475,6 @@ msgid "Manage Notifications"
 msgstr "Керувати сповіщеннями"
 
 #: corehq/tabs/tabclasses.py
-msgid "Mass Email Users"
-msgstr "Масова розсилка користувачам"
-
-#: corehq/tabs/tabclasses.py
 msgid "Check Call Center UCR tables"
 msgstr "Перевірити таблиці Call Center UCR"
 
@@ -65211,6 +65205,16 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid ""
+#~ "The date opened property for this case will be changed. Please do not use "
+#~ "unless you know what you are doing"
+#~ msgstr ""
+#~ "Властивість дати відкриття для цієї справи буде змінено. Будь ласка, не "
+#~ "використовуйте, якщо ви не впевнені у своїх діях"
+
+#~ msgid "Mass Email Users"
+#~ msgstr "Масова розсилка користувачам"
 
 #, fuzzy
 #~| msgid "Next Subscription Begins"
