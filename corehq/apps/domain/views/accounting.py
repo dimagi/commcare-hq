@@ -96,6 +96,10 @@ from corehq.apps.accounting.utils import (
     pause_current_subscription,
     quantize_accounting_decimal,
 )
+from corehq.apps.accounting.utils.invoicing import (
+    get_next_due_invoice,
+    get_next_due_customer_invoice,
+)
 from corehq.apps.accounting.utils.stripe import get_customer_cards
 from corehq.apps.accounting.utils.unpaid_invoice import can_domain_unpause
 from corehq.apps.domain.decorators import (
@@ -419,6 +423,18 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
         return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
+    def get_next_invoice_due_date(self):
+        today = datetime.date.today()
+        if self.account.is_customer_billing_account:
+            current_invoice = get_next_due_customer_invoice(
+                self.account,
+                today,
+                subscription=self.current_subscription
+            )
+        else:
+            current_invoice = get_next_due_invoice(self.current_subscription, today)
+        return current_invoice.date_due.strftime(USER_DATE_FORMAT) if current_invoice else None
+
     @property
     def page_context(self):
         from corehq.apps.domain.views.sms import SMSRatesView
@@ -443,6 +459,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'autopay_enabled': self.account.auto_pay_enabled,
             'manage_autopay_url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
             'autopay_card': serialize_account_card(autopay_card, autopay_owner) if autopay_card else None,
+            'autopay_date': self.get_next_invoice_due_date() if self.account.auto_pay_enabled else None,
         }
 
 
