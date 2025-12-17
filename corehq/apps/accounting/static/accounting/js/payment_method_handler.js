@@ -130,7 +130,7 @@ var paymentMethodHandler = function (formId, opts) {
     // selections, so create stripe card elements as needed. This is called in a number
     // of places because several different observables affect the visiblity of the card UI.
     self.stripeKey = initialPageData.get("stripe_public_key");
-    self.resetStripeCardUI = function (shouldCreateElement) {
+    self.resetStripeCardUI = (shouldCreateElement) => {
         const stripeSelector = '#' + formId + ' .stripe-card-container';
         if (shouldCreateElement && $(stripeSelector).length) {
             getCardElementPromise(self.stripeKey).then(cardElement => {
