@@ -216,21 +216,6 @@
   <h3 id="simple-form-example" class="pt-3">
     A Simple Form with HTMX and Alpine
   </h3>
-  <p>
-    <a href="{% url "sg_htmx_alpine_form_demo" %}" target="_blank">In this example</a>,
-    <strong>HTMX</strong> is used to asynchronously load a form and submit it back to the
-    same view. The form is posted to an <code>hq_hx_action</code> handler on that view,
-    which validates the data and either:
-  </p>
-  <ul>
-    <li>returns the form again with validation errors, or</li>
-    <li>shows a success message and resets the form.</li>
-  </ul>
-  <p>
-    <strong>Alpine</strong> provides a small layer of interactivity on top: it hides the
-    “Value” field when the “Match Type” is set to “is empty”. The Alpine model is defined
-    in the form layout itself, since that logic is specific to this form.
-  </p>
   <div class="alert alert-primary">
     <p class="mb-1">
       <strong>Tips:</strong>
@@ -252,6 +237,21 @@
       </li>
     </ul>
   </div>
+  <p>
+    <a href="{% url "sg_htmx_alpine_form_demo" %}" target="_blank">In this example</a>,
+    <strong>HTMX</strong> is used to asynchronously load a form and submit it back to the
+    same view. The form is posted to an <code>hq_hx_action</code> handler on that view,
+    which validates the data and either:
+  </p>
+  <ul>
+    <li>returns the form again with validation errors, or</li>
+    <li>shows a success message and resets the form.</li>
+  </ul>
+  <p>
+    <strong>Alpine</strong> provides a small layer of interactivity on top: it hides the
+    “Value” field when the “Match Type” is set to “is empty”. The Alpine model is defined
+    in the form layout itself, since that logic is specific to this form.
+  </p>
   <p>
     The <code>HtmxAlpineFormDemoView</code> uses <code>HqHtmxActionMixin</code> so that it
     can define two HTMX actions on the same URL using <code>hq-hx-action</code>:
