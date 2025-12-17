@@ -50,11 +50,6 @@ from memoized import memoized
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import always_allow_project_access, requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_INVITATION_SENT_FORM,
-    send_hubspot_form,
-    track_workflow_noop,
-)
 from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -613,7 +608,6 @@ class ListWebUsersView(BaseRoleAccessView):
 @require_can_edit_or_view_web_users
 @location_safe
 def download_web_users(request, domain):
-    track_workflow_noop(request.couch_user.get_email(), 'Bulk download web users selected')
     from corehq.apps.users.views.mobile.users import download_users
     return download_users(request, domain, user_type=WEB_USER_TYPE)
 
@@ -1337,10 +1331,6 @@ class InviteWebUserView(BaseManageWebUserView):
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
-                track_workflow_noop(request.couch_user.get_email(),
-                                    "Sent a project invitation",
-                                    {"Sent a project invitation": "yes"})
-                send_hubspot_form(HUBSPOT_INVITATION_SENT_FORM, request)
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:
@@ -1566,10 +1556,6 @@ class UploadWebUsers(BaseUploadUser):
         from corehq.apps.users.views.mobile import get_user_upload_context, BULK_WEB_HELP_SITE
         return get_user_upload_context(self.domain, request_params, "download_web_users", "web user", "web users",
                                        help_site_link=BULK_WEB_HELP_SITE)
-
-    def post(self, request, *args, **kwargs):
-        track_workflow_noop(request.couch_user.get_email(), 'Bulk upload web users selected')
-        return super(UploadWebUsers, self).post(request, *args, **kwargs)
 
 
 @location_safe

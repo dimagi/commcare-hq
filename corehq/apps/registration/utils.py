@@ -22,10 +22,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils.subscription import (
     ensure_free_or_paused_subscription,
 )
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
-    send_hubspot_form,
-)
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain, LicenseAgreementType
 from corehq.apps.hqmedia.models import LogoForSystemEmailsReference
@@ -210,8 +206,6 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
         is_new_user=is_new_user,
         is_new_sso_user=is_new_sso_user
     )
-
-    send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
 
 
