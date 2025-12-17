@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,571 +1,857 @@
+@@ -1,571 +1,861 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
@@ -148,9 +148,9 @@
 +                    data-bind="visible: !ko.utils.unwrapObservable(showEditCheckbox)"
 +                  >
                      <div class="form-check-placeholder">
-                       <label></label>
-                     </div>
-                   </div>
+-                      <label></label>
+-                    </div>
+-                  </div>
 -                <div class="col-sm-8 control-label">
 -                  <div data-bind="html: text"></div>
 -                  {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
@@ -249,6 +249,16 @@
 -              <div class="form-group" data-bind="visible: !tableauPermissions.all()">
 -                <label class="col-sm-4 control-label">
 -                  {% trans "Access Specific Tableau Reports" %}
+-                </label>
+-                <div class="col-sm-8 controls">
+-                  <div class="panel panel-default">
+-                    <div class="panel-heading">
+-                      {% trans "Select which Tableau reports the role can access:" %}
+-                    </div>
+-                    <div class="panel-body"
+-                         data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">
++                    </div>
++                  </div>
 +                  <div
 +                    class="col-md-2 controls"
 +                    data-bind="visible: showViewCheckbox"
@@ -263,8 +273,12 @@
 +                        type="checkbox"
 +                        checked="checked"
 +                        disabled="disabled"
++                        data-bind="attr: {id: viewCheckboxLabel + '-disabled'}"
 +                      />
-+                      <label class="form-check-label">
++                      <label
++                        class="form-check-label"
++                        data-bind="attr: {for: viewCheckboxLabel + '-disabled'}"
++                      >
 +                        <span
 +                          class="sr-only"
 +                          data-bind="text: screenReaderViewOnlyText"
@@ -301,7 +315,6 @@
 +                    data-bind="visible: !showViewCheckbox"
 +                  >
 +                    <div class="form-check-placeholder">
-+                      <label></label>
 +                    </div>
 +                  </div>
 +                  <div class="col-md-8 form-label">
@@ -316,10 +329,11 @@
 +                        type="checkbox"
 +                        checked="checked"
 +                        disabled="disabled"
++                        data-bind="attr: {id: allowCheckboxId + '-disabled'}"
 +                      />
 +                      <label
 +                        class="form-check-label"
-+                        data-bind="text: allowCheckboxText"
++                        data-bind="attr:{for: allowCheckboxId + '-disabled'}, text: allowCheckboxText"
 +                      ></label>
 +                    </div>
 +                    {# end PLACEHOLDER #}
@@ -348,10 +362,11 @@
 +                        class="form-check-input"
 +                        type="checkbox"
 +                        disabled="disabled"
++                        data-bind="attr: {id: allowCheckboxId + '-disabled2'}"
 +                      />
 +                      <label
 +                        class="form-check-label"
-+                        data-bind="text: allowCheckboxText"
++                        data-bind="attr:{for: allowCheckboxId + '-disabled2'}, text: allowCheckboxText"
 +                      ></label>
 +                    </div>
 +                    {# end PLACEHOLDER #}
@@ -366,10 +381,10 @@
 +                  class="row"
 +                  data-bind="using: erm.access_release_management"
 +                >
-+                  <label
++                  <div
 +                    class="col-md-4 form-label fw-bold"
 +                    data-bind="text: text"
-+                  ></label>
++                  ></div>
 +                  <div class="col-md-8 controls">
 +                    <div class="form-check pt-0">
 +                      <input
@@ -386,10 +401,10 @@
 +                </div>
 +
 +                <div class="row" data-bind="using: erm.edit_linked_configs">
-+                  <label
++                  <div
 +                    class="col-md-4 form-label fw-bold"
 +                    data-bind="text: text"
-+                  ></label>
++                  ></div>
 +                  <div class="col-md-8 controls">
 +                    <div class="form-check pt-0">
 +                      <!-- ko if: $parent.erm.access_release_management.checkboxPermission -->
@@ -420,10 +435,10 @@
 +
 +              <div data-bind="foreach: reports">
 +                <div class="row" data-bind="visible: visibilityRestraint">
-+                  <label
++                  <div
 +                    class="col-md-4 form-label fw-bold"
 +                    data-bind="text: text"
-+                  ></label>
++                  ></div>
 +                  <div class="col-md-8 controls">
 +                    <div class="form-check pt-0">
 +                      <input
@@ -441,16 +456,9 @@
 +                </div>
 +              </div>
 +              <div class="row" data-bind="visible: !reportPermissions.all()">
-+                <label class="col-md-4 form-label fw-bold">
++                <div class="col-md-4 form-label fw-bold">
 +                  {% trans "Access Specific Reports" %}
-                 </label>
--                <div class="col-sm-8 controls">
--                  <div class="panel panel-default">
--                    <div class="panel-heading">
--                      {% trans "Select which Tableau reports the role can access:" %}
--                    </div>
--                    <div class="panel-body"
--                         data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">
++                </div>
 +                <div class="col-md-8 controls">
 +                  <div class="card">
 +                    <div class="card-header">
@@ -514,15 +522,7 @@
 -                         data-bind="checked: commcareAnalyticsRoles.all" />
 -                  <label for="commcare-analytics-all-roles-checkbox">
 -                    {% trans "Assign all commcare analytics roles to users with this role" %}
-+
-+              {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
-+                <div
-+                  class="row mt-2"
-+                  data-bind="visible: !tableauPermissions.all()"
-+                >
-+                  <label class="col-md-4 form-label fw-bold">
-+                    {% trans "Access Specific Tableau Reports" %}
-                   </label>
+-                  </label>
 -                </div>
 -              </div>
 -            </div>
@@ -538,6 +538,15 @@
 -                  </div>
 -                  <div class="panel-body"
 -                       data-bind="foreach: commcareAnalyticsRoles.specific, slideVisible: !commcareAnalyticsRoles.all()">
++
++              {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
++                <div
++                  class="row mt-2"
++                  data-bind="visible: !tableauPermissions.all()"
++                >
++                  <div class="col-md-4 form-label fw-bold">
++                    {% trans "Access Specific Tableau Reports" %}
++                  </div>
 +                  <div class="col-md-8 controls">
 +                    <div class="card">
 +                      <div class="card-header">
@@ -582,9 +591,9 @@
 +              {% if request|toggle_enabled:"SUPERSET_ANALYTICS" %}
 +                <legend>{% trans "CommCare Analytics" %}</legend>
 +                <div class="row">
-+                  <label class="col-md-4 form-label fw-bold">
++                  <div class="col-md-4 form-label fw-bold">
 +                    {% trans "All CommCare Analytics Roles" %}
-+                  </label>
++                  </div>
 +                  <div class="col-md-8 controls">
                      <div class="form-check">
 -                      <input type="checkbox"
@@ -606,6 +615,8 @@
 -              <div class="form-group">
 -                <label class="col-sm-4 control-label">
 -                  {% trans "Integration Access" %}
+-                </label>
+-                <div class="col-sm-8 controls">
 +                      <input
 +                        class="form-check-input"
 +                        type="checkbox"
@@ -625,9 +636,9 @@
 +                  class="row"
 +                  data-bind="visible: !commcareAnalyticsRoles.all()"
 +                >
-+                  <label class="col-md-4 form-label fw-bold">
++                  <div class="col-md-4 form-label fw-bold">
 +                    {% trans "CommCare Analytics Roles" %}
-+                  </label>
++                  </div>
 +                  <div class="col-md-8 controls">
 +                    <div class="card mt-2">
 +                      <div class="card-header">
@@ -659,9 +670,9 @@
 +
 +              {% if show_integration %}
 +                <div class="row">
-+                  <label class="col-md-4 form-label fw-bold">
++                  <div class="col-md-4 form-label fw-bold">
 +                    {% trans "Integration Access" %}
-+                  </label>
++                  </div>
 +                  <div class="col-md-8 controls">
 +                    <div class="form-check">
 +                      <input
@@ -684,10 +695,9 @@
 +                class="row"
 +                data-bind="visible: permissions.access_all_locations"
 +              >
-+                <label class="col-md-4 form-label fw-bold">
++                <div class="col-md-4 form-label fw-bold">
 +                  {% trans "Manage Subscription Info" %}
-                 </label>
--                <div class="col-sm-8 controls">
++                </div>
 +                <div class="col-md-8 controls">
                    <div class="form-check">
 -                    <input type="checkbox"
@@ -719,95 +729,16 @@
 -                         data-bind="checked: permissions.edit_billing" />
 -                  <label for="edit-billing-checkbox">
 -                    {% trans "Allow role to manage subscription information." %}
-+              <div
-+                class="row w-100"
-+                data-bind="css: { 'has-error': hasUnpermittedLocationRestriction || unrestrictedButRestrictedRoleCanAssign,
-+                                   'has-warning': cantAccessAllLocations },
-+                            visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction"
-+              >
-+                <label class="col-md-4 form-label fw-bold">
-+                  {% trans "Full Organization Access" %}
-+                </label>
-+                <div class="col-md-8 controls">
-+                  <div class="form-check">
-+                    <input
-+                      class="form-check-input"
-+                      type="checkbox"
-+                      id="allow-data-all-access-checkbox"
-+                      data-bind="checked: permissions.access_all_locations,
-+                                    disable: hasUnpermittedLocationRestriction"
-+                    />
-+                    <label
-+                      class="form-check-label"
-+                      for="allow-data-all-access-checkbox"
-+                    >
-+                      {% trans "Allow role to access data from all locations." %}
-+                    </label>
-+                  </div>
-+                  <div
-+                    class="form-text"
-+                    data-bind="visible: cantAccessAllLocations"
-+                  >
-+                    {% blocktrans %}
-+                      Make sure any users assigned this role also have a
-+                      location assigned to them. Users without assigned
-+                      locations will not be permitted to log in.
-+                    {% endblocktrans %}
-+                  </div>
-+                  <div
-+                    class="form-text"
-+                    data-bind="visible: hasUnpermittedLocationRestriction"
-+                  >
-+                    {% blocktrans %}
-+                      Organization-based data access restrictions are only
-+                      available on the Pro plan and above. Saving this role will
-+                      enable full organization access for the assigned users.
-+                    {% endblocktrans %}
-+                  </div>
-+                  <div
-+                    class="form-text"
-+                    data-bind="visible: unrestrictedButRestrictedRoleCanAssign"
-+                  >
-+                    {% blocktrans %}
-+                      With the current configuration, this role will have full
-+                      organization access and roles that can assign it will not.
-+                      This is not recommended.
-+                    {% endblocktrans %}
-+                  </div>
-+                </div>
-+              </div>
-+              <div class="row">
-+                <label class="col-md-4 form-label fw-bold">
-+                  {% trans "Login-As All Users" %}
-+                </label>
-+                <div class="col-md-8 controls">
-+                  <div class="form-check">
-+                    <input
-+                      class="form-check-input"
-+                      type="checkbox"
-+                      id="login-as-all-users-checkbox"
-+                      data-bind="checked: permissions.login_as_all_users"
-+                    />
-+                    <label
-+                      class="form-check-label"
-+                      for="login-as-all-users-checkbox"
-+                    >
-+                      {% trans "Allow the user to log in as any mobile worker in Web Apps." %}
-+                    </label>
-+                  </div>
-+                </div>
-+              </div>
-+              {% if request|toggle_enabled:"RESTRICT_LOGIN_AS" %}
-+                <div class="row">
-+                  <label class="col-md-4 form-label fw-bold">
-+                    {% trans "Limit Login-As" %}
-                   </label>
+-                  </label>
 -                </div>
 -              </div>
 -            </div>
 -            <div class="form-group"
 -                 data-bind="css: { 'has-error': hasUnpermittedLocationRestriction || unrestrictedButRestrictedRoleCanAssign,
--                                   'has-warning': cantAccessAllLocations },
++              <div
++                class="row w-100"
++                data-bind="css: { 'has-error': hasUnpermittedLocationRestriction || unrestrictedButRestrictedRoleCanAssign,
+                                    'has-warning': cantAccessAllLocations },
 -                            visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction">
 -              <label class="col-sm-4 control-label">
 -                {% trans "Full Organization Access" %}
@@ -820,48 +751,7 @@
 -                                    disable: hasUnpermittedLocationRestriction" />
 -                  <label for="allow-data-all-access-checkbox">
 -                    {% trans "Allow role to access data from all locations." %}
-+                  <div class="col-md-8 controls">
-+                    {# PLACEHOLDER WHEN login_as_all_users IS TRUE #}
-+                    <div
-+                      class="form-check"
-+                      data-bind="visible: permissions.login_as_all_users()"
-+                    >
-+                      <input
-+                        class="form-check-input"
-+                        type="checkbox"
-+                        disabled="disabled"
-+                      />
-+                      <label
-+                        class="form-check-label"
-+                        for="limited-login-as-checkbox"
-+                      >
-+                        {% trans "Allow the user to log in as only specified users in Web Apps." %}
-+                      </label>
-+                    </div>
-+                    {# REAL CHECKBOX WHEN login_as_all_users IS FALSE #}
-+                    <div
-+                      class="form-check"
-+                      data-bind="visible: !permissions.login_as_all_users()"
-+                    >
-+                      <input
-+                        class="form-check-input"
-+                        type="checkbox"
-+                        id="limited-login-as-checkbox"
-+                        data-bind="checked: permissions.limited_login_as"
-+                      />
-+                      <label
-+                        class="form-check-label"
-+                        for="limited-login-as-checkbox"
-+                      >
-+                        {% trans "Allow the user to log in as only specified users in Web Apps." %}
-+                      </label>
-+                    </div>
-+                  </div>
-+                </div>
-+                <div class="row">
-+                  <label class="col-md-4 form-label fw-bold">
-+                    {% trans "Login-As Default User" %}
-                   </label>
+-                  </label>
 -                </div>
 -                <div class="help-block"
 -                     data-bind="visible: cantAccessAllLocations">
@@ -971,6 +861,127 @@
 -              <div class="col-sm-8 controls">
 -                <select class="form-control" id="landing-page"
 -                        data-bind="options: $root.landingPageChoices,
++                            visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction"
++              >
++                <div class="col-md-4 form-label fw-bold">
++                  {% trans "Full Organization Access" %}
++                </div>
++                <div class="col-md-8 controls">
++                  <div class="form-check">
++                    <input
++                      class="form-check-input"
++                      type="checkbox"
++                      id="allow-data-all-access-checkbox"
++                      data-bind="checked: permissions.access_all_locations,
++                                    disable: hasUnpermittedLocationRestriction"
++                    />
++                    <label
++                      class="form-check-label"
++                      for="allow-data-all-access-checkbox"
++                    >
++                      {% trans "Allow role to access data from all locations." %}
++                    </label>
++                  </div>
++                  <div
++                    class="form-text"
++                    data-bind="visible: cantAccessAllLocations"
++                  >
++                    {% blocktrans %}
++                      Make sure any users assigned this role also have a
++                      location assigned to them. Users without assigned
++                      locations will not be permitted to log in.
++                    {% endblocktrans %}
++                  </div>
++                  <div
++                    class="form-text"
++                    data-bind="visible: hasUnpermittedLocationRestriction"
++                  >
++                    {% blocktrans %}
++                      Organization-based data access restrictions are only
++                      available on the Pro plan and above. Saving this role will
++                      enable full organization access for the assigned users.
++                    {% endblocktrans %}
++                  </div>
++                  <div
++                    class="form-text"
++                    data-bind="visible: unrestrictedButRestrictedRoleCanAssign"
++                  >
++                    {% blocktrans %}
++                      With the current configuration, this role will have full
++                      organization access and roles that can assign it will not.
++                      This is not recommended.
++                    {% endblocktrans %}
++                  </div>
++                </div>
++              </div>
++              <div class="row">
++                <div class="col-md-4 form-label fw-bold">
++                  {% trans "Login-As All Users" %}
++                </div>
++                <div class="col-md-8 controls">
++                  <div class="form-check">
++                    <input
++                      class="form-check-input"
++                      type="checkbox"
++                      id="login-as-all-users-checkbox"
++                      data-bind="checked: permissions.login_as_all_users"
++                    />
++                    <label
++                      class="form-check-label"
++                      for="login-as-all-users-checkbox"
++                    >
++                      {% trans "Allow the user to log in as any mobile worker in Web Apps." %}
++                    </label>
++                  </div>
++                </div>
++              </div>
++              {% if request|toggle_enabled:"RESTRICT_LOGIN_AS" %}
++                <div class="row">
++                  <div class="col-md-4 form-label fw-bold">
++                    {% trans "Limit Login-As" %}
++                  </div>
++                  <div class="col-md-8 controls">
++                    {# PLACEHOLDER WHEN login_as_all_users IS TRUE #}
++                    <div
++                      class="form-check"
++                      data-bind="visible: permissions.login_as_all_users()"
++                    >
++                      <input
++                        class="form-check-input"
++                        type="checkbox"
++                        disabled="disabled"
++                      />
++                      <label
++                        class="form-check-label"
++                        for="limited-login-as-checkbox"
++                      >
++                        {% trans "Allow the user to log in as only specified users in Web Apps." %}
++                      </label>
++                    </div>
++                    {# REAL CHECKBOX WHEN login_as_all_users IS FALSE #}
++                    <div
++                      class="form-check"
++                      data-bind="visible: !permissions.login_as_all_users()"
++                    >
++                      <input
++                        class="form-check-input"
++                        type="checkbox"
++                        id="limited-login-as-checkbox"
++                        data-bind="checked: permissions.limited_login_as"
++                      />
++                      <label
++                        class="form-check-label"
++                        for="limited-login-as-checkbox"
++                      >
++                        {% trans "Allow the user to log in as only specified users in Web Apps." %}
++                      </label>
++                    </div>
++                  </div>
++                </div>
++                <div class="row">
++                  <div class="col-md-4 form-label fw-bold">
++                    {% trans "Login-As Default User" %}
++                  </div>
 +                  <div class="col-md-8 controls">
 +                    {# Placeholder disabled checkbox when not using limited log in as #}
 +                    <div
@@ -1012,9 +1023,9 @@
 +                </div>
 +              {% endif %}
 +              <div class="row">
-+                <label class="col-md-4 form-label fw-bold">
++                <div class="col-md-4 form-label fw-bold">
 +                  {% trans "Mobile App Access" %}
-+                </label>
++                </div>
 +                <div class="col-md-8 controls">
 +                  <div class="form-check">
 +                    <input
@@ -1030,9 +1041,9 @@
 +                </div>
 +              </div>
 +              <div class="row">
-+                <label class="col-md-4 form-label fw-bold" for="landing-page">
++                <div class="col-md-4 form-label fw-bold" for="landing-page">
 +                  {% trans "Default Landing Page" %}
-+                </label>
++                </div>
 +                <div class="col-md-8 controls">
 +                  <select
 +                    class="form-select my-2"
@@ -1108,15 +1119,16 @@
 -                data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()">
 -                <label class="col-sm-4 control-label">
 -                  {% trans "Assign All User Profiles" %}
+-                </label>
+-                <div class="col-sm-8 controls">
 +                                  value: default_landing_page"
 +                  ></select>
 +                </div>
 +              </div>
 +              <div class="row">
-+                <label class="col-md-4 form-label fw-bold">
++                <div class="col-md-4 form-label fw-bold">
 +                  {% trans "Allow Reporting Issues" %}
-                 </label>
--                <div class="col-sm-8 controls">
++                </div>
 +                <div class="col-md-8 controls">
                    <div class="form-check">
 -                    <input type="checkbox"
@@ -1140,10 +1152,7 @@
 -                data-bind="visible: !profilePermissions.all() && (permissions.edit_web_users() || permissions.edit_commcare_users())">
 -                <label class="col-sm-4 control-label">
 -                  {% trans "Assign Specific User Profiles" %}
-+              <div class="row">
-+                <label class="col-md-4 form-label fw-bold">
-+                  {% trans "Non-admin Editable" %}
-                 </label>
+-                </label>
 -                <div class="col-sm-8 controls">
 -                  <div class="panel panel-default">
 -                    <div class="panel-heading">
@@ -1151,6 +1160,10 @@
 -                    </div>
 -                    <div class="panel-body"
 -                      data-bind="foreach: profilePermissions.specific, slideVisible: !profilePermissions.all()">
++              <div class="row">
++                <div class="col-md-4 form-label fw-bold">
++                  {% trans "Non-admin Editable" %}
++                </div>
 +                <div class="col-md-8 controls">
 +                  <div class="form-check">
 +                    <input
@@ -1173,9 +1186,9 @@
 +                class="row"
 +                data-bind="visible: !manageRoleAssignments.all()"
 +              >
-+                <label class="col-md-4 form-label fw-bold">
++                <div class="col-md-4 form-label fw-bold">
 +                  {% trans "Manage Role Assignment" %}
-+                </label>
++                </div>
 +                <div
 +                  class="col-md-8 controls"
 +                  ,
@@ -1226,6 +1239,11 @@
 -                         data-bind="checked: permissions.manage_domain_alerts" />
 -                  <label for="manage-domain-alerts-checkbox">
 -                    {% trans "Allow this role to manage project alerts." %}
+-                  </label>
+-                </div>
+-              </div>
+-            </div>
+-            {% endif %}
 +                  <div
 +                    class="form-text text-danger"
 +                    data-bind="visible: showRestrictedLocationRoleAssignmentWarning"
@@ -1243,13 +1261,9 @@
 +                  class="row"
 +                  data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()"
 +                >
-+                  <label class="col-md-4 form-label fw-bold">
++                  <div class="col-md-4 form-label fw-bold">
 +                    {% trans "Assign All User Profiles" %}
-                   </label>
--                </div>
--              </div>
--            </div>
--            {% endif %}
++                  </div>
 +                  <div class="col-md-8 controls">
 +                    <div class="form-check">
 +                      <input
@@ -1271,9 +1285,9 @@
 +                  class="row"
 +                  data-bind="visible: !profilePermissions.all() && (permissions.edit_web_users() || permissions.edit_commcare_users())"
 +                >
-+                  <label class="col-md-4 form-label fw-bold">
++                  <div class="col-md-4 form-label fw-bold">
 +                    {% trans "Assign Specific User Profiles" %}
-+                  </label>
++                  </div>
 +                  <div class="col-md-8 controls">
 +                    <div class="card">
 +                      <div class="card-header">
@@ -1303,9 +1317,9 @@
 +              {% endif %}
 +              {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
 +                <div class="row">
-+                  <label class="col-md-4 form-label fw-bold">
++                  <div class="col-md-4 form-label fw-bold">
 +                    {% trans "Manage Project Alerts" %}
-+                  </label>
++                  </div>
 +                  <div class="col-md-8 controls">
 +                    <div class="form-check">
 +                      <input
@@ -1365,18 +1379,19 @@
                {% trans "Close" %}
              </button>
            </div>
-@@ -576,44 +862,62 @@
+@@ -576,44 +866,62 @@
  </div>
  
  <script type="text/html" id="permission_all_selected_none">
 -  <div class="form-group" data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}">
 -    <div class="col-sm-4 control-label">
+-      <label data-bind="text: text"></label>
 +  <div
 +    class="row"
 +    data-bind="css: {'has-warning': id === 'access_web_apps' && hasRestrictedApplicationAccess}"
 +  >
 +    <div class="col-md-4 form-label fw-bold">
-       <label data-bind="text: text"></label>
++      <div data-bind="text: text"></div>
        <!-- ko if: id === 'access_web_apps' && hasRestrictedApplicationAccess -->
 -        <span class='help-block'>
 -          {% url "cloudcare_app_settings" domain as manage_web_apps_permissions_url %}
