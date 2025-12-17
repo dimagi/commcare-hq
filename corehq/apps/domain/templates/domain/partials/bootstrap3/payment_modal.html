@@ -280,7 +280,7 @@
                            data: newCard,
                            name: 'select-new-stripe-card-template',
                            if: mustCreateNewCard,
-                           afterRender: showOrHideStripeUI,
+                           afterRender: resetStripeCardUI,
                        }"
           ></div>
 
@@ -289,7 +289,7 @@
                            data: $data,
                            name: 'select-stripe-card-template',
                            if: canSelectCard,
-                           afterRender: showOrHideStripeUI,
+                           afterRender: resetStripeCardUI,
                        }"
           ></div>
           <!-- /ko -->
