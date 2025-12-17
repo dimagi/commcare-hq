@@ -1,4 +1,4 @@
-{% extends 'styleguide/bootstrap5/base.html' %}
+{% extends "styleguide/bootstrap5/base.html" %}
 {% load hq_shared_tags %}
 
 {% block intro %}
@@ -16,30 +16,45 @@
       <li>
         <a href="#overview">Overview</a>
         <ul>
-          <a href="#getting-started">Getting Started</a></li>
+          <li><a href="#getting-started">Getting Started</a></li>
+          <li><a href="#north-star-goals">North Star Goals</a></li>
         </ul>
       </li>
       <li>
-        <a href="#usage-forms">Usage with Forms</a>
+        <a href="#mixin"><code>HqHtmxActionMixin</code> to Simplify Usage</a>
         <ul>
-          <a href="#usage-forms-demo">Demo with Crispy Forms</a></li>
+          <li><a href="#mixin-how-it-works">How it works (high level)</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#examples">Examples</a>
+        <ul>
+          <li><a href="#simple-form-example">Simple Form with HTMX and Alpine</a></li>
+          <li><a href="#example-todo">To-Do List (multiple HTMX actions)</a></li>
         </ul>
       </li>
       <li>
         <a href="#organization">Organization for Complex Pages</a>
         <ul>
-          <a href="#using-hqhtmxactionmixin">Using <code>HqHtmxActionMixin</code></a></li>
+          <li><a href="#bulk-edit-cases">Bulk Edit Cases (Host View + Section Views)</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#multistep-next-action">Multi-Step Flows with <code>next_action</code></a>
+        <ul>
+          <li><a href="#multistep-next-action-example">Simple Two-Step “Choose &amp; Confirm” Flow</a></li>
         </ul>
       </li>
       <li><a href="#debugging">Debugging During Development</a></li>
       <li>
         <a href="#loading-indicators">Loading Indicators</a>
         <ul>
-          <a href="#button-loading">Buttons</a></li>
-          <a href="#checkbox-loading">Checkboxes</a></li>
-          <a href="#form-loading">Forms</a></li>
+          <li><a href="#button-loading">Buttons</a></li>
+          <li><a href="#checkbox-loading">Checkboxes</a></li>
+          <li><a href="#form-loading">Forms</a></li>
         </ul>
       </li>
+      <li><a href="#htmx-django-tables">Table Pagination with HTMX and Django Tables</a></li>
     </ul>
   </nav>
 {% endblock toc %}
@@ -49,240 +64,615 @@
     Overview
   </h2>
   <p>
-    <a href="https://htmx.org/" target="_blank">HTMX</a> and <a href="https://alpinejs.dev/" target="_blank">Alpine</a>
-    are two lightweight JavaScript libraries that work well together to add interactivity to a page without
-    needing to add a ton of custom javascript. They work through clever usage of HTML attributes.
+    <a href="https://htmx.org/" target="_blank">HTMX</a> and
+    <a href="https://alpinejs.dev/" target="_blank">Alpine</a>
+    are two lightweight JavaScript libraries that work well together to add interactivity
+    to a page without a lot of custom JavaScript. Both are driven primarily by HTML
+    attributes, which keeps most behavior close to the markup it affects.
   </p>
   <p>
-    HTMX is particularly suited for a Django environment like ours as it expects asynchronous responses to
-    be HTML (instead of JSON), meaning we can return partial templates as responses. This allows us to utilize
-    more of Django's backend power, rather than having to re-create a ton of logic in the front end.
+    HTMX is particularly well-suited to a Django environment like ours because it expects
+    asynchronous responses to be HTML (instead of JSON). That means our views can return
+    partial templates as responses, and HTMX will swap them into the page. We can lean on
+    Django for rendering and business logic, instead of re-implementing that logic in the
+    browser.
   </p>
+
   <h3 id="getting-started" class="pt-3">
     Getting Started
   </h3>
   <p>
-    If you want to quickly get started, you can use this <code>js_entry</code> point
-    <code>hqwebapp/js/htmx_and_alpine</code> (no additional configuration necessary) and
-    include <code>hqwebapp/htmx/error_modal.html</code> in the <code>modals</code> block of your page.
+    To quickly get started on a new page, you can:
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_get_started %}
+  <ul>
+    <li>
+      Use the <code>js_entry</code> point
+      <code>hqwebapp/js/htmx_and_alpine</code> (no additional configuration required), and
+    </li>
+    <li>
+      Include <code>hqwebapp/htmx/error_modal.html</code> in the
+      <code>modals</code> block of your page.
+    </li>
+  </ul>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_get_started %}
   <p>
-    Right now HTMX and Alpine are only available on pages using Webpack. If you don't know what this means,
-    please read the
-    <a href="https://commcare-hq.readthedocs.io/js-guide/static-files.html" target="_blank">Overview of Static Files
-    and JavaScript Bundlers</a>. If you don't know how to proceed after that, read further.
+    HTMX and Alpine are currently only available on pages using Bootstrap 5. This is
+    intentional: we want to encourage pages to migrate to Bootstrap 5 first, and then
+    add HTMX and Alpine on top.
   </p>
   <div class="alert alert-primary">
-    <strong>Important:</strong> HTMX and Alpine can only be included on pages using Webpack.
+   <h3 id="north-star-goals" class="pt-3">
+      North Star Goals
+    </h3>
+    <p>
+      These are our long-term <em>default</em> patterns when building or updating pages with
+      HTMX and Alpine. They are guidelines, not strict rules, especially when working in
+      legacy areas of the codebase:
+    </p>
+    <ul>
+      <li>Reduce JS complexity and avoid duplicating server-side logic in the browser</li>
+      <li>
+        Rely on Django templates for most HTML and layout
+      </li>
+      <li>
+        Take advantage of Django’s templating features&mdash;template inheritance, inclusion
+        tags, filters, and control flow&mdash;instead of re-creating loops and conditionals
+        in JavaScript.
+      </li>
+      <li>Use Alpine for light, local interactivity and UI-only state</li>
+      <li>Use HTMX for server-coordinated interactions (forms, tables, filtering, pagination)</li>
+    </ul>
   </div>
 
-  <h2 id="usage-forms" class="pt-4">
-    Usage with Forms
+  <h2 id="mixin" class="pt-4">
+    <code>HqHtmxActionMixin</code> to Simplify Usage
   </h2>
   <p>
-    HTMX and Alpine are well suited for sprinkling bits of interactivity into an otherwise very static form.
-    For instance, we want to hide or show a field depending on the value of a select input.
+    In practice, many HTMX pages need to send several different actions to the
+    same URL to modify state and/or return an updated partial. Without any structure,
+    each view ends up manually inspecting request headers and branching on different
+    actions, or we create many small views with separate URLs that are hard to keep
+    track of over time.
   </p>
   <p>
-    The in-page interactivity is handled by Alpine. HTMX is useful because it allows us to submit (and load)
-    the form asynchronously.
+    The
+    <a href="https://github.com/dimagi/commcare-hq/blob/5c8ae80653ab957525e91db0c9f48a7cfad9fd6d/corehq/util/htmx_action.py" target="_blank">
+      <code>HqHtmxActionMixin</code>
+    </a>
+    lets you treat a single view as a collection of named HTMX actions. Each action is a
+    small method on the view, instead of a separate endpoint or a big
+    <code>if...elif</code> block. Mentally, you can think of each
+    <code>@hq_hx_action</code> method as a “mini endpoint” hanging off the view, all
+    sharing the same URL and page context. It lets you:
   </p>
-  <h3 id="usage-forms-demo" class="pt-3">
-    Demo with Crispy Forms
+  <ul>
+    <li>Declare small handler methods (like <code>load_form</code>, <code>submit_form</code>, or <code>mark_item_done</code>)</li>
+    <li>Call them from HTML using <code>hq-hx-action="load_form"</code> and similar attributes</li>
+    <li>Enforce HTTP method checks and basic security via the <code>@hq_hx_action</code> decorator (e.g. <code>POST</code> only requests)</li>
+    <li>Use helper methods for partial responses, no-op responses, and redirects (and more).</li>
+  </ul>
+
+  <h3 id="mixin-how-it-works" class="mt-3">
+    How it works (high level)
   </h3>
   <p>
-    <a href="{% url "sg_htmx_alpine_form_demo" %}" target="_blank">Take a look at this simple demo</a> of how
-    we might use HTMX and Alpine with Crispy Forms. Tip: Make sure you are logged in.
+    When an HTMX request includes an <code>hq-hx-action</code> attribute on the triggering
+    element, HQ's
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/hq_hx_action.js"
+      target="_blank"
+    >frontend code</a> also sends a <code>HQ-HX-Action</code> header with the same
+    value. <code>HqHtmxActionMixin</code> reads that header and routes the request to a
+    matching method on the view:
+  </p>
+  <ol>
+    <li>
+      Include <code>HqHtmxActionMixin</code> as a base class in your <code>TemplateView</code>
+    </li>
+    <li>
+      Where you use <code>hx-get</code> or <code>hx-post</code> in your code, include the
+      <code>hq-hx-action="some_action"</code> attribute.
+    </li>
+    <li>
+      In your view, you define a method with the same name
+      (<code>def some_action(...)</code>) and decorate it with
+      <code>@hq_hx_action()</code> (optionally passing an HTTP method like
+      <code>'post'</code>).
+    </li>
+    <li>
+      <code>HqHtmxActionMixin.dispatch()</code>:
+      <ul>
+        <li>Looks up <code>some_action</code> on the view</li>
+        <li>Checks that it's decorated with <code>@hq_hx_action</code></li>
+        <li>Verifies the HTTP method if one was specified</li>
+        <li>Calls the handler and returns its response</li>
+      </ul>
+    </li>
+  </ol>
+  <p>
+    If no <code>HQ-HX-Action</code> header is present, the mixin simply falls back to the
+    normal <code>dispatch</code> behavior (i.e., your view works like a regular
+    <code>TemplateView</code> for non-HTMX requests).
+  </p>
+
+  <h2 id="examples" class="pt-2">
+    Examples
+  </h2>
+
+  <p>
+    Below are two starter examples working with both HTMX and Alpine:
+  </p>
+  <ul>
+    <li>
+      A simple form demo-ing asynchronously loading, validating, and displaying
+      a success message (HTMX) and hiding/showing a field based on the value of another field (Alpine).
+    </li>
+    <li>
+      A more complex view using a todo-list to demo multiple different actions and partials with HTMX,
+      and triggering an inline-editing form with Alpine.
+    </li>
+  </ul>
+
+  <h3 id="simple-form-example" class="pt-3">
+    A Simple Form with HTMX and Alpine
+  </h3>
+  {% include "styleguide/bootstrap5/partials/demo_callout.html" with urlname="sg_htmx_alpine_form_demo" %}
+  <div class="alert alert-primary">
+    <p class="mb-1">
+      <strong>Tips:</strong>
+    </p>
+    <ul class="mb-0">
+      <li>
+        To <a href="{% url "sg_htmx_alpine_form_demo" %}" target="_blank">view this demo</a>,
+        make sure you are logged in.
+      </li>
+      <li>
+        Leave the “Value” field blank (with a match type that requires a value) to trigger
+        Django form validation via HTMX.
+      </li>
+      <li>
+        Set the “Match Type” field to “is empty” to hide the “Value” field (Alpine).
+      </li>
+      <li>
+        Submit the form with all fields filled out to trigger the success message (HTMX).
+      </li>
+    </ul>
+  </div>
+  <p>
+    <a href="{% url "sg_htmx_alpine_form_demo" %}" target="_blank">In this example</a>,
+    <strong>HTMX</strong> is used to asynchronously load a form and submit it back to the
+    same view. The form is posted to an <code>hq_hx_action</code> handler on that view,
+    which validates the data and either:
+  </p>
+  <ul>
+    <li>returns the form again with validation errors, or</li>
+    <li>shows a success message and resets the form.</li>
+  </ul>
+  <p>
+    <strong>Alpine</strong> provides a small layer of interactivity on top: it hides the
+    “Value” field when the “Match Type” is set to “is empty”. The Alpine model is defined
+    in the form layout itself, since that logic is specific to this form.
   </p>
   <p>
-    Below we have two template views, <code>HtmxAlpineFormDemoView</code> and <code>FilterDemoFormView</code>.
-    <code>HtmxAlpineFormDemoView</code> is the view that loads when visiting the URL above. It can be considered
-    the "host" view, and asynchronously loads the partial template content from the <code>FilterDemoFormView</code>
-    on page load. <code>FilterDemoFormView</code> then controls everything related to the <code>FilterDemoForm</code>.
+    The <code>HtmxAlpineFormDemoView</code> uses <code>HqHtmxActionMixin</code> so that it
+    can define two HTMX actions on the same URL using <code>hq-hx-action</code>:
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_alpine_form_views %}
+  <ul>
+    <li>
+      <code>load_form</code> &mdash; loads the initial empty form when the page first loads.
+    </li>
+    <li>
+      <code>submit_form</code> &mdash; handles the POSTed form data, validates it, and
+      returns either the form with errors or a success message with a fresh form.
+    </li>
+  </ul>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_alpine_form_views %}
   <p>
-    Take a look at the template for <code>HtmxAlpineFormDemoView</code>. You can see it uses a common
-    <code>js_entry</code> entry point <code>hqwebapp/js/htmx_and_alpine</code>, which is appropriate for
-    most common uses of HTMX and Alpine.
+    <code>HtmxAlpineFormDemoView</code> references two templates:
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.form_main_template %}
+  <ul>
+    <li>
+      <code>main.html</code> &mdash; the full page template. It:
+      <ul>
+        <li>extends a core base template,</li>
+        <li>
+          uses the <code>hqwebapp/js/htmx_and_alpine</code> entry point (no extra JS
+          needed for this demo), and
+        </li>
+        <li>
+          sets up an HTMX <code>hx-trigger="load"</code> request to
+          <code>request.path_info</code> (the same URL serving the view),
+          which calls the <code>load_form</code> action.
+        </li>
+      </ul>
+      {% include "styleguide/bootstrap5/code_display.html" with content=examples.form_main_template %}
+    </li>
+    <li>
+      <code>partial_form.html</code> &mdash; the partial template returned by the two
+      <code>hq-hx-action</code> handlers. It renders the crispy form and, when
+      appropriate, a success message.
+      {% include "styleguide/bootstrap5/code_display.html" with content=examples.form_partial_template %}
+    </li>
+  </ul>
+
   <p>
-    The template for <code>FilterDemoFormView</code> then looks like this&mdash;a very simple form partial!
-    The magic of what happens after the form is submitted is in the <code>hx-</code> attributes within
-    the <code>&lt;form&gt;</code> tag that control the HTMX interactions.
+    Lastly, the Django form <code>FilterDemoForm</code> uses crispy-forms to define the
+    layout. This layout also sets up the Alpine data model and <code>x-*</code> attributes
+    that drive the hide/show "Value" field behavior.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.form_partial_template %}
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_alpine_form %}
+
+  <h3 id="example-todo" class="pt-3">
+    A Single View with Multiple HTMX Actions (To-Do List)
+  </h3>
+  {% include "styleguide/bootstrap5/partials/demo_callout.html" with urlname="sg_htmx_todo_list_example" %}
   <p>
-    The interaction within the form is then controlled by Alpine. Take a peek at <code>self.helper.layout</code>
-    in the code below. All the <code>x_</code> attributes define the Alpine model and interactions&mdash;no
-    external JavaScript file necessary!
+    The form demo showed a view with two HTMX actions (<code>load_form</code>,
+    <code>submit_form</code>) on the same URL. The To-Do List demo takes the same idea
+    one step further: a single view with several HTMX actions for different interactions
+    (create, edit, mark done), plus some inline editing behavior powered by Alpine.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_alpine_form %}
+  <p>
+    In the
+    <a href="{% url "sg_htmx_todo_list_example" %}" target="_blank">To-Do List demo</a>,
+    <code>TodoListDemoView</code> mixes in <code>HqHtmxActionMixin</code>. Three methods
+    are decorated with <code>@hq_hx_action('post')</code>:
+    <code>create_new_item</code>, <code>edit_item</code>, and <code>mark_item_done</code>.
+  </p>
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_todo_list_view %}
+
+  <p>
+    These methods act like small, named HTMX endpoints hanging off the same URL. The main
+    template wires them up with HTMX:
+  </p>
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_todo_main %}
+
+  <p>
+    Each list item template then combines HTMX calls to those actions with a tiny Alpine
+    model for inline editing:
+  </p>
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_todo_item %}
+
+  <p>
+    When an item is marked as done, <code>render_item_response()</code> returns a different
+    partial that uses <code>hx-swap-oob</code> to move the item into the “Done” list:
+  </p>
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_todo_item_done_swap %}
+
+  <p>
+    This pattern (one view + several <code>@hq_hx_action</code> methods) works well for
+    medium-complexity pages that have a few related interactions but don’t yet need to be
+    split into multiple views.
+  </p>
 
   <h2 id="organization" class="pt-4">
     Organization for Complex Pages
   </h2>
   <p>
-    You can imagine that if a page needs to make a lot of different HTMX requests for multiple page interactions,
-    the view list needed to process each request might get pretty long. Additionally, it might be challenging to
-    properly identify these views as related to one main view.
+    For very complex pages, a single view with many HTMX actions can still become hard
+    to reason about. In those cases, it can be helpful to split the page into multiple
+    <strong>section views</strong>:
   </p>
+  <ul>
+    <li>
+      A single <strong>host view</strong> renders the overall page layout, navigation,
+      common context, and JavaScript entry point.
+    </li>
+    <li>
+      Several <strong>section views</strong> each manage one part of the page.
+      Each section view has its own URL and its own HTMX actions.
+    </li>
+  </ul>
   <p>
-    That is where <code>HqHtmxActionMixin</code> comes in! You can use this mixin with any <code>TemplateView</code>
-    (and common HQ subclasses, like <code>BasePageView</code>). Once mixed-in, any method on that view can be
-    decorated with <code>@hq_hx_action()</code> to make that method name directly available as an "action"
-    with any <code>hx-get</code>, <code>hx-post</code>, or related <code>hx-</code> request to that View's URL.
-    This association can be made with the <code>hq-hx-action</code> attribute in the same element that has the
-    <code>hx-</code> request tag.
+    The host view passes section view URLs into the template via context, and the
+    template uses those URLs as <code>hx-get</code>/<code>hx-post</code> targets for
+    different parts of the page.
   </p>
-  <p>
-    Not quite following? Yes, it's a bit complex. Let's check out a demo and hopefully that will clear up any
-    confusion...
-  </p>
-  <h3 id="using-hqhtmxactionmixin" class="pt-3">
-    Using <code>HqHtmxActionMixin</code>
+
+  <h3 id="bulk-edit-cases" class="pt-3">
+    Example: Bulk Edit Cases (Host View + Section Views)
   </h3>
   <p>
-    To illustrate the usage of <code>HqHtmxActionMixin</code>, here is a simple
-    <a href="{% url "sg_htmx_todo_list_example" %}" target="_blank">To-Do List</a> demo.
+    A concrete production example of this pattern is the bulk data editing UI in
+    <a
+      href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/data_cleaning"
+      target="_blank"
+    ><code>corehq.apps.data_cleaning</code></a>. The
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/5c8ae80653ab957525e91db0c9f48a7cfad9fd6d/corehq/apps/data_cleaning/views/main.py#L60"
+      target="_blank"
+    ><code>BulkEditCasesSessionView</code></a> acts as the host view for the page, and several
+    section views handle individual areas of the UI.
+  </p>
+
+  <p>
+    In
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/5c8ae80653ab957525e91db0c9f48a7cfad9fd6d/corehq/apps/data_cleaning/views/main.py#L104-L130"
+      target="_blank"
+    ><code>BulkEditCasesSessionView.page_context</code></a>, the host view exposes the URLs
+    of its section views.
+  </p>
+
+  <p>
+    Each of these URLs points to a section view responsible for one part of the page:
+  </p>
+  <ul>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/blob/5c8ae80653ab957525e91db0c9f48a7cfad9fd6d/corehq/apps/data_cleaning/views/tables.py#L40"
+        target="_blank"
+      >
+        <code>EditCasesTableView</code>
+      </a> &mdash; main table of cases
+    </li>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/blob/5c8ae80653ab957525e91db0c9f48a7cfad9fd6d/corehq/apps/data_cleaning/views/filters.py#L27"
+        target="_blank"
+      >
+        <code>ManagePinnedFiltersView</code>
+      </a> &mdash; "pinned" / fixed filters
+    </li>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/blob/5c8ae80653ab957525e91db0c9f48a7cfad9fd6d/corehq/apps/data_cleaning/views/filters.py#L74"
+        target="_blank"
+      >
+        <code>ManageFiltersView</code>
+      </a> &mdash; user-definable filters
+    </li>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/blob/5c8ae80653ab957525e91db0c9f48a7cfad9fd6d/corehq/apps/data_cleaning/views/columns.py#L23"
+        target="_blank"
+      >
+        <code>ManageColumnsFormView</code>
+      </a> &mdash; column selection
+    </li>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/data_cleaning/views/bulk_edit.py"
+        target="_blank"
+      >
+        <code>EditSelectedRecordsFormView</code>
+      </a> &mdash; bulk edit form for selected rows
+    </li>
+    <li>
+      <a
+        href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/data_cleaning/views/status.py"
+        target="_blank"
+      >
+        <code>BulkEditSessionStatusView</code>
+      </a> &mdash; session progress / status when the edits are submitted
+    </li>
+  </ul>
+
+  <p>
+    Each section view follows the same patterns described earlier:
+    <code>TemplateView</code> + <code>HqHtmxActionMixin</code>, with one or more
+    <code>@hq_hx_action</code> methods to handle interactions for that section.
   </p>
   <p>
-    Let's first start with the <code>TodoListDemoView</code>, a subclass of <code>BasePageView</code> that mixes
-    in <code>HqHtmxActionMixin</code>. You can see that the <code>@hq_hx_action()</code> decorator is applied
-    to three methods in this view: <code>create_new_item</code>, <code>edit_item</code>, and
-    <code>mark_item_done</code>.
+    The end result is a page that feels like a single cohesive UI, but where each section
+    has its own view class, URL, and HTMX actions. This keeps each piece manageable and
+    testable, while still creating the feeling of a cohesive "full-page app" with the host
+    view tying everything together. You get a feeling of using React, but Django is actually at the core!
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_hq_hx_action %}
+
+  <h2 id="multistep-next-action" class="pt-4">
+    Multi-Step Flows with <code>next_action</code>
+  </h2>
   <p>
-    Looking at the main template for this view, we can scan the page for the first <code>hx-post</code>
-    attribute, which posts to <code>request.path_info</code>. This is URL of the page serving this
-    template: <code>TodoListDemoView</code>.
-  </p>
-  <p>
-    Below <code>hx-post</code> is the <code>hq-hx-action</code> attribute referencing the
-    <code>create_new_item</code> method of the <code>TodoListDemoView</code>. Remember, this was one
-    of the methods decorated with <code>@hq_hx_action()</code>. The rest of the attributes are specific to
-    HTMX, and you can read more about them on <a href="https://htmx.org/" target="_blank">htmx.org</a>.
+    Sometimes you need a short multi-step flow made of one or more forms:
+    pick something, confirm what to do with it, then either finish or go back.
+    You could model this as a single "wizard" form with a <code>step</code> field,
+    but often it's clearer to give each step its own form and handler.
   </p>
   <p>
-    If you scan the rest of the template, you will notice another <code>hq-hx-action</code> attribute which
-    references the method <code>does_not_exist</code>. As it is aptly named, this method does not exist in
-    <code>TodoListDemoView</code>. However, that's the point, as this attribute is attached to a button which
-    triggers the HTMX error modal. :)
+    With HTMX and <code>HqHtmxActionMixin</code>, you can keep this entirely
+    server-driven by using a simple <strong><code>next_action</code> pattern</strong>:
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_todo_main %}
+  <ul>
+    <li>One view class, with multiple <code>@hq_hx_action</code> methods.</li>
+    <li>A shared partial that posts to the same URL, but uses
+      <code>hq-hx-action="{{ next_action }}"</code>.
+    </li>
+    <li>Each handler validates its form and either:
+      <ul>
+        <li>returns a “next step” form with a new <code>next_action</code>, or</li>
+        <li>returns a final success / summary state.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3 id="multistep-next-action-example" class="mt-3">
+    Example: Simple Two-Step “Choose &amp; Confirm” Flow
+  </h3>
+  {% include "styleguide/bootstrap5/partials/demo_callout.html" with urlname="sg_htmx_next_action_demo" %}
   <p>
-    What about the other two actions, <code>edit_item</code> and <code>mark_item_done</code>? To examine the usage
-    for these, we need to look at the <code>item.html</code> template.
+    <a
+      href="{% url "sg_htmx_next_action_demo" %}"
+    >This demo</a> shows a tiny two-step flow:
   </p>
+  <ol>
+    <li>Choose a favorite fruit.</li>
+    <li>Confirm the choice or go back and change it.</li>
+  </ol>
   <p>
-    In this template, we see <code>hq_hx_action="mark_item_done"</code> applied to the <code>checkbox</code>
-    input. Scrolling down, we see <code>hq_hx_action="edit_item"</code> applied to the <code>form</code>
-    that contains the <code>input</code> with the edited form value.
+    The view <code>SimpleNextActionDemoView</code> uses three HTMX actions:
   </p>
+  <ul>
+    <li><code>load_first_step</code> &mdash; load the initial form on page load.</li>
+    <li><code>validate_choice</code> &mdash; validate the chosen fruit and move to the confirm step.</li>
+    <li><code>confirm_or_change</code> &mdash; either finish or go back to step 1.</li>
+  </ul>
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_next_action_simple_view %}
+
   <p>
-    However, how is the quick inline-edit interaction happening? That all comes from Alpine! Looking at the
-    attributes in the <code>li</code> element on that template, we see the simple Alpine model being defined,
-    setting up variables to track the <code>isEditing</code> and <code>isSubmitting</code> states. Additionally,
-    the <code>itemValue</code> is defined and initialized from the template variable <code>item.name</code>. This
-    <code>itemValue</code> is bound to the text <code>input</code> in the <code>edit_item</code> form below, with
-    Alpine's <code>x-model</code> attribute.
+    The main template sets up the HTMX + Alpine entry point and an empty container
+    that loads the first step via HTMX:
   </p>
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_next_action_simple_template %}
+
   <p>
-    The hide/show states of other elements are then controlled with Alpine's <code>x-show</code> attribute,
-    while other form elements are disabled using Alpine's <code>:disabled</code> shorthand attribute when the
-    <code>isEditing</code> or <code>isSubmitting</code> states change.
+    The partial template is intentionally generic, and based on an even simpler version reused elsewhere in HQ
+    (<a
+      href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/templates/hqwebapp/htmx/forms/next_action_form.html"
+      target="_blank"
+    >See it here</a>).
+    This template doesn't know about "fruits"
+    or a specific step...it just renders whatever <code>form</code> and
+    <code>next_action</code> the view provides. It does add a message alert in case one of the steps decides to display a message.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_todo_item %}
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_next_action_simple_form_template %}
+
   <p>
-    From the code in <code>TodoListDemoView</code>, you can see that a request to the different
-    <code>@hq_hx_action()</code> methods returns <code>self.render_item_response</code>. This returns
-    <code>render_htmx_partial_response</code>, which is part of the <code>HqHtmxActionMixin</code>.
-    Looking at this <code>render_item_response</code> method, we see two partial templates being returned.
+    The two forms keep all validation and labels in Django:
   </p>
+
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_next_action_simple_forms %}
+
   <p>
-    The <code>item.html</code> template we've already examined above. However, when the item is marked as
-    <code>is_done</code>, the method returns the <code>item_done_oob_swap.html</code> partial. Let's take a
-    look at this template:
+    The end result is a small multi-step flow that:
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_todo_item_done_swap %}
+  <ul>
+    <li>stays entirely server-driven,</li>
+    <li>reuses one HTMX container and one partial template, and</li>
+    <li>keeps each step's logic in its own form + action method.</li>
+  </ul>
   <p>
-    As you can see, this template just adds a wrapper around the <code>item_done.html</code> template, but
-    it has a very interesting HTMX attribute in this wrapper, <code>hx-swap-oob</code>. This was included
-    to demonstrate a powerful feature of HTMX to do out-of-bounds swaps, which you can
-    <a href="https://htmx.org/attributes/hx-swap-oob/" target="_blank">read about here</a>.
-  </p>
-  <p>
-    Lastly, we have the <code>item_done.html</code> partial template. It's very simple:
-  </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.htmx_todo_item_done %}
-  <p>
-    That's it! Hopefully <code>HqHtmxActionMixin</code> seems less confusing now,
-    and you are inspired to use it. :)
+    The only thing the template needs to know is
+    <strong>which action name to call next</strong>.
   </p>
 
   <h2 id="debugging" class="pt-4">
     Debugging During Development
   </h2>
   <p>
-    During development of a page using <code>HTMX</code>, you might be interested in seeing how the page
-    looks like when requests take a long time to load, or when the server is a little flaky. Unfortunately,
-    when you try to use the browser dev tools to simulate page slowness, you are only delaying sending the
-    request to your local server, rather than simulating a slow server response. The distinction is important
-    with HTMX, especially when debugging timeout issues.
+    When developing an HTMX-powered page, it’s often useful to see how the UI behaves
+    when requests are slow or the server is flaky. Browser dev tools throttling only
+    delays the <em>request from the browser</em> to your local server&mdash;it does not
+    simulate a slow or unreliable <em>server response</em>. That distinction matters a lot
+    for HTMX, especially when you’re debugging spinners, timeouts, and retry behavior.
   </p>
   <p>
-    To enable some advanced debugging features on a view using the <code>HqHtmxActionMixin</code>, you
-    can also mix-in the <code>HqHtmxDebugMixin</code>. The <code>HqHtmxDebugMixin</code> allows you to
-    simulate slow server responses by setting <code>simulate_slow_response = True</code> on your view.
-    You can also simulate intermittent bad gateway errors with <code>simulate_flaky_gateway = True</code>.
+    To make this easier on views that use <code>HqHtmxActionMixin</code>, you can also mix in
+    <code>HqHtmxDebugMixin</code>. This mixin lets you:
+  </p>
+  <ul>
+    <li>
+      Simulate slow responses by setting
+      <code>simulate_slow_response = True</code> (and adjusting
+      <code>slow_response_time</code> in seconds).
+    </li>
+    <li>
+      Simulate intermittent 504 “gateway timeout” errors by setting
+      <code>simulate_flaky_gateway = True</code>.
+    </li>
+  </ul>
+  <p>
+    A typical usage looks like:
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.htmx_debug_mixin_usage %}
+  <p>
+    <strong>Important:</strong> mixin order matters. Make sure
+    <code>HqHtmxDebugMixin</code> appears <em>before</em>
+    <code>HqHtmxActionMixin</code> so its <code>dispatch()</code> runs first.
   </p>
   <p>
-    You can check out the <code>HqHtmxDebugMixin</code> directly for additional documentation and usage
-    guidance.
+    You can check out <code>HqHtmxDebugMixin</code> in the codebase for additional
+    documentation and implementation details.
   </p>
 
   <h2 id="loading-indicators" class="pt-4">
     Loading Indicators
   </h2>
   <p>
-    By default, if an element triggers an HTMX request, it will automatically get an <code>htmx-request</code>
-    CSS class applied to it. We've added custom styling to <code>_htmx.scss</code> to support the common states outlined
-    later in this section.
+    By default, when an element triggers an HTMX request, HTMX will automatically add the
+    <code>htmx-request</code> CSS class to that element for the duration of the request.
+    HQ defines some shared styles for this and related states in
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/scss/commcarehq/_htmx.scss"
+      target="_blank"
+    ><code>_htmx.scss</code></a>, which support the common patterns outlined later in this section.
   </p>
   <p>
-    If you want to create new types of loading indicators for non-standard elements, you can explore using
-    the <code>hx-indicator</code> attribute
+    If you want to create custom loading indicators for non-standard elements (for example, a spinner
+    elsewhere on the page rather than on the trigger itself), you can use the
+    <code>hx-indicator</code> attribute
     (<a href="https://htmx.org/attributes/hx-indicator/" target="_blank">see docs here</a>).
-  </p>
-  <p>
-    It's often a great idea to pair button requests with <code>hx-disabled-elt="this"</code>
-    (<a href="https://htmx.org/attributes/hx-disabled-elt/" target="_blank`">see docs for hx-disabled-elt</a>),
-    like the examples below, so that the requesting <code>button</code> is disabled during the request.
   </p>
   <h3 id="button-loading" class="pt-4">
     Buttons
   </h3>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.loading_button %}
+  <p>
+    It's often a good idea to pair button-triggered requests with
+    <code>hx-disabled-elt="this"</code>
+    (<a href="https://htmx.org/attributes/hx-disabled-elt/" target="_blank">see docs for hx-disabled-elt</a>),
+    as in the example below, so that the triggering <code>&lt;button&gt;</code> is disabled while the
+    request is in flight.
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.loading_button %}
 
   <h3 id="checkbox-loading" class="pt-4">
     Checkboxes
   </h3>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.loading_checkbox %}
+  <p>
+    You can also add <code>hx-disabled-elt="this"</code> to checkboxes to reveal the checkbox spinner
+    when a request is in flight.
+  </p>
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.loading_checkbox %}
 
   <h3 id="form-loading" class="pt-4">
     Forms
   </h3>
   <p>
-    In the example below, note that the <code>form</code> is the triggering element, so the
-    <code>hx-disabled-elt</code> value is set to <code>find button</code> to disable all button children
-    of that form during an HTMX request. Since <code>form</code> is the submitting element, by default
-    it has the <code>htmx-request</code> class applied. Our styles ensure that
-    <code>button type="submit"</code> elements of a submitting form show the loading indicator during
-    an HTMX request.
+    In the example below, the <code>&lt;form&gt;</code> element is the HTMX trigger, so
+    <code>hx-disabled-elt="find button"</code> is used to disable all of the form’s
+    <code>&lt;button&gt;</code> children while the request is in flight. Because the
+    form is the submitting element, HTMX automatically applies the
+    <code>htmx-request</code> class to it for the duration of the request.
+    Our styles then ensure that any <code>&lt;button type="submit"&gt;</code> inside a
+    submitting form shows a loading indicator during the HTMX request.
   </p>
-  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.loading_form %}
+  {% include "styleguide/bootstrap5/code_display.html" with content=examples.loading_form %}
 
+  <h3 id="htmx-django-tables" class="pt-4">
+    Table Pagination with HTMX and Django Tables
+  </h3>
+  <p>
+    For paginated tables, HTMX pairs nicely with
+    <a href="https://django-tables2.readthedocs.io/en/latest/" target="_blank">django-tables2</a>:
+    Django renders each page of results as a partial, and HTMX swaps that partial into the page
+    as the user clicks through pages or changes page size.
+  </p>
+  <p>
+    We have a separate styleguide example that walks through this pattern end-to-end
+    (table definition, paginated view, and “host” HTMX view), plus a live demo:
+  </p>
+  <ul>
+    <li>
+      <a href="{% url "styleguide_molecules_pagination_b5" %}#using-pagination-htmx">
+        Pagination with HTMX and Django Tables (documentation)
+      </a>
+    </li>
+    <li>
+      <a href="{% url "styleguide_b5_htmx_pagination_view" %}" target="_blank">
+        Simple Pagination: HTMX + Django Tables2 (demo)
+      </a>
+    </li>
+  </ul>
+  <p>
+    If you're building or migrating any paginated tables, start there for concrete patterns you
+    can copy into your own views.
+  </p>
 {% endblock content %}
