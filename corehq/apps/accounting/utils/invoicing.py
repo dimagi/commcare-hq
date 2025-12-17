@@ -167,3 +167,24 @@ def get_prorated_software_plan_cost(date_start, date_end, monthly_fee):
     return total_cost.quantize(
         Decimal('0.01'), rounding=ROUND_HALF_UP,
     )
+
+
+def get_next_due_invoice(subscription, today):
+    return Invoice.objects.filter(
+        subscription=subscription,
+        is_hidden=False,
+        date_due__gte=today,
+        date_paid__isnull=True,
+    ).order_by('date_due').first()
+
+
+def get_next_due_customer_invoice(account, today, subscription=None):
+    current_invoices = CustomerInvoice.objects.filter(
+        account=account,
+        is_hidden=False,
+        date_due__gte=today,
+        date_paid__isnull=True,
+    )
+    if subscription:
+        current_invoices = current_invoices.filter(subscriptions__in=[subscription])
+    return current_invoices.order_by('date_due').first()
