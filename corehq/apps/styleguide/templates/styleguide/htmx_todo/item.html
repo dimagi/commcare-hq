@@ -52,7 +52,11 @@
     </div>
 
     {# the element below defines what the inline edit looks like in edit mode #}
-    <div x-show="isEditing">
+    <div
+      x-show="isEditing"
+      {# x-cloak will hide the element until Alpine initializes on the page #}
+      x-cloak
+    >
       <form
         hx-post="{{ request.path_info }}"
         hq-hx-action="edit_item"
