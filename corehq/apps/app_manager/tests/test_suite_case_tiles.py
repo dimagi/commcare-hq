@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.exceptions import AppMisconfigurationError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -160,7 +160,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
                     raise AssertionError(message)
 
     def test_case_tile_template_does_not_exist(self):
-        with self.assertRaises(AppMisconfigurationError):
+        with self.assertRaises(CaseTileMisconfigurationError):
             case_tile_template_config("unknow")
 
     def test_case_tile_template_custom(self):

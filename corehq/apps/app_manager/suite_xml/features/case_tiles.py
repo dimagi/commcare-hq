@@ -9,7 +9,7 @@ from typing import List, Dict
 from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import AppMisconfigurationError, SuiteError
+from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Detail, DetailVariable, XPathVariable, TileGroup, Style, EndpointAction
 )
@@ -42,7 +42,7 @@ def case_tile_template_config(template):
     if template == CUSTOM:
         return CaseTileTemplateConfig(**{})
     if template not in CaseTileTemplates.values:
-        raise AppMisconfigurationError(f"'{template}' is not a valid case tile template")
+        raise CaseTileMisconfigurationError(f"'{template}' is not a valid case tile template")
     try:
         with open(
             TILE_DIR / (template + '.json'),

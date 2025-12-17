@@ -26,8 +26,8 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
-    AppMisconfigurationError,
     CaseXPathValidationError,
+    CaseTileMisconfigurationError,
     FormNotFoundException,
     LocationXPathValidationError,
     ModuleIdMissingException,
@@ -679,16 +679,15 @@ class ModuleDetailValidatorMixin(object):
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
 
                 try:
-                    if detail.case_tile_template:
-                        for field in case_tile_template_config(detail.case_tile_template).fields:
-                            if field not in col_by_tile_field:
-                                errors.append({
-                                    'type': self.__invalid_tile_configuration_type,
-                                    'module': self.get_module_info(),
-                                    'reason': _('A case property must be assigned to the "{}" tile '
-                                        'field.').format(field)
-                                })
-                except AppMisconfigurationError:
+                    for field in case_tile_template_config(detail.case_tile_template).fields:
+                        if field not in col_by_tile_field:
+                            errors.append({
+                                'type': self.__invalid_tile_configuration_type,
+                                'module': self.get_module_info(),
+                                'reason': _('A case property must be assigned to the "{}" tile '
+                                    'field.').format(field)
+                            })
+                except CaseTileMisconfigurationError:
                     errors.append({
                         'type': 'invalid case type template',
                         'details': f'"{detail.case_tile_template}" is not a valid case tile template',
