@@ -40,7 +40,7 @@ class CaseTileTemplateConfig:
 @memoized
 def case_tile_template_config(template):
     if template == CUSTOM:
-        return CaseTileTemplateConfig(**{})
+        return CaseTileTemplateConfig()
     if template not in CaseTileTemplates.values:
         raise CaseTileMisconfigurationError(f"'{template}' is not a valid case tile template")
     try:
