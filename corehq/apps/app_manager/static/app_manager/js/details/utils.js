@@ -45,6 +45,18 @@ module.getFieldFormats = function () {
     }, {
         value: "markdown",
         label: gettext('Markdown'),
+    },{
+        value: "geo-boundary",
+        label: gettext('Geo Boundary'),
+    }, {
+        value: "geo-boundary-color",
+        label: gettext('Geo Boundary Color'),
+    }, {
+        value: "geo-points",
+        label: gettext('Geo Points'),
+    }, {
+        value: "geo-points-colors",
+        label: gettext('Geo Points Colors'),
     }];
 
     if (toggles.toggleEnabled('CASE_LIST_MAP')) {
