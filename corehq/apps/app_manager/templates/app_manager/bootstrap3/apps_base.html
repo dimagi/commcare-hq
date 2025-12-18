@@ -90,7 +90,7 @@
 {% block modals %}
   {{ block.super }}
   {% if app.is_deleted %}
-    {% include 'app_manager/partials/undo_delete_app.html' %}
+    {% include 'app_manager/partials/bootstrap3/undo_delete_app.html' %}
   {% endif %}
   {% include "hqwebapp/bootstrap3/rollout_revert_modal.html" %}
   {% include 'app_manager/partials/confirm_delete_app.html' %}
