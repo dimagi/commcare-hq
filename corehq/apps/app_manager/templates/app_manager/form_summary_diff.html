@@ -22,7 +22,7 @@
       {% initial_page_data 'first.app_id' first.app_id %}
       {% initial_page_data 'first.app_version' first.app_version %}
       {% initial_page_data 'first.read_only' first.read_only %}
-      {% include 'app_manager/form_summary_base.html' with modules=first.modules errors=first.errors app_version=first.app_version%}
+      {% include 'app_manager/bootstrap3/form_summary_base.html' with modules=first.modules errors=first.errors app_version=first.app_version%}
     </div>
     <div class="col-sm-6 ko-template scrollable" id="second-app-summary">
       {% initial_page_data 'second.errors' second.errors %}
@@ -30,7 +30,7 @@
       {% initial_page_data 'second.app_id' second.app_id %}
       {% initial_page_data 'second.app_version' second.app_version %}
       {% initial_page_data 'second.read_only' second.read_only %}
-      {% include 'app_manager/form_summary_base.html' with modules=second.modules errors=second.errors app_version=second.app_version%}
+      {% include 'app_manager/bootstrap3/form_summary_base.html' with modules=second.modules errors=second.errors app_version=second.app_version%}
     </div>
   </div>
 {% endblock content_extra %}
