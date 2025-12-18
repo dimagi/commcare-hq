@@ -338,6 +338,7 @@ export default function (col, screen) {
 
     let menuOptions = filterFormats(Utils.getFieldFormats(), self.original.format);
     self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
+    self.previousFormat = self.format.val();
 
     self.updateFormatOptions = function (dynamicFormats, formatsToInclude) {
         let updateMenuOptions = Utils.getFieldFormats();

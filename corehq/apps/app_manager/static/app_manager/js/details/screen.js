@@ -361,6 +361,10 @@ export default function (spec, config, options) {
         'geo-boundary-color': ['address', 'geo-boundary'],
         'geo-points-colors': ['address', 'geo-points'],
     };
+    const uniqueDependencies = Array.from(
+        new Set(_.flatten(Object.values(COLUMN_FORMAT_DEPENDENCIES))),
+    );
+
     const columnsHasFormat = function (formatName) {
         return _.some(self.columns(), function(col) {
             return col.format && col.format.val && col.format.val() === formatName;
@@ -379,6 +383,15 @@ export default function (spec, config, options) {
             }
         });
         return formatsToInclude;
+    };
+    const updateAllColumnFormats = function () {
+        const formatsToInclude = calculateDynamicFormatsToInclude();
+        const dynamicFormats = Object.keys(COLUMN_FORMAT_DEPENDENCIES);
+        _.each(self.columns(), function (col) {
+            if (!col.isTab) {
+                col.updateFormatOptions(dynamicFormats, formatsToInclude);
+            }
+        });
     };
 
     self.initColumnAsColumn = function (column) {
@@ -422,6 +435,16 @@ export default function (spec, config, options) {
                 }]);
             }
         });
+        column.format.on('change', function () {
+            const newFormat = column.format.val();
+            const dependencyChanged =
+                uniqueDependencies.includes(column.previousFormat) ||
+                uniqueDependencies.includes(newFormat);
+            if (dependencyChanged) {
+                updateAllColumnFormats();
+            }
+            column.previousFormat = newFormat;
+        });
         return column;
     };
 
@@ -462,6 +485,9 @@ export default function (spec, config, options) {
         self.columns.push(ColumnModel(columns[i], self));
         self.initColumnAsColumn(self.columns()[i]);
     }
+
+    // Update all column formats on page load to account for dynamic formats
+    updateAllColumnFormats();
 
     self.caseTileRowMax = ko.computed(() => _.max([self.columns().length + 1, 7]));
     self.caseTileRowMax.subscribe(function (newValue) {
