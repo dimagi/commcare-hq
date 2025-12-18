@@ -1,0 +1,165 @@
+{% extends "app_manager/apps_base.html" %}
+{% load app_manager_extras %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load xforms_extras %}
+
+{% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Menu Settings' %}{% endblock %}
+
+{% js_entry 'app_manager/js/modules/module_view' %}
+
+{% block stylesheets %}{{ block.super }}
+  <style>
+    /* Prevent help icons from disturbing horizontal alignment of table headers */
+    th > .hq-help {
+      position: absolute;
+    }
+  </style>
+{% endblock %}
+
+{% block pre_form_content %}
+  {% include 'app_manager/partials/modules/module_view_heading.html' %}
+{% endblock %}
+
+{% block form-view %}
+  {% initial_page_data 'module_brief' module_brief %}
+  {% initial_page_data 'module_filter' module.module_filter %}
+  {% initial_page_data 'details' details %}
+  {% initial_page_data 'js_options' js_options %}
+  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+  {% initial_page_data 'case_list_form_options' case_list_form_options %}
+  {% initial_page_data 'case_search_enabled' js_options.is_search_enabled %}
+  {% initial_page_data 'form_endpoint_options' form_endpoint_options %}
+  {% initial_page_data 'case_list_form_not_allowed_reasons' case_list_form_not_allowed_reasons %}
+  {% initial_page_data 'case_type' module.case_type %}
+  {% initial_page_data 'lazy_load_case_list_fields' module.lazy_load_case_list_fields %}
+  {% initial_page_data 'show_case_list_optimization_options' module.show_case_list_optimization_options %}
+  {% initial_page_data 'app_supports_case_list_optimizations' app.supports_case_list_optimizations %}
+  {% initial_page_data 'formats_supporting_case_list_optimizations' formats_supporting_case_list_optimizations %}
+  {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
+  {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+  {% initial_page_data 'parent_case_modules' parent_case_modules %}
+  {% initial_page_data 'all_case_modules' all_case_modules %}
+  {% initial_page_data 'print_media_info' print_media_info %}
+  {% initial_page_data 'print_ref' print_ref %}
+  {% initial_page_data 'print_uploader_js' print_uploader_js %}
+  {% initial_page_data 'shadow_module_options' shadow_module_options %}
+  {% initial_page_data 'default_language' app.default_language %}
+  {% initial_page_data 'current_language' lang %}
+  {% registerurl "view_form" domain app.id '---' %}
+  {% registerurl "edit_module_detail_screens" domain app.id module.unique_id %}
+  {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
+  {% registerurl "existing_case_types" domain %}
+  <div class="tabbable appmanager-tabs-container">
+
+    {% if not module.is_surveys %}
+      <ul class="nav nav-tabs sticky-tabs" id="module-view-tabs">  {# todo B5: css-nav #}
+        {% block tab-headers %}
+          <li><a href="#module-settings" data-bs-toggle="tab">{% trans "Settings" %}</a></li>
+          {% for detail in details %}
+            <li>
+              <a href="#{{ detail.type }}-detail-screen-config-tab" data-bs-toggle="tab">
+                {{ detail.label }}
+              </a>
+            </li>
+            {% if detail.long %}
+              <li>
+                <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-bs-toggle="tab">
+                  {{ detail.detail_label }}
+                </a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          {% if add_ons.case_detail_overwrite and details and app|get_available_modules_for_case_list_configuration:module %}
+            <li><a href="#module-actions" data-bs-toggle="tab">{% trans "Actions" %}</a></li>
+          {% endif %}
+        {% endblock %}{# endblock tab-headers #}
+      </ul>
+      <div class="spacer"></div>
+    {% endif %}
+
+    <div class="tab-content">
+      {% block tab-content %}
+        <!-- Survey modules don't actually use tabs, so the sticky-tabs logic doesn't run, so content must be explicitly set to .active -->
+        <div class="tab-pane{% if module.is_surveys %} active{% endif %}" id="module-settings">
+          {% include "app_manager/partials/modules/module_view_settings.html" %}
+        </div>
+
+        {% if not module.is_surveys %}
+          {% for detail in details %}
+            <div class="tab-pane ko-template" id="{{ detail.type }}-detail-screen-config-tab">
+              {% include 'app_manager/partials/modules/case_list.html' %}
+            </div>
+            {% if detail.long %}
+              <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+                {% include 'app_manager/partials/modules/case_detail.html' %}
+              </div>
+            {% endif %}
+          {% endfor %}
+          {% if add_ons.case_detail_overwrite and details %}
+            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+              {% if available_modules %}
+                <div class="tab-pane" id="module-actions">
+                  {% include 'app_manager/partials/modules/module_actions.html' %}
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+        {% endif %}
+      {% endblock %}
+    </div>
+  </div>
+
+  <script type="text/html" id="module-forms-template">
+    <tr>
+      <td>
+        <div class="checkbox">  {# todo B5: css-checkbox #}
+          <label>
+            <input name="incl_form_ids"
+                   type="checkbox"  {# todo B5: css-checkbox #}
+                   data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
+            <span data-bind="text: name"></span>
+          </label>
+        </div>
+      </td>
+
+      {% if session_endpoints_enabled %}
+        <td>
+          <div class="checkbox">  {# todo B5: css-checkbox #}
+            <label>
+              <input
+                class="form-control"
+                name="form_session_endpoint_ids"
+                placeholder="{% trans "Session Endpoint Id" %}"
+                data-bind="textInput: sessionEndpointId"/>
+            </label>
+          </div>
+        </td>
+      {% endif %}
+    </tr>
+  </script>
+
+  <script type="text/html" id="module-case-detail-tab-nodeset-template">
+    <div>
+        <select class="form-select" data-bind="options: dropdownOptions, optionsText: 'name', optionsValue: 'value', value: nodesetCaseType" style="margin-bottom: 5px;"></select>  {# todo B5: inline-style #}
+        <button class="btn btn-outline-primary btn-sm" data-bind="visible: !showFilter() && !showXpath(), click: function () { showFilter(true); }">
+          <i class="fa fa-plus"></i> {% trans "Add filter" %}
+        </button>
+        <input type="text" class="form-control" data-bind="value: nodesetFilter, visible: showFilter" placeholder="{% trans_html_attr "referral = 'y'" %}" />
+        <textarea class="form-control vertical-resize" data-bind="value: nodeset, visible: showXpath" /></textarea>
+        {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
+          <p data-bind="visible: showXpath() && nodeset()" class="help-block">{% trans "This data will not be shown for case search results." %}</p>
+        {% endif %}
+    </div>
+  </script>
+
+  {% include 'hqwebapp/partials/bootstrap5/key_value_mapping.html' %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+  {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
+  {% include 'app_manager/partials/modules/style_configuration_modal.html' %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
+{% endblock modals %}

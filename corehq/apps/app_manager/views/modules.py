@@ -139,7 +139,7 @@ def get_module_template(user, module):
     elif isinstance(module, ReportModule):
         return "app_manager/module_view_report.html"
     else:
-        return "app_manager/module_view.html"
+        return "app_manager/bootstrap3/module_view.html"
 
 
 def get_module_view_context(request, app, module, lang=None):
