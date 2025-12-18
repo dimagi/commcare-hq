@@ -18,7 +18,7 @@ import "hqwebapp/js/select2_knockout_bindings.ko";
 import "app_manager/js/widgets";  // app version widget when copying an app
 import "app_manager/js/download_async_modal";  // for the "Download ZIP" button on the multimedia tab
 import "hqwebapp/js/bootstrap3/widgets";
-import "app_manager/js/add_ons";
+import "app_manager/js/bootstrap3/add_ons";
 import "app_manager/js/settings/translations";
 import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/select_toggle";
