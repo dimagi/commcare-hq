@@ -448,7 +448,7 @@
 {% endif %}
 
 {% if request|toggle_enabled:"CASE_LIST_LOOKUP" or request|toggle_enabled:"BIOMETRIC_INTEGRATION" %}
-  {% include "app_manager/partials/modules/case_list_lookup.html" %}
+  {% include "app_manager/partials/modules/bootstrap3/case_list_lookup.html" %}
 {% endif %}
 
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
