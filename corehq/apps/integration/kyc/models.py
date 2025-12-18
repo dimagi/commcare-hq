@@ -112,6 +112,13 @@ class KycConfig(models.Model):
         """
         return KycProviderThresholdFields.get_required_fields(self.provider)
 
+    def get_kyc_api_method(self):
+        if self.provider == KycProviders.MTN_KYC:
+            from corehq.apps.integration.kyc.services import mtn_kyc_verify
+            return mtn_kyc_verify
+        else:
+            raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
+
     def get_kyc_users_query(self):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             return UserES().domain(self.domain).mobile_users()
