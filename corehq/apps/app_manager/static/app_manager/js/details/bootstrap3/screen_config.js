@@ -6,7 +6,7 @@ import ko from "knockout";
 import _ from "underscore";
 import parentSelect from "app_manager/js/details/parent_select";
 import fixtureSelect from "app_manager/js/details/fixture_select";
-import screenModule from "app_manager/js/details/screen";
+import screenModule from "app_manager/js/details/bootstrap3/screen";
 import toggles from "hqwebapp/js/toggles";
 import filterModule from "app_manager/js/details/filter";
 import sortRows from "app_manager/js/details/bootstrap3/sort_rows";
