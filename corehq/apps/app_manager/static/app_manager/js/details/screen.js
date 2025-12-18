@@ -545,6 +545,7 @@ export default function (spec, config, options) {
         } else if (change.status === 'deleted') {
             move = 1;
             affectedColumns = self.columns.slice(change.index);
+            updateAllColumnFormats();
         }
         if (affectedColumns) {
             affectedColumns.forEach(c => {
@@ -756,6 +757,12 @@ export default function (spec, config, options) {
             self.columns.splice(index, 0, column);
         }
         column.useXpathExpression = !!columnConfiguration.useXpathExpression;
+
+        const formatsToInclude = calculateDynamicFormatsToInclude();
+        const dynamicFormats = Object.keys(FORMAT_DEPENDENCIES);
+        if (!column.isTab) {
+            column.updateFormatOptions(dynamicFormats, formatsToInclude);
+        }
     };
     self.pasteCallback = function (data, index) {
         try {
