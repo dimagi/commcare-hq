@@ -4,7 +4,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManager from "app_manager/js/bootstrap5/app_manager";
-import releases from "app_manager/js/releases/releases";
+import releases from "app_manager/js/releases/bootstrap5/releases";
 import languageProfiles from "app_manager/js/releases/bootstrap5/language_profiles";
 import previewApp from "app_manager/js/preview_app";
 import noopMetrics from "analytix/js/noopMetrics";
