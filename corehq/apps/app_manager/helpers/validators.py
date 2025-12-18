@@ -27,6 +27,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     CaseXPathValidationError,
+    CaseTileMisconfigurationError,
     FormNotFoundException,
     LocationXPathValidationError,
     ModuleIdMissingException,
@@ -39,7 +40,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationError,
     XFormValidationFailed,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
+from corehq.apps.app_manager.suite_xml.features.case_tiles import CUSTOM, case_tile_template_config
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import (
     app_callout_templates,
@@ -654,7 +655,7 @@ class ModuleDetailValidatorMixin(object):
         for detail in [self.module.case_details.short, self.module.case_details.long]:
             if detail.case_tile_template:
                 if detail.display != "short":
-                    if detail.case_tile_template != "custom":
+                    if detail.case_tile_template != CUSTOM:
                         errors.append({
                             'type': self.__invalid_tile_configuration_type,
                             'module': self.get_module_info(),
@@ -676,13 +677,23 @@ class ModuleDetailValidatorMixin(object):
                                             'Row #{} contains fields from multiple tabs.').format(row_index + 1),
                             })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in case_tile_template_config(detail.case_tile_template).fields:
-                    if field not in col_by_tile_field:
-                        errors.append({
-                            'type': self.__invalid_tile_configuration_type,
-                            'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.').format(field)
-                        })
+
+                try:
+                    for field in case_tile_template_config(detail.case_tile_template).fields:
+                        if field not in col_by_tile_field:
+                            errors.append({
+                                'type': self.__invalid_tile_configuration_type,
+                                'module': self.get_module_info(),
+                                'reason': _('A case property must be assigned to the "{}" tile '
+                                    'field.').format(field)
+                            })
+                except CaseTileMisconfigurationError:
+                    errors.append({
+                        'type': 'invalid case type template',
+                        'details': f'"{detail.case_tile_template}" is not a valid case tile template',
+                        'module': self.get_module_info(),
+                    })
+
             self._validate_fields_with_format_duplicate('address', 'Address', detail.columns, errors)
             self._validate_clickable_icons(detail.columns, errors)
 
