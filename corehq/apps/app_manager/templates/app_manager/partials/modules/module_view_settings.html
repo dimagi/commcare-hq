@@ -46,7 +46,7 @@
           </div>
           <div class="panel-body">
             {% if not module.is_surveys and module.module_type != 'shadow' %}
-              {% include "app_manager/partials/modules/module_view_case_type.html" %}
+              {% include "app_manager/partials/modules/bootstrap3/module_view_case_type.html" %}
 
               {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
               <div class="form-group">
