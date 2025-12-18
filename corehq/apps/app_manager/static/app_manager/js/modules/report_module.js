@@ -5,7 +5,7 @@ import "jquery-textchange/jquery.textchange";
 import main from "hqwebapp/js/bootstrap3/main";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManager from "app_manager/js/app_manager";
-import graphConfigModule from "app_manager/js/details/graph_config";
+import graphConfigModule from "app_manager/js/details/bootstrap3/graph_config";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable
 
 var graphConfigModel = function (reportId, reportName, availableReportIds, reportCharts, graphConfigs,

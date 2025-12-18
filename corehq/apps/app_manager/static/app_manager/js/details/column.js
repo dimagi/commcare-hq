@@ -21,7 +21,7 @@ import uiElementKeyValueMapping from "hqwebapp/js/ui_elements/bootstrap3/ui-elem
 import uiElementLangcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
 import detailTabNodeset from "app_manager/js/details/detail_tab_nodeset";
-import graphConfig from "app_manager/js/details/graph_config";
+import graphConfig from "app_manager/js/details/bootstrap3/graph_config";
 import google from "analytix/js/google";
 
 const microCaseImageName = 'cc_case_image';
