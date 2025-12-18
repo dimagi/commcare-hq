@@ -5,7 +5,7 @@ import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManagerUtils from "app_manager/js/app_manager";
 import noopMetrics from "analytix/js/noopMetrics";
-import formWorkflow from "app_manager/js/forms/form_workflow";
+import formWorkflow from "app_manager/js/forms/bootstrap3/form_workflow";
 import toggles from "hqwebapp/js/toggles";
 import customInstancesModule from "app_manager/js/forms/custom_instances";
 import "app_manager/js/nav_menu_media";
