@@ -35,7 +35,7 @@
 
       {% if app.get_doc_type == 'Application' %}
         {% if not app.is_remote_app and app.langs|length > 1%}
-          {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
+          {% include 'app_manager/partials/bootstrap3/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
         {% endif %}
 
         {% include 'app_manager/partials/menu/bootstrap3/appnav_menu.html' %}

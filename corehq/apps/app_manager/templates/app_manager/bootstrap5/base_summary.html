@@ -38,7 +38,7 @@
         <nav class="ko-template">
           {% include 'app_manager/partials/bootstrap5/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True linked_name=linked_name linked_version=linked_version %}
 
-          {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app_langs langs=langs %}
+          {% include 'app_manager/partials/bootstrap5/appnav_menu_langs.html' with app_langs=app_langs langs=langs %}
 
           <ul class="nav nav-hq-sidebar appnav-menu">  {# todo B5: css-nav #}
             <li role="presentation">
