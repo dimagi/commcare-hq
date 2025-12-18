@@ -101,7 +101,7 @@
             {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
               {% if available_modules %}
                 <div class="tab-pane" id="module-actions">
-                  {% include 'app_manager/partials/modules/module_actions.html' %}
+                  {% include 'app_manager/partials/modules/bootstrap5/module_actions.html' %}
                 </div>
               {% endif %}
             {% endwith %}
