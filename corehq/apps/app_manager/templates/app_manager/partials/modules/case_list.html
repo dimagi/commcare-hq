@@ -40,7 +40,7 @@
   </div>
   <div class="panel-body">
     <div data-bind="with: shortScreen">
-      {% include 'app_manager/partials/modules/case_tile_templates.html' %}
+      {% include 'app_manager/partials/modules/bootstrap3/case_tile_templates.html' %}
       {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
         <div data-bind="visible: !caseTileTemplate()">
           <div class="checkbox">
