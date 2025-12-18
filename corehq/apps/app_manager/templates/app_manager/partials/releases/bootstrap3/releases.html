@@ -23,7 +23,7 @@
 {% else %}
 
   {% if not build_profile_access and not enable_update_prompts %}
-    {% include 'app_manager/partials/releases/releases_table.html' %}
+    {% include 'app_manager/partials/releases/bootstrap3/releases_table.html' %}
   {% else%}
     <div class="tabbable">
       <ul class="nav nav-tabs sticky-tabs">
@@ -43,7 +43,7 @@
       <div class="spacer"></div>
       <div class="tab-content">
         <div id="versions-tab" class="tab-pane">
-          {% include 'app_manager/partials/releases/releases_table.html' %}
+          {% include 'app_manager/partials/releases/bootstrap3/releases_table.html' %}
         </div>
         {% if enable_update_prompts %}
           <div id="prompt-settings-tab" class="tab-pane">
