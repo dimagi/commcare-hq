@@ -509,7 +509,12 @@ export default function (spec, config, options) {
         // Only save if property names are valid
         var errors = [],
             containsTab = false,
-            imageColumnCount = 0;
+            imageColumnCount = 0,
+            geoBoundaryCount = 0,
+            geoBoundaryColorCount = 0,
+            geoPointsCount = 0,
+            geoPointsColorsCount = 0;
+
         _.each(self.columns(), function (column) {
             column.saveAttempted(true);
             if (column.isTab) {
@@ -521,11 +526,31 @@ export default function (spec, config, options) {
                 errors.push(gettext("There is an error in your property name: ") + column.field.value);
             } else if (column.format.value === 'image') {
                 imageColumnCount += 1;
+            } else if (column.format.value === 'geo-boundary') {
+                geoBoundaryCount += 1;
+            } else if (column.format.value === 'geo-boundary-color') {
+                geoBoundaryColorCount += 1;
+            } else if (column.format.value === 'geo-points') {
+                geoPointsCount += 1;
+            } else if (column.format.value === 'geo-points-colors') {
+                geoPointsColorsCount += 1;
             }
         });
 
         if (imageColumnCount > 1) {
             errors.push(gettext("You can only have one property with the 'Image' format"));
+        }
+        if (geoBoundaryCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Boundary' format"));
+        }
+        if (geoBoundaryColorCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Boundary Color' format"));
+        }
+        if (geoPointsCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Points' format"));
+        }
+        if (geoPointsColorsCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Points Colors' format"));
         }
         if (containsTab) {
             if (!self.columns()[0].isTab) {
