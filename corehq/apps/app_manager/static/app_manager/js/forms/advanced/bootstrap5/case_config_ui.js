@@ -8,7 +8,7 @@ import actions from "app_manager/js/forms/advanced/actions";
 import google from "analytix/js/google";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import main from "hqwebapp/js/bootstrap5/main";
-import appManager from "app_manager/js/app_manager";
+import appManager from "app_manager/js/bootstrap5/app_manager";
 import visitSchedulerModel from "app_manager/js/visit_scheduler";
 
 $(function () {

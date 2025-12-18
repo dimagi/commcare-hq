@@ -8,7 +8,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import privileges from "hqwebapp/js/privileges";
 import toggles from "hqwebapp/js/toggles";
 import main from "hqwebapp/js/bootstrap3/main";
-import appManager from "app_manager/js/app_manager";
+import appManager from "app_manager/js/bootstrap3/app_manager";
 import noopMetrics from "analytix/js/noopMetrics";
 import google from "analytix/js/google";
 

@@ -3,7 +3,7 @@ import $ from "jquery";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import noopMetrics from "analytix/js/noopMetrics";
-import appManager from "app_manager/js/app_manager";
+import appManager from "app_manager/js/bootstrap3/app_manager";
 import editDetails from "app_manager/js/forms/edit_form_details";
 import "jquery-ui/ui/widgets/sortable";
 import "jquery-ui-built-themes/redmond/jquery-ui.min.css";

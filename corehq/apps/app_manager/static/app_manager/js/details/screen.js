@@ -20,7 +20,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import uiMapList from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list";
 import main from "hqwebapp/js/bootstrap3/main";
 import toggles from "hqwebapp/js/toggles";
-import appManager from "app_manager/js/app_manager";
+import appManager from "app_manager/js/bootstrap3/app_manager";
 import google from "analytix/js/google";
 import "hqwebapp/js/components/select_toggle";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable binding

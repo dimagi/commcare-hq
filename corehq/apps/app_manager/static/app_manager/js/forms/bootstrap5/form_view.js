@@ -3,7 +3,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import appManagerUtils from "app_manager/js/app_manager";
+import appManagerUtils from "app_manager/js/bootstrap5/app_manager";
 import noopMetrics from "analytix/js/noopMetrics";
 import formWorkflow from "app_manager/js/forms/bootstrap5/form_workflow";
 import toggles from "hqwebapp/js/toggles";
