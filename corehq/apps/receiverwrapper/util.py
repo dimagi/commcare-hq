@@ -1,7 +1,8 @@
 import json
 import re
 from collections import namedtuple
-
+from types import EllipsisType
+from typing import Optional, Protocol, Union
 from django.conf import settings
 from django.http import Http404
 
@@ -16,10 +17,21 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils.xform import convert_xform_to_json, sanitize_instance_xml
+from corehq.form_processor.submission_post import (
+    FormProcessingResult,
+    SubmissionPost,
+)
+from corehq.form_processor.utils.xform import (
+    convert_xform_to_json,
+    sanitize_instance_xml,
+)
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+
+
+class AuthContextProto(Protocol):
+    def is_valid(self) -> bool:
+        ...
 
 
 def get_submit_url(domain, app_id=None):
@@ -29,23 +41,41 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/".format(domain=domain)
 
 
-def submit_form_locally(instance, domain, max_wait=..., app_id=None, build_id=None, **kwargs):
+def submit_form_locally(
+    instance: str,
+    domain: str,
+    max_wait: Union[float, None, EllipsisType] = ...,
+    app_id: Optional[str] = None,
+    build_id: Optional[str] = None,
+    *,
+    auth_context: Optional[AuthContextProto] = None,
+    **kwargs,
+) -> FormProcessingResult:
     """
+    Submit a form XML string
+
     :param instance: XML instance (as a string) to submit
     :param domain: The domain to submit the form to
-    :param max_wait: Maximum time (in seconds) to allow the process to be delayed if
-    the project is over its submission rate limit.
-    The value None means "do not throttle".
-    The special value ... (Ellipsis) means "The caller did not pass in a value".
-    (This was chosen because of the special meaning already assumed by None.)
+    :param max_wait: Maximum time (in seconds) to allow the process to
+        be delayed if the project is over its submission rate limit.
+        The value ``None`` means "do not throttle".
+        The special value ``...`` (Ellipsis) means "The caller did not
+        pass in a value". (This was chosen because of the special
+        meaning already assumed by ``None``.)
+    :param app_id: The ID of the application this form submission
+        belongs to
+    :param build_id: The ID of the build this form submission belongs to
+    :param auth_context: Authentication context for the form submission
+    :param kwargs: Additional arguments to pass to SubmissionPost
+    :return: FormProcessingResult object containing processing results
+        and response
     """
-
     if max_wait is ...:
         max_wait = 0.1
     if max_wait is not None:
         rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=max_wait)
     # intentionally leave these unauth'd for now
-    kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
+    auth_context = auth_context or DefaultAuthContext()
     if app_id is not None and build_id is None:
         app_id, build_id = get_app_and_build_ids(domain, app_id)
     result = SubmissionPost(
@@ -53,6 +83,7 @@ def submit_form_locally(instance, domain, max_wait=..., app_id=None, build_id=No
         instance=instance,
         app_id=app_id,
         build_id=build_id,
+        auth_context=auth_context,
         **kwargs
     ).run()
     if not 200 <= result.response.status_code < 300:
@@ -179,7 +210,7 @@ class BuildVersionSource(object):
     NONE = object()
 
 
-AppVersionInfo = namedtuple('AppInfo', ['build_version', 'commcare_version', 'source'])
+AppVersionInfo = namedtuple('AppVersionInfo', ['build_version', 'commcare_version', 'source'])
 
 
 def get_app_version_info(domain, build_id, xform_version, xform_metadata):
