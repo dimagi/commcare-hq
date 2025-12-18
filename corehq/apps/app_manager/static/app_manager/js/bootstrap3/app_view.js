@@ -7,7 +7,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import commcareSettings from "app_manager/js/settings/commcare_settings";
-import supportedLanguages from "app_manager/js/supported_languages";
+import supportedLanguages from "app_manager/js/bootstrap3/supported_languages";
 import google from "analytix/js/google";
 import widgets from "hqwebapp/js/bootstrap3/widgets";
 import main from "hqwebapp/js/bootstrap3/main";
