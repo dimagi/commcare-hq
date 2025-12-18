@@ -9,7 +9,7 @@ import fixtureSelect from "app_manager/js/details/fixture_select";
 import screenModule from "app_manager/js/details/screen";
 import toggles from "hqwebapp/js/toggles";
 import filterModule from "app_manager/js/details/filter";
-import sortRows from "app_manager/js/details/sort_rows";
+import sortRows from "app_manager/js/details/bootstrap5/sort_rows";
 import caseListCallout from "app_manager/js/details/bootstrap5/case_list_callout";
 import caseClaimModels from "app_manager/js/details/case_claim";
 import initialPageData from "hqwebapp/js/initial_page_data";
