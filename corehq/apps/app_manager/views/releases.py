@@ -622,7 +622,7 @@ def _get_app_diffs(first_app, second_app):
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
     page_title = gettext_lazy("App diff")
-    template_name = 'app_manager/app_diff.html'
+    template_name = 'app_manager/bootstrap3/app_diff.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
