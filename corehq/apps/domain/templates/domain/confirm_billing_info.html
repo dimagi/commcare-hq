@@ -139,13 +139,18 @@
           </div>
 
           <div class="px-2 pt-2">
-            <a href="{{ cancel_url }}" class="btn btn-outline-primary">
+            <a
+              href="{{ cancel_url }}"
+              class="btn btn-outline-primary"
+              :class="{ 'disabled': isSubmitting }"
+            >
               {% trans "Cancel" %}
             </a>
             <button
               type="submit"
-              class="btn btn-primary"
+              class="btn btn-primary disable-on-submit"
               :disabled="isSubmitDisabled"
+              @click="isSubmitting = true"
             >
               {% trans "Subscribe to Plan" %}
             </button>
