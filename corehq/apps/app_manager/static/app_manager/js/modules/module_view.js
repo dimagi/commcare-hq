@@ -5,7 +5,7 @@ import _ from "underscore";
 import noopMetrics from "analytix/js/noopMetrics";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import appManager from "app_manager/js/app_manager";
-import screenConfig from "app_manager/js/details/screen_config";
+import screenConfig from "app_manager/js/details/bootstrap3/screen_config";
 import shadowModuleSettings from "app_manager/js/modules/shadow_module_settings";
 import toggles from "hqwebapp/js/toggles";
 import VisitScheduler from "app_manager/js/visit_scheduler";  // advanced modules only
