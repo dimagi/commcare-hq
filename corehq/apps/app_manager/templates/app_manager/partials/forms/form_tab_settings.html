@@ -72,7 +72,7 @@
           {% endif %}
 
           {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
-            {% include "app_manager/partials/forms/custom_instances.html" %}
+            {% include "app_manager/partials/forms/bootstrap3/custom_instances.html" %}
           {% endif %}
           {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
             {% include "app_manager/partials/forms/bootstrap3/custom_assertions.html" %}
