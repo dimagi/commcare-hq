@@ -1,0 +1,70 @@
+{% extends "app_manager/bootstrap5/app_view.html" %}
+{% load compress %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load xforms_extras %}
+
+{% block title %}
+  {% trans "Releases" %} -
+  {% if app.name %}
+    {{ app.name|html_name }}
+  {% else %}
+    {% trans 'Applications' %}
+  {% endif %}
+{% endblock %}
+
+{% js_entry "app_manager/js/releases/app_view_release_manager" %}
+
+{% block app_view_tabs %}
+  {% initial_page_data 'app_id' app.id %}
+  {% initial_page_data 'app_version' app.version %}
+  {% initial_page_data 'application_profile_url' application_profile_url %}
+  {% initial_page_data 'build_profiles' app.build_profiles %}
+  {% initial_page_data 'latest_version_for_build_profiles' latest_version_for_build_profiles %}
+  {% initial_page_data 'latestReleasedVersion' latest_released_version %}
+  {% initial_page_data 'upstream_briefs' upstream_briefs %}{# linked apps only #}
+  {% initial_page_data 'multiple_upstreams' multiple_upstreams %}{# linked apps only #}
+  {% initial_page_data 'practice_users' practice_users %}
+  {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
+  {% initial_page_data 'intro_only' intro_only %}
+  {% initial_page_data 'langs' app.langs %}
+  {% initial_page_data 'latest_build_id' latest_build_id %}
+  {% initial_page_data 'confirm' confirm %}
+  {% initial_page_data 'upstream_url' upstream_url_template %}
+  {% initial_page_data 'show_release_mode' show_release_mode %}
+  {% registerurl "app_data_json" app.domain '---' %}
+  {% registerurl "app_form_summary_diff" domain '---' '---' %}
+  {% registerurl "paginate_releases" domain app.id %}
+  {% registerurl "paginate_release_logs" domain app.id %}
+  {% registerurl "delete_copy" domain app.id %}
+  {% registerurl "odk_install" domain '---' %}
+  {% registerurl "odk_media_install" domain '---' %}
+  {% registerurl "download_index" domain '---' %}
+  {% registerurl "release_build" domain app.id '---' %}
+  {% registerurl "save_copy" domain app.id %}
+  {% registerurl "revert_to_copy" domain app.id %}
+  {% registerurl "download_ccz" app.domain '---' %}
+  {% registerurl "download_multimedia_zip" app.domain '---' %}
+  {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
+  {% registerurl "formplayer_main_view_build" app.domain '---' '---' %}
+  {% registerurl "app_form_summary" app.domain '---' %}
+  <div class="tab-pane" id="releases">
+    {% if show_release_mode %}
+      {% if not build_profile_access and not enable_update_prompts %}
+        <div id="release-control" class="w-100 text-end hidden">
+      {% else %}
+        <div id="release-control" class="float-end hidden">
+      {% endif %}
+          {% trans "Release Mode" %}
+            <button id="btn-release-locked" class="btn btn-outline-primary">
+              <i class="fa fa-lock fa-fw"></i>
+            </button>
+            <button id="btn-release-unlocked" class="btn btn-outline-primary">
+              <i class="fa fa-unlock fa-fw"></i>
+            </button>
+        </div>
+    {% endif %}
+    {% include "app_manager/partials/releases/bootstrap5/releases.html" %}
+  </div>
+{% endblock app_view_tabs %}
