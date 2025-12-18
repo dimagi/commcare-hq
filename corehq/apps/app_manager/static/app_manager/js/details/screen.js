@@ -354,6 +354,33 @@ export default function (spec, config, options) {
         self.fire('change');
     };
 
+    // Key = format name, Value = array of required dependency formats (all must be present)
+    const COLUMN_FORMAT_DEPENDENCIES = {
+        'geo-boundary': ['address'],
+        'geo-points': ['address'],
+        'geo-boundary-color': ['address', 'geo-boundary'],
+        'geo-points-colors': ['address', 'geo-points'],
+    };
+    const columnsHasFormat = function (formatName) {
+        return _.some(self.columns(), function(col) {
+            return col.format && col.format.val && col.format.val() === formatName;
+        });
+    };
+    const areAllDependenciesPresent = function (dependencies) {
+        return _.every(dependencies, function(dep) {
+            return columnsHasFormat(dep);
+        });
+    };
+    const calculateDynamicFormatsToInclude = function () {
+        const formatsToInclude = [];
+        _.each(COLUMN_FORMAT_DEPENDENCIES, function(dependencies, formatName) {
+            if (areAllDependenciesPresent(dependencies)) {
+                formatsToInclude.push(formatName);
+            }
+        });
+        return formatsToInclude;
+    };
+
     self.initColumnAsColumn = function (column) {
         column.model.setEdit(false);
         column.field.setEdit(true);
