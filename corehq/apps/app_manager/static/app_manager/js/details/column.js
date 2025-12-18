@@ -327,7 +327,10 @@ export default function (col, screen) {
         }
     } else {
         // Restrict Translatable Text usage to Calculated Properties only
-        menuOptions.splice(-1);
+        const index = menuOptions.findIndex(f => f.value.includes('translatable-enum'));
+        if (index !== -1) {
+            menuOptions.splice(index, 1);
+        }
     }
 
     self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
