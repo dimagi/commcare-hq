@@ -105,5 +105,5 @@
 {% block modals %}
   {{ block.super }}
   {% url "download_ccz" app.domain app.id as ccz_url %}
-  {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
+  {% include 'app_manager/partials/bootstrap3/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
 {% endblock %}
