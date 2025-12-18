@@ -135,7 +135,7 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(user, module):
     if isinstance(module, AdvancedModule):
-        return "app_manager/module_view_advanced.html"
+        return "app_manager/bootstrap3/module_view_advanced.html"
     elif isinstance(module, ReportModule):
         return "app_manager/bootstrap3/module_view_report.html"
     else:
