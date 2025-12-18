@@ -275,6 +275,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/01/4e/53a125038d6a814491a0ae3457435c13cf8821eb602292cf9db37ce35f62/celery-5.6.0-py3-none-any.whl", hash = "sha256:33cf01477b175017fc8f22c5ee8a65157591043ba8ca78a443fe703aa910f581", size = 444561, upload-time = "2025-11-30T17:39:44.314Z" },
 ]
 
+[package.optional-dependencies]
+redis = [
+    { name = "kombu", extra = ["redis"] },
+]
+
 [[package]]
 name = "certifi"
 version = "2025.1.31"
@@ -426,7 +431,7 @@ dependencies = [
     { name = "beautifulsoup4" },
     { name = "bleach", extra = ["css"] },
     { name = "boto3" },
-    { name = "celery" },
+    { name = "celery", extra = ["redis"] },
     { name = "commcaretranslationchecker" },
     { name = "crispy-bootstrap3to5" },
     { name = "cryptography" },
@@ -599,7 +604,7 @@ requires-dist = [
     { name = "bleach" },
     { name = "bleach", extras = ["css"] },
     { name = "boto3" },
-    { name = "celery" },
+    { name = "celery", extras = ["redis"] },
     { name = "commcaretranslationchecker", specifier = ">=0.9.7" },
     { name = "crispy-bootstrap3to5", git = "https://github.com/dimagi/crispy-bootstrap3to5.git?rev=775b93b8cd8e5312cab4a367409a95b66ce18165" },
     { name = "cryptography", specifier = ">=43.0.1" },
@@ -1910,6 +1915,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/14/d6/943cf84117cd9ddecf6e1707a3f712a49fc64abdb8ac31b19132871af1dd/kombu-5.6.1-py3-none-any.whl", hash = "sha256:b69e3f5527ec32fc5196028a36376501682973e9620d6175d1c3d4eaf7e95409", size = 214141, upload-time = "2025-11-25T11:07:31.54Z" },
 ]
 
+[package.optional-dependencies]
+redis = [
+    { name = "redis" },
+]
+
 [[package]]
 name = "legacy-cgi"
 version = "2.6.3"
@@ -2808,11 +2818,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/ef/26/f38d49c21d933e3e4
 
 [[package]]
 name = "redis"
-version = "7.1.0"
+version = "6.4.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/43/c8/983d5c6579a411d8a99bc5823cc5712768859b5ce2c8afe1a65b37832c81/redis-7.1.0.tar.gz", hash = "sha256:b1cc3cfa5a2cb9c2ab3ba700864fb0ad75617b41f01352ce5779dabf6d5f9c3c", size = 4796669, upload-time = "2025-11-19T15:54:39.961Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/d6/e8b92798a5bd67d659d51a18170e91c16ac3b59738d91894651ee255ed49/redis-6.4.0.tar.gz", hash = "sha256:b01bc7282b8444e28ec36b261df5375183bb47a07eb9c603f284e89cbc5ef010", size = 4647399, upload-time = "2025-08-07T08:10:11.441Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/f0/8956f8a86b20d7bb9d6ac0187cf4cd54d8065bc9a1a09eb8011d4d326596/redis-7.1.0-py3-none-any.whl", hash = "sha256:23c52b208f92b56103e17c5d06bdc1a6c2c0b3106583985a76a18f83b265de2b", size = 354159, upload-time = "2025-11-19T15:54:38.064Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/02/89e2ed7e85db6c93dfa9e8f691c5087df4e3551ab39081a4d7c6d1f90e05/redis-6.4.0-py3-none-any.whl", hash = "sha256:f0544fa9604264e9464cdf4814e7d4830f74b165d52f2a330a760a88dd248b7f", size = 279847, upload-time = "2025-08-07T08:10:09.84Z" },
 ]
 
 [[package]]
