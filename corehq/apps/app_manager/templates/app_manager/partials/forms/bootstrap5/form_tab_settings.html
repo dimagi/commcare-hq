@@ -61,7 +61,7 @@
         </div>
         <div class="card-body">
           {% if is_training_module %}
-            {% include "app_manager/partials/forms/release_notes_setting.html" %}
+            {% include "app_manager/partials/forms/bootstrap5/release_notes_setting.html" %}
           {% endif %}
           <div class="form-group" data-bind="visible: visible, css: {error: hasError()}">  {# todo B5: css-form-group #}
             {% include "app_manager/partials/forms/bootstrap5/form_gps_capture.html" %}
