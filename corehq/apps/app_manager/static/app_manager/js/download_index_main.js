@@ -3,7 +3,7 @@ import $ from "jquery";
 import _ from "underscore";
 import baseAce from "hqwebapp/js/base_ace";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import multimediaSizeUtil from "app_manager/js/multimedia_size_util";
+import multimediaSizeUtil from "app_manager/js/bootstrap3/multimedia_size_util";
 import "app_manager/js/download_async_modal";
 import "app_manager/js/source_files";
 
