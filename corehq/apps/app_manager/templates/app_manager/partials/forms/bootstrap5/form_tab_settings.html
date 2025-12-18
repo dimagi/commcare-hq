@@ -46,7 +46,7 @@
         </div>
         <div class="card-body" data-bind=" visible: visible, css: {error: hasError()}">
           {% if allow_form_filtering %}
-            {% include "app_manager/partials/forms/form_filter.html" %}
+            {% include "app_manager/partials/forms/bootstrap5/form_filter.html" %}
           {% else %}
             <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
           {% endif %}
