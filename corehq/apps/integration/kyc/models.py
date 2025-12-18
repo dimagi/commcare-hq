@@ -10,6 +10,7 @@ import jsonfield
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.es.users import UserES
+from corehq.apps.integration.kyc.services import mtn_kyc_verify
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import OAUTH2_CLIENT
@@ -133,6 +134,12 @@ class KycConfig(models.Model):
         :return: List of required field names
         """
         return KycProviderThresholdFields.get_required_fields(self.provider)
+
+    def get_kyc_api_method(self):
+        if self.provider == KycProviders.MTN_KYC:
+            return mtn_kyc_verify
+        else:
+            raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
 
     def get_kyc_users_query(self):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:

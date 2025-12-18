@@ -45,7 +45,8 @@ def verify_user(kyc_user, config):
     verification_error = None
 
     try:
-        verification_status = _verify_user(kyc_user, config)
+        verify_method = config.get_verification_method()
+        verification_status = verify_method(kyc_user, config)
         if verification_status == KycVerificationStatus.FAILED:
             verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
 
@@ -64,7 +65,7 @@ def verify_user(kyc_user, config):
     return verification_status, verification_error
 
 
-def _verify_user(kyc_user, config):
+def mtn_kyc_verify(kyc_user, config):
     """
     Verify a user using the Chenosis MTN KYC API.
 
