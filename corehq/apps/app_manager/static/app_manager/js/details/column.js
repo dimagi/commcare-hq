@@ -20,7 +20,7 @@ import uiElementInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input"
 import uiElementKeyValueMapping from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping";
 import uiElementLangcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
-import detailTabNodeset from "app_manager/js/details/detail_tab_nodeset";
+import detailTabNodeset from "app_manager/js/details/bootstrap3/detail_tab_nodeset";
 import graphConfig from "app_manager/js/details/bootstrap3/graph_config";
 import google from "analytix/js/google";
 
