@@ -304,36 +304,65 @@ export default function (col, screen) {
         return false;
     }, self);
 
-    // Add the graphing option if self is a graph so self we can set the value to graph
-    let menuOptions = Utils.getFieldFormats();
-    if (self.original.format === "graph") {
-        menuOptions = menuOptions.concat([{
-            value: "graph",
-            label: "",
-        }]);
-    }
+    const filterFormats = function (menuOptions, currentFormatValue) {
+        let filteredOptions = menuOptions;
+        // Add the graphing option if self is a graph so self we can set the value to graph
+        if (currentFormatValue === "graph") {
+            filteredOptions = filteredOptions.concat([{
+                value: "graph",
+                label: "",
+            }]);
+        }
 
-    if (self.useXpathExpression) {
-        const menuOptionsToRemove = ['picture', 'audio'];
-        for (let i = 0; i < menuOptionsToRemove.length; i++) {
-            for (let j = 0; j < menuOptions.length; j++) {
-                if (
-                    menuOptions[j].value !== self.original.format
-                    && menuOptions[j].value === menuOptionsToRemove[i]
-                ) {
-                    menuOptions.splice(j, 1);
+        if (self.useXpathExpression) {
+            const menuOptionsToRemove = ['picture', 'audio'];
+            for (let i = 0; i < menuOptionsToRemove.length; i++) {
+                for (let j = 0; j < filteredOptions.length; j++) {
+                    if (
+                        filteredOptions[j].value !== self.original.format
+                        && filteredOptions[j].value === menuOptionsToRemove[i]
+                    ) {
+                        filteredOptions.splice(j, 1);
+                    }
                 }
             }
+        } else {
+            // Restrict Translatable Text usage to Calculated Properties only
+            const index = filteredOptions.findIndex(f => f.value.includes('translatable-enum'));
+            if (index !== -1) {
+                filteredOptions.splice(index, 1);
+            }
         }
-    } else {
-        // Restrict Translatable Text usage to Calculated Properties only
-        const index = menuOptions.findIndex(f => f.value.includes('translatable-enum'));
-        if (index !== -1) {
-            menuOptions.splice(index, 1);
-        }
-    }
+        return filteredOptions;
+    };
 
+    let menuOptions = filterFormats(Utils.getFieldFormats(), self.original.format);
     self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
+
+    self.updateFormatOptions = function (dynamicFormats, formatsToInclude) {
+        let updateMenuOptions = Utils.getFieldFormats();
+        updateMenuOptions = updateMenuOptions.filter(function(option) {
+            if (!dynamicFormats.includes(option.value)) {
+                return true;
+            }
+            return formatsToInclude.includes(option.value);
+        });
+
+        const currentFormatValue = self.format && self.format.val ? self.format.val() : null;
+        updateMenuOptions = filterFormats(updateMenuOptions, currentFormatValue);
+
+        self.format.setOptions(updateMenuOptions);
+
+        const shouldClearSelection = currentFormatValue && dynamicFormats.includes(currentFormatValue) &&
+            !formatsToInclude.includes(currentFormatValue);
+        if (shouldClearSelection) {
+            self.format.val('plain');
+            self.format.ui.find('select').val('plain');
+        } else if (currentFormatValue) {
+            self.format.val(currentFormatValue);
+        }
+    };
+
     self.supportsOptimizations = ko.observable(false);
     self.setSupportOptimizations = function () {
         let optimizationsSupported = (
