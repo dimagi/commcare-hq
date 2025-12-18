@@ -1512,7 +1512,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string("app_manager/partials/build_errors.html", {
+    response_html = render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,

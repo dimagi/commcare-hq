@@ -336,7 +336,7 @@ def save_copy(request, domain, app_id):
         lang, langs = get_langs(request, app)
         return JsonResponse({
             "saved_app": None,
-            "error_html": render_to_string("app_manager/partials/build_errors.html", {
+            "error_html": render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
                 'app': get_app(domain, app_id),
                 'build_errors': e.errors,
                 'domain': domain,
