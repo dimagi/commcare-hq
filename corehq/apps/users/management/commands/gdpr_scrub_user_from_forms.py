@@ -30,7 +30,7 @@ class Command(BaseCommand):
         input_response = input(
             "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":
-            for form_data in XFormInstance.objects.iter_forms(form_ids, domain):
+            for form_data in XFormInstance.objects.iter_forms(form_ids):
                 form_attachment_xml_new = self.update_form_data(form_data, NEW_USERNAME)
                 XFormInstance.objects.modify_attachment_xml_and_metadata(
                     form_data, form_attachment_xml_new)

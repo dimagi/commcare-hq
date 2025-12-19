@@ -54,7 +54,7 @@ def perform_resave_on_xforms(domain, start_date, end_date, no_input):
             return
     get_forms = XFormInstance.objects.get_forms
     for xform_ids in chunked(with_progress_bar(xform_ids_missing_in_es), 100):
-        xforms = get_forms(list(xform_ids), domain)
+        xforms = get_forms(list(xform_ids))
         found_xform_ids = set()
 
         for xform in xforms:
@@ -76,7 +76,7 @@ def perform_resave_on_cases(domain, start_date, end_date, no_input):
             print("No changes made")
             return
     for case_ids in chunked(with_progress_bar(case_ids_missing_in_es), 100, list):
-        cases = CommCareCase.objects.get_cases(case_ids, domain)
+        cases = CommCareCase.objects.get_cases(case_ids)
         found_case_ids = set()
 
         for case in cases:

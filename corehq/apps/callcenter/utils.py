@@ -103,7 +103,7 @@ def get_call_center_cases(domain_name, case_type, user=None):
         case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(
             domain_name, case_type=case_type)
 
-    for case in CommCareCase.objects.iter_cases(case_ids, domain_name):
+    for case in CommCareCase.objects.iter_cases(case_ids):
         cc_case = CallCenterCase.from_case(case)
         if cc_case:
             all_cases.append(cc_case)
