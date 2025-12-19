@@ -12,14 +12,17 @@ class Command(BaseCommand):
         parser.add_argument('hostname')
 
     def handle(self, hostname, **options):
-        celery = Celery()
-        celery.config_from_object(settings)
-        celery.control.broadcast('shutdown', destination=[hostname])
-        worker_responses = celery.control.ping(
-            timeout=10, destination=[hostname]
-        )
-        pings = parse_celery_pings(worker_responses)
-        if hostname in pings:
+        self.celery = Celery()
+        self.celery.config_from_object(settings)
+        self.celery.control.broadcast('shutdown', destination=[hostname])
+        if self._ping_worker(hostname):
             print('Did not shutdown worker')
             exit(1)
         print('Successfully initiated warm shutdown')
+
+    def _ping_worker(self, hostname):
+        worker_responses = self.celery.control.ping(
+            timeout=10, destination=[hostname]
+        )
+        pings = parse_celery_pings(worker_responses)
+        return hostname in pings
