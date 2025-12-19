@@ -1,0 +1,20 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if request|toggle_enabled:"MOBILE_UCR" %}
+  <div class="form-group">  {# todo B5: css-form-group #}
+    <label class="form-label {% css_label_class %}">
+      {% trans "Last UCR Update" %}
+    </label>
+    <div id="report-context-tile" class="{% css_field_class %} checkbox">  {# todo B5: css-checkbox #}
+      <label>
+        <input type="checkbox" data-bind="checked: {{ observable }}" />  {# todo B5: css-checkbox #}
+        <input type="hidden" name="{{ observable }}" data-bind="value: {{ observable }}"/>
+        {% blocktrans %}
+          Throughout this menu, include a persistent report tile displaying the last time UCR data
+          was synced.
+        {% endblocktrans %}
+      </label>
+    </div>
+  </div>
+{% endif %}

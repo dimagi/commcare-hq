@@ -1,0 +1,26 @@
+--- 
++++ 
+@@ -1,12 +1,12 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ <div class="btn-group">
+-  <button class="btn btn-default" data-bind="click: addProperty">
++  <button class="btn btn-outline-primary" data-bind="click: addProperty">
+     <i class="fa fa-plus"></i>
+     {% trans "Add Property" %}
+   </button>
+   {% if request|toggle_enabled:'GRAPH_CREATION' %}
+-    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
++    <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">  {# todo B5: css-dropdown #}
+       <span class="caret"></span>
+     </button>
+     <ul class="dropdown-menu">
+@@ -29,7 +29,7 @@
+     </ul>
+   {% else %}
+     <!-- ko if: hasXpathExpressions -->
+-    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
++    <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">  {# todo B5: css-dropdown #}
+       <span class="caret"></span>
+     </button>
+     <ul class="dropdown-menu">
