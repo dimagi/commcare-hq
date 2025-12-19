@@ -113,6 +113,37 @@ module.getFieldFormats = function () {
     return formats;
 };
 
+// Dynamic format configuration and utilities
+module.dynamicFormats = {
+    // Configuration: Define format dependencies
+    // Key = format name, Value = array of required dependency formats (all must be present)
+    COLUMN_FORMAT_DEPENDENCIES: {
+        'geo-boundary': ['address'],
+        'geo-points': ['address'],
+        'geo-boundary-color': ['address', 'geo-boundary'],
+        'geo-points-colors': ['address', 'geo-points'],
+    },
+
+    getFormatLabel: function (formatValue) {
+        const format = module.getFieldFormats().find(f => f.value === formatValue);
+        return format.label;
+    },
+
+    getDependencyAlertMessage: function (formatValue) {
+        const formatLabel = this.getFormatLabel(formatValue);
+        const dependencies = this.COLUMN_FORMAT_DEPENDENCIES[formatValue];
+        const dependencyLabels = dependencies.map(dep => this.getFormatLabel(dep)).join(', ');
+        return interpolate(
+            gettext('The "%(format)s" format requires columns with formats: %(dependencies)s.'),
+            {
+                format: formatLabel,
+                dependencies: dependencyLabels
+            },
+            true
+        );
+    },
+};
+
 module.getFieldHtml = function (field) {
     var text = field || '';
     if (module.isAttachmentProperty(text)) {

@@ -15,6 +15,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import main from "hqwebapp/js/bootstrap3/main";
+import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import Utils from "app_manager/js/details/utils";
 import uiElementInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
 import uiElementKeyValueMapping from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping";
@@ -359,7 +360,9 @@ export default function (col, screen) {
         if (shouldClearSelection) {
             self.format.val('plain');
             self.format.ui.find('select').val('plain');
-        } else if (currentFormatValue) {
+            const message = Utils.dynamicFormats.getDependencyAlertMessage(currentFormatValue);
+            alertUser.alert_user(message, 'warning', false, true);
+        } else if (currentFormatValue != null) {
             self.format.val(currentFormatValue);
         }
     };

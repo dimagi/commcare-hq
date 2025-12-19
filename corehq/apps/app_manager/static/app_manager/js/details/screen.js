@@ -354,13 +354,7 @@ export default function (spec, config, options) {
         self.fire('change');
     };
 
-    // Key = format name, Value = array of required dependency formats (all must be present)
-    const COLUMN_FORMAT_DEPENDENCIES = {
-        'geo-boundary': ['address'],
-        'geo-points': ['address'],
-        'geo-boundary-color': ['address', 'geo-boundary'],
-        'geo-points-colors': ['address', 'geo-points'],
-    };
+    const COLUMN_FORMAT_DEPENDENCIES = Utils.dynamicFormats.COLUMN_FORMAT_DEPENDENCIES;
     const uniqueDependencies = Array.from(
         new Set(_.flatten(Object.values(COLUMN_FORMAT_DEPENDENCIES))),
     );
@@ -759,7 +753,7 @@ export default function (spec, config, options) {
         column.useXpathExpression = !!columnConfiguration.useXpathExpression;
 
         const formatsToInclude = calculateDynamicFormatsToInclude();
-        const dynamicFormats = Object.keys(FORMAT_DEPENDENCIES);
+        const dynamicFormats = Object.keys(COLUMN_FORMAT_DEPENDENCIES);
         if (!column.isTab) {
             column.updateFormatOptions(dynamicFormats, formatsToInclude);
         }
