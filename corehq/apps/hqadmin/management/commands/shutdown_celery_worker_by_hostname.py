@@ -23,7 +23,7 @@ class Command(BaseCommand):
             return
 
         # try old broker if it is set
-        if settings.OLD_BROKER_URL:
+        if getattr(settings, 'OLD_BROKER_URL', None):
             old_celery_app = Celery()
             old_celery_app.config_from_object(settings)
             old_celery_app.conf.broker_url = settings.OLD_BROKER_URL
