@@ -85,6 +85,7 @@ class BaseKycUserSetup(TestCase):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=self._sample_api_field_to_user_data_map(),
+            passing_threshold=self._sample_passing_thresholds(),
         )
         self.kyc_user = KycUser(self.config, self.user)
 
@@ -102,6 +103,19 @@ class BaseKycUserSetup(TestCase):
             "nationality": {
                 "data_field": "nationality"
             }
+        }
+
+    def _sample_passing_thresholds(self):
+        return {
+            "firstName": 100,
+            "lastName": 100,
+            "phoneNumber": 100,
+            "emailAddress": 100,
+            "nationalIdNumber": 100,
+            "streetAddress": 100,
+            "city": 100,
+            "postCode": 100,
+            "country": 100,
         }
 
 
