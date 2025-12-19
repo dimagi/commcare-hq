@@ -1,0 +1,47 @@
+--- 
++++ 
+@@ -9,34 +9,34 @@
+     </a>
+   </p>
+ </div>
+-<div class="panel panel-appmanager">
+-  <div class="panel-heading">
+-    <h4 class="panel-title panel-title-nolink">
++<div class="card panel-appmanager">  {# todo B5: css-panel #}
++  <div class="card-header">
++    <h4 class="card-title card-title-nolink">
+       {% trans "Copy Case List to another menu" %}
+     </h4>
+   </div>
+-  <div class="panel-body">
++  <div class="card-body">
+     <p class="help-block">
+       {% trans "This will <strong>overwrite</strong> the case list of the selected menu with the current menu's case list configuration." %}
+     </p>
+     {% with detail_type="short" %}
+-      {% include 'app_manager/partials/modules/bootstrap3/case_list_module_overwrite.html' %}
++      {% include 'app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html' %}
+     {% endwith %}
+   </div>
+ </div>
+-<div class="panel panel-appmanager">
+-  <div class="panel-heading">
+-    <h4 class="panel-title panel-title-nolink">
++<div class="card panel-appmanager">  {# todo B5: css-panel #}
++  <div class="card-header">
++    <h4 class="card-title card-title-nolink">
+       {% trans "Copy Case Detail to another menu" %}
+     </h4>
+   </div>
+-  <div class="panel-body">
++  <div class="card-body">
+     <p class="help-block">
+       {% trans "This will <strong>overwrite</strong> the case detail of the selected menu with the current menu's case detail configuration." %}
+     </p>
+     <br><br>
+     {% with detail_type="long" %}
+-      {% include 'app_manager/partials/modules/bootstrap3/case_list_module_overwrite.html' %}
++      {% include 'app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html' %}
+     {% endwith %}
+   </div>
+ </div>

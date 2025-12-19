@@ -116,7 +116,7 @@ def view_generic(
         })
 
     if form:
-        template = "app_manager/form_view.html"
+        template = "app_manager/bootstrap3/form_view.html"
         context.update(get_form_view_context(
             request,
             domain,
@@ -128,11 +128,11 @@ def view_generic(
         template = get_module_template(request.user, module)
         context.update(get_module_view_context(request, app, module, lang))
     else:
-        template = 'app_manager/app_view_settings.html'
+        template = 'app_manager/bootstrap3/app_view_settings.html'
         context.update(get_app_view_context(request, app))
 
         if release_manager:
-            template = 'app_manager/app_view_release_manager.html'
+            template = 'app_manager/bootstrap3/app_view_release_manager.html'
             context.update(get_releases_context(request, domain, app_id))
 
         context['is_app_settings_page'] = not release_manager
@@ -240,7 +240,7 @@ def _handle_bad_states(
     if app.application_version == APP_V1:
         _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, "app_manager/no_longer_supported.html", {
+        return render(request, "app_manager/bootstrap3/no_longer_supported.html", {
             'domain': domain,
             'app': app,
         })
