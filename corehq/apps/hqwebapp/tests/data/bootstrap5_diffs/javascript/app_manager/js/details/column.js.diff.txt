@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -14,14 +14,14 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import main from "hqwebapp/js/bootstrap3/main";
++import main from "hqwebapp/js/bootstrap5/main";
+ import Utils from "app_manager/js/details/utils";
+-import uiElementInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
+-import uiElementKeyValueMapping from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping";
++import uiElementInput from "hqwebapp/js/ui_elements/bootstrap5/ui-element-input";
++import uiElementKeyValueMapping from "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping";
+ import uiElementLangcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
+-import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
+-import detailTabNodeset from "app_manager/js/details/bootstrap3/detail_tab_nodeset";
+-import graphConfig from "app_manager/js/details/bootstrap3/graph_config";
++import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
++import detailTabNodeset from "app_manager/js/details/bootstrap5/detail_tab_nodeset";
++import graphConfig from "app_manager/js/details/bootstrap5/graph_config";
+ import google from "analytix/js/google";
+ 
+ const microCaseImageName = 'cc_case_image';
+@@ -146,7 +146,7 @@
+         $modalDiv.koApplyBindings(self);
+         const $modal = $modalDiv.find('.modal');
+         $modal.appendTo('body');
+-        $modal.modal('show');
++        $modal.modal('show');  /* todo B5: js-modal */
+         $modal.on('hidden.bs.modal', function () {
+             $modal.remove();
+         });
