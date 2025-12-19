@@ -1,11 +1,17 @@
 from decimal import ROUND_DOWN, Decimal
+
 from django.conf import settings
-from corehq.apps.accounting.utils import log_accounting_info
+
 import stripe
+
+from corehq.apps.accounting.utils import log_accounting_info
 
 
 def get_customer_cards(username):
-    from corehq.apps.accounting.models import StripePaymentMethod, PaymentMethodType
+    from corehq.apps.accounting.models import (
+        PaymentMethodType,
+        StripePaymentMethod,
+    )
 
     try:
         payment_method = StripePaymentMethod.objects.get(
@@ -16,7 +22,7 @@ def get_customer_cards(username):
         return dict(cards)
     except StripePaymentMethod.DoesNotExist:
         pass
-    except stripe.error.AuthenticationError:
+    except stripe.AuthenticationError:
         if not settings.STRIPE_PRIVATE_KEY:
             log_accounting_info("Private key is not defined in settings")
         else:
