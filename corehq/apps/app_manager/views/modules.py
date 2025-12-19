@@ -135,11 +135,11 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(user, module):
     if isinstance(module, AdvancedModule):
-        return "app_manager/module_view_advanced.html"
+        return "app_manager/bootstrap3/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return "app_manager/module_view_report.html"
+        return "app_manager/bootstrap3/module_view_report.html"
     else:
-        return "app_manager/module_view.html"
+        return "app_manager/bootstrap3/module_view.html"
 
 
 def get_module_view_context(request, app, module, lang=None):
@@ -1512,7 +1512,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string("app_manager/partials/build_errors.html", {
+    response_html = render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
