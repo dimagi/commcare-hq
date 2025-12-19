@@ -45,7 +45,7 @@ def verify_user(kyc_user, config):
     verification_error = None
 
     try:
-        verify_method = config.get_verification_method()
+        verify_method = config.get_kyc_api_method()
         verification_status = verify_method(kyc_user, config)
         if verification_status == KycVerificationStatus.FAILED:
             verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
@@ -121,6 +121,51 @@ def mtn_kyc_verify(kyc_user, config):
     field_scores = response.json().get('data', {})
     verification_successful = all(v >= config.passing_threshold[k] for k, v in field_scores.items())
     return KycVerificationStatus.PASSED if verification_successful else KycVerificationStatus.FAILED
+
+
+def orange_cameroon_verify(kyc_user, config):
+    """
+    Verify a user using the Orange Cameroon KYC API.
+
+    Returns True if all user data is accurate above its required
+    threshold, otherwise False.
+    """
+
+    # Documentation:  https://apiis.orange.cm/store/
+    # Example request:
+    #
+    #     POST https://api-s1.orange.cm/omcoreapis/1.0.2/infos/subscriber/customer/{customerMsisdn}
+    #     {
+    #       "pin": "test",
+    #       "channelMsisdn": "123456789"
+    #     }
+    #
+    # Example 200 response:
+    #
+    #    {
+    #     "message": "customer 8877665544 successfully retrieve full name.",
+    #     "data": {
+    #         "firstName": "First",
+    #         "lastName": "Last"
+    #     }
+    # }
+
+    user_data = get_user_data_for_api(kyc_user, config)
+    requests = config.get_connection_settings().get_requests()
+    response = requests.post(
+        f'/omcoreapis/1.0.2/infos/subscriber/custome/{user_data["phoneNumber"]}',
+        json={
+            "pin": settings.ORANGE_CAMEROON_CONNECTION_SETTINGS['channel_pin'],
+            "channelMsisdn": settings.ORANGE_CAMEROON_CONNECTION_SETTINGS['channel_msisdn'],
+        },
+    )
+    response.raise_for_status()
+    user_info = response.json().get('data', {})
+    # TODO Add Comparison logic for firstName and lastName. For now, we directly compare them.
+    if (user_info['firstName'].lower() == user_data['firstName'].lower()
+            and user_info['lastName'].lower() == user_data['lastName'].lower()):
+        return KycVerificationStatus.PASSED
+    return KycVerificationStatus.FAILED
 
 
 def _report_verification_failure_metric(domain, errors_with_count):

@@ -10,7 +10,6 @@ import jsonfield
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.es.users import UserES
-from corehq.apps.integration.kyc.services import mtn_kyc_verify
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import OAUTH2_CLIENT
@@ -137,7 +136,11 @@ class KycConfig(models.Model):
 
     def get_kyc_api_method(self):
         if self.provider == KycProviders.MTN_KYC:
+            from corehq.apps.integration.kyc.services import mtn_kyc_verify
             return mtn_kyc_verify
+        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
+            from corehq.apps.integration.kyc.services import orange_cameroon_verify
+            return orange_cameroon_verify
         else:
             raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
 
