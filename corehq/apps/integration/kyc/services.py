@@ -110,6 +110,10 @@ def mtn_kyc_verify(kyc_user, config):
     #         }
     #     }
 
+    # This is for testing only since we don't have a working testing environment for verification yet
+    # This is for testing only since we don't have a working testing environment for verification yet
+    return _mock_api_result_for_testing()
+
     user_data = get_user_data_for_api(kyc_user, config)
     _validate_schema('kycVerify/v1', user_data)  # See kyc-verify-v1.json
     requests = config.get_connection_settings().get_requests()
@@ -121,6 +125,24 @@ def mtn_kyc_verify(kyc_user, config):
     field_scores = response.json().get('data', {})
     verification_successful = all(v >= config.passing_threshold[k] for k, v in field_scores.items())
     return KycVerificationStatus.PASSED if verification_successful else KycVerificationStatus.FAILED
+
+
+def _mock_api_result_for_testing():
+    import random
+    testing_outcome = {
+        "passed": KycVerificationStatus.PASSED,
+        "failed": KycVerificationStatus.FAILED
+    }
+    weights = {
+        "passed": 0.8,  # 80%
+        "failed": 0.2,  # 20%
+    }
+    choice = random.choices(
+        population=list(testing_outcome.keys()),
+        weights=list(weights.values()),
+        k=1,
+    )[0]
+    return testing_outcome[choice]
 
 
 def orange_cameroon_verify(kyc_user, config):
@@ -149,6 +171,9 @@ def orange_cameroon_verify(kyc_user, config):
     #         "lastName": "Last"
     #     }
     # }
+
+    # This is for testing only since we don't have a working testing environment for verification yet
+    return _mock_api_result_for_testing()
 
     user_data = get_user_data_for_api(kyc_user, config)
     requests = config.get_connection_settings().get_requests()
