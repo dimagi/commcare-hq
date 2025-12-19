@@ -24,25 +24,37 @@ class Command(BaseCommand):
 
         succeeded = self._shutdown(hostname, broker_conn)
         if succeeded:
-            print('Successfully initiated warm shutdown')
+            print(f'Successfully initiated warm shutdown of {hostname}')
             return
 
-        print(f'Did not shutdown worker {hostname}')
         exit(1)
 
     def _shutdown(self, hostname, broker_conn=None):
+        # a worker configured to read from the old broker and write to the new
+        # broker will be unable to respond to a ping on the custom broker_conn
+        # so just skip it if using a custom broker_conn
+        check_worker_up = broker_conn is None
+        if check_worker_up and not self._is_worker_up(hostname, broker_conn):
+            print(f'{hostname} did not respond to ping. Aborted shutdown.')
+            return False
+
         kwargs = {'destination': [hostname]}
         if broker_conn is not None:
             # use a custom broker connection
             kwargs['broker'] = broker_conn
         self.celery.control.broadcast('shutdown', **kwargs)
 
-        if broker_conn is None:
-            worker_responses = self.celery.control.ping(
-                timeout=10, destination=[hostname]
-            )
-            pings = parse_celery_pings(worker_responses)
-            if hostname in pings:
-                return False
-            return True
+        if check_worker_up and self._is_worker_up(hostname, broker_conn):
+            # if worker is still up, the shutdown likely did not succeed
+            # or it is just a slow shutdown
+            print(f'{hostname} responded to ping after initiating shutdown.')
+            return False
+
         return True
+
+    def _is_worker_up(self, hostname):
+        worker_responses = self.celery.control.ping(
+            timeout=10, destination=[hostname]
+        )
+        pings = parse_celery_pings(worker_responses)
+        return hostname in pings
