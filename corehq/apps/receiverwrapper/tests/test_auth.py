@@ -30,7 +30,6 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
-from corehq.util.test_utils import flag_enabled
 
 
 class FakeFile(object):
@@ -464,11 +463,6 @@ class TestHasMobileAccess(TestCase):
         is_from_formplayer.return_value = True
         self.assertTrue(self._has_mobile_access(self.user_without_permission))
 
-    def test_no_permission_but_whitelisted(self, is_from_formplayer):
-        is_from_formplayer.return_value = False
-        with flag_enabled('OPEN_SUBMISSION_ENDPOINT'):
-            self.assertTrue(self._has_mobile_access(self.user_without_permission))
-
-    def test_no_permission_no_toggle(self, is_from_formplayer):
+    def test_no_permission(self, is_from_formplayer):
         is_from_formplayer.return_value = False
         self.assertFalse(self._has_mobile_access(self.user_without_permission))
