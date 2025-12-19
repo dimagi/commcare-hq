@@ -17,7 +17,7 @@ dependencies = [
     "bleach", # USH - used for rich text messaging emails
     "bleach[css]", # USH - used for rich text messaging emails
     "boto3",
-    "celery",
+    "celery[redis]",
     "CommcareTranslationChecker>=0.9.7",
     "cryptography>=43.0.1",
     "csiphash",
