@@ -116,6 +116,9 @@ class KycConfig(models.Model):
         if self.provider == KycProviders.MTN_KYC:
             from corehq.apps.integration.kyc.services import mtn_kyc_verify
             return mtn_kyc_verify
+        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
+            from corehq.apps.integration.kyc.services import orange_cameroon_kyc_verify
+            return orange_cameroon_kyc_verify
         else:
             raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
 
