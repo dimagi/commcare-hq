@@ -37,21 +37,68 @@ Here is a sample configuration for the MTN provider.
 ::
 
     {
-        "firstName": "first_name",
-        "lastName": "last_name",
-        "email": "email",
-        "phoneNumber": "phone_number",
-        "nationalIdNumber": "national_id_number",
-        "streetAddress": "street_address",
-        "city": "city",
-        "postCode": "post_code",
-        "country": "country"
+      "firstName": {
+        "data_field": "first_name"
+      },
+      "lastName": {
+        "data_field": "last_name"
+      },
+      "phoneNumber": {
+        "data_field": "phone_number",
+        "is_sensitive": true
+      },
+      "email": {
+        "data_field": "email"
+      },
+      "nationalIdNumber": {
+        "data_field": "national_id_number"
+      },
+      "streetAddress": {
+        "data_field": "street_address"
+      },
+      "city": {
+        "data_field": "city"
+      },
+      "postCode": {
+        "data_field": "post_code"
+      },
+      "country": {
+        "data_field": "country"
+      }
     }
 
-Each key in the JSON represents the field name expected by the KYC provider,
-while the corresponding value represents the field in the recipient data store where the data will be sourced from.
+Each key in the JSON corresponds to a field name expected by the KYC provider. All keys are mandatory for MTN.
+The `data_field` key within each mapping indicates the field in the recipient data store from which the value will be sourced.
+The `is_sensitive` key, when set to `true`, marks the field as containing sensitive information and instructs the UI to hide it. If a field is not sensitive, this key can be omitted.
+Let’s take a closer look at the Phone Number field in the above example:
 
-Let’s take a closer look at the first field in the above example:
+- **phoneNumber**: The field name required by the MTN provider.
+- **data_field:phone_number**: The field in the recipient data store from which the user’s phone number will be retrieved.
+- **is_sensitive:true**: The phone number is considered sensitive and should be hidden in the UI.
 
-- **firstName**: The API field name for the MTN provider.
-- **first_name**: The field in the recipient data store from which the data will be retrieved for the user.
+Passing Threshold for KYC Verification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This field allows you to set the minimum score in percentage required for each field for a user to pass the KYC verification.
+The score is provided by the KYC provider as part of the verification response and should be an integer value.
+
+Here is a sample configuration for the MTN provider.
+::
+
+    {
+      "firstName": 90,
+      "lastName": 90,
+      "phoneNumber": 100,
+      "emailAddress": 100,
+      "nationalIdNumber": 100,
+      "streetAddress": 80,
+      "city": 100,
+      "postCode": 100,
+      "country": 100
+    }
+
+Each key in the JSON corresponds to a field name expected by the KYC provider. All keys are mandatory for MTN.
+The value for each key indicates the minimum score required for that field for the user to pass the KYC verification.
+Let’s take a closer look at the Phone Number field in the above example:
+
+- **phoneNumber**: The field name required by the MTN provider.
+- **100**: The value indicates that the user must have a score of 100 percent for the phone number field to pass the KYC verification.

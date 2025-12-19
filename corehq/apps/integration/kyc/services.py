@@ -109,19 +109,6 @@ def _verify_user(kyc_user, config):
     #         }
     #     }
 
-    # TODO: Determine what thresholds we want
-    required_thresholds = {
-        'firstName': 100,
-        'lastName': 100,
-        'phoneNumber': 100,
-        'emailAddress': 100,
-        'nationalIdNumber': 100,
-        'streetAddress': 80,  # Allow streetAddress to be less accurate
-        'city': 100,
-        'postCode': 100,
-        'country': 0,  # e.g "Ivory Coast" vs. "Republic of Côte d'Ivoire" vs. "CIV"?
-    }
-
     user_data = get_user_data_for_api(kyc_user, config)
     _validate_schema('kycVerify/v1', user_data)  # See kyc-verify-v1.json
     requests = config.get_connection_settings().get_requests()
@@ -131,7 +118,7 @@ def _verify_user(kyc_user, config):
     )
     response.raise_for_status()
     field_scores = response.json().get('data', {})
-    verification_successful = all(v >= required_thresholds[k] for k, v in field_scores.items())
+    verification_successful = all(v >= config.passing_threshold[k] for k, v in field_scores.items())
     return KycVerificationStatus.PASSED if verification_successful else KycVerificationStatus.FAILED
 
 
