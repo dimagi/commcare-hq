@@ -154,10 +154,10 @@ def delete_old_request_logs():
             return
 
 
-@periodic_task(
-    run_every=CHECK_REPEATERS_INTERVAL,
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
+#@periodic_task(
+#    run_every=CHECK_REPEATERS_INTERVAL,
+#    queue=settings.CELERY_PERIODIC_QUEUE,
+#)
 def check_repeaters():
     # this creates a task for all partitions
     # the Nth child task determines if a lock is available for the Nth partition
