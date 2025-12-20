@@ -6,6 +6,12 @@ from corehq.apps.hqadmin.utils import parse_celery_pings
 
 
 class Command(BaseCommand):
+    """
+    This is designed to be run from a celery machine.
+    It will work from another machine as long as a broker migration
+    is not in progress (i.e., some celery workers read/write to a
+    different broker than the host machine this command is run on)
+    """
     help = "Gracefully shuts down a celery worker"
 
     def add_arguments(self, parser):
@@ -16,24 +22,8 @@ class Command(BaseCommand):
         celery.config_from_object(settings)
         succeeded = self._shutdown(celery, hostname)
         if succeeded:
-            print(
-                f'Successfully initiated warm shutdown of {hostname} '
-                f'via broker {celery.conf.broker_url}'
-            )
+            print(f'Successfully initiated warm shutdown of {hostname}')
             return
-
-        # try old broker if it is set
-        if getattr(settings, 'OLD_BROKER_URL', None):
-            old_celery_app = Celery()
-            old_celery_app.config_from_object(settings)
-            old_celery_app.conf.broker_url = settings.OLD_BROKER_URL
-            succeeded = self._shutdown(old_celery_app, hostname)
-            if succeeded:
-                print(
-                    f'Successfully initiated warm shutdown of {hostname} '
-                    f'via old broker {settings.OLD_BROKER_URL}'
-                )
-                return
 
         print(f'Did not shutdown worker {hostname}')
         exit(1)
@@ -44,7 +34,7 @@ class Command(BaseCommand):
             return False
 
         celery_app.control.broadcast('shutdown', destiation=[hostname])
-        if self.is_worker_up(celery_app, hostname):
+        if self._is_worker_up(celery_app, hostname):
             # if worker is still up, the shutdown likely did not succeed
             # or it is just a slow shutdown
             return False
