@@ -31,7 +31,40 @@ class KycProviders(models.TextChoices):
     # When adding a new provider:
     # 1. Add connection settings to `settings.py` if necessary
     # 2. Add it to `KycConfig.get_connections_settings()`
+    # 3. Add required threshold fields to `KycProviderThresholdFields`
     MTN_KYC = 'mtn_kyc', _('MTN KYC')
+    ORANGE_CAMEROON_KYC = 'orange_cameroon_kyc', _('Orange Cameroon KYC')
+
+
+class KycProviderThresholdFields:
+    """
+    Defines the required threshold fields for each KYC provider.
+    When adding a new provider, add its required fields here.
+    """
+    MTN_KYC_REQUIRED_FIELDS = [
+        'firstName',
+        'lastName',
+        'phoneNumber',
+        'emailAddress',
+        'nationalIdNumber',
+        'streetAddress',
+        'city',
+        'postCode',
+        'country',
+    ]
+    ORANGE_CAMEROON_KYC_REQUIRED_FIELDS = [
+        'firstName',
+        'lastName',
+    ]
+
+    @classmethod
+    def get_required_fields(cls, provider):
+        if provider == KycProviders.MTN_KYC:
+            return cls.MTN_KYC_REQUIRED_FIELDS
+        elif provider == KycProviders.ORANGE_CAMEROON_KYC:
+            return cls.ORANGE_CAMEROON_KYC_REQUIRED_FIELDS
+        else:
+            raise ValueError(f'Unable to determine required threshold fields for KYC provider {provider!r}.')
 
 
 class KycConfig(models.Model):
@@ -45,6 +78,7 @@ class KycConfig(models.Model):
         default=KycProviders.MTN_KYC,
     )
     phone_number_field = models.CharField(max_length=126, null=True, blank=True)
+    passing_threshold = jsonfield.JSONField(default=dict)
 
     class Meta:
         constraints = [
@@ -78,9 +112,37 @@ class KycConfig(models.Model):
                 client_secret=kyc_settings['client_secret'],
                 token_url=kyc_settings['token_url'],
             )
-        # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
+        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
+            kyc_settings = settings.ORANGE_CAMEROON_CONNECTION_SETTINGS
+            return ConnectionSettings(
+                domain=self.domain,
+                name=KycProviders.ORANGE_CAMEROON_KYC.label,
+                url=kyc_settings['url'],
+                auth_type=OAUTH2_CLIENT,
+                client_id=kyc_settings['client_id'],
+                client_secret=kyc_settings['client_secret'],
+                token_url=kyc_settings['token_url'],
+            )
         else:
             raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
+
+    def get_required_threshold_fields(self):
+        """
+        Returns the list of required threshold fields for the configured provider.
+
+        :return: List of required field names
+        """
+        return KycProviderThresholdFields.get_required_fields(self.provider)
+
+    def get_kyc_api_method(self):
+        if self.provider == KycProviders.MTN_KYC:
+            from corehq.apps.integration.kyc.services import mtn_kyc_verify
+            return mtn_kyc_verify
+        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
+            from corehq.apps.integration.kyc.services import orange_cameroon_verify
+            return orange_cameroon_verify
+        else:
+            raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
 
     def get_kyc_users_query(self):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
