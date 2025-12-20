@@ -1,0 +1,16 @@
+--- 
++++ 
+@@ -3,10 +3,10 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import "jquery-textchange/jquery.textchange";
+-import appManager from "app_manager/js/bootstrap3/app_manager";
++import appManager from "app_manager/js/bootstrap5/app_manager";
+ import caseConfigUtils from "app_manager/js/case_config_utils";
+-import main from "hqwebapp/js/bootstrap3/main";
+-import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
++import main from "hqwebapp/js/bootstrap5/main";
++import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
+ import utils from "app_manager/js/details/utils";
+ import "app_manager/js/forms/case_knockout_bindings";  // numericValue
+ 

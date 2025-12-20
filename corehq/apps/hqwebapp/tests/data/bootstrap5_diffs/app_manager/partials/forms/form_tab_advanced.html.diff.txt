@@ -1,0 +1,77 @@
+--- 
++++ 
+@@ -3,28 +3,28 @@
+ {% load hq_shared_tags %}
+ <div class="tab-pane" id="advanced">
+   {% if allow_form_copy%}
+-    <div class="panel panel-appmanager">
+-      <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>
++    <div class="card panel-appmanager">  {# todo B5: css-panel #}
++      <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>  {# todo B5: css-form-inline #}
+         {% csrf_token %}
+-        <div class="panel-heading">
+-          <h4 class="panel-title panel-title-nolink">
++        <div class="card-header">
++          <h4 class="card-title card-title-nolink">
+             {% trans "Copy Form" %}
+           </h4>
+         </div>
+-        <div class="panel-body">
++        <div class="card-body">
+           {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
+             <span id="app-module-selection">
+-                        <select name="to_app_id"
++                        <select name="to_app_id"  {# todo B5: css-select-form-control #}
+                                 class='form-control'
+-                                style="min-width: 150px;"
++                                style="min-width: 150px;"  {# todo B5: inline-style #}
+                                 data-bind="options: apps,
+                                            optionsText: 'name',
+                                            optionsValue: 'id',
+                                            value: selectedAppId"></select>
+               <!-- ko with: selectedApp -->
+-                        <select name="to_module_id"
++                        <select name="to_module_id"  {# todo B5: css-select-form-control #}
+                                 class='form-control'
+-                                style="min-width: 150px;"
++                                style="min-width: 150px;"  {# todo B5: inline-style #}
+                                 data-bind="options: modules,
+                                            optionsText: 'name',
+                                            optionsValue: 'id',
+@@ -32,11 +32,11 @@
+               <!-- /ko -->
+                     </span>
+           {% else %}
+-            <select name='to_module_id' class='form-control' style="min-width: 150px;">{% for mod in app.get_modules %}
++            <select name='to_module_id' class='form-select' style="min-width: 150px;">{% for mod in app.get_modules %}  {# todo B5: inline-style #}
+               <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
+             {% endfor %}</select>
+           {% endif %}
+-          <button class='btn btn-default' type="submit">
++          <button class='btn btn-outline-primary' type="submit">
+             <i class="fa fa-copy"></i>
+             {% trans "Copy" %}
+           </button>
+@@ -48,16 +48,16 @@
+ 
+     </fieldset>
+   {% endif %}
+-  <div class="panel panel-appmanager">
+-    <div class="panel-heading">
+-      <h4 class="panel-title panel-title-nolink">
++  <div class="card panel-appmanager">  {# todo B5: css-panel #}
++    <div class="card-header">
++      <h4 class="card-title card-title-nolink">
+         {% trans "XForm" %}
+       </h4>
+     </div>
+-    <div class="panel-body">
+-      <ul class="nav nav-pills nav-stacked">
++    <div class="card-body">
++      <ul class="nav nav-pills nav-stacked">  {# todo B5: css-nav #}
+         <li>
+-          <a href="#upload-xform" data-toggle="modal">
++          <a href="#upload-xform" data-bs-toggle="modal">
+             <i class="fa fa-arrow-up"></i>
+             {% trans "Upload" %}
+           </a>

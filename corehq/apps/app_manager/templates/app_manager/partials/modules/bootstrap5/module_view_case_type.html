@@ -1,0 +1,36 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="form-group" id="case_type_form_group">  {# todo B5: css-form-group #}
+  <label class="{% css_label_class %} form-label">
+    {% trans "Case Type" %}
+    {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+    <span class="hq-help-template"
+          data-title="{% trans "Case Type" %}"
+          data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case. Other case lists with the same case type will use the same set of case(s)." %}"
+    ></span>
+    {% else %}
+    <span class="hq-help-template"
+          data-title="{% trans "Case Type" %}"
+          data-content="{% trans "The name for the type of case you are tracking (e.g. &quot;pregnancy&quot;, &quot;farm&quot;, &quot;household&quot;, etc.). All cases you register in this case list will be this type of case, and only cases of this type will show in the case list. Other case lists with the same case type will use the same set of cases." %}"
+    ></span>
+    {% endif %}
+  </label>
+  <div class="{% css_field_class %}">
+    <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+    <span class="help-block" id="case_type_deprecated_warning" style="display: none;">  {# todo B5: inline-style #}
+      {% trans "This case type has been deprecated in the Data Dictionary." %}
+    </span>
+    <span class="help-block" id="case_type_error" style="display: none;">  {# todo B5: inline-style #}
+      {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
+    </span>
+    <span class="help-block" id="case_type_changed_warning" style="display: none;">  {# todo B5: inline-style #}
+            {% blocktrans with case_type=module.case_type %}
+              You have cases associated with the {{ case_type }} Case Type.
+              Making this change will NOT affect your existing cases.
+              Only new cases will be affected.
+            {% endblocktrans %}
+        </span>
+  </div>
+</div>

@@ -1,0 +1,71 @@
+{% load xforms_extras %}
+{% load url_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+
+{% if intro_only %}
+  <div class="helpbubble helpbubble-primary helpbubble-left float-start" style="max-width: 300px;">  {# todo B5: inline-style #}
+    {% blocktrans %}
+      <p class="lead">
+        Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
+      </p>
+    {% endblocktrans %}
+  </div>
+  <div class="helpbubble helpbubble-secondary helpbubble-right float-end" style="max-width: 300px;">  {# todo B5: inline-style #}
+    {% blocktrans %}
+      <p class="lead">
+        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
+      </p>
+    {% endblocktrans %}
+  </div>
+{% else %}
+
+  {% if not build_profile_access and not enable_update_prompts %}
+    {% include 'app_manager/partials/releases/bootstrap5/releases_table.html' %}
+  {% else%}
+    <div class="tabbable">
+      <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
+        <li><a href="#versions-tab" data-bs-toggle="tab">
+          {% trans "Versions" %}</a>
+        </li>
+        {% if enable_update_prompts %}
+          <li><a href="#prompt-settings-tab" data-bs-toggle="tab">{% trans "Manage Update Settings" %}</a></li>
+        {% endif %}
+        {% if build_profile_access %}
+          <li><a href="#profiles-tab" data-bs-toggle="tab">{% trans "Application Profiles" %}</a></li>
+        {% endif %}
+        {% if request|toggle_enabled:"APPLICATION_RELEASE_LOGS" %}
+          <li><a href="#release-logs-tab" data-bs-toggle="tab">{% trans "Application Release Logs" %}</a></li>
+        {% endif %}
+      </ul>
+      <div class="spacer"></div>
+      <div class="tab-content">
+        <div id="versions-tab" class="tab-pane">
+          {% include 'app_manager/partials/releases/bootstrap5/releases_table.html' %}
+        </div>
+        {% if enable_update_prompts %}
+          <div id="prompt-settings-tab" class="tab-pane">
+            {% crispy prompt_settings_form %}  {# todo B5: crispy #}
+            <div data-bind="saveButton: saveButton"></div>
+          </div>
+        {% endif %}
+        {% if build_profile_access %}
+          <div id="profiles-tab" class="tab-pane">
+            {% include 'app_manager/partials/releases/bootstrap5/build_profiles.html' %}
+          </div>
+        {% endif %}
+        {% if request|toggle_enabled:"APPLICATION_RELEASE_LOGS" %}
+          <div id="release-logs-tab" class="tab-pane">
+            {% include 'app_manager/partials/releases/bootstrap5/app_release_logs.html' %}
+          </div>
+        {% endif %}
+      </div>
+    </div><!-- .tabbable -->
+  {% endif%}
+
+{% endif %}<!-- intro_only condition -->
+
+<!-- Async Download Modals -->
+{% include 'app_manager/partials/bootstrap5/download_async_modal.html' with element_id='download-zip-modal' %}
