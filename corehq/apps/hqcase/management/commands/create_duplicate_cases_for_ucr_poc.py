@@ -85,18 +85,25 @@ def _duplicate_household_and_all_child_cases(household_case, next_household_id, 
 
     client_cases = household_case.get_subcases()
     for client_case in client_cases:
-        client_case_case_structure = _duplicate_client_case(client_case, household_case_case_structure, next_client_id)
+        client_case_case_structure = _duplicate_client_case(
+            client_case,
+            household_case_case_structure,
+            next_client_id,
+        )
         new_case_structures.append(client_case_case_structure)
         next_client_id += 1
 
         for client_child_case in client_case.get_subcases():
-            client_child_case_case_structure = _duplicate_client_child_case(client_child_case,
-                                                                            client_case_case_structure)
+            client_child_case_case_structure = _duplicate_child(
+                client_child_case,
+                client_case_case_structure,
+            )
             new_case_structures.append(client_child_case_case_structure)
 
             for client_child_child_case in client_child_case.get_subcases():
-                client_child_child_case_case_structure = _duplicate_client_child_child_case(
-                    client_child_child_case, client_child_case_case_structure
+                client_child_child_case_case_structure = _duplicate_child(
+                    client_child_child_case,
+                    client_child_case_case_structure,
                 )
                 new_case_structures.append(client_child_child_case_case_structure)
 
@@ -116,7 +123,6 @@ def _duplicate_household_case(household_case, next_household_id):
             'update': case_properties,
         }
     )
-
 
 
 def _format_household_id_for_case(next_household_id):
@@ -164,57 +170,31 @@ def _format_client_id_for_case(next_client_id):
     return f'CL{next_client_id:08d}'
 
 
-def _duplicate_client_child_case(client_child_case, client_case_case_structure):
-    case_properties = copy(client_child_case.case_json)
-    client_id = client_case_case_structure.attrs['case_name']
-    case_properties['household_id'] = client_case_case_structure.attrs['update']['household_id']
+def _duplicate_child(child, parent_case_structure):
+    case_properties = copy(child.case_json)
+    client_id = parent_case_structure.attrs['case_name']
+    case_properties['household_id'] = parent_case_structure.attrs['update']['household_id']
     case_properties['client_id'] = client_id
     case_properties['client_name'] = client_id
-
-    case_properties['parent_type'] = client_case_case_structure.attrs['case_type']
-    case_properties['parent_id'] = client_case_case_structure.case_id
-
+    case_properties['parent_type'] = parent_case_structure.attrs['case_type']
+    case_properties['parent_id'] = parent_case_structure.case_id
     return CaseStructure(
         case_id=uuid.uuid4().hex,
         attrs={
             'create': True,
-            'case_type': client_child_case.type,
-            'case_name': client_id, # Yes, this is same as the client's
-            'owner_id': client_child_case.owner_id,
-            'update': case_properties,
-        },
-        indices=[
-            CaseIndex(
-                client_case_case_structure,
-            )
-        ],
-        walk_related=False,
-    )
-
-def _duplicate_client_child_child_case(client_child_child_case, client_child_case_case_structure):
-    case_properties = copy(client_child_child_case.case_json)
-    client_id = client_child_case_case_structure.attrs['case_name']
-    case_properties['household_id'] = client_child_case_case_structure.attrs['update']['household_id']
-    case_properties['client_id'] = client_id
-    case_properties['client_name'] = client_id
-    case_properties['parent_type'] = client_child_case_case_structure.attrs['case_type']
-    case_properties['parent_id'] = client_child_case_case_structure.case_id
-    return CaseStructure(
-        case_id=uuid.uuid4().hex,
-        attrs={
-            'create': True,
-            'case_type': client_child_child_case.type,
+            'case_type': child.type,
             'case_name': client_id,  # Yes, this is same as the client's
-            'owner_id': client_child_child_case.owner_id,
+            'owner_id': child.owner_id,
             'update': case_properties,
         },
         indices=[
             CaseIndex(
-                client_child_case_case_structure,
+                parent_case_structure,
             )
         ],
         walk_related=False,
     )
+
 
 def _save_cases(new_case_structures):
     return CaseFactory(domain=DOMAIN).create_or_update_cases(
