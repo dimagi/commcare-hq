@@ -120,9 +120,14 @@ def _duplicate_household_case(household_case, next_household_id):
 
 
 def _format_household_id_for_case(next_household_id):
-    # return in format H[8 digit number]
-    # like H00010000 for 10000
-    return "H" + '0'*(8 - len(str(next_household_id))) + str(next_household_id)
+    """
+    Return ``next_household_id`` in format "H[8 digit number]"
+
+    >>> _format_household_id_for_case(10_000)
+    'H00010000'
+
+    """
+    return f'H{next_household_id:08d}'
 
 
 def _duplicate_client_case(client_case, new_household_case_case_structure, next_client_id):
@@ -149,9 +154,14 @@ def _duplicate_client_case(client_case, new_household_case_case_structure, next_
 
 
 def _format_client_id_for_case(next_client_id):
-    # return in format CL[8 digit number]
-    # like CL00003000 for 3000
-    return "CL" + '0'*(8 - len(str(next_client_id))) + str(next_client_id)
+    """
+    Return ``next_client_id`` in format "CL[8 digit number]"
+
+    >>> _format_client_id_for_case(3000)
+    'CL00003000'
+
+    """
+    return f'CL{next_client_id:08d}'
 
 
 def _duplicate_client_child_case(client_child_case, client_case_case_structure):
