@@ -44,8 +44,8 @@ class Command(BaseCommand):
             values_list('_id', flat=True)
         )
 
-        next_household_id = len(CommCareCase.objects.get_case_ids_in_domain(DOMAIN, HOUSEHOLD_CASE_TYPE)) + 1
-        next_client_id = len(CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CLIENT_CASE_TYPE)) + 1
+        next_household_id = _count_cases(DOMAIN, HOUSEHOLD_CASE_TYPE) + 1
+        next_client_id = _count_cases(DOMAIN, CLIENT_CASE_TYPE) + 1
 
         for case_id in with_progress_bar(household_case_ids):
             to_save = []
@@ -62,6 +62,19 @@ class Command(BaseCommand):
             else:
                 pass
                 # print([b.as_text() for b in CaseFactory(domain=DOMAIN).get_case_blocks(to_save)])
+
+
+def _count_cases(domain, case_type):
+    # See CommCareCaseManager._get_case_ids_in_domain()
+    owner_ids = None
+    is_closed = None
+    deleted = False
+    with CommCareCase.objects.model.get_plproxy_cursor(readonly=True) as cursor:
+        cursor.execute(
+            'SELECT COUNT(case_id) FROM get_case_ids_in_domain(%s, %s, %s, %s, %s)',
+            [domain, case_type, owner_ids, is_closed, deleted]
+        )
+        return next(row[0] for row in cursor)
 
 
 def _duplicate_household_and_all_child_cases(household_case, next_household_id, next_client_id):
