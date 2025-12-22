@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import _ from "underscore";
+-import main from "hqwebapp/js/bootstrap3/main";
++import main from "hqwebapp/js/bootstrap5/main";
+ 
+ /**
+  * This provides the UI for a case detail tab's nodeset.
