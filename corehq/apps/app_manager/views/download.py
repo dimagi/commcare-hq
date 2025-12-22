@@ -373,7 +373,7 @@ def download_index(request, domain, app_id):
         enabled_build_profiles = [_id for _id, version in latest_enabled_build_profiles.items()
                                   if version == request.app.version]
 
-    return render(request, "app_manager/download_index.html", {
+    return render(request, "app_manager/bootstrap3/download_index.html", {
         'app': request.app,
         'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'build_profiles': build_profiles,
@@ -395,7 +395,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     if ajax and "blank form" in [error.get('type') for error in errors]:
         response_html = ""
     else:
-        response_html = render_to_string("app_manager/partials/build_errors.html", {
+        response_html = render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
             'app': app,
             'build_errors': errors,
             'not_actual_build': True,

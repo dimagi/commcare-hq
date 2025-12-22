@@ -26,7 +26,8 @@ module.exports = function (grunt) {
      *  - Test in the browser at http://localhost:8000/mocha/<app>/<section>
      */
     var apps = [
-        'app_manager',
+        'app_manager/bootstrap3',
+        'app_manager/bootstrap5',
         'export',
         'notifications/bootstrap3',
         'notifications/bootstrap5',

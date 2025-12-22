@@ -1,0 +1,38 @@
+--- 
++++ 
+@@ -5,9 +5,9 @@
+ import noopMetrics from "analytix/js/noopMetrics";
+ import downloadAsyncModal from "app_manager/js/download_async_modal";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import appManager from "app_manager/js/bootstrap3/app_manager";
++import appManager from "app_manager/js/bootstrap5/app_manager";
+ import menu from "app_manager/js/menu";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // openModal binding
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // openModal binding
+ 
+ function savedAppModel(appData, releasesMain) {
+     var self = ko.mapping.fromJS(appData);
+@@ -226,9 +226,9 @@
+         // Hide the main deploy modal, then re-open
+         // it when the scan barcode modal is closed
+         var $deployModal = $('.modal.fade.in');
+-        $deployModal.modal('hide');
++        $deployModal.modal('hide');  /* todo B5: js-modal */
+         $('body').one("hide.bs.modal", function () {
+-            $deployModal.modal({ show: true });
++            $deployModal.modal({ show: true });  /* todo B5: js-modal */
+         });
+     };
+ 
+@@ -296,9 +296,9 @@
+         self.async_downloader.generateDownload(url, params);
+         // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
+         // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
+-        $('.modal.fade.in').modal('hide');
++        $('.modal.fade.in').modal('hide');  /* todo B5: js-modal */
+         try {
+-            self.download_modal.modal({show: true});
++            self.download_modal.modal({show: true});  /* todo B5: js-modal */
+         } catch (e) {
+             // do nothing. this error only shows up in mocha tests when run
+             // via grunt rather than the browser due to how the DOM is

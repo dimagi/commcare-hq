@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+-{% extends "app_manager/bootstrap3/apps_base.html" %}
++{% extends "app_manager/bootstrap5/apps_base.html" %}
+ {% load compress %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% load reports_core_tags %}
+ {% load xforms_extras %}
+ 
+-{% js_entry_b3 'app_manager/js/modules/bootstrap3/module_view_report' %}
++{% js_entry 'app_manager/js/modules/bootstrap5/module_view_report' %}
+ 
+ {% block form-view %}
+   {% initial_page_data 'lang' lang %}
+@@ -21,12 +21,12 @@
+   {% registerurl "edit_report_module" domain app.id module.unique_id %}
+   {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
+ 
+-  {% include 'app_manager/partials/modules/bootstrap3/module_view_heading.html' %}
+-  {% include 'app_manager/partials/modules/bootstrap3/mobile_report_configs.html' %}
++  {% include 'app_manager/partials/modules/bootstrap5/module_view_heading.html' %}
++  {% include 'app_manager/partials/modules/bootstrap5/mobile_report_configs.html' %}
+ {% endblock %}
+ 
+ {% block modals %}{{ block.super }}
+   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
+-  {% include 'app_manager/partials/modules/bootstrap3/graph_configuration_modal.html' %}
++  {% include 'app_manager/partials/modules/bootstrap5/graph_configuration_modal.html' %}
+ {% endblock modals %}

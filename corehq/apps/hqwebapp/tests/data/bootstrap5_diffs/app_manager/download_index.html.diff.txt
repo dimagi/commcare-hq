@@ -1,0 +1,82 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "app_manager/bootstrap3/source_files.html" %}
++{% extends "app_manager/bootstrap5/source_files.html" %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'app_manager/js/bootstrap3/download_index_main' %}
++{% js_entry 'app_manager/js/bootstrap5/download_index_main' %}
+ 
+ {% block page_title %}
+   {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
+@@ -15,32 +15,32 @@
+     <table class="table table-condensed">
+       <thead>
+       <tr>
+-        <th class="col-sm-2">Name</th>
+-        <th class="col-sm-2">Languages</th>
+-        <th class="col-sm-2">Latest Enabled Version</th>
+-        <th class="col-sm-2">Action</th>
++        <th class="col-md-2">Name</th>
++        <th class="col-md-2">Languages</th>
++        <th class="col-md-2">Latest Enabled Version</th>
++        <th class="col-md-2">Action</th>
+       </tr>
+       </thead>
+       <tbody>
+       {% for build_profile_id, build_profile in app.build_profiles.items %}
+         <tr>
+-          <td class="col-sm-2">{{ build_profile.name }}</td>
+-          <td class="col-sm-2">{{ build_profile.langs|join:", " }}</td>
+-          <td class="col-sm-2">
++          <td class="col-md-2">{{ build_profile.name }}</td>
++          <td class="col-md-2">{{ build_profile.langs|join:", " }}</td>
++          <td class="col-md-2">
+             {% for id, version in latest_enabled_build_profiles.items %}
+               {% if id == build_profile_id %}
+                 {{ version }}
+               {% endif %}
+             {% endfor %}
+           </td>
+-          <td class="col-sm-2">
++          <td class="col-md-2">
+             {% if build_profile_id in enabled_build_profiles %}
+-              <a class="btn btn-default" href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=disable'>
++              <a class="btn btn-outline-primary" href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=disable'>
+                 <i class="fa-solid fa-link-slash"></i>
+                 {% trans 'Revoke restriction' %}
+               </a>
+             {% else %}
+-              <a class="btn btn-default" href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=enable'>
++              <a class="btn btn-outline-primary" href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=enable'>
+                 <i class="fa fa-ban"></i>
+                 {% trans 'Restrict to this version' %}
+               </a>
+@@ -57,7 +57,7 @@
+   {% initial_page_data 'app_id' app.id %}
+   {% initial_page_data 'build_profiles' build_profiles %}
+   <h2>{% trans 'Multimedia Sizes' %}</h2>
+-  {% include 'app_manager/partials/bootstrap3/build_profiles_select.html' %}
++  {% include 'app_manager/partials/bootstrap5/build_profiles_select.html' %}
+   <div id="multimedia-sizes-container" class="ko-template">
+     {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
+   </div>
+@@ -67,7 +67,7 @@
+   <table class="table table-condensed">
+     <tr>
+       <td>
+-        <a href="#download_ccz" data-toggle="modal"  class='download-zip'>
++        <a href="#download_ccz" data-bs-toggle="modal"  class='download-zip'>
+           <i class="fa-regular fa-file-zipper"></i>
+           CommCare.ccz
+         </a>
+@@ -105,5 +105,5 @@
+ {% block modals %}
+   {{ block.super }}
+   {% url "download_ccz" app.domain app.id as ccz_url %}
+-  {% include 'app_manager/partials/bootstrap3/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
++  {% include 'app_manager/partials/bootstrap5/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
+ {% endblock %}

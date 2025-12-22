@@ -1022,5 +1022,173 @@
       "label": "javascript/users/js",
       "compare_all_files": true
     }
+  ],
+  "apps/app_manager/templates/app_manager": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/forms/bootstrap3",
+        "partials/forms/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/partials/forms",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/menu/bootstrap3",
+        "partials/menu/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/partials/menu",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/module_options/bootstrap3",
+        "partials/module_options/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/partials/module_options",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/modules/bootstrap3",
+        "partials/modules/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/partials/modules",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/releases/bootstrap3",
+        "partials/releases/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/partials/releases",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/settings/bootstrap3",
+        "partials/settings/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/partials/settings",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "spec/bootstrap3",
+        "spec/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "app_manager/spec",
+      "compare_all_files": true
+    }
+  ],
+  "apps/app_manager/static/app_manager/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "details/bootstrap3",
+        "details/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js/details",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "forms/bootstrap3",
+        "forms/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js/forms",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "forms/advanced/bootstrap3",
+        "forms/advanced/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js/forms/advanced",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "modules/bootstrap3",
+        "modules/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js/modules",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "releases/bootstrap3",
+        "releases/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js/releases",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "settings/bootstrap3",
+        "settings/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js/settings",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "summary/bootstrap3",
+        "summary/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/js/summary",
+      "compare_all_files": true
+    }
+  ],
+  "apps/app_manager/static/app_manager/spec": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/app_manager/spec",
+      "compare_all_files": true
+    }
   ]
 }

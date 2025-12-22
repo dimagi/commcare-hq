@@ -1,0 +1,41 @@
+--- 
++++ 
+@@ -3,29 +3,29 @@
+ 
+ {% if request|toggle_enabled:"USH_CASE_LIST_MULTI_SELECT" %}
+ 
+-  <div class="panel panel-appmanager" data-bind="with: shortScreen">
+-    <div class="panel-heading">
+-      <h4 class="panel-title panel-title-nolink">
++  <div class="card panel-appmanager" data-bind="with: shortScreen">  {# todo B5: css-panel #}
++    <div class="card-header">
++      <h4 class="card-title card-title-nolink">
+         {% trans "Multi-Select Case List Options" %}
+       </h4>
+     </div>
+-    <div class="panel-body">
++    <div class="card-body">
+       <div class="row">
+         <div>
+-          <div class="checkbox">
++          <div class="checkbox">  {# todo B5: css-checkbox #}
+             <label>
+-              <input type="checkbox" data-bind="checked: multiSelectEnabled"/>
++              <input type="checkbox" data-bind="checked: multiSelectEnabled"/>  {# todo B5: css-checkbox #}
+               {% trans "Enable multi-select case list" %}
+             </label>
+           </div>
+-          <div class="checkbox">
++          <div class="checkbox">  {# todo B5: css-checkbox #}
+             <label>
+-              <input type="checkbox" data-bind="checked: autoSelectEnabled, enable: multiSelectEnabled()"/>
++              <input type="checkbox" data-bind="checked: autoSelectEnabled, enable: multiSelectEnabled()"/>  {# todo B5: css-checkbox #}
+               {% trans "Enable auto select" %}
+             </label>
+           </div>
+           <div data-bind="visible: multiSelectEnabled()">
+-            <label class="control-label {% css_label_class %}">
++            <label class="form-label {% css_label_class %}">
+                 {% trans "Maximum selected value" %}
+                 <span class="hq-help-template" data-title="{% trans 'Maximum Selected Value' %}"
+                       data-content="{% trans_html_attr 'Sets a maximum selected value for multi select case lists. If no value is inputted, the default value is used.' %}">

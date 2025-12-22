@@ -174,7 +174,7 @@ def _get_form_designer_view(request, domain, app, module, form):
         ),
     })
 
-    response = render(request, "app_manager/form_designer.html", context)
+    response = render(request, "app_manager/bootstrap3/form_designer.html", context)
     set_lang_cookie(response, context['lang'])
     return response
 

@@ -81,7 +81,7 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    template_name = 'app_manager/case_summary.html'
+    template_name = 'app_manager/bootstrap3/case_summary.html'
 
     @property
     def page_context(self):
@@ -102,7 +102,7 @@ class AppCaseSummaryView(AppSummaryView):
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    template_name = 'app_manager/form_summary.html'
+    template_name = 'app_manager/bootstrap3/form_summary.html'
 
     @property
     def page_context(self):
@@ -118,7 +118,7 @@ class AppFormSummaryView(AppSummaryView):
 
 class FormSummaryDiffView(AppSummaryView):
     urlname = "app_form_summary_diff"
-    template_name = 'app_manager/form_summary_diff.html'
+    template_name = 'app_manager/bootstrap3/form_summary_diff.html'
 
     @property
     def app(self):

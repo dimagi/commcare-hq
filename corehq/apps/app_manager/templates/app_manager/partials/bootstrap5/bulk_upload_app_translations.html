@@ -1,0 +1,87 @@
+{% extends "hqwebapp/partials/bootstrap5/bulk_upload.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block prerequisites %}
+  {% if request|toggle_enabled:'BULK_UPDATE_MULTIMEDIA_PATHS' %}
+    <li>
+      <p>
+        {% trans "Select a language." %}
+      </p>
+      <p>
+        <select class="form-select hqwebapp-select2" data-bind="value: lang">
+          <option value="">{% trans "All" %}</option>
+          {% for lang in langs %}
+            <option>{{ lang }}</option>
+          {% endfor %}
+        </select>
+      </p>
+    </li>
+    <li>
+      <p>
+        {% trans "Select a format." %}
+      </p>
+      <p>
+        <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
+                       params="
+                         value: format,
+                         options: [
+                           {
+                             id: 'multi',
+                             text: '{% trans_html_attr 'One sheet for each menu and form' %}',
+                           },
+                           {
+                             id: 'single',
+                             text: '{% trans_html_attr 'Single sheet for all translations' %}',
+                           },
+                         ],
+                       "></select-toggle>
+      </p>
+    </li>
+    {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
+    <li>
+      <p>
+        {% trans "Download only translations eligible for Transifex?" %}
+      </p>
+      <p>
+        <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
+                       params="
+                         value: skipBlacklisted,
+                         id: 'skip_blacklisted',
+                         options: [
+                           {
+                             id: 'true',
+                             text: '{% trans_html_attr 'Only Transifex references' %}',
+                           },
+                           {
+                             id: 'false',
+                             text: '{% trans_html_attr 'All translations' %}',
+                           },
+                         ],
+                       "></select-toggle>
+      </p>
+    </li>
+    {% endif %}
+  {% endif %}
+{% endblock %}
+
+{% block download_file %}
+  <p>
+    <a id="download_link" href="{{ bulk_upload.download_url }}" data-bind="attr: {href: url}">
+      <button class="btn btn-primary" data-bind="disable: disableDownload">
+        <i class="fa-solid fa-cloud-arrow-down"></i>
+        {% blocktrans with plural_noun=bulk_upload.plural_noun %}
+          Download {{ plural_noun }}
+        {% endblocktrans %}
+      </button>
+    </a>
+  </p>
+  <div class="has-error" data-bind="visible: disableDownload">  {# todo B5: css-has-error #}
+    <p class="help-block">
+      {% blocktrans %}
+        The single-sheet format is only available when downloading a single language.
+        <br>Please either select a language or choose the multi-sheet format.
+      {% endblocktrans %}
+    </p>
+  </div>
+{% endblock %}

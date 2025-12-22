@@ -1,0 +1,183 @@
+--- 
++++ 
+@@ -5,21 +5,21 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <a href="#" class="close" data-dismiss="modal">×</a>
++        <a href="#" class="btn-close" data-bs-dismiss="modal">×</a>  {# todo B5: css-close #}
+         <h4 class="modal-title">{% trans "Remove Child Case?" %}</h4>
+       </div>
+       <div class="modal-body">
+         <p>{% trans "Are you sure you want to remove this Child Case?" %}</p>
+       </div>
+       <div class="modal-footer">
+-        <a href="#" class="btn btn-default" data-dismiss="modal">
++        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">
+           {% trans "Cancel" %}
+         </a>
+         <a
+-          class="btn btn-danger"
++          class="btn btn-outline-danger"
+           href="#"
+           data-bind="click: $parent.removeSubCase"
+-          data-dismiss="modal"
++          data-bs-dismiss="modal"
+         >
+           {% trans "Remove Child Case" %}
+         </a>
+@@ -30,13 +30,13 @@
+ 
+ <script type="text/html" id="case-config:case-transaction">
+   {% if add_ons.conditional_form_actions %}
+-  <div class="panel panel-appmanager" data-bind="visible: allow.condition()">
+-    <div class="panel-heading">
+-      <h4 class="panel-title panel-title-nolink">
++  <div class="card panel-appmanager" data-bind="visible: allow.condition()">  {# todo B5: css-panel #}
++    <div class="card-header">
++      <h4 class="card-title card-title-nolink">
+         {% trans "Open Case Condition" %}
+       </h4>
+     </div>
+-    <div class="panel-body">
++    <div class="card-body">
+       <div
+         data-bind="template: {
+                           name: 'case-config:condition',
+@@ -48,20 +48,20 @@
+   {% endif %}
+ 
+   <div
+-    class="panel panel-appmanager case-properties wide-select2s"
++    class="card panel-appmanager case-properties wide-select2s"  {# todo B5: css-panel #}
+     data-bind='template: { name: "case-config:case-transaction:case-properties" }'
+   ></div>
+ 
+-  <div class="panel panel-appmanager">
+-    <div class="panel-heading">
+-      <h4 class="panel-title panel-title-nolink">
++  <div class="card panel-appmanager">  {# todo B5: css-panel #}
++    <div class="card-header">
++      <h4 class="card-title card-title-nolink">
+         {% trans "Close Condition" %}
+       </h4>
+     </div>
+-    <div class="panel-body">
++    <div class="card-body">
+       <label>
+         <input
+-          type="checkbox"
++          type="checkbox"  {# todo B5: css-checkbox #}
+           data-bind="checked: close_case,
+                           disable: !hasPrivilege"
+         />
+@@ -87,11 +87,11 @@
+   <div data-bind="saveButton: saveButton"></div>
+ 
+   <div data-bind="with: caseConfigViewModel">
+-    <div class="panel panel-appmanager">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">{% trans "Cases" %}</h4>
+-      </div>
+-      <div class="panel-body">
++    <div class="card panel-appmanager">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">{% trans "Cases" %}</h4>
++      </div>
++      <div class="card-body">
+         <div class="container-fluid">
+           <p class="lead">
+             {% blocktrans %}
+@@ -123,9 +123,9 @@
+           {% elif module_is_multi_select %}
+             {% trans "Followup: This form loads a set of cases" as updates_case %}
+           {% else %}
+-            {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
++            {% trans "Followup: This form loads a case and may then update or btn-close it" as updates_case %}  {# todo B5: css-close #}
+           {% endif %}
+-          <select
++          <select  {# todo B5: css-select-form-control #}
+             class="form-control"
+             id="case-action-select"
+             data-bind="optstr: [
+@@ -152,8 +152,8 @@
+     {% if form.source %}
+       <!--ko if: actionType() === 'update' -->
+       {% if module_loads_registry_case %}
+-        <div class="panel panel-appmanager">
+-          <div class="panel-body">
++        <div class="card panel-appmanager">  {# todo B5: css-panel #}
++          <div class="card-body">
+             <p>
+               {% blocktrans trimmed %}
+                 Updating cases directly is not supported when using data
+@@ -169,8 +169,8 @@
+           </div>
+         </div>
+       {% elif module_is_multi_select %}
+-        <div class="panel panel-appmanager">
+-          <div class="panel-body">
++        <div class="card panel-appmanager">  {# todo B5: css-panel #}
++          <div class="card-body">
+             <p>
+               {% blocktrans trimmed %}
+                 Updating cases directly is not supported for multi-select menus.
+@@ -218,7 +218,7 @@
+         </p>
+ 
+         {% if not add_ons_privileges.subcases %}
+-          <div class="well well-sm">
++          <div class="card well-sm">  {# todo B5: css-well #}
+             <p>
+               <i class="fa fa-info-circle"></i>
+               {% blocktrans %}
+@@ -235,9 +235,9 @@
+         {% endif %}
+ 
+         <div data-bind="foreach: subcases">
+-          <div class="panel panel-appmanager panel-case-actions">
+-            <div class="panel-heading">
+-              <h4 class="panel-title panel-title-nolink form-inline">
++          <div class="card panel-appmanager panel-case-actions">  {# todo B5: css-panel #}
++            <div class="card-header">
++              <h4 class="card-title card-title-nolink form-inline">  {# todo B5: css-form-inline #}
+                 <i class="fa fa-check"></i>
+                 {% trans "This Form opens a Child Case in the Case List" %}:&nbsp;
+                 <span
+@@ -256,20 +256,20 @@
+                 </a>
+               {% endif %}
+             </div>
+-            <div class="panel-body">
+-              <div class="panel panel-appmanager">
+-                <div class="panel-heading">
+-                  <h4 class="panel-title panel-title-nolink">
++            <div class="card-body">
++              <div class="card panel-appmanager">  {# todo B5: css-panel #}
++                <div class="card-header">
++                  <h4 class="card-title card-title-nolink">
+                     {% trans "Case List Configuration" %}
+                   </h4>
+                 </div>
+-                <div class="panel-body form-inline">
++                <div class="card-body form-inline">  {# todo B5: css-form-inline #}
+                   {% trans "This Form opens a Child Case in the Case List" %}&nbsp;
+                   <span
+-                    class="form-group"
++                    class="form-group"  {# todo B5: css-form-group #}
+                     data-bind="css: {'has-warning': !case_type()}"
+                   >
+-                    <select
++                    <select  {# todo B5: css-select-form-control #}
+                       class="form-control"
+                       {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
+                       data-bind="options: $parent.caseTypes,
+@@ -297,7 +297,7 @@
+           </div>
+         </div>
+         {% if add_ons_privileges.subcases %}
+-          <a href="#" class="btn btn-default" data-bind="click: addSubCase">
++          <a href="#" class="btn btn-outline-primary" data-bind="click: addSubCase">
+             <i class="fa fa-plus"></i>
+             {% trans "Add a Child Case to open a case for a different Case List..." %}
+           </a>
