@@ -429,8 +429,6 @@ class TestAPIEndpoint(TestCase):
 
 
 @mock.patch('corehq.apps.receiverwrapper.views.is_from_formplayer')
-@mock.patch('corehq.apps.receiverwrapper.views.cache.get', mock.MagicMock(return_value=None))
-@mock.patch('corehq.apps.receiverwrapper.views.cache.set', mock.MagicMock)
 class TestHasMobileAccess(TestCase):
     domain = "test-has-mobile-access"
 
