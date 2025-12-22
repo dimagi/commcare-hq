@@ -334,6 +334,22 @@ export default function (col, screen) {
                 filteredOptions.splice(index, 1);
             }
         }
+
+        // Filter formats based on screen type (short=case list, long=case detail)
+        const formatDeps = Utils.dynamicFormats.COLUMN_FORMAT_DEPENDENCIES;
+        filteredOptions = filteredOptions.filter(option => {
+            const config = formatDeps[option.value];
+            if (!config || option.value === currentFormatValue) {
+                return true;
+            }
+            if (config.display === 'short') {
+                return screen.columnKey === 'short';
+            } else if (config.display === 'long') {
+                return screen.columnKey === 'long';
+            }
+            return true;
+        });
+
         return filteredOptions;
     };
 

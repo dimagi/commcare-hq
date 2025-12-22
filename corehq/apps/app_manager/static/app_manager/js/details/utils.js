@@ -115,13 +115,27 @@ module.getFieldFormats = function () {
 
 // Dynamic format configuration and utilities
 module.dynamicFormats = {
-    // Configuration: Define format dependencies
-    // Key = format name, Value = array of required dependency formats (all must be present)
+    // Configuration: Define format dependencies and display restrictions
+    // Key = format name, Value = object with:
+    //   - dependencies: array of required dependency formats (all must be present)
+    //   - display: where format should be shown ('short' for case list, 'long' for case-detail, or 'both')
     COLUMN_FORMAT_DEPENDENCIES: {
-        'geo-boundary': ['address'],
-        'geo-points': ['address'],
-        'geo-boundary-color': ['address', 'geo-boundary'],
-        'geo-points-colors': ['address', 'geo-points'],
+        'geo-boundary': {
+            dependencies: ['address'],
+            display: 'short'
+        },
+        'geo-points': {
+            dependencies: ['address'],
+            display: 'short'
+        },
+        'geo-boundary-color': {
+            dependencies: ['address', 'geo-boundary'],
+            display: 'short'
+        },
+        'geo-points-colors': {
+            dependencies: ['address', 'geo-points'],
+            display: 'short'
+        },
     },
 
     getFormatLabel: function (formatValue) {
@@ -131,7 +145,7 @@ module.dynamicFormats = {
 
     getDependencyAlertMessage: function (formatValue) {
         const formatLabel = this.getFormatLabel(formatValue);
-        const dependencies = this.COLUMN_FORMAT_DEPENDENCIES[formatValue];
+        const dependencies = this.COLUMN_FORMAT_DEPENDENCIES[formatValue].dependencies;
         const dependencyLabels = dependencies.map(dep => this.getFormatLabel(dep)).join(', ');
         return interpolate(
             gettext('The "%(format)s" format requires columns with formats: %(dependencies)s.'),

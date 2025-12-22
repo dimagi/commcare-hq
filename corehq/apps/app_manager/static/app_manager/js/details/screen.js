@@ -356,7 +356,9 @@ export default function (spec, config, options) {
 
     const COLUMN_FORMAT_DEPENDENCIES = Utils.dynamicFormats.COLUMN_FORMAT_DEPENDENCIES;
     const uniqueDependencies = Array.from(
-        new Set(_.flatten(Object.values(COLUMN_FORMAT_DEPENDENCIES))),
+        new Set(_.flatten(
+            Object.values(COLUMN_FORMAT_DEPENDENCIES).map(config => config.dependencies)
+        ))
     );
 
     const columnsHasFormat = function (formatName) {
@@ -371,8 +373,8 @@ export default function (spec, config, options) {
     };
     const calculateDynamicFormatsToInclude = function () {
         const formatsToInclude = [];
-        _.each(COLUMN_FORMAT_DEPENDENCIES, function(dependencies, formatName) {
-            if (areAllDependenciesPresent(dependencies)) {
+        _.each(COLUMN_FORMAT_DEPENDENCIES, function(config, formatName) {
+            if (areAllDependenciesPresent(config.dependencies)) {
                 formatsToInclude.push(formatName);
             }
         });
