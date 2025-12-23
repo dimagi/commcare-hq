@@ -1,0 +1,43 @@
+--- 
++++ 
+@@ -6,23 +6,23 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import commcareSettings from "app_manager/js/settings/bootstrap3/commcare_settings";
+-import supportedLanguages from "app_manager/js/bootstrap3/supported_languages";
++import commcareSettings from "app_manager/js/settings/bootstrap5/commcare_settings";
++import supportedLanguages from "app_manager/js/bootstrap5/supported_languages";
+ import google from "analytix/js/google";
+-import widgets from "hqwebapp/js/bootstrap3/widgets";
+-import main from "hqwebapp/js/bootstrap3/main";
++import widgets from "hqwebapp/js/bootstrap5/widgets";
++import main from "hqwebapp/js/bootstrap5/main";
+ import translations from "translations/js/translations";
+-import appManager from "app_manager/js/bootstrap3/app_manager";
++import appManager from "app_manager/js/bootstrap5/app_manager";
+ import sectionChanger from "app_manager/js/section_changer";
+ import "hqwebapp/js/select2_knockout_bindings.ko";
+ import "app_manager/js/widgets";  // app version widget when copying an app
+ import "app_manager/js/download_async_modal";  // for the "Download ZIP" button on the multimedia tab
+-import "hqwebapp/js/bootstrap3/widgets";
+-import "app_manager/js/bootstrap3/add_ons";
++import "hqwebapp/js/bootstrap5/widgets";
++import "app_manager/js/bootstrap5/add_ons";
+ import "app_manager/js/settings/translations";
+ import "app_manager/js/custom_assertions";
+ import "hqwebapp/js/components/select_toggle";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
+ import "jquery-textchange/jquery.textchange";   // textchange is referenced in ko bindings in app_settings.html
+ 
+ $(function () {
+@@ -93,7 +93,7 @@
+                         _.each(toggles, function (toggle) {
+                             $ul.append(template(toggle));
+                         });
+-                        $modal.modal().one("click", ".btn-primary", function () {
++                        $modal.modal().one("click", ".btn-primary", function () {  /* todo B5: js-modal */
+                             $(this).disableButton();
+                             $form.submit();
+                         }).one("hide.bs.modal", function () {
