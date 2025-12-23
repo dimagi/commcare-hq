@@ -1,0 +1,165 @@
+{% load i18n %}
+<div class="form-group">  {# todo B5: css-form-group #}
+  <label class="form-label col-md-2">
+    {% trans "End of Form Navigation" %}
+    <span class="hq-help-template"
+          data-title="{% trans "End of Form Navigation" %}"
+          data-content="{% blocktrans %}After the user completes a form, your application automatically returns to the home screen.
+              Here you can set the application to navigate automatically to a different location in the app.{% endblocktrans %}"
+    ></span>
+  </label>
+  <div id="form-workflow" class="col-md-4 commcare-feature" data-since-version="2.10">
+    <div class="form-group" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">  {# todo B5: css-form-group, css-has-error #}
+      <select name="post_form_workflow" class="form-select" data-bind="
+                optstr: workflowOptions(),
+                value: workflow,
+                staticSelect2: {},
+                "></select>
+      <div data-bind="visible: hasError" class="help-block">
+        {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
+      </div>
+      <span class="help-block" data-bind="visible: hasWarning">
+        {% blocktrans %}
+          The end of form navigation specified here will override the end of registration
+          action in the menu(s) where this form is a case list registration form.
+          To avoid this, select the default option here ('Home Screen').
+        {% endblocktrans %}
+      </span>
+    </div>
+
+    <div class="form-links-container" data-bind="
+            visible: showFormLinkUI
+            ">
+
+      <!-- Container for Form Link UI. Will be populated with existing form links and where new
+          form links will be added -->
+      <div class="form-links" data-bind="
+                template: {
+                    name: 'form-link-template',
+                    foreach: formLinks,
+                    as: 'formLink'
+                }
+                ">
+      </div>
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <strong>
+          {% trans "Navigation Fallback" %}
+        </strong>
+        <div>
+          <select name="post_form_workflow_fallback" class="form-select" data-bind="
+                        optstr: workflowFallbackOptions(),
+                        value: workflowfallback,
+                        optionsCaption: gettext('Choose a fallback option...'),
+                        staticSelect2: {},
+                    "></select>
+        </div>
+      </div>
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <button class="btn btn-outline-primary" data-bind="click: onAddFormLink">
+          <i class="fa fa-plus"></i>
+          {% trans "Add link" %}
+        </button>
+        <input type="hidden" class="workflow-change-trigger" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/html" id="form-link-template">
+  <div class="card">  {# todo B5: css-well #}
+    <div>
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <textarea name="form_links_xpath_expressions"
+                  placeholder="{% trans "XPath Expression" %}"
+                  rows="1"
+                  class="form-control vertical-resize"
+                  data-bind="text: formLink.xpath, value: formLink.xpath"
+                  spellcheck="false"
+        ></textarea>
+      </div>
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <select class="form-select" name="form_links_form_ids" data-bind="
+                  options: $parent.forms,
+                  optionsText: 'name',
+                  optionsValue: 'uniqueId',
+                  optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
+                  value: formLink.formId,
+                  staticSelect2: {},
+                  "></select>
+        <div data-bind="visible: formLink.allowManualLinking()">
+          <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
+          <div class="help-block" data-bind="visible: !formLink.autoLink()">
+            {% trans "This form requires manual linking." %}
+          </div>
+          <div class="help-block" data-bind="visible: formLink.autoLink() && !formLink.manualDatums()">
+            <span data-bind="click: enableManualDatums" class="btn btn-outline-primary btn-sm">
+              {% trans "Enable manual linking" %}
+            </span>
+          </div>
+          <div class="help-block" data-bind="visible: formLink.manualDatums">
+            <span data-bind="click: disableManualDatums" class="btn btn-outline-danger btn-sm">
+              {% trans "Disable manual linking" %}
+            </span>
+          </div>
+          <!-- ko ifnot: formLink.advancedMode -->
+            <div class="help-block" data-bind="visible: formLink.showLinkDatums()">
+              <button class="btn btn-outline-primary btn-sm" data-bind="click: formLink.fetchDatums">
+                <!-- ko if: formLink.datumsFetched() -->
+                {% trans "Refresh" %}
+                <!-- /ko -->
+                <!-- ko if: !formLink.datumsFetched() -->
+                {% trans "Continue" %}
+                <!-- /ko -->
+              </button>
+            </div>
+            <div class="help-block" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
+              {% trans "No additional linking required." %}
+            </div>
+            <div class="text-danger" data-bind="visible: formLink.datumsError()">
+              {% trans "Error fetching link data." %}
+            </div>
+            <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
+              <div class="form-group">  {# todo B5: css-form-group #}
+                <div class="card panel-appmanager">  {# todo B5: css-panel #}
+                  <div class="card-header">
+                    <h4 class="card-title card-title-nolink">
+                      <span data-bind="text: name"></span>
+                      <span class="badge text-bg-primary" data-bind="text: caseType"></span>
+                    </h4>
+                  </div>
+                  <div class="card-body">
+                    <div class="controls">
+                      <textarea name="_xpath"
+                        placeholder="XPath Expression"
+                        rows="1"
+                        data-bind="text: xpath, value: xpath"
+                        class="form-control vertical-resize"
+                        spellcheck="false">
+                      </textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <!-- /ko -->
+          <!-- ko if: formLink.advancedMode && formLink.showLinkDatums() -->
+            <div data-bind="jqueryElement: formLink.advancedModeDatumsElement.ui"></div>
+          <!-- /ko -->
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger" data-bind="visible: formLink.errors().length">
+      <ul data-bind="foreach: formLink.errors()">
+        <li data-bind="text: $data"></li>
+      </ul>
+    </div>
+
+    <button class="btn btn-outline-danger btn-sm"
+            data-bind="click: $parent.onDestroyFormLink.bind($parent)">
+      <i class="fa fa-remove"></i>
+      {% trans "Remove this link" %}
+    </button>
+  </div>
+  </div>
+</script>
