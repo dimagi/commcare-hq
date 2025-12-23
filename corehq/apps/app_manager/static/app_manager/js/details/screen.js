@@ -362,18 +362,18 @@ export default function (spec, config, options) {
     );
 
     const columnsHasFormat = function (formatName) {
-        return _.some(self.columns(), function(col) {
+        return _.some(self.columns(), function (col) {
             return col.format && col.format.val && col.format.val() === formatName;
         });
     };
     const areAllDependenciesPresent = function (dependencies) {
-        return _.every(dependencies, function(dep) {
+        return _.every(dependencies, function (dep) {
             return columnsHasFormat(dep);
         });
     };
     const calculateDynamicFormatsToInclude = function () {
         const formatsToInclude = [];
-        _.each(COLUMN_FORMAT_DEPENDENCIES, function(config, formatName) {
+        _.each(COLUMN_FORMAT_DEPENDENCIES, function (config, formatName) {
             if (areAllDependenciesPresent(config.dependencies)) {
                 formatsToInclude.push(formatName);
             }

@@ -359,7 +359,7 @@ export default function (col, screen) {
 
     self.updateFormatOptions = function (dynamicFormats, formatsToInclude) {
         let updateMenuOptions = Utils.getFieldFormats();
-        updateMenuOptions = updateMenuOptions.filter(function(option) {
+        updateMenuOptions = updateMenuOptions.filter(function (option) {
             if (!dynamicFormats.includes(option.value)) {
                 return true;
             }
@@ -378,7 +378,7 @@ export default function (col, screen) {
             self.format.ui.find('select').val('plain');
             const message = Utils.dynamicFormats.getDependencyAlertMessage(currentFormatValue);
             alertUser.alert_user(message, 'warning', false, true);
-        } else if (currentFormatValue != null) {
+        } else if (currentFormatValue !== null) {
             self.format.val(currentFormatValue);
         }
     };
