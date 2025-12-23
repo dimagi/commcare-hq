@@ -354,6 +354,42 @@ export default function (spec, config, options) {
         self.fire('change');
     };
 
+    const COLUMN_FORMAT_DEPENDENCIES = Utils.dynamicFormats.COLUMN_FORMAT_DEPENDENCIES;
+    const uniqueDependencies = Array.from(
+        new Set(_.flatten(
+            Object.values(COLUMN_FORMAT_DEPENDENCIES).map(config => config.dependencies)
+        ))
+    );
+
+    const columnsHasFormat = function (formatName) {
+        return _.some(self.columns(), function (col) {
+            return col.format && col.format.val && col.format.val() === formatName;
+        });
+    };
+    const areAllDependenciesPresent = function (dependencies) {
+        return _.every(dependencies, function (dep) {
+            return columnsHasFormat(dep);
+        });
+    };
+    const calculateDynamicFormatsToInclude = function () {
+        const formatsToInclude = [];
+        _.each(COLUMN_FORMAT_DEPENDENCIES, function (config, formatName) {
+            if (areAllDependenciesPresent(config.dependencies)) {
+                formatsToInclude.push(formatName);
+            }
+        });
+        return formatsToInclude;
+    };
+    const updateAllColumnFormats = function () {
+        const formatsToInclude = calculateDynamicFormatsToInclude();
+        const dynamicFormats = Object.keys(COLUMN_FORMAT_DEPENDENCIES);
+        _.each(self.columns(), function (col) {
+            if (!col.isTab) {
+                col.updateFormatOptions(dynamicFormats, formatsToInclude);
+            }
+        });
+    };
+
     self.initColumnAsColumn = function (column) {
         column.model.setEdit(false);
         column.field.setEdit(true);
@@ -395,6 +431,16 @@ export default function (spec, config, options) {
                 }]);
             }
         });
+        column.format.on('change', function () {
+            const newFormat = column.format.val();
+            const dependencyChanged =
+                uniqueDependencies.includes(column.previousFormat) ||
+                uniqueDependencies.includes(newFormat);
+            if (dependencyChanged) {
+                updateAllColumnFormats();
+            }
+            column.previousFormat = newFormat;
+        });
         return column;
     };
 
@@ -435,6 +481,9 @@ export default function (spec, config, options) {
         self.columns.push(ColumnModel(columns[i], self));
         self.initColumnAsColumn(self.columns()[i]);
     }
+
+    // Update all column formats on page load to account for dynamic formats
+    updateAllColumnFormats();
 
     self.caseTileRowMax = ko.computed(() => _.max([self.columns().length + 1, 7]));
     self.caseTileRowMax.subscribe(function (newValue) {
@@ -492,6 +541,7 @@ export default function (spec, config, options) {
         } else if (change.status === 'deleted') {
             move = 1;
             affectedColumns = self.columns.slice(change.index);
+            updateAllColumnFormats();
         }
         if (affectedColumns) {
             affectedColumns.forEach(c => {
@@ -509,7 +559,12 @@ export default function (spec, config, options) {
         // Only save if property names are valid
         var errors = [],
             containsTab = false,
-            imageColumnCount = 0;
+            imageColumnCount = 0,
+            geoBoundaryCount = 0,
+            geoBoundaryColorCount = 0,
+            geoPointsCount = 0,
+            geoPointsColorsCount = 0;
+
         _.each(self.columns(), function (column) {
             column.saveAttempted(true);
             if (column.isTab) {
@@ -521,11 +576,31 @@ export default function (spec, config, options) {
                 errors.push(gettext("There is an error in your property name: ") + column.field.value);
             } else if (column.format.value === 'image') {
                 imageColumnCount += 1;
+            } else if (column.format.value === 'geo-boundary') {
+                geoBoundaryCount += 1;
+            } else if (column.format.value === 'geo-boundary-color') {
+                geoBoundaryColorCount += 1;
+            } else if (column.format.value === 'geo-points') {
+                geoPointsCount += 1;
+            } else if (column.format.value === 'geo-points-colors') {
+                geoPointsColorsCount += 1;
             }
         });
 
         if (imageColumnCount > 1) {
             errors.push(gettext("You can only have one property with the 'Image' format"));
+        }
+        if (geoBoundaryCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Boundary' format"));
+        }
+        if (geoBoundaryColorCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Boundary Color' format"));
+        }
+        if (geoPointsCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Points' format"));
+        }
+        if (geoPointsColorsCount > 1) {
+            errors.push(gettext("You can only have one property with the 'Geo Points Colors' format"));
         }
         if (containsTab) {
             if (!self.columns()[0].isTab) {
@@ -678,6 +753,12 @@ export default function (spec, config, options) {
             self.columns.splice(index, 0, column);
         }
         column.useXpathExpression = !!columnConfiguration.useXpathExpression;
+
+        const formatsToInclude = calculateDynamicFormatsToInclude();
+        const dynamicFormats = Object.keys(COLUMN_FORMAT_DEPENDENCIES);
+        if (!column.isTab) {
+            column.updateFormatOptions(dynamicFormats, formatsToInclude);
+        }
     };
     self.pasteCallback = function (data, index) {
         try {
