@@ -336,7 +336,7 @@ class KycUser:
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
             user_data_obj.update(update)
-            user_data_obj.save()
+            self._user_or_case_obj.save()
         else:
             if isinstance(self._user_or_case_obj, CommCareUser):
                 case_id = self._user_or_case_obj.get_usercase().case_id
