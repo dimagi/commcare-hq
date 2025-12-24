@@ -8568,38 +8568,8 @@ msgid "Person Simple"
 msgstr "Проста особа"
 
 #: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, subtitle row, third row with two cells, and map"
-msgstr ""
-"Рядок заголовка, рядок підзаголовка, третій рядок з двома комірками та карта"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, second row with two cells, third row, and map"
-msgstr "Рядок заголовка, другий рядок з двома комірками, третій рядок і карта"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, second row with two cells, third and fourth rows, and map"
-msgstr ""
-"Рядок заголовка, другий рядок з двома комірками, третій і четвертий рядки та "
-"карта"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Three upper rows, four rows with two cells, two lower rows and map"
-msgstr ""
-"Три верхні рядки, чотири рядки з двома комірками, два нижні рядки та карта"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, second row with two cells, third row with two cells"
-msgstr ""
-"Рядок заголовка, другий рядок з двома комірками, третій рядок з двома "
-"комірками"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
 msgid "2 x 3 grid of image and text"
 msgstr "Сітка 2 x 3 зображення і тексту"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "BHA Referrals"
-msgstr "BHA направлення"
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
@@ -9354,6 +9324,7 @@ msgstr "Встановити CommCare"
 #: corehq/apps/reports/templates/reports/standard/bootstrap5/submission_error_report.html
 #: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/attribute_wrap_length.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_next_action_simple/next_step_with_message.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -25152,6 +25123,22 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    This subscription will be paused on %(next_date)s.\n"
+#| "                  "
+msgid ""
+"\n"
+"                  Payment is scheduled for %(autopay_date)s.\n"
+"                "
+msgstr ""
+"\n"
+"                    Ця підписка буде призупинена %(next_date)s.\n"
+"                  "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Next Subscription Begins"
 msgstr "Початок наступної підписки"
 
@@ -32997,8 +32984,6 @@ msgid "Lock Linked Tables For Me"
 msgstr "Заблокувати пов'язані таблиці для мене"
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 msgid ""
 "\n"
 "                Linked configurations are controlled from a separate, linked "
@@ -51938,10 +51923,6 @@ msgid "Hint: select 'is empty' to watch the Value field below disappear"
 msgstr ""
 "Підказка: оберіть 'порожнє', щоб побачити, як поле Значення зникне нижче"
 
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_hq_hx_action.py
-msgid "New Item"
-msgstr "Новий елемент"
-
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Big Cats"
 msgstr "Великі коти"
@@ -51954,6 +51935,10 @@ msgstr "Дата народження"
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Opened On"
 msgstr "Відкрито"
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_todo_list.py
+msgid "New Item"
+msgstr "Новий елемент"
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
 msgid "Team"
@@ -57542,12 +57527,23 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+#| "commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+#| "            target=\"_blank\">Learn more</a> about how roles &amp; "
+#| "permissions are used.\n"
+#| "        "
 msgid ""
 "\n"
-"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
 "pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\">Learn more</a> about how roles &amp; "
-"permissions are used.\n"
+"            target=\"_blank\"\n"
+"            >Learn more</a\n"
+"          >\n"
+"          about how roles &amp; permissions are used.\n"
 "        "
 msgstr ""
 "\n"
@@ -57569,10 +57565,47 @@ msgstr "Заблокувати пов’язані ролі для мене"
 
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                Linked configurations are controlled from a separate, "
+#| "linked project space.\n"
+#| "                  <a href='https://confluence.dimagi.com/display/"
+#| "commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</"
+#| "a>.\n"
+#| "              "
 msgid ""
 "\n"
-"          Would you like to edit roles and add new,\n"
-"          custom roles?\n"
+"            Linked configurations are controlled from a separate, linked "
+"project\n"
+"            space.\n"
+"            <a\n"
+"              href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"Enterprise+Release+Management\"\n"
+"              target=\"_blank\"\n"
+"              >Learn more</a\n"
+"            >.\n"
+"          "
+msgstr ""
+"\n"
+"                Пов'язані налаштування керуються з окремого, пов'язаного "
+"простору проєкту.\n"
+"                  <a href='https://confluence.dimagi.com/display/"
+"commcarepublic/Enterprise+Release+Management' target='_blank'>Дізнатися "
+"більше</a>.\n"
+"              "
+
+#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
+#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          Would you like to edit roles and add new,\n"
+#| "          custom roles?\n"
+#| "        "
+msgid ""
+"\n"
+"          Would you like to edit roles and add new, custom roles?\n"
 "        "
 msgstr ""
 "\n"
@@ -57582,11 +57615,21 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          <strong><a href=\"%(subscription_url)s\">Upgrade to CommCare "
+#| "Standard</a></strong>\n"
+#| "          to activate\n"
+#| "          <strong>Advanced Role-Based Access</strong>.\n"
+#| "        "
 msgid ""
 "\n"
-"          <strong><a href=\"%(subscription_url)s\">Upgrade to CommCare "
-"Standard</a></strong>\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Upgrade to CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
 "          to activate\n"
 "          <strong>Advanced Role-Based Access</strong>.\n"
 "        "
@@ -58478,7 +58521,6 @@ msgid "Allow role to access data from all locations."
 msgstr "Дозволити ролі доступ до даних з усіх локацій."
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    Make sure any users assigned this role also have a "
@@ -58495,7 +58537,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    Organization-based data access restrictions are only "
@@ -58513,7 +58554,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    With the current configuration, this role will have full "
@@ -58608,7 +58648,6 @@ msgid "Select which other roles can assign this role:"
 msgstr "Виберіть, які інші ролі можуть призначати цю роль:"
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    If the highlighted roles are selected, this role will "
@@ -58658,7 +58697,6 @@ msgid "Allow this role to manage project alerts."
 msgstr "Дозволити цій ролі керувати сповіщеннями про проєкт."
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #, python-format
 msgid ""
 "\n"
@@ -58849,6 +58887,132 @@ msgstr "Перевірка електронної адреси"
 #, python-format
 msgid "Delete +%(number)s ?"
 msgstr "Видалити +%(number)s ?"
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Make sure any users assigned this role also have a "
+#| "location assigned to them.\n"
+#| "                    Users without assigned locations will not be "
+#| "permitted to log in.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      Make sure any users assigned this role also have a\n"
+"                      location assigned to them. Users without assigned\n"
+"                      locations will not be permitted to log in.\n"
+"                    "
+msgstr ""
+"\n"
+"                    Переконайтеся, що всім користувачам із цією роллю також "
+"призначено локацію.\n"
+"                    Користувачі без призначених локацій не зможуть увійти в "
+"систему.\n"
+"                  "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Organization-based data access restrictions are only "
+#| "available\n"
+#| "                    on the Pro plan and above. Saving this role will "
+#| "enable\n"
+#| "                    full organization access for the assigned users.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      Organization-based data access restrictions are only\n"
+"                      available on the Pro plan and above. Saving this role "
+"will\n"
+"                      enable full organization access for the assigned "
+"users.\n"
+"                    "
+msgstr ""
+"\n"
+"                    Обмеження доступу до даних на основі організації "
+"доступні\n"
+"                    лише у тарифному плані Pro та вище. Збереження цієї ролі "
+"надасть\n"
+"                    повний доступ до організації призначеним користувачам.\n"
+"                  "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    With the current configuration, this role will have "
+#| "full organization access and roles that can assign it will not.\n"
+#| "                    This is not recommended.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      With the current configuration, this role will have "
+"full\n"
+"                      organization access and roles that can assign it will "
+"not.\n"
+"                      This is not recommended.\n"
+"                    "
+msgstr ""
+"\n"
+"                    За поточної конфігурації ця роль матиме повний доступ до "
+"організації, а ролі, які можуть її призначати, — ні.\n"
+"                    Це не рекомендується.\n"
+"                  "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    If the highlighted roles are selected, this role will "
+#| "have full organization access and be assignable\n"
+#| "                    by a role that does not. This is not recommended "
+#| "configuration.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      If the highlighted roles are selected, this role will "
+"have\n"
+"                      full organization access and be assignable by a role "
+"that\n"
+"                      does not. This is not recommended configuration.\n"
+"                    "
+msgstr ""
+"\n"
+"                    Якщо вибрано виділені ролі, ця роль матиме повний доступ "
+"до організації та може бути призначена\n"
+"                    роллю, яка такого доступу не має. Це не рекомендована "
+"конфігурація.\n"
+"                  "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "            This permission is already configured via <a "
+#| "target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web "
+#| "Apps Permissions</a>.\n"
+#| "            Please remove this configuration before updating access "
+#| "here.\n"
+#| "          "
+msgid ""
+"\n"
+"          This permission is already configured via\n"
+"          <a target=\"_blank\" "
+"href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Manage Web Apps Permissions\n"
+"          </a>\n"
+"          . Please remove this configuration before updating access here.\n"
+"        "
+msgstr ""
+"\n"
+"            Це право вже налаштовано через <a target=\"_blank\" "
+"href=\"%(manage_web_apps_permissions_url)s\">Керування правами доступу до "
+"Веб-додатків</a>.\n"
+"            Будь ласка, видаліть цю конфігурацію перед оновленням доступу "
+"тут.\n"
+"          "
 
 #: corehq/apps/users/templates/users/partials/confirm_trust_identity_provider_message.html
 msgid ""
@@ -59050,38 +59214,6 @@ msgid "Go back to Web Users"
 msgstr "Повернутися до веб-користувачів"
 
 #: corehq/apps/users/views/__init__.py
-msgid "Roles & Permissions"
-msgstr "Ролі та дозволи"
-
-#: corehq/apps/users/views/__init__.py
-msgid "Use Default"
-msgstr "Використовувати за замовчуванням"
-
-#: corehq/apps/users/views/__init__.py
-msgid ""
-"We might be experiencing issues fetching the entire list of user roles right "
-"now. This issue is likely temporary and nothing to worry about, but if you "
-"keep seeing this for more than a day, please <a href='#modalReportIssue' "
-"data-toggle='modal'>Report an Issue</a>."
-msgstr ""
-"Можливо, зараз виникають проблеми з отриманням повного списку ролей "
-"користувачів. Це, ймовірно, тимчасова проблема, і турбуватися не варто, але "
-"якщо ви бачите це більше одного дня, будь ласка, <a href='#modalReportIssue' "
-"data-toggle='modal'>Повідомте про проблему</a>."
-
-#: corehq/apps/users/views/__init__.py
-msgid ""
-"This project has user roles that restrict data access by organization, but "
-"the software plan no longer supports that. Any users assigned to roles that "
-"are restricted in data access by organization can no longer access this "
-"project.  Please update the existing roles."
-msgstr ""
-"У цьому проєкті є ролі користувачів, які обмежують доступ до даних за "
-"організацією, але тарифний план більше це не підтримує. Користувачі, "
-"призначені на ролі з обмеженим доступом до даних за організацією, більше не "
-"можуть отримувати доступ до цього проєкту. Будь ласка, оновіть наявні ролі."
-
-#: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
 "You have successfully removed {username} from your project space. <a "
@@ -59094,31 +59226,6 @@ msgstr ""
 #, python-brace-format
 msgid "It appears {username} has already been removed from your project space."
 msgstr "Схоже, {username} вже був видалений з вашого простору проєкту."
-
-#: corehq/apps/users/views/__init__.py
-msgid "A role with the same name already exists"
-msgstr "Роль з такою ж назвою вже існує"
-
-#: corehq/apps/users/views/__init__.py
-#, python-brace-format
-msgid ""
-"Unable to delete role '{role}'. This role is the default role for Mobile "
-"Users and can not be deleted."
-msgstr ""
-"Не вдалося видалити роль '{role}'. Ця роль є роллю за замовчуванням для "
-"мобільних користувачів і не може бути видалена."
-
-#: corehq/apps/users/views/__init__.py
-#, python-brace-format
-msgid ""
-"Unable to delete role '{role}'. It has one user and/or invitation still "
-"assigned to it. Remove all users assigned to the role before deleting it."
-msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
-"still assigned to it. Remove all users assigned to the role before deleting "
-"it."
-msgstr[0] ""
-msgstr[1] ""
 
 #: corehq/apps/users/views/__init__.py
 msgid "Invite Web User to Project"
@@ -59479,6 +59586,63 @@ msgstr "Скидання пароля завершено"
 #| msgid "Password Reset Complete"
 msgid "Password reset email sent to {}"
 msgstr "Скидання пароля завершено"
+
+#: corehq/apps/users/views/role.py
+msgid "Roles & Permissions"
+msgstr "Ролі та дозволи"
+
+#: corehq/apps/users/views/role.py
+msgid "Use Default"
+msgstr "Використовувати за замовчуванням"
+
+#: corehq/apps/users/views/role.py
+msgid ""
+"We might be experiencing issues fetching the entire list of user roles right "
+"now. This issue is likely temporary and nothing to worry about, but if you "
+"keep seeing this for more than a day, please <a href='#modalReportIssue' "
+"data-toggle='modal'>Report an Issue</a>."
+msgstr ""
+"Можливо, зараз виникають проблеми з отриманням повного списку ролей "
+"користувачів. Це, ймовірно, тимчасова проблема, і турбуватися не варто, але "
+"якщо ви бачите це більше одного дня, будь ласка, <a href='#modalReportIssue' "
+"data-toggle='modal'>Повідомте про проблему</a>."
+
+#: corehq/apps/users/views/role.py
+msgid ""
+"This project has user roles that restrict data access by organization, but "
+"the software plan no longer supports that. Any users assigned to roles that "
+"are restricted in data access by organization can no longer access this "
+"project.  Please update the existing roles."
+msgstr ""
+"У цьому проєкті є ролі користувачів, які обмежують доступ до даних за "
+"організацією, але тарифний план більше це не підтримує. Користувачі, "
+"призначені на ролі з обмеженим доступом до даних за організацією, більше не "
+"можуть отримувати доступ до цього проєкту. Будь ласка, оновіть наявні ролі."
+
+#: corehq/apps/users/views/role.py
+msgid "A role with the same name already exists"
+msgstr "Роль з такою ж назвою вже існує"
+
+#: corehq/apps/users/views/role.py
+#, python-brace-format
+msgid ""
+"Unable to delete role '{role}'. This role is the default role for Mobile "
+"Users and can not be deleted."
+msgstr ""
+"Не вдалося видалити роль '{role}'. Ця роль є роллю за замовчуванням для "
+"мобільних користувачів і не може бути видалена."
+
+#: corehq/apps/users/views/role.py
+#, python-brace-format
+msgid ""
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
+msgid_plural ""
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -65205,6 +65369,32 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Title row, subtitle row, third row with two cells, and map"
+#~ msgstr ""
+#~ "Рядок заголовка, рядок підзаголовка, третій рядок з двома комірками та "
+#~ "карта"
+
+#~ msgid "Title row, second row with two cells, third row, and map"
+#~ msgstr ""
+#~ "Рядок заголовка, другий рядок з двома комірками, третій рядок і карта"
+
+#~ msgid "Title row, second row with two cells, third and fourth rows, and map"
+#~ msgstr ""
+#~ "Рядок заголовка, другий рядок з двома комірками, третій і четвертий рядки "
+#~ "та карта"
+
+#~ msgid "Three upper rows, four rows with two cells, two lower rows and map"
+#~ msgstr ""
+#~ "Три верхні рядки, чотири рядки з двома комірками, два нижні рядки та карта"
+
+#~ msgid "Title row, second row with two cells, third row with two cells"
+#~ msgstr ""
+#~ "Рядок заголовка, другий рядок з двома комірками, третій рядок з двома "
+#~ "комірками"
+
+#~ msgid "BHA Referrals"
+#~ msgstr "BHA направлення"
 
 #~ msgid ""
 #~ "The date opened property for this case will be changed. Please do not use "
