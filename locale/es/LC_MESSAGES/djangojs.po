@@ -544,7 +544,6 @@ msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr "Descendente (1.3, 1.2, 1.1)"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-#| msgid "Fetching your location..."
 msgid "Missing sort calculation."
 msgstr "Falta el cálculo de ordenamiento."
 
