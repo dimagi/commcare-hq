@@ -1,0 +1,61 @@
+--- 
++++ 
+@@ -10,11 +10,11 @@
+   <div class="modal-dialog" role="document">
+     <div class="modal-content">
+       <!-- B5 TODO: Replace inline styles with B5 utility classes -->
+-      <div class="modal-header" style="border-bottom: 1px solid lightgray;">
++      <div class="modal-header" style="border-bottom: 1px solid lightgray;">  {# todo B5: inline-style #}
+         <button
+           type="button"
+-          class="close"
+-          data-dismiss="modal"
++          class="btn-close"  {# todo B5: css-close #}
++          data-bs-dismiss="modal"
+           aria-label="{% trans 'Close' %}"
+         >
+           <span aria-hidden="true">&times;</span>
+@@ -27,9 +27,9 @@
+         <p class="lead">
+           {% trans "Please define a case type for your case list." %}
+         </p>
+-        <div class="form-horizontal" style="margin-top: 30px;">
+-          <div class="form-group">
+-            <label class="control-label col-sm-3">
++        <div class="form-horizontal" style="margin-top: 30px;">  {# todo B5: inline-style #}
++          <div class="form-group">  {# todo B5: css-form-group #}
++            <label class="form-label col-md-3">
+               {% trans "Case Type" %}
+               {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+                 <span
+@@ -45,8 +45,8 @@
+                 ></span>
+               {% endif %}
+             </label>
+-            <div class="col-sm-6">
+-              <select
++            <div class="col-md-6">
++              <select  {# todo B5: css-select-form-control #}
+                 class="form-control"
+                 id="new-case-type-dropdown"
+                 name="new-case-type-dropdown"
+@@ -56,7 +56,7 @@
+               <div
+                 class="help-block"
+                 id="new-case-type-error"
+-                style="display: none;"
++                style="display: none;"  {# todo B5: inline-style #}
+               ></div>
+               <div class="help-block" id="new-case-type-help">
+                 {% trans "* You can change the Case Type later by going to the menu settings page" %}
+@@ -68,8 +68,8 @@
+       <div class="modal-footer">
+         <button
+           type="button"
+-          class="btn btn-default"
+-          data-dismiss="modal"
++          class="btn btn-outline-primary"
++          data-bs-dismiss="modal"
+           id="case-type-go-back-btn"
+         >
+           {% trans "Go Back" %}
