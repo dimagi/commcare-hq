@@ -337,6 +337,8 @@ class KycUser:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
             user_data_obj.update(update)
             user_data_obj.save()
+            # Save the user to trigger ES update via couch_user_post_save signal
+            CommCareUser.get(self._user_or_case_obj.user_id).save()
         else:
             if isinstance(self._user_or_case_obj, CommCareUser):
                 case_id = self._user_or_case_obj.get_usercase().case_id
