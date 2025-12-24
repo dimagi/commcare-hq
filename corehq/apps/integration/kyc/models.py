@@ -351,7 +351,7 @@ class KycUser:
                 device_id=device_id or f'{__name__}.update_status',
             )
             if isinstance(self._user_or_case_obj, CommCareCase):
-                self._user_or_case_obj.refresh_from_db()
+                self._user_or_case_obj = CommCareCase.objects.get_case(case_id, self.kyc_config.domain)
         self._user_data = None
 
 
