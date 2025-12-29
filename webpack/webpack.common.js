@@ -129,6 +129,12 @@ module.exports = {
             'window.jQuery': 'jquery',  // needed for some third-party libraries that depend on jQuery, such as multiselect
         }),
         new hqPlugins.EntryChunksPlugin(),
+
+        // Supports hqAnalytics in vellum when VELLUM_DEBUG=True
+        new webpack.NormalModuleReplacementPlugin(
+            /hqAnalytics\.js/,
+            path.resolve(utils.getStaticPathForApp('app_manager', 'js/forms/'), 'form_designer_analytics.js'),
+        ),
     ],
 
     optimization: {
@@ -139,6 +145,12 @@ module.exports = {
 
     resolve: {
         alias: utils.getAllAliases(Object.assign(aliases, vellumUtils.getAliases())),
+
+        // Needed for js-xpath in app manager
+        fallback: {
+            "path": false,
+            "fs": false,
+        },
     },
 
     snapshot: {

@@ -1,0 +1,9 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ import $ from "jquery";
+-import main from "hqwebapp/js/bootstrap3/main";
++import main from "hqwebapp/js/bootstrap5/main";
+ 
+ function updatePromptModel(form) {
+     var self = {};
