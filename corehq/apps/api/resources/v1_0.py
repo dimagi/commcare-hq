@@ -6,30 +6,28 @@ from django.urls import re_path as url
 from tastypie import fields
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpNotFound
-from . import (
-    CouchResourceMixin,
-    DomainSpecificResourceMixin,
-    HqBaseResource,
-)
+
+from corehq import toggles
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.users.role_utils import get_commcare_analytics_access_for_user_domain
-from corehq import toggles
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import (
-    CouchUser,
-    HqPermissions,
-    Invitation,
+from corehq.apps.api.validation import (
+    WebUserResourceSpec,
+    WebUserValidationException,
 )
-from corehq.apps.users.model_log import InviteModelAction
-from corehq.apps.users.views import InviteWebUserView
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
     get_tableau_groups_by_ids,
 )
-from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
-
+from corehq.apps.users.model_log import InviteModelAction
+from corehq.apps.users.models import CouchUser, HqPermissions, Invitation
+from corehq.apps.users.role_utils import (
+    get_commcare_analytics_access_for_user_domain,
+)
+from corehq.apps.users.views import InviteWebUserView
 from corehq.const import INVITATION_CHANGE_VIA_API
+
+from . import CouchResourceMixin, DomainSpecificResourceMixin, HqBaseResource
 
 
 class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
