@@ -45,6 +45,9 @@ self.initViz = function (ticket) {
         new window.tableau.Viz(containerDiv, url, {
             hideTabs: true,
         });
+
+        // Add sandbox attribute to iframe before it loads
+        $(containerDiv).find('iframe').attr('sandbox', 'allow-scripts');
     });
 };
 
