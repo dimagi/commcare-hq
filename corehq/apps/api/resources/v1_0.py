@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.http import JsonResponse
 from django.urls import re_path as url
+from django.urls import reverse
 
 from tastypie import fields
 from tastypie.exceptions import ImmediateHttpResponse
@@ -14,6 +15,9 @@ from corehq.apps.api.validation import (
     WebUserResourceSpec,
     WebUserValidationException,
 )
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.views.download import DownloadDETSchemaView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
@@ -167,3 +171,118 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
                                     "action": InviteModelAction.CREATE, "changes": changes})
         bundle.obj = invite
         return bundle
+
+
+class DETExportInstanceResource(
+    CouchResourceMixin,
+    HqBaseResource,
+    DomainSpecificResourceMixin,
+):
+    """
+    API resource to list ``FormExportInstance`` and ``CaseExportInstance``
+    objects where ``show_det_config_download`` is True.
+
+    This is used by CommCare Data Pipeline (formerly CommCare Sync) to
+    list exports available for the Data Export Tool.
+    """
+    id = fields.CharField(attribute='_id', readonly=True, unique=True)
+    name = fields.CharField(attribute='name', readonly=True)
+    type = fields.CharField(readonly=True)
+    export_format = fields.CharField(attribute='export_format', readonly=True)
+    is_deidentified = fields.BooleanField(attribute='is_deidentified', readonly=True)
+    case_type = fields.CharField(readonly=True, null=True)
+    xmlns = fields.CharField(readonly=True, null=True)
+    det_config_url = fields.CharField(readonly=True)
+
+    class Meta(CustomResourceMeta):
+        resource_name = 'det_export_instance'
+        authentication = RequirePermissionAuthentication(HqPermissions.view_reports)
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+
+    def dehydrate_det_config_url(self, bundle):
+        return reverse(
+            DownloadDETSchemaView.urlname,
+            args=(bundle.request.domain, bundle.obj._id),
+        )
+
+    def dehydrate_type(self, bundle):
+        """Return 'form' or 'case' based on the export instance type"""
+        if isinstance(bundle.obj, FormExportInstance):
+            return FORM_EXPORT
+        elif isinstance(bundle.obj, CaseExportInstance):
+            return CASE_EXPORT
+        return None
+
+    def dehydrate_case_type(self, bundle):
+        """Return case_type for CaseExportInstance, None otherwise"""
+        if isinstance(bundle.obj, CaseExportInstance):
+            return bundle.obj.case_type
+        return None
+
+    def dehydrate_xmlns(self, bundle):
+        """Return xmlns for FormExportInstance, None otherwise"""
+        if isinstance(bundle.obj, FormExportInstance):
+            return bundle.obj.xmlns
+        return None
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+
+        form_key = [domain, 'FormExportInstance']
+        form_results = FormExportInstance.get_db().view(
+            'export_instances_by_domain/view',
+            startkey=form_key,
+            endkey=form_key + [{}],
+            include_docs=True,
+            reduce=False
+        ).all()
+        form_exports = [
+            FormExportInstance.wrap(result['doc'])
+            for result in form_results
+            if result['doc'].get('show_det_config_download', False)
+        ]
+
+        case_key = [domain, 'CaseExportInstance']
+        case_results = CaseExportInstance.get_db().view(
+            'export_instances_by_domain/view',
+            startkey=case_key,
+            endkey=case_key + [{}],
+            include_docs=True,
+            reduce=False
+        ).all()
+        case_exports = [
+            CaseExportInstance.wrap(result['doc'])
+            for result in case_results
+            if result['doc'].get('show_det_config_download', False)
+        ]
+
+        return form_exports + case_exports
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+
+        try:
+            export = FormExportInstance.get(pk)
+            if (
+                export.doc_type == 'FormExportInstance'
+                and export.domain == domain
+                and export.show_det_config_download
+            ):
+                return export
+        except Exception:
+            pass
+
+        try:
+            export = CaseExportInstance.get(pk)
+            if (
+                export.doc_type == 'CaseExportInstance'
+                and export.domain == domain
+                and export.show_det_config_download
+            ):
+                return export
+        except Exception:
+            pass
+
+        raise ImmediateHttpResponse(HttpNotFound())
