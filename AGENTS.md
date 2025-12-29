@@ -1,5 +1,9 @@
 # Guidelines for AI Agents
 
+This document provides technical information about the CommCare HQ codebase
+for AI coding assistants. For coding standards and best practices, see
+`CODE_STANDARDS.md`.
+
 ## Tech Stack
 
 - Backend: Python, Django
@@ -15,65 +19,39 @@
 - Stream processing: Kafka
 - Version Control: Git
 
-## Commands
-
-- Testing: Use the `--reusedb=1` parameter to improve speed by avoiding
-  resetting the test database: `pytest --reusedb=1 path/to/test.py`
-- Python linting: `ruff check path/to/file.py`
-- JavaScript linting: `npx eslint path/to/file.js`
-- Sort imports: `ruff check --select I --fix path/to/file.py`
-- Format: `ruff format path/to/file.py`
-
-## Code Standards
-
-### Code Clarity
-
-- Comments: Don't use comments to indicate _what_ the code does; make
-  sure that that is obvious from the code itself. Use comments to
-  explain _why_ the code does what it does, and only when it might not
-  be clear.
-
-- Docstrings: Use docstrings to give the purpose of a module or class.
-  Avoid docstrings on methods or functions where their purpose is clear
-  from the name. Use reStructuredText format in docstrings.
-
-- Single responsibility: Break up longer functions and methods where
-  appropriate.
-
-- Don't repeat yourself (DRY): If you suspect that similar code might have been
-  needed before, search the codebase for it before implementing it. If you find
-  functionality similar to what you are looking for, you may need to move it to
-  keep architectural layers or Django app dependencies structured well.
-
-- Keep docs in sync: Ensure that comments and docstrings are updated
-  when code changes are made. Keep `README.md` files, and documentation
-  under `docs/` directories, up-to-date with the behavior of the code.
+## Common Commands
 
 ### Testing
 
-- Use pytest features and pytest conventions, like Pythonic `assert`
-  statements, and parametrized tests for repetitive test cases.
-- Use [pytest-unmagic][https://github.com/dimagi/pytest-unmagic/] for
-  explicit test fixtures.
-- Tests should be easy to read.
-- Code changes must be covered by appropriate tests.
-- Tests need to cover edge cases and failure scenarios.
-- Doctests should be tested. e.g.
-  ```python
-  def test_doctests():
-      results = doctest.testmod(some_module)
-      assert results.failed == 0
-  ```
-- Run the tests that cover code changes before considering changes
-  complete.
+```bash
+# Run tests with database reuse for faster execution
+pytest --reusedb=1 path/to/test.py
+```
 
-### Database Performance
+Use the `--reusedb=1` parameter when running tests to avoid resetting
+the test database unnecessarily
 
-- Database queries should be optimized. In rare instances this could
-  require the Developer to test the performance of the query in an
-  environment similar to production. Notify the Developer when this
-  would be beneficial.
+### Linting
 
-### JavaScript Guide
+```bash
+# Python linting
+ruff check path/to/file.py
 
-- The JavaScript Guide is documented under the `docs/js-guide/` directory.
+# JavaScript linting
+npx eslint path/to/file.js
+```
+
+### Formatting
+
+```bash
+# Sort Python imports
+ruff check --select I --fix path/to/file.py
+
+# Format Python code
+ruff format path/to/file.py
+```
+
+## Important Notes
+
+- Refer to `CODE_STANDARDS.md` for coding conventions and best practices
+- Refer to the `docs/js-guide/` directory for the JavaScript Guide
