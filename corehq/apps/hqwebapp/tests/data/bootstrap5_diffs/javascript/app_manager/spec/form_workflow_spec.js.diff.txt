@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ import sinon from "sinon";
+ 
+ import Toggles from "hqwebapp/js/toggles";
+-import FormWorkflow from "app_manager/js/forms/bootstrap3/form_workflow";
++import FormWorkflow from "app_manager/js/forms/bootstrap5/form_workflow";
+ 
+ describe('Form Workflow', function () {
+     var workflow;

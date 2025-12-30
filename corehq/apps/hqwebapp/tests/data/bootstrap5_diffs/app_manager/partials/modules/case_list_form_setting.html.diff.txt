@@ -1,0 +1,78 @@
+--- 
++++ 
+@@ -5,8 +5,8 @@
+ {% if add_ons.register_from_case_list %}
+ 
+   <div id="case-list-form">
+-    <div class="form-group">
+-      <label class="{% css_label_class %} control-label">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="{% css_label_class %} form-label">
+         {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+           {% trans "Form Accessible from Case List" %}
+           <span class="hq-help-template"
+@@ -23,8 +23,8 @@
+         {% endif %}
+       </label>
+       {% if not case_list_form_not_allowed_reasons %}
+-        <div class="{% css_field_class %}" data-bind="css: {'has-error': formMissing()}">
+-          <select class="form-control" data-bind="value: caseListForm">
++        <div class="{% css_field_class %}" data-bind="css: {'has-error': formMissing()}">  {# todo B5: css-has-error #}
++          <select class="form-select" data-bind="value: caseListForm">
+             {% if case_list_form_options.form.form_id and case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
+               <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
+             {% endif %}
+@@ -75,8 +75,8 @@
+       {% endif %}
+     </div>
+     {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+-      <div class="form-group" id="case_list_form-expression" data-bind="visible: caseListForm()">
+-        <label class="{% css_label_class %} control-label">
++      <div class="form-group" id="case_list_form-expression" data-bind="visible: caseListForm()">  {# todo B5: css-form-group #}
++        <label class="{% css_label_class %} form-label">
+           {% trans "Display Condition" %}
+           <span class="hq-help-template"
+                 data-title='{% trans_html_attr "Display Condition" %}'
+@@ -88,8 +88,8 @@
+         </div>
+       </div>
+     {% endif %}
+-    <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
+-      <label class="{% css_label_class %} control-label">
++    <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">  {# todo B5: css-form-group #}
++      <label class="{% css_label_class %} form-label">
+         {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+           {% trans "Label for Case List Form" %}
+         {% else %}
+@@ -100,8 +100,8 @@
+         {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
+       </div>
+     </div>
+-    <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
+-      <label class="{% css_label_class %} control-label">
++    <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">  {# todo B5: css-form-group #}
++      <label class="{% css_label_class %} form-label">
+         {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+           {% trans "End of Form Action" %}
+         {% else %}
+@@ -109,7 +109,7 @@
+         {% endif %}
+       </label>
+       <div class="{% css_field_class %}">
+-        <select-toggle data-apply-bindings="false"
++        <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
+                        data-bind="visible: !formHasEOFNav()"
+                        params="name: 'case_list_post_form_workflow',
+                                      options: endOfRegistrationOptions,
+@@ -127,9 +127,9 @@
+   </div>
+   <div id="case_list_media">
+     {% if request|toggle_enabled:'FOLLOWUP_FORMS_AS_CASE_LIST_FORM' %}
+-      {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Form Icon" AUDIO_LABEL="Form Audio" %}
++      {% include "app_manager/partials/bootstrap5/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Form Icon" AUDIO_LABEL="Form Audio" %}
+     {% else %}
+-      {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
++      {% include "app_manager/partials/bootstrap5/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
+     {% endif %}
+   </div>
+ 
