@@ -237,12 +237,12 @@ class DETExportInstanceResource(
             include_docs=True,
             reduce=False
         ).all()
-        form_exports = [
-            FormExportInstance.wrap(result['doc'])
+        form_exports = (
+            _wrap_or_none(FormExportInstance, result['doc'])
             for result in form_results
             if result['doc'].get('show_det_config_download', False)
-        ]
-
+        )
+        form_exports = [exp for exp in form_exports if exp]
         case_key = [domain, 'CaseExportInstance']
         case_results = CaseExportInstance.get_db().view(
             'export_instances_by_domain/view',
@@ -251,11 +251,12 @@ class DETExportInstanceResource(
             include_docs=True,
             reduce=False
         ).all()
-        case_exports = [
-            CaseExportInstance.wrap(result['doc'])
+        case_exports = (
+            _wrap_or_none(CaseExportInstance, result['doc'])
             for result in case_results
             if result['doc'].get('show_det_config_download', False)
-        ]
+        )
+        case_exports = [exp for exp in case_exports if exp]
 
         return form_exports + case_exports
 
@@ -286,3 +287,13 @@ class DETExportInstanceResource(
             pass
 
         raise ImmediateHttpResponse(HttpNotFound())
+
+
+def _wrap_or_none(class_, doc):
+    """
+    Returns ``class_.wrap(doc)``. If ``doc`` is malformed, returns ``None``.
+    """
+    try:
+        return class_.wrap(doc)
+    except Exception:
+        return None
