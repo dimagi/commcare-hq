@@ -34,6 +34,7 @@ self.requestViz = function () {
 
 self.initViz = function (ticket) {
     var containerDiv = document.getElementById("vizContainer");
+
     var url = _.template("https://<%- validate_hostname %>/<% if (is_server) { %>trusted/<%- ticket %>/<% } %><%- view_url %>")({
         validate_hostname: initialPageData.get("validate_hostname"),
         is_server: initialPageData.get("server_type") === "server",
@@ -46,6 +47,11 @@ self.initViz = function (ticket) {
             hideTabs: true,
         });
     });
+
+    var iframe = $(containerDiv).find('iframe')[0];
+    iframe.remove();
+    iframe.setAttribute('sandbox', 'allow-scripts');
+    containerDiv.appendChild(iframe);
 };
 
 $(document).ready(function () {
