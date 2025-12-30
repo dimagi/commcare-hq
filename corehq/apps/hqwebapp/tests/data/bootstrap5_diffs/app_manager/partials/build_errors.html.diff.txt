@@ -1,0 +1,29 @@
+--- 
++++ 
+@@ -469,7 +469,7 @@
+               {% if "VISIT_SCHEDULER" in toggles %}or visit scheduler{% endif %}
+               in the
+               form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
+-              is missing a question. Please choose a question from the dropdown
++              is missing a question. Please choose a question from the dropdown  {# todo B5: css-dropdown #}
+               next to the case property.
+             {% endif %}
+             {% case "multimedia case property not supported" %}
+@@ -548,7 +548,7 @@
+                 but cases are not available for this form. Please either remove
+                 the case reference or (1) make sure that the case list is set to
+                 display the case list first and then form, and (2) make sure
+-                that all forms in this case list update or close a case (which
++                that all forms in this case list update or btn-close a case (which  {# todo B5: css-close #}
+                 means registration forms must go in a different case list).
+               {% endblocktrans %}
+             {% else %}
+@@ -557,7 +557,7 @@
+                 are not available. Please either remove the case reference or
+                 (1) make sure that the case list is set to display the case list
+                 first and then form, and (2) make sure that all forms in this
+-                case list update or close a case (which means registration forms
++                case list update or btn-close a case (which means registration forms  {# todo B5: css-close #}
+                 must go in a different case list).
+               {% endblocktrans %}
+             {% endif %}
