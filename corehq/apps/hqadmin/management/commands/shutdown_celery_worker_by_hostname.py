@@ -41,7 +41,7 @@ class Command(BaseCommand):
         kwargs = {'destination': [hostname]}
         if broker_conn is not None:
             # use a custom broker connection
-            kwargs['broker'] = broker_conn
+            kwargs['connection'] = broker_conn
         self.celery.control.broadcast('shutdown', **kwargs)
 
         if check_worker_up and self._is_worker_up(hostname, broker_conn):
