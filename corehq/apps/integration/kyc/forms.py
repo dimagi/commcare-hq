@@ -12,6 +12,7 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.integration.kyc.models import (
     KycConfig,
+    KycProviderThresholdFields,
     KycProviders,
     UserDataStore,
 )
@@ -29,6 +30,7 @@ class KycConfigureForm(forms.ModelForm):
             'provider',
             'api_field_to_user_data_map',
             'phone_number_field',
+            'passing_threshold',
         ]
 
     user_data_store = forms.ChoiceField(
@@ -61,6 +63,17 @@ class KycConfigureForm(forms.ModelForm):
         required=False,
         help_text=_('The case property or user data field that contains the phone number. '
                     'Leave blank if it’s not used for KYC verification.'),
+    )
+    passing_threshold = JsonField(
+        label=_('Passing Threshold'),
+        required=True,
+        expected_type=dict,
+        help_text=format_html_lazy(
+            _('Maps API field for the KYC provider to the minimum score required to pass KYC verification.'
+              ' To learn more about this, please have a look at our '
+              '<a href="{}" target="_blank">support documentation</a>.'),
+            'https://commcare-hq.readthedocs.io/integrations/kyc.html#passing-threshold-for-kyc-verification'
+        ),
     )
 
     def __init__(self, *args, **kwargs):
@@ -96,6 +109,11 @@ class KycConfigureForm(forms.ModelForm):
                 crispy.Div(
                     'phone_number_field',
                 ),
+                crispy.Div(
+                    'passing_threshold',
+                    x_init='passing_threshold = $el.value',
+                    css_id='passing-threshold',
+                ),
                 twbscrispy.StrictButton(
                     _('Save'),
                     type='submit',
@@ -115,3 +133,22 @@ class KycConfigureForm(forms.ModelForm):
             (case_type, case_type) for case_type in case_types
             if case_type not in (USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE)
         ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        provider = cleaned_data.get('provider')
+        passing_threshold = cleaned_data.get('passing_threshold')
+
+        if provider and passing_threshold:
+            try:
+                required_fields = KycProviderThresholdFields.get_required_fields(provider)
+                missing_fields = [field for field in required_fields if field not in passing_threshold]
+
+                if missing_fields:
+                    self.add_error('passing_threshold', _(
+                        'The following required fields are missing from the passing threshold: {}'
+                    ).format(', '.join(missing_fields)))
+            except ValueError as e:
+                self.add_error('provider', str(e))
+
+        return cleaned_data
