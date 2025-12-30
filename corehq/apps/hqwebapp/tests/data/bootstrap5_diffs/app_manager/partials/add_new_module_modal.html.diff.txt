@@ -1,0 +1,47 @@
+--- 
++++ 
+@@ -16,8 +16,8 @@
+       <div class="modal-header">
+         <button
+           type="button"
+-          class="close"
+-          data-dismiss="modal"
++          class="btn-close"  {# todo B5: css-close #}
++          data-bs-dismiss="modal"
+           aria-label="Close"
+         >
+           <span aria-hidden="true">&times;</span>
+@@ -29,25 +29,25 @@
+       <div class="modal-body">
+         <!-- TODO: Use the b5 flexbox utilities when migrating to bootstrap 5 -->
+         <div class="new-module-modal-flex-container">
+-          {% include 'app_manager/partials/module_options/bootstrap3/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
+-          {% include 'app_manager/partials/module_options/bootstrap3/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
++          {% include 'app_manager/partials/module_options/bootstrap5/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
++          {% include 'app_manager/partials/module_options/bootstrap5/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
+           {% if show_biometric %}
+-            {% include 'app_manager/partials/module_options/bootstrap3/module_option_biometrics.html' with module_type="biometrics" icon_class="fcc fcc-app-biometrics" %}
++            {% include 'app_manager/partials/module_options/bootstrap5/module_option_biometrics.html' with module_type="biometrics" icon_class="fcc fcc-app-biometrics" %}
+           {% endif %}
+           {% if show_advanced %}
+-            {% include 'app_manager/partials/module_options/bootstrap3/module_option_advanced.html' with module_type="advanced" icon_class="fa fa-flask" %}
++            {% include 'app_manager/partials/module_options/bootstrap5/module_option_advanced.html' with module_type="advanced" icon_class="fa fa-flask" %}
+           {% endif %}
+           {% if show_report_modules %}
+-            {% include 'app_manager/partials/module_options/bootstrap3/module_option_report.html' with module_type="report" icon_class="fa-regular fa-chart-bar" %}
++            {% include 'app_manager/partials/module_options/bootstrap5/module_option_report.html' with module_type="report" icon_class="fa-regular fa-chart-bar" %}
+           {% endif %}
+           {% if show_shadow_modules %}
+-            {% include 'app_manager/partials/module_options/bootstrap3/module_option_shadow.html' with module_type="shadow" icon_class="fa-regular fa-moon" %}
++            {% include 'app_manager/partials/module_options/bootstrap5/module_option_shadow.html' with module_type="shadow" icon_class="fa-regular fa-moon" %}
+           {% endif %}
+           {% if show_shadow_module_v1 %}
+-            {% include 'app_manager/partials/module_options/bootstrap3/module_option_shadow_v1.html' with module_type="shadow-v1" icon_class="fa-regular fa-moon" %}
++            {% include 'app_manager/partials/module_options/bootstrap5/module_option_shadow_v1.html' with module_type="shadow-v1" icon_class="fa-regular fa-moon" %}
+           {% endif %}
+           {% if show_training_modules %}
+-            {% include 'app_manager/partials/module_options/bootstrap3/module_option_training.html' with module_type="training" icon_class="fa fa-graduation-cap" %}
++            {% include 'app_manager/partials/module_options/bootstrap5/module_option_training.html' with module_type="training" icon_class="fa fa-graduation-cap" %}
+           {% endif %}
+         </div>
+       </div>
