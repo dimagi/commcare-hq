@@ -1,0 +1,25 @@
+{% extends "app_manager/bootstrap3/module_view.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load xforms_extras %}
+
+{% block tab-headers %}{{ block.super }}
+  {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
+    <li>
+      <a href="#visit-scheduler-module-config-tab" data-toggle="tab">
+        {% trans "Visit Scheduler" %}
+      </a>
+    </li>
+  {% endif %}
+{% endblock %}
+
+{% block tab-content %}{{ block.super }}
+  {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
+    {% initial_page_data 'schedule_phases' schedule_phases %}
+    {% registerurl 'edit_schedule_phases' app.domain app.id module.unique_id %}
+    <div class="tab-pane" id="visit-scheduler-module-config-tab">
+      {% include "app_manager/partials/modules/bootstrap3/enable_schedule.html" %}
+    </div>
+  {% endif %}
+{% endblock %}
