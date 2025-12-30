@@ -34,6 +34,26 @@ self.requestViz = function () {
 
 self.initViz = function (ticket) {
     var containerDiv = document.getElementById("vizContainer");
+
+    // Watch for iframe creation and add sandbox attribute
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            mutation.addedNodes.forEach(function (node) {
+                if (node.tagName === 'IFRAME') {
+                    // Reset node with sandbox attrs
+                    node.remove();
+                    node.setAttribute('sandbox', 'allow-scripts');
+                    containerDiv.appendChild(node);
+                    console.log('Sandbox attribute set on iframe:', node.getAttribute('sandbox'));
+                    observer.disconnect();
+                }
+            });
+        });
+    });
+
+    // Start observing the container for new iframes
+    observer.observe(containerDiv, { childList: true, subtree: true });
+
     var url = _.template("https://<%- validate_hostname %>/<% if (is_server) { %>trusted/<%- ticket %>/<% } %><%- view_url %>")({
         validate_hostname: initialPageData.get("validate_hostname"),
         is_server: initialPageData.get("server_type") === "server",
@@ -46,6 +66,7 @@ self.initViz = function (ticket) {
             hideTabs: true,
         });
     });
+
 };
 
 $(document).ready(function () {
