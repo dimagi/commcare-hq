@@ -46,7 +46,7 @@ class Command(BaseCommand):
         # broker than the one it is reading from
         check_worker_up = broker_conn is None
 
-        if check_worker_up and not self._is_worker_up(hostname, broker_conn):
+        if check_worker_up and not self._is_worker_up(hostname):
             print(f'{hostname} did not respond to ping. Aborted shutdown.')
             return False
 
@@ -56,7 +56,7 @@ class Command(BaseCommand):
             kwargs['connection'] = broker_conn
         self.celery.control.broadcast('shutdown', **kwargs)
 
-        if check_worker_up and self._is_worker_up(hostname, broker_conn):
+        if check_worker_up and self._is_worker_up(hostname):
             # if worker is still up, the shutdown likely did not succeed
             # or it is just a slow shutdown
             print(f'{hostname} responded to ping after initiating shutdown.')
