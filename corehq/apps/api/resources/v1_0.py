@@ -2,7 +2,6 @@ from datetime import datetime
 
 from django.http import JsonResponse
 from django.urls import re_path as url
-from django.urls import reverse
 
 from tastypie import fields
 from tastypie.exceptions import ImmediateHttpResponse
@@ -30,6 +29,7 @@ from corehq.apps.users.role_utils import (
 )
 from corehq.apps.users.views import InviteWebUserView
 from corehq.const import INVITATION_CHANGE_VIA_API
+from corehq.util.view_utils import absolute_reverse
 
 from . import CouchResourceMixin, DomainSpecificResourceMixin, HqBaseResource
 
@@ -201,7 +201,7 @@ class DETExportInstanceResource(
         detail_allowed_methods = ['get']
 
     def dehydrate_det_config_url(self, bundle):
-        return reverse(
+        return absolute_reverse(
             DownloadDETSchemaView.urlname,
             args=(bundle.request.domain, bundle.obj._id),
         )

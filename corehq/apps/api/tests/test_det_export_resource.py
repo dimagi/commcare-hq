@@ -93,6 +93,7 @@ class TestDETExportInstanceResource(APIResourceTest):
         assert form_export_obj['xmlns'] == 'http://example.com/form1'
         assert form_export_obj['case_type'] is None
         assert self.form_export_visible._id in form_export_obj['det_config_url']
+        assert form_export_obj['det_config_url'].startswith('http')
 
     def test_get_list_returns_correct_case_export_fields(self):
         objects = self._get_list_objects()
@@ -107,6 +108,7 @@ class TestDETExportInstanceResource(APIResourceTest):
         assert case_export_obj['case_type'] == 'person'
         assert case_export_obj['xmlns'] is None
         assert self.case_export_visible._id in case_export_obj['det_config_url']
+        assert case_export_obj['det_config_url'].startswith('http')
 
     def test_get_detail_for_form_export(self):
         detail_url = self.single_endpoint(self.form_export_visible._id)
@@ -118,6 +120,7 @@ class TestDETExportInstanceResource(APIResourceTest):
         assert data['name'] == 'Form Export Visible'
         assert data['type'] == 'form'
         assert self.form_export_visible._id in data['det_config_url']
+        assert data['det_config_url'].startswith('http')
 
     def test_get_detail_for_case_export(self):
         detail_url = self.single_endpoint(self.case_export_visible._id)
@@ -129,6 +132,7 @@ class TestDETExportInstanceResource(APIResourceTest):
         assert data['name'] == 'Case Export Visible'
         assert data['type'] == 'case'
         assert self.case_export_visible._id in data['det_config_url']
+        assert data['det_config_url'].startswith('http')
 
     def test_get_detail_for_hidden_export_returns_404(self):
         detail_url = self.single_endpoint(self.form_export_hidden._id)
