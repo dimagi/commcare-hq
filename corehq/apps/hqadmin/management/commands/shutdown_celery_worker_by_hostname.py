@@ -34,6 +34,7 @@ class Command(BaseCommand):
         for broker_url in [current_broker_url, old_broker_url]:
             broker_conn = Connection(broker_url)
             succeeded = self._shutdown(hostname, broker_conn)
+            broker_conn.release()
             if succeeded:
                 print(
                     '[Broker Migration In Progress] Initiated warm shutdown '
