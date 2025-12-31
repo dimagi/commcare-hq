@@ -1,0 +1,22 @@
+--- 
++++ 
+@@ -7,8 +7,8 @@
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import privileges from "hqwebapp/js/privileges";
+ import toggles from "hqwebapp/js/toggles";
+-import main from "hqwebapp/js/bootstrap3/main";
+-import appManager from "app_manager/js/bootstrap3/app_manager";
++import main from "hqwebapp/js/bootstrap5/main";
++import appManager from "app_manager/js/bootstrap5/app_manager";
+ import noopMetrics from "analytix/js/noopMetrics";
+ import google from "analytix/js/google";
+ 
+@@ -26,7 +26,7 @@
+     var caseConfig = function (params) {
+         var self = {};
+         self.makePopover = function () {
+-            $('.property-description').closest('.read-only').popover({
++            $('.property-description').closest('.read-only').popover({  /* todo B5: js-popover */
+                 'trigger': 'hover',
+                 'placement': 'auto right',
+             });

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ import $ from "jquery";
+ import _ from "underscore";
+ import ko from "knockout";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ 
+ var multimediaSize = function (name, size) {

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import _ from "underscore";
+-import uiElementKeyValueList from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list";
++import uiElementKeyValueList from "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import toggles from "hqwebapp/js/toggles";
+ 
