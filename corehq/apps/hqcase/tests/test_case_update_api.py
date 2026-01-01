@@ -94,8 +94,8 @@ class TestCaseAPI(TestCase):
     def test_basic_get_list(self):
         with patch('corehq.apps.hqcase.views.get_list', lambda *args: {'example': 'result'}):
             res = self.client.get(reverse('case_api', args=(self.domain,)))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), {'example': 'result'})
+        assert res.status_code == 200
+        assert res.json() == {'example': 'result'}
 
     def test_create_case(self):
         res = self._create_case({
@@ -109,24 +109,24 @@ class TestCaseAPI(TestCase):
                 'dob': '1948-11-02',
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
+        assert set(res.keys()) == set(['case', 'form_id'])
         case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
-        self.assertEqual(case.domain, self.domain)
-        self.assertEqual(case.type, 'player')
-        self.assertFalse(case.closed)
-        self.assertEqual(case.name, 'Elizabeth Harmon')
-        self.assertEqual(case.external_id, '1')
-        self.assertEqual(case.owner_id, 'methuen_home')
-        self.assertEqual(case.opened_by, self.web_user.user_id)
-        self.assertEqual(case.dynamic_case_properties(), {
+        assert case.domain == self.domain
+        assert case.type == 'player'
+        assert not case.closed
+        assert case.name == 'Elizabeth Harmon'
+        assert case.external_id == '1'
+        assert case.owner_id == 'methuen_home'
+        assert case.opened_by == self.web_user.user_id
+        assert case.dynamic_case_properties() == {
             'dob': '1948-11-02',
             'sport': 'chess',
-        })
+        }
 
         xform = XFormInstance.objects.get_form(res['form_id'])
-        self.assertEqual(xform.xmlns, 'http://commcarehq.org/case_api')
-        self.assertEqual(xform.metadata.userID, self.web_user.user_id)
-        self.assertEqual(xform.metadata.deviceID, 'user agent string')
+        assert xform.xmlns == 'http://commcarehq.org/case_api'
+        assert xform.metadata.userID == self.web_user.user_id
+        assert xform.metadata.deviceID == 'user agent string'
 
     def test_non_schema_updates(self):
         res = self._create_case({
@@ -137,8 +137,8 @@ class TestCaseAPI(TestCase):
             'bad_property': "this doesn't fit the schema!",
             'properties': {'sport': 'chess'},
         })
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json()['error'], "'bad_property' is not a valid field.")
+        assert res.status_code == 400
+        assert res.json()['error'] == "'bad_property' is not a valid field."
 
     def test_empty_case_type(self):
         res = self._create_case({
@@ -147,8 +147,8 @@ class TestCaseAPI(TestCase):
             'owner_id': 'methuen_home',
         }).json()
         case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
-        self.assertEqual(case.name, 'Elizabeth Harmon')
-        self.assertEqual(case.type, '')
+        assert case.name == 'Elizabeth Harmon'
+        assert case.type == ''
 
     def test_no_required_updates(self):
         case = self._make_case()
@@ -156,17 +156,17 @@ class TestCaseAPI(TestCase):
         res = self._update_case(case.case_id, {
             'properties': {'rank': '2100'}
         })
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
 
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
         # Nothing was zeroed out by being omitted
-        self.assertEqual(case.name, 'Elizabeth Harmon')
-        self.assertEqual(case.owner_id, 'methuen_home')
-        self.assertEqual(case.dynamic_case_properties(), {
+        assert case.name == 'Elizabeth Harmon'
+        assert case.owner_id == 'methuen_home'
+        assert case.dynamic_case_properties() == {
             'dob': '1948-11-02',
             'rank': '2100',
             'sport': 'chess',
-        })
+        }
 
     def test_update_case(self):
         case = self._make_case()
@@ -180,18 +180,18 @@ class TestCaseAPI(TestCase):
                 'champion': 'true',
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
+        assert set(res.keys()) == set(['case', 'form_id'])
 
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertFalse(case.closed)
-        self.assertEqual(case.name, 'Beth Harmon')
-        self.assertEqual(case.owner_id, 'us_chess_federation')
-        self.assertEqual(case.dynamic_case_properties(), {
+        assert not case.closed
+        assert case.name == 'Beth Harmon'
+        assert case.owner_id == 'us_chess_federation'
+        assert case.dynamic_case_properties() == {
             'champion': 'true',
             'dob': '1948-11-02',
             'rank': '2100',
             'sport': 'chess',
-        })
+        }
 
     def test_can_update_case_type(self):
         case = self._make_case()
@@ -199,16 +199,16 @@ class TestCaseAPI(TestCase):
             'case_name': 'Beth Harmon',
             'case_type': 'legend',
         })
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertEqual(case.type, 'legend')
+        assert case.type == 'legend'
 
     def test_close_case(self):
         case = self._make_case()
         res = self._update_case(case.case_id, {'close': True})
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertTrue(case.closed)
+        assert case.closed
 
     def test_create_closed_case(self):
         res = self._create_case({
@@ -217,10 +217,10 @@ class TestCaseAPI(TestCase):
             'owner_id': 'us_chess_federation',
             'close': True,
         })
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         case_id = res.json()['case']['case_id']
         case = CommCareCase.objects.get_case(case_id, self.domain)
-        self.assertTrue(case.closed)
+        assert case.closed
 
     def test_update_case_bad_id(self):
         res = self._update_case('notarealcaseid', {
@@ -231,8 +231,8 @@ class TestCaseAPI(TestCase):
                 'champion': 'true',
             },
         })
-        self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
-        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
+        assert res.json()['error'] == "No case found with ID 'notarealcaseid'"
+        assert CommCareCase.objects.get_case_ids_in_domain(self.domain) == []
 
     def test_update_case_on_other_domain(self):
         case_id = str(uuid.uuid4())
@@ -247,8 +247,8 @@ class TestCaseAPI(TestCase):
         res = self._update_case(case_id, {
             'owner_id': 'stealing_this_case',
         })
-        self.assertEqual(res.json()['error'], f"No case found with ID '{case_id}'")
-        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
+        assert res.json()['error'] == f"No case found with ID '{case_id}'"
+        assert CommCareCase.objects.get_case_ids_in_domain(self.domain) == []
 
     def test_create_child_case(self):
         parent_case = self._make_case()
@@ -268,18 +268,18 @@ class TestCaseAPI(TestCase):
                 },
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
+        assert set(res.keys()) == set(['case', 'form_id'])
 
         case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
-        self.assertEqual(case.name, 'Harmon/Luchenko')
-        self.assertEqual(case.external_id, '23')
-        self.assertEqual(case.owner_id, 'harmon')
-        self.assertEqual(case.dynamic_case_properties(), {'winner': 'Harmon'})
-        self.assertEqual(case.indices[0].identifier, 'parent')
-        self.assertEqual(case.indices[0].referenced_id, parent_case.case_id)
-        self.assertEqual(case.indices[0].referenced_type, 'player')
-        self.assertEqual(case.indices[0].relationship, 'child')
-        self.assertEqual(case.indices[0].referenced_case.case_id, parent_case.case_id)
+        assert case.name == 'Harmon/Luchenko'
+        assert case.external_id == '23'
+        assert case.owner_id == 'harmon'
+        assert case.dynamic_case_properties() == {'winner': 'Harmon'}
+        assert case.indices[0].identifier == 'parent'
+        assert case.indices[0].referenced_id == parent_case.case_id
+        assert case.indices[0].referenced_type == 'player'
+        assert case.indices[0].relationship == 'child'
+        assert case.indices[0].referenced_case.case_id == parent_case.case_id
 
     def test_set_parent_by_external_id(self):
         parent_case = self._make_case()
@@ -295,10 +295,10 @@ class TestCaseAPI(TestCase):
                 },
             },
         }).json()
-        self.assertItemsEqual(res.keys(), ['case', 'form_id'])
+        assert set(res.keys()) == set(['case', 'form_id'])
 
         case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
-        self.assertEqual(case.indices[0].referenced_id, parent_case.case_id)
+        assert case.indices[0].referenced_id == parent_case.case_id
 
     def test_set_parent_by_bad_external_id(self):
         res = self._create_case({
@@ -313,7 +313,7 @@ class TestCaseAPI(TestCase):
                 },
             },
         }).json()
-        self.assertEqual(res['error'], "Could not find a case with external_id 'MISSING'")
+        assert res['error'] == "Could not find a case with external_id 'MISSING'"
 
     def test_set_parent_missing_field(self):
         parent_case = self._make_case()
@@ -329,14 +329,13 @@ class TestCaseAPI(TestCase):
                 },
             },
         }).json()
-        self.assertEqual(res['error'], "Property relationship is required when creating or updating case indices")
+        assert res['error'] == "Property relationship is required when creating or updating case indices"
 
     def test_delete_index(self):
         # aka remove child case
         parent_case = self._make_case()
         child_case = self._make_case(parent_id=parent_case.case_id)
-        self.assertEqual([c.case_id for c in parent_case.get_subcases()],
-                         [child_case.case_id])
+        assert [c.case_id for c in parent_case.get_subcases()] == [child_case.case_id]
 
         res = self._update_case(child_case.case_id, {
             'indices': {
@@ -347,13 +346,13 @@ class TestCaseAPI(TestCase):
                 },
             },
         })
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
 
         parent_case = CommCareCase.objects.get_case(parent_case.case_id, self.domain)
-        self.assertEqual(parent_case.get_subcases(), [])
+        assert parent_case.get_subcases() == []
 
         child_case = CommCareCase.objects.get_case(child_case.case_id, self.domain)
-        self.assertEqual(child_case.get_index('parent').referenced_id, '')
+        assert child_case.get_index('parent').referenced_id == ''
 
     def test_bulk_action(self):
         existing_case = self._make_case()
@@ -381,13 +380,13 @@ class TestCaseAPI(TestCase):
             },
         ]).json()
         #  only returns a single form ID - chunking should happen in the client
-        self.assertItemsEqual(res.keys(), ['cases', 'form_id'])
+        assert set(res.keys()) == set(['cases', 'form_id'])
 
         updated_case = CommCareCase.objects.get_case(existing_case.case_id, self.domain)
-        self.assertEqual(updated_case.name, 'Beth Harmon')
+        assert updated_case.name == 'Beth Harmon'
 
         new_case = CommCareCase.objects.get_case_by_external_id(self.domain, 'jolene')
-        self.assertEqual(new_case.name, 'Jolene')
+        assert new_case.name == 'Jolene'
 
     def test_bulk_without_create_flag(self):
         res = self._bulk_update_cases([{
@@ -396,9 +395,8 @@ class TestCaseAPI(TestCase):
             'case_name': 'Jolene',
             'owner_id': 'methuen_home',
         }])
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("A 'create' flag is required for each update.",
-                      res.json()['error'])
+        assert res.status_code == 400
+        assert "A 'create' flag is required for each update." in res.json()['error']
 
     def test_attempt_create_with_case_id(self):
         res = self._bulk_update_cases([{
@@ -408,20 +406,16 @@ class TestCaseAPI(TestCase):
             'owner_id': 'methuen_home',
             'case_id': 'somethingmalicious',
         }])
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("You cannot specify case_id when creating a new case",
-                      res.json()['error'])
+        assert res.status_code == 400
+        assert "You cannot specify case_id when creating a new case" in res.json()['error']
 
     def test_bulk_update_too_big(self):
         res = self._bulk_update_cases([
             {'create': True, 'case_name': f'case {i}', 'case_type': 'player'}
             for i in range(103)
         ])
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(
-            res.json(),
-            {'error': "You cannot submit more than 100 updates in a single request"}
-        )
+        assert res.status_code == 400
+        assert res.json() == {'error': "You cannot submit more than 100 updates in a single request"}
 
     def test_update_with_bad_case_id(self):
         res = self._bulk_update_cases([
@@ -440,8 +434,8 @@ class TestCaseAPI(TestCase):
                 'owner_id': 'methuen_home',
             },
         ])
-        self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
-        self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
+        assert res.json()['error'] == "No case found with ID 'notarealcaseid'"
+        assert CommCareCase.objects.get_case_ids_in_domain(self.domain) == []
 
     def test_create_parent_and_child_together(self):
         res = self._bulk_update_cases([
@@ -472,10 +466,10 @@ class TestCaseAPI(TestCase):
                 },
             },
         ])
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
         child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
-        self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
+        assert parent.case_id == child.get_index('parent').referenced_id
 
     def test_create_child_with_no_parent(self):
         res = self._bulk_update_cases([
@@ -497,8 +491,8 @@ class TestCaseAPI(TestCase):
                 },
             },
         ])
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json()['error'], "Could not find a case with temporary_id 'MISSING'")
+        assert res.status_code == 400
+        assert res.json()['error'] == "Could not find a case with temporary_id 'MISSING'"
 
     def test_index_reference_to_uncreated_external_id(self):
         res = self._bulk_update_cases([
@@ -525,10 +519,10 @@ class TestCaseAPI(TestCase):
                 },
             },
         ])
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
         child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
-        self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
+        assert parent.case_id == child.get_index('parent').referenced_id
 
     def test_update_by_external_id(self):
         case = self._make_case()
@@ -540,9 +534,9 @@ class TestCaseAPI(TestCase):
             },
             content_type="application/json;charset=utf-8",
         )
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertEqual(case.dynamic_case_properties().get('champion'), 'true')
+        assert case.dynamic_case_properties().get('champion') == 'true'
 
     def test_update_by_external_id_doesnt_exist(self):
         res = self.client.put(
@@ -553,8 +547,8 @@ class TestCaseAPI(TestCase):
             },
             content_type="application/json;charset=utf-8",
         )
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json()['error'], "Could not find a case with external_id 'notarealcaseid'")
+        assert res.status_code == 400
+        assert res.json()['error'] == "Could not find a case with external_id 'notarealcaseid'"
 
     def test_bulk_update_by_external_id(self):
         case = self._make_case()
@@ -563,9 +557,9 @@ class TestCaseAPI(TestCase):
             'external_id': case.external_id,
             'owner_id': 'us_chess_federation',
         }])
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertEqual(case.owner_id, 'us_chess_federation')
+        assert case.owner_id == 'us_chess_federation'
 
     def test_bulk_update_external_id_doesnt_exist(self):
         res = self._bulk_update_cases([{
@@ -573,13 +567,13 @@ class TestCaseAPI(TestCase):
             'external_id': 'notarealcaseid',
             'owner_id': 'us_chess_federation',
         }])
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json()['error'], "Could not find a case with external_id 'notarealcaseid'")
+        assert res.status_code == 400
+        assert res.json()['error'] == "Could not find a case with external_id 'notarealcaseid'"
 
     def test_non_json_data(self):
         res = self._create_case("this isn't json")
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json(), {'error': "Payload must be valid JSON"})
+        assert res.status_code == 400
+        assert res.json() == {'error': "Payload must be valid JSON"}
 
     def test_missing_required_field(self):
         res = self._create_case({
@@ -588,8 +582,8 @@ class TestCaseAPI(TestCase):
             'owner_id': 'methuen_home',
             'properties': {'dob': '1948-11-02'},
         })
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json(), {'error': "Property case_name is required."})
+        assert res.status_code == 400
+        assert res.json() == {'error': "Property case_name is required."}
 
     def test_invalid_properties(self):
         res = self._create_case({
@@ -601,10 +595,10 @@ class TestCaseAPI(TestCase):
                 'age': 72,  # Can't pass integers
             },
         })
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json(), {
+        assert res.status_code == 400
+        assert res.json() == {
             'error': "Error with case property 'age'. Values must be strings, received '72'"
-        })
+        }
 
     def test_non_xml_properties(self):
         res = self._create_case({
@@ -613,9 +607,9 @@ class TestCaseAPI(TestCase):
             'owner_id': 'methuen_home',
             'properties': {'not good': 'tsk tsk'},
         })
-        self.assertEqual(res.status_code, 400)
+        assert res.status_code == 400
         msg = "Error with case property 'not good'. Case property names must be valid XML identifiers."
-        self.assertEqual(res.json()['error'], msg)
+        assert res.json()['error'] == msg
 
     def test_non_xml_index_name(self):
         parent_case = self._make_case()
@@ -631,10 +625,10 @@ class TestCaseAPI(TestCase):
                 },
             },
         })
-        self.assertEqual(res.status_code, 400)
+        assert res.status_code == 400
         msg = ("Error with index 'Robert'); DROP TABLE students;--'. "
                "Index names must be valid XML identifiers.")
-        self.assertEqual(res.json()['error'], msg)
+        assert res.json()['error'] == msg
 
     def test_bad_index_reference(self):
         res = self._create_case({
@@ -653,32 +647,32 @@ class TestCaseAPI(TestCase):
                 },
             },
         })
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("InvalidCaseIndex", res.json()['error'])
+        assert res.status_code == 400
+        assert "InvalidCaseIndex" in res.json()['error']
         form = XFormInstance.objects.get_form(res.json()['form_id'])
-        self.assertEqual(form.is_error, True)
+        assert form.is_error
 
     def test_unset_external_id(self):
         case = self._make_case()
-        self.assertEqual(case.external_id, '1')
+        assert case.external_id == '1'
 
         res = self._update_case(case.case_id, {
             'external_id': '',
         })
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertEqual(case.external_id, '')
+        assert case.external_id == ''
 
     def test_omitting_external_id_doesnt_clear_it(self):
         case = self._make_case()
-        self.assertEqual(case.external_id, '1')
+        assert case.external_id == '1'
 
         res = self._update_case(case.case_id, {
             'properties': {'champion': 'true'},
         })
-        self.assertEqual(res.status_code, 200)
+        assert res.status_code == 200
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertEqual(case.external_id, '1')
+        assert case.external_id == '1'
 
     def test_urls_without_trailing_slash(self):
         case_id = self._make_case().case_id
@@ -694,7 +688,7 @@ class TestCaseAPI(TestCase):
                 HTTP_USER_AGENT="user agent string",
             )
             # Django's APPEND_SLASH setting redirects URLs without trailing slashes
-            self.assertEqual(res.status_code, 301)
+            assert res.status_code == 301
 
     @patch("corehq.apps.hqcase.views.handle_case_update")
     def test_post_without_external_id_calls_with_is_creation_true(self, mock_handle_update):
@@ -716,10 +710,10 @@ class TestCaseAPI(TestCase):
                 HTTP_USER_AGENT="test-agent",
             )
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         mock_handle_update.assert_called_once()
         call_kwargs = mock_handle_update.call_args[1]
-        self.assertTrue(call_kwargs["is_creation"])
+        assert call_kwargs["is_creation"]
 
     @patch("corehq.apps.hqcase.views.handle_case_update")
     def test_put_with_case_id_calls_with_is_creation_false(self, mock_handle_update):
@@ -741,10 +735,10 @@ class TestCaseAPI(TestCase):
                 HTTP_USER_AGENT="test-agent",
             )
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         mock_handle_update.assert_called_once()
         call_kwargs = mock_handle_update.call_args[1]
-        self.assertFalse(call_kwargs["is_creation"])
+        assert not call_kwargs["is_creation"]
 
     @staticmethod
     def _get_update_return():
