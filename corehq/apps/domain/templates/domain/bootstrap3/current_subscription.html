@@ -184,6 +184,13 @@
               {% endif %}
               (<a href="{{ manage_autopay_url }}#payment-methods">Manage</a>)
             </p>
+            {% if autopay_date %}
+              <p>
+                {% blocktrans %}
+                  Payment is scheduled for {{ autopay_date }}.
+                {% endblocktrans %}
+              </p>
+            {% endif %}
           </div>
         </div>
         {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}

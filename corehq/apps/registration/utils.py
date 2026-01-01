@@ -22,12 +22,8 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils.subscription import (
     ensure_free_or_paused_subscription,
 )
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
-    send_hubspot_form,
-)
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, LicenseAgreementType
 from corehq.apps.hqmedia.models import LogoForSystemEmailsReference
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.registration.models import (
@@ -95,7 +91,7 @@ def activate_new_user(
     new_user.subscribed_to_commcare_users = False
     new_user.eula.signed = True
     new_user.eula.date = now
-    new_user.eula.type = 'End User License Agreement'
+    new_user.eula.type = LicenseAgreementType.EULA
     if ip:
         new_user.eula.user_ip = ip
 
@@ -210,8 +206,6 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
         is_new_user=is_new_user,
         is_new_sso_user=is_new_sso_user
     )
-
-    send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
 
 
@@ -277,7 +271,7 @@ def project_logo_emails_context(domain, couch_user=None):
         try:
             image_reference = LogoForSystemEmailsReference.objects.get(domain=domain)
             return {
-                "base_container_template": "registration/email/base_templates/bootstrap3/_base_container_project_logo.html",
+                "base_container_template": "registration/email/base_templates/_base_container_project_logo.html",
                 "link_to_logo": image_reference.full_url_to_image()
             }
         except LogoForSystemEmailsReference.DoesNotExist:

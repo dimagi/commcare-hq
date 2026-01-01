@@ -16,7 +16,7 @@ from corehq.apps.integration.kyc.models import (
 from corehq.util.metrics import metrics_counter
 
 
-def verify_users(kyc_users, config):
+def verify_users(kyc_users, config, verified_by):
     # TODO: An endpoint to verify a group of users does not seem to be
     #       available using Chenosis. If we have to do this with
     #       multiple calls, consider using Celery gevent workers.
@@ -31,6 +31,7 @@ def verify_users(kyc_users, config):
 
         kyc_user.update_verification_status(
             verification_status,
+            verified_by,
             device_id=device_id,
             error_message=verification_error,
         )

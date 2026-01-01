@@ -164,6 +164,8 @@ advanced_v0 = pro_v1 + [
     privileges.BULK_DATA_EDITING,
     privileges.DATA_DICT_TYPES,
     privileges.GEOJSON_EXPORT,
+    privileges.CUSTOM_ICON_BADGES,
+    privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
 ]
 
 enterprise_v0 = advanced_v0 + [

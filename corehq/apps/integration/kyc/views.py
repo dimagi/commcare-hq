@@ -20,6 +20,7 @@ from corehq.apps.es.users import (
 )
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.hqwebapp.tables.export import TableExportMixin
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter, PhoneNumberFilter
 from corehq.apps.integration.kyc.forms import KycConfigureForm
@@ -97,9 +98,11 @@ class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
 
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
-class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
+class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin):
     urlname = 'kyc_verify_table'
     table_class = KycVerifyTable
+    report_title = _('KYC Report')
+    exclude_columns_in_export = ('verify_select', 'verify_btn')
 
     @cached_property
     def kyc_config(self):
@@ -175,7 +178,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         kyc_users = self._filter_valid_users(kyc_users)
 
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
-        results = verify_users(kyc_users, self.kyc_config)
+        results = verify_users(kyc_users, self.kyc_config, request.user.username)
         success_count = sum(1 for result in results.values() if result == KycVerificationStatus.PASSED)
         failure_count = len(results) - success_count
         context = {
@@ -186,6 +189,15 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         self._report_success_on_reverification_metric(existing_failed_user_ids, results)
 
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
+
+    @hq_hx_action('get')
+    def export(self, request, *args, **kwargs):
+        response = self.trigger_export()
+        return self.render_htmx_partial_response(
+            request,
+            'kyc/partials/kyc_export_alert.html',
+            {'message': response.content.decode('utf-8')},
+        )
 
     def _filter_valid_users(self, kyc_users):
         def is_user_valid(kyc_user):

@@ -690,6 +690,22 @@ class TestCaseAPI(TestCase):
             # Django's APPEND_SLASH setting redirects URLs without trailing slashes
             assert res.status_code == 301
 
+    def test_case_name_twice(self):
+        case = self._make_case()
+        res = self._update_case(case.case_id, {
+            'case_name': 'Beth Harmon',
+            'owner_id': 'us_chess_federation',
+            'properties': {
+                'rank': '2100',
+                'case_name': 'Beth Harmon',  # ERROR
+                'champion': 'true',
+            },
+        })
+        assert res.status_code == 400
+        msg = "Error with case property 'case_name'. This must be specified at the top level."
+        assert res.json()['error'] == msg
+
+
     @patch("corehq.apps.hqcase.views.handle_case_update")
     def test_post_without_external_id_calls_with_is_creation_true(self, mock_handle_update):
         mock_handle_update.return_value = self._get_update_return()

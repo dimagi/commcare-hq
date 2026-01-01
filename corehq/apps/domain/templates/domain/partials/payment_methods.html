@@ -29,12 +29,19 @@
     </table>
   {% else %}
     <div class="alert alert-warning">
-      <i class="fa fa-warning"></i>
-      {% blocktrans %}
-        You don't have an autopay card set for your account.
-      {% endblocktrans %}
+      <p class="mb-0">
+        <i class="fa fa-warning"></i>
+        {% blocktrans %}
+          You don't have an autopay card set for your account. By providing your
+          payment information and selecting "Set as autopay card" or "Use this
+          card to autopay," you are completing the Autopay enrollment process
+          and giving your affirmative consent to these recurring payment terms.
+          Please read them carefully.
+        {% endblocktrans %}
+      </p>
     </div>
   {% endif %}
+  {% include "domain/partials/autopay_terms.html" %}
 </fieldset>
 
 <div class="htmx-indicator">
@@ -102,8 +109,7 @@
               {% endif %}
             </td>
             <td class="align-middle">
-              {# rollback when ops is ready to: not card.is_autopay and not card.other_autopay_domains #}
-              {% if True %}
+              {% if not card.is_autopay and not card.other_autopay_domains %}
                 <button
                   class="btn btn-outline-danger"
                   type="button"

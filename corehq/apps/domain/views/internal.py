@@ -491,6 +491,7 @@ def _can_copy_toggle(toggle, domain, other_domain):
     )
 
 
+@always_allow_project_access
 @login_and_domain_required
 @require_superuser
 def calculated_properties(request, domain):

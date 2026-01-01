@@ -22,10 +22,9 @@ from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed,
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.models import ServerLocation
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
-from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
@@ -33,25 +32,6 @@ from corehq.apps.users.models import CouchUser
 class RegisterWebUserForm(forms.Form):
     # Use: NewUserRegistrationView
     # Not inheriting from other forms to de-obfuscate the role of this form.
-    _envs = ServerLocation.get_envs()
-    if settings.SERVER_ENVIRONMENT in _envs:
-        server_location = forms.ChoiceField(
-            label=_("Cloud Location"),
-            required=False,
-            widget=forms.RadioSelect,
-            choices=[
-                (server['subdomain'], _("{location_name} Cloud").format(location_name=server['long_name']))
-                for __, server in _envs.items()
-            ],
-            help_text=_(
-                "*You're creating an account and project space in the chosen cloud location.<br/>"
-                "These cannot be transferred between cloud locations. "
-                "<a href='{help_link}' target='_blank'>Learn more</a>."
-            ).format(
-                help_link=("https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3101491209/"
-                           "CommCare+Cloud+Server+Locations")
-            ),
-        )
     full_name = forms.CharField(label=_("Full Name"))
     email = forms.CharField(label=_("Professional Email"))
     password = forms.CharField(
@@ -88,38 +68,32 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe(_(
-            """I have read and agree to Dimagi's
-            <a href="http://www.dimagi.com/terms/latest/privacy/"
-               target="_blank">Privacy Policy</a>,
-            <a href="http://www.dimagi.com/terms/latest/tos/"
-               target="_blank">Terms of Service</a>,
-            <a href="http://www.dimagi.com/terms/latest/ba/"
-               target="_blank">Business Agreement</a>, and
-            <a href="http://www.dimagi.com/terms/latest/aup/"
-               target="_blank">Acceptable Use Policy</a>.
-            """)))
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(_(
+                """I have read and agree to Dimagi's
+                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                target="_blank">Privacy Policy</a>,
+                <a href="http://www.dimagi.com/terms/latest/tos/"
+                target="_blank">Terms of Service</a>,
+                <a href="http://www.dimagi.com/terms/latest/ba/"
+                target="_blank">Business Agreement</a>, and
+                <a href="http://www.dimagi.com/terms/latest/aup/"
+                target="_blank">Acceptable Use Policy</a>.
+                """)
+            ),
+        ),
+        label="",
+    )
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
+        self.can_select_cloud = kwargs.pop('can_select_cloud', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
 
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
-
-        server_location_field = []
-        if self.fields.get('server_location'):
-            # safe to access because we only render the field if the current environment is in ServerLocation.ENVS
-            envs = ServerLocation.get_envs()
-            self.fields['server_location'].initial = envs[settings.SERVER_ENVIRONMENT]['subdomain']
-            server_location_field = [
-                hqcrispy.RadioSelect(
-                    'server_location',
-                    data_bind="checked: serverLocation"
-                ),
-            ]
 
         saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -127,9 +101,10 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Div(
                     hqcrispy.RadioSelect(
                         'persona',
-                        css_class="input-lg",
+                        css_class="form-control-lg",
                         data_bind="checked: personaChoice, "
                     ),
+                    css_class="mb-3",
                     data_bind="css: {"
                               " 'has-success': isPersonaChoiceChosen, "
                               " 'has-error': isPersonaChoiceNeeded"
@@ -138,10 +113,11 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Div(
                     hqcrispy.InlineField(
                         'persona_other',
-                        css_class="input-lg",
+                        css_class="form-control-lg",
                         data_bind="value: personaOther, "
                                   "visible: isPersonaChoiceOther, "
                     ),
+                    css_class="mb-3",
                     data_bind="css: {"
                               " 'has-success': isPersonaChoiceOtherPresent, "
                               " 'has-error': isPersonaChoiceOtherNeeded"
@@ -153,13 +129,14 @@ class RegisterWebUserForm(forms.Form):
                 crispy.Div(
                     hqcrispy.InlineField(
                         'company_name',
-                        css_class="input-lg",
+                        css_class="form-control-lg",
                         data_bind="value: companyName, "
                                   "valueUpdate: 'keyup', "
                                   "koValidationStateFeedback: { "
                                   "   validator: companyName "
                                   "}",
                     ),
+                    css_class="mb-3",
                     data_bind="visible: isPersonaChoiceProfessional, ",
                 ),
             ]
@@ -170,22 +147,52 @@ class RegisterWebUserForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Fieldset(
+                    _('Choose Your Cloud Location'),
+                    hqcrispy.FormStepNumber(1, 3),
+                    crispy.HTML(
+                        "{% include 'registration/partials/register_new_user/choose_cloud_location.html' %}"
+                    ),
+                    crispy.Div(
+                        twbscrispy.StrictButton(
+                            gettext("Back"),
+                            css_id="back-to-start-btn",
+                            css_class="btn btn-outline-primary btn-lg d-none",
+                        ),
+                        twbscrispy.StrictButton(
+                            gettext("Next"),
+                            css_class="btn btn-primary btn-lg",
+                            data_bind="click: nextStep"
+                        ),
+                        css_class="mt-3",
+                    ),
+                ),
+                css_class="form-bubble form-step cloud-step",
+                style="display: none;"
+            ),
+            crispy.Div(
+                crispy.Fieldset(
                     _('Create Your Account'),
-                    hqcrispy.FormStepNumber(1, 2),
-                    *server_location_field,
-                    hqcrispy.InlineField(
-                        'full_name',
-                        css_class="input-lg",
-                        data_bind="value: fullName, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: fullName "
-                                  "}"
+                    hqcrispy.FormStepNumber(2, 3),
+                    crispy.HTML(
+                        "{% include 'registration/partials/register_new_user/chosen_cloud_location.html' %}"
+                        if self.can_select_cloud else ""
+                    ),
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'full_name',
+                            css_class="form-control-lg",
+                            data_bind="value: fullName, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "   validator: fullName "
+                                      "}"
+                        ),
+                        css_class="mb-3",
                     ),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'email',
-                            css_class="input-lg",
+                            css_class="form-control-lg",
                             data_bind="value: email, "
                                       "valueUpdate: 'keyup', "
                                       "koValidationStateFeedback: { "
@@ -199,13 +206,13 @@ class RegisterWebUserForm(forms.Form):
                         crispy.HTML('<p class="validation-message-block" '
                                     'data-bind="visible: isEmailValidating, '
                                     'text: validatingEmailMsg">&nbsp;</p>'),
-                        hqcrispy.ValidationMessage('emailDelayed'),
                         data_bind="validationOptions: { allowHtmlMessages: 1 }",
+                        css_class="mb-3",
                     ),
                     crispy.Div(
                         hqcrispy.InlineField(
                             'password',
-                            css_class="input-lg",
+                            css_class="form-control-lg",
                             autocomplete="new-password",
                             data_bind="value: password, "
                                       "valueUpdate: 'keyup', "
@@ -214,64 +221,75 @@ class RegisterWebUserForm(forms.Form):
                                       "   delayedValidator: passwordDelayed "
                                       "}",
                         ),
-                        hqcrispy.ValidationMessage('passwordDelayed'),
-                        data_bind="visible: showPasswordField"
+                        data_bind="visible: showPasswordField",
+                        css_class="mb-3",
                     ),
-                    hqcrispy.InlineField(
-                        'phone_number',
-                        css_class="input-lg",
-                        data_bind="value: phoneNumber, "
-                                  "valueUpdate: 'keyup'"
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'phone_number',
+                            css_class="form-control-lg",
+                            data_bind="value: phoneNumber, "
+                                      "valueUpdate: 'keyup'"
+                        ),
+                        css_class="mb-3",
                     ),
                     hqcrispy.InlineField('atypical_user'),
-                    twbscrispy.StrictButton(
-                        gettext("Back"),
-                        css_id="back-to-start-btn",
-                        css_class="btn btn-default btn-lg hide",
-                    ),
-                    twbscrispy.StrictButton(
-                        gettext("Next"),
-                        css_class="btn btn-primary btn-lg",
-                        data_bind="click: nextStep, disable: disableNextStepOne"
+                    crispy.Div(
+                        twbscrispy.StrictButton(
+                            gettext("Back"),
+                            css_class="btn btn-outline-primary btn-lg",
+                            data_bind="click: previousStep" if self.can_select_cloud else "disable: true",
+                        ),
+                        twbscrispy.StrictButton(
+                            gettext("Next"),
+                            css_class="btn btn-primary btn-lg",
+                            data_bind="click: nextStep, disable: disableNextUserStep"
+                        ),
+                        css_class="mt-3",
                     ),
                     hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
                 ),
-                css_class="form-bubble form-step step-1",
+                css_class="form-bubble form-step user-step",
                 style="display: none;"
             ),
             crispy.Div(
                 crispy.Fieldset(
                     _('Name Your First Project'),
-                    hqcrispy.FormStepNumber(2, 2),
-                    hqcrispy.InlineField(
-                        'project_name',
-                        css_class="input-lg",
-                        data_bind="value: projectName, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: projectName "
-                                  "}",
+                    hqcrispy.FormStepNumber(3, 3),
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'project_name',
+                            css_class="form-control-lg",
+                            data_bind="value: projectName, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "   validator: projectName "
+                                      "}",
+                        ),
+                        css_class="mb-3",
                     ),
                     crispy.Div(*saas_fields),
-                    hqcrispy.InlineField(
-                        'eula_confirmed',
-                        css_class="input-lg",
-                        data_bind="checked: eulaConfirmed"
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'eula_confirmed',
+                            data_bind="checked: eulaConfirmed"
+                        ),
+                        css_class="mb-3",
                     ),
                     twbscrispy.StrictButton(
                         gettext("Back"),
-                        css_class="btn btn-default btn-lg",
+                        css_class="btn btn-outline-primary btn-lg",
                         data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
                         gettext("Finish"),
                         css_class="btn btn-primary btn-lg",
                         data_bind="click: submitForm, "
-                                  "disable: disableNextStepTwo"
+                                  "disable: disableNextProjectStep"
                     )
                 ),
-                css_class="form-bubble form-step step-2",
+                css_class="form-bubble form-step project-step",
                 style="display: none;"
             ),
         )
@@ -386,7 +404,7 @@ class DomainRegistrationForm(forms.Form):
                 hqcrispy.LinkButton(
                     _("Cancel"),
                     reverse('homepage'),
-                    css_class="btn btn-default",
+                    css_class="btn btn-outline-primary",
                 ),
             )
         )
@@ -568,12 +586,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             if self.custom_data:
-                prefixed_fields = {}
-                if WEB_USER_INVITE_ADDITIONAL_FIELDS.enabled(domain):
-                    prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
-                elif PROFILE_SLUG in self.custom_data.form.fields:
-                    prefixed_profile_key = with_prefix(PROFILE_SLUG, self.custom_data.prefix)
-                    prefixed_fields[prefixed_profile_key] = self.custom_data.form.fields[PROFILE_SLUG]
+                prefixed_fields = add_prefix(self.custom_data.form.fields, self.custom_data.prefix)
                 self.fields.update(prefixed_fields)
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
@@ -654,7 +667,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 ),
                 crispy.HTML(
                     render_to_string(
-                        'users/partials/waiting_to_verify_email_message.html',
+                        'users/partials/bootstrap3/waiting_to_verify_email_message.html',
                         {}
                     ),
                 ),

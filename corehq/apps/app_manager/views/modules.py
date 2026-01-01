@@ -650,7 +650,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "excl_form_ids": None,
         "form_session_endpoints": None,
         "display_style": None,
-        "custom_icon_form": None,
+        "custom_icon_type": None,
         "custom_icon_text_body": None,
         "custom_icon_xpath": None,
         "use_default_image_for_all": None,
@@ -687,7 +687,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
-    if should_edit("custom_icon_form"):
+    if should_edit("custom_icon_type"):
         handle_custom_icon_edits(request, module, lang)
     if should_edit("no_items_text"):
         module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
@@ -1224,25 +1224,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.custom_variables_dict = custom_variables_dict['long']
 
     if sort_elements is not None:
-        # Attempt to map new elements to old so we don't lose translations
-        # Imperfect because the same field may be used multiple times, or user may change field
-        old_elements_by_field = {e['field']: e for e in detail.short.sort_elements}
-
-        detail.short.sort_elements = []
-        for sort_element in sort_elements:
-            item = SortElement()
-            item.field = sort_element['field']
-            item.type = sort_element['type']
-            item.direction = sort_element['direction']
-            item.blanks = sort_element['blanks']
-            if item.field in old_elements_by_field:
-                item.display = old_elements_by_field[item.field].display
-            item.display[lang] = sort_element['display']
-            if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
-                item.sort_calculation = sort_element['sort_calculation']
-            else:
-                item.sort_calculation = ""
-            detail.short.sort_elements.append(item)
+        error_response = _update_sort_elements(domain, lang, detail, sort_elements)
+        if error_response:
+            return error_response
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
         if module_case_hierarchy_has_circular_reference(module):
@@ -1255,6 +1239,41 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     resp = {}
     app.save(resp)
     return JsonResponse(resp)
+
+
+def _update_sort_elements(domain, lang, detail, sort_elements):
+    # Attempt to map new elements to old so we don't lose translations
+    # Imperfect because the same field may be used multiple times, or user may change field
+    old_elements_by_field = {}
+    old_elements_by_calculation = {}
+    for sort_element in detail.short.sort_elements:
+        if sort_element.sort_calculation:
+            old_elements_by_calculation[sort_element.sort_calculation] = sort_element
+        elif sort_element.field:
+            old_elements_by_field[sort_element.field] = sort_element
+    detail.short.sort_elements = []
+    for sort_element in sort_elements:
+        item = _init_new_sort_element(sort_element)
+        if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
+            item.sort_calculation = sort_element['sort_calculation']
+            is_valid, error_message = item.valid()
+            if not is_valid:
+                return HttpResponseBadRequest(error_message)
+        if item.sort_calculation and item.sort_calculation in old_elements_by_calculation:
+            item.display = old_elements_by_calculation[item.sort_calculation].display
+        elif item.field and item.field in old_elements_by_field:
+            item.display = old_elements_by_field[item.field].display
+        item.display[lang] = sort_element['display']
+        detail.short.sort_elements.append(item)
+
+
+def _init_new_sort_element(sort_element):
+    item = SortElement()
+    item.field = sort_element['field']
+    item.type = sort_element['type']
+    item.direction = sort_element['direction']
+    item.blanks = sort_element['blanks']
+    return item
 
 
 def _gather_and_update_search_properties(params, app, module, lang):

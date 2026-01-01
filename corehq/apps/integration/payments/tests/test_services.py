@@ -751,6 +751,20 @@ class TestRequestPaymentsStatusForCases(TestCase):
         case = _create_case(self.factory, name, properties)
         return case
 
+    @staticmethod
+    def _mock_side_effect_case_wise(mock_responses):
+        """Return a side-effect callable for mocks that returns/raises based on case_id.
+        mock_responses: dict mapping case_id -> either a response dict or Exception to raise.
+        """
+
+        def _side_effect(case, *args, **kwargs):
+            resp = mock_responses[case.case_id]
+            if isinstance(resp, Exception):
+                raise resp
+            return resp
+
+        return _side_effect
+
     @patch('corehq.apps.integration.payments.services.request_payment_status')
     def test_request_payments_status_for_cases_success(self, mock_request_status):
         submitted_cases = [
@@ -766,13 +780,14 @@ class TestRequestPaymentsStatusForCases(TestCase):
         for case in submitted_cases:
             self.addCleanup(case.delete)
 
-        mock_request_status.side_effect = [
-            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
-            {
+        mock_responses = {
+            submitted_cases[0].case_id: {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            submitted_cases[1].case_id: {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
                 PaymentProperties.PAYMENT_ERROR: 'DepositPayerFailed',
-            }
-        ]
+            },
+        }
+        mock_request_status.side_effect = self._mock_side_effect_case_wise(mock_responses)
 
         case_ids = [case.case_id for case in submitted_cases]
         request_payments_status_for_cases(case_ids, self.config)
@@ -841,14 +856,16 @@ class TestRequestPaymentsStatusForCases(TestCase):
         for case in submitted_cases:
             self.addCleanup(case.delete)
 
-        mock_request_status.side_effect = [
-            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
-            PaymentRequestError("Network timeout"),
-            {
+        mock_responses = {
+            submitted_cases[0].case_id: {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            submitted_cases[1].case_id: PaymentRequestError("Network timeout"),
+            submitted_cases[2].case_id: {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
                 PaymentProperties.PAYMENT_ERROR: 'DepositPayerInvalidCurrency',
-            }
-        ]
+            },
+        }
+
+        mock_request_status.side_effect = self._mock_side_effect_case_wise(mock_responses)
 
         case_ids = [case.case_id for case in submitted_cases]
         request_payments_status_for_cases(case_ids, self.config)
@@ -910,14 +927,15 @@ class TestRequestPaymentsStatusForCases(TestCase):
         for case in cases:
             self.addCleanup(case.delete)
 
-        mock_request_status.side_effect = [
-            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
-            {
+        mock_responses = {
+            cases[0].case_id: {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            cases[1].case_id: {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
                 PaymentProperties.PAYMENT_ERROR: 'DepositPayerNotAllowed',
             },
-            PaymentRequestError("Timeout")
-        ]
+            cases[2].case_id: PaymentRequestError("Timeout"),
+        }
+        mock_request_status.side_effect = self._mock_side_effect_case_wise(mock_responses)
 
         case_ids = [case.case_id for case in cases]
         request_payments_status_for_cases(case_ids, self.config)

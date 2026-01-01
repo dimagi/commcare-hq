@@ -76,14 +76,14 @@ from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
     waf_allow,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
 from corehq.apps.integration.util import integration_contexts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import get_complete_username
-from corehq.apps.users.views import BaseUserSettingsView, ListRolesView
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.users.views.role import ListRolesView
 from corehq.util.metrics import metrics_counter, metrics_histogram
 
 
@@ -550,13 +550,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         if not build_id:
             return _fail(_("No corresponding application found in this project."))
 
-    restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
-    force_login_as = (not toggles.SMART_LINKS_FOR_WEB_USERS.enabled(domain)
-                      and not restore_as_user.is_commcare_user())
-    if force_login_as and not can_use_restore_as(request):
-        return _fail(_("This user cannot access this link."))
-
-    state = {"appId": build_id, "forceLoginAs": force_login_as}
+    state = {"appId": build_id}
     if endpoint_id is not None:
         state.update({
             "endpointId": endpoint_id,

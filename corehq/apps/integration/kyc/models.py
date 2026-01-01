@@ -156,6 +156,7 @@ class KycConfig(models.Model):
 class KycProperties:
     KYC_VERIFICATION_STATUS = 'kyc_verification_status'
     KYC_LAST_VERIFIED_AT = 'kyc_last_verified_at'
+    KYC_VERIFIED_BY = 'kyc_verified_by'
     KYC_VERIFICATION_ERROR = 'kyc_verification_error'
     KYC_PROVIDER = 'kyc_provider'
 
@@ -248,10 +249,14 @@ class KycUser:
         return value
 
     @property
+    def kyc_verified_by(self):
+        return self.user_data.get(KycProperties.KYC_VERIFIED_BY)
+
+    @property
     def kyc_provider(self):
         return self.user_data.get(KycProperties.KYC_PROVIDER)
 
-    def update_verification_status(self, verification_status, device_id=None, error_message=None):
+    def update_verification_status(self, verification_status, verified_by, device_id=None, error_message=None):
         from corehq.apps.hqcase.utils import update_case
 
         assert verification_status in [
@@ -263,6 +268,7 @@ class KycUser:
             KycProperties.KYC_PROVIDER: self.kyc_config.provider,
             KycProperties.KYC_LAST_VERIFIED_AT: datetime.utcnow().isoformat(),
             KycProperties.KYC_VERIFICATION_STATUS: verification_status,
+            KycProperties.KYC_VERIFIED_BY: verified_by,
             KycProperties.KYC_VERIFICATION_ERROR: error_message if error_message else '',
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
