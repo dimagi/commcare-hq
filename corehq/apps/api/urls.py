@@ -143,8 +143,8 @@ urlpatterns = [
     # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
     url(r'v0\.6/case(?:/(?P<case_id>[\w\-,]+))?/?$', case_api),
     url(r'case/v2(?:/(?P<case_id>[\w\-,]+))?/?$', case_api, name='case_api'),
-    url(r'v0\.6/case/ext/(?P<external_id>[\w\-]+)/$', case_api),
-    url(r'case/v2/ext/(?P<external_id>[\w\-]+)/$', case_api),
+    path('v0.6/case/ext/<path:external_id>/', case_api),
+    path('case/v2/ext/<path:external_id>/', case_api),
     path('', include(list(versioned_apis(_OLD_API_LIST)))),
     url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view()),
     url(r'^case_attachment/v1/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),
