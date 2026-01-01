@@ -1,34 +1,448 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_base";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import toggles from "hqwebapp/js/toggles";
+import privileges from "hqwebapp/js/privileges";
 import Alpine from "alpinejs";
 
 Alpine.data('initRole', (roleJson) => {
+
+    console.log(`initRole: ${JSON.stringify(roleJson, null, 2)}`);
+
     return {
         role: roleJson,
         isSaving: false,
         roleError: '',
-        saveRole() {
-            this.isSaving = true;
+        accessAreas: [],
+        init() {
+            const self = this;
+            this.accessAreas = [
+                {
+                    showOption: true,
+                    get editPermission() {
+                        return self.role.permissions.edit_web_users;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_web_users = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_web_users;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_web_users = value;
+                    },
+                    text: gettext("<strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-web-users-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-web-users-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Mobile Workers"),
+                    screenReaderViewOnlyText: gettext("View-Only Mobile Workers"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return toggles.toggleEnabled("TABLEAU_USER_SYNCING") &&
+                            (self.role.permissions.edit_web_users || self.role.permissions.view_web_users);
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_user_tableau_config;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_user_tableau_config = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_user_tableau_config;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_user_tableau_config = value;
+                    },
+                    text: gettext("<strong>Manage Tableau Configuration</strong> &mdash; manage tableau configuration for web users"),
+                    get showEditCheckbox() {
+                        return self.role.permissions.edit_web_users;
+                    },
+                    editCheckboxLabel: "edit-user-tableau-config-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-user-tableau-config-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View tableau configuration for web users"),
+                    screenReaderViewOnlyText: gettext("View-Only tableau configuration for web users"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    showOption: true,
+                    get editPermission() {
+                        return self.role.permissions.edit_commcare_users;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_commcare_users = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_commcare_users;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_commcare_users = value;
+                    },
+                    text: gettext("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings, deactivate or delete mobile workers."),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-commcare-users-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-commcare-users-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Web Users"),
+                    screenReaderViewOnlyText: gettext("View-Only Web Users"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return self.role.permissions.access_all_locations
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_groups;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_groups = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_groups;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_groups = value;
+                    },
+                    text: gettext("<strong>Groups</strong> &mdash; manage groups of mobile workers"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-groups-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-groups-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Groups"),
+                    screenReaderViewOnlyText: gettext("View-Only Web Groups"),
+                    showAllowCheckbox: true,
+                    allowCheckboxText: gettext("Allow changing group membership (requires edit groups)."),
+                    allowCheckboxId: "edit-users-groups-checkbox",
+                    get allowCheckboxPermission() {
+                        return self.role.permissions.edit_users_in_groups
+                    },
+                    set allowCheckboxPermission(value) { // Add this setter
+                        self.role.permissions.edit_users_in_groups = value;
+                    },
+                },
+                {
+                    showOption: true,
+                    get editPermission() {
+                        return self.role.permissions.edit_locations;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_locations = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_locations;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_locations = value;
+                    },
+                    text: gettext("<strong>Locations</strong> &mdash; manage locations in the Organization's Hierarchy"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-locations-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-locations-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Locations"),
+                    screenReaderViewOnlyText: gettext("View-Only Web Locations"),
+                    showAllowCheckbox: true,
+                    allowCheckboxText: gettext("Allow changing workers at a location."),
+                    allowCheckboxId: "edit-users-locations-checkbox",
+                    get allowCheckboxPermission() {
+                        return self.role.permissions.edit_users_in_locations
+                    },
+                    set allowCheckboxPermission(value) { // Add this setter
+                        self.role.permissions.edit_users_in_locations = value;
+                    },
+                },
+                {
+                    get showOption() {
+                        return privileges.hasPrivilege('data_dictionary');
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_data_dict;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_data_dict = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_data_dict;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_data_dict = value;
+                    },
+                    text: gettext("<strong>Data Dictionary</strong> &mdash; manage case properties within CommCare HQ"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-data-dict-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-data-dict-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Data Dictionary"),
+                    screenReaderViewOnlyText: gettext("View-Only Data Dictionary"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    showOption: true,
+                    get editPermission() {
+                        return self.role.permissions.edit_data;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_data = value;
+                    },
+                    viewPermission: null,
+                    text: gettext("<strong>Data</strong> &mdash; view, export, and edit form and case data, reassign cases"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-data-checkbox",
+                    showViewCheckbox: false,
+                    viewCheckboxLabel: "view-data-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Data"),
+                    screenReaderViewOnlyText: null,
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    showOption: true,
+                    get editPermission() {
+                        return self.role.permissions.edit_messaging;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_messaging = value;
+                    },
+                    viewPermission: null,
+                    text: gettext("<strong>Messaging</strong> &mdash; configure and send conditional alerts"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-messaging-checkbox",
+                    showViewCheckbox: false,
+                    viewCheckboxLabel: "view-messaging-checkbox",
+                    screenReaderEditAndViewText: gettext("Access Messaging"),
+                    screenReaderViewOnlyText: null,
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    // Since disabling "Full Organization Access" automatically disables "Access APIs"
+                    // and we never want "Access APIs" without "Full Organization Access",
+                    // we hide "Access APIs" when "Full Organization Access" is disabled.
+                    // If "Access APIs" is checked though, even if "Full Organization Access" isn't
+                    // we always want to show it.
+                    // One can no longer make this combination happen in the UI,
+                    // but for the small number of existing roles that have this combination
+                    // we want it to be displayed.
+                    // Unchecking "Access APIs" in this situation will then make the option disappear.
+                    get showOption() {
+                        return self.role.permissions.access_all_locations || self.role.permissions.access_api;
+                    },
+                    get editPermission() {
+                        return self.role.permissions.access_api;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.access_api = value;
+                    },
+                    viewPermission: null,
+                    text: gettext("<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data. Specific APIs may require additional permissions."),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-apis-checkbox",
+                    showViewCheckbox: false,
+                    viewCheckboxLabel: "view-apis-checkbox",
+                    screenReaderEditAndViewText: gettext("Access APIs"),
+                    screenReaderViewOnlyText: null,
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return self.role.permissions.access_all_locations;
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_apps;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_apps = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_apps;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_apps = value;
+                    },
+                    text: gettext("<strong>Applications</strong> &mdash; modify or view the structure and configuration of all applications."),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-apps-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-apps-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Apps"),
+                    screenReaderViewOnlyText: gettext("View-Only Applications"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return self.role.permissions.access_all_locations;
+                    },
+                    editPermission: false,
+                    get viewPermission() {
+                        return self.role.permissions.view_roles;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_roles = value;
+                    },
+                    text: gettext("<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile worker roles &amp; permissions (only Admins can edit roles)"),
+                    showEditCheckbox: false,
+                    editCheckboxLabel: "edit-roles-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-roles-checkbox",
+                    screenReaderEditAndViewText: null,
+                    screenReaderViewOnlyText: gettext("View Roles and Permissions"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return initialPageData.get("data_file_download_enabled");
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_file_dropzone;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_file_dropzone = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_file_dropzone;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_file_dropzone = value;
+                    },
+                    text: gettext("<strong>Dropzone</strong> &mdash; Upload and download files from the file Dropzone"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-dropzone-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-dropzone-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & Download files from the Dropzone "),
+                    screenReaderViewOnlyText: gettext("View-Only Dropzone"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return initialPageData.get("export_ownership_enabled");
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_shared_exports;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_shared_exports = value;
+                    },
+                    viewPermission: null,
+                    text: gettext("<strong>Manage Shared Exports</strong> &mdash; access and edit the content and structure of shared exports"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-shared-exports-checkbox",
+                    showViewCheckbox: false,
+                    viewCheckboxLabel: "view-shared-exports-checkbox",
+                    screenReaderEditAndViewText: null,
+                    screenReaderViewOnlyText: null,
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return initialPageData.get("attendance_tracking_privilege");
+                    },
+                    get editPermission() {
+                        return self.role.permissions.manage_attendance_tracking;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.manage_attendance_tracking = value;
+                    },
+                    viewPermission: null,
+                    text: gettext("<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking events and users"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-attenance-tracking-checkbox",
+                    showViewCheckbox: false,
+                    viewCheckboxLabel: "view-attenance-tracking-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit Attendance Tracking Events"),
+                    screenReaderViewOnlyText: gettext("Edit Attendance Tracking Events"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+                {
+                    get showOption() {
+                        return toggles.toggleEnabled("SUPERSET_ANALYTICS");
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_commcare_analytics;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_commcare_analytics = value;
+                    },
+                    get viewPermission() {
+                        return self.role.permissions.view_commcare_analytics;
+                    },
+                    set viewPermission(value) {
+                        self.role.permissions.view_commcare_analytics = value;
+                    },
+                    text: gettext("<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics associated with this project"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-commcare-analytics-checkbox",
+                    showViewCheckbox: true,
+                    viewCheckboxLabel: "view-commcare-analytics-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View CommCare Analytics"),
+                    screenReaderViewOnlyText: gettext("View-Only CommCare Analytics"),
+                    showAllowCheckbox: false,
+                    allowCheckboxText: null,
+                    allowCheckboxId: null,
+                    allowCheckboxPermission: null,
+                },
+            ]; // end accessAreas
 
-            $.ajax({
-                method: 'POST',
-                url: initialPageData.reverse("post_user_role"),
-                data: JSON.stringify(this.role, null, 2),
-                dataType: 'json',
-                success: () => {
-                    this.isSaving = false;
-                },
-                error: (response) => {
-                    this.isSaving = false;
-                    let message = gettext("An error occurred, please try again.");
-                    if (response.responseJSON && response.responseJSON.message) {
-                        message = response.responseJSON.message;
-                    }
-                    this.roleError = message;
-                },
-            });
-        }
+            this.saveRole = () => {
+                self.isSaving = true;
+
+                $.ajax({
+                    method: 'POST',
+                    url: initialPageData.reverse("post_user_role"),
+                    data: JSON.stringify(self.role, null, 2),
+                    dataType: 'json',
+                    success: () => {
+                        self.isSaving = false;
+                    },
+                    error: (response) => {
+                        self.isSaving = false;
+                        let message = gettext("An error occurred, please try again.");
+                        if (response.responseJSON && response.responseJSON.message) {
+                            message = response.responseJSON.message;
+                        }
+                        self.roleError = message;
+                    },
+                });
+            }
+        }, // end init
     };
 });
 
