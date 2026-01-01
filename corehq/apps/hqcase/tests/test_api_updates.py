@@ -20,27 +20,7 @@ from ..api.updates import (
 )
 
 
-@sharded
-class TestIndividualUpdate(TestCase):
-    domain = "test-individual-update"
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain_obj = create_domain(cls.domain)
-        cls.web_user = WebUser.create(
-            cls.domain, "testuser", "password", None, None
-        )
-
-    def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain)
-        FormProcessorTestUtils.delete_all_xforms(self.domain)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.web_user.delete(cls.domain, deleted_by=None)
-        cls.domain_obj.delete()
-        super().tearDownClass()
+class TestIndividualUpdate:
 
     def test_individual_update_with_is_creation_true(self):
         data = {
@@ -48,13 +28,11 @@ class TestIndividualUpdate(TestCase):
             "case_name": "Jane Doe",
             "owner_id": "test-owner",
         }
-
         update = _get_individual_update(
             data,
-            self.web_user.user_id,
+            'user_id',
             is_creation=True
         )
-
         assert update.is_new_case
 
     def test_individual_update_with_is_creation_false(self):
@@ -62,38 +40,16 @@ class TestIndividualUpdate(TestCase):
             "case_id": "existing-case",
             "case_name": "Updated Name",
         }
-
         update = _get_individual_update(
             data,
-            self.web_user.user_id,
+            'user_id',
             is_creation=False
         )
-
         assert not update.is_new_case
         assert update.case_id == "existing-case"
 
 
-@sharded
-class TestBulkUpdates(TestCase):
-    domain = "test-bulk-updates"
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain_obj = create_domain(cls.domain)
-        cls.web_user = WebUser.create(
-            cls.domain, "testuser", "password", None, None
-        )
-
-    def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain)
-        FormProcessorTestUtils.delete_all_xforms(self.domain)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.web_user.delete(cls.domain, deleted_by=None)
-        cls.domain_obj.delete()
-        super().tearDownClass()
+class TestBulkUpdates:
 
     def test_bulk_update_missing_create_flag_raises_error(self):
         data = [
@@ -102,11 +58,11 @@ class TestBulkUpdates(TestCase):
                 "case_name": "Test Case",
             }
         ]
-
-        with pytest.raises(UserError) as excinfo:
-            _get_bulk_updates(data, self.web_user.user_id)
-
-        assert "A 'create' flag is required" in str(excinfo.value)
+        with pytest.raises(
+            UserError,
+            match="Error in row 1: A 'create' flag is required for each update.",
+        ):
+            _get_bulk_updates(data, 'user_id')
 
     def test_bulk_update_with_create_true(self):
         data = [
@@ -117,9 +73,7 @@ class TestBulkUpdates(TestCase):
                 "owner_id": "test-owner",
             }
         ]
-
-        updates = _get_bulk_updates(data, self.web_user.user_id)
-
+        updates = _get_bulk_updates(data, 'user_id')
         assert len(updates) == 1
         assert updates[0].is_new_case
 
@@ -131,9 +85,7 @@ class TestBulkUpdates(TestCase):
                 "case_name": "Updated Name",
             }
         ]
-
-        updates = _get_bulk_updates(data, self.web_user.user_id)
-
+        updates = _get_bulk_updates(data, 'user_id')
         assert len(updates) == 1
         assert not updates[0].is_new_case
         assert updates[0].case_id == "existing-case"
@@ -148,9 +100,7 @@ class TestBulkUpdates(TestCase):
                 "owner_id": "test-owner",
             }
         ]
-
-        updates = _get_bulk_updates(data, self.web_user.user_id)
-
+        updates = _get_bulk_updates(data, 'user_id')
         assert len(updates) == 1
         assert isinstance(updates[0], JsonCaseUpsert)
         with pytest.raises(ValueError):
@@ -167,12 +117,11 @@ class TestBulkUpdates(TestCase):
                 "owner_id": "test-owner",
             }
         ]
-
         with pytest.raises(
             UserError,
             match='Error in row 1: Property external_id is required.',
         ):
-            _get_bulk_updates(data, self.web_user.user_id)
+            _get_bulk_updates(data, 'user_id')
 
     def test_bulk_update_with_create_none_with_case_id_raises_error(self):
         data = [
@@ -185,11 +134,11 @@ class TestBulkUpdates(TestCase):
                 "owner_id": "test-owner",
             }
         ]
-
-        with pytest.raises(UserError) as excinfo:
-            _get_bulk_updates(data, self.web_user.user_id)
-
-        assert "UPSERT does not allow case_id" in str(excinfo.value)
+        with pytest.raises(
+            UserError,
+            match='Error in row 1: UPSERT does not allow case_id to be specified',
+        ):
+            _get_bulk_updates(data, 'user_id')
 
     def test_bulk_update_with_error_reports_row_number(self):
         data = [
@@ -200,13 +149,11 @@ class TestBulkUpdates(TestCase):
                 "case_name": "Missing owner_id",
             },
         ]
-
-        with pytest.raises(UserError) as excinfo:
-            _get_bulk_updates(data, self.web_user.user_id)
-
-        error_message = str(excinfo.value)
-        assert "Error in row 1" in error_message
-        assert "owner_id" in error_message
+        with pytest.raises(
+            UserError,
+            match='Error in row 1: Property owner_id is required.',
+        ):
+            _get_bulk_updates(data, 'user_id')
 
 
 @sharded
