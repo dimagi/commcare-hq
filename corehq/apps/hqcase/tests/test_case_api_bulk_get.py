@@ -83,7 +83,7 @@ class TestCaseAPIBulkGet(TestCase):
         )
 
     def test_get_single_case(self):
-        res = self.client.get(reverse('case_api', args=(self.domain, self.case_ids[0])))
+        res = self.client.get(reverse('case_api_detail', args=(self.domain, self.case_ids[0])))
         assert res.status_code == 200
         assert res.json()['case_id'] == self.case_ids[0]
 
@@ -123,12 +123,12 @@ class TestCaseAPIBulkGet(TestCase):
         assert res.json()['error'] == "Case 'missing-external-id' not found"
 
     def test_get_single_case_not_found(self):
-        res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
+        res = self.client.get(reverse('case_api_detail', args=(self.domain, 'fake_id')))
         assert res.status_code == 404
         assert res.json()['error'] == "Case 'fake_id' not found"
 
     def test_get_single_case_on_other_domain(self):
-        res = self.client.get(reverse('case_api', args=(self.domain, self.other_domain_case_id)))
+        res = self.client.get(reverse('case_api_detail', args=(self.domain, self.other_domain_case_id)))
         assert res.status_code == 404
         assert res.json()['error'] == f"Case '{self.other_domain_case_id}' not found"
 
@@ -204,7 +204,7 @@ class TestCaseAPIBulkGet(TestCase):
         )
 
     def _call_get_api_check_results(self, case_ids, matching=None, missing=None):
-        res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
+        res = self.client.get(reverse('case_api_detail', args=(self.domain, ','.join(case_ids))))
         assert res.status_code == 200
         result = res.json()
         result_case_ids = [case['case_id'] for case in result['cases']]

@@ -91,7 +91,7 @@ class TestCaseUpdateView(TestCase):
             return_value={"case_id": "case-123"},
         ):
             response = self.client.put(
-                reverse("case_api", args=(self.domain, "case-123")),
+                f"/a/{self.domain}/api/case/v2/case-123/",
                 json.dumps(
                     {
                         "case_name": "Updated Name",
