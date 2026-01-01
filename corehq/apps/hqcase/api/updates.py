@@ -195,9 +195,9 @@ class JsonCaseUpsert(BaseJsonCaseChange):
 def handle_case_update(domain, data, user, device_id, is_creation, xmlns=None):
     is_bulk = isinstance(data, list)
     if is_bulk:
-        updates = _get_bulk_updates(domain, data, user)
+        updates = _get_bulk_updates(data, user.user_id)
     else:
-        updates = [_get_individual_update(domain, data, user, is_creation)]
+        updates = [_get_individual_update(data, user.user_id, is_creation)]
 
     case_db = CaseIDLookerUpper(domain, updates)
 
@@ -215,9 +215,9 @@ def handle_case_update(domain, data, user, device_id, is_creation, xmlns=None):
         return xform, cases[0]
 
 
-def _get_individual_update(domain, data, user, is_creation):
+def _get_individual_update(data, user_id, is_creation):
     update_class = JsonCaseCreation if is_creation else JsonCaseUpdate
-    data['user_id'] = user.user_id
+    data['user_id'] = user_id
     try:
         update = update_class.wrap(data)
     except BadValueError as e:
@@ -225,19 +225,19 @@ def _get_individual_update(domain, data, user, is_creation):
     return update
 
 
-def _get_upsert_update(domain, data, user):
+def _get_upsert_update(data, user_id):
     if 'case_id' in data:
         raise UserError("UPSERT does not allow case_id to be specified")
     if not data.get('external_id'):
         raise UserError("UPSERT requires external_id to be specified")
-    data['user_id'] = user.user_id
+    data['user_id'] = user_id
     try:
         return JsonCaseUpsert.wrap(data)
     except BadValueError as err:
         raise UserError(str(err))
 
 
-def _get_bulk_updates(domain, all_data, user):
+def _get_bulk_updates(all_data, user_id):
     if len(all_data) > CASEBLOCK_CHUNKSIZE:
         raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
@@ -249,9 +249,9 @@ def _get_bulk_updates(domain, all_data, user):
                 raise UserError("A 'create' flag is required for each update.")
             create_flag = data.pop('create')
             if create_flag is None:
-                updates.append(_get_upsert_update(domain, data, user))
+                updates.append(_get_upsert_update(data, user_id))
             else:
-                updates.append(_get_individual_update(domain, data, user, create_flag))
+                updates.append(_get_individual_update(data, user_id, create_flag))
         except UserError as e:
             errors.append(f'Error in row {i}: {e}')
 

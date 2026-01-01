@@ -50,9 +50,8 @@ class TestIndividualUpdate(TestCase):
         }
 
         update = _get_individual_update(
-            self.domain,
             data,
-            self.web_user,
+            self.web_user.user_id,
             is_creation=True
         )
 
@@ -65,9 +64,8 @@ class TestIndividualUpdate(TestCase):
         }
 
         update = _get_individual_update(
-            self.domain,
             data,
-            self.web_user,
+            self.web_user.user_id,
             is_creation=False
         )
 
@@ -106,7 +104,7 @@ class TestBulkUpdates(TestCase):
         ]
 
         with pytest.raises(UserError) as excinfo:
-            _get_bulk_updates(self.domain, data, self.web_user)
+            _get_bulk_updates(data, self.web_user.user_id)
 
         assert "A 'create' flag is required" in str(excinfo.value)
 
@@ -120,7 +118,7 @@ class TestBulkUpdates(TestCase):
             }
         ]
 
-        updates = _get_bulk_updates(self.domain, data, self.web_user)
+        updates = _get_bulk_updates(data, self.web_user.user_id)
 
         assert len(updates) == 1
         assert updates[0].is_new_case
@@ -134,7 +132,7 @@ class TestBulkUpdates(TestCase):
             }
         ]
 
-        updates = _get_bulk_updates(self.domain, data, self.web_user)
+        updates = _get_bulk_updates(data, self.web_user.user_id)
 
         assert len(updates) == 1
         assert not updates[0].is_new_case
@@ -151,7 +149,7 @@ class TestBulkUpdates(TestCase):
             }
         ]
 
-        updates = _get_bulk_updates(self.domain, data, self.web_user)
+        updates = _get_bulk_updates(data, self.web_user.user_id)
 
         assert len(updates) == 1
         assert isinstance(updates[0], JsonCaseUpsert)
@@ -171,7 +169,7 @@ class TestBulkUpdates(TestCase):
         ]
 
         with pytest.raises(UserError) as excinfo:
-            _get_bulk_updates(self.domain, data, self.web_user)
+            _get_bulk_updates(data, self.web_user.user_id)
 
         assert "UPSERT requires external_id" in str(excinfo.value)
 
@@ -188,7 +186,7 @@ class TestBulkUpdates(TestCase):
         ]
 
         with pytest.raises(UserError) as excinfo:
-            _get_bulk_updates(self.domain, data, self.web_user)
+            _get_bulk_updates(data, self.web_user.user_id)
 
         assert "UPSERT does not allow case_id" in str(excinfo.value)
 
@@ -203,7 +201,7 @@ class TestBulkUpdates(TestCase):
         ]
 
         with pytest.raises(UserError) as excinfo:
-            _get_bulk_updates(self.domain, data, self.web_user)
+            _get_bulk_updates(data, self.web_user.user_id)
 
         error_message = str(excinfo.value)
         assert "Error in row 1" in error_message
