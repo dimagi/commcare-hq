@@ -365,3 +365,18 @@ class TestGetBulkFunction(TestCase):
             },
         ]
         assert result in possible_results
+
+    def test_get_bulk_repeats(self):
+        """
+        If case_ids and external_ids refer to the same cases, they will
+        be repeated in `get_bulk()` results.
+        """
+        result = get_bulk(
+            self.domain,
+            self.web_user,
+            case_ids=[self.case_ids[0]],  # Case 1
+            external_ids=['test1'],  # Also case 1
+        )
+        assert result['matching_records'] == 2
+        case_names = [c['case_name'] for c in result['cases']]
+        assert case_names == ['Test Case 1', 'Test Case 1']
