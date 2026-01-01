@@ -1,28 +1,43 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+{% js_entry 'users/js/edit_role' %}
 {% block page_content %}
-<div class="container p-5">
-  <!--<div>{{data}}</div>-->
-  <form x-data="{{ data }}">
-    <div class="row mb-4">
-      <label class="col-sm-2 control-label" for="role-name">
-        Role Name<span class="asteriskField">*</span>
-      </label>
-      <div class="col-sm-4 controls">
-        <input
-          x-model="name"
-          type="text"
-          id="role-name"
-          class="form-control"
-          pattern="\S.*"
-          title='{% trans_html_attr "The name must start with a valid character." %}'
-          required />
-      </div>
-    </div>
+  {% registerurl "post_user_role" domain %}
 
-    <button type="submit" class="btn btn-primary">Save Role</button>
-  </form>
-</div>
+  <div class="container mx-0">
+    <form
+      x-data="initRole({{ data }})"
+      @submit.prevent="saveRole($data.formData)"
+    >
+      <div class="row mb-4">
+        <label class="col-sm-2 control-label" for="role-name">
+          Role Name<span class="asteriskField">*</span>
+        </label>
+        <div class="col-sm-4 controls">
+          <input
+            x-model="role.name"
+            type="text"
+            id="role-name"
+            class="form-control"
+            pattern="\S.*"
+            title="{% trans_html_attr "The name must start with a valid character." %}"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-sm-2">
+          <button type="submit" class="btn btn-primary" :disabled="isSaving">
+            <span x-show="!isSaving">{% trans "Save" %}</span>
+            <span x-show="isSaving">{% trans "Saving ..." %}</span>
+          </button>
+        </div>
+        <div class="col-sm-10">
+          <span class="form-text text-danger" x-text="roleError"></span>
+        </div>
+      </div>
+    </form>
+  </div>
 {% endblock %}
