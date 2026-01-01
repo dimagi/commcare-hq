@@ -1,5 +1,6 @@
+import json
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -694,3 +695,61 @@ class TestCaseAPI(TestCase):
             )
             # Django's APPEND_SLASH setting redirects URLs without trailing slashes
             self.assertEqual(res.status_code, 301)
+
+    @patch("corehq.apps.hqcase.views.handle_case_update")
+    def test_post_without_external_id_calls_with_is_creation_true(self, mock_handle_update):
+        mock_handle_update.return_value = self._get_update_return()
+
+        with patch(
+            "corehq.apps.hqcase.views.serialize_case",
+            return_value={"case_id": "new-case"},
+        ):
+            response = self.client.post(
+                reverse("case_api", args=(self.domain,)),
+                json.dumps(
+                    {
+                        "case_type": "patient",
+                        "case_name": "Jane Doe",
+                    }
+                ),
+                content_type="application/json",
+                HTTP_USER_AGENT="test-agent",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        mock_handle_update.assert_called_once()
+        call_kwargs = mock_handle_update.call_args[1]
+        self.assertTrue(call_kwargs["is_creation"])
+
+    @patch("corehq.apps.hqcase.views.handle_case_update")
+    def test_put_with_case_id_calls_with_is_creation_false(self, mock_handle_update):
+        mock_handle_update.return_value = self._get_update_return()
+
+        with patch(
+            "corehq.apps.hqcase.views.serialize_case",
+            return_value={"case_id": "case-123"},
+        ):
+            response = self.client.put(
+                f"/a/{self.domain}/api/case/v2/case-123/",
+                json.dumps(
+                    {
+                        "case_name": "Updated Name",
+                        "external_id": "ext-456",
+                    }
+                ),
+                content_type="application/json",
+                HTTP_USER_AGENT="test-agent",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        mock_handle_update.assert_called_once()
+        call_kwargs = mock_handle_update.call_args[1]
+        self.assertFalse(call_kwargs["is_creation"])
+
+    @staticmethod
+    def _get_update_return():
+        """Helper method to create mock return value for handle_case_update"""
+        mock_xform = MagicMock(spec=XFormInstance)
+        mock_xform.form_id = "test-form-id"
+        mock_case = MagicMock(spec=CommCareCase)
+        return mock_xform, mock_case
