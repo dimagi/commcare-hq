@@ -1,0 +1,21 @@
+<div x-data="{ color: null }">
+  <label for="color-select" class="form-label">Favorite color</label>
+  <select
+    name="color"
+    {# important: use proper JSON format (no trailing comma) #}
+    x-select2='{
+      "placeholder": "Select a color",
+      "allowClear": true
+    }'
+  >
+    <option value=""></option>
+    <option value="purple">Purple</option>
+    <option value="red">Red</option>
+    <option value="green">Green</option>
+    <option value="blue">Blue</option>
+  </select>
+
+  <p class="mt-2 text-muted">
+    Selected: <span x-text="color || 'none'"></span>
+  </p>
+</div>

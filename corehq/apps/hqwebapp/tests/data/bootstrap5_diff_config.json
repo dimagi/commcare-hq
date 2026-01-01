@@ -440,11 +440,11 @@
   "apps/users/templates/users": [
     {
       "directories": [
-        "partials/bootstrap3",
-        "partials/bootstrap5"
+        "bootstrap3",
+        "bootstrap5"
       ],
       "file_type": "template",
-      "label": "users/partials",
+      "label": "users",
       "compare_all_files": true
     },
     {
@@ -1010,14 +1010,16 @@
       "file_type": "template",
       "label": "registration/partials",
       "compare_all_files": true
-    },
+    }
+  ],
+  "apps/users/static/users/js": [
     {
       "directories": [
-        "spec/bootstrap3",
-        "spec/bootstrap5"
+        "bootstrap3",
+        "bootstrap5"
       ],
-      "file_type": "template",
-      "label": "registration/spec",
+      "file_type": "javascript",
+      "label": "javascript/users/js",
       "compare_all_files": true
     }
   ]

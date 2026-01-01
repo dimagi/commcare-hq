@@ -15,7 +15,7 @@ from corehq.apps.accounting.utils.cards import (
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from dimagi.utils.web import json_response
+from dimagi.utils.web import get_ip, json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -96,6 +96,10 @@ from corehq.apps.accounting.utils import (
     pause_current_subscription,
     quantize_accounting_decimal,
 )
+from corehq.apps.accounting.utils.invoicing import (
+    get_next_due_invoice,
+    get_next_due_customer_invoice,
+)
 from corehq.apps.accounting.utils.stripe import get_customer_cards
 from corehq.apps.accounting.utils.unpaid_invoice import can_domain_unpause
 from corehq.apps.domain.decorators import (
@@ -113,6 +117,11 @@ from corehq.apps.domain.forms import (
     EditBillingAccountInfoForm,
     SelectSubscriptionTypeForm,
 )
+from corehq.apps.domain.models import (
+    AUTOPAY_TERMS_CURRENT_VERSION,
+    LicenseAgreement,
+    LicenseAgreementType,
+)
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
@@ -122,9 +131,8 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import HqPermissions
+from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.const import USER_DATE_FORMAT
-from corehq.toggles import SHOW_AUTO_RENEWAL
 
 PAYMENT_ERROR_MESSAGES = {
     400: gettext_lazy('Your request was not formatted properly.'),
@@ -221,10 +229,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return self.request.couch_user.can_edit_billing()
 
     def can_set_auto_renew(self):
-        can_access_auto_renewal = (
-            SHOW_AUTO_RENEWAL.enabled(self.request.domain)
-            and self.request.couch_user.can_edit_billing()
-        )
+        can_access_auto_renewal = self.request.couch_user.can_edit_billing()
         subscription_eligible_for_auto_renewal = (
             self.current_subscription.service_type == SubscriptionType.PRODUCT
             and self.current_subscription.date_end is not None
@@ -418,6 +423,18 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
         return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
+    def get_next_invoice_due_date(self):
+        today = datetime.date.today()
+        if self.account.is_customer_billing_account:
+            current_invoice = get_next_due_customer_invoice(
+                self.account,
+                today,
+                subscription=self.current_subscription
+            )
+        else:
+            current_invoice = get_next_due_invoice(self.current_subscription, today)
+        return current_invoice.date_due.strftime(USER_DATE_FORMAT) if current_invoice else None
+
     @property
     def page_context(self):
         from corehq.apps.domain.views.sms import SMSRatesView
@@ -442,7 +459,23 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'autopay_enabled': self.account.auto_pay_enabled,
             'manage_autopay_url': reverse(EditExistingBillingAccountView.urlname, args=[self.domain]),
             'autopay_card': serialize_account_card(autopay_card, autopay_owner) if autopay_card else None,
+            'autopay_date': self.get_next_invoice_due_date() if self.account.auto_pay_enabled else None,
         }
+
+
+def sign_autopay_terms(request):
+    current_user = CouchUser.from_django_user(request.user)
+    autopay_terms = current_user.get_eula(AUTOPAY_TERMS_CURRENT_VERSION, LicenseAgreementType.AUTOPAY_TERMS)
+    if not autopay_terms:
+        autopay_terms = LicenseAgreement(
+            type=LicenseAgreementType.AUTOPAY_TERMS,
+            version=AUTOPAY_TERMS_CURRENT_VERSION,
+            signed=True,
+            date=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None),
+            user_ip=get_ip(request),
+        )
+        current_user.eulas.append(autopay_terms)
+        current_user.save()
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -555,6 +588,7 @@ class EditExistingBillingAccountView(HqHtmxActionMixin, DomainAccountingSettings
                 self.account,
                 self.domain,
             )
+            sign_autopay_terms(request)
         except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
             error = e.json_body.get('error', {}).get(
                 'message', _('Unknown error setting autopay. Please contact Support.')
@@ -1623,8 +1657,7 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
         )
 
     def is_autopay_required(self):
-        # rollback when ops is ready to: not self.is_annual_plan or self.account.require_auto_pay
-        return False
+        return not self.is_annual_plan or self.account.require_auto_pay
 
     @property
     def page_context(self):
@@ -1686,6 +1719,8 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
                 messages.success(
                     request, message
                 )
+                if self.account.auto_pay_enabled:
+                    sign_autopay_terms(request)
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
 
             downgrade_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
@@ -1779,6 +1814,7 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
                 self.account,
                 self.domain,
             )
+            sign_autopay_terms(request)
         except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
             error = e.json_body.get('error', {}).get(
                 'message', _('Unknown error setting autopay method. Please contact Support.')
@@ -2037,6 +2073,8 @@ class CardsView(BaseCardView):
         autopay = request.POST.get('autopay') == 'true'
         try:
             self.payment_method.create_card(stripe_token, self.account, domain, autopay)
+            if autopay:
+                sign_autopay_terms(request)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
         except Exception:
