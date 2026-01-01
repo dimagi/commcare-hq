@@ -168,10 +168,11 @@ class TestBulkUpdates(TestCase):
             }
         ]
 
-        with pytest.raises(UserError) as excinfo:
+        with pytest.raises(
+            UserError,
+            match='Error in row 1: Property external_id is required.',
+        ):
             _get_bulk_updates(data, self.web_user.user_id)
-
-        assert "UPSERT requires external_id" in str(excinfo.value)
 
     def test_bulk_update_with_create_none_with_case_id_raises_error(self):
         data = [

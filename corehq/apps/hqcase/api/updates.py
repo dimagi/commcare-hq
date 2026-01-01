@@ -226,10 +226,6 @@ def _get_individual_update(data, user_id, is_creation):
 
 
 def _get_upsert_update(data, user_id):
-    if 'case_id' in data:
-        raise UserError("UPSERT does not allow case_id to be specified")
-    if not data.get('external_id'):
-        raise UserError("UPSERT requires external_id to be specified")
     data['user_id'] = user_id
     try:
         return JsonCaseUpsert.wrap(data)
