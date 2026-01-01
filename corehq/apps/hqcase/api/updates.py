@@ -73,7 +73,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
     properties = jsonobject.DictProperty(validators=[valid_properties_dict], default={})
     indices = jsonobject.DictProperty(JsonIndex, validators=[valid_indices_dict])
     close = jsonobject.BooleanProperty(default=False)
-    _is_case_creation = False
+    is_new_case = False
 
     _allow_dynamic_properties = False
 
@@ -102,7 +102,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         return CaseBlock(
             case_id=self.get_case_id(case_db),
             user_id=self.user_id,
-            create=self._is_case_creation,
+            create=self.is_new_case,
             update=dict(self.properties),
             close=self.close,
             index={
@@ -115,10 +115,6 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             **get_kwargs('case_type', 'case_name', 'external_id', 'owner_id'),
         ).as_text()
 
-    @property
-    def is_new_case(self):
-        return self._is_case_creation
-
 
 class JsonCaseCreation(BaseJsonCaseChange):
     temporary_id = jsonobject.StringProperty()
@@ -128,7 +124,7 @@ class JsonCaseCreation(BaseJsonCaseChange):
     case_type = jsonobject.StringProperty(required=True)
     owner_id = jsonobject.StringProperty(required=True)
 
-    _is_case_creation = True
+    is_new_case = True
 
     @classmethod
     def wrap(cls, data):
@@ -142,7 +138,7 @@ class JsonCaseCreation(BaseJsonCaseChange):
 
 
 class JsonCaseUpdate(BaseJsonCaseChange):
-    _is_case_creation = False
+    is_new_case = False
 
     def validate(self, *args, **kwargs):
         super().validate(*args, **kwargs)
@@ -167,7 +163,13 @@ class JsonCaseUpsert(BaseJsonCaseChange):
     case_type = jsonobject.StringProperty(required=True)
     owner_id = jsonobject.StringProperty(required=True)
 
-    _is_case_creation = None  # Determined when get_case_id() is called
+    _is_case_creation = ...  # Determined when get_case_id() is called
+
+    @property
+    def is_new_case(self):
+        if self._is_case_creation is ...:
+            raise ValueError('is_new_case has not yet been initialized')
+        return self._is_case_creation
 
     @classmethod
     def wrap(cls, data):
@@ -301,7 +303,7 @@ class CaseIDLookerUpper:
 
         ids_to_find = {
             update.external_id for update in self.updates
-            if update._is_case_creation is not True and not update.case_id
+            if not isinstance(update, JsonCaseCreation) and not update.case_id
         } | {
             index.external_id for update in self.updates for index in update.indices.values()
         }

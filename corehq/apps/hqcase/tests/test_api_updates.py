@@ -56,7 +56,7 @@ class TestIndividualUpdate(TestCase):
             is_creation=True
         )
 
-        assert update._is_case_creation
+        assert update.is_new_case
 
     def test_individual_update_with_is_creation_false(self):
         data = {
@@ -71,7 +71,7 @@ class TestIndividualUpdate(TestCase):
             is_creation=False
         )
 
-        assert not update._is_case_creation
+        assert not update.is_new_case
         assert update.case_id == "existing-case"
 
 
@@ -123,7 +123,7 @@ class TestBulkUpdates(TestCase):
         updates = _get_bulk_updates(self.domain, data, self.web_user)
 
         assert len(updates) == 1
-        assert updates[0]._is_case_creation
+        assert updates[0].is_new_case
 
     def test_bulk_update_with_create_false(self):
         data = [
@@ -137,7 +137,7 @@ class TestBulkUpdates(TestCase):
         updates = _get_bulk_updates(self.domain, data, self.web_user)
 
         assert len(updates) == 1
-        assert not updates[0]._is_case_creation
+        assert not updates[0].is_new_case
         assert updates[0].case_id == "existing-case"
 
     def test_bulk_update_with_create_none_returns_upsert(self):
@@ -155,8 +155,9 @@ class TestBulkUpdates(TestCase):
 
         assert len(updates) == 1
         assert isinstance(updates[0], JsonCaseUpsert)
-        # _is_case_creation is None until get_case_id() is called
-        assert updates[0]._is_case_creation is None
+        with pytest.raises(ValueError):
+            # is_new_case raises ValueError until get_case_id() initializes its value
+            updates[0].is_new_case
         assert updates[0].external_id == "ext-123"
 
     def test_bulk_update_with_create_none_without_external_id_raises_error(self):

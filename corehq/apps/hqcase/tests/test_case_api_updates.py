@@ -2,6 +2,8 @@ from unittest.mock import Mock
 
 from django.test import SimpleTestCase
 
+import pytest
+
 from corehq.apps.hqcase.api.updates import JsonCaseCreation, JsonCaseUpsert
 
 
@@ -121,6 +123,10 @@ class JsonCaseUpsertTests(SimpleTestCase):
         assert '<update>' in case_block
         assert '<status>active</status>' in case_block
 
-    def test_is_new_case_initially_none(self):
+    def test_is_new_case_not_initialized(self):
         upsert = JsonCaseUpsert(self.data)
-        assert upsert.is_new_case is None
+        with pytest.raises(
+            ValueError,
+            match='is_new_case has not yet been initialized',
+        ):
+            upsert.is_new_case
