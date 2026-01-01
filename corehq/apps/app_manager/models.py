@@ -187,7 +187,7 @@ from corehq.apps.users.dbaccessors import get_display_name_for_user_id
 from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.util import bitly, view_utils
+from corehq.util import bitly
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
@@ -2269,6 +2269,13 @@ class DetailColumn(IndexedSchema):
 
 
 class SortElement(IndexedSchema):
+    """
+    A sort entry for case list
+
+    It should either have a field or a sort calculation to sort by.
+    Having sort calculation makes field redundant.
+    For legacy sort element entries that have both present, sort calculation is considered.
+    """
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
@@ -2278,6 +2285,14 @@ class SortElement(IndexedSchema):
 
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
+
+    def valid(self):
+        """
+        returns if object is valid; along with an error message in case invalid
+        """
+        if not self.field and not self.sort_calculation:
+            return False, _("Sort property needs a property or a calculation")
+        return True, None
 
 
 class CaseListLookupMixin(DocumentSchema):
@@ -4867,7 +4882,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        from corehq.apps.analytics.tasks import track_workflow_noop, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
@@ -4884,11 +4898,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
 
-        request = view_utils.get_request()
-        user = getattr(request, 'couch_user', None)
-        if user and user.days_since_created == 0:
-            track_workflow_noop(user.get_email(), 'Saved the App Builder within first 24 hours')
-        send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 

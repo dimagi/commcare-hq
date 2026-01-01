@@ -1250,6 +1250,7 @@ toggles
  0001_toggle_edit_permission
  0002_assign_permissions_superusers
  0003_delete_web_usercase_toggle
+ 0004_alter_toggleeditpermission_tag_slug
 translations
  0001_initial
  0002_transifexblacklist
@@ -1378,6 +1379,7 @@ users
  0084_remove_hqapikey_key
  0085_usercredential
  0086_backfill_usercases
+ 0087_alter_sqluserdata_managers
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

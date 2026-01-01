@@ -28,6 +28,7 @@ Alpine.data('requiredBillingDetails', (isAutopayRequired) => ({
     emailList: [],
     isAutopayRequired: isAutopayRequired,
     hasAutopay: false,
+    isSubmitting: false,
     basicInfoComplete() {
         return (this.firstName
             && this.lastName && this.firstLine && this.city

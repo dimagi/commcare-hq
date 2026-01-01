@@ -19,7 +19,7 @@ from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.form_processor.utils.xform import TestFormMetadata
-from corehq.util.test_utils import flag_enabled, make_es_ready_form
+from corehq.util.test_utils import make_es_ready_form
 
 
 @es_test(requires=[form_adapter], setup_class=True)
@@ -64,7 +64,6 @@ class TestCalculateFormSubmittingMobileWorkers(BaseInvoiceTestCase):
 
 
 @travel('2025-10-01', tick=False)
-@flag_enabled('SHOW_AUTO_RENEWAL')
 class TestSubscriptionReminderEmails(BaseInvoiceTestCase):
 
     def test_sends_renewal_reminder_email(self):

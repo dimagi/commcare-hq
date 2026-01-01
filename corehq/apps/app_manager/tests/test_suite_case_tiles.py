@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
-
-from corehq.apps.app_manager.exceptions import SuiteValidationError
+from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -10,7 +9,11 @@ from corehq.apps.app_manager.models import (
     Module,
     SortElement,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates, case_tile_template_config
+from corehq.apps.app_manager.suite_xml.features.case_tiles import (
+    CUSTOM,
+    CaseTileTemplates,
+    case_tile_template_config
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -63,50 +66,79 @@ def add_columns_for_case_details(_module):
     ]
 
 
-def add_columns_for_one_one_two_case_details(_module):
+def add_columns_for_icon_text_grid_details(_module):
     _module.case_details.short.columns = [
         DetailColumn(
             header={'en': 'a'},
             model='case',
             field='a',
             format='plain',
-            case_tile_field='title'
+            case_tile_field='top_left_image'
         ),
         DetailColumn(
             header={'en': 'b'},
             model='case',
             field='b',
             format='plain',
-            case_tile_field='top'
+            case_tile_field='top_left_text'
         ),
         DetailColumn(
             header={'en': 'c'},
             model='case',
             field='c',
             format='address',
-            case_tile_field='bottom_left'
+            case_tile_field='top_right_image'
         ),
         DetailColumn(
             header={'en': 'd'},
             model='case',
             field='d',
             format='date',
-            case_tile_field='bottom_right'
+            case_tile_field='top_right_text'
         ),
         DetailColumn(
             header={'en': 'e'},
             model='case',
             field='e',
             format='address',
-            case_tile_field='map'
+            case_tile_field='middle_left_image'
         ),
         DetailColumn(
             header={'en': 'e'},
             model='case',
             field='e',
             format='address-popup',
-            case_tile_field='map_popup'
+            case_tile_field='middle_left_text'
         ),
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='middle_right_image'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='middle_right_text'
+        ),
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='bottom_left_image'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='bottom_left_text'
+        ),
+
     ]
 
 
@@ -126,6 +158,18 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
                     message = "Number of columns in template '{}' " \
                         "exceeds the limit of 12".format(template_name)
                     raise AssertionError(message)
+
+    def test_case_tile_template_does_not_exist(self):
+        with self.assertRaises(CaseTileMisconfigurationError):
+            case_tile_template_config("unknow")
+
+    def test_case_tile_template_custom(self):
+        self.assertEqual([], case_tile_template_config(CUSTOM).fields)
+
+    # only passes if the person simple file is renamed
+    # def test_case_tile_template_file_does_not_exist(self):
+    #     with self.assertRaises(FileNotFoundError):
+    #         case_tile_template_config(CaseTileTemplates.PERSON_SIMPLE.value)
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
         suite = factory.app.create_suite()
@@ -540,9 +584,9 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     def test_case_tile_with_sorting(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module("my_module", "person")
-        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.case_tile_template = CaseTileTemplates.ICON_TEXT_GRID.value
         module.case_details.short.display = 'short'
-        add_columns_for_one_one_two_case_details(module)
+        add_columns_for_icon_text_grid_details(module)
         sort_elements = [
             SortElement(field='b', direction='ascending', type='plain'),
             SortElement(field='a', direction='ascending', type='plain')
@@ -595,9 +639,9 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     def test_case_tile_with_register_from_case_list(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module("my_module", "person")
-        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.case_tile_template = CaseTileTemplates.ICON_TEXT_GRID.value
         module.case_details.short.display = 'short'
-        add_columns_for_one_one_two_case_details(module)
+        add_columns_for_icon_text_grid_details(module)
 
         reg_form = factory.new_form(module)
         reg_form.actions.open_case.condition.type = 'always'

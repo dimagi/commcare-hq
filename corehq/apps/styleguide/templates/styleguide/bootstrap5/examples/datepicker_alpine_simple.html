@@ -1,0 +1,28 @@
+<div
+  class="card mb-3"
+  x-data="{
+    selectedDate: '',
+  }"
+>
+  <div class="card-body">
+    <label
+      for="alpine-datepicker-simple"
+      class="form-label"
+    >
+      Simple date picker (YYYY-MM-DD)
+    </label>
+    <input
+      id="alpine-datepicker-simple"
+      type="text"
+      class="form-control w-auto"
+      x-model="selectedDate"
+      x-datepicker=""
+      placeholder="YYYY-MM-DD"
+      autocomplete="off"
+    />
+    <p class="mt-2 mb-0 small text-muted">
+      <strong>Selected date:</strong>
+      <span x-text="selectedDate || '—'"></span>
+    </p>
+  </div>
+</div>

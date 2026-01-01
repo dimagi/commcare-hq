@@ -127,28 +127,21 @@ var paymentMethodHandler = function (formId, opts) {
 
     // Stripe can't attach the card UI to the page until its container exists.
     // Its container is removed and re-added from the DOM depending on the user's
-    // selections, so mount and unmount it as needed. This is called in a number
+    // selections, so create stripe card elements as needed. This is called in a number
     // of places because several different observables affect the visiblity of the card UI.
-    self.cardElementPromise = getCardElementPromise(initialPageData.get("stripe_public_key"));
-    self.cardElementMounted = false;
-    self.showOrHideStripeUI = function (show) {
-        self.cardElementPromise.then(function (cardElement) {
-            const stripeSelector = '#' + formId + ' .stripe-card-container';
-            if (show) {
-                if ($(stripeSelector).length && !self.cardElementMounted) {
-                    cardElement.mount(stripeSelector);
-                    self.cardElementMounted = true;
-                }
-            } else {
-                cardElement.unmount();
-                self.cardElementMounted = false;
-            }
-        });
+    self.stripeKey = initialPageData.get("stripe_public_key");
+    self.resetStripeCardUI = (shouldCreateElement) => {
+        const stripeSelector = '#' + formId + ' .stripe-card-container';
+        if (shouldCreateElement && $(stripeSelector).length) {
+            getCardElementPromise(self.stripeKey).then(cardElement => {
+                cardElement.mount(stripeSelector);
+            });
+        }
     };
 
     self.savedCards = ko.observableArray();
     self.savedCards.subscribe(function (newValue) {
-        _.delay(function () { self.showOrHideStripeUI(newValue); });
+        _.delay(function () { self.resetStripeCardUI(newValue); });
     });
 
     self.selectedSavedCard = ko.observable();
@@ -164,7 +157,7 @@ var paymentMethodHandler = function (formId, opts) {
         return self.selectedCardType() === 'new';
     });
     self.isNewCard.subscribe(function (newValue) {
-        _.delay(function () { self.showOrHideStripeUI(newValue); });
+        _.delay(function () { self.resetStripeCardUI(newValue); });
     });
 
     self.newCard = ko.observable(stripeCardModel());
@@ -195,7 +188,7 @@ var paymentMethodHandler = function (formId, opts) {
     });
 
     self.mustCreateNewCard.subscribe(function (newValue) {
-        _.delay(function () { self.showOrHideStripeUI(newValue); });
+        _.delay(function () { self.resetStripeCardUI(newValue); });
     });
 
     self.canSelectCard = ko.computed(function () {
@@ -234,11 +227,7 @@ var paymentMethodHandler = function (formId, opts) {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
         self.newCard().reset();
-        if (self.cardElementMounted) {
-            self.cardElementPromise.then(function (cardElement) {
-                cardElement.clear();
-            });
-        }
+        self.resetStripeCardUI(true);
     };
 
     self.processPayment = function () {
@@ -285,7 +274,7 @@ var paymentMethodHandler = function (formId, opts) {
     };
 
     // Initial showing (or not) of Stripe UI
-    self.showOrHideStripeUI(self.mustCreateNewCard());
+    self.resetStripeCardUI(self.mustCreateNewCard());
 
     return self;
 };

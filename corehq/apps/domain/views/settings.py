@@ -18,7 +18,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
-from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
@@ -522,10 +521,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def get_toggle(self, slug):
         if slug not in [f.slug for f, _ in self.features()]:
             raise Http404()
-        try:
-            return Toggle.get(slug)
-        except ResourceNotFound:
-            return Toggle(slug=slug)
+        return Toggle.get_or_create(slug)
 
     @property
     def page_context(self):
