@@ -258,6 +258,46 @@ class TestUpsertIntegration(TestCase):
         assert case.external_id == "new-ext-id"
         assert case.type == "patient"
 
+    def test_upsert_with_missing_external_id(self):
+        data = [
+            {
+                "create": None,
+                "case_type": "patient",
+                "case_name": "New Patient",
+                "owner_id": self.web_user.user_id,
+            }
+        ]
+
+        with pytest.raises(UserError):
+            handle_case_update(
+                self.domain,
+                data,
+                self.web_user,
+                device_id="test",
+                is_creation=None,
+            )
+
+    def test_upsert_create_with_missing_data(self):
+        data = [
+            {
+                "create": None,
+                "external_id": "new-ext-id",
+                "owner_id": self.web_user.user_id,
+            }
+        ]
+
+        with pytest.raises(
+            ValueError,
+            match='required for new case new-ext-id',
+        ):
+            handle_case_update(
+                self.domain,
+                data,
+                self.web_user,
+                device_id="test",
+                is_creation=None,
+            )
+
     def test_upsert_updates_case_when_external_id_exists(self):
         existing_case_id = str(uuid.uuid4())
         case_block = CaseBlock(
@@ -273,7 +313,7 @@ class TestUpsertIntegration(TestCase):
         data = [
             {
                 "create": None,
-                "case_type": "patient",
+                # case_type not required for update
                 "case_name": "Updated Name",
                 "external_id": "existing-ext-id",
                 "owner_id": self.web_user.user_id,

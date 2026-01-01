@@ -93,11 +93,17 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
     def get_caseblock(self, case_db):
 
         def get_kwargs(*attribs):
-            return {
+            kwargs = {
                 a: getattr(self, a)
                 for a in attribs
                 if getattr(self, a) is not None
             }
+            if self.is_new_case:
+                required_kwargs = {'case_type', 'case_name', 'owner_id'}
+                if missing := required_kwargs - kwargs.keys():
+                    ext_id = kwargs.get('external_id', '')
+                    raise ValueError(f'{missing} required for new case {ext_id}')
+            return kwargs
 
         return CaseBlock(
             case_id=self.get_case_id(case_db),
@@ -157,11 +163,6 @@ class JsonCaseUpdate(BaseJsonCaseChange):
 class JsonCaseUpsert(BaseJsonCaseChange):
     """Handles UPSERT operations where create/update is determined at lookup time."""
     external_id = jsonobject.StringProperty(required=True)
-
-    # Required because we might create
-    case_name = jsonobject.StringProperty(required=True)
-    case_type = jsonobject.StringProperty(required=True)
-    owner_id = jsonobject.StringProperty(required=True)
 
     _is_case_creation = ...  # Determined when get_case_id() is called
 
