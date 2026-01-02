@@ -1,0 +1,92 @@
+--- 
++++ 
+@@ -5,7 +5,7 @@
+ <form class="form-horizontal">
+   <div id="settings-save-btn"></div>
+   <div class="section-changer btn-group" data-collapse-key="app-settings">
+-    <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
++    <a class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" href="#">  {# todo B5: css-dropdown #}
+       <i class="fa fa-reorder"></i>
+       <span class="caret"></span>
+     </a>
+@@ -25,23 +25,23 @@
+       {% endif %}
+     </ul>
+   </div>
+-  <div data-bind="foreach: sections" id="app-settings-options" class="panel-group">
+-    <div class="panel panel-appmanager" data-bind="visible: isVisible, css: {hide: collapse}, attr: {'data-slug': id}">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">
++  <div data-bind="foreach: sections" id="app-settings-options" class="card-group">
++    <div class="card panel-appmanager" data-bind="visible: isVisible, css: {hide: collapse}, attr: {'data-slug': id}">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">
+           <span data-bind="text: title"></span>
+         </h4>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <!-- ko foreach: settings -->
+-        <div class="form-group"
++        <div class="form-group"  {# todo B5: css-form-group #}
+              data-bind="visible: visible() || showUpgradeText(),
+                         css: {error: hasError()}">
+-          <div class="col-sm-2 control-label">
++          <div class="col-md-2 form-label">
+             <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
+             <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
+           </div>
+-          <div class="col-sm-4">
++          <div class="col-md-4">
+             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
+             <p class="help-block" data-bind="visible: disabledButHasValue">
+               <span data-bind="text: $data.disabled_txt"></span>
+@@ -56,7 +56,7 @@
+               </span>
+             </p>
+             <!-- ko if: showUpgradeText-->
+-            <div class="well well-sm">
++            <div class="card well-sm">  {# todo B5: css-well #}
+               <i class="fa fa-info-circle"></i>
+               {% blocktrans %}
+                 This feature is not available on your subscription. Please upgrade to
+@@ -66,10 +66,10 @@
+             </div>
+             <!-- /ko -->
+           </div>
+-          <div class="col-sm-4 control-label">
+-            <div class="pull-left">
+-              <span class="label label-danger" data-bind="text: $data.warning || $parents[1].warning, visible: !$data.valueIsLegal()"></span>
+-              <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
++          <div class="col-md-4 form-label">
++            <div class="float-start">
++              <span class="badge text-bg-danger" data-bind="text: $data.warning || $parents[1].warning, visible: !$data.valueIsLegal()"></span>
++              <span class="badge text-bg-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+               <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
+                 <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
+                 <span data-bind="text: disabledMessage()"></span>
+@@ -83,17 +83,17 @@
+     </div>
+   </div>
+   {% if request|toggle_enabled:"CUSTOM_PROPERTIES" and not is_linked_app %}
+-    <div class="panel panel-appmanager" data-slug="custom-properties" data-bind="css: {hide: customPropertiesCollapse}">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">{% trans 'Custom Properties' %}</h4>
++    <div class="card panel-appmanager" data-slug="custom-properties" data-bind="css: {hide: customPropertiesCollapse}">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">{% trans 'Custom Properties' %}</h4>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <fieldset>
+-          <div class="col-sm-6" data-bind="attr: { id: customPropertyType }">
++          <div class="col-md-6" data-bind="attr: { id: customPropertyType }">
+             <div class="custom-property-list" data-bind="foreach: customProperties, as: 'customProperty'">
+-              <div class="form-group container-fluid" data-bind="template: { name: 'CommcareSettings.widgets.customProperty' }"></div>
++              <div class="form-group container-fluid" data-bind="template: { name: 'CommcareSettings.widgets.customProperty' }"></div>  {# todo B5: css-form-group #}
+             </div>
+-            <button class="btn btn-default" data-bind="click: onAddCustomProperty">
++            <button class="btn btn-outline-primary" data-bind="click: onAddCustomProperty">
+               <i class="fa fa-plus"></i>
+               {% trans "Add Custom Property" %}
+             </button>
