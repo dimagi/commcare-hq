@@ -47,7 +47,9 @@ class Command(BaseCommand):
             print(f'Failed to ping {hostname} via broker at {conn.hostname}')
             return False
 
-        self.celery.control.broadcast('shutdown', destination=[hostname])
+        self.celery.control.broadcast(
+            'shutdown', destination=[hostname], connection=conn
+        )
 
         if self._ping_worker(hostname, conn):
             print(
