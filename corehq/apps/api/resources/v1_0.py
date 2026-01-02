@@ -3,7 +3,8 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.urls import re_path as url
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import BadValueError, ResourceNotFound
+from jsonobject.exceptions import WrappingAttributeError
 from tastypie import fields
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpNotFound
@@ -270,7 +271,7 @@ class DETExportInstanceResource(
                 and export.show_det_config_download
             ):
                 return export
-        except ResourceNotFound:
+        except (BadValueError, ResourceNotFound, WrappingAttributeError):
             pass
 
         try:
@@ -281,7 +282,7 @@ class DETExportInstanceResource(
                 and export.show_det_config_download
             ):
                 return export
-        except ResourceNotFound:
+        except (BadValueError, ResourceNotFound, WrappingAttributeError):
             pass
 
         raise ImmediateHttpResponse(HttpNotFound())
@@ -293,5 +294,5 @@ def _wrap_or_none(class_, doc):
     """
     try:
         return class_.wrap(doc)
-    except Exception:
+    except (BadValueError, WrappingAttributeError):
         return None
