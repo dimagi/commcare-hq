@@ -40,8 +40,12 @@ from corehq.apps.accounting.models import (
     CustomerInvoice,
     CustomerBillingRecord,
 )
-from corehq.apps.accounting.utils.stripe import get_customer_cards
 from corehq.apps.accounting.utils import quantize_accounting_decimal, log_accounting_error
+from corehq.apps.accounting.utils.cards import (
+    get_autopay_card_and_owner_for_billing_account,
+    serialize_account_card,
+)
+from corehq.apps.accounting.utils.stripe import get_customer_cards
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
@@ -368,6 +372,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     @property
     def page_context(self):
         pagination_context = self.pagination_context
+        autopay_card, autopay_owner = get_autopay_card_and_owner_for_billing_account(self.account)
         pagination_context.update({
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'stripe_cards': self.stripe_cards,
@@ -389,6 +394,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
             'total_balance': self.total_balance,
             'show_plan': False,
             'can_pay_by_wire': self.can_pay_by_wire,
+            'autopay_card': serialize_account_card(autopay_card, autopay_owner) if autopay_card else None,
         })
         return pagination_context
 
