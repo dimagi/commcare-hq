@@ -67,7 +67,7 @@ class ElasticProcessor(PillowProcessor):
             get_doc_meta_object_from_document,
         )
 
-        if self.change_filter_fn and self.change_filter_fn(change):
+        if self.change_filter_fn(change):
             return
 
         if change.deleted and change.id:
@@ -101,7 +101,7 @@ class ElasticProcessor(PillowProcessor):
             ensure_matched_revisions(change, doc)
 
         with self._datadog_timing('transform'):
-            if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
+            if doc is None or self.doc_filter_fn(doc):
                 return
 
             if doc.get('doc_type') is not None and doc['doc_type'].endswith("-Deleted"):
