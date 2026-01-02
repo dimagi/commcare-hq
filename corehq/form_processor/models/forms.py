@@ -90,7 +90,6 @@ class XFormInstanceManager(RequireDBManager):
     def iter_forms(self, form_ids):
         """
         :param form_ids: list of form_ids.
-        :param domain: See the same parameter of `get_forms`.
         """
         for chunk in chunked(form_ids, 100):
             yield from self.get_forms([_f for _f in chunk if _f])
