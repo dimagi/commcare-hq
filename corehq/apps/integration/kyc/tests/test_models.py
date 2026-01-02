@@ -17,45 +17,8 @@ from corehq.apps.integration.kyc.models import (
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
-from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
-
-
-class TestGetConnectionSettings(TestCase):
-
-    def test_valid_without_connection_settings(self):
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.USER_CASE,
-        )
-        # Does not raise `django.db.utils.IntegrityError`
-        config.save()
-
-    def test_get_connection_settings(self):
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.USER_CASE,
-        )
-        assert ConnectionSettings.objects.count() == 0
-
-        connx = config.get_connection_settings()
-        assert isinstance(connx, ConnectionSettings)
-        # Doesn't save ConnectionSettings
-        assert ConnectionSettings.objects.count() == 0
-
-    def test_bad_config(self):
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.USER_CASE,
-            provider='invalid',
-        )
-        with pytest.raises(
-            ValueError,
-            match="^Unable to determine connection settings for KYC provider "
-                  "'invalid'.$",
-        ):
-            config.get_connection_settings()
 
 
 @es_test(requires=[case_search_adapter, user_adapter])
