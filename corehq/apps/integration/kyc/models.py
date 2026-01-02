@@ -79,6 +79,12 @@ class KycConfig(models.Model):
     )
     phone_number_field = models.CharField(max_length=126, null=True, blank=True)
     passing_threshold = jsonfield.JSONField(default=dict)
+    connection_settings = models.ForeignKey(
+        ConnectionSettings,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         constraints = [
