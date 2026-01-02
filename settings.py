@@ -1182,6 +1182,15 @@ MTN_KYC_CONNECTION_SETTINGS = {
     'client_id': 'test',
     'client_secret': 'password',
 }
+ORANGE_CAMEROON_CONNECTION_SETTINGS = {
+    'url': 'https://dev.api.chenosis.io/',
+    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
+    'client_id': 'test',
+    'client_secret': 'password',
+    'x-auth-token': 'test',
+    'channel_msisdn': 'test',
+    'channel_pin': '1234',
+}
 
 #### Chatbot configuration
 # Override in localsettings.py
