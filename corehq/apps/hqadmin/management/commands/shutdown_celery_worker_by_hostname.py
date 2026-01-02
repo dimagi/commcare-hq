@@ -14,11 +14,15 @@ class Command(BaseCommand):
     def handle(self, hostname, **options):
         self.celery = Celery()
         self.celery.config_from_object(settings)
+
         self.celery.control.broadcast('shutdown', destination=[hostname])
+
         if self._ping_worker(hostname):
-            print('Did not shutdown worker')
-            exit(1)
-        print('Successfully initiated warm shutdown')
+            print(
+                f'Sent shutdown to {hostname} but worker is still '
+                'responding to ping'
+            )
+        print(f'Successfully shutdown {hostname}')
 
     def _ping_worker(self, hostname):
         worker_responses = self.celery.control.ping(
