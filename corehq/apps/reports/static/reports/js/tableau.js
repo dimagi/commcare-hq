@@ -42,7 +42,7 @@ self.initViz = function (ticket) {
                 if (node.tagName === 'IFRAME') {
                     // Reset node with sandbox attrs
                     node.remove();
-                    node.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                    node.setAttribute('sandbox', 'allow-same-origin');
                     containerDiv.appendChild(node);
                     console.log('Sandbox attribute set on iframe:', node.getAttribute('sandbox'));
                     observer.disconnect();
