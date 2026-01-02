@@ -15,7 +15,6 @@ from corehq.apps.api.validation import (
     WebUserResourceSpec,
     WebUserValidationException,
 )
-from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.views.download import DownloadDETSchemaView
 from corehq.apps.locations.models import SQLLocation
@@ -209,11 +208,9 @@ class DETExportInstanceResource(
 
     def dehydrate_type(self, bundle):
         """Return 'form' or 'case' based on the export instance type"""
-        if isinstance(bundle.obj, FormExportInstance):
-            return FORM_EXPORT
-        elif isinstance(bundle.obj, CaseExportInstance):
-            return CASE_EXPORT
-        return None
+        assert isinstance(bundle.obj, (CaseExportInstance, FormExportInstance)), \
+            'Only form and case exports are supported'
+        return bundle.obj.type
 
     def dehydrate_case_type(self, bundle):
         """Return case_type for CaseExportInstance, None otherwise"""
