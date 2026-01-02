@@ -3,6 +3,7 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.urls import re_path as url
 
+from couchdbkit import ResourceNotFound
 from tastypie import fields
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpNotFound
@@ -272,7 +273,7 @@ class DETExportInstanceResource(
                 and export.show_det_config_download
             ):
                 return export
-        except Exception:
+        except ResourceNotFound:
             pass
 
         try:
@@ -283,7 +284,7 @@ class DETExportInstanceResource(
                 and export.show_det_config_download
             ):
                 return export
-        except Exception:
+        except ResourceNotFound:
             pass
 
         raise ImmediateHttpResponse(HttpNotFound())
