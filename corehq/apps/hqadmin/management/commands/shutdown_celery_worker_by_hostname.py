@@ -9,6 +9,13 @@ from corehq.apps.hqadmin.utils import parse_celery_pings
 
 
 class Command(BaseCommand):
+    """
+    The complexity here is to accommodate migrating celery brokers
+    If in the future it becomes a challenge to support custom connections,
+    removing that logic here should be fine. The downside is that when
+    switching brokers, celery workers configured to read/write to the old
+    broker will not shutdown properly.
+    """
     help = "Gracefully shuts down a celery worker"
 
     def add_arguments(self, parser):
