@@ -1,0 +1,9 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ {% load i18n %}
+-<a href="{% url "app_form_summary" domain app.id %}" class="btn btn-default">
++<a href="{% url "app_form_summary" domain app.id %}" class="btn btn-outline-primary">
+   <i class="fa-regular fa-rectangle-list"></i>
+   {% trans "App Summary" %}
+ </a>
