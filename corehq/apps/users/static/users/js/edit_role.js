@@ -14,6 +14,7 @@ Alpine.data('initRole', (roleJson) => {
         isSaving: false,
         roleError: '',
         accessAreas: [],
+        erm: {},
         init() {
             const self = this;
             this.accessAreas = [
@@ -420,6 +421,39 @@ Alpine.data('initRole', (roleJson) => {
                     allowCheckboxPermission: null,
                 },
             ]; // end accessAreas
+
+            const linkedTitle = privileges.hasPrivilege('release_management') ?
+                gettext("Enterprise Release Management") : gettext("Multi-Environment Release Management");
+
+            this.erm = {
+                title: linkedTitle,
+                get visible() {
+                    return privileges.hasPrivilege('release_management') ||
+                        privileges.hasPrivilege('lite_release_management');
+                },
+                access_release_management: {
+                    text: gettext('Linked Project Spaces'),
+                    checkboxLabel: "erm-checkbox",
+                    get checkboxPermission() {
+                        return self.role.permissions.access_release_management
+                    },
+                    set checkboxPermission(value) {
+                        self.role.permissions.access_release_management = value;
+                    },
+                    checkboxText: gettext("Allow role to configure linked project spaces"),
+                },
+                edit_linked_configs: {
+                    text: gettext("Linked Configurations"),
+                    checkboxLabel: "erm-edit-linked-checkbox",
+                    get checkboxPermission() {
+                        return self.role.permissions.edit_linked_configurations
+                    },
+                    set checkboxPermission(value) {
+                        self.role.permissions.edit_linked_configurations = value;
+                    },
+                    checkboxText: gettext("Allow role to edit linked configurations on this project space"),
+                },
+            };
 
             this.saveRole = () => {
                 self.isSaving = true;

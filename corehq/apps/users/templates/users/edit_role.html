@@ -213,6 +213,76 @@
         </div>
       </fieldset>
 
+      <fieldset class="active" x-show="erm.visible">
+        <legend>
+          <a class="accordion-toggle" data-bs-toggle="collapse" href="#erm-card">
+            <i class="fa fa-angle-double-down"></i>
+            <span x-text="erm.title"></span>
+          </a>
+        </legend>
+        <div id="erm-card" class="card-body collapse show">
+          <div
+            class="row"
+            x-data="erm.access_release_management"
+          >
+            <div
+              class="col-md-4 form-label fw-bold"
+              x-text="text"
+            ></div>
+            <div class="col-md-8 controls">
+              <div class="form-check pt-0">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  :id="checkboxLabel"
+                  x-model="checkboxPermission"
+                />
+                <label
+                  class="form-check-label"
+                  :for="checkboxLabel"
+                  x-text="checkboxText"
+                ></label>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="row"
+            x-data="erm.edit_linked_configs"
+          >
+            <div
+              class="col-md-4 form-label fw-bold"
+              x-text="text"
+            ></div>
+            <div class="col-md-8 controls">
+              <div class="form-check pt-0">
+                <template x-if="erm.access_release_management.checkboxPermission">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    checked
+                    disabled
+                  />
+                </template>
+                <template x-if="!erm.access_release_management.checkboxPermission">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    :id="checkboxLabel"
+                    x-model="checkboxPermission"
+                  />
+                </template>
+                <label
+                  class="form-check-label"
+                  :for="checkboxLabel"
+                  x-text="checkboxText"
+                ></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
       <div class="border-top my-2"></div>
 
       <div class="row mb-4">
