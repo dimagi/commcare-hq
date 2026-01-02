@@ -15,6 +15,10 @@ class Command(BaseCommand):
         self.celery = Celery()
         self.celery.config_from_object(settings)
 
+        if not self._ping_worker(hostname):
+            print(f'Failed to ping {hostname}. Aborting shutdown.')
+            exit(1)
+
         self.celery.control.broadcast('shutdown', destination=[hostname])
 
         if self._ping_worker(hostname):
