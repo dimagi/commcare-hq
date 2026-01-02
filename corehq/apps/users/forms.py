@@ -1746,7 +1746,7 @@ class BaseTableauUserForm(forms.Form):
         label=gettext_noop("Groups"),
         choices=[],
         required=False,
-        widget=forms.CheckboxSelectMultiple()
+        widget=forms.CheckboxSelectMultiple(),
     )
 
     def __init__(self, *args, **kwargs):
@@ -1761,11 +1761,10 @@ class BaseTableauUserForm(forms.Form):
         self.allowed_tableau_groups = [
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
             if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
-        self.fields['groups'].choices = []
         self.fields['groups'].initial = []
-        for i, group in enumerate(self.allowed_tableau_groups):
-            # Add a choice for each tableau group on the server
-            self.fields['groups'].choices.append((i, group.name))
+        self.fields['groups'].choices = [
+            (i, group.name) for i, group in enumerate(self.allowed_tableau_groups)
+        ]
 
 
 class TableauUserForm(BaseTableauUserForm):

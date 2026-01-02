@@ -537,20 +537,12 @@ export default function (spec, config, options) {
                 "Please update following properties: ");
             errors.push(msg + self.config.search.commonProperties());
         }
+
         if (errors.length) {
             alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));
             return;
         }
 
-        if (self.containsSortConfiguration) {
-            var sortRows = self.config.sortRows.sortRows();
-            for (var i = 0; i < sortRows.length; i++) {
-                var row = sortRows[i];
-                if (!row.hasValidPropertyName()) {
-                    row.showWarning(true);
-                }
-            }
-        }
         if (self.validate()) {
             self.saveButton.ajax({
                 url: self.saveUrl,
@@ -564,10 +556,14 @@ export default function (spec, config, options) {
         }
     };
     self.validate = function () {
+        var valid = true;
         if (self.containsCaseListLookupConfiguration) {
-            return self.config.caseListLookup.validate();
+            valid = self.config.caseListLookup.validate() && valid;
         }
-        return true;
+        if (self.containsSortConfiguration) {
+            valid = self.config.sortRows.validate() && valid;
+        }
+        return valid;
     };
     self.serialize = function () {
         var columns = self.columns();

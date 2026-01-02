@@ -255,6 +255,9 @@ class Command(BaseCommand):
                          'GeoJSON format.'),
         Role(slug=privileges.CUSTOM_ICON_BADGES, name='Custom Icon Badges',
              description='Add text or xpath based custom icon badges to menus and forms'),
+        Role(slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
+             name='Location columns in user last activity report',
+             description="Add primary location's hierarchy to excel export in User Last Activity Report"),
     ]
 
     BOOTSTRAP_PLANS = [

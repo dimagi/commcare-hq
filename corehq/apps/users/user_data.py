@@ -211,8 +211,8 @@ class SQLUserData(models.Model):
                                 on_delete=models.SET_NULL, null=True)
     data = models.JSONField()
 
-    all_objects = models.Manager()
     objects = SQLUserDataManager()
+    all_objects = models.Manager()
 
     class Meta:
         unique_together = ("user_id", "domain")

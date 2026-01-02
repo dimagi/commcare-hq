@@ -22,7 +22,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop, override
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView, FormView
+from django.views.generic import FormView, TemplateView
 
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
@@ -33,8 +33,8 @@ from oauth2_provider.models import AccessToken, RefreshToken
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.web import json_response
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -51,15 +51,13 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import (
-    CUSTOM_DATA_FIELD_PREFIX,
-)
+from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
+    api_auth,
     domain_admin_required,
     login_and_domain_required,
     login_or_basic_ex,
-    api_auth,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -82,7 +80,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     can_edit_workers_location,
     location_safe,
-    user_can_access_other_user
+    user_can_access_other_user,
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import (
@@ -107,23 +105,26 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_can_use_filtered_user_download,
 )
-from corehq.apps.users.exceptions import InvalidRequestException, ModifyUserStatusException
+from corehq.apps.users.exceptions import (
+    InvalidRequestException,
+    ModifyUserStatusException,
+)
 from corehq.apps.users.forms import (
     CommCareUserFormSet,
     CommtrackUserForm,
     ConfirmExtraUserChargesForm,
     MultipleSelectionForm,
     NewMobileWorkerForm,
-    SetUserPasswordForm,
     SendCommCareUserPasswordResetEmailForm,
+    SetUserPasswordForm,
     UserFilterForm,
 )
 from corehq.apps.users.models import (
     CommCareUser,
+    ConnectIDUserLink,
     CouchUser,
     DeactivateMobileWorkerTrigger,
     check_and_send_limit_email,
-    ConnectIDUserLink
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -136,10 +137,10 @@ from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
     generate_mobile_username,
+    get_complete_username,
     log_user_change,
     raw_username,
     verify_modify_user_conditions,
-    get_complete_username,
 )
 from corehq.apps.users.views import (
     BaseEditUserView,
@@ -150,7 +151,8 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.apps.users.views.utils import (
-    filter_user_query_by_locations_accessible_to_user, get_user_location_info
+    filter_user_query_by_locations_accessible_to_user,
+    get_user_location_info,
 )
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
@@ -169,7 +171,7 @@ from corehq.util.workbook_json.excel import (
     get_workbook,
 )
 
-from ..utils import log_user_groups_change
+from ..utils import log_user_groups_change, send_hq_sso_date_metric
 from .custom_data_fields import CommcareUserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://dimagi.atlassian.net/wiki/spaces/commcarepublic"
@@ -195,9 +197,9 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def template_name(self):
         if self.editable_user.is_deleted():
-            return "users/deleted_account.html"
+            return "users/bootstrap3/deleted_account.html"
         else:
-            return "users/edit_commcare_user.html"
+            return "users/bootstrap3/edit_commcare_user.html"
 
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
@@ -420,7 +422,7 @@ class EditCommCareUserView(BaseEditUserView):
 
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
     urlname = 'extra_users_confirm_billing'
-    template_name = 'users/extra_users_confirm_billing.html'
+    template_name = 'users/bootstrap3/extra_users_confirm_billing.html'
     page_title = gettext_noop("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
@@ -588,7 +590,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
 
 
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
-    template_name = 'users/confirm_turn_off_demo_mode.html'
+    template_name = 'users/bootstrap3/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
     page_title = gettext_noop("Turn off Demo mode")
 
@@ -694,7 +696,7 @@ def update_user_groups(request, domain, couch_user_id):
 
 @location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
-    template_name = 'users/mobile_workers.html'
+    template_name = 'users/bootstrap3/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = gettext_noop("Mobile Workers")
 
@@ -1188,7 +1190,7 @@ class FilteredUserDownload(BaseUserSettingsView):
         context.update({'form': form, 'count_users_url': reverse(self.count_view, args=[domain])})
         return render(
             request,
-            "users/filter_and_download.html",
+            "users/bootstrap3/filter_and_download.html",
             context
         )
 
@@ -1263,7 +1265,7 @@ class UsernameUploadMixin(object):
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
     page_title = gettext_noop('Bulk Delete')
-    template_name = 'users/bulk_delete.html'
+    template_name = 'users/bootstrap3/bulk_delete.html'
 
     @property
     def page_context(self):
@@ -1337,7 +1339,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
 class ClearCommCareUsers(DeleteCommCareUsers):
     urlname = 'clear_commcare_users'
     page_title = gettext_noop('Bulk Clear')
-    template_name = 'users/bulk_clear.html'
+    template_name = 'users/bootstrap3/bulk_clear.html'
 
     def post(self, request, *args, **kwargs):
         usernames = self._get_usernames(request)
@@ -1357,8 +1359,8 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         return self.get(request, *args, **kwargs)
 
     def _clear_users_data(self, request, user_docs_by_id):
-        from corehq.apps.users.model_log import UserModelAction
         from corehq.apps.hqwebapp.tasks import send_mail_async
+        from corehq.apps.users.model_log import UserModelAction
 
         cleared_count = 0
         for user_id, doc in user_docs_by_id.items():
@@ -1390,7 +1392,7 @@ class ClearCommCareUsers(DeleteCommCareUsers):
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
     page_title = gettext_noop('Mobile Workers Bulk Lookup')
-    template_name = 'users/bulk_lookup.html'
+    template_name = 'users/bootstrap3/bulk_lookup.html'
 
     @property
     def page_context(self):
@@ -1517,7 +1519,7 @@ def download_users(request, domain, user_type):
 
 @location_safe
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
-    template_name = "users/commcare_user_confirm_account.html"
+    template_name = "users/bootstrap3/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
     ONE_HOUR_IN_SECONDS = 60 * 60
@@ -1598,7 +1600,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 @method_decorator(requires_privilege_with_fallback(privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION),
                 name="dispatch")
 class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
-    template_name = "users/commcare_user_confirm_account.html"
+    template_name = "users/bootstrap3/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
 
     @property
@@ -1620,7 +1622,7 @@ class CommCareUserConfirmAccountViewByEmailView(CommCareUserConfirmAccountView):
 
 @location_safe
 class CommCareUserAccountConfirmedView(TemplateView, DomainViewMixin):
-    template_name = "users/commcare_user_account_confirmed.html"
+    template_name = "users/bootstrap3/commcare_user_account_confirmed.html"
     urlname = "commcare_user_account_confirmed"
     strict_domain_fetching = True
 
@@ -1691,6 +1693,7 @@ def link_connectid_user(request, domain):
         connectid_username=connectid_username, commcare_user=request.user, domain=request.domain
     )
     if new:
+        send_hq_sso_date_metric(link)
         return HttpResponse(status=201)
     else:
         return HttpResponse()

@@ -76,9 +76,9 @@
  
      $(document).on('click', '.track-usage-link', function (e) {
          var $link = $(e.currentTarget),
-@@ -421,8 +424,13 @@
+@@ -421,8 +424,14 @@
      // EULA modal
-     var eulaCookie = "gdpr_rollout";
+     var eulaCookie = "tos2025";
      if (!$.cookie(eulaCookie)) {
 -        var $modal = $("#eulaModal");
 -        if ($modal.length) {
@@ -89,10 +89,11 @@
 +                keyboard: false,
 +                backdrop: 'static',
 +            });
++            eulaModal.show();
              $("body").addClass("has-eula");
              $("#eula-agree").click(function () {
                  $(this).disableButton();
-@@ -430,7 +438,7 @@
+@@ -430,7 +439,7 @@
                      url: initialPageData.reverse("agree_to_eula"),
                      method: "POST",
                      success: function () {
@@ -101,7 +102,7 @@
                          $("body").removeClass("has-eula");
                      },
                      error: function (xhr) {
-@@ -446,21 +454,22 @@
+@@ -446,21 +455,22 @@
                      },
                  });
              });

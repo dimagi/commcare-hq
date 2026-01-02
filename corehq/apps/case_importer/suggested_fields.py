@@ -10,7 +10,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.case_importer.util import RESERVED_FIELDS
 from corehq.apps.data_dictionary.util import get_values_hints_dict, get_deprecated_fields
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 
 
 def _combine_field_specs(field_specs, exclude_fields):
@@ -36,7 +35,7 @@ def get_suggested_case_fields(domain, case_type, exclude=None):
     hints_dict = get_values_hints_dict(domain, case_type)
     deprecated_fields = get_deprecated_fields(domain, case_type)
 
-    special_field_specs = (field_spec for field_spec in get_special_fields(domain))
+    special_field_specs = (field_spec for field_spec in get_special_fields())
 
     dynamic_field_specs = (
         FieldSpec(field=field, show_in_menu=True, values_hints=hints_dict[field],
@@ -58,8 +57,8 @@ class FieldSpec(jsonobject.StrictJsonObject):
     deprecated = jsonobject.BooleanProperty(default=False)
 
 
-def get_special_fields(domain=None):
-    special_fields = [
+def get_special_fields():
+    return [
         FieldSpec(
             field='name',
             description=_("This field will be used to set the case's name."),
@@ -105,17 +104,6 @@ def get_special_fields(domain=None):
             description=_("This field will be used to close cases. "
                           "Any case with 'yes' in this column will be closed.")),
     ]
-    if domain and BULK_UPLOAD_DATE_OPENED.enabled(domain):
-        special_fields.append(
-            FieldSpec(
-                field='date_opened',
-                description=_(
-                    "The date opened property for this case will be changed. "
-                    "Please do not use unless you know what you are doing"
-                )
-            )
-        )
-    return special_fields
 
 
 def get_non_discoverable_system_properties():

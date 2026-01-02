@@ -46,7 +46,7 @@ def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
 
 
 def _get_unpaid_saas_invoices_in_reminder_daterange(today):
-    date_start = today + datetime.timedelta(days=1)
+    date_start = today
     date_end = today + datetime.timedelta(days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
     return _get_all_unpaid_saas_invoices().filter(
         date_due__gte=date_start,
@@ -88,7 +88,7 @@ def _get_oldest_invoice_over_threshold(domain, invoices):
 
 
 def get_accounts_with_customer_invoices_due_soon(today):
-    date_start = today + datetime.timedelta(days=1)
+    date_start = today
     date_end = today + datetime.timedelta(days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
     return _get_accounts_over_threshold_in_daterange(date_start, date_end)
 
@@ -167,3 +167,24 @@ def get_prorated_software_plan_cost(date_start, date_end, monthly_fee):
     return total_cost.quantize(
         Decimal('0.01'), rounding=ROUND_HALF_UP,
     )
+
+
+def get_next_due_invoice(subscription, today):
+    return Invoice.objects.filter(
+        subscription=subscription,
+        is_hidden=False,
+        date_due__gte=today,
+        date_paid__isnull=True,
+    ).order_by('date_due').first()
+
+
+def get_next_due_customer_invoice(account, today, subscription=None):
+    current_invoices = CustomerInvoice.objects.filter(
+        account=account,
+        is_hidden=False,
+        date_due__gte=today,
+        date_paid__isnull=True,
+    )
+    if subscription:
+        current_invoices = current_invoices.filter(subscriptions__in=[subscription])
+    return current_invoices.order_by('date_due').first()

@@ -1,0 +1,39 @@
+--- 
++++ 
+@@ -2,21 +2,21 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ import googleAnalytics from "analytix/js/google";
+ import multiselectUtils from "hqwebapp/js/multiselect_utils";
+-import customDataFields from "users/js/bootstrap3/custom_data_fields";
++import customDataFields from "users/js/bootstrap5/custom_data_fields";
+ import "locations/js/widgets";
+ import "jquery-textchange/jquery.textchange";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
+-import "hqwebapp/js/bootstrap3/widgets";
+-import "registration/js/bootstrap3/password";
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
++import "hqwebapp/js/bootstrap5/widgets";
++import "registration/js/bootstrap5/password";
+ import "select2/dist/js/select2.full.min";
+ import "eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min";
+ 
+ var couchUserId = initialPageData.get('couch_user_id');
+ 
+-$('.verify-button').tooltip();
++$('.verify-button').tooltip();  /* todo B5: js-tooltip */
+ $('#id_language').select2({
+     placeholder: gettext('Select a language...'),
+ });
+@@ -127,7 +127,7 @@
+ // Enable deactivate after calendar widget
+ let showDeactivateAfterDate = initialPageData.get('show_deactivate_after_date');
+ if (showDeactivateAfterDate) {
+-    $('#id_deactivate_after_date').datetimepicker({
++    $('#id_deactivate_after_date').datetimepicker({  /* todo B5: js-datetimepicker */
+         format: 'MM-y',
+     }).on('dp.change', function () {
+         $userInformationForm.trigger('change');

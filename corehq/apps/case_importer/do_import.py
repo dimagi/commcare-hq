@@ -28,7 +28,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
 from corehq.toggles import (
-    BULK_UPLOAD_DATE_OPENED,
     DOMAIN_PERMISSIONS_MIRROR,
     MTN_MOBILE_WORKER_VERIFICATION,
 )
@@ -631,10 +630,6 @@ class _CaseImportRow(object):
                         return {identifier: (parent_case.type, parent_case.case_id, "extension")}
                 raise InvalidParentId(column)
 
-    def _get_date_opened(self):
-        if self.date_opened and BULK_UPLOAD_DATE_OPENED.enabled(self.domain):
-            return self.date_opened
-
     def _get_external_id(self):
         if self.is_new_case and self.config.search_field == 'external_id':
             return self.search_id
@@ -645,8 +640,6 @@ class _CaseImportRow(object):
             'update': self.fields_to_update,
             'index': self._get_parent_index(),
         }
-        if date_opened := self._get_date_opened():
-            kwargs['date_opened'] = date_opened
         if external_id := self._get_external_id():
             kwargs['external_id'] = external_id
         return kwargs

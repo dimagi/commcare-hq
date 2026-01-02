@@ -3,12 +3,10 @@ from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
-from django.utils.dateparse import parse_datetime
 
 from celery import states
 from celery.exceptions import Ignore
 
-from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 
 from corehq.apps.case_importer import exceptions
@@ -38,7 +36,6 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_disabled, flag_enabled
-from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
 
 
@@ -72,20 +69,6 @@ class TestCaseImportRow(SimpleTestCase):
         row = self.get_row(fields_to_update)
         kwargs = row._get_caseblock_kwargs()
         self.assertEqual(kwargs, {
-            'index': None,
-            'update': {'foo': 'bar'},
-        })
-
-    @flag_enabled('BULK_UPLOAD_DATE_OPENED')
-    def test_get_caseblock_kwargs_date_opened(self):
-        fields_to_update = {
-            'foo': 'bar',
-            CASE_TAG_DATE_OPENED: '1970-01-01',
-        }
-        row = self.get_row(fields_to_update)
-        kwargs = row._get_caseblock_kwargs()
-        self.assertEqual(kwargs, {
-            'date_opened': '1970-01-01',
             'index': None,
             'update': {'foo': 'bar'},
         })
@@ -541,17 +524,6 @@ class ImporterTest(TestCase):
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_name'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
-
-    def test_opened_on(self):
-        case = self.factory.create_case()
-        new_date = '2015-04-30T14:41:53.000000Z'
-        with flag_enabled('BULK_UPLOAD_DATE_OPENED'):
-            self.import_mock_file([
-                ['case_id', 'date_opened'],
-                [case.case_id, new_date]
-            ])
-        case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
 
     def test_date_validity_checking(self):
         setup_data_dictionary(self.domain, self.default_case_type, [('d1', 'date'), ('d2', 'date')])

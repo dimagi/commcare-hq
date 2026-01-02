@@ -21,6 +21,7 @@
       <li><a href="#date-and-time">Date &amp; Time</a></li>
       <li><a href="#time-only">Time Only</a></li>
       <li><a href="#date-range">Date Range</a></li>
+      <li><a href="#alpine-datepicker">Alpine <code>x-datepicker</code></a></li>
     </ul>
   </nav>
 {% endblock toc %}
@@ -62,7 +63,7 @@
     The <code>hqwebapp/js/bootstrap5/widgets</code> module when loaded to a page will look for <code>input</code> fields
     with the <code>date-picker</code> CSS class, and apply the Tempus Dominus plugin to that field.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.datepicker_widget %}
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.datepicker_widget %}
 
   <h2 id="advanced-date-picker" class="pt-4">
     Advanced Date Picker
@@ -72,7 +73,7 @@
     the clock component. See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for additional guidance.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.date_only %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.date_only %}
 
   <h2 id="date-and-time" class="pt-4">
     Date &amp; Time
@@ -82,7 +83,7 @@
     See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for additional guidance.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.tempus_dominus %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.tempus_dominus %}
 
   <h2 id="time-only" class="pt-4">
     Time Only
@@ -97,11 +98,11 @@
     <code>bootstrap-timepicker</code> plugin. The example below should be a good starting point to use as a drop-in
     replacement for that widget.
   </div>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.time_only %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.time_only %}
   <p>
     If you want a time-picker in 24-hour format, the example below provides a good starting point.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.time_only_24 %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.time_only_24 %}
 
   <h2 id="date-range" class="pt-4">
     Date Range
@@ -114,5 +115,105 @@
     For additional guidance, see the <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for Tempus Dominus.
   </p>
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.date_range %}
+  {% include "styleguide/bootstrap5/html_js_example.html" with content=examples.date_range %}
+
+  <h2 id="alpine-datepicker" class="pt-4">
+    Using the <code>x-datepicker</code> Alpine directive
+  </h2>
+  <p>
+    In addition to CSS-class-based widgets, we provide an Alpine directive,
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js"
+      target="_blank"
+    ><code>x-datepicker</code></a>, that wraps Tempus Dominus with sensible defaults. This is useful
+    when you are already using Alpine for other page behavior.
+  </p>
+
+  <div class="alert alert-primary">
+    <p class="mb-1">
+      <strong>Important:</strong> to use <code>x-datepicker</code> on a page, make sure the
+      JavaScript entry file for that page imports the shared directive:
+    </p>
+    <pre class="mb-0 mt-2"><code>import "hqwebapp/js/alpinejs/directives/datepicker";</code></pre>
+  </div>
+
+  <p>
+    <a
+      href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js"
+      target="_blank"
+    >The directive is defined here.</a>
+  </p>
+
+  <p>
+    It supports a small JSON configuration object passed via the <code>x-datepicker</code> /
+    <code>x_datepicker</code> attribute:
+  </p>
+  <ul>
+    <li>
+      <code>datetime: true</code> &mdash; enable date <em>and</em> time selection, using a
+      24-hour clock and the format <code>yyyy-MM-dd H:mm:ss</code>.
+    </li>
+    <li>
+      <code>useInputGroup: true</code> &mdash; attach the picker to the surrounding
+      <code>.input-group</code> (for use with crispy <code>AppendedText</code> /
+      <code>PrependedText</code>). The input must be inside an <code>.input-group</code>.
+    </li>
+    <li>
+      <code>container: "#selector"</code> &mdash; render the popup inside a specific
+      DOM container (for example, an offcanvas or modal).
+    </li>
+  </ul>
+
+  <h3 id="alpine-datepicker-inline" class="pt-3">
+    Simple inline usage (date only)
+  </h3>
+  <p>
+    For a simple date-only picker rendered directly on the page, you can use
+    <code>x-datepicker</code> without any extra configuration:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.datepicker_alpine_simple %}
+
+  <h3 id="alpine-datepicker-datetime" class="pt-3">
+    Date &amp; time with <code>x-datepicker</code>
+  </h3>
+  <p>
+    To capture both date and time (24-hour clock), pass <code>datetime: true</code> in the
+    configuration JSON:
+  </p>
+  {% include "styleguide/bootstrap5/code_example.html" with content=examples.datepicker_alpine_datetime %}
+
+  <h3 id="alpine-datepicker-crispy" class="pt-3">
+    Using <code>x_datepicker</code> in crispy forms
+  </h3>
+  <p>
+    When working with crispy forms, you typically pass the configuration as JSON into the
+    <code>x_datepicker</code> attribute on a <code>crispy.Field</code>. The directive will
+    automatically handle the Tempus Dominus initialization and cleanup.
+  </p>
+  <p>
+    Combine this pattern with <code>AppendedText</code> to add an icon, as shown in the example.
+  </p>
+  {% include "styleguide/bootstrap5/form_example.html" with content=examples.datepicker_alpine_crispy %}
+
+  <div class="alert alert-primary mt-3">
+    <p class="mb-1">
+      <strong>Behavior details:</strong>
+    </p>
+    <ul class="mb-0">
+      <li>
+        For date-only pickers, selecting a date is a single-click action; the directive
+        automatically hides the picker after a successful selection.
+      </li>
+      <li>
+        For date+time pickers (<code>datetime: true</code>), the widget shows a close button
+        and does <em>not</em> auto-hide, since picking both date and time is usually a
+        multi-step interaction.
+      </li>
+      <li>
+        If the input value cannot be parsed, the directive clears the Tempus Dominus value
+        and stops the error from bubbling further, preventing the widget from getting into
+        a broken state.
+      </li>
+    </ul>
+  </div>
 {% endblock content %}
