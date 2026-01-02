@@ -1,0 +1,18 @@
+body {
+  background-color: @cc-bg;
+}
+
+.messages-container {
+  background-color: @cc-brand-mid;
+  min-height: 5px;
+}
+
+.hq-help {
+  a {
+    .transition(color 1s);
+  }
+}
+
+.hq-container {
+  padding-bottom: 0;
+}

@@ -1,0 +1,19 @@
+@import '../../hqwebapp/less/_hq/includes/variables.less';
+@import '../../hqwebapp/less/_hq/includes/mixins.less';
+
+/* This file is included only by apps_base.html */
+
+@import "variables";
+@import "corehq_overrides";
+@import "navigation";
+@import "form_editing";
+@import "deploy";
+@import "content";
+@import "case_tile_preview";
+@import "popover";
+@import "tabs";
+@import "savebtn";
+@import "panel";
+@import "table";
+@import "diff";
+@import "new_module_modal";

@@ -1,0 +1,183 @@
+.panel-appmanager {
+  border: none;
+  background-color: lighten(@cc-bg, 3);
+
+  .panel-heading {
+    padding: 0;
+    a:hover,
+    a:link,
+    a:focus {
+      text-decoration: none;
+    }
+    a {
+      display: block;
+      padding: 15px 15px;
+      .transition(background-color 1s);
+      &:hover {
+        background-color: @cc-bg;
+      }
+    }
+    .hq-help {
+      a {
+        padding: 0;
+        display: inline-block;
+      }
+      line-height: 0;
+      margin: 0;
+      i {
+        font-size: 18px;
+        margin-bottom: -3px;
+      }
+    }
+  }
+
+  .panel-title-nolink {
+    padding: 15px 15px;
+    border-bottom: 1px solid @cc-bg;
+  }
+
+  .collapsing {
+    overflow: hidden;
+  }
+
+  .pagination {
+    margin: 0;
+  }
+}
+
+.panel-appmanager-form {
+  legend {
+    padding: 15px 15px;
+    border-bottom: 1px solid @cc-bg;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1px solid @cc-bg;
+    margin-bottom: 0;
+  }
+
+  .form-actions {
+    margin-top: 5px;
+    border-top: 0;
+    background-color: lighten(desaturate(@cc-brand-hi, 50), 5);
+  }
+  .form-group {
+    margin-top: 15px;
+  }
+}
+
+.panel-appmanager-form-danger {
+  .form-actions {
+    border-top: 0;
+    background-color: lighten(desaturate(@cc-att-neg-hi, 20), 5);
+  }
+}
+
+.panel-group .panel-appmanager {
+  .border-top-radius(0);
+  .border-bottom-radius(0);
+}
+
+.panel-release {
+  border: none;
+  background-color: lighten(@cc-bg, 3);
+
+  &.build-latest-release {
+    .box-shadow(0 0 10px fade(@cc-brand-mid, 40));
+  }
+}
+
+.panel-release-title {
+  margin-left: 15px;
+  margin-right: 50px;
+  padding: 15px 0 5px;
+  font-size: 12px;
+  font-weight: 400;
+  color: lighten(@cc-text, 40);
+  strong {
+    color: @cc-text;
+  }
+}
+.panel-release > .panel-heading {
+  padding: 0;
+  background-color: @cc-bg;
+
+  .release-trash-container {
+    float: right;
+    padding: 11px 18px 13px;
+
+    .release-remove {
+      color: @text-color;
+      .transition(all 500ms ease-in-out);
+      font-size: 15px;
+      display: block;
+      &:hover {
+        color: @cc-att-neg-mid;
+      }
+    }
+  }
+  .build-is-released {
+    float: right;
+    padding: 13px 0;
+  }
+}
+
+.panel-release > .panel-footer {
+  border-top: 0;
+  background-color: transparent;
+  padding-top: 0;
+}
+
+.panel-release > .panel-body {
+  padding: 5px 15px;
+  .prefixed-icon {
+    position: absolute;
+    left: 30px;
+    padding-right: 10px;
+  }
+  .read-only {
+    min-width: 250px;
+  }
+  .ko-inline-edit {
+    .read-only {
+      margin-left: 20px;
+    }
+    .read-write textarea {
+      margin-top: 1px;
+      margin-bottom: 1px;
+      width: 100%;
+    }
+  }
+}
+.panel-case-actions {
+  position: relative;
+}
+.panel-case-actions .panel-case-actions-actions {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  > .btn {
+    .transition(background-color 1s);
+    border: none;
+  }
+}
+
+.panel-case-actions {
+  background-color: lighten(@cc-dark-cool-accent-hi, 3);
+  > .panel-heading {
+    background-color: @cc-dark-cool-accent-mid;
+    color: white;
+    .text-muted {
+      color: @cc-dark-cool-accent-hi;
+    }
+  }
+  .panel-appmanager {
+    border-radius: 10px;
+    .well {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      .hq-help {
+        margin-top: 4px;
+      }
+    }
+  }
+}
