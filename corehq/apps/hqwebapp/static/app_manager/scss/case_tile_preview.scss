@@ -7,14 +7,14 @@
     .cell {
         display: grid;
         margin: 2px;
-        border: 1px @cc-brand-mid dotted;
+        border: 1px $cc-brand-mid dotted;
         position: relative;
 
         // TODO: to be truly adorable, add transitions on changes to grid style, this doesn't work
         transition: 2s;
 
         &.odd-tab {
-            background-color: @cc-bg;
+            background-color: $cc-bg;
         }
 
         .content {
