@@ -2,20 +2,20 @@
   display: block;
   text-align: right;
   float: none !important;  // todo eventually move pull-right from SaveButton ui when this is global
-  background-color: lighten(@cc-bg, 3);
+  background-color: lighten($cc-bg, 3);
   padding: 10px 15px;
   margin-bottom: 10px;
-  .transition(background-color 1s);
-  .clearfix();
+  transition: background-color 1s;
+  @include clearfix();
 
   .btn {
-    .transition(all 1s);
+    transition: all 1s;
   }
   &.savebtn-bar-save {
-    background-color: @cc-att-pos-extra-hi;
+    background-color: $cc-att-pos-extra-hi;
   }
   &.savebtn-bar-retry {
-    background-color: @cc-light-warm-accent-hi;
+    background-color: $cc-light-warm-accent-hi;
   }
   .section-changer {
     float: right;
