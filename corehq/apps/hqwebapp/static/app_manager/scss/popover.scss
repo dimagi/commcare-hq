@@ -1,26 +1,25 @@
 .popover-additem {
-  background-color: @cc-light-cool-accent-low;
+  background-color: $cc-light-cool-accent-low;
   max-width: 730px;
-  .border-top-radius(0);
-  .border-bottom-radius(0);
-  color: @cc-light-cool-accent-hi;
+  border-radius: 0;
+  color: $cc-light-cool-accent-hi;
   border: 0;
 
   .popover-title {
     background-color: transparent;
     text-transform: uppercase;
     font-size: 1.2rem;
-    border-bottom: 1px solid darken(@cc-light-cool-accent-low, 2);
+    border-bottom: 1px solid darken($cc-light-cool-accent-low, 2);
   }
   &.right > .arrow:after {
-    border-right-color: @cc-light-cool-accent-low;
+    border-right-color: $cc-light-cool-accent-low;
   }
 }
 
 .popover-additem-option {
   width: 116px;
   box-sizing: border-box;
-  color: @cc-light-cool-accent-hi;
+  color: $cc-light-cool-accent-hi;
   border: none;
   background-color: transparent;
   margin-bottom: 10px;
@@ -30,16 +29,16 @@
   padding-top: 25px;
   padding-bottom: 25px;
   text-align: center;
-  .transition(background .5s);
+  transition: background .5s;
   font-size: 1.2rem;
   &:focus {
-    color: @cc-light-cool-accent-hi;
+    color: $cc-light-cool-accent-hi;
   }
 
   &:hover {
     text-decoration: none;
-    color: @cc-light-cool-accent-hi;
-    background-color: darken(@cc-light-cool-accent-low, 10);
+    color: $cc-light-cool-accent-hi;
+    background-color: darken($cc-light-cool-accent-low, 10);
   }
 
   > [class*='fa-'],
