@@ -11,7 +11,7 @@
     margin-top: -20px;
     margin-bottom: 20px;
     // B5 TODO: After migrated, find a better color that close to #676B70
-    color: lighten(@cc-text, 20);
+    color: lighten($cc-text, 20);
   }
 
   .new-module-modal-flex-container {
@@ -36,22 +36,22 @@
   background-color: transparent;
   border: none;
   // B5 TODO: Use one of the available predefined shades
-  color: lighten(@cc-text, 20);
+  color: lighten($cc-text, 20);
   margin: 20px;
   margin-top: 0px;
   margin-bottom: 10px;
 
   &:hover {
     .panel {
-      border: 1px solid @call-to-action-mid;
+      border: 1px solid $call-to-action-mid;
     }
 
     .panel-heading {
-      color: @call-to-action-mid;
+      color: $call-to-action-mid;
     }
 
     [class*="fa-"] {
-      color: @call-to-action-mid;
+      color: $call-to-action-mid;
     }
   }
 
