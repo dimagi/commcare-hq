@@ -1,6 +1,6 @@
 .panel-appmanager {
   border: none;
-  background-color: lighten(@cc-bg, 3);
+  background-color: lighten($cc-bg, 3);
 
   .panel-heading {
     padding: 0;
@@ -12,9 +12,9 @@
     a {
       display: block;
       padding: 15px 15px;
-      .transition(background-color 1s);
+      transition: background-color 1s;
       &:hover {
-        background-color: @cc-bg;
+        background-color: $cc-bg;
       }
     }
     .hq-help {
@@ -33,7 +33,7 @@
 
   .panel-title-nolink {
     padding: 15px 15px;
-    border-bottom: 1px solid @cc-bg;
+    border-bottom: 1px solid $cc-bg;
   }
 
   .collapsing {
@@ -48,17 +48,17 @@
 .panel-appmanager-form {
   legend {
     padding: 15px 15px;
-    border-bottom: 1px solid @cc-bg;
+    border-bottom: 1px solid $cc-bg;
     font-size: 14px;
     font-weight: 500;
-    border-bottom: 1px solid @cc-bg;
+    border-bottom: 1px solid $cc-bg;
     margin-bottom: 0;
   }
 
   .form-actions {
     margin-top: 5px;
     border-top: 0;
-    background-color: lighten(desaturate(@cc-brand-hi, 50), 5);
+    background-color: lighten(desaturate($cc-brand-hi, 50), 5);
   }
   .form-group {
     margin-top: 15px;
@@ -68,21 +68,20 @@
 .panel-appmanager-form-danger {
   .form-actions {
     border-top: 0;
-    background-color: lighten(desaturate(@cc-att-neg-hi, 20), 5);
+    background-color: lighten(desaturate($cc-att-neg-hi, 20), 5);
   }
 }
 
 .panel-group .panel-appmanager {
-  .border-top-radius(0);
-  .border-bottom-radius(0);
+  border-radius: 0;
 }
 
 .panel-release {
   border: none;
-  background-color: lighten(@cc-bg, 3);
+  background-color: lighten($cc-bg, 3);
 
   &.build-latest-release {
-    .box-shadow(0 0 10px fade(@cc-brand-mid, 40));
+    box-shadow: 0 0 10px fade($cc-brand-mid, 40);
   }
 }
 
@@ -92,26 +91,26 @@
   padding: 15px 0 5px;
   font-size: 12px;
   font-weight: 400;
-  color: lighten(@cc-text, 40);
+  color: lighten($cc-text, 40);
   strong {
-    color: @cc-text;
+    color: $cc-text;
   }
 }
 .panel-release > .panel-heading {
   padding: 0;
-  background-color: @cc-bg;
+  background-color: $cc-bg;
 
   .release-trash-container {
     float: right;
     padding: 11px 18px 13px;
 
     .release-remove {
-      color: @text-color;
-      .transition(all 500ms ease-in-out);
+      color: $text-color;
+      transition: all 500ms ease-in-out;
       font-size: 15px;
       display: block;
       &:hover {
-        color: @cc-att-neg-mid;
+        color: $cc-att-neg-mid;
       }
     }
   }
@@ -156,18 +155,18 @@
   right: 10px;
   top: 8px;
   > .btn {
-    .transition(background-color 1s);
+    transition: background-color 1s;
     border: none;
   }
 }
 
 .panel-case-actions {
-  background-color: lighten(@cc-dark-cool-accent-hi, 3);
+  background-color: lighten($cc-dark-cool-accent-hi, 3);
   > .panel-heading {
-    background-color: @cc-dark-cool-accent-mid;
+    background-color: $cc-dark-cool-accent-mid;
     color: white;
     .text-muted {
-      color: @cc-dark-cool-accent-hi;
+      color: $cc-dark-cool-accent-hi;
     }
   }
   .panel-appmanager {
