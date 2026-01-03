@@ -1,5 +1,6 @@
-@import '../../hqwebapp/less/_hq/includes/variables.less';
-@import '../../hqwebapp/less/_hq/includes/mixins.less';
+@import '../../hqwebapp/scss/commcarehq/variables';
+@import '../../hqwebapp/scss/commcarehq/variables_bootstrap3';
+@import '../../hqwebapp/scss/commcarehq/mixins';
 
 #hq-sidebar .well {
   margin-bottom: 10px;

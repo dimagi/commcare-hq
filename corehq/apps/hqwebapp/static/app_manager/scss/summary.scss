@@ -1,5 +1,6 @@
-@b3-import-variables: '../../../../../../../../node_modules/bootstrap/less/variables';
-@b3-import-mixins: '../../../../../../../../node_modules/bootstrap/less/mixins';
+@import "functions";
+@import "variables";
+@import "mixins";
 
 @import "summary-main";
 

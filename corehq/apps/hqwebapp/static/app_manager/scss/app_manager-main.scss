@@ -1,19 +1,20 @@
-@import '../../hqwebapp/less/_hq/includes/variables.less';
-@import '../../hqwebapp/less/_hq/includes/mixins.less';
+@import '../../hqwebapp/scss/commcarehq/variables';
+@import '../../hqwebapp/scss/commcarehq/variables_bootstrap3';
+@import '../../hqwebapp/scss/commcarehq/mixins';
 
 /* This file is included only by apps_base.html */
 
-@import "variables";
-@import "corehq_overrides";
-@import "navigation";
-@import "form_editing";
-@import "deploy";
-@import "content";
-@import "case_tile_preview";
-@import "popover";
-@import "tabs";
-@import "savebtn";
-@import "panel";
-@import "table";
-@import "diff";
-@import "new_module_modal";
+@import "includes/variables";
+@import "includes/corehq_overrides";
+@import "includes/navigation";
+@import "includes/form_editing";
+@import "includes/deploy";
+@import "includes/content";
+@import "includes/case_tile_preview";
+@import "includes/popover";
+@import "includes/tabs";
+@import "includes/savebtn";
+@import "includes/panel";
+@import "includes/table";
+@import "includes/diff";
+@import "includes/new_module_modal";
