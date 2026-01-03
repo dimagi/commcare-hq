@@ -39,11 +39,11 @@
   border: 1px solid white;
   margin-right: 10px;
   color: white;
-  .transition(0.5s background);
+  transition: 0.5s background;
 
   &:hover {
     color: white;
-    background-color: @cc-brand-low;
+    background-color: $cc-brand-low;
   }
 }
 
@@ -57,7 +57,7 @@
   position: absolute;
   right: 12px;
   line-height: 37px;
-  .transition(500ms color ease-in-out);
+  transition: 500ms color ease-in-out;
 
   &:hover,
   &:focus {
