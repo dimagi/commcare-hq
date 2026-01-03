@@ -1,26 +1,26 @@
 .appmanager-main-container {
   display: block;
-  margin-left: @app-manager-sidebar-width;
-  background-color: @cc-brand-low;
+  margin-left: $app-manager-sidebar-width;
+  background-color: $cc-brand-low;
   position:relative;
   box-sizing: border-box;
 
-  width: -webkit-calc(~"100% - " @app-manager-sidebar-width);
-  width: -moz-calc(~"100% - " @app-manager-sidebar-width);
-  width: calc(~"100% - " @app-manager-sidebar-width);
+  width: -webkit-calc(100% - $app-manager-sidebar-width);
+  width: -moz-calc(100% - $app-manager-sidebar-width);
+  width: calc(100% - $app-manager-sidebar-width);
 
   min-height: 100%;
 
-  .transition(all 1s);
-  .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
+  transition: all 1s;
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, .20);
 
   &.formdesigner-content-wrapper {
     padding: 0;
   }
   #formdesigner {
-    background-color: @cc-brand-low !important;
+    background-color: $cc-brand-low !important;
     opacity: 100;
-    .transition(opacity 1s);
+    transition: opacity 1s;
 
     &.loading {
       opacity: 0;
@@ -63,7 +63,8 @@
     -webkit-animation: spin 4s infinite linear;
   }
 
-  @media(max-width: @screen-sm-max) {
+  @include media-breakpoint-down(md) {
+    // todo B5: verify this breakpoint looks correct
     display: none;
   }
 }
@@ -84,11 +85,11 @@
 }
 
 #js-appmanager-body.appmanager-settings-content {
-  .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, .20);
   background-color: white;
   padding-top: 9px;
   padding-left: 20px;
-  padding-right: @preview-toggler-width + 20px;
+  padding-right: $preview-toggler-width + 20px;
   padding-bottom: 60px;
   min-height:  100%;
   position: absolute;
@@ -105,16 +106,16 @@
 }
 
 .appmanager-loading {
-  @dim: 4rem;
+  $dim: 4rem;
   display: block;
   position: absolute;
-  font-size: @dim;
-  width: @dim;
-  height: @dim;
-  left: calc(~"50% - " @dim / 2);
-  left: -moz-calc(~"50% - " @dim / 2);
-  left: -webkit-calc(~"50% - " @dim / 2);
-  color: fadeOut(@cc-text, 40);
+  font-size: $dim;
+  width: $dim;
+  height: $dim;
+  left: calc(50% - $dim / 2);
+  left: -moz-calc(50% - $dim / 2);
+  left: -webkit-calc(50% - $dim / 2);
+  color: fadeOut($cc-text, 40);
 }
 
 .appmanager-loading-nav {
@@ -128,7 +129,7 @@
 
 .ko-inline-edit {
   .read-only .prefixed-icon i {
-    color: @cc-text;
+    color: $cc-text;
   }
   .read-only .text.app-title {
     margin-left: 2px;
@@ -136,7 +137,7 @@
   .inline-edit-icon {
     vertical-align: top;
     i {
-      .transition(color 1s);
+      transition: color 1s;
     }
   }
   .inline-edit-icon.h3 {
@@ -144,7 +145,7 @@
   }
   &:hover {
     .read-only .inline-edit-icon i {
-      color: @cc-brand-mid;
+      color: $cc-brand-mid;
     }
   }
 }
@@ -211,17 +212,18 @@
 }
 
 .ko-inline-edit .read-only .btn-langcode-preprocessed {
-  background-color: darken(@cc-bg, 10);
+  background-color: darken($cc-bg, 10);
   border: none;
-  color: @cc-text;
+  color: $cc-text;
   vertical-align: top;
   margin-top: 6px;
 }
 
 .appmanager-content-row {
-  background-color: @cc-brand-low;
+  background-color: $cc-brand-low;
 
-  @media(max-width: @screen-sm-max) {
+  @include media-breakpoint-down(md) {
+    // todo B5: verify this breakpoint looks correct
     overflow: hidden;
   }
 }
@@ -245,12 +247,11 @@
 }
 
 .btn-preview {
-  @btn-preview-width: 30px;
-  width: @btn-preview-width;
-  height: @btn-preview-width;
+  $btn-preview-width: 30px;
+  width: $btn-preview-width;
+  height: $btn-preview-width;
   padding: 4px 10px;
-  .border-top-radius(@btn-preview-width/2);
-  .border-bottom-radius(@btn-preview-width/2);
+  border-radius: $btn-preview-width/2
 }
 
 .appmanager-content-single-page {
