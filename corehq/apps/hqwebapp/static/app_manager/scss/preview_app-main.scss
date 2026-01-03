@@ -8,68 +8,67 @@ EXTERNAL styling of the preview app container in app manager.
 For the styling of the app preview content and layout, please check out
 preview_app/scss/ */
 
-@transition-speed: .5s;
+$transition-speed: .5s;
 
 .preview-phone-container {
   box-sizing: border-box;
   background-color: black;
-  .border-top-radius(30px);
-  .border-bottom-radius(30px);
+  border-radius: 30px;
   right: -930px;
   position: absolute;
   top: 50%;
-  margin-top: -(@preview-phone-height + (@preview-phone-case-offset-y * 2))/2;
+  margin-top: -($preview-phone-height + ($preview-phone-case-offset-y * 2))/2;
 
-  width: @preview-phone-width + (@preview-phone-case-offset-x * 2);
-  height: @preview-phone-height + (@preview-phone-case-offset-y * 2);
-  padding-top: @preview-phone-case-offset-y;
-  padding-left: @preview-phone-case-offset-x;
+  width: $preview-phone-width + ($preview-phone-case-offset-x * 2);
+  height: $preview-phone-height + ($preview-phone-case-offset-y * 2);
+  padding-top: $preview-phone-case-offset-y;
+  padding-left: $preview-phone-case-offset-x;
 
-  .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
-  .transition(all @transition-speed);
+  box-shadow: 0 0px 10px 3px rgba(0,0,0,.45);
+  transition: all $transition-speed;
 }
 #formdesigner {
-  margin-right: @preview-toggler-width;
-  width: -webkit-calc(~"100% - " @preview-toggler-width);
-  width: -moz-calc(~"100% - " @preview-toggler-width);
-  width: calc(~"100% - " @preview-toggler-width);
+  margin-right: $preview-toggler-width;
+  width: -webkit-calc(100% - $preview-toggler-width);
+  width: -moz-calc(100% - $preview-toggler-width);
+  width: calc(100% - $preview-toggler-width);
 }
 #formdesigner > .full-screen .fd-content-right {
-  padding-right: @preview-toggler-width;
-  .transition(padding-right @transition-speed);
+  padding-right: $preview-toggler-width;
+  transition: padding-right $transition-speed;
 }
 
 #js-appmanager-body.offset-for-preview,
 #formdesigner.offset-for-preview {
-  margin-right: @preview-phone-wrapper-width;
-  width: -webkit-calc(~"100% - " @preview-phone-wrapper-width);
-  width: -moz-calc(~"100% - " @preview-phone-wrapper-width);
-  width: calc(~"100% - " @preview-phone-wrapper-width);
+  margin-right: $preview-phone-wrapper-width;
+  width: -webkit-calc(100% - $preview-phone-wrapper-width);
+  width: -moz-calc(100% - $preview-phone-wrapper-width);
+  width: calc(100% - $preview-phone-wrapper-width);
 }
 
 #formdesigner.offset-for-preview > .full-screen .fd-content-right {
-  padding-right: @preview-phone-wrapper-width;
+  padding-right: $preview-phone-wrapper-width;
 }
 
 #js-appmanager-body.offset-for-tablet,
 #formdesigner.offset-for-tablet {
-  margin-right: @preview-tablet-wrapper-width;
-  width: -webkit-calc(~"100% - " @preview-tablet-wrapper-width);
-  width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
-  width: calc(~"100% - " @preview-tablet-wrapper-width);
-  .transition(all @transition-speed);
+  margin-right: $preview-tablet-wrapper-width;
+  width: -webkit-calc(100% - $preview-tablet-wrapper-width);
+  width: -moz-calc(100% - $preview-tablet-wrapper-width);
+  width: calc(100% - $preview-tablet-wrapper-width);
+  transition: all $transition-speed;
 }
 
 #formdesigner.offset-for-tablet > .full-screen .fd-content-right {
-  padding-right: @preview-tablet-wrapper-width;
+  padding-right: $preview-tablet-wrapper-width;
 }
 
 #hq-messages-container > div > div > .alert {
-  .transition(margin-right @transition-speed);
+  transition: margin-right $transition-speed;
 }
 
 #hq-messages-container.offset-for-preview > div > div > .alert {
-  margin-right: @preview-phone-wrapper-width + 10;
+  margin-right: $preview-phone-wrapper-width + 10;
 }
 
 .preview-phone-wrapper {
@@ -77,21 +76,21 @@ preview_app/scss/ */
   top: 0;
   right: 0;
   position: fixed;
-  z-index: @zindex-app-preview;
-  width: @preview-toggler-width;
-  background-color: @cc-light-cool-accent-hi;
-  .transition(width @transition-speed);
+  z-index: $zindex-app-preview;
+  width: $preview-toggler-width;
+  background-color: $cc-light-cool-accent-hi;
+  transition: width $transition-speed;
   overflow: hidden;
   border-left: 0;
 
 
   &.open {
-    width: @preview-phone-wrapper-width;
-    .box-shadow(0 0px 10px 3px rgba(0,0,0,.35));
+    width: $preview-phone-wrapper-width;
+    box-shadow: 0 0px 10px 3px rgba(0,0,0,.35);
   }
 
   &.open.small-height  {
-    z-index: @zindex-app-preview + 2;
+    z-index: $zindex-app-preview + 2;
     > .preview-phone-container {
       top: 20px;
       margin-top: 0;
@@ -102,27 +101,27 @@ preview_app/scss/ */
   }
   &.fullscreen {
     z-index: 1040 !important;
-    background-color: fade(@cc-light-cool-accent-hi, 50);
+    background-color: fade($cc-light-cool-accent-hi, 50);
   }
 }
 
 .preview-toggler {
   cursor: pointer;
-  width: @preview-toggler-width;
+  width: $preview-toggler-width;
   height: 100%;
-  background-color: @cc-light-cool-accent-mid;
-  .transition(background-color @transition-speed);
+  background-color: $cc-light-cool-accent-mid;
+  transition: background-color $transition-speed;
   position: absolute;
   top: 0;
   left: 0;
 
   &:hover {
-    background-color: @cc-light-cool-accent-low;
+    background-color: $cc-light-cool-accent-low;
   }
 
   [class*='fa-'] {
     position: absolute;
-    left: @preview-toggler-width / 2 - 4px;
+    left: $preview-toggler-width / 2 - 4px;
     top: 50%;
     font-size: 11px;
     color: white;
@@ -130,39 +129,39 @@ preview_app/scss/ */
 }
 
 .preview-phone-window {
-   height: @preview-phone-height;
-   width: @preview-phone-width;
-   transition: all @transition-speed;
+   height: $preview-phone-height;
+   width: $preview-phone-width;
+   transition: all $transition-speed;
    background-color: white;
 }
 
 /* CSS Adjustments for tablet mode */
 .preview-tablet-mode {
   #js-appmanager-body.offset-for-preview {
-    margin-right: @preview-tablet-wrapper-width;
-    width: -webkit-calc(~"100% - " @preview-tablet-wrapper-width);
-    width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
-    width: calc(~"100% - " @preview-tablet-wrapper-width);
+    margin-right: preview-tablet-wrapper-width;
+    width: -webkit-calc(100% - $preview-tablet-wrapper-width);
+    width: -moz-calc(100% - $preview-tablet-wrapper-width);
+    width: calc(100% - $preview-tablet-wrapper-width);
   }
   #hq-messages-container.offset-for-preview > div > div > .alert {
-    margin-right: @preview-tablet-wrapper-width + 10;
+    margin-right: $preview-tablet-wrapper-width + 10;
   }
   &.open {
-    width: @preview-tablet-wrapper-width;
+    width: $preview-tablet-wrapper-width;
   }
   .preview-phone-container {
-    width: @preview-tablet-width + (@preview-phone-case-offset-x * 2);
-    height: @preview-tablet-height + (@preview-phone-case-offset-y * 2);
+    width: $preview-tablet-width + ($preview-phone-case-offset-x * 2);
+    height: $preview-tablet-height + ($preview-phone-case-offset-y * 2);
     max-height: 95vh;
-    margin-top: -(@preview-tablet-height + (@preview-phone-case-offset-y * 2))/2;
+    margin-top: -($preview-tablet-height + ($preview-phone-case-offset-y * 2))/2;
   }
 
   .preview-phone-window {
-    width: @preview-tablet-width;
-    height: @preview-tablet-height;
-    max-height: -webkit-calc(~"95vh - 2 * " @preview-phone-case-offset-y);
-    max-height: -moz-calc(~"95vh - 2 * " @preview-phone-case-offset-y);
-    max-height: calc(~"95vh - 2 * " @preview-phone-case-offset-y);
+    width: $preview-tablet-width;
+    height: $preview-tablet-height;
+    max-height: -webkit-calc(95vh - 2 * $preview-phone-case-offset-y);
+    max-height: -moz-calc(95vh - 2 * $preview-phone-case-offset-y);
+    max-height: calc(95vh - 2 * $preview-phone-case-offset-y);
   }
   .preview-tablet-icon {
     display: none;
@@ -186,28 +185,27 @@ preview_app/scss/ */
 }
 
 .appmanager-content-transition-all {
-  .transition(all @transition-speed);
+  transition: all $transition-speed;
 }
 
 .btn-preview-toggle {
-  @preview-close-size: 30px;
+  $preview-close-size: 30px;
   margin: 0 auto;
   display: block;
-  background-color: lighten(@cc-text, 20);
+  background-color: lighten($cc-text, 20);
   border: none;
-  .border-top-radius(@preview-close-size/2);
-  .border-bottom-radius(@preview-close-size/2);
-  width: @preview-close-size;
-  height: @preview-close-size;
+  border-radius: $preview-close-size/2;
+  width: $preview-close-size;
+  height: $preview-close-size;
   box-sizing: border-box;
   padding: 0;
   text-align: center;
-  color: lighten(@cc-text, 60);
+  color: lighten($cc-text, 60);
   font-size: 1.6rem;
   padding-left: 1px;
-  .transition(all .6s);
+  transition: all .6s;
   &:hover {
-    background-color: lighten(@cc-text, 10);
+    background-color: lighten($cc-text, 10);
     color: white;
   }
 
@@ -223,7 +221,7 @@ preview_app/scss/ */
 
 .btn-preview-refresh::after {
   font-family: "FontAwesome";
-  color: @cc-att-pos-mid;
+  color: $cc-att-pos-mid;
   width: 10px;
   height: 10px;
   display: block;
@@ -238,25 +236,25 @@ preview_app/scss/ */
   background-color: red;
   border-radius: 10px;
 
-  -webkit-animation: pulsate @transition-speed ease-out;
+  -webkit-animation: pulsate $transition-speed ease-out;
   -webkit-animation-iteration-count: infinite;
-  animation: pulsate @transition-speed ease-out;
+  animation: pulsate $transition-speed ease-out;
   animation-iteration-count: infinite;
 }
 
 .hardware-buttons {
-  width: @preview-phone-width;
+  width: $preview-phone-width;
   position: absolute;
   left: 50%;
   bottom: 1px;
-  margin-left: -@preview-phone-width/2;
+  margin-left: -$preview-phone-width/2;
   text-align: center;
 
   .btn-hardware {
     display: inline-block;
     background-color: transparent;
     color: darken(white, 20);
-    .transition(@transition-speed color);
+    transition: $transition-speed color;
     font-size: 1.8rem;
     width: 25%;
     &:focus {
