@@ -20,7 +20,7 @@
   }
 
   thead > tr {
-    background-color: @cc-bg;
+    background-color: $cc-bg;
     border: none;
     > th {
       border: none;
@@ -41,7 +41,7 @@
 
   tbody > tr {
     &:nth-child(even) {
-      background-color: @cc-bg;
+      background-color: $cc-bg;
     }
   }
 
@@ -54,7 +54,7 @@
 
   tbody > tr {
     &:nth-child(even) {
-      background-color: @cc-bg;
+      background-color: $cc-bg;
     }
   }
   .form-control {
