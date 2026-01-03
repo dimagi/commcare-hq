@@ -1,14 +1,14 @@
 .diff-added {
-  background-color: @cc-att-pos-hi;
-  color: @cc-att-pos-low;
+  background-color: $cc-att-pos-hi;
+  color: $cc-att-pos-low;
   &:before {
       content: '\f067 \0020';
       font-family: 'FontAwesome';
   }
 }
 .diff-removed {
-    background-color: @cc-att-neg-hi;
-    color: @cc-att-neg-low;
+    background-color: $cc-att-neg-hi;
+    color: $cc-att-neg-low;
     &:before {
         content: '\f068 \0020';
         font-family: 'FontAwesome';
@@ -16,8 +16,8 @@
 }
 
 .diff-changed {
-    background-color: @cc-light-warm-accent-hi;
-    color: @cc-light-warm-accent-low;
+    background-color: $cc-light-warm-accent-hi;
+    color: $cc-light-warm-accent-low;
     &:before {
         content: '\f0ec \0020';
         font-family: 'FontAwesome';
@@ -30,11 +30,11 @@
 }
 
 .diff-changes-added {
-  color: @cc-att-pos-low;
+  color: $cc-att-pos-low;
 }
 
 .diff-changes-removed {
-  color: @cc-att-neg-low;
+  color: $cc-att-neg-low;
 }
 
 .diff-comment {
