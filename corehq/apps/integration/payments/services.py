@@ -23,10 +23,11 @@ from corehq.apps.integration.payments.const import (
     PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
-from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.models import MoMoConfig, MoMoProviders
 from corehq.apps.integration.payments.schemas import (
     PartyDetails,
-    PaymentTransferDetails,
+    MTNPaymentTransferDetails,
+    OrangeCameroonPaymentTransferDetails,
 )
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
@@ -92,7 +93,7 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
 
 def _request_payment(payee_case: CommCareCase, config: MoMoConfig):
     _validate_payment_request(payee_case.case_json)
-    transfer_details = _get_transfer_details(payee_case)
+    transfer_details = _get_transfer_details(payee_case, config)
     payment_api_method = config.get_payment_api_method()
     transaction_id = payment_api_method(
         request_data=asdict(transfer_details),
@@ -209,17 +210,29 @@ def _get_cases_updates(case_ids, updates):
     return cases
 
 
-def _get_transfer_details(payee_case: CommCareCase) -> PaymentTransferDetails:
+def _get_transfer_details(payee_case: CommCareCase, config: MoMoConfig):
     case_json = payee_case.case_json
 
-    return PaymentTransferDetails(
-        payee=_get_payee_details(case_json),
-        amount=case_json.get(PaymentProperties.AMOUNT),
-        currency=case_json.get(PaymentProperties.CURRENCY),
-        payeeNote=case_json.get(PaymentProperties.PAYEE_NOTE),
-        payerMessage=case_json.get(PaymentProperties.PAYER_MESSAGE),
-        externalId=case_json.get(PaymentProperties.USER_OR_CASE_ID),
-    )
+    if config.provider == MoMoProviders.MTN_MONEY:
+        return MTNPaymentTransferDetails(
+            payee=_get_payee_details(case_json),
+            amount=case_json.get(PaymentProperties.AMOUNT),
+            currency=case_json.get(PaymentProperties.CURRENCY),
+            payeeNote=case_json.get(PaymentProperties.PAYEE_NOTE),
+            payerMessage=case_json.get(PaymentProperties.PAYER_MESSAGE),
+            externalId=case_json.get(PaymentProperties.USER_OR_CASE_ID),
+        )
+    elif config.provider == MoMoProviders.ORANGE_CAMEROON_MONEY:
+        return OrangeCameroonPaymentTransferDetails(
+            channelUserMsisdn=settings.ORANGE_CAMEROON_API_CREDS['channel_msisdn'],
+            pin=settings.ORANGE_CAMEROON_API_CREDS['channel_pin'],
+            amount=case_json.get(PaymentProperties.AMOUNT),
+            subscriberMsisdn=case_json.get(PaymentProperties.PHONE_NUMBER),
+            orderId=case_json.get(PaymentProperties.USER_OR_CASE_ID),
+            description=case_json.get(PaymentProperties.PAYER_MESSAGE),
+        )
+    else:
+        raise PaymentRequestError(_("Unsupported payment provider"))
 
 
 def _get_payee_details(case_data: dict) -> PartyDetails:
