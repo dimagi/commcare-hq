@@ -1183,6 +1183,13 @@ PERMANENT_DELETION_WINDOW = 30  # days
 AI_CHATBOT_ID = None
 AI_CHATBOT_TOKEN = None
 
+#  Credentials for Orange Cameroon API. Override in localsettings.py
+ORANGE_CAMEROON_API_CREDS = {
+    'x-auth-token': '',
+    'channel_msisdn': '',
+    'channel_pin': '',
+}
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
