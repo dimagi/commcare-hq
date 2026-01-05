@@ -1,7 +1,7 @@
 .savebtn-bar {
   display: block;
   text-align: right;
-  float: none !important;  // todo eventually move pull-right from SaveButton ui when this is global
+  float: none !important; // todo eventually move pull-right from SaveButton ui when this is global
   background-color: lighten($cc-bg, 3);
   padding: 10px 15px;
   margin-bottom: 10px;

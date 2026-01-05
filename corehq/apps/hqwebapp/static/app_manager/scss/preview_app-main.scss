@@ -1,6 +1,6 @@
-@import '../../hqwebapp/scss/commcarehq/variables';
-@import '../../hqwebapp/scss/commcarehq/variables_bootstrap3';
-@import '../../hqwebapp/scss/commcarehq/mixins';
+@import "../../hqwebapp/scss/commcarehq/variables";
+@import "../../hqwebapp/scss/commcarehq/variables_bootstrap3";
+@import "../../hqwebapp/scss/commcarehq/mixins";
 @import "includes/variables";
 
 /* this file is included in app_manager/apps_base.html and is relevant to the
@@ -9,7 +9,7 @@ EXTERNAL styling of the preview app container in app manager.
 For the styling of the app preview content and layout, please check out
 preview_app/scss/ */
 
-$transition-speed: .5s;
+$transition-speed: 0.5s;
 
 .preview-phone-container {
   box-sizing: border-box;
@@ -25,7 +25,7 @@ $transition-speed: .5s;
   padding-top: $preview-phone-case-offset-y;
   padding-left: $preview-phone-case-offset-x;
 
-  box-shadow: 0 0px 10px 3px rgba(0,0,0,.45);
+  box-shadow: 0 0px 10px 3px rgba(0, 0, 0, 0.45);
   transition: all $transition-speed;
 }
 #formdesigner {
@@ -84,13 +84,12 @@ $transition-speed: .5s;
   overflow: hidden;
   border-left: 0;
 
-
   &.open {
     width: $preview-phone-wrapper-width;
-    box-shadow: 0 0px 10px 3px rgba(0,0,0,.35);
+    box-shadow: 0 0px 10px 3px rgba(0, 0, 0, 0.35);
   }
 
-  &.open.small-height  {
+  &.open.small-height {
     z-index: $zindex-app-preview + 2;
     > .preview-phone-container {
       top: 20px;
@@ -120,7 +119,7 @@ $transition-speed: .5s;
     background-color: $cc-light-cool-accent-low;
   }
 
-  [class*='fa-'] {
+  [class*="fa-"] {
     position: absolute;
     left: $preview-toggler-width / 2 - 4px;
     top: 50%;
@@ -130,10 +129,10 @@ $transition-speed: .5s;
 }
 
 .preview-phone-window {
-   height: $preview-phone-height;
-   width: $preview-phone-width;
-   transition: all $transition-speed;
-   background-color: white;
+  height: $preview-phone-height;
+  width: $preview-phone-width;
+  transition: all $transition-speed;
+  background-color: white;
 }
 
 /* CSS Adjustments for tablet mode */
@@ -173,7 +172,6 @@ $transition-speed: .5s;
 }
 /* End tablet mode CSS */
 
-
 .preview-icon {
   font-size: 1.5rem;
   line-height: 24px;
@@ -204,7 +202,7 @@ $transition-speed: .5s;
   color: lighten($cc-text, 60);
   font-size: 1.6rem;
   padding-left: 1px;
-  transition: all .6s;
+  transition: all 0.6s;
   &:hover {
     background-color: lighten($cc-text, 10);
     color: white;
@@ -233,7 +231,7 @@ $transition-speed: .5s;
 }
 
 .btn-preview-refresh.app-out-of-date::after {
-  content: ' ';
+  content: " ";
   background-color: red;
   border-radius: 10px;
 
@@ -281,13 +279,31 @@ $transition-speed: .5s;
 }
 
 @-webkit-keyframes pulsate {
-    0% {-webkit-transform: scale(1, 1); opacity: 1.0;}
-    50% {-webkit-transform: scale(0.8, 0.8); opacity: 0.5;}
-    100% {-webkit-transform: scale(1, 1); opacity: 1.0;}
+  0% {
+    -webkit-transform: scale(1, 1);
+    opacity: 1;
+  }
+  50% {
+    -webkit-transform: scale(0.8, 0.8);
+    opacity: 0.5;
+  }
+  100% {
+    -webkit-transform: scale(1, 1);
+    opacity: 1;
+  }
 }
 
 @keyframes pulsate {
-    0% {transform: scale(1, 1); opacity: 1.0;}
-    50% {transform: scale(0.8, 0.8); opacity: 0.5;}
-    100% {transform: scale(1, 1); opacity: 1.0;}
+  0% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8, 0.8);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
 }

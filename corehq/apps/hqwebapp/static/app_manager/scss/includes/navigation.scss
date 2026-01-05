@@ -35,7 +35,7 @@ $appnav-secondary-width: 35px;
   line-height: $appnav-item-height;
   padding-right: $appnav-trash-width;
   color: $cc-text;
-  transition: all .5s;
+  transition: all 0.5s;
   text-decoration: none !important;
 }
 
@@ -54,13 +54,13 @@ $appnav-secondary-width: 35px;
   font-size: 2rem;
 }
 
-.appnav-menu .appnav-primary-icon-lg  {
+.appnav-menu .appnav-primary-icon-lg {
   top: 3px;
 }
 
 .appnav-menu > li > .appnav-item a.appnav-delete {
   width: $appnav-trash-width;
-  transition: all .2s;
+  transition: all 0.2s;
   position: relative;
   z-index: $z-index-trash;
 
@@ -72,12 +72,13 @@ $appnav-secondary-width: 35px;
     height: $appnav-item-height;
     vertical-align: top;
     line-height: $appnav-item-height;
-    transition: margin .5s;
+    transition: margin 0.5s;
     position: relative;
     margin-left: -50px;
   }
 
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     color: $cc-att-neg-mid;
   }
 }
@@ -127,10 +128,11 @@ $drag-icon-right: 10px;
 .appnav-menu > li > .appnav-item a.appnav-secondary {
   width: $appnav-secondary-width;
   &.appnav-settings {
-    transition: all .2s;
+    transition: all 0.2s;
   }
 
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     color: $cc-brand-mid;
   }
 }
@@ -138,16 +140,17 @@ $drag-icon-right: 10px;
 .appnav-menu > li > .appnav-item a.appnav-add {
   width: $appnav-width;
   padding-left: $appnav-trash-width;
-  > [class*='fa-'] {
-    transition: all .2s;
+  > [class*="fa-"] {
+    transition: all 0.2s;
     margin-right: 8px;
     margin-left: 5px;
     position: relative;
   }
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     text-decoration: none;
 
-    > [class*='fa-'] {
+    > [class*="fa-"] {
       color: $call-to-action-mid;
     }
   }
@@ -163,8 +166,9 @@ $drag-icon-right: 10px;
   @include clearfix();
   overflow: hidden;
 
-  &:hover, &:focus {
-    background-color: rgba(255,255,255,0.6);
+  &:hover,
+  &:focus {
+    background-color: rgba(255, 255, 255, 0.6);
 
     a {
       text-decoration: none;
@@ -188,8 +192,8 @@ $drag-icon-right: 10px;
 }
 
 $nesting-indent: 10px;
-$t-shaped-line: '\f00a';
-$l-shaped-line: '\f00b';
+$t-shaped-line: "\f00a";
+$l-shaped-line: "\f00b";
 
 .appnav-menu-nested {
   > li > .appnav-item > a.appnav-title {
@@ -211,7 +215,8 @@ $l-shaped-line: '\f00b';
   }
 }
 
-.appnav-menu-nested > li, .child-modules > li.module  {
+.appnav-menu-nested > li,
+.child-modules > li.module {
   > .appnav-item > a.appnav-title {
     padding-left: $nesting-indent;
     position: relative;
@@ -240,7 +245,8 @@ $l-shaped-line: '\f00b';
     > a.appnav-title {
       margin-left: $nesting-indent;
       margin-right: -$nesting-indent;
-      width: $appnav-width - $appnav-trash-width - $appnav-secondary-width - $nesting-indent;
+      width: $appnav-width - $appnav-trash-width - $appnav-secondary-width -
+        $nesting-indent;
       > .appnav-drag-icon {
         right: $drag-icon-right;
       }
@@ -264,11 +270,16 @@ $l-shaped-line: '\f00b';
   position: relative;
   transition: background-color 1s;
 
-  &:hover, &.active {
-     background-color: darken($cc-brand-mid, 10);
+  &:hover,
+  &.active {
+    background-color: darken($cc-brand-mid, 10);
   }
 
-  a, a:link, a:visited, a:hover, a:focus {
+  a,
+  a:link,
+  a:visited,
+  a:hover,
+  a:focus {
     color: white;
     text-decoration: none;
   }
@@ -278,7 +289,7 @@ $l-shaped-line: '\f00b';
   padding: 0;
   margin: 0;
   margin-right: 51px;
-  font-size: $font-size-base*1.2;
+  font-size: $font-size-base * 1.2;
   a {
     padding: 15px;
     display: block;
@@ -300,17 +311,17 @@ $l-shaped-line: '\f00b';
   font-weight: bold;
   position: relative;
   &:after {
-    content: '';
-	position: absolute;
-	top: 0;
-	left: 25px;
-	width: 0;
-	height: 0;
-	border: 10px solid transparent;
-	border-bottom-color: $cc-dark-cool-accent-mid;
-	border-top: 0;
-	margin-left: -10px;
-	margin-top: -10px;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 25px;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-bottom-color: $cc-dark-cool-accent-mid;
+    border-top: 0;
+    margin-left: -10px;
+    margin-top: -10px;
   }
 }
 
@@ -336,8 +347,13 @@ $l-shaped-line: '\f00b';
     padding-bottom: 13px;
     display: block;
     transition: all 1s;
-    &:hover, &:focus, &.active {
-      text-shadow: 0 0 10px white, 0 0 20px white, 0 0 30px white;
+    &:hover,
+    &:focus,
+    &.active {
+      text-shadow:
+        0 0 10px white,
+        0 0 20px white,
+        0 0 30px white;
     }
   }
 }
@@ -448,15 +464,17 @@ $l-shaped-line: '\f00b';
   .appnav-secondary {
     color: $cc-brand-hi;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       text-shadow: 0 0 10px #000;
     }
     &.appnav-settings {
       color: $cc-brand-hi;
-      &:hover, &:focus {
+      &:hover,
+      &:focus {
         color: darken($cc-brand-hi, 20);
         text-shadow: 0 0 10px #0000;
       }
     }
   }
-} 
+}

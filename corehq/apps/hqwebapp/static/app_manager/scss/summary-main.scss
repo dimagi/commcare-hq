@@ -1,6 +1,6 @@
-@import '../../hqwebapp/scss/commcarehq/variables';
-@import '../../hqwebapp/scss/commcarehq/variables_bootstrap3';
-@import '../../hqwebapp/scss/commcarehq/mixins';
+@import "../../hqwebapp/scss/commcarehq/variables";
+@import "../../hqwebapp/scss/commcarehq/variables_bootstrap3";
+@import "../../hqwebapp/scss/commcarehq/mixins";
 
 #hq-sidebar .well {
   margin-bottom: 10px;
@@ -9,14 +9,15 @@
   padding-right: 0;
   border: 0;
   -webkit-box-shadow: none;
-          box-shadow: none;
+  box-shadow: none;
 
   .nav > li > a {
     padding: 5px 15px;
   }
 }
 
-.case-properties, .case-relationships {
+.case-properties,
+.case-relationships {
   .fa-ul {
     margin-left: 0;
   }
@@ -28,10 +29,10 @@
 }
 
 .hq-icon {
-  color: #2787d0;  // todo track down how this color was generated from palette
+  color: #2787d0; // todo track down how this color was generated from palette
 }
 
 .scrollable {
-    height: 100%;
-    overflow-y: scroll;
+  height: 100%;
+  overflow-y: scroll;
 }
