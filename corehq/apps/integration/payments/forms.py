@@ -1,3 +1,5 @@
+import json
+
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
@@ -35,6 +37,7 @@ class PaymentConfigureForm(forms.ModelForm):
     environment = forms.ChoiceField(
         label=_('Environment'),
         choices=MoMoEnvironments.choices,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -46,18 +49,30 @@ class PaymentConfigureForm(forms.ModelForm):
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Payment Configuration'),
-                crispy.Field('provider'),
-                crispy.Field('connection_settings'),
-                crispy.Field('environment'),
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _('Save'),
-                    type='submit',
-                    css_class='btn btn-primary',
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Payment Configuration'),
+                    crispy.Field(
+                        'provider',
+                        x_init='provider = $el.value',
+                        x_model='provider',
+                    ),
+                    crispy.Field('connection_settings'),
+                    crispy.Div(
+                        'environment',
+                        x_show=f"provider === '{MoMoProviders.MTN_MONEY}'",
+                    ),
                 ),
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _('Save'),
+                        type='submit',
+                        css_class='btn btn-primary',
+                    ),
+                ),
+                x_data=json.dumps({
+                    'provider': self.instance.provider,
+                }),
             )
         )
 
@@ -69,3 +84,10 @@ class PaymentConfigureForm(forms.ModelForm):
     def clean_connection_settings(self):
         connection_settings_id = self.cleaned_data['connection_settings']
         return ConnectionSettings.objects.get(id=connection_settings_id)
+
+    def clean_environment(self):
+        environment = self.cleaned_data.get('environment')
+        provider = self.cleaned_data.get('provider')
+        if provider == MoMoProviders.ORANGE_CAMEROON_MONEY:
+            environment = MoMoEnvironments.LIVE
+        return environment
