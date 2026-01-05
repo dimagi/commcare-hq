@@ -9,6 +9,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.integration.payments.models import (
     MoMoConfig,
     MoMoEnvironments,
+    MoMoProviders,
 )
 from corehq.motech.models import ConnectionSettings
 
@@ -18,10 +19,16 @@ class PaymentConfigureForm(forms.ModelForm):
     class Meta:
         model = MoMoConfig
         fields = [
+            'provider',
             'connection_settings',
             'environment',
         ]
 
+    provider = forms.ChoiceField(
+        label=_('Provider'),
+        required=True,
+        choices=MoMoProviders.choices,
+    )
     connection_settings = forms.ChoiceField(
         label=_('Connection Settings'),
     )
@@ -41,6 +48,7 @@ class PaymentConfigureForm(forms.ModelForm):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Payment Configuration'),
+                crispy.Field('provider'),
                 crispy.Field('connection_settings'),
                 crispy.Field('environment'),
             ),
