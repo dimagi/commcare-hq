@@ -27,3 +27,10 @@ class MoMoConfig(models.Model):
     environment = models.CharField(
         max_length=25, choices=MoMoEnvironments.choices, default=MoMoEnvironments.LIVE,
     )
+
+    def get_payment_api_method(self):
+        if self.provider == MoMoProviders.MTN_MONEY:
+            from corehq.apps.integration.payments.services import make_mtn_payment_request
+            return make_mtn_payment_request
+        else:
+            raise ValueError(f"Unsupported provider: {self.provider}")

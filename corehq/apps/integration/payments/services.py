@@ -92,14 +92,15 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
 def _request_payment(payee_case: CommCareCase, config: MoMoConfig):
     _validate_payment_request(payee_case.case_json)
     transfer_details = _get_transfer_details(payee_case)
-    transaction_id = _make_payment_request(
+    payment_api_method = config.get_payment_api_method()
+    transaction_id = payment_api_method(
         request_data=asdict(transfer_details),
         config=config,
     )
     return transaction_id
 
 
-def _make_payment_request(request_data, config: MoMoConfig):
+def make_mtn_payment_request(request_data, config: MoMoConfig):
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
 
