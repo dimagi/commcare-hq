@@ -705,7 +705,6 @@ class TestCaseAPI(TestCase):
         msg = "Error with case property 'case_name'. This must be specified at the top level."
         assert res.json()['error'] == msg
 
-
     @patch("corehq.apps.hqcase.views.handle_case_update")
     def test_post_without_external_id_calls_with_is_creation_true(self, mock_handle_update):
         mock_handle_update.return_value = self._get_update_return()
