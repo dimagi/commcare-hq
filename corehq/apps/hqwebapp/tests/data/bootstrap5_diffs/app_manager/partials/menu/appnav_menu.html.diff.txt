@@ -1,0 +1,60 @@
+--- 
++++ 
+@@ -14,7 +14,7 @@
+         data-uid="{{ module.unique_id }}"
+         data-rootmoduleuid="{{ module.root_module_id|default:"" }}"
+       >
+-        {% include 'app_manager/partials/menu/bootstrap3/module_link.html' %}
++        {% include 'app_manager/partials/menu/bootstrap5/module_link.html' %}
+ 
+         <ul
+           class="appnav-menu appnav-menu-nested see sortable sortable-forms
+@@ -29,7 +29,7 @@
+                 data-uid="{{ form.unique_id }}"
+                 {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}
+               >
+-                {% include 'app_manager/partials/menu/bootstrap3/form_link.html' %}
++                {% include 'app_manager/partials/menu/bootstrap5/form_link.html' %}
+               </li>
+             {% endfor %}
+           {% endwith %}
+@@ -46,7 +46,7 @@
+           id="new-module-form"
+           action="{% url "new_module" domain app.id %}"
+           method="post"
+-          class="hide"
++          class="d-none"
+         >
+           {% csrf_token %}
+           <input id="new-module-type" type="hidden" name="module_type" />
+@@ -56,8 +56,8 @@
+           href="#"
+           class="appnav-add add-new-module"
+           data-slug="module"
+-          data-toggle="modal"
+-          data-target="#add-new-module-modal"
++          data-bs-toggle="modal"
++          data-bs-target="#add-new-module-modal"
+         >
+           <i class="new-module-icon fa fa-plus"></i>
+           {% trans "Add..." %}
+@@ -73,8 +73,8 @@
+       <div class="modal-header">
+         <button
+           type="button"
+-          class="close"
+-          data-dismiss="modal"
++          class="btn-close"  {# todo B5: css-close #}
++          data-bs-dismiss="modal"
+           aria-label="Close"
+         >
+           <span aria-hidden="true">&times;</span>
+@@ -103,7 +103,7 @@
+           {% endblocktrans %}
+         </div>
+         <div class="modal-footer">
+-          <button type="button" class="btn btn-default" data-dismiss="modal">
++          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+             {% trans "Not Now" %}
+           </button>
+           <button type="submit" class="disable-on-submit btn btn-primary">

@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -3,8 +3,8 @@
+ {% load hq_shared_tags %}
+ 
+ <div class="appmanager-page-actions">
+-  {% include 'app_manager/partials/bootstrap3/app_summary_button.html' %}
+-  {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-default' %}
++  {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
++  {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
+ </div>
+ <div class="appmanager-edit-title">
+   {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true"%}
