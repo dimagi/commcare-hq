@@ -3,6 +3,7 @@ from dataclasses import asdict
 from datetime import datetime
 from json import JSONDecodeError
 
+from django.conf import settings
 from django.utils.translation import gettext as _
 
 import requests
@@ -70,7 +71,7 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
             'transaction_id': transaction_id,  # can be used to check payment status
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
         })
-    except PaymentRequestError as e:
+    except (requests.HTTPError, PaymentRequestError) as e:
         payment_update.update({
             PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_REQUEST_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
@@ -116,6 +117,31 @@ def make_mtn_payment_request(request_data, config: MoMoConfig):
     if response.status_code != PAYMENT_SUCCESS_STATUS_CODE:
         raise PaymentRequestError(_("Payment request failed"))
     return transaction_id
+
+
+def make_orange_cameroon_payment_request(request_data, config: MoMoConfig):
+    connection_settings = config.connection_settings
+    requests = connection_settings.get_requests()
+
+    response = requests.post(
+        '/omcoreapis/1.0.2/cashin/init',
+        headers={
+            'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
+        }
+    )
+    response.raise_for_status()
+    pay_token = response.json()['data']['payToken']
+
+    res = requests.post(
+        '/omcoreapis/1.0.2/cashin/pay',
+        json={**request_data, 'payToken': pay_token},
+        headers={
+            'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
+        }
+    )
+    res.raise_for_status()
+
+    return pay_token
 
 
 def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
