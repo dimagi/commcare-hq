@@ -30,6 +30,7 @@ from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 
 
@@ -100,9 +101,10 @@ class AppCaseSummaryView(AppSummaryView):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    template_name = 'app_manager/bootstrap3/form_summary.html'
+    template_name = 'app_manager/bootstrap5/form_summary.html'
 
     @property
     def page_context(self):
