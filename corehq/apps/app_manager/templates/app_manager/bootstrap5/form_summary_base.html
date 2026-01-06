@@ -22,7 +22,7 @@
 
 <ul class="fa-ul" data-bind="foreach: modules">
   <li data-bind="visible: isVisible, css: getDiffClass('module'), popover: getDiffPopover(changes['module'], 'module') ">
-    <h4>
+    <h4 class="mt-3">
       <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
         <i data-bind="attr: { 'class': icon }"></i>
         <span data-bind="text: $root.translate(name), css: getDiffClass('name'), popover: getDiffPopover(changes['name'], 'name')"></span>
@@ -86,7 +86,7 @@
 
 {# Button for question attribute #}
 <script type="text/html" id="attribute-toggle">
-  <button type="button" class="btn btn-outline-primary"
+  <button type="button" class="btn btn-outline-primary rounded-pill text-nowrap mb-1"
     data-bind="click: clickFn, css: { active: activeObs }">
     <i class="fa fa-calculator" data-bind="attr: {'class': icon}"></i>
     &nbsp;<span data-bind="text: text"></span>
