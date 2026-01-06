@@ -147,7 +147,7 @@
    &.fullscreen {
      z-index: 1040 !important;
 -    background-color: fade(@cc-light-cool-accent-hi, 50);
-+    background-color: fade($cc-light-cool-accent-hi, 50);
++    background-color: rgba($cc-light-cool-accent-hi, 0.5);
    }
  }
  
