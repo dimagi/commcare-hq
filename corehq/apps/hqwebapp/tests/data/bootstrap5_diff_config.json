@@ -1240,59 +1240,59 @@
       "files": [
         [
           "case_tile_preview.less",
-          "case_tile_preview.scss"
+          "_case_tile_preview.scss"
         ],
         [
           "content.less",
-          "content.scss"
+          "_content.scss"
         ],
         [
           "corehq_overrides.less",
-          "corehq_overrides.scss"
+          "_corehq_overrides.scss"
         ],
         [
           "deploy.less",
-          "deploy.scss"
+          "_deploy.scss"
         ],
         [
           "diff.less",
-          "diff.scss"
+          "_diff.scss"
         ],
         [
           "form_editing.less",
-          "form_editing.scss"
+          "_form_editing.scss"
         ],
         [
           "navigation.less",
-          "navigation.scss"
+          "_navigation.scss"
         ],
         [
           "new_module_modal.less",
-          "new_module_modal.scss"
+          "_new_module_modal.scss"
         ],
         [
           "panel.less",
-          "panel.scss"
+          "_panel.scss"
         ],
         [
           "popover.less",
-          "popover.scss"
+          "_popover.scss"
         ],
         [
           "savebtn.less",
-          "savebtn.scss"
+          "_savebtn.scss"
         ],
         [
           "table.less",
-          "table.scss"
+          "_table.scss"
         ],
         [
           "tabs.less",
-          "tabs.scss"
+          "_tabs.scss"
         ],
         [
           "variables.less",
-          "variables.scss"
+          "_variables.scss"
         ]
       ]
     }
