@@ -359,26 +359,14 @@ $l-shaped-line: "\f00b";
 }
 
 .appnav-language-select {
-  padding: 5px 15px 4px;
+  padding: 7px 15px 6px;
   font-size: 11px;
   background-color: $cc-brand-mid;
   color: white;
-  label {
-    font-weight: 400;
-    line-height: 13px;
-    padding-top: 1px;
-    display: inline-block;
-  }
   select {
-    width: 42px;
-    height: 16px;
-    display: inline;
-    float: right;
     background-color: darken($cc-brand-mid, 5);
     border: none;
     color: white;
-    margin-top: 2px;
-    padding: 0;
   }
 }
 
