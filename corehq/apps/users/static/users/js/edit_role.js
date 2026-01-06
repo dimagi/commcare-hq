@@ -1,3 +1,4 @@
+import _ from "underscore";
 import "commcarehq";
 import "hqwebapp/js/htmx_base";
 import initialPageData from "hqwebapp/js/initial_page_data";
@@ -15,6 +16,7 @@ Alpine.data('initRole', (roleJson) => {
         roleError: '',
         accessAreas: [],
         erm: {},
+        reports: [],
         init() {
             const self = this;
             this.accessAreas = [
@@ -454,6 +456,154 @@ Alpine.data('initRole', (roleJson) => {
                     checkboxText: gettext("Allow role to edit linked configurations on this project space"),
                 },
             };
+
+            this.reportPermissions = {
+                get all() {
+                    return self.role.permissions.view_reports;
+                },
+                set all(value) {
+                    self.role.permissions.view_reports = value;
+                },
+                specific: _.map(initialPageData.get("report_list"), (report) => ({
+                    path: report.path,
+                    slug: report.slug,
+                    name: report.name,
+                    get value() {
+                        return self.role.permissions.view_report_list.indexOf(report.path) !== -1
+                    },
+                    set value(value) {
+                        if (value) {
+                            self.role.permissions.view_report_list.push(report.path);
+                        } else {
+                            const index = self.role.permissions.view_report_list.indexOf(report.path);
+                            if (index > -1) {
+                                self.role.permissions.view_report_list.splice(index, 1);
+                            }
+                        }
+                    }
+                })),
+            };
+
+            this.tableauPermissions = {
+                get all() {
+                    return self.role.permissions.view_tableau;
+                },
+                set all(value) {
+                    self.role.permissions.view_tableau = value;
+                },
+                specific: _.map(initialPageData.get("tableau_list"), (report) => ({
+                    path: report.path,
+                    slug: report.slug,
+                    name: report.name,
+                    get value() {
+                        return self.role.permissions.view_tableau_list.indexOf(report.path) !== -1
+                    },
+                    set value(value) {
+                        if (value) {
+                            self.role.permissions.view_tableau_list.push(report.path);
+                        } else {
+                            const index = self.role.permissions.view_tableau_list.indexOf(report.path);
+                            if (index > -1) {
+                                self.role.permissions.view_tableau_list.splice(index, 1);
+                            }
+                        }
+                    }
+                })),
+            };
+
+            this.reports = [
+                {
+                    get visibilityRestraint() {
+                        return self.role.permissions.access_all_locations;
+                    },
+                    text: gettext("Create and Edit Reports"),
+                    checkboxLabel: "create-and-edit-reports-checkbox",
+                    get checkboxPermission() {
+                        return self.role.permissions.edit_reports;
+                    },
+                    set checkboxPermission(value) {
+                        self.role.permissions.edit_reports = value;
+                    },
+                    checkboxText: gettext("Allow role to create and edit reports in report builder."),
+                },
+            ]
+            if (toggles.toggleEnabled('USER_CONFIGURABLE_REPORTS')) {
+                if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
+                    this.reports.push({
+                        get visibilityRestraint() {
+                            return self.role.permissions.access_all_locations;
+                        },
+                        text: gettext("Create and Edit Custom Web Reports"),
+                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                        get checkboxPermission() {
+                            return self.role.permissions.edit_ucrs;
+                        },
+                        set checkboxPermission(value) {
+                            self.role.permissions.edit_ucrs = value;
+                        },
+                        checkboxText: gettext("Allow role to create and edit custom web reports."),
+                    });
+                } else { //TODO: only text is different? Can I make it a get instead?
+                    this.reports.push({
+                        get visibilityRestraint() {
+                            return self.role.permissions.access_all_locations;
+                        },
+                        text: gettext("Create and Edit Configurable Reports"),
+                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                        get checkboxPermission() {
+                            return self.role.permissions.edit_ucrs;
+                        },
+                        set checkboxPermission(value) {
+                            self.role.permissions.edit_ucrs = value;
+                        },
+                        checkboxText: gettext("Allow role to create and edit configurable reports."),
+                    });
+                }
+            }
+            const hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
+            this.reports.push({
+                visibilityRestraint: true,
+                text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
+                checkboxLabel: "access-all-reports-checkbox",
+                get checkboxPermission() {
+                    return self.reportPermissions.all;
+                },
+                set checkboxPermission(value) {
+                    self.reportPermissions.all = value;
+                },
+                checkboxText: hasEmbeddedTableau
+                    ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
+                    : gettext("Allow role to access all reports."),
+            });
+
+            this.reports.push({
+                get visibilityRestraint() {
+                    return self.reportPermissions.all || _.any(self.reportPermissions.specific, (p) => p.value);
+                },
+                text: gettext("Download and Email Reports"),
+                checkboxLabel: "download-and-email-reports-checkbox",
+                get checkboxPermission() {
+                    return self.role.permissions.download_reports;
+                },
+                set checkboxPermission(value) {
+                    self.role.permissions.download_reports = value;
+                },
+                checkboxText: gettext("Allow role to download and email report data."),
+            });
+            if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
+                this.reports.push({
+                    visibilityRestraint: true,
+                    text: gettext("Access All Tableau Reports"),
+                    checkboxLabel: "view-tableau-checkbox",
+                    get checkboxPermission() {
+                        return self.tableauPermissions.all;
+                    },
+                    set checkboxPermission(value) {
+                        self.tableauPermissions.all = value;
+                    },
+                    checkboxText: gettext("Allow role to access all embedded Tableau reports."),
+                });
+            }
 
             this.saveRole = () => {
                 self.isSaving = true;
