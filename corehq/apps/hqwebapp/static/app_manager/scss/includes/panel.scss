@@ -81,7 +81,7 @@
   background-color: lighten($cc-bg, 3);
 
   &.build-latest-release {
-    box-shadow: 0 0 10px fade($cc-brand-mid, 40);
+    box-shadow: 0 0 10px rgba($cc-brand-mid, 0.4);
   }
 }
 
