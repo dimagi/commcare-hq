@@ -1295,6 +1295,15 @@
           "_variables.scss"
         ]
       ]
+    },
+    {
+      "directories": [
+        "less/font-workflow",
+        "scss/font-workflow"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets/font",
+      "compare_all_files": true
     }
   ]
 }
