@@ -18,6 +18,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.reports.util import get_possible_reports
@@ -29,12 +30,78 @@ from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.models_role import UserRole, StaticRole
 from corehq.apps.users.views import BaseRoleAccessView, _commcare_analytics_roles_options
-
 from corehq.util.view_utils import json_error
 
 
+class RoleContextMixin:
+    """Mixin to provide common context for role-related views."""
+
+    @property
+    def landing_page_choices(self):
+        return [
+            {'id': None, 'name': _('Use Default')}
+        ] + [
+            {'id': page.id, 'name': _(page.name)}
+            for page in get_allowed_landing_pages(self.domain)
+        ]
+
+    def get_possible_profiles(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+        definition = CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE)
+        if definition is not None:
+            return [{
+                    'id': profile.id,
+                    'name': profile.name,
+                    }
+                for profile in definition.get_profiles()]
+        else:
+            return []
+
+    def get_common_role_context(self):
+        """Returns context data common to role views."""
+        tableau_list = []
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            tableau_list = [{
+                'id': viz.id,
+                'name': viz.name,
+            } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+
+        return {
+            'tableau_list': tableau_list,
+            'report_list': get_possible_reports(self.domain),
+            'profile_list': self.get_possible_profiles(),
+            'is_domain_admin': self.couch_user.is_domain_admin,
+            'domain_object': self.domain_object,
+            'uses_locations': self.domain_object.uses_locations,
+            'can_restrict_access_by_location': self.can_restrict_access_by_location,
+            'landing_page_choices': self.landing_page_choices,
+            'show_integration': (
+                toggles.OPENMRS_INTEGRATION.enabled(self.domain)
+                or toggles.DHIS2_INTEGRATION.enabled(self.domain)
+                or toggles.GENERIC_INBOUND_API.enabled(self.domain)
+            ),
+            'web_apps_choices': get_cloudcare_apps(self.domain),
+            'attendance_tracking_privilege': (
+                toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+                and domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
+            ),
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'data_file_download_enabled':
+                domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
+            'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
+            'data_registry_choices': get_data_registry_dropdown_options(self.domain),
+            'commcare_analytics_roles': _commcare_analytics_roles_options(),
+            'has_restricted_application_access': (
+                get_application_access_for_domain(self.domain).restrict
+                and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
+            ),
+        }
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
-class ListRolesView(BaseRoleAccessView):
+class ListRolesView(RoleContextMixin, BaseRoleAccessView):
     template_name = 'users/bootstrap5/roles_and_permissions.html'
     page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
@@ -47,15 +114,6 @@ class ListRolesView(BaseRoleAccessView):
     def can_edit_roles(self):
         return (has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
                 and self.couch_user.is_domain_admin)
-
-    @property
-    def landing_page_choices(self):
-        return [
-            {'id': None, 'name': _('Use Default')}
-        ] + [
-            {'id': page.id, 'name': _(page.name)}
-            for page in get_allowed_landing_pages(self.domain)
-        ]
 
     @property
     @memoized
@@ -107,23 +165,8 @@ class ListRolesView(BaseRoleAccessView):
             )
         return role_view_data
 
-    def get_possible_profiles(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import (
-            CUSTOM_USER_DATA_FIELD_TYPE,
-        )
-        definition = CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE)
-        if definition is not None:
-            return [{
-                    'id': profile.id,
-                    'name': profile.name,
-                    }
-                for profile in definition.get_profiles()]
-        else:
-            return []
-
     @property
     def page_context(self):
-        from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
                         for role in self.non_admin_roles)):
@@ -134,49 +177,16 @@ class ListRolesView(BaseRoleAccessView):
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
 
-        tableau_list = []
-        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
-            tableau_list = [{
-                'id': viz.id,
-                'name': viz.name,
-            } for viz in TableauVisualization.objects.filter(domain=self.domain)]
-
-        return {
+        context = self.get_common_role_context()
+        context.update({
             'is_managed_by_upstream_domain': is_active_downstream_domain(self.domain),
             'can_edit_linked_data': self.can_edit_linked_roles(),
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
-            'tableau_list': tableau_list,
-            'report_list': get_possible_reports(self.domain),
-            'profile_list': self.get_possible_profiles(),
-            'is_domain_admin': self.couch_user.is_domain_admin,
-            'domain_object': self.domain_object,
-            'uses_locations': self.domain_object.uses_locations,
-            'can_restrict_access_by_location': self.can_restrict_access_by_location,
-            'landing_page_choices': self.landing_page_choices,
-            'show_integration': (
-                toggles.OPENMRS_INTEGRATION.enabled(self.domain)
-                or toggles.DHIS2_INTEGRATION.enabled(self.domain)
-                or toggles.GENERIC_INBOUND_API.enabled(self.domain)
-            ),
-            'web_apps_choices': get_cloudcare_apps(self.domain),
-            'attendance_tracking_privilege': (
-                toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-                and domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
-            ),
-            'has_report_builder_access': has_report_builder_access(self.request),
-            'data_file_download_enabled':
-                domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
-            'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
-            'data_registry_choices': get_data_registry_dropdown_options(self.domain),
-            'commcare_analytics_roles': _commcare_analytics_roles_options(),
-            'has_restricted_application_access': (
-                get_application_access_for_domain(self.domain).restrict
-                and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
-            ),
-        }
+        })
+        return context
 
 
 # If any permission less than domain admin were allowed here, having that
@@ -298,7 +308,7 @@ def _delete_user_role(domain, role_data):
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
-class EditRoleView(BaseRoleAccessView):
+class EditRoleView(RoleContextMixin, BaseRoleAccessView):
     urlname = "edit_role"
     template_name = 'users/edit_role.html'
     page_title = gettext_lazy("Edit Role")
@@ -317,9 +327,11 @@ class EditRoleView(BaseRoleAccessView):
     @property
     def page_context(self):
         role_data = self.role.to_json()
-        return {
+        context = self.get_common_role_context()
+        context.update({
             "data": json.dumps(role_data)
-        }
+        })
+        return context
 
     @property
     def role(self):

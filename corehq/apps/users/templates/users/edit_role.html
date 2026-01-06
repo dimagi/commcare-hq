@@ -3,11 +3,8 @@
 {% load i18n %}
 {% js_entry 'users/js/edit_role' %}
 {% block page_content %}
-  {% registerurl "post_user_role" domain %}
-  {% initial_page_data "attendance_tracking_privilege" attendance_tracking_privilege %}
-  {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
-  {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
 
+  {% registerurl "post_user_role" domain %}
   {% initial_page_data "user_roles" user_roles %}
   {% initial_page_data "non_admin_roles" non_admin_roles %}
   {% initial_page_data "can_edit_roles" can_edit_roles %}
@@ -18,11 +15,15 @@
   {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
   {% initial_page_data "landing_page_choices" landing_page_choices %}
   {% initial_page_data "web_apps_choices" web_apps_choices %}
+  {% initial_page_data "attendance_tracking_privilege" attendance_tracking_privilege %}
   {% initial_page_data "has_report_builder_access" has_report_builder_access %}
+  {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
+  {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
   {% initial_page_data "data_registry_choices" data_registry_choices %}
   {% initial_page_data "can_edit_linked_data" can_edit_linked_data %}
   {% initial_page_data "commcare_analytics_roles" commcare_analytics_roles %}
   {% initial_page_data "has_restricted_application_access" has_restricted_application_access %}
+
 
   <div class="container mx-0">
     <form
@@ -283,11 +284,128 @@
         </div>
       </fieldset>
 
+      <fieldset class="active">
+        <legend>
+          <a class="accordion-toggle" data-bs-toggle="collapse" href="#reports-card">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans "Reports" %}
+          </a>
+        </legend>
+        <div id="reports-card" class="card-body collapse show">
+          <template x-for="report in reports">
+            <div class="row" x-show="report.visibilityRestraint">
+              <div
+                class="col-md-4 form-label fw-bold"
+                x-text="report.text"
+              ></div>
+              <div class="col-md-8 controls">
+                <div class="form-check pt-0">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    :id="report.checkboxLabel"
+                    x-model="report.checkboxPermission"
+                  />
+                  <label
+                    class="form-check-label"
+                    :for="report.checkboxLabel"
+                    x-text="report.checkboxText"
+                  >
+                  </label>
+                </div>
+              </div>
+            </div>
+          </template>
+          <!-- TODO: yarn add @alpinejs/collapse -->
+          <div class="row"
+            x-show="!reportPermissions.all"
+            x-collapse
+            x-cloak
+          >
+            <div class="col-md-4 form-label fw-bold">
+              {% trans "Access Specific Reports" %}
+            </div>
+            <div class="col-md-8 controls">
+              <div class="card">
+                <div class="card-header">
+                  {% trans "Select which reports the role can access:" %}
+                </div>
+                <div
+                  class="card-body"
+                >
+                  <template x-for="report in reportPermissions.specific">
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        x-model="report.value"
+                        :id="report.slug + '-checkbox'"
+                      />
+                      <label
+                        class="form-check-label"
+                        :for="report.slug + '-checkbox'"
+                      >
+                        <span
+                          x-text="report.name"
+                          class="text-break"
+                        ></span>
+                      </label>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
+            <div
+              class="row mt-2"
+              x-show="!tableauPermissions.all"
+              x-collapse
+              x-cloak
+            >
+              <div class="col-md-4 form-label fw-bold">
+                {% trans "Access Specific Tableau Reports" %}
+              </div>
+              <div class="col-md-8 controls">
+                <div class="card">
+                  <div class="card-header">
+                    {% trans "Select which Tableau reports the role can access:" %}
+                  </div>
+                  <div class="card-body">
+                    <template x-for="report in tableauPermissions.specific">
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          x-model="report.value"
+                          :id="'tableau-' + report.slug + '-checkbox'"
+                        />
+                        <label
+                          class="form-check-label"
+                          :for="'tableau-' + report.slug + '-checkbox'"
+                        >
+                          <span
+                            x-text="report.name"
+                            class="text-break"
+                          ></span>
+                        </label>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+        </div>
+      </fieldset>
+
       <div class="border-top my-2"></div>
 
       <div class="row mb-4">
         <div class="col-sm-2">
-          <button type="submit" class="btn btn-primary" :disabled="isSaving">
+          <button type="submit" class="btn btn-primary" :disabled="isSaving" x-cloak>
             <span x-show="!isSaving">{% trans "Save" %}</span>
             <span x-show="isSaving">{% trans "Saving ..." %}</span>
           </button>
