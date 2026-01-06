@@ -118,9 +118,10 @@ class AppFormSummaryView(AppSummaryView):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class FormSummaryDiffView(AppSummaryView):
     urlname = "app_form_summary_diff"
-    template_name = 'app_manager/bootstrap3/form_summary_diff.html'
+    template_name = 'app_manager/bootstrap5/form_summary_diff.html'
 
     @property
     def app(self):
