@@ -417,7 +417,6 @@
         </fieldset>
       {% endif %}
 
-
       {% if request|toggle_enabled:"DATA_REGISTRY" %}
         <fieldset class="active">
             <legend>
@@ -432,6 +431,75 @@
                   {% include 'users/partials/select_permission.html' %}
                 </div>
               </template>
+            </div>
+        </fieldset>
+      {% endif %}
+
+      {% if request|toggle_enabled:"SUPERSET_ANALYTICS" %}
+        <fieldset class="active">
+            <legend>
+                <a class="accordion-toggle" data-bs-toggle="collapse" href="#analytics-card">
+                    <i class="fa fa-angle-double-down"></i>
+                    {% trans "CommCare Analytics" %}
+                </a>
+            </legend>
+            <div id="analytics-card" class="card-body collapse show">
+              <div class="row">
+                <div class="col-md-4 form-label fw-bold">
+                  {% trans "All CommCare Analytics Roles" %}
+                </div>
+                <div class="col-md-8 controls">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="commcare-analytics-all-roles-checkbox"
+                      x-model="commcareAnalyticsRoles.all"
+                    />
+                    <label
+                      class="form-check-label"
+                      for="commcare-analytics-all-roles-checkbox"
+                    >
+                      {% trans "Assign all commcare analytics roles to users with this role" %}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="row"
+                x-show="!commcareAnalyticsRoles.all"
+              >
+                <div class="col-md-4 form-label fw-bold">
+                  {% trans "CommCare Analytics Roles" %}
+                </div>
+                <div class="col-md-8 controls">
+                  <div class="card mt-2">
+                    <div class="card-header">
+                      {% trans "Commcare Analytics Roles:" %}
+                    </div>
+                    <div class="card-body">
+                      <!-- TODO slideVisible: !commcareAnalyticsRoles.all -->
+                      <template x-for="s in commcareAnalyticsRoles.specific">
+                        <div class="form-check">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            x-model="s.value"
+                            :id="'cca-role-' + s.slug + '-checkbox'"
+
+                          />
+                          <label
+                            class="form-check-label"
+                            :for="'cca-role-' + s.slug + '-checkbox'"
+                          >
+                            <span x-text="s.name"></span>
+                          </label>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
         </fieldset>
       {% endif %}
