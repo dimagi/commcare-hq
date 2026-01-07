@@ -170,6 +170,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_data_registry_contents': 'view_data_registry_contents_list',
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
+    'view_powerbi': 'view_powerbi_list',
     'access_web_apps': 'web_apps_list',
     'commcare_analytics_roles': 'commcare_analytics_roles_list',
     'edit_user_profile': 'edit_user_profile_list',
@@ -217,6 +218,8 @@ class HqPermissions(DocumentSchema):
     edit_ucrs = BooleanProperty(default=False)
     view_tableau = BooleanProperty(default=False)
     view_tableau_list = StringListProperty(default=[])
+    view_powerbi = BooleanProperty(default=False)
+    view_powerbi_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -368,6 +371,11 @@ class HqPermissions(DocumentSchema):
         if not viz.location_safe and not self.access_all_locations:
             return False
         return self.view_tableau or str(viz.id) in self.view_tableau_list
+
+    def view_powerbi_report(self, report):
+        if not report.location_safe and not self.access_all_locations:
+            return False
+        return self.view_powerbi or str(report.id) in self.view_powerbi_list
 
     def has(self, permission, data=None):
         if data:
@@ -1715,6 +1723,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def can_view_some_tableau_viz(self, domain):
         from corehq.apps.reports.models import TableauVisualization
         return bool(TableauVisualization.for_user(domain, self))
+
+    def can_view_some_powerbi_report(self, domain):
+        from corehq.apps.reports.models import PowerBIReport
+        return bool(PowerBIReport.for_user(domain, self))
 
     def can_login_as(self, domain):
         return (
