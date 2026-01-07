@@ -367,7 +367,7 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
         return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MISSING_TRANSACTION_ID)
 
     try:
-        response = _make_payment_status_request(transaction_id, config)
+        response = make_mtn_payment_status_request(transaction_id, config)
         response_data = response.json()
 
         status = response_data.get('status', '').lower()
@@ -409,7 +409,7 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
     return _get_status_details(status, error_code)
 
 
-def _make_payment_status_request(reference_id, config):
+def make_mtn_payment_status_request(reference_id, config):
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
     response = requests.get(

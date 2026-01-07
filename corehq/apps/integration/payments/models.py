@@ -37,3 +37,10 @@ class MoMoConfig(models.Model):
             return make_orange_cameroon_payment_request
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
+
+    def get_payment_status_api_method(self):
+        if self.provider == MoMoProviders.MTN_MONEY:
+            from corehq.apps.integration.payments.services import make_mtn_payment_status_request
+            return make_mtn_payment_status_request
+        else:
+            raise ValueError(f"Unsupported provider: {self.provider}")
