@@ -361,25 +361,20 @@ export default function (spec, config, options) {
         ))
     );
 
-    const columnsHasFormat = function (formatName) {
-        return _.some(self.columns(), function (col) {
-            return col.format && col.format.val && col.format.val() === formatName;
-        });
-    };
-    const areAllDependenciesPresent = function (dependencies) {
-        return _.every(dependencies, function (dep) {
-            return columnsHasFormat(dep);
-        });
-    };
     const calculateDynamicFormatsToInclude = function () {
-        const formatsToInclude = [];
-        _.each(COLUMN_FORMAT_DEPENDENCIES, function (config, formatName) {
-            if (areAllDependenciesPresent(config.dependencies)) {
-                formatsToInclude.push(formatName);
-            }
-        });
-        return formatsToInclude;
+        const formatSet = new Set(
+            self.columns()
+                .map(col => col.format?.val?.())
+                .filter(Boolean)
+        );
+
+        return Object.entries(COLUMN_FORMAT_DEPENDENCIES)
+            .filter(([, config]) =>
+                config.dependencies.every(dep => formatSet.has(dep))
+            )
+            .map(([formatName]) => formatName);
     };
+
     const updateAllColumnFormats = function () {
         const formatsToInclude = calculateDynamicFormatsToInclude();
         const dynamicFormats = Object.keys(COLUMN_FORMAT_DEPENDENCIES);
