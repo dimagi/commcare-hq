@@ -4,7 +4,6 @@ import logging
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.core.cache import cache
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
@@ -65,26 +64,13 @@ from tastypie.http import HttpNotAcceptable, HttpTooManyRequests
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
-CACHE_EXPIRY_7_DAYS_IN_SECS = 7 * 24 * 60 * 60
 
 
-# This mirrors the logic of require_mobile_access, but with a whitelist exempted
+# This mirrors the logic of require_mobile_access
 def _has_mobile_access(domain, user_id, request):
     """Unless going through formplayer or the API, users need access_mobile_endpoints"""
-    if (is_from_formplayer(request)
-            or request.couch_user.has_permission(domain, 'access_mobile_endpoints')):
-        return True
-
-    if toggles.OPEN_SUBMISSION_ENDPOINT.enabled(domain):
-        # log incorrect access at most once every 7 days to ease transition off flag
-        cache_key = f"form_submission_permissions_audit_v2:{user_id}"
-        if not cache.get(cache_key):
-            cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
-            message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
-            notify_exception(request, message=message)
-        return True
-
-    return False
+    return (is_from_formplayer(request)
+            or request.couch_user.has_permission(domain, 'access_mobile_endpoints'))
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
