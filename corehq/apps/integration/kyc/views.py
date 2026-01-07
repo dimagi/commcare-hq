@@ -36,7 +36,9 @@ from corehq.apps.integration.kyc.tables import (
     KycUserElasticRecord,
     KycVerifyTable,
 )
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
+from corehq.apps.reports.standard.cases.utils import add_case_owners_and_location_access
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.timezones.utils import get_timezone
@@ -128,6 +130,9 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, 
         return self._apply_filters(query)
 
     def _apply_filters(self, query):
+        if self.kyc_config.user_data_store == UserDataStore.OTHER_CASE_TYPE:
+            query = self._apply_case_list_filter(query)
+
         query_filters = []
         if kyc_verification_status := self.request.GET.get(KycVerificationStatusFilter.slug):
             self._apply_kyc_verification_status_filter(kyc_verification_status, query_filters)
@@ -136,6 +141,16 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, 
         if query_filters:
             query = query.filter(filters.AND(*query_filters))
         return query
+
+    def _apply_case_list_filter(self, query):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        return add_case_owners_and_location_access(
+            query,
+            self.request.domain,
+            self.request.couch_user,
+            self.request.can_access_all_locations,
+            mobile_user_and_group_slugs,
+        )
 
     def _apply_kyc_verification_status_filter(self, kyc_verification_status, query_filters):
         field_name = KycProperties.KYC_VERIFICATION_STATUS
@@ -230,6 +245,8 @@ class KYCFiltersMixin:
         fields = [
             'corehq.apps.integration.kyc.filters.KycVerificationStatusFilter',
         ]
+        if getattr(self, 'kyc_config', None) and self.kyc_config.user_data_store == UserDataStore.OTHER_CASE_TYPE:
+            fields.insert(0, 'corehq.apps.reports.filters.case_list.CaseListFilter')
         if hasattr(self, 'kyc_config') and self.kyc_config and self.kyc_config.phone_number_field:
             fields.append('corehq.apps.integration.kyc.filters.PhoneNumberFilter')
         return fields
