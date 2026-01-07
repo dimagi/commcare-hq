@@ -1,0 +1,21 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+
+{% block page_content %}
+
+{% initial_page_data "workspace_id" workspace_id %}
+{% initial_page_data "report_id" report_id %}
+{% initial_page_data "report_title" report_title %}
+{% registerurl 'get_powerbi_embed_token' request.domain %}
+
+{% js_entry "reports/js/powerbi" %}
+
+<body>
+    <div id="loadingDiv" class="fa-5x">
+        <i class="fa fa-spin fa-spinner"></i>
+    </div>
+    <div id="powerBIContainer" style="height: 600px;"></div>
+    <div id="errorMessage" class="alert alert-danger d-none"></div>
+</body>
+
+{% endblock %}

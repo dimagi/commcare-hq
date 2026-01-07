@@ -18,6 +18,7 @@ from corehq.apps.reports.standard.cases.case_data import (
     undo_close_case_view,
 )
 from corehq.apps.reports.standard.tableau import TableauView, get_tableau_server_ticket
+from corehq.apps.reports.standard.powerbi import PowerBIView, get_powerbi_embed_token
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -157,6 +158,9 @@ urlpatterns = [
 
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
     url(r'^tableau/ticket/$', get_tableau_server_ticket, name='get_tableau_server_ticket'),
+
+    url(r'^powerbi/(?P<report_id>[\d]+)/$', PowerBIView.as_view(), name=PowerBIView.urlname),
+    url(r'^powerbi/embed_token/$', get_powerbi_embed_token, name='get_powerbi_embed_token'),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
