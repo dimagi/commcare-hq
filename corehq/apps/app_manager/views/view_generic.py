@@ -45,6 +45,7 @@ from corehq.apps.hqmedia.views import (
     ProcessAudioFileUploadView,
     ProcessImageFileUploadView,
 )
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 from corehq.apps.linked_domain.dbaccessors import (
     get_accessible_downstream_domains,
     get_upstream_domain_link,
@@ -128,12 +129,14 @@ def view_generic(
         template = get_module_template(request.user, module)
         context.update(get_module_view_context(request, app, module, lang))
     else:
-        template = 'app_manager/bootstrap3/app_view_settings.html'
+        template = 'app_manager/bootstrap5/app_view_settings.html'
         context.update(get_app_view_context(request, app))
 
         if release_manager:
             template = 'app_manager/bootstrap3/app_view_release_manager.html'
             context.update(get_releases_context(request, domain, app_id))
+        else:
+            set_bootstrap_version5()
 
         context['is_app_settings_page'] = not release_manager
 
