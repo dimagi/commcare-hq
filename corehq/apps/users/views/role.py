@@ -59,6 +59,11 @@ class RoleContextMixin:
         else:
             return []
 
+    @property
+    def can_edit_roles(self):
+        return (has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
+                and self.couch_user.is_domain_admin)
+
     def get_common_role_context(self):
         """Returns context data common to role views."""
         tableau_list = []
@@ -69,6 +74,7 @@ class RoleContextMixin:
             } for viz in TableauVisualization.objects.filter(domain=self.domain)]
 
         return {
+            'can_edit_roles': self.can_edit_roles,
             'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
             'profile_list': self.get_possible_profiles(),
@@ -109,11 +115,6 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
     @method_decorator(require_can_view_roles)
     def dispatch(self, request, *args, **kwargs):
         return super(ListRolesView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def can_edit_roles(self):
-        return (has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-                and self.couch_user.is_domain_admin)
 
     @property
     @memoized

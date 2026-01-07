@@ -17,18 +17,21 @@ const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
 
 const selectPermissionModel = (args) => {
     const {
-        id,
         text,
         listHeading,
-        showAlreadyConfiguredWarning,
+        showAlreadyConfiguredWarning = false,
         permissionObj,
         accessKey,
         listKey,
         listChoices,
     } = args;
 
+    console.log(`accessKey: ${accessKey}`);
+    console.log(`listChoices: ${JSON.stringify(listChoices, null, 2)}`);
+    console.log(`permissionObj[${listKey}]: ${JSON.stringify(permissionObj[listKey])}`);
+
     const handler = {
-        id: id,
+        id: accessKey,
         text: text,
         listHeading: listHeading,
         showAlreadyConfiguredWarning: showAlreadyConfiguredWarning,
@@ -40,6 +43,7 @@ const selectPermissionModel = (args) => {
         },
 
         set selection(value) {
+            console.log(`Setting selection to ${value}`);
             this.state = value;
             if (value === ALL) {
                 permissionObj[accessKey] = true;
@@ -51,6 +55,8 @@ const selectPermissionModel = (args) => {
                 permissionObj[accessKey] = false;
                 permissionObj[listKey] = this.specificCache;
             }
+            console.log(`updated permissionObj[${accessKey}]: ${JSON.stringify(permissionObj[accessKey])}`);
+            console.log(`Updated permissionObj[${listKey}]: ${JSON.stringify(permissionObj[listKey])}`);
         },
 
         get showItems() {
@@ -74,10 +80,8 @@ const selectPermissionModel = (args) => {
         }
     };
 
-    console.log(`listChoices: ${JSON.stringify(listChoices, null, 2)}`);
-
     handler.specific = _.map(listChoices, (item) => ({
-        slug: item._id,
+        slug: item._id || item.slug,
         name: item.name,
         get value() {
             const list = permissionObj[listKey] || [];
@@ -105,6 +109,7 @@ Alpine.data('initRole', (roleJson) => {
         role: roleJson,
         isSaving: false,
         roleError: '',
+        allowEdit: initialPageData.get("can_edit_roles"),
         accessAreas: [],
         erm: {},
         reports: [],
@@ -697,7 +702,6 @@ Alpine.data('initRole', (roleJson) => {
             }
 
             this.webAppsPermissions = selectPermissionModel({
-                id: 'access_web_apps',
                 text: gettext("Use Web Apps for online data entry"),
                 listHeading: gettext("Select which web apps..."),
                 showAlreadyConfiguredWarning: initialPageData.get('has_restricted_application_access'),
@@ -707,8 +711,29 @@ Alpine.data('initRole', (roleJson) => {
                 listChoices: initialPageData.get("web_apps_choices")
             });
 
+            this.registryPermissions = [
+                selectPermissionModel({
+                    text: gettext("Manage Registries"),
+                    listHeading: gettext("Select which registries the role can manage:"),
+                    permissionObj: self.role.permissions,
+                    accessKey: 'manage_data_registry',
+                    listKey: 'manage_data_registry_list',
+                    listChoices: initialPageData.get("data_registry_choices")
+                }),
+                selectPermissionModel({
+                    text: gettext("View Registry Data"),
+                    listHeading: gettext("Select which registry data the role can view:"),
+                    permissionObj: self.role.permissions,
+                    accessKey: 'view_data_registry_contents',
+                    listKey: 'view_data_registry_contents_list',
+                    listChoices: initialPageData.get("data_registry_choices")
+                }),
+            ];
+
             this.saveRole = () => {
                 self.isSaving = true;
+
+                console.log(`saveRole: ${JSON.stringify(self.role, null, 2)}`);
 
                 $.ajax({
                     method: 'POST',
