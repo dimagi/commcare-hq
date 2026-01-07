@@ -26,10 +26,6 @@ const selectPermissionModel = (args) => {
         listChoices,
     } = args;
 
-    console.log(`accessKey: ${accessKey}`);
-    console.log(`listChoices: ${JSON.stringify(listChoices, null, 2)}`);
-    console.log(`permissionObj[${listKey}]: ${JSON.stringify(permissionObj[listKey])}`);
-
     const handler = {
         id: accessKey,
         text: text,
@@ -43,7 +39,6 @@ const selectPermissionModel = (args) => {
         },
 
         set selection(value) {
-            console.log(`Setting selection to ${value}`);
             this.state = value;
             if (value === ALL) {
                 permissionObj[accessKey] = true;
@@ -53,10 +48,8 @@ const selectPermissionModel = (args) => {
                 permissionObj[listKey] = [];
             } else {
                 permissionObj[accessKey] = false;
-                permissionObj[listKey] = this.specificCache;
+                permissionObj[listKey] = [...this.specificCache];
             }
-            console.log(`updated permissionObj[${accessKey}]: ${JSON.stringify(permissionObj[accessKey])}`);
-            console.log(`Updated permissionObj[${listKey}]: ${JSON.stringify(permissionObj[listKey])}`);
         },
 
         get showItems() {
@@ -75,7 +68,7 @@ const selectPermissionModel = (args) => {
                 this.state = NONE;
             } else {
                 this.state = SELECTED;
-                this.specificCache = permissionObj[listKey];
+                this.specificCache = [...permissionObj[listKey]];
             }
         }
     };
@@ -729,6 +722,38 @@ Alpine.data('initRole', (roleJson) => {
                     listChoices: initialPageData.get("data_registry_choices")
                 }),
             ];
+
+            this.commcareAnalyticsRoles = {
+                get all() {
+                    return self.role.permissions.commcare_analytics_roles;
+                },
+                set all(checked) {
+                    self.role.permissions.commcare_analytics_roles = checked;
+                    if (checked) {
+                        self.role.permissions.commcare_analytics_roles_list = [];
+                    } else {
+                        self.role.permissions.commcare_analytics_roles_list = [...this.specificCache];
+                    }
+                },
+                specificCache: [...self.role.permissions.commcare_analytics_roles_list],
+
+            };
+            this.commcareAnalyticsRoles.specific = _.map(initialPageData.get('commcare_analytics_roles'), (role) => ({
+                name: role.name,
+                slug: role.slug,
+                get value() {
+                    return self.role.permissions.commcare_analytics_roles_list.indexOf(role.slug) !== -1;
+                },
+                set value(checked) {
+                    if (checked) {
+                        self.role.permissions.commcare_analytics_roles_list.push(this.slug);
+                        this.commcareAnalyticsRoles.specificCache.push(this.slug);
+                    } else {
+                        removeItem(self.role.permissions.commcare_analytics_roles_list, this.slug);
+                        removeItem(this.commcareAnalyticsRoles.specificCache, this.slug);
+                    }
+                }
+            }));
 
             this.saveRole = () => {
                 self.isSaving = true;
