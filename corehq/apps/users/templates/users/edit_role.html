@@ -397,9 +397,25 @@
               </div>
             </div>
           {% endif %}
-
         </div>
       </fieldset>
+
+      {% if request|request_has_privilege:"CLOUDCARE" %}
+      <fieldset class="active">
+          <legend>
+              <a class="accordion-toggle" data-bs-toggle="collapse" href="#web-apps-card">
+                  <i class="fa fa-angle-double-down"></i>
+                  {% trans "Web Apps" %}
+              </a>
+          </legend>
+          <div id="web-apps-card" class="card-body collapse show">
+            <div x-data="webAppsPermissions">
+              {% include 'users/partials/select_permission.html' %}
+            </div>
+
+          </div>
+      </fieldset>
+      {% endif %}
 
       <div class="border-top my-2"></div>
 
