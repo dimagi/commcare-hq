@@ -60,7 +60,7 @@ class PaymentConfigureForm(forms.ModelForm):
                     crispy.Field('connection_settings'),
                     crispy.Div(
                         'environment',
-                        x_show=f"provider === '{MomoProviders.MTN_MONEY}'",
+                        x_show=f"provider === '{MoMoProviders.MTN_MONEY}'",
                     ),
                 ),
                 hqcrispy.FormActions(
@@ -88,6 +88,6 @@ class PaymentConfigureForm(forms.ModelForm):
     def clean_environment(self):
         environment = self.cleaned_data.get('environment')
         provider = self.cleaned_data.get('provider')
-        if provider == MomoProviders.ORANGE_CAMEROON_MONEY:
+        if provider == MoMoProviders.ORANGE_CAMEROON_MONEY:
             environment = MoMoEnvironments.LIVE
         return environment

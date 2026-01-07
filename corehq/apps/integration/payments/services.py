@@ -93,7 +93,7 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
 
 def _request_payment(payee_case: CommCareCase, config: MoMoConfig):
     _validate_payment_request(payee_case.case_json)
-    transfer_details = _get_transfer_details(payee_case)
+    transfer_details = _get_transfer_details(payee_case, config)
     payment_api_method = config.get_payment_api_method()
     transaction_id = payment_api_method(
         request_data=asdict(transfer_details),
@@ -130,6 +130,8 @@ def make_orange_cameroon_payment_request(request_data, config: MoMoConfig):
             'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
         }
     )
+    print("Cashin init response:", response.text)
+    print("Request headers:", response.request.headers)
     response.raise_for_status()
     pay_token = response.json().get('data')['payToken']
 
@@ -140,6 +142,9 @@ def make_orange_cameroon_payment_request(request_data, config: MoMoConfig):
             'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
         }
     )
+    print("Cashin pay response:", res.text)
+    print("Request headers:", res.request.headers)
+    print("Request body:", res.request.body)
     res.raise_for_status()
 
     return pay_token
@@ -222,7 +227,7 @@ def _get_transfer_details(payee_case: CommCareCase, config: MoMoConfig):
         )
     elif config.provider == MoMoProviders.ORANGE_CAMEROON_MONEY:
         return OrangeCameroonPaymentTransferDetails(
-            channelUserMsisdn=settings.ORANGE_CAMEROON_API_CREDS['channel_user_msisdn'],
+            channelUserMsisdn=settings.ORANGE_CAMEROON_API_CREDS['channel_msisdn'],
             pin=settings.ORANGE_CAMEROON_API_CREDS['channel_pin'],
             amount=case_json.get(PaymentProperties.AMOUNT),
             subscriberMsisdn=case_json.get(PaymentProperties.PHONE_NUMBER),
