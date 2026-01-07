@@ -608,6 +608,26 @@ class AddressPopup(HideShortColumn):
     template_form = 'address-popup'
 
 
+@register_format_type('geo-boundary')
+class GeoBoundary(FormattedDetailColumn):
+    template_form = 'geo-boundary'
+
+
+@register_format_type('geo-boundary-color')
+class GeoBoundaryColor(FormattedDetailColumn):
+    template_form = 'geo-boundary-color'
+
+
+@register_format_type('geo-points')
+class GeoPoints(FormattedDetailColumn):
+    template_form = 'geo-points'
+
+
+@register_format_type('geo-points-colors')
+class GeoPointsColors(FormattedDetailColumn):
+    template_form = 'geo-points-colors'
+
+
 @register_format_type('picture')
 class Picture(FormattedDetailColumn):
     template_form = 'image'
