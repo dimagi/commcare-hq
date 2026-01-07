@@ -952,6 +952,7 @@ reports
  0019_tableauvisualization_location_safe
  0020_tableauserver_get_reports_using_role
  0021_tableauconnectedapp_use_aes_cbc_encryption
+ 0022_powerbiworkspace_powerbiapp_powerbireport
 saved_reports
  0001_initial
  0002_scheduledreportlog
