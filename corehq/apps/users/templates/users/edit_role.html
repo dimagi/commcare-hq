@@ -400,21 +400,40 @@
         </div>
       </fieldset>
 
+
       {% if request|request_has_privilege:"CLOUDCARE" %}
-      <fieldset class="active">
+        <fieldset class="active">
           <legend>
-              <a class="accordion-toggle" data-bs-toggle="collapse" href="#web-apps-card">
-                  <i class="fa fa-angle-double-down"></i>
-                  {% trans "Web Apps" %}
-              </a>
+            <a class="accordion-toggle" data-bs-toggle="collapse" href="#web-apps-card">
+              <i class="fa fa-angle-double-down"></i>
+              {% trans "Web Apps" %}
+            </a>
           </legend>
           <div id="web-apps-card" class="card-body collapse show">
             <div x-data="webAppsPermissions">
               {% include 'users/partials/select_permission.html' %}
             </div>
-
           </div>
-      </fieldset>
+        </fieldset>
+      {% endif %}
+
+
+      {% if request|toggle_enabled:"DATA_REGISTRY" %}
+        <fieldset class="active">
+            <legend>
+                <a class="accordion-toggle" data-bs-toggle="collapse" href="#data-registry-card">
+                    <i class="fa fa-angle-double-down"></i>
+                    {% trans "Data Registries" %}
+                </a>
+            </legend>
+            <div id="data-registry-card" class="card-body collapse show">
+              <template x-for="p in registryPermissions">
+                <div x-data="p">
+                  {% include 'users/partials/select_permission.html' %}
+                </div>
+              </template>
+            </div>
+        </fieldset>
       {% endif %}
 
       <div class="border-top my-2"></div>
