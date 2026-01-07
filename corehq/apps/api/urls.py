@@ -141,13 +141,14 @@ urlpatterns = [
 
     # Case API v0.6 endpoints
     url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch),
-    path('v0.6/case/', case_api),
-    url(r'v0\.6/case/(?P<case_id>[\w\-,]+)/$', case_api, name='case_api_v0.6_detail'),
+    # Trailing slash optional: https://github.com/dimagi/commcare-hq/pull/29939
+    url(r'v0.6/case/?$', case_api, name='case_api_v0.6'),
+    url(r'v0\.6/case/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_v0.6_detail'),
     path('v0.6/case/ext/<path:external_id>/', case_api),
     # Case API v2 endpoints
     url(r'case/v2/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch'),
-    path('case/v2/', case_api, name='case_api'),
-    url(r'case/v2/(?P<case_id>[\w\-,]+)/$', case_api, name='case_api_detail'),
+    url(r'case/v2/?$', case_api, name='case_api'),
+    url(r'case/v2/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_detail'),
     path('case/v2/ext/<path:external_id>/', case_api),
 
     path('', include(list(versioned_apis(_OLD_API_LIST)))),

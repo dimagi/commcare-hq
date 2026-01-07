@@ -50,11 +50,13 @@ def test_external_id_url_decoding_v0_6(url_path, expected_external_id):
     # v2 endpoints
     ('/a/test-domain/api/case/v2/', None),
     ('/a/test-domain/api/case/v2/simple-case-id/', 'simple-case-id'),
+    ('/a/test-domain/api/case/v2/simple-case-id', 'simple-case-id'),  # no trailing slash
     ('/a/test-domain/api/case/v2/case-with-uuid-123/', 'case-with-uuid-123'),
     ('/a/test-domain/api/case/v2/id1,id2,id3/', 'id1,id2,id3'),  # commas supported
     # v0.6 endpoints
     ('/a/test-domain/api/v0.6/case/', None),
     ('/a/test-domain/api/v0.6/case/simple-case-id/', 'simple-case-id'),
+    ('/a/test-domain/api/v0.6/case/simple-case-id', 'simple-case-id'),
     ('/a/test-domain/api/v0.6/case/id1,id2,id3/', 'id1,id2,id3'),  # commas supported
 ])
 def test_case_id_url_patterns(url, expected_case_id):

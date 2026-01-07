@@ -679,6 +679,8 @@ class TestCaseAPI(TestCase):
         urls = [
             (self.client.post, reverse('case_api', args=(self.domain,)).rstrip("/")),
             (self.client.put, reverse('case_api_detail', args=(self.domain, case_id)).rstrip("/")),
+            (self.client.post, reverse('case_api_v0.6', args=(self.domain,)).rstrip("/")),
+            (self.client.put, reverse('case_api_v0.6_detail', args=(self.domain, case_id)).rstrip("/")),
         ]
         for request_fn, url in urls:
             res = request_fn(
@@ -687,8 +689,8 @@ class TestCaseAPI(TestCase):
                 content_type="application/json;charset=utf-8",
                 HTTP_USER_AGENT="user agent string",
             )
-            # Django's APPEND_SLASH setting redirects URLs without trailing slashes
-            assert res.status_code == 301
+            # These requests should return a 400 because of the bad body, not a 301 redirect
+            assert res.status_code == 400
 
     def test_case_name_twice(self):
         case = self._make_case()
