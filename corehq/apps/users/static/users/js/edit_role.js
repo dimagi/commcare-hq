@@ -6,6 +6,97 @@ import toggles from "hqwebapp/js/toggles";
 import privileges from "hqwebapp/js/privileges";
 import Alpine from "alpinejs";
 
+const removeItem = (array, item) => {
+    const index = array.indexOf(item);
+    if (index > -1) {
+        array.splice(index, 1);
+    }
+};
+
+const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
+
+const selectPermissionModel = (args) => {
+    const {
+        id,
+        text,
+        listHeading,
+        showAlreadyConfiguredWarning,
+        permissionObj,
+        accessKey,
+        listKey,
+        listChoices,
+    } = args;
+
+    const handler = {
+        id: id,
+        text: text,
+        listHeading: listHeading,
+        showAlreadyConfiguredWarning: showAlreadyConfiguredWarning,
+        state: NONE,
+        specificCache: [],
+
+        get selection() {
+            return this.state;
+        },
+
+        set selection(value) {
+            this.state = value;
+            if (value === ALL) {
+                permissionObj[accessKey] = true;
+                permissionObj[listKey] = [];
+            } else if (value === NONE) {
+                permissionObj[accessKey] = false;
+                permissionObj[listKey] = [];
+            } else {
+                permissionObj[accessKey] = false;
+                permissionObj[listKey] = this.specificCache;
+            }
+        },
+
+        get showItems() {
+            return this.selection === SELECTED;
+        },
+
+        get hasError() {
+            const list = permissionObj[listKey];
+            return list !== undefined && list.length === 0;
+        },
+
+        init() {
+            if (permissionObj[accessKey]) {
+                this.state = ALL;
+            } else if (!permissionObj[listKey] || permissionObj[listKey].length === 0) {
+                this.state = NONE;
+            } else {
+                this.state = SELECTED;
+                this.specificCache = permissionObj[listKey];
+            }
+        }
+    };
+
+    console.log(`listChoices: ${JSON.stringify(listChoices, null, 2)}`);
+
+    handler.specific = _.map(listChoices, (item) => ({
+        slug: item._id,
+        name: item.name,
+        get value() {
+            const list = permissionObj[listKey] || [];
+            return list.indexOf(this.slug) !== -1;
+        },
+        set value(checked) {
+            if (checked) {
+                permissionObj[listKey].push(this.slug);
+                handler.specificCache.push(this.slug);
+            } else {
+                removeItem(permissionObj[listKey], this.slug);
+                removeItem(handler.specificCache, this.slug);
+            }
+        }
+    }));
+
+    return handler;
+};
+
 Alpine.data('initRole', (roleJson) => {
 
     console.log(`initRole: ${JSON.stringify(roleJson, null, 2)}`);
@@ -604,6 +695,17 @@ Alpine.data('initRole', (roleJson) => {
                     checkboxText: gettext("Allow role to access all embedded Tableau reports."),
                 });
             }
+
+            this.webAppsPermissions = selectPermissionModel({
+                id: 'access_web_apps',
+                text: gettext("Use Web Apps for online data entry"),
+                listHeading: gettext("Select which web apps..."),
+                showAlreadyConfiguredWarning: initialPageData.get('has_restricted_application_access'),
+                permissionObj: self.role.permissions,
+                accessKey: 'access_web_apps',
+                listKey: 'web_apps_list',
+                listChoices: initialPageData.get("web_apps_choices")
+            });
 
             this.saveRole = () => {
                 self.isSaving = true;
