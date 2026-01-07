@@ -7844,36 +7844,8 @@ msgid "Person Simple"
 msgstr "Persona Semplice"
 
 #: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, subtitle row, third row with two cells, and map"
-msgstr ""
-"Riga del titolo, riga del sottotitolo, terza riga con due celle e mappa"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, second row with two cells, third row, and map"
-msgstr "Riga del titolo, seconda riga con due celle, terza riga e mappa"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, second row with two cells, third and fourth rows, and map"
-msgstr ""
-"Riga del titolo, seconda riga con due celle, terza e quarta riga e mappa"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Three upper rows, four rows with two cells, two lower rows and map"
-msgstr ""
-"Tre righe superiori, quattro righe con due celle, due righe inferiori e "
-"mappa"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "Title row, second row with two cells, third row with two cells"
-msgstr "Riga del titolo, seconda riga con due celle, terza riga con due celle"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
 msgid "2 x 3 grid of image and text"
 msgstr "Griglia 2 x 3 di immagine e testo"
-
-#: corehq/apps/app_manager/suite_xml/features/case_tiles.py
-msgid "BHA Referrals"
-msgstr "Referral BHA"
 
 #: corehq/apps/app_manager/suite_xml/features/scheduler.py
 #, python-brace-format
@@ -8604,6 +8576,7 @@ msgstr "Installa CommCare"
 #: corehq/apps/reports/templates/reports/standard/bootstrap5/submission_error_report.html
 #: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/attribute_wrap_length.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_next_action_simple/next_step_with_message.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -11436,7 +11409,6 @@ msgid "Cache and Index"
 msgstr "Cache e indice"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-#| msgid "Add sort property"
 msgid "Add Sort Property"
 msgstr "Aggiungi Proprietà di Ordinamento"
 
@@ -22665,6 +22637,22 @@ msgstr "NON IMPOSTATO"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                    This subscription will be paused on %(next_date)s.\n"
+#| "                  "
+msgid ""
+"\n"
+"                  Payment is scheduled for %(autopay_date)s.\n"
+"                "
+msgstr ""
+"\n"
+"                  Il pagamento è programmato per il %(autopay_date)s.\n"
+"                "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Next Subscription Begins"
 msgstr "Inizio prossimo abbonamento"
 
@@ -29822,8 +29810,6 @@ msgid "Lock Linked Tables For Me"
 msgstr "Blocca Tabelle Collegate per Me"
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 msgid ""
 "\n"
 "                Linked configurations are controlled from a separate, linked project space.\n"
@@ -47649,10 +47635,6 @@ msgstr ""
 "Suggerimento: seleziona 'è vuoto' per vedere il campo Valore qui sotto "
 "scomparire"
 
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_hq_hx_action.py
-msgid "New Item"
-msgstr "Nuovo elemento"
-
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Big Cats"
 msgstr "Grandi felini"
@@ -47665,6 +47647,10 @@ msgstr "Data di nascita"
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Opened On"
 msgstr "Aperto il"
+
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_todo_list.py
+msgid "New Item"
+msgstr "Nuovo elemento"
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
 msgid "Team"
@@ -52889,15 +52875,28 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#| msgid ""
+#| "\n"
+#| "          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+#| "            target=\"_blank\">Learn more</a> about how roles &amp; permissions are used.\n"
+#| "        "
 msgid ""
 "\n"
-"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\">Learn more</a> about how roles &amp; permissions are used.\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >Learn more</a\n"
+"          >\n"
+"          about how roles &amp; permissions are used.\n"
 "        "
 msgstr ""
 "\n"
-"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\">Scopri di più</a> su come vengono utilizzati ruoli e permessi.\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >Scopri di più</a\n"
+"          >\n"
+"          su come vengono utilizzati ruoli e permessi.\n"
 "        "
 
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
@@ -52912,29 +52911,74 @@ msgstr "Blocca Ruoli Collegati per Me"
 
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#| msgid ""
+#| "\n"
+#| "                Linked configurations are controlled from a separate, linked project space.\n"
+#| "                  <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.\n"
+#| "              "
 msgid ""
 "\n"
-"          Would you like to edit roles and add new,\n"
-"          custom roles?\n"
+"            Linked configurations are controlled from a separate, linked project\n"
+"            space.\n"
+"            <a\n"
+"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"              target=\"_blank\"\n"
+"              >Learn more</a\n"
+"            >.\n"
+"          "
+msgstr ""
+"\n"
+"            Le configurazioni collegate sono gestite da uno spazio di progetto\n"
+"            separato e collegato.\n"
+"            <a\n"
+"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"              target=\"_blank\"\n"
+"              >Scopri di più</a\n"
+"            >.\n"
+"          "
+
+#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
+#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#| msgid ""
+#| "\n"
+#| "          Would you like to edit roles and add new,\n"
+#| "          custom roles?\n"
+#| "        "
+msgid ""
+"\n"
+"          Would you like to edit roles and add new, custom roles?\n"
 "        "
 msgstr ""
 "\n"
-"          Vuoi modificare i ruoli e aggiungere nuovi\n"
-"          ruoli personalizzati?\n"
+"          Vuoi modificare i ruoli e aggiungere nuovi ruoli personalizzati?\n"
 "        "
 
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "          <strong><a href=\"%(subscription_url)s\">Upgrade to CommCare Standard</a></strong>\n"
+#| "          to activate\n"
+#| "          <strong>Advanced Role-Based Access</strong>.\n"
+#| "        "
 msgid ""
 "\n"
-"          <strong><a href=\"%(subscription_url)s\">Upgrade to CommCare Standard</a></strong>\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Upgrade to CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
 "          to activate\n"
 "          <strong>Advanced Role-Based Access</strong>.\n"
 "        "
 msgstr ""
 "\n"
-"          <strong><a href=\"%(subscription_url)s\">Passa a CommCare Standard</a></strong>\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Passa a CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
 "          per attivare\n"
 "          <strong>Accesso Avanzato Basato sui Ruoli</strong>.\n"
 "        "
@@ -53648,7 +53692,6 @@ msgid "Allow role to access data from all locations."
 msgstr "Consenti al ruolo di accedere ai dati di tutte le sedi."
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    Make sure any users assigned this role also have a location assigned to them.\n"
@@ -53661,7 +53704,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    Organization-based data access restrictions are only available\n"
@@ -53676,7 +53718,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
@@ -53770,7 +53811,6 @@ msgid "Select which other roles can assign this role:"
 msgstr "Seleziona quali altri ruoli possono assegnare questo ruolo:"
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 msgid ""
 "\n"
 "                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
@@ -53816,7 +53856,6 @@ msgid "Allow this role to manage project alerts."
 msgstr "Consenti a questo ruolo di gestire gli avvisi di progetto."
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #, python-format
 msgid ""
 "\n"
@@ -53997,6 +54036,103 @@ msgstr "Verifica Indirizzo Email"
 #, python-format
 msgid "Delete +%(number)s ?"
 msgstr "Eliminare +%(number)s ?"
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#| msgid ""
+#| "\n"
+#| "                    Make sure any users assigned this role also have a location assigned to them.\n"
+#| "                    Users without assigned locations will not be permitted to log in.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      Make sure any users assigned this role also have a\n"
+"                      location assigned to them. Users without assigned\n"
+"                      locations will not be permitted to log in.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Assicurati che ogni utente assegnato a questo ruolo abbia anche una\n"
+"                      sede assegnata. Gli utenti senza sede assegnata non potranno accedere.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#| msgid ""
+#| "\n"
+#| "                    Organization-based data access restrictions are only available\n"
+#| "                    on the Pro plan and above. Saving this role will enable\n"
+#| "                    full organization access for the assigned users.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      Organization-based data access restrictions are only\n"
+"                      available on the Pro plan and above. Saving this role will\n"
+"                      enable full organization access for the assigned users.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Le restrizioni di accesso ai dati basate sull'organizzazione sono disponibili solo\n"
+"                      con il piano Pro e superiori. Salvando questo ruolo abiliterai l'accesso completo all'organizzazione per gli utenti assegnati.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#| msgid ""
+#| "\n"
+#| "                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
+#| "                    This is not recommended.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      With the current configuration, this role will have full\n"
+"                      organization access and roles that can assign it will not.\n"
+"                      This is not recommended.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Con la configurazione attuale, questo ruolo avrà accesso completo all'organizzazione e i ruoli che possono assegnarlo non lo avranno.\n"
+"                      Non è consigliato.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#| msgid ""
+#| "\n"
+#| "                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
+#| "                    by a role that does not. This is not recommended configuration.\n"
+#| "                  "
+msgid ""
+"\n"
+"                      If the highlighted roles are selected, this role will have\n"
+"                      full organization access and be assignable by a role that\n"
+"                      does not. This is not recommended configuration.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Se vengono selezionati i ruoli evidenziati, questo ruolo avrà\n"
+"                      accesso completo all'organizzazione e potrà essere assegnato da un ruolo che non lo ha. Questa configurazione non è consigliata.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            This permission is already configured via <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</a>.\n"
+#| "            Please remove this configuration before updating access here.\n"
+#| "          "
+msgid ""
+"\n"
+"          This permission is already configured via\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Manage Web Apps Permissions\n"
+"          </a>\n"
+"          . Please remove this configuration before updating access here.\n"
+"        "
+msgstr ""
+"\n"
+"          Questo permesso è già configurato tramite\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Gestisci Permessi Web App\n"
+"          </a>\n"
+"          . Rimuovi questa configurazione prima di aggiornare l'accesso qui.\n"
+"        "
 
 #: corehq/apps/users/templates/users/partials/confirm_trust_identity_provider_message.html
 msgid ""
@@ -54183,39 +54319,6 @@ msgid "Go back to Web Users"
 msgstr "Torna agli Utenti Web"
 
 #: corehq/apps/users/views/__init__.py
-msgid "Roles & Permissions"
-msgstr "Ruoli e Permessi"
-
-#: corehq/apps/users/views/__init__.py
-msgid "Use Default"
-msgstr "Usa Predefinito"
-
-#: corehq/apps/users/views/__init__.py
-msgid ""
-"We might be experiencing issues fetching the entire list of user roles right"
-" now. This issue is likely temporary and nothing to worry about, but if you "
-"keep seeing this for more than a day, please <a href='#modalReportIssue' "
-"data-toggle='modal'>Report an Issue</a>."
-msgstr ""
-"Potremmo avere problemi nel recuperare l'intera lista dei ruoli utente in "
-"questo momento. Questo problema è probabilmente temporaneo e non c'è motivo "
-"di preoccuparsi, ma se continui a vedere questo messaggio per più di un "
-"giorno, per favore <a href='#modalReportIssue' data-toggle='modal'>Segnala "
-"un Problema</a>."
-
-#: corehq/apps/users/views/__init__.py
-msgid ""
-"This project has user roles that restrict data access by organization, but "
-"the software plan no longer supports that. Any users assigned to roles that "
-"are restricted in data access by organization can no longer access this "
-"project.  Please update the existing roles."
-msgstr ""
-"Questo progetto ha ruoli utente che limitano l'accesso ai dati per "
-"organizzazione, ma il piano software non lo supporta più. Gli utenti "
-"assegnati a ruoli con restrizioni di accesso ai dati per organizzazione non "
-"possono più accedere a questo progetto. Aggiorna i ruoli esistenti."
-
-#: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
 "You have successfully removed {username} from your project space. <a "
@@ -54230,31 +54333,6 @@ msgid ""
 "It appears {username} has already been removed from your project space."
 msgstr ""
 "Sembra che {username} sia già stato rimosso dal tuo spazio di progetto."
-
-#: corehq/apps/users/views/__init__.py
-msgid "A role with the same name already exists"
-msgstr "Esiste già un ruolo con lo stesso nome"
-
-#: corehq/apps/users/views/__init__.py
-#, python-brace-format
-msgid ""
-"Unable to delete role '{role}'. This role is the default role for Mobile "
-"Users and can not be deleted."
-msgstr ""
-"Impossibile eliminare il ruolo '{role}'. Questo ruolo è il ruolo predefinito"
-" per gli Utenti Mobili e non può essere eliminato."
-
-#: corehq/apps/users/views/__init__.py
-#, python-brace-format
-msgid ""
-"Unable to delete role '{role}'. It has one user and/or invitation still "
-"assigned to it. Remove all users assigned to the role before deleting it."
-msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users and/or invitations"
-" still assigned to it. Remove all users assigned to the role before deleting"
-" it."
-msgstr[0] ""
-msgstr[1] ""
 
 #: corehq/apps/users/views/__init__.py
 msgid "Invite Web User to Project"
@@ -54603,6 +54681,64 @@ msgstr "Invio dell'email di reimpostazione password non riuscito - "
 #: corehq/apps/users/views/mobile/users.py
 msgid "Password reset email sent to {}"
 msgstr "Email di reimpostazione password inviata a {}"
+
+#: corehq/apps/users/views/role.py
+msgid "Roles & Permissions"
+msgstr "Ruoli e Permessi"
+
+#: corehq/apps/users/views/role.py
+msgid "Use Default"
+msgstr "Usa Predefinito"
+
+#: corehq/apps/users/views/role.py
+msgid ""
+"We might be experiencing issues fetching the entire list of user roles right"
+" now. This issue is likely temporary and nothing to worry about, but if you "
+"keep seeing this for more than a day, please <a href='#modalReportIssue' "
+"data-toggle='modal'>Report an Issue</a>."
+msgstr ""
+"Potremmo avere problemi nel recuperare l'intera lista dei ruoli utente in "
+"questo momento. Questo problema è probabilmente temporaneo e non c'è motivo "
+"di preoccuparsi, ma se continui a vedere questo messaggio per più di un "
+"giorno, per favore <a href='#modalReportIssue' data-toggle='modal'>Segnala "
+"un Problema</a>."
+
+#: corehq/apps/users/views/role.py
+msgid ""
+"This project has user roles that restrict data access by organization, but "
+"the software plan no longer supports that. Any users assigned to roles that "
+"are restricted in data access by organization can no longer access this "
+"project.  Please update the existing roles."
+msgstr ""
+"Questo progetto ha ruoli utente che limitano l'accesso ai dati per "
+"organizzazione, ma il piano software non lo supporta più. Gli utenti "
+"assegnati a ruoli con restrizioni di accesso ai dati per organizzazione non "
+"possono più accedere a questo progetto. Aggiorna i ruoli esistenti."
+
+#: corehq/apps/users/views/role.py
+msgid "A role with the same name already exists"
+msgstr "Esiste già un ruolo con lo stesso nome"
+
+#: corehq/apps/users/views/role.py
+#, python-brace-format
+msgid ""
+"Unable to delete role '{role}'. This role is the default role for Mobile "
+"Users and can not be deleted."
+msgstr ""
+"Impossibile eliminare il ruolo '{role}'. Questo ruolo è il ruolo predefinito"
+" per gli Utenti Mobili e non può essere eliminato."
+
+#: corehq/apps/users/views/role.py
+#, python-brace-format
+msgid ""
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
+msgid_plural ""
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations"
+" still assigned to it. Remove all users assigned to the role before deleting"
+" it."
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -60172,6 +60308,28 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#~ msgid "Title row, subtitle row, third row with two cells, and map"
+#~ msgstr ""
+#~ "Riga del titolo, riga del sottotitolo, terza riga con due celle e mappa"
+
+#~ msgid "Title row, second row with two cells, third row, and map"
+#~ msgstr "Riga del titolo, seconda riga con due celle, terza riga e mappa"
+
+#~ msgid "Title row, second row with two cells, third and fourth rows, and map"
+#~ msgstr ""
+#~ "Riga del titolo, seconda riga con due celle, terza e quarta riga e mappa"
+
+#~ msgid "Three upper rows, four rows with two cells, two lower rows and map"
+#~ msgstr ""
+#~ "Tre righe superiori, quattro righe con due celle, due righe inferiori e "
+#~ "mappa"
+
+#~ msgid "Title row, second row with two cells, third row with two cells"
+#~ msgstr "Riga del titolo, seconda riga con due celle, terza riga con due celle"
+
+#~ msgid "BHA Referrals"
+#~ msgstr "Referral BHA"
 
 #~ msgid ""
 #~ "The date opened property for this case will be changed. Please do not use "
