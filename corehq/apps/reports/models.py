@@ -594,3 +594,236 @@ class QueryStringHash(models.Model):
     last_accessed = models.DateTimeField(auto_now=True)
     query_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     query_string = models.TextField()
+
+
+class PowerBIWorkspace(models.Model):
+    """
+    Represents a PowerBI workspace (formerly called App Workspace or Group).
+    A workspace contains reports, dashboards, and datasets.
+    """
+    # Core identification
+    domain = models.CharField(
+        max_length=64,
+        unique=True,
+        help_text="CommCare domain associated with this workspace"
+    )
+
+    workspace_id = models.CharField(
+        max_length=64,
+        help_text="PowerBI workspace GUID (from PowerBI API)"
+    )
+
+    workspace_name = models.CharField(
+        max_length=128,
+        help_text="Display name of the PowerBI workspace"
+    )
+
+    # Azure AD tenant info
+    tenant_id = models.CharField(
+        max_length=64,
+        help_text="Azure AD tenant ID where workspace exists"
+    )
+
+    # Optional: API endpoint override (for sovereign clouds)
+    api_endpoint = models.CharField(
+        max_length=256,
+        default='https://api.powerbi.com',
+        blank=True,
+        help_text="PowerBI API endpoint (defaults to commercial cloud)"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "PowerBI Workspace"
+        verbose_name_plural = "PowerBI Workspaces"
+
+    def __str__(self):
+        return f'{self.domain} - {self.workspace_name}'
+
+
+class PowerBIReport(models.Model):
+    """
+    Represents a PowerBI report that can be embedded.
+    Each report belongs to a workspace and can have access controls.
+    """
+    # Display info
+    title = models.CharField(
+        max_length=128,
+        help_text="Display title for the report"
+    )
+
+    # Association
+    domain = models.CharField(
+        max_length=64,
+        help_text="CommCare domain"
+    )
+
+    workspace = models.ForeignKey(
+        PowerBIWorkspace,
+        on_delete=models.CASCADE,
+        related_name='reports',
+        help_text="Workspace containing this report"
+    )
+
+    # PowerBI identifiers
+    report_id = models.CharField(
+        max_length=64,
+        help_text="PowerBI report GUID"
+    )
+
+    dataset_id = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text="PowerBI dataset GUID (optional, for RLS)"
+    )
+
+    # Embed URL (cached from API)
+    embed_url = models.CharField(
+        max_length=512,
+        blank=True,
+        default='',
+        help_text="Cached embed URL from PowerBI API"
+    )
+
+    # Access control
+    location_safe = models.BooleanField(
+        default=False,
+        help_text="Whether report respects location-based permissions"
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "PowerBI Report"
+        verbose_name_plural = "PowerBI Reports"
+        unique_together = ['workspace', 'report_id']
+
+    def __str__(self):
+        return f'{self.domain} - {self.title}'
+
+    @property
+    def name(self):
+        """Display name for consistency with TableauVisualization"""
+        return self.title
+
+    @classmethod
+    def for_user(cls, domain, couch_user):
+        """
+        Get all reports accessible to a user in a domain.
+        Mirrors TableauVisualization.for_user()
+        """
+        items = [
+            report
+            for report in cls.objects.filter(domain=domain)
+            if couch_user.can_view_powerbi_report(domain, report)
+        ]
+        return sorted(items, key=lambda r: r.title.lower())
+
+
+class PowerBIApp(models.Model):
+    """
+    Represents an Azure AD application used for PowerBI API authentication.
+    Uses Service Principal authentication (app-only access).
+    """
+    # Azure AD app identity
+    application_id = models.CharField(
+        max_length=64,
+        help_text="Azure AD Application (client) ID"
+    )
+
+    # Encrypted secret
+    encrypted_client_secret = models.CharField(
+        max_length=256,
+        help_text="Encrypted Azure AD client secret (format: $algo$ciphertext)"
+    )
+
+    # Tenant
+    tenant_id = models.CharField(
+        max_length=64,
+        help_text="Azure AD tenant ID for authentication"
+    )
+
+    # Association
+    workspace = models.OneToOneField(
+        PowerBIWorkspace,
+        on_delete=models.CASCADE,
+        related_name='app',
+        help_text="PowerBI workspace this app has access to"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "PowerBI Application"
+        verbose_name_plural = "PowerBI Applications"
+
+    def __str__(self):
+        return f'App: {self.application_id} | Workspace: {self.workspace.workspace_name}'
+
+    @property
+    def plaintext_client_secret(self):
+        """
+        Decrypt and return the client secret.
+        Mirrors TableauConnectedApp.plaintext_secret_value
+        """
+        if self.encrypted_client_secret == '':
+            return ''
+        ciphertext = self.encrypted_client_secret.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
+
+    @plaintext_client_secret.setter
+    def plaintext_client_secret(self, plaintext):
+        """
+        Encrypt and store the client secret.
+        """
+        ciphertext = b64_aes_cbc_encrypt(plaintext)
+        self.encrypted_client_secret = f'${ALGO_AES_CBC}${ciphertext}'
+
+    def get_access_token(self):
+        """
+        Get Azure AD access token for PowerBI API using client credentials flow.
+        Returns: Access token string
+        Raises: PowerBIAPIError if authentication fails
+        """
+        from corehq.apps.reports.exceptions import PowerBIAPIError
+
+        token_url = f'https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token'
+
+        data = {
+            'grant_type': 'client_credentials',
+            'client_id': self.application_id,
+            'client_secret': self.plaintext_client_secret,
+            'scope': 'https://analysis.windows.net/powerbi/api/.default'
+        }
+
+        try:
+            response = requests.post(token_url, data=data)
+            response.raise_for_status()
+            return response.json()['access_token']
+        except requests.exceptions.RequestException as e:
+            raise PowerBIAPIError(f"Failed to get Azure AD access token: {str(e)}")
+
+    @classmethod
+    def get_workspace(cls, domain):
+        """
+        Get workspace for a domain, checking if app credentials exist.
+        Mirrors TableauConnectedApp.get_server()
+        """
+        try:
+            workspace = PowerBIWorkspace.objects.get(domain=domain)
+        except PowerBIWorkspace.DoesNotExist:
+            return None
+
+        try:
+            if workspace.workspace_id and cls.objects.get(workspace=workspace):
+                return workspace
+        except cls.DoesNotExist:
+            pass
+
+        return None
