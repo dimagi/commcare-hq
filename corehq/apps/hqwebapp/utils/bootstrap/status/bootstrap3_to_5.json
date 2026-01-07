@@ -2,6 +2,9 @@
   "analytics": {
     "in_progress": true
   },
+  "app_manager": {
+    "in_progress": true
+  },
   "builds": {
     "is_complete": true,
     "templates": [

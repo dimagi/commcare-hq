@@ -1,0 +1,65 @@
+--- 
++++ 
+@@ -15,7 +15,7 @@
+ >
+   <div data-module-unique-id="<%- moduleUniqueId %>">
+     <% if (showSurvey) { %>
+-    <div class="pull-left">
++    <div class="float-start">
+       <button
+         type="button"
+         class="popover-additem-option js-new-form appnav-responsive"
+@@ -27,7 +27,7 @@
+       </button>
+     </div>
+     <% } %> <% if (showTraining) { %>
+-    <div class="pull-left">
++    <div class="float-start">
+       <button
+         type="button"
+         class="popover-additem-option js-new-form appnav-responsive"
+@@ -39,7 +39,7 @@
+       </button>
+     </div>
+     <% } %> <% if (showCaseForms) { %>
+-    <div class="pull-left">
++    <div class="float-start">
+       <button
+         type="button"
+         class="popover-additem-option js-new-form appnav-responsive"
+@@ -50,7 +50,7 @@
+         <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
+       </button>
+     </div>
+-    <div class="pull-left">
++    <div class="float-start">
+       <button
+         type="button"
+         class="popover-additem-option js-new-form appnav-responsive"
+@@ -62,7 +62,7 @@
+       </button>
+     </div>
+     <% } %> <% if (showAdvanced) { %>
+-    <div class="pull-left">
++    <div class="float-start">
+       <button
+         type="button"
+         class="popover-additem-option js-new-form appnav-responsive"
+@@ -73,7 +73,7 @@
+       </button>
+     </div>
+     <% } %> <% if (showShadow) { %>
+-    <div class="pull-left">
++    <div class="float-start">
+       <button
+         type="button"
+         class="popover-additem-option js-new-form appnav-responsive"
+@@ -85,7 +85,7 @@
+       </button>
+     </div>
+     <% } %>
+-    <form method="post" class="hide" action="<%- newFormUrl %>">
++    <form method="post" class="d-none" action="<%- newFormUrl %>">
+       {% csrf_token %}
+       <input type="hidden" name="case_action" />
+       <input type="hidden" name="form_type" />
