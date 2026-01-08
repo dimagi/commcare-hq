@@ -297,14 +297,14 @@
     </div>
     <div class="tab-pane" id="actions">
       {% if copy_app_form %}
-        <div class="card panel-appmanager panel-appmanager-form" id="copy-app-form">  {# todo B5: css-panel #}
-          <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-            {% crispy copy_app_form %}  {# todo B5: crispy #}
+        <div class="card mb-3" id="copy-app-form">
+          <form method="post" action="{% url "copy_app" domain %}">
+            {% crispy copy_app_form %}
           </form>
         </div>
       {% endif %}
-      <div class="card panel-appmanager panel-appmanager-form panel-appmanager-form-danger">  {# todo B5: css-panel #}
-        <legend>{% trans "Delete Application" %}</legend>
+      <div class="card">
+        <legend class="card-header fs-5 py-3 lh-sm">{% trans "Delete Application" %}</legend>
         <div class="card-body">
           <a href="#delete-app-modal" class="btn btn-outline-danger" data-bs-toggle="modal">
             <i class="fa-regular fa-trash-can"></i>
