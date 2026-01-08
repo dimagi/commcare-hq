@@ -10,12 +10,14 @@ from corehq.apps.app_manager.views.utils import (
     get_multimedia_sizes_for_build,
     get_new_multimedia_between_builds,
 )
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq import toggles
 from corehq.util.quickcache import quickcache
 
 
 @require_deploy_apps
+@use_bootstrap5
 def multimedia_ajax(request, domain, app_id):
     app = get_app(domain, app_id)
     if not is_remote_app(app):
@@ -46,7 +48,7 @@ def multimedia_ajax(request, domain, app_id):
                 'import_app_counts': import_app_counts,
             })
 
-        return render(request, "app_manager/partials/settings/bootstrap3/multimedia_ajax.html", context)
+        return render(request, "app_manager/partials/settings/bootstrap5/multimedia_ajax.html", context)
     else:
         raise Http404()
 
