@@ -24,7 +24,8 @@ All endpoints are available under
 ``www.commcarehq.org/a/<domain>/api/case/v2/``
 
 =========================== ======================================
-**Endpoint**                **Description**
+Endpoint                    Description
+=========================== ======================================
 GET /                       Query list of cases
 GET /<case_id>              Get individual case
 GET /<case_id>,<case_id>... Get multiple cases by ID
@@ -72,8 +73,8 @@ the supported endpoints.
 **Included fields**
 
 +-----------------------------+---------------------------------------+
-| **Field Name**              | **Description**                       |
-+-----------------------------+---------------------------------------+
+| Field Name                  | Description                           |
++=============================+=======================================+
 | domain                      |                                       |
 +-----------------------------+---------------------------------------+
 | case_id                     |                                       |
@@ -163,8 +164,8 @@ or updating a case.
 property values.
 
 +-----------------------------+---------------------------------------+
-| **Field Name**              | **Description**                       |
-+-----------------------------+---------------------------------------+
+| Field Name                  | Description                           |
++=============================+=======================================+
 | case_id                     | Only allowed in bulk updates.  Will   |
 |                             | be server generated for case          |
 |                             | creations,                            |
@@ -240,8 +241,8 @@ This endpoint returns a list of cases, which can be filtered as
 described below.
 
 +----------------------------------+----------------------------------+
-| **Filter Param**                 | **Description**                  |
-+----------------------------------+----------------------------------+
+| Filter Param                     | Description                      |
++==================================+==================================+
 | limit                            | Defaults to 20, maximum 5000     |
 +----------------------------------+----------------------------------+
 | external_id                      |                                  |
@@ -422,8 +423,8 @@ Response format (cases truncated for clarity)
     }
 
 +--------------------+------------------------------------------------+
-| **Response field** | **Description**                                |
-+--------------------+------------------------------------------------+
+| Response field     | Description                                    |
++====================+================================================+
 | matching_records   | The number of cases that were found            |
 +--------------------+------------------------------------------------+
 | missing_records    | The number of cases that were not found        |
@@ -452,7 +453,8 @@ in "`Case Create / Update Format`_"
 Return value includes two fields:
 
 ========= ===========================================
-**Param** **Description**
+Param     Description
+========= ===========================================
 xform_id  ID of the form generated to create the case
 case      Serialized version of the case
 ========= ===========================================
@@ -473,7 +475,8 @@ in "`Case Create / Update Format`_"
 Return value includes two fields:
 
 ========= ===============================================
-**Param** **Description**
+Param     Description
+========= ===============================================
 xform_id  ID of the form generated to update the case
 case      Serialized version of the new state of the case
 ========= ===============================================
@@ -493,7 +496,8 @@ used to determine whether it is a case creation or update.
 The response contains:
 
 ========= =========================================================
-**Param** **Description**
+Param     Description
+========= =========================================================
 xform_id  ID of the (single) form generated to update all cases
 cases     Serialized version of the new state of the cases provided
 ========= =========================================================
@@ -581,8 +585,8 @@ generated on the server.  Here are some notable parameters associated
 with that:
 
 +--------------------+------------------------------------------------+
-| **Param**          | **Description**                                |
-+--------------------+------------------------------------------------+
+| Param              | Description                                    |
++====================+================================================+
 | username / user_id | Corresponding to the user who submitted the    |
 |                    | request.  The API cannot not be used to make   |
 |                    | it appear that another user made case updates. |
