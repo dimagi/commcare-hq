@@ -1,0 +1,40 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+<div class="appmanager-page-actions">
+  {% include 'app_manager/partials/bootstrap3/app_summary_button.html' %}
+  {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-default' %}
+</div>
+<div class="appmanager-edit-title">
+  {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true"%}
+    {% if module.is_training_module %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-book' disallow_edit=disallow_edit %}
+    {% elif module.module_type == "shadow" %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-folder-open' disallow_edit=disallow_edit %}
+    {% elif module.module_type == "report" %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-chart-bar' disallow_edit=disallow_edit %}
+    {% elif module.module_type == "advanced" %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-flask' disallow_edit=disallow_edit %}
+    {% elif module.is_surveys %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' disallow_edit=disallow_edit %}
+    {% else %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-solid fa-list-check' disallow_edit=disallow_edit %}
+    {% endif %}
+  {% endwith %}
+</div>
+
+<div class="appmanager-edit-description">
+  <inline-edit params="
+    name: 'comment',
+    id:'comment-id',
+    value: '{{ module.comment|escapejs }}',
+    placeholder: 'Enter {% if not module.is_surveys %}case list{% endif %} description here',
+    url: '{% url "edit_module_attr" domain app.id module.unique_id 'comment' %}',
+    saveValueName: 'comment',
+    cols: 50,
+    disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
+"></inline-edit>
+  <br />
+
+  <div id="build_errors"></div>

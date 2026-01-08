@@ -1,0 +1,88 @@
+--- 
++++ 
+@@ -2,14 +2,14 @@
+ {% load hq_shared_tags %}
+ 
+ <div data-bind="saveButton: saveButton"></div>
+-<div class="panel panel-appmanager">
+-  <div class="panel-heading">
+-    <h4 class="panel-title-nolink">
++<div class="card panel-appmanager">  {# todo B5: css-panel #}
++  <div class="card-header">
++    <h4 class="card-title-nolink">
+       {% trans "Current Profiles" %}
+     </h4>
+ 
+   </div>
+-  <div class="panel-body">
++  <div class="card-body">
+     {% if app.is_remote_app %}
+       <div class="alert alert-danger" data-bind="visible: app_profiles().length > 1">
+         {% blocktrans %}
+@@ -32,7 +32,7 @@
+     </div>
+     <table class="table table-profiles">
+       <thead>
+-      <tr class="row form-group">
++      <tr class="row form-group">  {# todo B5: css-form-group #}
+         <th>{% trans "Profile Name" %}</th>
+         <th>{% trans "Languages" %}</th>
+         <th>{% trans "Default Language" %}</th>
+@@ -46,9 +46,9 @@
+       </tr>
+       </thead>
+       <tbody data-bind="foreach: app_profiles">
+-      <tr class="row form-group">
+-        <td class="col-sm-3">
+-                    <span class="form-inline">
++      <tr class="row form-group">  {# todo B5: css-form-group #}
++        <td class="col-md-3">
++                    <span class="form-inline">  {# todo B5: css-form-inline #}
+                         <input class="form-control" data-bind="value: $data.name"/>
+                       {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+                         <div data-bind="visible: $data.latestEnabledVersion">
+@@ -60,26 +60,26 @@
+                       {% endif %}
+                     </span>
+         </td>
+-        <td class="col-sm-3">
+-          <select class="language-select form-control"
++        <td class="col-md-3">
++          <select class="language-select form-select"
+                   multiple="true"
+                   data-bind="options: $root.app_langs, selectedOptions: langs, attr: {id: 'profile-' + $index()}">
+           </select>
+         </td>
+-        <td class="col-sm-3">
+-                    <span class="form-inline">
+-                        <select class="form-control" data-bind="value: defaultLang, options: langs"></select>
++        <td class="col-md-3">
++                    <span class="form-inline">  {# todo B5: css-form-inline #}
++                        <select class="form-select" data-bind="value: defaultLang, options: langs"></select>
+                     </span>
+         </td>
+-        <td class="col-sm-3">
+-                    <span class="form-inline">
+-                        <select class="practice-user" data-bind="foreach: $root.practice_users,  attr: {id: 'practice-user-' + $index()}, value: $data.practiceUser, enable: $root.enable_practice_users">
++        <td class="col-md-3">
++                    <span class="form-inline">  {# todo B5: css-form-inline #}
++                        <select class="practice-user" data-bind="foreach: $root.practice_users,  attr: {id: 'practice-user-' + $index()}, value: $data.practiceUser, enable: $root.enable_practice_users">  {# todo B5: css-select-form-control #}
+                             <option data-bind="value: $data.id, text: $data.text"></option>
+                         </select>
+                     </span>
+         </td>
+         <td>
+-          <button class="btn btn-danger" data-bind="click: $root.removeProfile">
++          <button class="btn btn-outline-danger" data-bind="click: $root.removeProfile">
+             <i class="fa fa-remove"></i>
+           </button>
+         </td>
+@@ -87,7 +87,7 @@
+       </tr>
+       </tbody>
+     </table>
+-    <button class="btn btn-default" data-bind="click: newProfile">
++    <button class="btn btn-outline-primary" data-bind="click: newProfile">
+       <i class="fa fa-plus"></i>
+       {% trans "Add Profile" %}
+     </button>
