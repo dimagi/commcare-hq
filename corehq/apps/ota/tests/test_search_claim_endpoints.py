@@ -233,7 +233,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(len(claim_ids), 2)
 
         # The most recent one should be the extension owned by the other user
-        claim_cases = CommCareCase.objects.get_cases(claim_ids, DOMAIN)
+        claim_cases = CommCareCase.objects.get_cases(claim_ids)
         self.assertIn(another_user._id, [case.owner_id for case in claim_cases])
 
     def test_search_endpoint(self):

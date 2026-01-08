@@ -47,7 +47,8 @@ class FormDocumentStore(DocumentStore):
         return iter(XFormInstance.objects.iter_form_ids_by_xmlns(self.domain, self.xmlns))
 
     def iter_documents(self, ids):
-        for wrapped_form in XFormInstance.objects.iter_forms(ids, self.domain):
+        """NOTE: unlike iter_document_ids, this does not enforce domain membership"""
+        for wrapped_form in XFormInstance.objects.iter_forms(ids):
             try:
                 yield self._to_json(wrapped_form)
             except (DocumentNotFoundError, MissingFormXml):
@@ -81,7 +82,8 @@ class CaseDocumentStore(DocumentStore):
         return iter_all_ids(accessor)
 
     def iter_documents(self, ids):
-        for wrapped_case in CommCareCase.objects.iter_cases(ids, self.domain):
+        """NOTE: unlike iter_document_ids, this does not enforce domain membership"""
+        for wrapped_case in CommCareCase.objects.iter_cases(ids):
             yield wrapped_case.to_json()
 
 

@@ -329,7 +329,7 @@ def _noauth_post(request, domain, app_id=None):
 
         # todo: consider whether we want to remove this call, and/or pass the result
         # through to the next function so we don't have to get the cases again later
-        cases = CommCareCase.objects.get_cases(list(case_ids), domain)
+        cases = CommCareCase.objects.get_cases(list(case_ids))
         for case in cases:
             if case.domain != domain:
                 return False
