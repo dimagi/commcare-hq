@@ -156,23 +156,63 @@
 </script>
 
 <div class="tabbable">
-  <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
+  <ul class="nav nav-tabs sticky-tabs">
     {% if is_linked_app %}
-      <li><a href="#linked-app" data-bs-toggle="tab">{% trans "Linked Application" %}</a></li>
-      <li><a href="#languages" data-bs-toggle="tab">{% trans "Languages" %}</a></li>
-      <li><a href="#multimedia-tab" data-bs-toggle="tab">{% trans "Multimedia" %}</a></li>
-      <li><a href="#actions" data-bs-toggle="tab">{% trans "Actions" %}</a></li>
+      <li class="nav-item">
+        <a href="#linked-app" data-bs-toggle="tab" class="nav-link">
+          {% trans "Linked Application" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#languages" data-bs-toggle="tab" class="nav-link">
+          {% trans "Languages" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#multimedia-tab" data-bs-toggle="tab" class="nav-link">
+          {% trans "Multimedia" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#actions" data-bs-toggle="tab" class="nav-link">
+          {% trans "Actions" %}
+        </a>
+      </li>
     {% else %}
-      <li><a href="#languages" data-bs-toggle="tab">{% trans "Languages" %}</a></li>
+      <li class="nav-item">
+        <a href="#languages" data-bs-toggle="tab" class="nav-link">
+          {% trans "Languages" %}
+        </a>
+      </li>
       {% if not is_remote_app %}
-        <li><a href="#multimedia-tab" data-bs-toggle="tab">{% trans "Multimedia" %}</a></li>
+        <li class="nav-item">
+          <a href="#multimedia-tab" data-bs-toggle="tab" class="nav-link">
+            {% trans "Multimedia" %}
+          </a>
+        </li>
       {% endif %}
-      <li><a href="#actions" data-bs-toggle="tab">{% trans "Actions" %}</a></li>
-      <li><a href="#add-ons" data-bs-toggle="tab">{% trans "Add-ons" %}</a></li>
+      <li class="nav-item">
+        <a href="#actions" data-bs-toggle="tab" class="nav-link">
+          {% trans "Actions" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#add-ons" data-bs-toggle="tab" class="nav-link">
+          {% trans "Add-ons" %}
+        </a>
+      </li>
     {% endif %}
-    <li><a href="#commcare-settings" data-bs-toggle="tab">{% trans "Advanced Settings" %}</a></li>
+    <li class="nav-item">
+      <a href="#commcare-settings" data-bs-toggle="tab" class="nav-link">
+        {% trans "Advanced Settings" %}
+      </a>
+    </li>
     {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
-      <li><a href="#custom-assertions-tab" data-bs-toggle="tab">{% trans "Custom Assertions" %}</a></li>
+      <li class="nav-item">
+        <a href="#custom-assertions-tab" data-bs-toggle="tab" class="nav-link">
+          {% trans "Custom Assertions" %}
+        </a>
+      </li>
     {% endif %}
   </ul>
   <div class="tab-content appmanager-tab-content">

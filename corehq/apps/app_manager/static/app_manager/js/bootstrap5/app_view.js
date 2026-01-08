@@ -236,7 +236,7 @@ $(function () {
                 }
             };
         $("#multimedia-tab").koApplyBindings(multimediaTab);
-        if ($('[href="#multimedia-tab"]').parent().hasClass("active")) {
+        if ($('[href="#multimedia-tab"]').hasClass("active")) {
             // Multimedia tab has already been selected
             initializeMultimediaTab();
         }
