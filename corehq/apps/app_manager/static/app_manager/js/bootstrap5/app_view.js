@@ -17,7 +17,7 @@ import appManager from "app_manager/js/bootstrap5/app_manager";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 import "app_manager/js/widgets";  // app version widget when copying an app
-import "app_manager/js/download_async_modal";  // for the "Download ZIP" button on the multimedia tab
+import "app_manager/js/bootstrap5/download_async_modal";  // for the "Download ZIP" button on the multimedia tab
 import "hqwebapp/js/bootstrap5/widgets";
 import "app_manager/js/bootstrap5/add_ons";
 import "app_manager/js/settings/translations";
