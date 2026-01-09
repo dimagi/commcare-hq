@@ -112,6 +112,16 @@ class KycConfig(models.Model):
         """
         return KycProviderThresholdFields.get_required_fields(self.provider)
 
+    def get_kyc_api_method(self):
+        if self.provider == KycProviders.MTN_KYC:
+            from corehq.apps.integration.kyc.services import mtn_kyc_verify
+            return mtn_kyc_verify
+        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
+            from corehq.apps.integration.kyc.services import orange_cameroon_kyc_verify
+            return orange_cameroon_kyc_verify
+        else:
+            raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
+
     def get_kyc_users_query(self):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             return UserES().domain(self.domain).mobile_users()
@@ -305,6 +315,8 @@ class KycUser:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
             user_data_obj.update(update)
             user_data_obj.save()
+            # Save the user to trigger ES update via couch_user_post_save signal
+            CommCareUser.get(self._user_or_case_obj.user_id).save()
         else:
             if isinstance(self._user_or_case_obj, CommCareUser):
                 case_id = self._user_or_case_obj.get_usercase().case_id
@@ -317,7 +329,7 @@ class KycUser:
                 device_id=device_id or f'{__name__}.update_status',
             )
             if isinstance(self._user_or_case_obj, CommCareCase):
-                self._user_or_case_obj.refresh_from_db()
+                self._user_or_case_obj = CommCareCase.objects.get_case(case_id, self.kyc_config.domain)
         self._user_data = None
 
 
