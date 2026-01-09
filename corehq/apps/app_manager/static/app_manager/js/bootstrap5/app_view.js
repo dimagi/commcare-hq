@@ -5,7 +5,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import { Tooltip } from "bootstrap5";
+import { Modal, Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import commcareSettings from "app_manager/js/settings/bootstrap5/commcare_settings";
 import supportedLanguages from "app_manager/js/bootstrap5/supported_languages";
@@ -69,7 +69,7 @@ $(function () {
         var $submit = $(this),
             $form = $submit.closest("form"),
             domain = $form.find("#id_domain").val(),
-            $modal = $("#copy-toggles");
+            $modalEl = $("#copy-toggles");
 
         if (!isCopyApplicationFormValid($form)) {
             return false;
@@ -85,16 +85,17 @@ $(function () {
                 },
                 success: function (toggles) {
                     if (toggles.length) {
-                        var template = _.template($modal.find("script").html()),
-                            $ul = $modal.find("ul").html(""),
+                        var template = _.template($modalEl.find("script").html()),
+                            $ul = $modalEl.find("ul").html(""),
                             flagsUrl = initialPageData.reverse("feature_flags_and_privileges", domain);
 
-                        $modal.find("#feature-flags-link").attr("href", flagsUrl);
+                        $modalEl.find("#feature-flags-link").attr("href", flagsUrl);
 
                         _.each(toggles, function (toggle) {
                             $ul.append(template(toggle));
                         });
-                        $modal.modal().one("click", ".btn-primary", function () {  /* todo B5: js-modal */
+                        new Modal($modalEl).show();
+                        $modalEl.one("click", ".btn-primary", function () {
                             $(this).disableButton();
                             $form.submit();
                         }).one("hide.bs.modal", function () {
