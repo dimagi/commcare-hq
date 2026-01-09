@@ -221,10 +221,10 @@
   <div class="tab-content appmanager-tab-content">
     {% if is_linked_app %}
       <div class="tab-pane" id="linked-app">
-        <div class="card panel-appmanager panel-appmanager-form">  {# todo B5: css-panel #}
+        <div class="card">
           <form action="{% url "pull_upstream_app" domain app.id %}" method="POST">
             {% csrf_token %}
-            <legend>
+            <legend class="card-header fs-5 py-3 lh-sm">
               {% trans "Update from upstream application" %}
             </legend>
             <div class="card-body">
@@ -241,41 +241,45 @@
                   {% endblocktrans %}
                 {% endif %}
               </p>
-              <div class="form-horizontal">
-                {% if multiple_upstreams %}
-                  <div class="form-group">  {# todo B5: css-form-group #}
-                    <div class="{% css_field_class %}">
-                      <select name="upstream_app_id" class="form-select hqwebapp-select2"
-                              data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
-                        <option value="">{% trans "Select an upstream app to pull" %}</option>
-                        {% for brief in upstream_briefs %}
-                          {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
-                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in upstream_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                  </div>
-                {% else %}
-                  <input name="upstream_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
-                {% endif %}
-                <div class="form-group">  {# todo B5: css-form-group #}
-                  <div class="{% css_field_class %}">
-                    <div class="checkbox">  {# todo B5: css-checkbox #}
-                      <label>
-                        <input type="checkbox" name="notify">  {# todo B5: css-checkbox #}
-                        {% trans "Email when finished (recommended for large applications)" %}
-                      </label>
-                    </div>
+              {% if multiple_upstreams %}
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <select name="upstream_app_id" class="form-select hqwebapp-select2"
+                            data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
+                      <option value="">{% trans "Select an upstream app to pull" %}</option>
+                      {% for brief in upstream_briefs %}
+                        {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
+                        <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in upstream_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
-                <div class="form-group">  {# todo B5: css-form-group #}
-                  <div class="{% css_field_class %}">
-                    <button type="submit" class="btn btn-primary">
-                      <i class="fa fa-arrow-up"></i>
-                      {% trans "Update" %}
-                    </button>
+              {% else %}
+                <input name="upstream_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
+              {% endif %}
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="email-when-finished-checkbox"
+                      name="notify"
+                    />
+                    <label
+                      for="email-when-finished-checkbox"
+                      class="form-check-label"
+                    >
+                      {% trans "Email when finished (recommended for large applications)" %}
+                    </label>
                   </div>
                 </div>
+              </div>
+              <div class="ms-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-arrow-up"></i>
+                  {% trans "Update" %}
+                </button>
               </div>
             </div>
           </form>
