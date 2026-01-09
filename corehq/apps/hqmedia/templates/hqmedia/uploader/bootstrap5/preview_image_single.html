@@ -1,10 +1,13 @@
 {% load i18n %}
 <p>
   <img src="<%-url %>?thumb=100" alt="uploaded image" />
-  <a href="<%- url %>"
-     class="btn btn-outline-primary existing-media"
-     target="_blank"
-     data-bs-toggle="tooltip" data-title="Opens image in new tab.">{% trans 'View Full Size' %}</a>
+  <a
+    href="<%- url %>"
+    class="btn btn-outline-primary existing-media"
+    target="_blank"
+    data-bs-toggle="tooltip"
+    data-bs-title="Opens image in new tab."
+  >{% trans 'View Full Size' %}</a>
 </p>
 <p class="text-success hqm-upload-completed d-none">
   <span class="badge text-bg-success">{% trans 'New Image Uploaded Successfully' %}</span>
