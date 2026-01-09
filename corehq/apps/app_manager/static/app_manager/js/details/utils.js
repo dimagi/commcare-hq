@@ -45,6 +45,18 @@ module.getFieldFormats = function () {
     }, {
         value: "markdown",
         label: gettext('Markdown'),
+    },{
+        value: "geo-boundary",
+        label: gettext('Geo Boundary (Mobile only)'),
+    }, {
+        value: "geo-boundary-color",
+        label: gettext('Geo Boundary Color (Mobile only)'),
+    }, {
+        value: "geo-points",
+        label: gettext('Geo Points (Mobile only)'),
+    }, {
+        value: "geo-points-colors",
+        label: gettext('Geo Points Colors (Mobile only)'),
     }];
 
     if (toggles.toggleEnabled('CASE_LIST_MAP')) {
@@ -99,6 +111,51 @@ module.getFieldFormats = function () {
     }
 
     return formats;
+};
+
+// Dynamic format configuration and utilities
+module.dynamicFormats = {
+    // Configuration: Define format dependencies and display restrictions
+    // Key = format name, Value = object with:
+    //   - dependencies: array of required dependency formats (all must be present)
+    //   - display: where format should be shown ('short' for case list, 'long' for case-detail, or 'both')
+    COLUMN_FORMAT_DEPENDENCIES: {
+        'geo-boundary': {
+            dependencies: ['address'],
+            display: 'short'
+        },
+        'geo-points': {
+            dependencies: ['address'],
+            display: 'short'
+        },
+        'geo-boundary-color': {
+            dependencies: ['address', 'geo-boundary'],
+            display: 'short'
+        },
+        'geo-points-colors': {
+            dependencies: ['address', 'geo-points'],
+            display: 'short'
+        },
+    },
+
+    getFormatLabel: function (formatValue) {
+        const format = module.getFieldFormats().find(f => f.value === formatValue);
+        return format.label;
+    },
+
+    getDependencyAlertMessage: function (formatValue) {
+        const formatLabel = this.getFormatLabel(formatValue);
+        const dependencies = this.COLUMN_FORMAT_DEPENDENCIES[formatValue].dependencies;
+        const dependencyLabels = dependencies.map(dep => this.getFormatLabel(dep)).join(', ');
+        return interpolate(
+            gettext('The "%(format)s" format requires columns with formats: %(dependencies)s.'),
+            {
+                format: formatLabel,
+                dependencies: dependencyLabels
+            },
+            true
+        );
+    },
 };
 
 module.getFieldHtml = function (field) {
