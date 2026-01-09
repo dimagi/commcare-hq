@@ -1,21 +1,21 @@
 import uuid
 
-from django.utils.functional import cached_property
 from django.core.exceptions import PermissionDenied
+from django.utils.functional import cached_property
 
 import jsonobject
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.users import UserES
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.apps.es.case_search import CaseSearchES
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.es.users import UserES
-from corehq.apps.users.models import CouchUser
 
 from .core import SubmissionError, UserError
 
@@ -76,7 +76,7 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
     properties = jsonobject.DictProperty(validators=[valid_properties_dict], default={})
     indices = jsonobject.DictProperty(JsonIndex, validators=[valid_indices_dict])
     close = jsonobject.BooleanProperty(default=False)
-    _is_case_creation = False
+    is_new_case = False
 
     _allow_dynamic_properties = False
 
@@ -96,16 +96,22 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
     def get_caseblock(self, case_db):
 
         def get_kwargs(*attribs):
-            return {
+            kwargs = {
                 a: getattr(self, a)
                 for a in attribs
                 if getattr(self, a) is not None
             }
+            if self.is_new_case:
+                required_kwargs = {'case_type', 'case_name', 'owner_id'}
+                if missing := required_kwargs - kwargs.keys():
+                    ext_id = kwargs.get('external_id', '')
+                    raise ValueError(f'{missing} required for new case {ext_id}')
+            return kwargs
 
         return CaseBlock(
             case_id=self.get_case_id(case_db),
             user_id=self.user_id,
-            create=self._is_case_creation,
+            create=self.is_new_case,
             update=dict(self.properties),
             close=self.close,
             index={
@@ -118,10 +124,6 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             **get_kwargs('case_type', 'case_name', 'external_id', 'owner_id'),
         ).as_text()
 
-    @property
-    def is_new_case(self):
-        return self._is_case_creation
-
 
 class JsonCaseCreation(BaseJsonCaseChange):
     temporary_id = jsonobject.StringProperty()
@@ -131,7 +133,7 @@ class JsonCaseCreation(BaseJsonCaseChange):
     case_type = jsonobject.StringProperty(required=True)
     owner_id = jsonobject.StringProperty(required=True)
 
-    _is_case_creation = True
+    is_new_case = True
 
     @classmethod
     def wrap(cls, data):
@@ -145,7 +147,7 @@ class JsonCaseCreation(BaseJsonCaseChange):
 
 
 class JsonCaseUpdate(BaseJsonCaseChange):
-    _is_case_creation = False
+    is_new_case = False
 
     def validate(self, *args, **kwargs):
         super().validate(*args, **kwargs)
@@ -161,12 +163,44 @@ class JsonCaseUpdate(BaseJsonCaseChange):
         return case_db.get_by_external_id(self.external_id)
 
 
+class JsonCaseUpsert(BaseJsonCaseChange):
+    """Handles UPSERT operations where create/update is determined at lookup time."""
+    external_id = jsonobject.StringProperty(required=True)
+
+    _is_case_creation = ...  # Determined when get_case_id() is called
+
+    @property
+    def is_new_case(self):
+        if self._is_case_creation is ...:
+            raise ValueError('is_new_case has not yet been initialized')
+        return self._is_case_creation
+
+    @classmethod
+    def wrap(cls, data):
+        if 'case_id' in data:
+            raise UserError("UPSERT does not allow case_id to be specified")
+        return super().wrap(data)
+
+    def get_case_id(self, case_db):
+        if self.case_id:
+            return self.case_id
+
+        existing_case_id = case_db.get_upsert_case_id(self.external_id)
+        if existing_case_id:
+            self._is_case_creation = False
+            self.case_id = existing_case_id
+        else:
+            self._is_case_creation = True
+            self.case_id = str(uuid.uuid4())
+        return self.case_id
+
+
 def handle_case_update(domain, data, user, device_id, is_creation, xmlns=None):
     is_bulk = isinstance(data, list)
     if is_bulk:
-        updates = _get_bulk_updates(domain, data, user)
+        updates = _get_bulk_updates(data, user.user_id)
     else:
-        updates = [_get_individual_update(domain, data, user, is_creation)]
+        updates = [_get_individual_update(data, user.user_id, is_creation)]
 
     case_db = CaseIDLookerUpper(domain, updates)
 
@@ -184,9 +218,9 @@ def handle_case_update(domain, data, user, device_id, is_creation, xmlns=None):
         return xform, cases[0]
 
 
-def _get_individual_update(domain, data, user, is_creation):
+def _get_individual_update(data, user_id, is_creation):
     update_class = JsonCaseCreation if is_creation else JsonCaseUpdate
-    data['user_id'] = user.user_id
+    data['user_id'] = user_id
     try:
         update = update_class.wrap(data)
     except BadValueError as e:
@@ -194,7 +228,15 @@ def _get_individual_update(domain, data, user, is_creation):
     return update
 
 
-def _get_bulk_updates(domain, all_data, user):
+def _get_upsert_update(data, user_id):
+    data['user_id'] = user_id
+    try:
+        return JsonCaseUpsert.wrap(data)
+    except BadValueError as err:
+        raise UserError(str(err))
+
+
+def _get_bulk_updates(all_data, user_id):
     if len(all_data) > CASEBLOCK_CHUNKSIZE:
         raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
@@ -202,10 +244,13 @@ def _get_bulk_updates(domain, all_data, user):
     errors = []
     for i, data in enumerate(all_data, start=1):
         try:
-            is_creation = data.pop('create', None)
-            if is_creation is None:
+            if 'create' not in data:
                 raise UserError("A 'create' flag is required for each update.")
-            updates.append(_get_individual_update(domain, data, user, is_creation))
+            create_flag = data.pop('create')
+            if create_flag is None:
+                updates.append(_get_upsert_update(data, user_id))
+            else:
+                updates.append(_get_individual_update(data, user_id, create_flag))
         except UserError as e:
             errors.append(f'Error in row {i}: {e}')
 
@@ -245,6 +290,10 @@ class CaseIDLookerUpper:
         except KeyError:
             raise UserError(f"Could not find a case with external_id '{key}'")
 
+    def get_upsert_case_id(self, external_id):
+        """Returns case_id if found, None if not found (indicating creation)."""
+        return self._by_external_id.get(external_id)
+
     @cached_property
     def _by_external_id(self):
         ids_in_request = {
@@ -254,7 +303,7 @@ class CaseIDLookerUpper:
 
         ids_to_find = {
             update.external_id for update in self.updates
-            if not update._is_case_creation and not update.case_id
+            if not isinstance(update, JsonCaseCreation) and not update.case_id
         } | {
             index.external_id for update in self.updates for index in update.indices.values()
         }
