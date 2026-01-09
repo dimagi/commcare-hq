@@ -106,6 +106,25 @@ Alpine.data('initRole', (roleJson) => {
         accessAreas: [],
         erm: {},
         reports: [],
+        get hasUnpermittedLocationRestriction() {
+            return !initialPageData.get("can_restrict_access_by_location") && !this.role.permissions.access_all_locations;
+        },
+        get restrictRoleChecked() {
+            return this.manageRoleAssignments.specific.some(role => role.value && !role.access_all_locations);
+        },
+        get unrestrictedButRestrictedRoleCanAssign() {
+            return this.role.permissions.access_all_locations && this.restrictRoleChecked;
+        },
+        get cantAccessAllLocations() {
+            return !this.hasUnpermittedLocationRestriction && !this.role.permissions.access_all_locations
+        },
+        get canRestrictAccessByLocation() {
+            return initialPageData.get("can_restrict_access_by_location");
+        },
+        get showRestrictedLocationRoleAssignmentWarning() {
+            return this.role.permissions.access_all_locations && this.restrictRoleChecked;
+        },
+        landingPageChoices: initialPageData.get("landing_page_choices"),
         init() {
             const self = this;
             this.accessAreas = [
@@ -747,13 +766,78 @@ Alpine.data('initRole', (roleJson) => {
                 set value(checked) {
                     if (checked) {
                         self.role.permissions.commcare_analytics_roles_list.push(this.slug);
-                        this.commcareAnalyticsRoles.specificCache.push(this.slug);
+                        self.commcareAnalyticsRoles.specificCache.push(this.slug);
                     } else {
                         removeItem(self.role.permissions.commcare_analytics_roles_list, this.slug);
-                        removeItem(this.commcareAnalyticsRoles.specificCache, this.slug);
+                        removeItem(self.commcareAnalyticsRoles.specificCache, this.slug);
                     }
                 }
             }));
+
+            this.manageRoleAssignments = {
+                get all() {
+                    return self.role.is_non_admin_editable;
+                },
+                set all(checked) {
+                    self.role.is_non_admin_editable = checked;
+                    if (checked) {
+                        self.role.assignable_by = [];
+                    } else {
+                        self.role.assignable_by = [...this.specificCache];
+                    }
+                },
+                specificCache: [...self.role.assignable_by],
+            };
+            this.manageRoleAssignments.specific = _.map(initialPageData.get("non_admin_roles"), (role) => ({
+                path: role._id,
+                name: role.name,
+                access_all_locations: role.permissions.access_all_locations,
+                get value() {
+                    return self.role.assignable_by.indexOf(role._id) !== -1;
+                },
+                set value(checked) {
+                    if (checked) {
+                        self.role.assignable_by.push(role._id);
+                        self.manageRoleAssignments.specificCache.push(role._id);
+                    } else {
+                        removeItem(self.role.assignable_by, role._id);
+                        removeItem(self.manageRoleAssignments.specificCache, role._id);
+                    }
+                }
+            }));
+
+            this.profilePermissions = {
+                get all() {
+                    return self.role.permissions.edit_user_profile;
+                },
+                set all(checked) {
+                    self.role.permissions.edit_user_profile = checked;
+                    if (checked) {
+                        self.role.permissions.edit_user_profile_list = [];
+                    } else {
+                        self.role.permissions.edit_user_profile_list = [...this.specificCache];
+                    }
+                },
+                specificCache: [...self.role.permissions.edit_user_profile_list],
+
+            };
+            this.profilePermissions.specific = _.map(initialPageData.get('profile_list'), (profile) => ({
+                name: profile.name,
+                slug: String(profile.id),
+                get value() {
+                    return self.role.permissions.edit_user_profile_list.indexOf(this.slug) !== -1;
+                },
+                set value(checked) {
+                    if (checked) {
+                        self.role.permissions.edit_user_profile_list.push(this.slug);
+                        self.profilePermissions.specificCache.push(this.slug);
+                    } else {
+                        removeItem(self.role.permissions.edit_user_profile_list, this.slug);
+                        removeItem(self.profilePermissions.specificCache, this.slug);
+                    }
+                }
+            }));
+
 
             this.saveRole = () => {
                 self.isSaving = true;
