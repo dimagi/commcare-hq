@@ -463,7 +463,8 @@ class TestKycFilters(BaseTestKycView):
             user_data={
                 'first_name': 'John',
                 'phone_number': '123',
-                'kyc_verification_status': KycVerificationStatus.PASSED
+                'kyc_verification_status': KycVerificationStatus.PASSED,
+                'kyc_verified_by': cls.username,
             }
         )
         cls.user_pending = CommCareUser.create(
@@ -486,7 +487,8 @@ class TestKycFilters(BaseTestKycView):
             data={
                 'first_name': 'Alice',
                 'phone_number': '789',
-                'kyc_verification_status': KycVerificationStatus.PASSED
+                'kyc_verification_status': KycVerificationStatus.PASSED,
+                'kyc_verified_by': cls.username,
             }
         )
         cls.case_pending = _create_case(
@@ -505,6 +507,7 @@ class TestKycFilters(BaseTestKycView):
                 'phone_number': '111',
                 'kyc_verification_status': KycVerificationStatus.PASSED,
                 'hq_user_id': uuid.uuid4().hex,
+                'kyc_verified_by': cls.username,
             },
         )
         cls.usercase_pending = _create_case(
@@ -652,6 +655,41 @@ class TestKycFilters(BaseTestKycView):
         response = self.client.get(self.endpoint, {EMWF.slug: f"u__{self.webuser.user_id}"})
         assert response.status_code == 200
 
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        assert table_data.data[0].serialized_data['id'] == self.case_verified.case_id
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_verified_by_custom_user_data(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.endpoint, {'verified_by': self.username})
+
+        assert response.status_code == 200
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        assert table_data.data[0].serialized_data['id'] == self.user_verified.user_id
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_verified_by_other_case_type(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other-case',
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.endpoint, {'verified_by': self.username})
+
+        assert response.status_code == 200
         table_data = response.context['table'].data
         assert len(table_data) == 1
         assert table_data.data[0].serialized_data['id'] == self.case_verified.case_id
