@@ -1643,13 +1643,6 @@ DISABLE_MOBILE_ENDPOINTS = StaticToggle(
     )
 )
 
-OPEN_SUBMISSION_ENDPOINT = StaticToggle(
-    'open_submission_endpoint',
-    'Leave submission endpoint open to let old APIs keep working',
-    TAG_FROZEN,
-    [NAMESPACE_DOMAIN],
-)
-
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',

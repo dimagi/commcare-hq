@@ -183,6 +183,7 @@ urlpatterns = [
     v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
     v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
     v1_0.InvitationResource.get_urlpattern('v1'),
+    v1_0.DETExportInstanceResource.get_urlpattern('v1'),
 ]
 
 

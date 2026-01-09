@@ -3,33 +3,36 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.urls import re_path as url
 
+from couchdbkit import BadValueError, ResourceNotFound
+from jsonobject.exceptions import WrappingAttributeError
 from tastypie import fields
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpNotFound
-from . import (
-    CouchResourceMixin,
-    DomainSpecificResourceMixin,
-    HqBaseResource,
-)
+
+from corehq import toggles
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.users.role_utils import get_commcare_analytics_access_for_user_domain
-from corehq import toggles
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import (
-    CouchUser,
-    HqPermissions,
-    Invitation,
+from corehq.apps.api.validation import (
+    WebUserResourceSpec,
+    WebUserValidationException,
 )
-from corehq.apps.users.model_log import InviteModelAction
-from corehq.apps.users.views import InviteWebUserView
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.views.download import DownloadDETSchemaView
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import (
     get_tableau_group_ids_by_names,
     get_tableau_groups_by_ids,
 )
-from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
-
+from corehq.apps.users.model_log import InviteModelAction
+from corehq.apps.users.models import CouchUser, HqPermissions, Invitation
+from corehq.apps.users.role_utils import (
+    get_commcare_analytics_access_for_user_domain,
+)
+from corehq.apps.users.views import InviteWebUserView
 from corehq.const import INVITATION_CHANGE_VIA_API
+from corehq.util.view_utils import absolute_reverse
+
+from . import CouchResourceMixin, DomainSpecificResourceMixin, HqBaseResource
 
 
 class CommCareAnalyticsUserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -169,3 +172,127 @@ class InvitationResource(HqBaseResource, DomainSpecificResourceMixin):
                                     "action": InviteModelAction.CREATE, "changes": changes})
         bundle.obj = invite
         return bundle
+
+
+class DETExportInstanceResource(
+    CouchResourceMixin,
+    HqBaseResource,
+    DomainSpecificResourceMixin,
+):
+    """
+    API resource to list ``FormExportInstance`` and ``CaseExportInstance``
+    objects where ``show_det_config_download`` is True.
+
+    This is used by CommCare Data Pipeline (formerly CommCare Sync) to
+    list exports available for the Data Export Tool.
+    """
+    id = fields.CharField(attribute='_id', readonly=True, unique=True)
+    name = fields.CharField(attribute='name', readonly=True)
+    type = fields.CharField(readonly=True)
+    export_format = fields.CharField(attribute='export_format', readonly=True)
+    is_deidentified = fields.BooleanField(attribute='is_deidentified', readonly=True)
+    case_type = fields.CharField(readonly=True, null=True)
+    xmlns = fields.CharField(readonly=True, null=True)
+    det_config_url = fields.CharField(readonly=True)
+
+    class Meta(CustomResourceMeta):
+        resource_name = 'det_export_instance'
+        authentication = RequirePermissionAuthentication(HqPermissions.view_reports)
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+
+    def dehydrate_det_config_url(self, bundle):
+        return absolute_reverse(
+            DownloadDETSchemaView.urlname,
+            args=(bundle.request.domain, bundle.obj._id),
+        )
+
+    def dehydrate_type(self, bundle):
+        """Return 'form' or 'case' based on the export instance type"""
+        assert isinstance(bundle.obj, (CaseExportInstance, FormExportInstance)), \
+            'Only form and case exports are supported'
+        return bundle.obj.type
+
+    def dehydrate_case_type(self, bundle):
+        """Return case_type for CaseExportInstance, None otherwise"""
+        if isinstance(bundle.obj, CaseExportInstance):
+            return bundle.obj.case_type
+        return None
+
+    def dehydrate_xmlns(self, bundle):
+        """Return xmlns for FormExportInstance, None otherwise"""
+        if isinstance(bundle.obj, FormExportInstance):
+            return bundle.obj.xmlns
+        return None
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+
+        form_key = [domain, 'FormExportInstance']
+        form_results = FormExportInstance.get_db().view(
+            'export_instances_by_domain/view',
+            startkey=form_key,
+            endkey=form_key + [{}],
+            include_docs=True,
+            reduce=False
+        ).all()
+        form_exports = (
+            _wrap_or_none(FormExportInstance, result['doc'])
+            for result in form_results
+            if result['doc'].get('show_det_config_download', False)
+        )
+        form_exports = [exp for exp in form_exports if exp]
+        case_key = [domain, 'CaseExportInstance']
+        case_results = CaseExportInstance.get_db().view(
+            'export_instances_by_domain/view',
+            startkey=case_key,
+            endkey=case_key + [{}],
+            include_docs=True,
+            reduce=False
+        ).all()
+        case_exports = (
+            _wrap_or_none(CaseExportInstance, result['doc'])
+            for result in case_results
+            if result['doc'].get('show_det_config_download', False)
+        )
+        case_exports = [exp for exp in case_exports if exp]
+
+        return form_exports + case_exports
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+
+        try:
+            export = FormExportInstance.get(pk)
+            if (
+                export.doc_type == 'FormExportInstance'
+                and export.domain == domain
+                and export.show_det_config_download
+            ):
+                return export
+        except (BadValueError, ResourceNotFound, WrappingAttributeError):
+            pass
+
+        try:
+            export = CaseExportInstance.get(pk)
+            if (
+                export.doc_type == 'CaseExportInstance'
+                and export.domain == domain
+                and export.show_det_config_download
+            ):
+                return export
+        except (BadValueError, ResourceNotFound, WrappingAttributeError):
+            pass
+
+        raise ImmediateHttpResponse(HttpNotFound())
+
+
+def _wrap_or_none(class_, doc):
+    """
+    Returns ``class_.wrap(doc)``. If ``doc`` is malformed, returns ``None``.
+    """
+    try:
+        return class_.wrap(doc)
+    except (BadValueError, WrappingAttributeError):
+        return None

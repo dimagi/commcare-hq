@@ -56,7 +56,7 @@ class Command(BaseCommand):
         for domain, case_ids in case_ids_by_domain.items():
             logger.info(f"Processing {len(case_ids)} for domain '{domain}'")
             case_blocks_and_meta = []
-            cases = CommCareCase.objects.get_cases(case_ids, domain)
+            cases = CommCareCase.objects.get_cases(case_ids)
             for case in cases:
                 meta = case_metas[case.case_id]
                 index = get_index_by_ref_id(case, meta)

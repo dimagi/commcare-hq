@@ -329,7 +329,7 @@ class Event(models.Model):
             include_closed=False,
             case_type=case_type,
         )
-        return CommCareCase.objects.get_cases(ext_case_ids, self.domain)
+        return CommCareCase.objects.get_cases(ext_case_ids)
 
     def _close_extension_cases(self, case_type=None):
         ext_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
@@ -429,7 +429,7 @@ class AttendeeModelManager(models.Manager):
         case_ids = get_case_ids(domain, case_type)
         return [
             AttendeeModel(case=case, domain=domain)
-            for case in CommCareCase.objects.get_cases(case_ids, domain)
+            for case in CommCareCase.objects.get_cases(case_ids)
         ]
 
     def by_location_id(
@@ -454,7 +454,7 @@ class AttendeeModelManager(models.Manager):
         case_ids = es_query.get_ids()
         return [
             AttendeeModel(case=case, domain=domain)
-            for case in CommCareCase.objects.get_cases(case_ids, domain)
+            for case in CommCareCase.objects.get_cases(case_ids)
         ]
 
 
