@@ -913,8 +913,32 @@
                         </label>
                       </div>
                     </template>
-
                   </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
+            <div class="row">
+              <div class="col-md-4 form-label fw-bold">
+                {% trans "Manage Project Alerts" %}
+              </div>
+              <div class="col-md-8 controls">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    class="form-check-input"
+                    type="checkbox"
+                    id="manage-domain-alerts-checkbox"
+                    x-model="role.permissions.manage_domain_alerts"
+                  />
+                  <label
+                    class="form-check-label"
+                    for="manage-domain-alerts-checkbox"
+                  >
+                    {% trans "Allow this role to manage project alerts." %}
+                  </label>
                 </div>
               </div>
             </div>
