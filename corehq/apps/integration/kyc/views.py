@@ -22,7 +22,11 @@ from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.export import TableExportMixin
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
-from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter, PhoneNumberFilter
+from corehq.apps.integration.kyc.filters import (
+    KycVerificationStatusFilter,
+    KycVerifiedByFilter,
+    PhoneNumberFilter,
+)
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import (
     KycConfig,
@@ -136,6 +140,8 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, 
         query_filters = []
         if kyc_verification_status := self.request.GET.get(KycVerificationStatusFilter.slug):
             self._apply_kyc_verification_status_filter(kyc_verification_status, query_filters)
+        if verified_by := self.request.GET.get(KycVerifiedByFilter.slug):
+            self._apply_verified_by_filter(verified_by, query_filters)
         if phone_number := self.request.GET.get(PhoneNumberFilter.slug):
             self._apply_phone_number_filter(phone_number, query_filters)
         if query_filters:
@@ -171,6 +177,13 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, 
             else:
                 condition = case_property_query(field_name, kyc_verification_status)
         query_filters.append(condition)
+
+    def _apply_verified_by_filter(self, verified_by, query_filters):
+        field_name = KycProperties.KYC_VERIFIED_BY
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            query_filters.append(query_user_data(field_name, verified_by))
+        else:
+            query_filters.append(case_property_query(field_name, verified_by))
 
     def _apply_phone_number_filter(self, phone_number, query_filters):
         if field_name := self.kyc_config.phone_number_field:
@@ -244,6 +257,7 @@ class KYCFiltersMixin:
     def fields(self):
         fields = [
             'corehq.apps.integration.kyc.filters.KycVerificationStatusFilter',
+            'corehq.apps.integration.kyc.filters.KycVerifiedByFilter',
         ]
         if (hasattr(self, 'kyc_config') and self.kyc_config
                 and self.kyc_config.user_data_store == UserDataStore.OTHER_CASE_TYPE):
