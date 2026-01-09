@@ -24,6 +24,7 @@ from corehq.apps.integration.kyc.services import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
+from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
 
@@ -82,11 +83,19 @@ class BaseKycUserSetup(TestCase):
             None, None,
             first_name='abc',
         )
+        self.connection_settings = ConnectionSettings.objects.create(
+            domain=self.domain,
+            name='test-conn-settings',
+            username='test-username',
+            password='test-password',
+            url='http://test-url.com',
+        )
         self.config = KycConfig.objects.create(
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=self._sample_api_field_to_user_data_map(),
             passing_threshold=self._sample_passing_thresholds(),
+            connection_settings=self.connection_settings,
         )
         self.kyc_user = KycUser(self.config, self.user)
 
@@ -226,8 +235,9 @@ class TestVerifyUser(BaseKycUserSetup):
         assert error is None
 
     @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
-    @patch('corehq.apps.integration.kyc.services.get_user_data_for_api',
-       return_value={'phoneNumber': 1234, 'firstName': 'abc', 'lastName': 'def'}
+    @patch(
+        'corehq.apps.integration.kyc.services.get_user_data_for_api',
+        return_value={'phoneNumber': 1234, 'firstName': 'abc', 'lastName': 'def'}
     )
     @patch('corehq.motech.requests.Requests.post')
     def test_orange_cameroon_kyc_verify_success(self, mock_post, *args):
@@ -239,6 +249,7 @@ class TestVerifyUser(BaseKycUserSetup):
                 "firstName": 100,
                 "lastName": 100,
             },
+            connection_settings=self.connection_settings,
         )
         kyc_user = KycUser(config, self.user)
 
