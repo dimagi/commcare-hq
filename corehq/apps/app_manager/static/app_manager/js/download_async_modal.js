@@ -16,8 +16,8 @@ var asyncDownloader = function ($el) {
         self.download_in_progress = false;
         self.download_poll_url = null;
         self.download_poll_id = null;
-        self.$download_progress.addClass("hide");
-        self.$downloading.removeClass("hide");
+        self.$download_progress.addClass("d-none");
+        self.$downloading.removeClass("d-none");
         self.$el.removeClass("full-screen-modal");
     };
 
@@ -43,8 +43,8 @@ var asyncDownloader = function ($el) {
 
     self.updateProgress = function (progressResponse) {
         if (progressResponse.trim().length) {
-            self.$downloading.addClass("hide");
-            self.$download_progress.html(progressResponse).removeClass("hide");
+            self.$downloading.addClass("d-none");
+            self.$download_progress.html(progressResponse).removeClass("d-none");
         }
     };
 
@@ -85,8 +85,8 @@ var asyncDownloader = function ($el) {
     self.downloadError = function (text) {
         self.init();
         self.$download_progress.html(text);
-        self.$download_progress.removeClass("hide");
-        self.$downloading.addClass("hide");
+        self.$download_progress.removeClass("d-none");
+        self.$downloading.addClass("d-none");
         self.$el.addClass("full-screen-modal");     // allow scrolling in case of many errors
     };
 
