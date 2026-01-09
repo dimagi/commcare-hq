@@ -9,7 +9,7 @@
       <select class="col-md-3 form-select" data-bind="
           options: options,
           value: selectedOption,
-          optionsText: 'badge',
+          optionsText: 'label',
           attr: {disabled: !enabled(), id: inputId}
       "></select>
     </span>
@@ -17,7 +17,7 @@
       <select class="col-md-3 form-select error" data-bind="
           options: options,
           value: writeSelectedOption,
-          optionsText: 'badge',
+          optionsText: 'label',
           attr: {disabled: !enabled(), id: inputId},
           optionsCaption: value()
       "></select>
@@ -32,7 +32,7 @@
               class="col-md-3 form-control"
               data-bind="options: options,
                          selectedOptions: selectedOptions,
-                         optionsText: 'badge',
+                         optionsText: 'label',
                          attr: {
                            disabled: !enabled(),
                            id: inputId
@@ -43,7 +43,7 @@
               class="col-md-3 form-control error"
               data-bind="options: options,
                          selectedOptions: writeSelectedOptions,
-                         optionsText: 'badge',
+                         optionsText: 'label',
                          attr: {
                            disabled: !enabled(),
                            id: inputId
@@ -54,13 +54,16 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-  <div class="checkbox-app-settings">
-    <input type="checkbox"  {# todo B5: css-checkbox #}
-           data-bind="checked: boolValue,
-                      attr: {
-                        disabled: !enabled() || showDisabledCheckbox(),
-                        id: inputId
-                      }"/>
+  <div class="form-check checkbox-app-settings">
+    <input
+      type="checkbox"
+      class="form-check-input"
+      data-bind="checked: boolValue,
+        attr: {
+          disabled: !enabled() || showDisabledCheckbox(),
+          id: inputId
+        }"
+    />
   </div>
   <!-- ko if: showUncheckWarning -->
   <div class="alert alert-warning alert-small">
