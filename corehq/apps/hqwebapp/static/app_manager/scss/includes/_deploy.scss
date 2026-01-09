@@ -1,0 +1,22 @@
+// Deploy page
+#releases-table {
+  .pending img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .released {
+    color: #ffff00;
+    text-shadow:
+      1px 0px #ffa500,
+      -1px 0px #ffa500,
+      0px 1px #ffa500,
+      0px -1px #ffa500;
+  }
+}
+
+// Icons in deploy modal panels
+.panel-title i {
+  width: 18px;
+  text-align: center;
+}

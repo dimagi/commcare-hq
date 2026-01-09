@@ -1190,5 +1190,120 @@
       "label": "javascript/app_manager/spec",
       "compare_all_files": true
     }
+  ],
+  "apps/hqwebapp/static/app_manager": [
+    {
+      "directories": [
+        "less/",
+        "scss/"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets",
+      "files": [
+        [
+          "app_manager-main.less",
+          "app_manager-main.scss"
+        ],
+        [
+          "app_manager.less",
+          "app_manager.scss"
+        ],
+        [
+          "font-workflow.less",
+          "font-workflow.scss"
+        ],
+        [
+          "preview_app-main.less",
+          "preview_app-main.scss"
+        ],
+        [
+          "preview_app.less",
+          "preview_app.scss"
+        ],
+        [
+          "summary-main.less",
+          "summary-main.scss"
+        ],
+        [
+          "summary.less",
+          "summary.scss"
+        ]
+      ]
+    },
+    {
+      "directories": [
+        "less/",
+        "scss/includes/"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets/imports",
+      "files": [
+        [
+          "case_tile_preview.less",
+          "_case_tile_preview.scss"
+        ],
+        [
+          "content.less",
+          "_content.scss"
+        ],
+        [
+          "corehq_overrides.less",
+          "_corehq_overrides.scss"
+        ],
+        [
+          "deploy.less",
+          "_deploy.scss"
+        ],
+        [
+          "diff.less",
+          "_diff.scss"
+        ],
+        [
+          "form_editing.less",
+          "_form_editing.scss"
+        ],
+        [
+          "navigation.less",
+          "_navigation.scss"
+        ],
+        [
+          "new_module_modal.less",
+          "_new_module_modal.scss"
+        ],
+        [
+          "panel.less",
+          "_panel.scss"
+        ],
+        [
+          "popover.less",
+          "_popover.scss"
+        ],
+        [
+          "savebtn.less",
+          "_savebtn.scss"
+        ],
+        [
+          "table.less",
+          "_table.scss"
+        ],
+        [
+          "tabs.less",
+          "_tabs.scss"
+        ],
+        [
+          "variables.less",
+          "_variables.scss"
+        ]
+      ]
+    },
+    {
+      "directories": [
+        "less/font-workflow",
+        "scss/font-workflow"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets/font",
+      "compare_all_files": true
+    }
   ]
 }

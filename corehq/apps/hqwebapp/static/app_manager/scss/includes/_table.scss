@@ -1,0 +1,69 @@
+.table-languages {
+  clear: both;
+
+  td {
+    vertical-align: middle;
+
+    p {
+      margin: 7px 0;
+    }
+  }
+}
+
+.table-savecaseprops {
+  .select2-container {
+    width: 100%;
+    .select2-choice {
+      height: 31px;
+    }
+  }
+
+  thead > tr {
+    background-color: $cc-bg;
+    border: none;
+    > th {
+      border: none;
+    }
+  }
+
+  tbody > tr > td {
+    border: none;
+    > i {
+      margin-top: 10px;
+    }
+    code {
+      margin-top: 5px;
+      display: inline-block;
+    }
+  }
+
+  tbody > tr {
+    &:nth-child(even) {
+      background-color: $cc-bg;
+    }
+  }
+
+  // This prevents the table from reaching beyond its containing div.
+  table-layout: fixed;
+}
+
+.table-profiles {
+  clear: both;
+
+  tbody > tr {
+    &:nth-child(even) {
+      background-color: $cc-bg;
+    }
+  }
+  .form-control {
+    width: 100%;
+  }
+  td > a {
+    line-height: 30px;
+  }
+}
+
+.full-width-select2 .select2-container {
+  width: 100% !important;
+  min-width: 200px;
+}
