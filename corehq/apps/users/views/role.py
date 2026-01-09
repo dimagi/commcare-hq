@@ -64,6 +64,14 @@ class RoleContextMixin:
         return (has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
                 and self.couch_user.is_domain_admin)
 
+    @property
+    @memoized
+    def non_admin_roles(self):
+        return list(sorted(
+            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
+            key=lambda role: role.name if role.name else '\uFFFF'
+        )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
+
     def get_common_role_context(self):
         """Returns context data common to role views."""
         tableau_list = []
@@ -103,6 +111,7 @@ class RoleContextMixin:
                 get_application_access_for_domain(self.domain).restrict
                 and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(self.domain)
             ),
+            'non_admin_roles': self.non_admin_roles,
         }
 
 
@@ -115,14 +124,6 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
     @method_decorator(require_can_view_roles)
     def dispatch(self, request, *args, **kwargs):
         return super(ListRolesView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def non_admin_roles(self):
-        return list(sorted(
-            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
-            key=lambda role: role.name if role.name else '\uFFFF'
-        )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
 
     def can_edit_linked_roles(self):
         return self.request.couch_user.can_edit_linked_data(self.domain)
@@ -183,7 +184,6 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
             'is_managed_by_upstream_domain': is_active_downstream_domain(self.domain),
             'can_edit_linked_data': self.can_edit_linked_roles(),
             'user_roles': self.get_roles_for_display(),
-            'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
         })
@@ -330,7 +330,7 @@ class EditRoleView(RoleContextMixin, BaseRoleAccessView):
         role_data = self.role.to_json()
         context = self.get_common_role_context()
         context.update({
-            "data": json.dumps(role_data)
+            "data": json.dumps(role_data),
         })
         return context
 
