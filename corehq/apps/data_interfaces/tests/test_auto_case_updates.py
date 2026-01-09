@@ -1065,7 +1065,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertEqual(CaseRuleSubmission.objects.filter(domain=self.domain, archived=True).count(), 2)
 
             form_ids = CaseRuleSubmission.objects.filter(domain=self.domain).values_list('form_id', flat=True)
-            for form in XFormInstance.objects.iter_forms(form_ids, self.domain):
+            for form in XFormInstance.objects.iter_forms(form_ids):
                 self.assertTrue(form.is_archived)
 
     @override_settings(

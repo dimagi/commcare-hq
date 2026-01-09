@@ -352,7 +352,7 @@ class PrefetchIndexCaseAccessor:
         kw['prefetched_indices'] = [ix
             for case_id in case_ids
             for ix in self.indices[case_id]]
-        return CommCareCase.objects.get_cases(case_ids, self.domain, **kw)
+        return CommCareCase.objects.get_cases(case_ids, **kw)
 
 
 def batch_cases(accessor, case_ids):

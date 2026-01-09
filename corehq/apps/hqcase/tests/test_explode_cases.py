@@ -59,7 +59,7 @@ class ExplodeCasesDbTest(TestCase):
         explode_cases(self.domain.name, self.user_id, 10)
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain.name)
-        cases_back = list(CommCareCase.objects.iter_cases(case_ids, self.domain.name))
+        cases_back = list(CommCareCase.objects.iter_cases(case_ids))
         self.assertEqual(10, len(cases_back))
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
@@ -77,7 +77,7 @@ class ExplodeCasesDbTest(TestCase):
         explode_cases(self.domain.name, self.user_id, 10)
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain.name)
-        cases_back = list(CommCareCase.objects.iter_cases(case_ids, self.domain.name))
+        cases_back = list(CommCareCase.objects.iter_cases(case_ids))
         self.assertEqual(1, len(cases_back))
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
@@ -108,7 +108,7 @@ class ExplodeCasesDbTest(TestCase):
 
         explode_cases(self.domain.name, self.user_id, 5)
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain.name)
-        cases_back = list(CommCareCase.objects.iter_cases(case_ids, self.domain.name))
+        cases_back = list(CommCareCase.objects.iter_cases(case_ids))
         self.assertEqual(10, len(cases_back))
         parent_cases = {p.case_id: p for p in [case for case in cases_back if case.type == parent_type]}
         self.assertEqual(5, len(parent_cases))
@@ -249,7 +249,7 @@ class ExplodeLedgersTest(BaseSyncTest):
     def test_explode_ledgers(self):
         explode_cases(self.project.name, self.user_id, 5)
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.project.name)
-        cases = CommCareCase.objects.iter_cases(case_ids, self.project.name)
+        cases = CommCareCase.objects.iter_cases(case_ids)
         for case in cases:
             ledger_values = {v.entry_id: v
                 for v in self.ledger_accessor.get_ledger_values_for_case(case.case_id)}
