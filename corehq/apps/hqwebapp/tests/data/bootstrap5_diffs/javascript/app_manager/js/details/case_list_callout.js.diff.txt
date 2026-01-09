@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -2,8 +2,8 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import "jquery-textchange/jquery.textchange";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
+-import uiElementInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
++import uiElementInput from "hqwebapp/js/ui_elements/bootstrap5/ui-element-input";
+ import uiElementLangcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
+ 
+ var caseListLookupViewModel = function ($el, state, lang, saveButton) {

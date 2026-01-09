@@ -336,7 +336,7 @@ def save_copy(request, domain, app_id):
         lang, langs = get_langs(request, app)
         return JsonResponse({
             "saved_app": None,
-            "error_html": render_to_string("app_manager/partials/build_errors.html", {
+            "error_html": render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
                 'app': get_app(domain, app_id),
                 'build_errors': e.errors,
                 'domain': domain,
@@ -531,7 +531,7 @@ def odk_install(request, domain, app_id, with_media=False):
                            }),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/odk_install.html", context)
+    return render(request, "app_manager/bootstrap3/odk_install.html", context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -622,7 +622,7 @@ def _get_app_diffs(first_app, second_app):
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
     page_title = gettext_lazy("App diff")
-    template_name = 'app_manager/app_diff.html'
+    template_name = 'app_manager/bootstrap3/app_diff.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
