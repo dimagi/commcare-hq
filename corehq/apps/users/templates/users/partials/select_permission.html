@@ -1,0 +1,66 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div
+  class="row"
+  :class="showAlreadyConfiguredWarning ? 'has-warning' : ''"
+>
+  <div class="col-md-4 form-label fw-bold">
+    <div x-text="text"></div>
+    <template x-if="showAlreadyConfiguredWarning">
+      <span class="help-block">
+        {% url "cloudcare_app_settings" domain as manage_web_apps_permissions_url %}
+        {% blocktrans %}
+          This permission is already configured via
+          <a target="_blank" href="{{ manage_web_apps_permissions_url }}">
+            Manage Web Apps Permissions
+          </a>
+          . Please remove this configuration before updating access here.
+        {% endblocktrans %}
+      </span>
+    </template>
+  </div>
+  <div class="col-md-8 controls">
+    <select
+      class="form-select mb-2"
+      :id="id"
+      x-model="selection"
+    >
+      <option value="none">{% trans "No Access" %}</option>
+      <option value="all">{% trans "Access All" %}</option>
+      <option value="selected">{% trans "Limited Access" %}</option>
+    </select>
+    <div
+      class="card mb-2"
+      x-show="showItems"
+
+    >
+      <!-- :class="id === 'hasError ? 'has-error' : ''" -->
+      <div class="card-header" x-text="listHeading"></div>
+      <div class="card-body">
+        <!-- TODO slideVisible-->
+        <template x-for="s in specific">
+          <div class="form-check mt-1">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              x-model="s.value"
+              :id="id + '-' + s.slug + '-checkbox'"
+              :disabled="!allowEdit"
+            />
+            <label
+              class="form-check-label"
+              :for="id + '-' + s.slug + '-checkbox'"
+            >
+              <span x-text="s.name" class="text-break"></span>
+            </label>
+          </div>
+        </template>
+
+        <span class="form-text text-danger" x-show="hasError">
+          {% trans "Please select at least one item." %}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
