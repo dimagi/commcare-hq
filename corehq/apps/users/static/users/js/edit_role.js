@@ -15,7 +15,7 @@ const removeItem = (array, item) => {
 
 const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
 
-const selectPermissionModel = (args) => {
+const createNoneAllSelectedPermissionModel = (args) => {
     const {
         text,
         listHeading,
@@ -92,6 +92,54 @@ const selectPermissionModel = (args) => {
     }));
 
     return handler;
+};
+
+const createAllOrSelectedPermissionModel = (args) => {
+    const {
+        permissionObj,
+        accessKey,
+        listKey,
+        listChoices,
+        getProperties,
+        getIdentifier,
+    } = args;
+
+    const model = {
+        get all() {
+            return permissionObj[accessKey];
+        },
+        set all(checked) {
+            permissionObj[accessKey] = checked;
+            if (checked) {
+                permissionObj[listKey] = [];
+            } else {
+                permissionObj[listKey] = [...this.specificCache];
+            }
+        },
+        specificCache: [...permissionObj[listKey]],
+    };
+
+    model.specific = _.map(listChoices, (sourceItem) => {
+        const mappedItem = getProperties(sourceItem);
+        const identifier = getIdentifier(mappedItem);
+        return {
+            ...mappedItem,
+            get value() {
+                return permissionObj[listKey].indexOf(identifier) !== -1;
+            },
+            set value(checked) {
+                if (checked) {
+                    permissionObj[listKey].push(identifier);
+                    model.specificCache.push(identifier);
+                } else {
+                    removeItem(permissionObj[listKey], identifier);
+                    removeItem(model.specificCache, identifier);
+                }
+            }
+        };
+    });
+
+    return model;
 };
 
 Alpine.data('initRole', (roleJson) => {
@@ -713,7 +761,7 @@ Alpine.data('initRole', (roleJson) => {
                 });
             }
 
-            this.webAppsPermissions = selectPermissionModel({
+            this.webAppsPermissions = createNoneAllSelectedPermissionModel({
                 text: gettext("Use Web Apps for online data entry"),
                 listHeading: gettext("Select which web apps..."),
                 showAlreadyConfiguredWarning: initialPageData.get('has_restricted_application_access'),
@@ -724,7 +772,7 @@ Alpine.data('initRole', (roleJson) => {
             });
 
             this.registryPermissions = [
-                selectPermissionModel({
+                createNoneAllSelectedPermissionModel({
                     text: gettext("Manage Registries"),
                     listHeading: gettext("Select which registries the role can manage:"),
                     permissionObj: self.role.permissions,
@@ -732,7 +780,7 @@ Alpine.data('initRole', (roleJson) => {
                     listKey: 'manage_data_registry_list',
                     listChoices: initialPageData.get("data_registry_choices")
                 }),
-                selectPermissionModel({
+                createNoneAllSelectedPermissionModel({
                     text: gettext("View Registry Data"),
                     listHeading: gettext("Select which registry data the role can view:"),
                     permissionObj: self.role.permissions,
@@ -742,102 +790,42 @@ Alpine.data('initRole', (roleJson) => {
                 }),
             ];
 
-            this.commcareAnalyticsRoles = {
-                get all() {
-                    return self.role.permissions.commcare_analytics_roles;
-                },
-                set all(checked) {
-                    self.role.permissions.commcare_analytics_roles = checked;
-                    if (checked) {
-                        self.role.permissions.commcare_analytics_roles_list = [];
-                    } else {
-                        self.role.permissions.commcare_analytics_roles_list = [...this.specificCache];
-                    }
-                },
-                specificCache: [...self.role.permissions.commcare_analytics_roles_list],
+            this.commcareAnalyticsRoles = createAllOrSelectedPermissionModel({
+                permissionObj: self.role.permissions,
+                accessKey: 'commcare_analytics_roles',
+                listKey: 'commcare_analytics_roles_list',
+                listChoices: initialPageData.get('commcare_analytics_roles'),
+                getProperties: (role) => ({
+                    name: role.name,
+                    slug: role.slug,
+                }),
+                getIdentifier: (item) => item.slug,
+            });
 
-            };
-            this.commcareAnalyticsRoles.specific = _.map(initialPageData.get('commcare_analytics_roles'), (role) => ({
-                name: role.name,
-                slug: role.slug,
-                get value() {
-                    return self.role.permissions.commcare_analytics_roles_list.indexOf(role.slug) !== -1;
-                },
-                set value(checked) {
-                    if (checked) {
-                        self.role.permissions.commcare_analytics_roles_list.push(this.slug);
-                        self.commcareAnalyticsRoles.specificCache.push(this.slug);
-                    } else {
-                        removeItem(self.role.permissions.commcare_analytics_roles_list, this.slug);
-                        removeItem(self.commcareAnalyticsRoles.specificCache, this.slug);
-                    }
-                }
-            }));
+            this.manageRoleAssignments = createAllOrSelectedPermissionModel({
+                permissionObj: self.role,
+                accessKey: 'is_non_admin_editable',
+                listKey: 'assignable_by',
+                listChoices: initialPageData.get("non_admin_roles"),
+                getProperties: (role) => ({
+                    path: role._id,
+                    name: role.name,
+                    access_all_locations: role.permissions.access_all_locations,
+                }),
+                getIdentifier: (item) => item.path,
+            });
 
-            this.manageRoleAssignments = {
-                get all() {
-                    return self.role.is_non_admin_editable;
-                },
-                set all(checked) {
-                    self.role.is_non_admin_editable = checked;
-                    if (checked) {
-                        self.role.assignable_by = [];
-                    } else {
-                        self.role.assignable_by = [...this.specificCache];
-                    }
-                },
-                specificCache: [...self.role.assignable_by],
-            };
-            this.manageRoleAssignments.specific = _.map(initialPageData.get("non_admin_roles"), (role) => ({
-                path: role._id,
-                name: role.name,
-                access_all_locations: role.permissions.access_all_locations,
-                get value() {
-                    return self.role.assignable_by.indexOf(role._id) !== -1;
-                },
-                set value(checked) {
-                    if (checked) {
-                        self.role.assignable_by.push(role._id);
-                        self.manageRoleAssignments.specificCache.push(role._id);
-                    } else {
-                        removeItem(self.role.assignable_by, role._id);
-                        removeItem(self.manageRoleAssignments.specificCache, role._id);
-                    }
-                }
-            }));
-
-            this.profilePermissions = {
-                get all() {
-                    return self.role.permissions.edit_user_profile;
-                },
-                set all(checked) {
-                    self.role.permissions.edit_user_profile = checked;
-                    if (checked) {
-                        self.role.permissions.edit_user_profile_list = [];
-                    } else {
-                        self.role.permissions.edit_user_profile_list = [...this.specificCache];
-                    }
-                },
-                specificCache: [...self.role.permissions.edit_user_profile_list],
-
-            };
-            this.profilePermissions.specific = _.map(initialPageData.get('profile_list'), (profile) => ({
-                name: profile.name,
-                slug: String(profile.id),
-                get value() {
-                    return self.role.permissions.edit_user_profile_list.indexOf(this.slug) !== -1;
-                },
-                set value(checked) {
-                    if (checked) {
-                        self.role.permissions.edit_user_profile_list.push(this.slug);
-                        self.profilePermissions.specificCache.push(this.slug);
-                    } else {
-                        removeItem(self.role.permissions.edit_user_profile_list, this.slug);
-                        removeItem(self.profilePermissions.specificCache, this.slug);
-                    }
-                }
-            }));
-
+            this.profilePermissions = createAllOrSelectedPermissionModel({
+                permissionObj: self.role.permissions,
+                accessKey: 'edit_user_profile',
+                listKey: 'edit_user_profile_list',
+                listChoices: initialPageData.get('profile_list'),
+                getProperties: (profile) => ({
+                    name: profile.name,
+                    slug: String(profile.id),
+                }),
+                getIdentifier: (item) => item.slug,
+            });
 
             this.saveRole = () => {
                 self.isSaving = true;
