@@ -18,6 +18,7 @@ from corehq.apps.integration.kyc.models import (
 )
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.ui.fields import JsonField
+from corehq.motech.models import ConnectionSettings
 
 
 class KycConfigureForm(forms.ModelForm):
@@ -28,6 +29,7 @@ class KycConfigureForm(forms.ModelForm):
             'user_data_store',
             'other_case_type',
             'provider',
+            'connection_settings',
             'api_field_to_user_data_map',
             'phone_number_field',
             'passing_threshold',
@@ -46,6 +48,10 @@ class KycConfigureForm(forms.ModelForm):
         label=_('Provider'),
         required=True,
         choices=KycProviders.choices,
+    )
+    connection_settings = forms.ChoiceField(
+        label=_('Connection Settings'),
+        required=True,
     )
     api_field_to_user_data_map = JsonField(
         label=_('API Field to Recipient Data Map'),
@@ -80,6 +86,7 @@ class KycConfigureForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.instance = kwargs.pop('instance')
 
+        self.fields['connection_settings'].choices = self._get_domain_connection_settings()
         self.fields['other_case_type'].choices = self._get_case_types()
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -100,6 +107,9 @@ class KycConfigureForm(forms.ModelForm):
                     'provider',
                     x_init='provider = $el.value',
                     x_show='showProvider',
+                ),
+                crispy.Div(
+                    'connection_settings',
                 ),
                 crispy.Div(
                     'api_field_to_user_data_map',
@@ -152,3 +162,12 @@ class KycConfigureForm(forms.ModelForm):
                 self.add_error('provider', str(e))
 
         return cleaned_data
+
+    def _get_domain_connection_settings(self):
+        return ConnectionSettings.objects.filter(
+            domain=self.instance.domain
+        ).values_list('id', 'name')
+
+    def clean_connection_settings(self):
+        connection_settings_id = self.cleaned_data['connection_settings']
+        return ConnectionSettings.objects.get(id=connection_settings_id)

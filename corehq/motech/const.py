@@ -135,3 +135,7 @@ DIRECTIONS = (
 )
 
 MAX_REQUEST_LOG_LENGTH = 1024 * 1024
+
+SSRF_WHITELISTED_DOMAINS = [
+    'api-s1.orange.cm',
+]
