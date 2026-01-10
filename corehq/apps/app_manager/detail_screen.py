@@ -609,22 +609,22 @@ class AddressPopup(HideShortColumn):
 
 
 @register_format_type('geo-boundary')
-class GeoBoundary(FormattedDetailColumn):
+class GeoBoundary(HideShortColumn):
     template_form = 'geo_boundary'
 
 
 @register_format_type('geo-boundary-color')
-class GeoBoundaryColor(FormattedDetailColumn):
+class GeoBoundaryColor(HideShortColumn):
     template_form = 'geo_boundary_color_hex'
 
 
 @register_format_type('geo-points')
-class GeoPoints(FormattedDetailColumn):
+class GeoPoints(HideShortColumn):
     template_form = 'geo_points'
 
 
 @register_format_type('geo-points-colors')
-class GeoPointsColors(FormattedDetailColumn):
+class GeoPointsColors(HideShortColumn):
     template_form = 'geo_points_colors_hex'
 
 
