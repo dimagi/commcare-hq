@@ -468,6 +468,7 @@
               <div
                 class="row"
                 x-show="!commcareAnalyticsRoles.all"
+                x-collapse
               >
                 <div class="col-md-4 form-label fw-bold">
                   {% trans "CommCare Analytics Roles" %}
@@ -478,7 +479,6 @@
                       {% trans "Commcare Analytics Roles:" %}
                     </div>
                     <div class="card-body">
-                      <!-- TODO slideVisible: !commcareAnalyticsRoles.all -->
                       <template x-for="s in commcareAnalyticsRoles.specific">
                         <div class="form-check">
                           <input
@@ -808,6 +808,7 @@
           <div
             class="row"
             x-show="!manageRoleAssignments.all"
+            x-collapse
           >
             <div class="col-md-4 form-label fw-bold">
               {% trans "Manage Role Assignment" %}
@@ -820,7 +821,6 @@
                 <div class="card-header">
                   {% trans "Select which other roles can assign this role:" %}
                 </div>
-                <!-- TODO: slideVisible: !manageRoleAssignments.all-->
                 <div class="card-body">
                   <template x-for="s in manageRoleAssignments.specific">
                     <div class="form-check">
@@ -884,6 +884,7 @@
             <div
               class="row"
               x-show="!profilePermissions.all && (role.permissions.edit_web_users || role.permissions.edit_commcare_users)"
+              x-collapse
             >
               <div class="col-md-4 form-label fw-bold">
                 {% trans "Assign Specific User Profiles" %}
@@ -893,7 +894,6 @@
                   <div class="card-header">
                     {% trans "Select which user profiles the role can assign to mobile workers and web users:" %}
                   </div>
-                  <!-- TODO: slideVisible: !profilePermissions.all()-->
                   <div
                     class="card-body"
                   >

@@ -33,12 +33,11 @@
     <div
       class="card mb-2"
       x-show="showItems"
-
+      x-collapse
     >
       <!-- :class="id === 'hasError ? 'has-error' : ''" -->
       <div class="card-header" x-text="listHeading"></div>
       <div class="card-body">
-        <!-- TODO slideVisible-->
         <template x-for="s in specific">
           <div class="form-check mt-1">
             <input

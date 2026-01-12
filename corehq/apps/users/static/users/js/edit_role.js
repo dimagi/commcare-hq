@@ -5,6 +5,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";
 import privileges from "hqwebapp/js/privileges";
 import Alpine from "alpinejs";
+import collapse from '@alpinejs/collapse'
 
 const removeItem = (array, item) => {
     const index = array.indexOf(item);
@@ -854,4 +855,5 @@ Alpine.data('initRole', (roleJson) => {
     };
 });
 
+Alpine.plugin(collapse)
 Alpine.start();
