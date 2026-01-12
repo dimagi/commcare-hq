@@ -168,7 +168,7 @@ class TestCaseAPIPermissions(TestCase):
             self.client,
         ):
             case_id = self.case_mapping['user_case']
-            url = reverse('case_api', args=(self.domain, case_id))
+            url = reverse('case_api_detail', args=(self.domain, case_id))
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             json = response.json()
@@ -182,7 +182,7 @@ class TestCaseAPIPermissions(TestCase):
             self.client,
         ):
             case_id = self.case_mapping['restricted_case']
-            url = reverse('case_api', args=(self.domain, case_id))
+            url = reverse('case_api_detail', args=(self.domain, case_id))
             response = self.client.get(url)
             self.assertEqual(response.status_code, 403)
 
@@ -194,7 +194,7 @@ class TestCaseAPIPermissions(TestCase):
             self.client,
         ):
             case_id = self.case_mapping['restricted_case']
-            url = reverse('case_api', args=(self.domain, case_id))
+            url = reverse('case_api_detail', args=(self.domain, case_id))
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             json = response.json()
@@ -208,7 +208,7 @@ class TestCaseAPIPermissions(TestCase):
             self.client,
         ):
             case_id = self.case_mapping['user_case']
-            url = reverse('case_api', args=(self.domain, case_id))
+            url = reverse('case_api_detail', args=(self.domain, case_id))
             response = self.client.put(
                 url,
                 {'properties': self.test_case_property},
@@ -226,7 +226,7 @@ class TestCaseAPIPermissions(TestCase):
             self.client,
         ):
             case_id = self.case_mapping['restricted_case']
-            url = reverse('case_api', args=(self.domain, case_id))
+            url = reverse('case_api_detail', args=(self.domain, case_id))
             response = self.client.put(
                 url,
                 {'properties': self.test_case_property},
@@ -242,7 +242,7 @@ class TestCaseAPIPermissions(TestCase):
             self.client,
         ):
             case_id = self.case_mapping['restricted_case']
-            url = reverse('case_api', args=(self.domain, case_id))
+            url = reverse('case_api_detail', args=(self.domain, case_id))
             response = self.client.put(
                 url,
                 {'properties': self.test_case_property},
