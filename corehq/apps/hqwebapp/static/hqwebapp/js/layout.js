@@ -128,10 +128,10 @@ self.actions = {
         });
     },
     showPublishStatus: function () {
-        $(self.selector.publishStatus).fadeIn();
+        $(self.selector.publishStatus).removeClass('d-none').fadeIn();
     },
     hidePublishStatus: function () {
-        $(self.selector.publishStatus).fadeOut();
+        $(self.selector.publishStatus).addClass('d-none').fadeOut();
     },
 };
 

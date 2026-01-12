@@ -18,9 +18,7 @@
       <span class="variable-app_name appname-text">{{ app_name }}</span>
     </a>
   </h2>
-  <div id="js-publish-status"
-       class="appnav-name-publish"
-       style="display: none;">  {# todo B5: inline-style #}
+  <div id="js-publish-status" class="appnav-name-publish d-none">
     {% trans "Updates Available to Publish" %}
   </div>
   {% if linked_name and linked_version %}
