@@ -23,8 +23,12 @@
       <option value="all">{% trans "Access All" %}</option>
       <option value="selected">{% trans "Limited Access" %}</option>
     </select>
-    <div class="card mb-2" x-show="showItems" x-collapse>
-      <!-- :class="id === 'hasError ? 'has-error' : ''" -->
+    <div
+      class="card mb-2"
+      :class="hasError && 'has-error'"
+      x-show="showItems"
+      x-collapse
+    >
       <div class="card-header" x-text="listHeading"></div>
       <div class="card-body">
         <template x-for="s in specific">
