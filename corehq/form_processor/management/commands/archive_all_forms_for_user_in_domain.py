@@ -31,7 +31,7 @@ class Command(BaseCommand):
         # ordered with latest form's id on top
         get_forms = XFormInstance.objects.get_forms
         form_ids = XFormInstance.objects.get_form_ids_for_user(self.domain, self.user_id)
-        return [f for f in get_forms(form_ids, self.domain) if f.is_normal]
+        return [f for f in get_forms(form_ids) if f.is_normal]
 
     def _fetch_case_ids_to_rebuild(self):
         case_ids_to_rebuild = set()

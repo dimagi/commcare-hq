@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from json import JSONDecodeError
 from unittest.mock import Mock, patch
 
@@ -440,6 +441,16 @@ class TestRequestPaymentStatus(SimpleTestCase):
         self.mock_payment_case.case_id = str(uuid.uuid4())
         self.transaction_id = str(uuid.uuid4())
 
+    def _assert_result(self, result, expected_status, expected_error):
+        self.assertEqual(result[PaymentProperties.PAYMENT_STATUS], expected_status)
+        self.assertEqual(result[PaymentProperties.PAYMENT_ERROR], expected_error)
+        self.assertIsInstance(
+            datetime.fromisoformat(
+                result[PaymentProperties.PAYMENT_STATUS_CONFIRMED_ON]
+            ),
+            datetime
+        )
+
     def test_successful_payment_status_request(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
@@ -454,11 +465,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
-                PaymentProperties.PAYMENT_ERROR: '',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.SUCCESSFUL, '')
             mock_request.assert_called_once_with(self.transaction_id, self.mock_config)
 
     def test_failed_payment_status_request(self):
@@ -475,11 +482,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
-                PaymentProperties.PAYMENT_ERROR: 'Insufficient funds',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.FAILED, 'Insufficient funds')
 
     def test_no_transaction_id(self):
         """Test error when no transaction ID is found"""
@@ -487,11 +490,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
         result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-        expected = {
-            PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-            PaymentProperties.PAYMENT_ERROR: 'MissingTransactionId',
-        }
-        self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, 'MissingTransactionId')
 
     def test_http_error_404(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -505,11 +504,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.HTTP_ERROR_404,
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.ERROR, PaymentStatusErrorCode.HTTP_ERROR_404)
 
     def test_http_error_500_with_json_response(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -527,11 +522,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'INTERNAL_PROCESSING_ERROR',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.ERROR, 'INTERNAL_PROCESSING_ERROR')
 
     def test_http_error_500_with_json_decode_error(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -546,11 +537,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'HttpError500',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.ERROR, 'HttpError500')
 
     def test_http_error_502_raises_exception(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -580,11 +567,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'HttpError418',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.ERROR, 'HttpError418')
 
             # Verify that error notification was called
             mock_notify_error.assert_called_once()
@@ -626,11 +609,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'UnexpectedError',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.ERROR, 'UnexpectedError')
 
             # Verify that exception notification was called
             mock_notify_exception.assert_called_once()
@@ -653,11 +632,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'UnexpectedStatus-invalid',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.ERROR, 'UnexpectedStatus-invalid')
 
     def test_status_with_uppercase(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -673,11 +648,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
-                PaymentProperties.PAYMENT_ERROR: '',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.SUCCESSFUL, '')
 
     def test_successful_status_without_reason(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -692,11 +663,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
-                PaymentProperties.PAYMENT_ERROR: '',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.SUCCESSFUL, '')
 
     def test_failed_status_with_reason(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -712,11 +679,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
             result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
-                PaymentProperties.PAYMENT_ERROR: 'Account blocked',
-            }
-            self.assertEqual(result, expected)
+            self._assert_result(result, PaymentStatus.FAILED, 'Account blocked')
 
 
 class TestRequestPaymentsStatusForCases(TestCase):

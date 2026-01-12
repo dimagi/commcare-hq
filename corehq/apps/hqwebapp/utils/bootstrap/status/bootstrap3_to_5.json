@@ -2,6 +2,9 @@
   "analytics": {
     "in_progress": true
   },
+  "app_manager": {
+    "in_progress": true
+  },
   "builds": {
     "is_complete": true,
     "templates": [
@@ -113,10 +116,11 @@
   "hqwebapp": {
     "in_progress": true,
     "templates": [
-      "maintenance_alerts.html",
       "close_window.html",
       "crispy/field/multifield.html",
-      "includes/create_item_form.html"
+      "includes/create_item_form.html",
+      "includes/modal_eula.html",
+      "maintenance_alerts.html"
     ]
   },
   "integration": {
@@ -172,8 +176,7 @@
       "email/base_templates/_base.html",
       "email/base_templates/_base_container_project_logo.html",
       "email/password_reset_email_hq.html",
-      "register_new_user.html",
-      "spec/mocha.html"
+      "register_new_user.html"
     ],
     "javascript": [
       "js/password_reset_confirm.js",
@@ -227,6 +230,9 @@
     "is_complete": true
   },
   "userreports": {
+    "in_progress": true
+  },
+  "users": {
     "in_progress": true
   }
 }

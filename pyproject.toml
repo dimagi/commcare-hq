@@ -17,7 +17,7 @@ dependencies = [
     "bleach", # USH - used for rich text messaging emails
     "bleach[css]", # USH - used for rich text messaging emails
     "boto3",
-    "celery",
+    "celery[redis]",
     "CommcareTranslationChecker>=0.9.7",
     "cryptography>=43.0.1",
     "csiphash",
@@ -147,6 +147,7 @@ dev = [
     'wheel',
     'flake8>=6.0', # linting/formatting
     'isort',
+    'ruff',
     'yapf',
     {include-group = "test"},
 ]
@@ -235,3 +236,9 @@ pythonpath = [
 ]
 required_plugins = 'pytest-django'
 DJANGO_SETTINGS_MODULE = 'testsettings'
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "single"

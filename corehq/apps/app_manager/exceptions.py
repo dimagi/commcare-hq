@@ -196,6 +196,10 @@ class AppMisconfigurationError(AppManagerException):
     """Errors in app configuration that are the user's responsibility"""
 
 
+class CaseTileMisconfigurationError(AppManagerException):
+    pass
+
+
 class CannotRestoreException(Exception):
     """Errors that inherit from this exception will always fail hard in restores"""
 

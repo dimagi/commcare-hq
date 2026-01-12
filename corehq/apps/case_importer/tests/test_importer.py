@@ -3,12 +3,10 @@ from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
-from django.utils.dateparse import parse_datetime
 
 from celery import states
 from celery.exceptions import Ignore
 
-from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 
 from corehq.apps.case_importer import exceptions
@@ -38,7 +36,6 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_disabled, flag_enabled
-from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.workbook_reading import make_worksheet
 
 
@@ -72,20 +69,6 @@ class TestCaseImportRow(SimpleTestCase):
         row = self.get_row(fields_to_update)
         kwargs = row._get_caseblock_kwargs()
         self.assertEqual(kwargs, {
-            'index': None,
-            'update': {'foo': 'bar'},
-        })
-
-    @flag_enabled('BULK_UPLOAD_DATE_OPENED')
-    def test_get_caseblock_kwargs_date_opened(self):
-        fields_to_update = {
-            'foo': 'bar',
-            CASE_TAG_DATE_OPENED: '1970-01-01',
-        }
-        row = self.get_row(fields_to_update)
-        kwargs = row._get_caseblock_kwargs()
-        self.assertEqual(kwargs, {
-            'date_opened': '1970-01-01',
             'index': None,
             'update': {'foo': 'bar'},
         })
@@ -178,7 +161,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
         self.assertEqual(1, res['num_chunks'])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
+        cases = CommCareCase.objects.get_cases(case_ids)
         self.assertEqual(5, len(cases))
         properties_seen = set()
         for case in cases:
@@ -204,7 +187,7 @@ class ImporterTest(TestCase):
         self.assertFalse(res['errors'])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertCountEqual(
-            [case.external_id for case in CommCareCase.objects.get_cases(case_ids, self.domain)],
+            [case.external_id for case in CommCareCase.objects.get_cases(case_ids)],
             ['external_id-0', 'external_id-0', 'external_id-1']
         )
 
@@ -260,7 +243,7 @@ class ImporterTest(TestCase):
         # shouldn't create any more cases, just the one
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
-        [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
+        [case] = CommCareCase.objects.get_cases(case_ids)
         for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
 
@@ -424,7 +407,7 @@ class ImporterTest(TestCase):
         # should just create the one case
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
-        [case] = CommCareCase.objects.get_cases(case_ids, self.domain)
+        [case] = CommCareCase.objects.get_cases(case_ids)
         self.assertEqual(external_id, case.external_id)
         for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
@@ -488,7 +471,7 @@ class ImporterTest(TestCase):
         extension_case_ids = CommCareCaseIndex.objects.get_extension_case_ids(
             self.domain, [parent_case.case_id])
         self.assertEqual(len(extension_case_ids), 2)
-        extension_cases = CommCareCase.objects.get_cases(extension_case_ids, self.domain)
+        extension_cases = CommCareCase.objects.get_cases(extension_case_ids)
         # Check that identifier is set correctly
         self.assertEqual(
             {'host', 'mother'},
@@ -526,7 +509,7 @@ class ImporterTest(TestCase):
             ['', 'non-case-owning-name', '', improper_loc.name],
         ])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
 
         self.assertEqual(cases['location-owner-id'].owner_id, location.location_id)
         self.assertEqual(cases['location-owner-code'].owner_id, location.location_id)
@@ -541,17 +524,6 @@ class ImporterTest(TestCase):
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_name'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
-
-    def test_opened_on(self):
-        case = self.factory.create_case()
-        new_date = '2015-04-30T14:41:53.000000Z'
-        with flag_enabled('BULK_UPLOAD_DATE_OPENED'):
-            self.import_mock_file([
-                ['case_id', 'date_opened'],
-                [case.case_id, new_date]
-            ])
-        case = CommCareCase.objects.get_case(case.case_id, self.domain)
-        self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
 
     def test_date_validity_checking(self):
         setup_data_dictionary(self.domain, self.default_case_type, [('d1', 'date'), ('d2', 'date')])
@@ -631,7 +603,7 @@ class ImporterTest(TestCase):
             ])
             self.assertEqual(res['errors'], {})
             case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-            cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+            cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
             self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
             self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
             self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
@@ -648,7 +620,7 @@ class ImporterTest(TestCase):
             ])
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.location_id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
@@ -670,7 +642,7 @@ class ImporterTest(TestCase):
             ])
 
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids, self.domain)}
+        cases = {c.name: c for c in CommCareCase.objects.get_cases(case_ids)}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa_owner._id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
@@ -853,7 +825,7 @@ class MultipleDomainImporterTest(TestCase):
 
         # Asserting current domain
         cur_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
-        cur_cases = CommCareCase.objects.get_cases(cur_case_ids, self.domain)
+        cur_cases = CommCareCase.objects.get_cases(cur_case_ids)
         self.assertEqual(3, len(cur_cases))
         #Asserting current domain case property
         cases = {c.name: c for c in cur_cases}
@@ -861,7 +833,7 @@ class MultipleDomainImporterTest(TestCase):
 
         # Asserting subdomain 1
         s1_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain1.name)
-        s1_cases = CommCareCase.objects.get_cases(s1_case_ids, self.domain)
+        s1_cases = CommCareCase.objects.get_cases(s1_case_ids)
         self.assertEqual(1, len(s1_cases))
         # Asserting subdomain 1 case property
         s1_cases_pro = {c.name: c for c in s1_cases}
@@ -869,7 +841,7 @@ class MultipleDomainImporterTest(TestCase):
 
         # Asserting subdomain 2
         s2_case_ids = CommCareCase.objects.get_case_ids_in_domain(self.subdomain2.name)
-        s2_cases = CommCareCase.objects.get_cases(s2_case_ids, self.domain)
+        s2_cases = CommCareCase.objects.get_cases(s2_case_ids)
         self.assertEqual(1, len(s2_cases))
         # Asserting subdomain 2 case property
         s2_cases_pro = {c.name: c for c in s2_cases}
@@ -898,7 +870,7 @@ class MultipleDomainImporterTest(TestCase):
         self.assertEqual(0, res['failed_count'])
         case_ids = CommCareCase.objects.get_case_ids_in_domain(self.domain)
         # Asserting current domain
-        cur_cases = CommCareCase.objects.get_cases(case_ids, self.domain)
+        cur_cases = CommCareCase.objects.get_cases(case_ids)
         self.assertEqual(6, len(cur_cases))
         # Asserting domain case property
         cases = {c.name: c for c in cur_cases}

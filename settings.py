@@ -1167,6 +1167,7 @@ CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
 CONNECTID_CREDENTIALS_CLIENT_ID = ''
 CONNECTID_CREDENTIALS_CLIENT_SECRET = ''
+CONNECTID_ADD_USER_ANALYTICS_URL = 'http://localhost:8080/users/add_user_analytics/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
@@ -1198,6 +1199,13 @@ ORANGE_CAMEROON_CONNECTION_SETTINGS = {
 # ID of the chatbot in Open Chat Studio
 AI_CHATBOT_ID = None
 AI_CHATBOT_TOKEN = None
+
+#  Credentials for Orange Cameroon API. Override in localsettings.py
+ORANGE_CAMEROON_API_CREDS = {
+    'x-auth-token': '',
+    'channel_msisdn': '',
+    'channel_pin': '',
+}
 
 try:
     # try to see if there's an environmental variable set for local_settings

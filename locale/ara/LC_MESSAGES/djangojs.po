@@ -527,6 +527,14 @@ msgstr "تنازلي (3، 2، 1)"
 msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr "تنازلي (1.3، 1.2، 1.1)"
 
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Missing sort calculation."
+msgstr "حساب الترتيب مفقود."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
+msgid "Missing sort property."
+msgstr "خاصية الترتيب مفقودة."
+
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
@@ -1090,22 +1098,6 @@ msgstr "اللغة مكررة"
 msgid "This conflicts with a current language"
 msgstr "هذا يتعارض مع لغة حالية"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "{path} is not a valid data parent"
-msgstr "{path} ليس أصل بيانات صالح"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "createXML"
-msgstr "إنشاءXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "getData"
-msgstr "الحصول على البيانات"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/0.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
 msgid "New Form"
 msgstr "نموذج جديد"
@@ -1149,6 +1141,22 @@ msgstr "صحيح عندما تكون جميع التعابير صحيحة."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "True when ANY of the expressions are true."
 msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} ليس أصل بيانات صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "createXML"
+msgstr "إنشاءXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "getData"
+msgstr "الحصول على البيانات"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
@@ -1412,10 +1420,6 @@ msgstr ""
 msgid "Loading..."
 msgstr "جارٍ التحميل..."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
-msgid "Fetching your location..."
-msgstr "جارٍ تحديد موقعك..."
-
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Please perform a search."
 msgstr "يرجى إجراء بحث."
@@ -1435,10 +1439,6 @@ msgid ""
 msgstr ""
 "لقد قمت بتحديد أكثر من الحد الأقصى المسموح به وهو <%- value %> . يرجى إلغاء "
 "تحديد بعض القيم للمتابعة."
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
-msgid "Your location"
-msgstr "موقعك"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid ""
@@ -1625,7 +1625,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap3/deduplication_rules.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/bootstrap5/deduplication_rules.js
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Issue communicating with server. Try again."
 msgstr "مشكلة في التواصل مع الخادم. حاول مرة أخرى."
 
@@ -2814,7 +2815,8 @@ msgstr "يرجى إدخال اسمك."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 #: corehq/apps/styleguide/static/styleguide/js/examples/crispy_forms_knockout_validation.js
-#: corehq/apps/users/static/users/js/invite_web_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/invite_web_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/invite_web_user.js
 msgid "Please specify an email."
 msgstr "يرجى تحديد بريد إلكتروني."
 
@@ -3052,7 +3054,8 @@ msgstr "الوقت"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/edit_scheduled_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "اختر لغة..."
 
@@ -3498,87 +3501,148 @@ msgstr "مصدر البيانات"
 msgid "Unknown error"
 msgstr "خطأ غير معروف"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr "تم تغيير كلمة المرور بنجاح."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password is not strong enough. Try making your password more complex."
 msgstr ""
 "كلمة المرور غير قوية بما فيه الكفاية. حاول جعل كلمة المرور أكثر تعقيدًا."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "The two password fields didn't match."
 msgstr "حقلا كلمة المرور غير متطابقين."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Password was not changed. "
 msgstr "لم يتم تغيير كلمة المرور."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Available Groups"
 msgstr "المجموعات المتاحة"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Groups with this User"
 msgstr "المجموعات مع هذا المستخدم"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Search Group..."
 msgstr "بحث عن مجموعة..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap3/edit_commcare_user.js
+#: corehq/apps/users/static/users/js/bootstrap5/edit_commcare_user.js
 msgid "Group membership has changed."
 msgstr "تم تغيير عضوية المجموعة."
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "<%- user_count %> user"
 msgstr "<%- user_count %> مستخدم"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "<%- user_count %> users"
 msgstr "<%- user_count %> مستخدمين"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid " and <%- group_count %> group"
 msgstr " و <%- group_count %> مجموعة"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid " and <%- group_count %> groups"
 msgstr " و <%- group_count %> مجموعات"
 
-#: corehq/apps/users/static/users/js/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap3/filtered_download.js
+#: corehq/apps/users/static/users/js/bootstrap5/filtered_download.js
 msgid "Error determining number of matching users"
 msgstr "حدث خطأ أثناء تحديد عدد المستخدمين المطابقين"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Unavailable"
 msgstr "غير متوفر"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "<%- minutes %> minutes remaining"
 msgstr "متبقي <%- minutes %> دقيقة"
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "يرجى إدخال عنوان بريد إلكتروني صالح."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Phone number is required when users confirm their own accounts by sms."
 msgstr ""
 "رقم الهاتف مطلوب عندما يؤكد المستخدمون حساباتهم بأنفسهم عبر الرسائل القصيرة."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Phone number should contain only digits 0-9."
 msgstr "يجب أن يحتوي رقم الهاتف على أرقام فقط من 0 إلى 9."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Checking availability..."
 msgstr "جارٍ التحقق من التوفر..."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap3/mobile_workers.js
+#: corehq/apps/users/static/users/js/bootstrap5/mobile_workers.js
 msgid "Issue connecting to server. Check Internet connection."
 msgstr "مشكلة في الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت."
+
+#: corehq/apps/users/static/users/js/bootstrap3/roles_and_permissions.js
+#: corehq/apps/users/static/users/js/bootstrap5/roles_and_permissions.js
+msgid "View Only"
+msgstr "عرض فقط"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "<%- days %> days remaining"
+msgstr "متبقي <%- days %> يوم"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Unable to delete invitation, please try again later."
+msgstr "تعذر حذف الدعوة، يرجى المحاولة لاحقًا."
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Unable to resend invitation, please try again later."
+msgstr "تعذر إعادة إرسال الدعوة، يرجى المحاولة لاحقًا."
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Delete request"
+msgstr "حذف الطلب"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid "Are you sure you want to delete this request?"
+msgstr "هل أنت متأكد أنك تريد حذف هذا الطلب؟"
+
+#: corehq/apps/users/static/users/js/bootstrap3/web_users.js
+#: corehq/apps/users/static/users/js/bootstrap5/web_users.js
+msgid ""
+"We have sent the invitation email to this user but the user's email server "
+"rejected it. This usually means either the email address is incorrect or "
+"your organization is blocking emails from our address (<%- fromAddress %>)."
+msgstr ""
+"لقد أرسلنا رسالة الدعوة إلى هذا المستخدم لكن خادم البريد الإلكتروني للمستخدم"
+" رفضها. عادةً ما يعني هذا أن عنوان البريد الإلكتروني غير صحيح أو أن مؤسستك "
+"تحظر الرسائل من عنواننا (<%- fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "No Access"
@@ -3942,40 +4006,6 @@ msgstr "هل أنت متأكد أنك تريد حذف الدور <%- role %>؟"
 msgid "An error occurred, please try again."
 msgstr "حدث خطأ، يرجى المحاولة مرة أخرى."
 
-#: corehq/apps/users/static/users/js/roles_and_permissions.js
-msgid "View Only"
-msgstr "عرض فقط"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "<%- days %> days remaining"
-msgstr "متبقي <%- days %> يوم"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Unable to delete invitation, please try again later."
-msgstr "تعذر حذف الدعوة، يرجى المحاولة لاحقًا."
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Unable to resend invitation, please try again later."
-msgstr "تعذر إعادة إرسال الدعوة، يرجى المحاولة لاحقًا."
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Delete request"
-msgstr "حذف الطلب"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid "Are you sure you want to delete this request?"
-msgstr "هل أنت متأكد أنك تريد حذف هذا الطلب؟"
-
-#: corehq/apps/users/static/users/js/web_users.js
-msgid ""
-"We have sent the invitation email to this user but the user's email server "
-"rejected it. This usually means either the email address is incorrect or "
-"your organization is blocking emails from our address (<%- fromAddress %>)."
-msgstr ""
-"لقد أرسلنا رسالة الدعوة إلى هذا المستخدم لكن خادم البريد الإلكتروني للمستخدم"
-" رفضها. عادةً ما يعني هذا أن عنوان البريد الإلكتروني غير صحيح أو أن مؤسستك "
-"تحظر الرسائل من عنواننا (<%- fromAddress %>)."
-
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
 msgstr "لم يتم العثور على أي مستخدمين يطابقون بحثك."
@@ -4183,6 +4213,9 @@ msgstr "فشل! الاستجابة هي: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
+
+#~ msgid "Your location"
+#~ msgstr "موقعك"
 
 #~ msgid "Could not enable user properties, please try again later."
 #~ msgstr "تعذر تفعيل خصائص المستخدم، يرجى المحاولة مرة أخرى لاحقًا."

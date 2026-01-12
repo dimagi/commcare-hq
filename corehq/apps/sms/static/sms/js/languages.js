@@ -1,6 +1,6 @@
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import supportedLanguages from "app_manager/js/supported_languages";
+import supportedLanguages from "app_manager/js/bootstrap3/supported_languages";
 
 $(function () {
     var langs = initialPageData.get('sms_langs');

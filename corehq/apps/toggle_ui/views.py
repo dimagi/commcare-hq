@@ -162,10 +162,7 @@ class ToggleEditView(BasePageView):
     def get_toggle(self):
         if not self.static_toggle:
             raise Http404()
-        try:
-            return Toggle.get(self.toggle_slug)
-        except ResourceNotFound:
-            return Toggle(slug=self.toggle_slug)
+        return Toggle.get_or_create(self.toggle_slug)
 
     @property
     def page_context(self):
@@ -437,7 +434,7 @@ def toggle_status(request, toggle_slug):
     if status not in ToggleStatus:
         raise Exception('Invalid toggle status')
 
-    toggle = Toggle.get(toggle_slug)
+    toggle = Toggle.get_or_create(toggle_slug)
     toggle.status = status
     toggle.save()
     for entry in toggle.enabled_users:

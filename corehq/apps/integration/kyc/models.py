@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext as _
@@ -12,7 +11,6 @@ from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
-from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 
 
@@ -79,6 +77,12 @@ class KycConfig(models.Model):
     )
     phone_number_field = models.CharField(max_length=126, null=True, blank=True)
     passing_threshold = jsonfield.JSONField(default=dict)
+    connection_settings = models.ForeignKey(
+        ConnectionSettings,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         constraints = [

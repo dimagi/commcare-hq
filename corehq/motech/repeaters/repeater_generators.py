@@ -252,7 +252,9 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         else:
             case_ids_to_forward = [cid for cid in case_ids_to_forward.split(' ') if cid]
         new_owner = payload_doc.get_case_property('new_owner')
-        cases_to_forward = CommCareCase.objects.get_cases(case_ids_to_forward, payload_doc.domain)
+        cases_to_forward = [c for c in
+                            CommCareCase.objects.get_cases(case_ids_to_forward)
+                            if c.domain == payload_doc.domain]
         case_ids_to_forward = set(case_ids_to_forward)
         included_case_types = payload_doc.get_case_property('case_types').split(' ')
         case_type_configs = {}
