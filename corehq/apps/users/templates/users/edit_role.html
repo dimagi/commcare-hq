@@ -27,6 +27,7 @@
     <form
       x-data="initRole({{ data }})"
       @submit.prevent="saveRole($data.formData)"
+      x-cloak
     >
       <div class="row mb-4">
         <label class="col-sm-2 control-label" for="role-name">
@@ -292,11 +293,7 @@
               </div>
             </div>
           </template>
-          <div class="row"
-            x-show="!reportPermissions.all"
-            x-collapse
-            x-cloak
-          >
+          <div class="row" x-show="!reportPermissions.all" x-collapse>
             <div class="col-md-4 form-label fw-bold">
               {% trans "Access Specific Reports" %}
             </div>
@@ -328,12 +325,7 @@
           </div>
 
           {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
-            <div
-              class="row mt-2"
-              x-show="!tableauPermissions.all"
-              x-collapse
-              x-cloak
-            >
+            <div class="row mt-2" x-show="!tableauPermissions.all" x-collapse>
               <div class="col-md-4 form-label fw-bold">
                 {% trans "Access Specific Tableau Reports" %}
               </div>
@@ -909,12 +901,7 @@
 
       <div class="row mb-4">
         <div class="col-sm-2">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :disabled="isSaving"
-            x-cloak
-          >
+          <button type="submit" class="btn btn-primary" :disabled="isSaving">
             <span x-show="!isSaving">{% trans "Save" %}</span>
             <span x-show="isSaving">{% trans "Saving ..." %}</span>
           </button>
