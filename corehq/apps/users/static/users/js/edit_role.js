@@ -144,9 +144,6 @@ const createAllOrSelectedPermissionModel = (args) => {
 };
 
 Alpine.data('initRole', (roleJson) => {
-
-    console.log(`initRole: ${JSON.stringify(roleJson, null, 2)}`);
-
     return {
         role: roleJson,
         isSaving: false,
@@ -830,9 +827,6 @@ Alpine.data('initRole', (roleJson) => {
 
             this.saveRole = () => {
                 self.isSaving = true;
-
-                console.log(`saveRole: ${JSON.stringify(self.role, null, 2)}`);
-
                 $.ajax({
                     method: 'POST',
                     url: initialPageData.reverse("post_user_role"),
