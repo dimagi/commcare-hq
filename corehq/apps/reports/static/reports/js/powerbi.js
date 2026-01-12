@@ -9,23 +9,25 @@ self.requestEmbedToken = function () {
         method: 'post',
         url: initialPageData.reverse('get_powerbi_embed_token'),
         data: {
-            report_id: initialPageData.get("report_id"),
+            report_sql_id: initialPageData.get("report_sql_id"),
         },
         dataType: 'json',
         success: function (data) {
-            $('#loadingDiv').addClass("hide");
+            console.log('PowerBI token response:', data);
+            $('#loadingDiv').addClass("d-none");
             if (data.success) {
                 self.embedReport(data.embedToken, data.embedUrl, data.reportId);
             } else {
-                $('#errorMessage').removeClass("hide");
+                $('#errorMessage').removeClass("d-none");
                 document.getElementById('errorMessage').innerHTML = '<b>' + data.message + '</b>';
             }
         },
-        error: function () {
-            $('#loadingDiv').addClass("hide");
+        error: function (xhr, status, error) {
+            console.error('PowerBI token request error:', status, error, xhr.responseText);
+            $('#loadingDiv').addClass("d-none");
             var requestErrorMessage = gettext("An error occurred with the PowerBI embed token request. " +
                 "Please ensure the configuration is correct and try again.");
-            $('#errorMessage').removeClass("hide");
+            $('#errorMessage').removeClass("d-none");
             document.getElementById("errorMessage").innerHTML = requestErrorMessage;
         },
     });

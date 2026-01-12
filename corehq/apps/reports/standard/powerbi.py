@@ -12,6 +12,7 @@ from corehq.apps.reports.models import PowerBIWorkspace, PowerBIReport, PowerBIA
 from corehq.apps.reports.exceptions import PowerBIAPIError
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.permissions import location_safe
 
 
@@ -41,6 +42,7 @@ class PowerBIView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.report.id,))
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         if not self._authenticate_request(request):
@@ -57,7 +59,7 @@ class PowerBIView(BaseDomainView):
         return {
             "domain": self.report.workspace.domain,
             "workspace_id": self.report.workspace.workspace_id,
-            "report_id": self.report.report_id,
+            "report_sql_id": self.report.id,
             "report_title": self.report.title,
         }
 
@@ -74,15 +76,13 @@ def get_powerbi_embed_token(request, domain):
     This endpoint is called by the frontend to get credentials for embedding.
     """
     report_data = {data: value[0] for data, value in dict(request.POST).items()}
-
     try:
-        report = PowerBIReport.objects.get(id=report_data.get('report_id'))
+        report = PowerBIReport.objects.get(id=report_data.get('report_sql_id'))
     except PowerBIReport.DoesNotExist:
         return JsonResponse({
             "success": False,
             "message": _("PowerBI report not found"),
         })
-
     # Authenticate user
     if not request.couch_user.can_view_powerbi_report(domain, report):
         raise Http403
@@ -102,7 +102,7 @@ def get_powerbi_embed_token(request, domain):
         access_token = app.get_access_token()
 
         # Generate embed token for the report
-        embed_token_url = f'{workspace.api_endpoint}/v1.0/myorg/groups/{workspace.workspace_id}/reports/{report.report_id}/GenerateToken'
+        embed_token_url = f'{workspace.api_endpoint}/v1.0/myorg/GenerateToken'
 
         headers = {
             'Content-Type': 'application/json',
@@ -111,8 +111,8 @@ def get_powerbi_embed_token(request, domain):
 
         # Request body for embed token generation
         body = {
-            'accessLevel': 'View',
-            'allowSaveAs': False
+            'reports': [{'id': report.report_id}],
+            'targetWorkspaces': [{'id': workspace.workspace_id}]
         }
 
         response = requests.post(embed_token_url, json=body, headers=headers)
