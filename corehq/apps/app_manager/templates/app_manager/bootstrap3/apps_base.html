@@ -18,7 +18,7 @@
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-  {% include 'app_manager/partials/apps_stylesheets.html' %}
+  {% include 'app_manager/partials/bootstrap3/apps_stylesheets.html' %}
   <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
 {% endblock %}
 
