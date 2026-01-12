@@ -5,7 +5,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import toggles from "hqwebapp/js/toggles";
 import privileges from "hqwebapp/js/privileges";
 import Alpine from "alpinejs";
-import collapse from '@alpinejs/collapse'
+import collapse from '@alpinejs/collapse';
 
 const removeItem = (array, item) => {
     const index = array.indexOf(item);
@@ -71,7 +71,7 @@ const createNoneAllSelectedPermissionModel = (args) => {
                 this.state = SELECTED;
                 this.specificCache = [...permissionObj[listKey]];
             }
-        }
+        },
     };
 
     handler.specific = _.map(listChoices, (item) => ({
@@ -89,7 +89,7 @@ const createNoneAllSelectedPermissionModel = (args) => {
                 removeItem(permissionObj[listKey], this.slug);
                 removeItem(handler.specificCache, this.slug);
             }
-        }
+        },
     }));
 
     return handler;
@@ -136,7 +136,7 @@ const createAllOrSelectedPermissionModel = (args) => {
                     removeItem(permissionObj[listKey], identifier);
                     removeItem(model.specificCache, identifier);
                 }
-            }
+            },
         };
     });
 
@@ -165,7 +165,7 @@ Alpine.data('initRole', (roleJson) => {
             return this.role.permissions.access_all_locations && this.restrictRoleChecked;
         },
         get cantAccessAllLocations() {
-            return !this.hasUnpermittedLocationRestriction && !this.role.permissions.access_all_locations
+            return !this.hasUnpermittedLocationRestriction && !this.role.permissions.access_all_locations;
         },
         get canRestrictAccessByLocation() {
             return initialPageData.get("can_restrict_access_by_location");
@@ -262,7 +262,7 @@ Alpine.data('initRole', (roleJson) => {
                 },
                 {
                     get showOption() {
-                        return self.role.permissions.access_all_locations
+                        return self.role.permissions.access_all_locations;
                     },
                     get editPermission() {
                         return self.role.permissions.edit_groups;
@@ -287,7 +287,7 @@ Alpine.data('initRole', (roleJson) => {
                     allowCheckboxText: gettext("Allow changing group membership (requires edit groups)."),
                     allowCheckboxId: "edit-users-groups-checkbox",
                     get allowCheckboxPermission() {
-                        return self.role.permissions.edit_users_in_groups
+                        return self.role.permissions.edit_users_in_groups;
                     },
                     set allowCheckboxPermission(value) { // Add this setter
                         self.role.permissions.edit_users_in_groups = value;
@@ -318,7 +318,7 @@ Alpine.data('initRole', (roleJson) => {
                     allowCheckboxText: gettext("Allow changing workers at a location."),
                     allowCheckboxId: "edit-users-locations-checkbox",
                     get allowCheckboxPermission() {
-                        return self.role.permissions.edit_users_in_locations
+                        return self.role.permissions.edit_users_in_locations;
                     },
                     set allowCheckboxPermission(value) { // Add this setter
                         self.role.permissions.edit_users_in_locations = value;
@@ -594,7 +594,7 @@ Alpine.data('initRole', (roleJson) => {
                     text: gettext('Linked Project Spaces'),
                     checkboxLabel: "erm-checkbox",
                     get checkboxPermission() {
-                        return self.role.permissions.access_release_management
+                        return self.role.permissions.access_release_management;
                     },
                     set checkboxPermission(value) {
                         self.role.permissions.access_release_management = value;
@@ -605,7 +605,7 @@ Alpine.data('initRole', (roleJson) => {
                     text: gettext("Linked Configurations"),
                     checkboxLabel: "erm-edit-linked-checkbox",
                     get checkboxPermission() {
-                        return self.role.permissions.edit_linked_configurations
+                        return self.role.permissions.edit_linked_configurations;
                     },
                     set checkboxPermission(value) {
                         self.role.permissions.edit_linked_configurations = value;
@@ -626,7 +626,7 @@ Alpine.data('initRole', (roleJson) => {
                     slug: report.slug,
                     name: report.name,
                     get value() {
-                        return self.role.permissions.view_report_list.indexOf(report.path) !== -1
+                        return self.role.permissions.view_report_list.indexOf(report.path) !== -1;
                     },
                     set value(value) {
                         if (value) {
@@ -637,7 +637,7 @@ Alpine.data('initRole', (roleJson) => {
                                 self.role.permissions.view_report_list.splice(index, 1);
                             }
                         }
-                    }
+                    },
                 })),
             };
 
@@ -653,7 +653,7 @@ Alpine.data('initRole', (roleJson) => {
                     slug: report.slug,
                     name: report.name,
                     get value() {
-                        return self.role.permissions.view_tableau_list.indexOf(report.path) !== -1
+                        return self.role.permissions.view_tableau_list.indexOf(report.path) !== -1;
                     },
                     set value(value) {
                         if (value) {
@@ -664,7 +664,7 @@ Alpine.data('initRole', (roleJson) => {
                                 self.role.permissions.view_tableau_list.splice(index, 1);
                             }
                         }
-                    }
+                    },
                 })),
             };
 
@@ -683,7 +683,7 @@ Alpine.data('initRole', (roleJson) => {
                     },
                     checkboxText: gettext("Allow role to create and edit reports in report builder."),
                 },
-            ]
+            ];
             if (toggles.toggleEnabled('USER_CONFIGURABLE_REPORTS')) {
                 if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
                     this.reports.push({
@@ -700,7 +700,7 @@ Alpine.data('initRole', (roleJson) => {
                         },
                         checkboxText: gettext("Allow role to create and edit custom web reports."),
                     });
-                } else { //TODO: only text is different? Can I make it a get instead?
+                } else {
                     this.reports.push({
                         get visibilityRestraint() {
                             return self.role.permissions.access_all_locations;
@@ -769,7 +769,7 @@ Alpine.data('initRole', (roleJson) => {
                 permissionObj: self.role.permissions,
                 accessKey: 'access_web_apps',
                 listKey: 'web_apps_list',
-                listChoices: initialPageData.get("web_apps_choices")
+                listChoices: initialPageData.get("web_apps_choices"),
             });
 
             this.registryPermissions = [
@@ -779,7 +779,7 @@ Alpine.data('initRole', (roleJson) => {
                     permissionObj: self.role.permissions,
                     accessKey: 'manage_data_registry',
                     listKey: 'manage_data_registry_list',
-                    listChoices: initialPageData.get("data_registry_choices")
+                    listChoices: initialPageData.get("data_registry_choices"),
                 }),
                 createNoneAllSelectedPermissionModel({
                     text: gettext("View Registry Data"),
@@ -787,7 +787,7 @@ Alpine.data('initRole', (roleJson) => {
                     permissionObj: self.role.permissions,
                     accessKey: 'view_data_registry_contents',
                     listKey: 'view_data_registry_contents_list',
-                    listChoices: initialPageData.get("data_registry_choices")
+                    listChoices: initialPageData.get("data_registry_choices"),
                 }),
             ];
 
@@ -850,10 +850,10 @@ Alpine.data('initRole', (roleJson) => {
                         self.roleError = message;
                     },
                 });
-            }
+            };
         }, // end init
     };
 });
 
-Alpine.plugin(collapse)
+Alpine.plugin(collapse);
 Alpine.start();
