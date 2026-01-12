@@ -1755,6 +1755,10 @@ class ProjectUsersTab(UITab):
                 'description': _("View and manage user roles."),
                 'subpages': [
                     {
+                        'title': _("Create Role"),
+                        'urlname': 'create_role'
+                    },
+                    {
                         'title': _("Edit Role"),
                         'urlname': EditRoleView.urlname
                     },

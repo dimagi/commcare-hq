@@ -312,11 +312,19 @@ def _delete_user_role(domain, role_data):
 class EditRoleView(RoleContextMixin, BaseRoleAccessView):
     urlname = "edit_role"
     template_name = 'users/edit_role.html'
-    page_title = gettext_lazy("Edit Role")
+
+    @property
+    def page_title(self):
+        if self.kwargs.get('role_id'):
+            return gettext_lazy("Edit Role")
+        return gettext_lazy("Create Role")
 
     @property
     def page_url(self):
-        return reverse(self.urlname, kwargs={'domain': self.domain, 'role_id': self.kwargs.get('role_id')})
+        role_id = self.kwargs.get('role_id')
+        if role_id:
+            return reverse(self.urlname, kwargs={'domain': self.domain, 'role_id': role_id})
+        return reverse('create_role', kwargs={'domain': self.domain})
 
     @property
     def parent_pages(self):
@@ -327,17 +335,50 @@ class EditRoleView(RoleContextMixin, BaseRoleAccessView):
 
     @property
     def page_context(self):
-        role_data = self.role.to_json()
+        role_data = self._get_role_data()
         context = self.get_common_role_context()
         context.update({
             "data": json.dumps(role_data),
         })
         return context
 
+    def _get_role_data(self):
+        """Returns role data for editing or a blank structure for creating."""
+        role_id = self.kwargs.get("role_id")
+        if role_id:
+            role = self._get_existing_role(role_id)
+            return role.to_json() if role else self._get_blank_role_data()
+        return self._get_blank_role_data()
+
+    def _get_existing_role(self, role_id):
+        """Fetches an existing role by ID."""
+        try:
+            role = UserRole.objects.by_couch_id(role_id, self.domain)
+            if role.domain != self.domain:
+                raise Http404()
+            return role
+        except UserRole.DoesNotExist:
+            raise Http404()
+
+    def _get_blank_role_data(self):
+        """Returns a blank role structure for creating new roles."""
+        return {
+            "domain": self.domain,
+            "name": "",
+            "default_landing_page": None,
+            "is_non_admin_editable": False,
+            "is_archived": False,
+            "upstream_id": None,
+            "is_commcare_user_default": False,
+            "permissions": HqPermissions().to_json(),
+            "assignable_by": [],
+            # Note: no '_id' field for new roles
+        }
+
     @property
     def role(self):
+        """Returns the role being edited, or None for new roles."""
         role_id = self.kwargs.get("role_id")
-        try:
-            return UserRole.objects.by_couch_id(role_id, self.domain)
-        except UserRole.DoesNotExist:
+        if not role_id:
             return None
+        return self._get_existing_role(role_id)

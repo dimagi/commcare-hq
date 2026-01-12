@@ -30,10 +30,10 @@
       x-cloak
     >
       <div class="row mb-4">
-        <label class="col-sm-2 control-label" for="role-name">
+        <label class="col-md-2 control-label" for="role-name">
           Role Name<span class="asteriskField">*</span>
         </label>
-        <div class="col-sm-4 controls">
+        <div class="col-md-8 controls">
           <input
             x-model="role.name"
             type="text"
@@ -59,13 +59,13 @@
         </legend>
         <div id="access-areas-card" class="card-body collapse show">
           <div class="row">
-            <div class="col-md-2">{% trans "Can Edit" %}</div>
-            <div class="col-md-2">{% trans "Can View" %}</div>
+            <div class="col-md-1">{% trans "Can Edit" %}</div>
+            <div class="col-md-1">{% trans "Can View" %}</div>
             <div class="col-md-8"></div>
           </div>
           <template x-for="area in accessAreas" :key="area.editCheckboxLabel">
             <div class="row" x-show="area.showOption">
-              <div class="col-md-2 controls" x-show="area.showEditCheckbox">
+              <div class="col-md-1 controls" x-show="area.showEditCheckbox">
                 <div class="form-check">
                   <input
                     class="form-check-input"
@@ -82,10 +82,10 @@
                   </label>
                 </div>
               </div>
-              <div class="col-md-2 controls" x-show="!area.showEditCheckbox">
+              <div class="col-md-1 controls" x-show="!area.showEditCheckbox">
                 <div class="form-check-placeholder"></div>
               </div>
-              <div class="col-md-2 controls" x-show="area.showViewCheckbox">
+              <div class="col-md-1 controls" x-show="area.showViewCheckbox">
                 {# PLACEHOLDER checkbox when editPermission() is true #}
                 <div class="form-check" x-show="area.editPermission">
                   <input
@@ -125,7 +125,7 @@
                 </div>
                 {# END REAL checkbox #}
               </div>
-              <div class="col-md-2 controls" x-show="!area.showViewCheckbox">
+              <div class="col-md-1 controls" x-show="!area.showViewCheckbox">
                 <div class="form-check-placeholder"></div>
               </div>
               <div class="col-md-8 form-label">
@@ -204,7 +204,7 @@
         </legend>
         <div id="erm-card" class="card-body collapse show">
           <div class="row" x-data="erm.access_release_management">
-            <div class="col-md-4 form-label fw-bold" x-text="text"></div>
+            <div class="col-md-2 form-label fw-bold" x-text="text"></div>
             <div class="col-md-8 controls">
               <div class="form-check pt-0">
                 <input
@@ -223,7 +223,7 @@
           </div>
 
           <div class="row" x-data="erm.edit_linked_configs">
-            <div class="col-md-4 form-label fw-bold" x-text="text"></div>
+            <div class="col-md-2 form-label fw-bold" x-text="text"></div>
             <div class="col-md-8 controls">
               <div class="form-check pt-0">
                 <template
@@ -272,7 +272,7 @@
           <template x-for="report in reports">
             <div class="row" x-show="report.visibilityRestraint">
               <div
-                class="col-md-4 form-label fw-bold"
+                class="col-md-2 form-label fw-bold"
                 x-text="report.text"
               ></div>
               <div class="col-md-8 controls">
@@ -294,7 +294,7 @@
             </div>
           </template>
           <div class="row" x-show="!reportPermissions.all" x-collapse>
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Access Specific Reports" %}
             </div>
             <div class="col-md-8 controls">
@@ -326,7 +326,7 @@
 
           {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
             <div class="row mt-2" x-show="!tableauPermissions.all" x-collapse>
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "Access Specific Tableau Reports" %}
               </div>
               <div class="col-md-8 controls">
@@ -415,7 +415,7 @@
           </legend>
           <div id="analytics-card" class="card-body collapse show">
             <div class="row">
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "All CommCare Analytics Roles" %}
               </div>
               <div class="col-md-8 controls">
@@ -436,7 +436,7 @@
               </div>
             </div>
             <div class="row" x-show="!commcareAnalyticsRoles.all" x-collapse>
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "CommCare Analytics Roles" %}
               </div>
               <div class="col-md-8 controls">
@@ -483,7 +483,7 @@
         <div id="other-card" class="card-body collapse show">
           {% if show_integration %}
             <div class="row">
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "Integration Access" %}
               </div>
               <div class="col-md-8 controls">
@@ -504,7 +504,7 @@
           {% endif %}
 
           <div class="row" x-show="role.permissions.access_all_locations">
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Manage Subscription Info" %}
             </div>
             <div class="col-md-8 controls">
@@ -528,7 +528,7 @@
               + ' ' + (cantAccessAllLocations ? 'has-warning' : '')"
             x-show="canRestrictAccessByLocation || hasUnpermittedLocationRestriction"
           >
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Full Organization Access" %}
             </div>
             <div class="col-md-8 controls">
@@ -575,7 +575,7 @@
           </div>
 
           <div class="row">
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Login-As All Users" %}
             </div>
             <div class="col-md-8 controls">
@@ -598,7 +598,7 @@
 
           {% if request|toggle_enabled:"RESTRICT_LOGIN_AS" %}
             <div class="row">
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "Limit Login-As" %}
               </div>
               <div class="col-md-8 controls">
@@ -640,7 +640,7 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "Login-As Default User" %}
               </div>
               <div class="col-md-8 controls">
@@ -685,7 +685,7 @@
           {% endif %}
 
           <div class="row">
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Mobile App Access" %}
             </div>
             <div class="col-md-8 controls">
@@ -704,7 +704,7 @@
           </div>
 
           <div class="row">
-            <div class="col-md-4 form-label fw-bold" for="landing-page">
+            <div class="col-md-2 form-label fw-bold" for="landing-page">
               {% trans "Default Landing Page" %}
             </div>
             <div class="col-md-8 controls">
@@ -722,7 +722,7 @@
           </div>
 
           <div class="row">
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Allow Reporting Issues" %}
             </div>
             <div class="col-md-8 controls">
@@ -740,7 +740,7 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Non-admin Editable" %}
             </div>
             <div class="col-md-8 controls">
@@ -762,7 +762,7 @@
             </div>
           </div>
           <div class="row" x-show="!manageRoleAssignments.all" x-collapse>
-            <div class="col-md-4 form-label fw-bold">
+            <div class="col-md-2 form-label fw-bold">
               {% trans "Manage Role Assignment" %}
             </div>
             <div
@@ -814,7 +814,7 @@
               class="row"
               x-show="role.permissions.edit_web_users || role.permissions.edit_commcare_users"
             >
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "Assign All User Profiles" %}
               </div>
               <div class="col-md-8 controls">
@@ -839,7 +839,7 @@
               x-show="!profilePermissions.all && (role.permissions.edit_web_users || role.permissions.edit_commcare_users)"
               x-collapse
             >
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "Assign Specific User Profiles" %}
               </div>
               <div class="col-md-8 controls">
@@ -872,7 +872,7 @@
 
           {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
             <div class="row">
-              <div class="col-md-4 form-label fw-bold">
+              <div class="col-md-2 form-label fw-bold">
                 {% trans "Manage Project Alerts" %}
               </div>
               <div class="col-md-8 controls">
