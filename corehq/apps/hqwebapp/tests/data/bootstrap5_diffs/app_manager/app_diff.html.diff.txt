@@ -1,0 +1,22 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "app_manager/bootstrap3/source_files.html" %}
++{% extends "app_manager/bootstrap5/source_files.html" %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ {% load i18n %}
+-{% js_entry_b3 'app_manager/js/bootstrap3/source_files' %}
++{% js_entry 'app_manager/js/bootstrap5/source_files' %}
+ {% block stylesheets %}{{ block.super }}
+   {% compress css %}
+     <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
+@@ -21,7 +21,7 @@
+   {% registerurl 'compare_multimedia_sizes_for_build_profile' app.domain app.id other_app.id '---' %}
+   <div id="multimedia-sizes-diff-container">
+     <h2>{% trans 'Multimedia Sizes' %}</h2>
+-    {% include 'app_manager/partials/bootstrap3/build_profiles_select.html' %}
++    {% include 'app_manager/partials/bootstrap5/build_profiles_select.html' %}
+     <div id="multimedia-sizes-container-1" class="ko-template">
+       {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
+     </div>

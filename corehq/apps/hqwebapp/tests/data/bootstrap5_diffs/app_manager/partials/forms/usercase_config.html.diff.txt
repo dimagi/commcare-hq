@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ 
+ <script type="text/html" id="usercase-config:case-transaction">
+   <div class="row top-spacer">
+-    <div class="panel panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
++    <div class="card panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>  {# todo B5: css-panel #}
+   </div>
+ </script>
+ 
