@@ -40,9 +40,9 @@
         {% endif %}
             title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with form.id as index %}This is form {{ index }}<br>{% endblocktrans %} {% endif %}{{ form.get_icon_help_text }}"
             data-bs-toggle="tooltip"
-            data-placement="right"
-            data-container="body"
-            data-html="true"
+            data-bs-placement="right"
+            data-bs-container="body"
+            data-bs-html="true"
             >
         </i>
         <span {% if form == selected_form %}class="variable-form_name"{% endif %}>

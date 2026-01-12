@@ -34,15 +34,15 @@
         {% endif %}
             title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with module.id as index %}This is menu {{ index }}{% endblocktrans %}{% endif %}"
             data-bs-toggle="tooltip"
-            data-placement="right"
-            data-container="body"></i>
+            data-bs-placement="right"
+            data-bs-container="body"></i>
         <span
           {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}
           {% if module.case_type %}
             title="{% blocktrans  with module.case_type as case_type %}case type: {{case_type}}{% endblocktrans %}"
             data-bs-toggle="tooltip"
-            data-placement="right"
-            data-container="body"
+            data-bs-placement="right"
+            data-bs-container="body"
           {% endif %}
         >
             {{ module.name|html_trans_prefix:langs }}
