@@ -3,7 +3,6 @@
 {% load i18n %}
 {% js_entry 'users/js/edit_role' %}
 {% block page_content %}
-
   {% registerurl "post_user_role" domain %}
   {% initial_page_data "user_roles" user_roles %}
   {% initial_page_data "non_admin_roles" non_admin_roles %}
@@ -23,7 +22,6 @@
   {% initial_page_data "can_edit_linked_data" can_edit_linked_data %}
   {% initial_page_data "commcare_analytics_roles" commcare_analytics_roles %}
   {% initial_page_data "has_restricted_application_access" has_restricted_application_access %}
-
 
   <div class="container mx-0">
     <form
@@ -49,7 +47,11 @@
 
       <fieldset class="active">
         <legend>
-          <a class="accordion-toggle" data-bs-toggle="collapse" href="#access-areas-card">
+          <a
+            class="accordion-toggle"
+            data-bs-toggle="collapse"
+            href="#access-areas-card"
+          >
             <i class="fa fa-angle-double-down"></i>
             {% trans "Area Access" %}
           </a>
@@ -62,10 +64,7 @@
           </div>
           <template x-for="area in accessAreas" :key="area.editCheckboxLabel">
             <div class="row" x-show="area.showOption">
-              <div
-                class="col-md-2 controls"
-                x-show="area.showEditCheckbox"
-              >
+              <div class="col-md-2 controls" x-show="area.showEditCheckbox">
                 <div class="form-check">
                   <input
                     class="form-check-input"
@@ -73,10 +72,7 @@
                     :id="area.editCheckboxLabel"
                     x-model="area.editPermission"
                   />
-                  <label
-                    class="form-check-label"
-                    :for="area.editCheckboxLabel"
-                  >
+                  <label class="form-check-label" :for="area.editCheckboxLabel">
                     <span
                       class="sr-only"
                       x-text="area.screenReaderEditAndViewText"
@@ -85,22 +81,12 @@
                   </label>
                 </div>
               </div>
-              <div
-                class="col-md-2 controls"
-                x-show="!area.showEditCheckbox"
-              >
-                <div class="form-check-placeholder">
-                </div>
+              <div class="col-md-2 controls" x-show="!area.showEditCheckbox">
+                <div class="form-check-placeholder"></div>
               </div>
-              <div
-                class="col-md-2 controls"
-                x-show="area.showViewCheckbox"
-              >
+              <div class="col-md-2 controls" x-show="area.showViewCheckbox">
                 {# PLACEHOLDER checkbox when editPermission() is true #}
-                <div
-                  class="form-check"
-                  x-show="area.editPermission"
-                >
+                <div class="form-check" x-show="area.editPermission">
                   <input
                     class="form-check-input"
                     type="checkbox"
@@ -121,20 +107,14 @@
                 </div>
                 {# end PLACEHOLDER #}
                 {# REAL checkbox that controls viewPermission when editPermission() is false #}
-                <div
-                  class="form-check"
-                  x-show="!area.editPermission"
-                >
+                <div class="form-check" x-show="!area.editPermission">
                   <input
                     class="form-check-input"
                     type="checkbox"
                     :id="area.viewCheckboxLabel"
                     x-model="area.viewPermission"
                   />
-                  <label
-                    class="form-check-label"
-                    :for="area.viewCheckboxLabel"
-                  >
+                  <label class="form-check-label" :for="area.viewCheckboxLabel">
                     <span
                       class="sr-only"
                       x-text="area.screenReaderViewOnlyText"
@@ -144,12 +124,8 @@
                 </div>
                 {# END REAL checkbox #}
               </div>
-              <div
-                class="col-md-2 controls"
-                x-show="!area.showViewCheckbox"
-              >
-                <div class="form-check-placeholder">
-                </div>
+              <div class="col-md-2 controls" x-show="!area.showViewCheckbox">
+                <div class="form-check-placeholder"></div>
               </div>
               <div class="col-md-8 form-label">
                 <div x-html="area.text"></div>
@@ -216,20 +192,18 @@
 
       <fieldset class="active" x-show="erm.visible">
         <legend>
-          <a class="accordion-toggle" data-bs-toggle="collapse" href="#erm-card">
+          <a
+            class="accordion-toggle"
+            data-bs-toggle="collapse"
+            href="#erm-card"
+          >
             <i class="fa fa-angle-double-down"></i>
             <span x-text="erm.title"></span>
           </a>
         </legend>
         <div id="erm-card" class="card-body collapse show">
-          <div
-            class="row"
-            x-data="erm.access_release_management"
-          >
-            <div
-              class="col-md-4 form-label fw-bold"
-              x-text="text"
-            ></div>
+          <div class="row" x-data="erm.access_release_management">
+            <div class="col-md-4 form-label fw-bold" x-text="text"></div>
             <div class="col-md-8 controls">
               <div class="form-check pt-0">
                 <input
@@ -247,17 +221,13 @@
             </div>
           </div>
 
-          <div
-            class="row"
-            x-data="erm.edit_linked_configs"
-          >
-            <div
-              class="col-md-4 form-label fw-bold"
-              x-text="text"
-            ></div>
+          <div class="row" x-data="erm.edit_linked_configs">
+            <div class="col-md-4 form-label fw-bold" x-text="text"></div>
             <div class="col-md-8 controls">
               <div class="form-check pt-0">
-                <template x-if="erm.access_release_management.checkboxPermission">
+                <template
+                  x-if="erm.access_release_management.checkboxPermission"
+                >
                   <input
                     class="form-check-input"
                     type="checkbox"
@@ -265,7 +235,9 @@
                     disabled
                   />
                 </template>
-                <template x-if="!erm.access_release_management.checkboxPermission">
+                <template
+                  x-if="!erm.access_release_management.checkboxPermission"
+                >
                   <input
                     class="form-check-input"
                     type="checkbox"
@@ -286,7 +258,11 @@
 
       <fieldset class="active">
         <legend>
-          <a class="accordion-toggle" data-bs-toggle="collapse" href="#reports-card">
+          <a
+            class="accordion-toggle"
+            data-bs-toggle="collapse"
+            href="#reports-card"
+          >
             <i class="fa fa-angle-double-down"></i>
             {% trans "Reports" %}
           </a>
@@ -316,7 +292,6 @@
               </div>
             </div>
           </template>
-          <!-- TODO: yarn add @alpinejs/collapse -->
           <div class="row"
             x-show="!reportPermissions.all"
             x-collapse
@@ -330,9 +305,7 @@
                 <div class="card-header">
                   {% trans "Select which reports the role can access:" %}
                 </div>
-                <div
-                  class="card-body"
-                >
+                <div class="card-body">
                   <template x-for="report in reportPermissions.specific">
                     <div class="form-check">
                       <input
@@ -345,10 +318,7 @@
                         class="form-check-label"
                         :for="report.slug + '-checkbox'"
                       >
-                        <span
-                          x-text="report.name"
-                          class="text-break"
-                        ></span>
+                        <span x-text="report.name" class="text-break"></span>
                       </label>
                     </div>
                   </template>
@@ -385,10 +355,7 @@
                           class="form-check-label"
                           :for="'tableau-' + report.slug + '-checkbox'"
                         >
-                          <span
-                            x-text="report.name"
-                            class="text-break"
-                          ></span>
+                          <span x-text="report.name" class="text-break"></span>
                         </label>
                       </div>
                     </template>
@@ -400,11 +367,14 @@
         </div>
       </fieldset>
 
-
       {% if request|request_has_privilege:"CLOUDCARE" %}
         <fieldset class="active">
           <legend>
-            <a class="accordion-toggle" data-bs-toggle="collapse" href="#web-apps-card">
+            <a
+              class="accordion-toggle"
+              data-bs-toggle="collapse"
+              href="#web-apps-card"
+            >
               <i class="fa fa-angle-double-down"></i>
               {% trans "Web Apps" %}
             </a>
@@ -419,100 +389,106 @@
 
       {% if request|toggle_enabled:"DATA_REGISTRY" %}
         <fieldset class="active">
-            <legend>
-                <a class="accordion-toggle" data-bs-toggle="collapse" href="#data-registry-card">
-                    <i class="fa fa-angle-double-down"></i>
-                    {% trans "Data Registries" %}
-                </a>
-            </legend>
-            <div id="data-registry-card" class="card-body collapse show">
-              <template x-for="p in registryPermissions">
-                <div x-data="p">
-                  {% include 'users/partials/select_permission.html' %}
-                </div>
-              </template>
-            </div>
+          <legend>
+            <a
+              class="accordion-toggle"
+              data-bs-toggle="collapse"
+              href="#data-registry-card"
+            >
+              <i class="fa fa-angle-double-down"></i>
+              {% trans "Data Registries" %}
+            </a>
+          </legend>
+          <div id="data-registry-card" class="card-body collapse show">
+            <template x-for="p in registryPermissions">
+              <div x-data="p">
+                {% include 'users/partials/select_permission.html' %}
+              </div>
+            </template>
+          </div>
         </fieldset>
       {% endif %}
 
       {% if request|toggle_enabled:"SUPERSET_ANALYTICS" %}
         <fieldset class="active">
-            <legend>
-                <a class="accordion-toggle" data-bs-toggle="collapse" href="#analytics-card">
-                    <i class="fa fa-angle-double-down"></i>
-                    {% trans "CommCare Analytics" %}
-                </a>
-            </legend>
-            <div id="analytics-card" class="card-body collapse show">
-              <div class="row">
-                <div class="col-md-4 form-label fw-bold">
-                  {% trans "All CommCare Analytics Roles" %}
-                </div>
-                <div class="col-md-8 controls">
-                  <div class="form-check">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      id="commcare-analytics-all-roles-checkbox"
-                      x-model="commcareAnalyticsRoles.all"
-                    />
-                    <label
-                      class="form-check-label"
-                      for="commcare-analytics-all-roles-checkbox"
-                    >
-                      {% trans "Assign all commcare analytics roles to users with this role" %}
-                    </label>
-                  </div>
+          <legend>
+            <a
+              class="accordion-toggle"
+              data-bs-toggle="collapse"
+              href="#analytics-card"
+            >
+              <i class="fa fa-angle-double-down"></i>
+              {% trans "CommCare Analytics" %}
+            </a>
+          </legend>
+          <div id="analytics-card" class="card-body collapse show">
+            <div class="row">
+              <div class="col-md-4 form-label fw-bold">
+                {% trans "All CommCare Analytics Roles" %}
+              </div>
+              <div class="col-md-8 controls">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="commcare-analytics-all-roles-checkbox"
+                    x-model="commcareAnalyticsRoles.all"
+                  />
+                  <label
+                    class="form-check-label"
+                    for="commcare-analytics-all-roles-checkbox"
+                  >
+                    {% trans "Assign all commcare analytics roles to users with this role" %}
+                  </label>
                 </div>
               </div>
-              <div
-                class="row"
-                x-show="!commcareAnalyticsRoles.all"
-                x-collapse
-              >
-                <div class="col-md-4 form-label fw-bold">
-                  {% trans "CommCare Analytics Roles" %}
-                </div>
-                <div class="col-md-8 controls">
-                  <div class="card mt-2">
-                    <div class="card-header">
-                      {% trans "Commcare Analytics Roles:" %}
-                    </div>
-                    <div class="card-body">
-                      <template x-for="s in commcareAnalyticsRoles.specific">
-                        <div class="form-check">
-                          <input
-                            class="form-check-input"
-                            type="checkbox"
-                            x-model="s.value"
-                            :id="'cca-role-' + s.slug + '-checkbox'"
-
-                          />
-                          <label
-                            class="form-check-label"
-                            :for="'cca-role-' + s.slug + '-checkbox'"
-                          >
-                            <span x-text="s.name"></span>
-                          </label>
-                        </div>
-                      </template>
-                    </div>
+            </div>
+            <div class="row" x-show="!commcareAnalyticsRoles.all" x-collapse>
+              <div class="col-md-4 form-label fw-bold">
+                {% trans "CommCare Analytics Roles" %}
+              </div>
+              <div class="col-md-8 controls">
+                <div class="card mt-2">
+                  <div class="card-header">
+                    {% trans "Commcare Analytics Roles:" %}
+                  </div>
+                  <div class="card-body">
+                    <template x-for="s in commcareAnalyticsRoles.specific">
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          x-model="s.value"
+                          :id="'cca-role-' + s.slug + '-checkbox'"
+                        />
+                        <label
+                          class="form-check-label"
+                          :for="'cca-role-' + s.slug + '-checkbox'"
+                        >
+                          <span x-text="s.name"></span>
+                        </label>
+                      </div>
+                    </template>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
         </fieldset>
       {% endif %}
 
       <fieldset class="active">
         <legend>
-          <a class="accordion-toggle" data-bs-toggle="collapse" href="#other-card">
+          <a
+            class="accordion-toggle"
+            data-bs-toggle="collapse"
+            href="#other-card"
+          >
             <i class="fa fa-angle-double-down"></i>
             {% trans "Other Settings" %}
           </a>
         </legend>
         <div id="other-card" class="card-body collapse show">
-
           {% if show_integration %}
             <div class="row">
               <div class="col-md-4 form-label fw-bold">
@@ -527,10 +503,7 @@
                     x-model="role.permissions.edit_motech"
                     :disabled="!allowEdit"
                   />
-                  <label
-                    class="form-check-label"
-                    for="edit-motech-checkbox"
-                  >
+                  <label class="form-check-label" for="edit-motech-checkbox">
                     {% trans "Allow role to manage integration with other systems." %}
                   </label>
                 </div>
@@ -538,10 +511,7 @@
             </div>
           {% endif %}
 
-          <div
-            class="row"
-            x-show="role.permissions.access_all_locations"
-          >
+          <div class="row" x-show="role.permissions.access_all_locations">
             <div class="col-md-4 form-label fw-bold">
               {% trans "Manage Subscription Info" %}
             </div>
@@ -585,24 +555,18 @@
                   {% trans "Allow role to access data from all locations." %}
                 </label>
               </div>
-              <div
-                class="form-text"
-                x-show="cantAccessAllLocations"
-              >
+              <div class="form-text" x-show="cantAccessAllLocations">
                 {% blocktrans %}
-                  Make sure any users assigned this role also have a
-                  location assigned to them. Users without assigned
-                  locations will not be permitted to log in.
+                  Make sure any users assigned this role also have a location
+                  assigned to them. Users without assigned locations will not be
+                  permitted to log in.
                 {% endblocktrans %}
               </div>
-              <div
-                class="form-text"
-                x-show="hasUnpermittedLocationRestriction"
-              >
+              <div class="form-text" x-show="hasUnpermittedLocationRestriction">
                 {% blocktrans %}
-                  Organization-based data access restrictions are only
-                  available on the Pro plan and above. Saving this role will
-                  enable full organization access for the assigned users.
+                  Organization-based data access restrictions are only available
+                  on the Pro plan and above. Saving this role will enable full
+                  organization access for the assigned users.
                 {% endblocktrans %}
               </div>
               <div
@@ -738,7 +702,7 @@
                   class="form-check-input"
                   type="checkbox"
                   id="edit-mobile-checkbox"
-                  x-model="role.permissions.access_mobile_endpoints""
+                  x-model="role.permissions.access_mobile_endpoints"
                 />
                 <label class="form-check-label" for="edit-mobile-checkbox">
                   {% trans "Allow mobile users access to offline mobile application" %}
@@ -759,7 +723,7 @@
                 x-init="$nextTick(() => { role.default_landing_page = '{{ role.default_landing_page }}' || role.default_landing_page })"
               >
                 <template x-for="choice in landingPageChoices">
-                    <option :value="choice.id" x-text="choice.name"></option>
+                  <option :value="choice.id" x-text="choice.name"></option>
                 </template>
               </select>
             </div>
@@ -805,16 +769,13 @@
               </div>
             </div>
           </div>
-          <div
-            class="row"
-            x-show="!manageRoleAssignments.all"
-            x-collapse
-          >
+          <div class="row" x-show="!manageRoleAssignments.all" x-collapse>
             <div class="col-md-4 form-label fw-bold">
               {% trans "Manage Role Assignment" %}
             </div>
             <div
-              class="col-md-8 controls",
+              class="col-md-8 controls"
+              ,
               :class="showRestrictedLocationRoleAssignmentWarning ? 'has-error' : ''"
             >
               <div class="card my-2">
@@ -849,8 +810,8 @@
               >
                 {% blocktrans %}
                   If the highlighted roles are selected, this role will have
-                  full organization access and be assignable by a role that
-                  does not. This is not recommended configuration.
+                  full organization access and be assignable by a role that does
+                  not. This is not recommended configuration.
                 {% endblocktrans %}
               </div>
             </div>
@@ -894,9 +855,7 @@
                   <div class="card-header">
                     {% trans "Select which user profiles the role can assign to mobile workers and web users:" %}
                   </div>
-                  <div
-                    class="card-body"
-                  >
+                  <div class="card-body">
                     <template x-for="s in profilePermissions.specific">
                       <div class="form-check">
                         <input
@@ -943,7 +902,6 @@
               </div>
             </div>
           {% endif %}
-
         </div>
       </fieldset>
 
@@ -951,7 +909,12 @@
 
       <div class="row mb-4">
         <div class="col-sm-2">
-          <button type="submit" class="btn btn-primary" :disabled="isSaving" x-cloak>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            :disabled="isSaving"
+            x-cloak
+          >
             <span x-show="!isSaving">{% trans "Save" %}</span>
             <span x-show="isSaving">{% trans "Saving ..." %}</span>
           </button>

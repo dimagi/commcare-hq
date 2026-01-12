@@ -1,10 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div
-  class="row"
-  :class="showAlreadyConfiguredWarning ? 'has-warning' : ''"
->
+<div class="row" :class="showAlreadyConfiguredWarning ? 'has-warning' : ''">
   <div class="col-md-4 form-label fw-bold">
     <div x-text="text"></div>
     <template x-if="showAlreadyConfiguredWarning">
@@ -21,20 +18,12 @@
     </template>
   </div>
   <div class="col-md-8 controls">
-    <select
-      class="form-select mb-2"
-      :id="id"
-      x-model="selection"
-    >
+    <select class="form-select mb-2" :id="id" x-model="selection">
       <option value="none">{% trans "No Access" %}</option>
       <option value="all">{% trans "Access All" %}</option>
       <option value="selected">{% trans "Limited Access" %}</option>
     </select>
-    <div
-      class="card mb-2"
-      x-show="showItems"
-      x-collapse
-    >
+    <div class="card mb-2" x-show="showItems" x-collapse>
       <!-- :class="id === 'hasError ? 'has-error' : ''" -->
       <div class="card-header" x-text="listHeading"></div>
       <div class="card-body">
