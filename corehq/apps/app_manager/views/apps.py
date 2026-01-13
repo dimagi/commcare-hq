@@ -87,6 +87,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import all_app_manager_add_ons_enabled
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -541,8 +542,9 @@ def _build_sample_app(app):
 
 
 @require_can_edit_apps
+@use_bootstrap5
 def app_exchange(request, domain):
-    template = "app_manager/bootstrap3/app_exchange.html"
+    template = "app_manager/app_exchange.html"
     records = []
     for obj in ExchangeApplication.objects.all():
         results = get_all_built_app_results(obj.domain, app_id=obj.app_id)
