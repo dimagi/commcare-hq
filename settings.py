@@ -1175,6 +1175,23 @@ MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
 
+# Used by `corehq.apps.integration.kyc`. Override in localsettings.py
+MTN_KYC_CONNECTION_SETTINGS = {
+    'url': 'https://dev.api.chenosis.io/',
+    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
+    'client_id': 'test',
+    'client_secret': 'password',
+}
+ORANGE_CAMEROON_CONNECTION_SETTINGS = {
+    'url': 'https://dev.api.chenosis.io/',
+    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
+    'client_id': 'test',
+    'client_secret': 'password',
+    'x-auth-token': 'test',
+    'channel_msisdn': 'test',
+    'channel_pin': '1234',
+}
+
 #### Chatbot configuration
 # Override in localsettings.py
 # See https://docs.openchatstudio.com/chat_widget/
