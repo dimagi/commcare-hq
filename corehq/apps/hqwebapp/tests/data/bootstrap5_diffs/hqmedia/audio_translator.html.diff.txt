@@ -1,0 +1,55 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "hqmedia/bootstrap3/uploader_base.html" %}
++{% extends "hqmedia/bootstrap5/uploader_base.html" %}
+ {% load compress %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 'hqwebapp/js/bootstrap3/widgets' %}
++{% js_entry 'hqwebapp/js/bootstrap5/widgets' %}
+ 
+ {% block page_content %}
+   <p class="lead">{{ current_page.page_name }}</p>
+@@ -32,12 +32,12 @@
+   {% endblocktrans %}
+ 
+   <form class="form-horizontal" method="get">
+-    <div class="form-group">
+-      <label class="{% css_label_class %} control-label">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="{% css_label_class %} form-label">
+         {% trans "Language" %}
+       </label>
+       <div class="{% css_field_class %} controls">
+-        <select name="lang" class="form-control hqwebapp-select2" data-placeholder="{% trans_html_attr "Select a language" %}">
++        <select name="lang" class="form-select hqwebapp-select2" data-placeholder="{% trans_html_attr "Select a language" %}">
+           <option></option>
+           {% for lang in app.langs %}
+             {% if lang != app.default_language %}
+@@ -48,12 +48,12 @@
+       </div>
+     </div>
+     {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
+-      <div class="form-group">
+-        <label class="{% css_label_class %} control-label">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="{% css_label_class %} form-label">
+           {% trans "Transifex" %}
+         </label>
+         <div class="{% css_field_class %} controls">
+-          <select-toggle data-apply-bindings="true"
++          <select-toggle data-apply-bindings="true"  {# todo B5: css-select-form-control #}
+                          params="
+                            name: 'skip_blacklisted',
+                            options: [
+@@ -70,7 +70,7 @@
+         </div>
+       </div>
+     {% endif %}
+-    <div class="form-group">
++    <div class="form-group">  {# todo B5: css-form-group #}
+       <div class="{% css_action_class %} controls">
+         <button class="btn btn-primary" type="submit">
+           <i class="fa-solid fa-cloud-arrow-down"></i>

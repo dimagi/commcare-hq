@@ -1,4 +1,4 @@
-{% extends "hqwebapp/partials/bootstrap3/bulk_upload.html" %}
+{% extends "hqwebapp/partials/bootstrap5/bulk_upload.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -18,5 +18,5 @@
 {% endblock %}
 
 {% block download_file %}
-  {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
+  {% include "hqmedia/partials/bootstrap5/multimedia_zip_notice.html" with include_modal=True %}
 {% endblock download_file %}

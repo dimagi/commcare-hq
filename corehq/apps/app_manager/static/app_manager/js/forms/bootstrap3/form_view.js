@@ -8,7 +8,7 @@ import noopMetrics from "analytix/js/noopMetrics";
 import formWorkflow from "app_manager/js/forms/bootstrap3/form_workflow";
 import toggles from "hqwebapp/js/toggles";
 import customInstancesModule from "app_manager/js/forms/custom_instances";
-import "app_manager/js/nav_menu_media";
+import "app_manager/js/bootstrap3/nav_menu_media";
 import "app_manager/js/forms/copy_form_to_app";
 import "app_manager/js/forms/case_knockout_bindings";  // casePropertyAutocomplete and questionsSelect
 import "app_manager/js/forms/bootstrap3/case_config_ui";  // non-advanced modules only

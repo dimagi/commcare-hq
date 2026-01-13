@@ -1,6 +1,6 @@
 import $ from "jquery";
 import ko from "knockout";
-import mediaUploaders from "hqmedia/js/uploaders";
+import mediaUploaders from "hqmedia/js/bootstrap3/uploaders";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 function BaseMediaReference(ref, uploaderSlug) {

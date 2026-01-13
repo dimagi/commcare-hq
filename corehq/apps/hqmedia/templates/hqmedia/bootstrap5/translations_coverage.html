@@ -1,9 +1,9 @@
-{% extends "hqmedia/uploader_base.html" %}
+{% extends "hqmedia/bootstrap5/uploader_base.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'hqmedia/js/translations_coverage' %}
+{% js_entry 'hqmedia/js/bootstrap5/translations_coverage' %}
 
 {% block page_content %}
   {% registerurl "paginate_releases" domain app.get_id %}
@@ -27,12 +27,12 @@
 
   <form class="form-horizontal" method="post">
     {% csrf_token %}
-    <div class="form-group">
-      <label class="{% css_label_class %} control-label">
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="{% css_label_class %} form-label">
         {% trans "Version" %}
       </label>
       <div class="{% css_field_class %} controls">
-        <select class="form-control app-manager-version-dropdown" name="build_id">
+        <select class="form-select app-manager-version-dropdown" name="build_id">
           <option value="">{% trans "Latest" %}</option>
           {% if selected_build_id %}
             <option selected value="{{ selected_build_id }}">
@@ -42,12 +42,12 @@
         </select>
       </div>
     </div>
-    <div class="form-group">
-      <label class="{% css_label_class %} control-label">
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="{% css_label_class %} form-label">
         {% trans "Language(s)" %}
       </label>
       <div class="{% css_field_class %} controls">
-        <select multiple name="langs" class="form-control hqwebapp-select2">
+        <select multiple name="langs" class="form-select hqwebapp-select2">
           {% for lang in app.langs %}
             {% if lang != app.default_language %}
               <option{% if lang in selected_langs %} selected{% endif %}>{{ lang }}</option>
@@ -56,19 +56,19 @@
         </select>
       </div>
     </div>
-    <div class="form-group">
-      <label class="{% css_label_class %} control-label">
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="{% css_label_class %} form-label">
         {% trans "Media Type(s)" %}
       </label>
       <div class="{% css_field_class %} controls">
-        <select multiple name="media_types" class="form-control hqwebapp-select2">
+        <select multiple name="media_types" class="form-select hqwebapp-select2">
           {% for type, name in media_types.items %}
             <option{% if type in selected_media_types %} selected{% endif %} value="{{ type }}">{{ name }}</option>
           {% endfor %}
         </select>
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group">  {# todo B5: css-form-group #}
       <div class="{% css_action_class %} controls">
         <button class="btn btn btn-primary disable-on-submit" type="submit">
           <i class="fa fa-check"></i>

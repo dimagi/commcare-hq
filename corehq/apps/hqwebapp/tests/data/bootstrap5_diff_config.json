@@ -1327,5 +1327,45 @@
       "label": "javascript/translations/js",
       "compare_all_files": true
     }
+  ],
+  "apps/hqmedia/templates/hqmedia": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqmedia",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqmedia/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "uploader/bootstrap3",
+        "uploader/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqmedia/uploader",
+      "compare_all_files": true
+    }
+  ],
+  "apps/hqmedia/static/hqmedia/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqmedia/js",
+      "compare_all_files": true
+    }
   ]
 }

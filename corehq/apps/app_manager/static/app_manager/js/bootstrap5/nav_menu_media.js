@@ -1,7 +1,7 @@
 import $ from "jquery";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import appManagerMedia from "app_manager/js/app_manager_media";
+import appManagerMedia from "app_manager/js/bootstrap5/app_manager_media";
 
 $(function () {
     _.each(initialPageData.get("nav_menu_media_specifics"), function (item) {
