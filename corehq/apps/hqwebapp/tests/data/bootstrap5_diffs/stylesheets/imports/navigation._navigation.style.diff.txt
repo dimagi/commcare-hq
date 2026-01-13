@@ -56,17 +56,24 @@
  }
  
  .appnav-primary-icon {
-   font-size: 1.7rem;
+-  font-size: 1.7rem;
 -  color: lighten(@cc-text, 20);
++  font-size: 17px;
 +  color: lighten($cc-text, 20);
  }
  
  .appnav-menu .appnav-primary-icon {
-@@ -54,38 +54,39 @@
-   font-size: 2rem;
+@@ -51,41 +51,42 @@
  }
  
+ .appnav-primary-icon-lg {
+-  font-size: 2rem;
+-}
+-
 -.appnav-menu .appnav-primary-icon-lg  {
++  font-size: 20px;
++}
++
 +.appnav-menu .appnav-primary-icon-lg {
    top: 3px;
  }
@@ -267,8 +274,9 @@
 +      content: $t-shaped-line;
        left: -15px;
        top: -5px;
-       font-size: 4.6rem;
+-      font-size: 4.6rem;
 -      color: lighten(@cc-text, 60);
++      font-size: 46px;
 +      color: lighten($cc-text, 60);
      }
    }
@@ -393,7 +401,7 @@
    display: block;
    font-weight: bold;
    position: relative;
-@@ -335,9 +346,14 @@
+@@ -335,41 +346,34 @@
      padding-top: 14px;
      padding-bottom: 13px;
      display: block;
@@ -411,25 +419,32 @@
      }
    }
  }
-@@ -345,7 +361,7 @@
+ 
  .appnav-language-select {
-   padding: 5px 15px 4px;
+-  padding: 5px 15px 4px;
++  padding: 7px 15px 6px;
    font-size: 11px;
 -  background-color: @cc-brand-mid;
 +  background-color: $cc-brand-mid;
    color: white;
-   label {
-     font-weight: 400;
-@@ -358,7 +374,7 @@
-     height: 16px;
-     display: inline;
-     float: right;
+-  label {
+-    font-weight: 400;
+-    line-height: 13px;
+-    padding-top: 1px;
+-    display: inline-block;
+-  }
+   select {
+-    width: 42px;
+-    height: 16px;
+-    display: inline;
+-    float: right;
 -    background-color: darken(@cc-brand-mid, 5);
 +    background-color: darken($cc-brand-mid, 5);
      border: none;
      color: white;
-     margin-top: 2px;
-@@ -367,9 +383,9 @@
+-    margin-top: 2px;
+-    padding: 0;
+   }
  }
  
  .appnav-menu .btn-langcode-preprocessed {
@@ -441,7 +456,7 @@
    vertical-align: top;
    font-size: 9px;
    margin-top: -1px;
-@@ -379,7 +395,7 @@
+@@ -379,7 +383,7 @@
  }
  
  .appnav-section-name {
@@ -450,7 +465,7 @@
    color: white;
    padding: 10px 15px;
    margin: 0;
-@@ -413,16 +429,16 @@
+@@ -413,16 +417,16 @@
  }
  
  .appnav-toggle-label {
@@ -470,7 +485,7 @@
      word-break: break-word;
    }
    a {
-@@ -432,31 +448,33 @@
+@@ -432,31 +436,33 @@
        &:hover {
          color: white;
          cursor: move;

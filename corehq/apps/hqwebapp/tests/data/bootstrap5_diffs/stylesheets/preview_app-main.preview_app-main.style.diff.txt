@@ -292,7 +292,7 @@
    width: 10px;
    height: 10px;
    display: block;
-@@ -234,29 +231,29 @@
+@@ -234,43 +231,43 @@
  }
  
  .btn-preview-refresh.app-out-of-date::after {
@@ -324,10 +324,27 @@
      background-color: transparent;
      color: darken(white, 20);
 -    .transition(@transition-speed color);
+-    font-size: 1.8rem;
 +    transition: $transition-speed color;
-     font-size: 1.8rem;
++    font-size: 18px;
      width: 25%;
      &:focus {
+       outline: none;
+     }
+ 
+     .fa-down-left-and-up-right-to-center {
+-      font-size: 1.9rem;
++      font-size: 19px;
+       top: 10px;
+       position: absolute;
+     }
+ 
+     .fa-up-right-and-down-left-from-center {
+-      font-size: 1.7rem;
++      font-size: 17px;
+       top: 10px;
+       position: absolute;
+     }
 @@ -282,13 +279,31 @@
  }
  

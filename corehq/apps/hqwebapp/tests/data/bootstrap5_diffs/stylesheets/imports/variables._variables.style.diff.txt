@@ -1,8 +1,9 @@
 --- 
 +++ 
-@@ -1,11 +1,11 @@
+@@ -1,11 +1,12 @@
 -@app-manager-sidebar-width: 280px;
 +$app-manager-sidebar-width: 280px;
++$app-page-actions-width: 265px;
  
 -@preview-phone-wrapper-width: 325px;
 -@preview-phone-width: 250px;

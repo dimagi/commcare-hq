@@ -1,8 +1,10 @@
 --- 
 +++ 
-@@ -6,23 +6,23 @@
+@@ -5,24 +5,25 @@
+ import $ from "jquery";
  import ko from "knockout";
  import _ from "underscore";
++import { Tooltip } from "bootstrap5";
  import initialPageData from "hqwebapp/js/initial_page_data";
 -import commcareSettings from "app_manager/js/settings/bootstrap3/commcare_settings";
 -import supportedLanguages from "app_manager/js/bootstrap3/supported_languages";
@@ -32,7 +34,7 @@
  import "jquery-textchange/jquery.textchange";   // textchange is referenced in ko bindings in app_settings.html
  
  $(function () {
-@@ -93,7 +93,7 @@
+@@ -93,7 +94,7 @@
                          _.each(toggles, function (toggle) {
                              $ul.append(template(toggle));
                          });
@@ -41,3 +43,11 @@
                              $(this).disableButton();
                              $form.submit();
                          }).one("hide.bs.modal", function () {
+@@ -266,4 +267,7 @@
+         sectionChanger.attachToForm($saveContainer);
+     })();
+ 
++    // Initialize tooltips
++    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
++    [...tooltipTriggerList].map((tooltipTriggerEl) => new Tooltip(tooltipTriggerEl));
+ });

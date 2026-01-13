@@ -6,7 +6,7 @@
 -  margin-left: @app-manager-sidebar-width;
 -  background-color: @cc-brand-low;
 -  position:relative;
-+  margin-left: $app-manager-sidebar-width;
++  padding-left: 0;
 +  background-color: $cc-brand-low;
 +  position: relative;
    box-sizing: border-box;
@@ -155,7 +155,7 @@
      }
    }
    .inline-edit-icon.h3 {
-@@ -144,15 +152,15 @@
+@@ -144,23 +152,21 @@
    }
    &:hover {
      .read-only .inline-edit-icon i {
@@ -169,24 +169,63 @@
    .read-write.h3 {
 -     margin-top: 7.5px;
 -     margin-bottom: 2px;
+-  }
+-}
+-
+-.appmanager-edit-title {
+-  margin-right: 400px;
+-}
 +    margin-top: 7.5px;
 +    margin-bottom: 2px;
-   }
++  }
++}
++
++.appmanager-edit-title,
+ .appmanager-edit-app-title {
+-  margin-right: 400px;
++  margin-right: calc($app-page-actions-width + 2rem);
  }
  
-@@ -176,9 +184,9 @@
+ .appmanager-edit-title .ko-inline-edit {
+@@ -174,20 +180,20 @@
+   }
+   .read-write {
      padding-top: 10px;
-     padding-bottom: 10px;
-   }
+-    padding-bottom: 10px;
+-  }
 -  .read-write.h3 input{
-+  .read-write.h3 input {
-     margin-left: 0;
+-    margin-left: 0;
 -    width: 100%
-+    width: 100%;
+-  }
+-  .read-write .form-group:first-child {
+-    min-width: 80%;
++  }
++  .read-write.h3 {
++    min-width: unset;
++
++    .input-group {
++      margin-top: 3px;
++      width: 100%;
++    }
    }
-   .read-write .form-group:first-child {
-     min-width: 80%;
-@@ -211,17 +219,18 @@
+ }
+ .appmanager-edit-app-title .ko-inline-edit {
+   .read-only {
+     margin-left: -12px;
+-    margin-top: 12px;
++    margin-top: 13px;
+   }
+ }
+ .appmanager-edit-description .ko-inline-edit {
+@@ -197,6 +203,7 @@
+ .appmanager-page-actions {
+   float: right;
+   margin-top: 20px;
++  max-width: $app-page-actions-width;
+ }
+ 
+ .form-group .upgrade-message {
+@@ -211,17 +218,18 @@
  }
  
  .ko-inline-edit .read-only .btn-langcode-preprocessed {
@@ -210,7 +249,7 @@
      overflow: hidden;
    }
  }
-@@ -245,12 +254,11 @@
+@@ -245,12 +253,11 @@
  }
  
  .btn-preview {
@@ -227,7 +266,7 @@
  }
  
  .appmanager-content-single-page {
-@@ -259,7 +267,7 @@
+@@ -259,7 +266,7 @@
  }
  
  .auto-release-notes {
