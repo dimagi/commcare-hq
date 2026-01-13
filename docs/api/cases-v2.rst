@@ -452,6 +452,14 @@ Interface - ``POST /a/<domain>/api/case/v2/``
 The body of the request should contain the case update format described
 in "`Case Create/Update/Upsert Format`_"
 
+.. NOTE::
+
+   Requests to ``POST /a/<domain>/api/case/v2/`` where the payload is a
+   case (not a list) will always create a case. If the data sets the
+   external_id property to an existing value, CommCare HQ will create a
+   duplicate external ID. (In other words, POST for an individual case
+   is not an upsert operation.)
+
 Return value includes two fields:
 
 ========= ===========================================
@@ -477,9 +485,11 @@ Interface -
 The body of the request should contain the case update format described
 in "`Case Create/Update/Upsert Format`_".
 
-If the case is identified by its external ID, then it will be updated if
-it is found, and created if it is not found. (In other words, PUT by
-external ID is an upsert operation.)
+.. NOTE::
+
+   If the case is identified by its external ID, then it will be updated
+   if it is found, and created if it is not found. (In other words, PUT
+   by external ID is an upsert operation.)
 
 Return value includes two fields:
 
@@ -522,12 +532,14 @@ the upserted cases in a single request are unique, and that concurrent
 requests cannot include the same cases.
 
 .. DANGER::
+
    If a single request tries to upsert the same case more than once,
    **duplicate cases will be created!** This is because CommCare HQ
    searches for all upserted cases by their external IDs before any
    changes are made.
 
 .. WARNING::
+
    This operation is vulnerable to a race condition where, if two
    simultaneous requests try to upsert the same case, two cases could be
    created.
