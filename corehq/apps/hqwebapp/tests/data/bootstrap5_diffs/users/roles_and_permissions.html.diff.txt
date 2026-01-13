@@ -265,16 +265,25 @@
                  data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null"
                >
                  <span
-@@ -358,7 +357,7 @@
+@@ -357,8 +356,16 @@
+                   {% trans "View Role" %}
                  </span>
                </button>
++              <a data-bind="attr: { href: $data.editUrl }">
++                <button class="btn btn-default">
++                  <span>
++                    <i class="fa fa-edit"></i>
++                    {% trans "Edit Role View" %}
++                  </span>
++                </button>
++              </a>
                <button
 -                class="btn btn-danger"
 +                class="btn btn-outline-danger"
                  data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
                  click: $data._id ? $root.setRoleBeingDeleted : null"
                >
-@@ -378,25 +377,29 @@
+@@ -378,25 +385,29 @@
        </table>
        {% if can_edit_roles %}
          <button
@@ -309,7 +318,7 @@
                </div>
                <div class="modal-body">
                  <h4 data-bind="text: modalConfirmation"></h4>
-@@ -404,7 +407,7 @@
+@@ -404,7 +415,7 @@
                <div class="modal-footer">
                  <button
                    type="button"
@@ -318,7 +327,7 @@
                    data-bind="click: $root.unsetRoleBeingDeleted"
                  >
                    {% trans "Cancel" %}
-@@ -417,12 +420,12 @@
+@@ -417,12 +428,12 @@
            </div>
          </div>
        {% endif %}
