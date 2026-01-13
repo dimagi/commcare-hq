@@ -54,7 +54,7 @@ class MultimediaLogoUploadController(MultimediaImageUploadController):
 class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("audio")
 
-    existing_file_template = "hqmedia/uploader/preview_audio_single.html"
+    existing_file_template = "hqmedia/uploader/bootstrap3/preview_audio_single.html"
 
 
 class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
