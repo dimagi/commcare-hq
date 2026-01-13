@@ -1,0 +1,61 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css-close #}
+         <h4 class="modal-title">
+           {% if type == "image" %}
+             {% trans 'Upload Icon Image' %}
+@@ -20,8 +20,8 @@
+         </h4>
+       </div>
+       <div class="modal-body form form-horizontal">
+-        <div class="form-group">
+-          <label class="control-label col-sm-3">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label col-md-3">
+             {% if type == "image" %}
+               {% trans 'Select Icon Image' %}
+             {% elif type == "audio" %}
+@@ -34,16 +34,16 @@
+               {% trans 'Select File' %}
+             {% endif %}
+           </label>
+-          <div class="col-sm-9">
++          <div class="col-md-9">
+             <div class="hqm-select-files-container">
+               <button class="btn btn-primary" type="button">{% trans "Select" %}</button>
+-              <input type="file" class="hide" />
++              <input type="file" class="d-none" />  {# todo B5: css-file-inputs #}
+             </div>
+             <div class="hqm-upload-status"></div>
+           </div>
+         </div>
+-        <div class="form-group hqm-existing hide">
+-          <label class="control-label col-sm-3">
++        <div class="form-group hqm-existing d-none">  {# todo B5: css-form-group #}
++          <label class="form-label col-md-3">
+             {% if type == "image" %}
+               {% trans 'Current Icon' %}
+             {% elif type == "audio" %}
+@@ -56,14 +56,14 @@
+               {% trans 'Current File' %}
+             {% endif %}
+           </label>
+-          <div class="col-sm-9 hqm-existing-controls"></div>
++          <div class="col-md-9 hqm-existing-controls"></div>
+         </div>
+       </div>
+       <div class="modal-footer">
+-        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</a>
++        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Close' %}</a>
+         <a href="#" class="btn btn-primary disabled hqm-upload hqm-upload-confirm">
+           <i class="fa-solid fa-cloud-arrow-up"></i>
+-          <i class="fa-solid fa-spin fa-refresh hide"></i>
++          <i class="fa-solid fa-spin fa-refresh d-none"></i>
+           {% trans "Begin Upload" %}
+         </a>
+       </div>
