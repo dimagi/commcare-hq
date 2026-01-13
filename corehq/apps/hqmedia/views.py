@@ -443,7 +443,7 @@ def download_multimedia_paths(request, domain, app_id):
 @method_decorator(require_can_edit_apps, name='dispatch')
 class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
     urlname = "multimedia_translations_coverage"
-    template_name = "hqmedia/translations_coverage.html"
+    template_name = "hqmedia/bootstrap3/translations_coverage.html"
     page_title = gettext_noop("Translations Coverage")
 
     @property
