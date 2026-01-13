@@ -530,7 +530,7 @@ class DeleteTranslations(AppTranslations):
 class DownloadTranslations(BaseTranslationsView):
     page_title = gettext_lazy('Download Translations')
     urlname = 'download_translations'
-    template_name = 'translations/download_translations.html'
+    template_name = 'translations/bootstrap3/download_translations.html'
 
     @property
     def page_context(self):
