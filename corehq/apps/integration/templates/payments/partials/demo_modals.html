@@ -1,0 +1,67 @@
+{% load i18n %}
+
+<!-- Trigger Submissions Modal -->
+<div class="modal fade" id="trigger-submissions-modal" tabindex="-1" aria-labelledby="triggerSubmissionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="triggerSubmissionsModalLabel">{% trans "Trigger Submissions" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fa fa-info-circle"></i>
+          <strong>{% trans "Demo Purpose Only" %}</strong>
+        </div>
+        <p>{% trans "This action is for demonstration purposes only. In production, payment submissions are triggered automatically by the backend system at periodic intervals." %}</p>
+        <p>{% trans "Are you sure you want to manually trigger payment submissions?" %}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          hx-post="{% url 'payments_verify_table' domain %}"
+          hq-hx-action="trigger_submissions"
+          hx-target="#demo-alert"
+          data-bs-dismiss="modal"
+        >
+          {% trans "Confirm" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Trigger Fetch Status Modal -->
+<div class="modal fade" id="trigger-fetch-status-modal" tabindex="-1" aria-labelledby="triggerFetchStatusModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="triggerFetchStatusModalLabel">{% trans "Trigger Fetch Status" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fa fa-info-circle"></i>
+          <strong>{% trans "Demo Purpose Only" %}</strong>
+        </div>
+        <p>{% trans "This action is for demonstration purposes only. In production, payment status fetching is handled automatically by the backend system at periodic intervals." %}</p>
+        <p>{% trans "Are you sure you want to manually trigger payment status fetching?" %}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          hx-post="{% url 'payments_verify_table' domain %}"
+          hq-hx-action="trigger_fetch_status"
+          hx-target="#demo-alert"
+          data-bs-dismiss="modal"
+        >
+          {% trans "Confirm" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
