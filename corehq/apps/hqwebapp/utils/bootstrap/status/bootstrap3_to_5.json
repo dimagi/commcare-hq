@@ -3,7 +3,10 @@
     "in_progress": true
   },
   "app_manager": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "form_summary_diff.html"
+    ]
   },
   "builds": {
     "is_complete": true,
