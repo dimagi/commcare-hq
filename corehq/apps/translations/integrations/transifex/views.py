@@ -574,7 +574,7 @@ class DownloadTranslations(BaseTranslationsView):
 class MigrateTransifexProject(BaseTranslationsView):
     page_title = gettext_lazy('Migrate Project')
     urlname = 'migrate_transifex_project'
-    template_name = 'translations/migrate_project.html'
+    template_name = 'translations/bootstrap3/migrate_project.html'
 
     def section_url(self):
         return reverse(MigrateTransifexProject.urlname, args=self.args, kwargs=self.kwargs)
