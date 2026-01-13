@@ -9,6 +9,9 @@
       "form_summary_base.html",
       "form_summary_diff.html",
       "partials/form_summary_header.html"
+    ],
+    "javascript": [
+      "js/summary/form_summary.js"
     ]
   },
   "builds": {
