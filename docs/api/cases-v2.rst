@@ -313,10 +313,20 @@ towards the end of the results set.
 Get individual case
 ~~~~~~~~~~~~~~~~~~~
 
-Interface - ``GET /a/<domain>/api/case/v2/<case_id>``
+Interface -
+
+* ``GET /a/<domain>/api/case/v2/<case_id>``
+* ``GET /a/<domain>/api/case/v2/ext/<ext_id>/``
+
 
 This API takes no additional parameters.  The return value is a single
 case serialized as described in "`Single Case Serialization Format`_".
+
+.. WARNING::
+
+   If the case is identified by its external ID, and that ID is not
+   unique, only one case will be returned.
+
 
 Get Case's index information (parent/child or host/extension)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -458,7 +468,9 @@ in "`Case Create/Update/Upsert Format`_"
    case (not a list) will always create a case. If the data sets the
    external_id property to an existing value, CommCare HQ will create a
    duplicate external ID. (In other words, POST for an individual case
-   is not an upsert operation.)
+   is not an upsert operation.) If there is a possibility of submitting
+   duplicate external_id values by accident, rather use the upsert
+   functionality offered by the PUT interface detailed below.
 
 Return value includes two fields:
 
