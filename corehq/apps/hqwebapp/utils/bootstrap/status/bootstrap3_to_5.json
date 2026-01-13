@@ -16,6 +16,7 @@
     "javascript": [
       "js/app_exchange.js",
       "js/summary/case_summary.js",
+      "js/summary/form_diff.js",
       "js/summary/form_summary.js"
     ]
   },
