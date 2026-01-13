@@ -303,7 +303,7 @@ class BulkUploadMultimediaPollView(BaseMultimediaTemplateView):
 class BulkUploadMultimediaStatusView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload_status"
     page_title = gettext_noop('Bulk Upload Multimedia Status')
-    template_name = "hqmedia/bulk_upload_status.html"
+    template_name = "hqmedia/bootstrap3/bulk_upload_status.html"
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
