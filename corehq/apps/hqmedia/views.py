@@ -297,7 +297,7 @@ class BulkUploadMultimediaPollView(BaseMultimediaTemplateView):
             return HttpResponseServerError()
         status = BulkMultimediaStatusCache.get(processing_id)
         context.update(status.get_response())
-        return render(request, 'hqmedia/partials/bulk_upload_status.html', context)
+        return render(request, 'hqmedia/partials/bootstrap3/bulk_upload_status.html', context)
 
 
 class BulkUploadMultimediaStatusView(BaseMultimediaTemplateView):
