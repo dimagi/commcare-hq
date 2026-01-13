@@ -213,7 +213,7 @@ class ConvertTranslations(BaseTranslationsView):
 class PullResource(BaseTranslationsView):
     page_title = _('Pull Resource')
     urlname = 'pull_resource'
-    template_name = 'translations/pull_resource.html'
+    template_name = 'translations/bootstrap3/pull_resource.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(PullResource, self).dispatch(request, *args, **kwargs)
