@@ -44,7 +44,7 @@ class BaseMultimediaFileUploadController(object):
 
 class MultimediaImageUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("image")
-    existing_file_template = "hqmedia/uploader/preview_image_single.html"
+    existing_file_template = "hqmedia/uploader/bootstrap3/preview_image_single.html"
 
 
 class MultimediaLogoUploadController(MultimediaImageUploadController):
