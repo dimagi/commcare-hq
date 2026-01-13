@@ -313,7 +313,7 @@ class PullResource(BaseTranslationsView):
 class BlacklistTranslations(BaseTranslationsView):
     page_title = _('Blacklist Translations')
     urlname = 'blacklist_translations'
-    template_name = 'translations/blacklist_translations.html'
+    template_name = 'translations/bootstrap3/blacklist_translations.html'
 
     def section_url(self):
         return self.page_url
