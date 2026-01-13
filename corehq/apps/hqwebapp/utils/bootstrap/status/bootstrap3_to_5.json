@@ -113,6 +113,9 @@
   "hqcase": {
     "is_complete": true
   },
+  "hqmedia": {
+    "in_progress": true
+  },
   "hqwebapp": {
     "in_progress": true,
     "templates": [
