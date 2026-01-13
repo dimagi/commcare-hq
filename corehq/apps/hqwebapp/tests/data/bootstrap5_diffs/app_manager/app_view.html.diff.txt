@@ -17,6 +17,15 @@
    </div>
  
    <div class="appmanager-edit-title appmanager-edit-app-title">
+@@ -24,7 +24,7 @@
+     "></inline-edit>
+   </div>
+ 
+-  <div class="appmanager-edit-description">
++  <div class="appmanager-edit-description mt-2">
+     <inline-edit params="
+         value: '{{ app.short_comment|escapejs }}',
+         url: '{% url "edit_app_attr" domain app.id 'comment' %}',
 @@ -47,5 +47,5 @@
    {% for uploader in uploaders %}
      {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
