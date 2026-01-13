@@ -12,6 +12,7 @@
       "partials/form_summary_header.html"
     ],
     "javascript": [
+      "js/summary/case_summary.js",
       "js/summary/form_summary.js"
     ]
   },
