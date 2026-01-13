@@ -83,7 +83,7 @@ var MapItem = function (item, index, mappingContext) {
         var altText = item.alt_text[mappingContext.lang];
         var defaultIconPath = actualPath || self.generateIconPath();
         import('app_manager/js/app_manager_media').then(function (appManager) {
-            import('app_manager/js/nav_menu_media_common').then(function (uploaders) {
+            import('app_manager/js/bootstrap5/nav_menu_media_common').then(function (uploaders) {
                 self.iconManager = appManager.default.appMenuMediaManager({
                     ref: {
                         "path": actualPath,
