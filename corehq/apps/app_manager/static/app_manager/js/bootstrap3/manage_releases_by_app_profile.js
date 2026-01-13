@@ -4,7 +4,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
-import "translations/js/app_translations";
+import "translations/js/bootstrap3/app_translations";
 
 $(function () {
     var AppRelease = function (details) {

@@ -1305,5 +1305,27 @@
       "label": "stylesheets/font",
       "compare_all_files": true
     }
+  ],
+  "apps/translations/templates/translations": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "translations",
+      "compare_all_files": true
+    }
+  ],
+  "apps/translations/static/translations/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/translations/js",
+      "compare_all_files": true
+    }
   ]
 }
