@@ -163,7 +163,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
 class MultimediaReferencesView(BaseMultimediaUploaderView):
     urlname = "hqmedia_references"
-    template_name = "hqmedia/references.html"
+    template_name = "hqmedia/bootstrap3/references.html"
     page_title = gettext_noop("Multimedia Reference Checker")
 
     @property
