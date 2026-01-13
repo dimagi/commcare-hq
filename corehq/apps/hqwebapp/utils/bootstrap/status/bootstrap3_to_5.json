@@ -3,7 +3,22 @@
     "in_progress": true
   },
   "app_manager": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "app_exchange.html",
+      "base_summary.html",
+      "case_summary.html",
+      "form_summary.html",
+      "form_summary_base.html",
+      "form_summary_diff.html",
+      "partials/form_summary_header.html"
+    ],
+    "javascript": [
+      "js/app_exchange.js",
+      "js/summary/case_summary.js",
+      "js/summary/form_diff.js",
+      "js/summary/form_summary.js"
+    ]
   },
   "builds": {
     "is_complete": true,
