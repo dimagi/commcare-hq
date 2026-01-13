@@ -35,14 +35,15 @@
     </p>
   {% endblocktrans %}
   <div class="appmanager-content-single-page">
-      <div class="row results">
+      <div class="row results row-cols-md-3 row-cols-lg-4 g-3">
       {% for app in records %}
-        {% if forloop.counter0|divisibleby:"4" and forloop.counter0 != 0 %}{# Force tiles to appear in aligned rows #}
-          </div><div class="row results">
-        {% endif %}
-        <form action="{% url "app_exchange" domain %}" method="POST" class="col-md-3 mb-3">
+        <form
+          action="{% url "app_exchange" domain %}"
+          method="POST"
+          class="col-md"
+        >
           {% csrf_token %}
-          <div class="card text-bg-light text-center">
+          <div class="card text-bg-light text-center h-100">
             <div class="card-body">
               <h3 class="app-name mt-3">{{ app.name }}</h3>
               {% if app.help_link %}
