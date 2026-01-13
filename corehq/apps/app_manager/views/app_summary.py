@@ -83,7 +83,7 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 @method_decorator(use_bootstrap5, name='dispatch')
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    template_name = 'app_manager/bootstrap5/case_summary.html'
+    template_name = 'app_manager/case_summary.html'
 
     @property
     def page_context(self):
