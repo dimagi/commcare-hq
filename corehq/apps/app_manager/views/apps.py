@@ -544,7 +544,7 @@ def _build_sample_app(app):
 @require_can_edit_apps
 @use_bootstrap5
 def app_exchange(request, domain):
-    template = "app_manager/bootstrap5/app_exchange.html"
+    template = "app_manager/app_exchange.html"
     records = []
     for obj in ExchangeApplication.objects.all():
         results = get_all_built_app_results(obj.domain, app_id=obj.app_id)
