@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+ import $ from "jquery";
+ import _ from "underscore";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
+-import UIInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
+-import UISelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
++import hqMain from "hqwebapp/js/bootstrap5/main";
++import UIInput from "hqwebapp/js/ui_elements/bootstrap5/ui-element-input";
++import UISelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
+ 
+ var mk_translation_ui = function (spec) {
+     var translation_ui = {
