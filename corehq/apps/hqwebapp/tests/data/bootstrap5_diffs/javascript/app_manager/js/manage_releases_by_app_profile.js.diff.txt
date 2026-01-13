@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import assertProperties from "hqwebapp/js/assert_properties";
+-import "translations/js/bootstrap3/app_translations";
++import "translations/js/bootstrap5/app_translations";
+ 
+ $(function () {
+     var AppRelease = function (details) {
