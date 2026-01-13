@@ -5,6 +5,7 @@
   "app_manager": {
     "in_progress": true,
     "templates": [
+      "base_summary.html",
       "case_summary.html",
       "form_summary.html",
       "form_summary_base.html",
