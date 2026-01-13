@@ -105,7 +105,7 @@ class AppCaseSummaryView(AppSummaryView):
 @method_decorator(use_bootstrap5, name='dispatch')
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    template_name = 'app_manager/bootstrap5/form_summary.html'
+    template_name = 'app_manager/form_summary.html'
 
     @property
     def page_context(self):
