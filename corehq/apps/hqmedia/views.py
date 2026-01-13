@@ -329,7 +329,7 @@ class BulkUploadMultimediaStatusView(BaseMultimediaTemplateView):
 @method_decorator(require_can_edit_apps, name='dispatch')
 class ManageMultimediaPathsView(BaseMultimediaTemplateView):
     urlname = "manage_multimedia_paths"
-    template_name = "hqmedia/manage_paths.html"
+    template_name = "hqmedia/bootstrap3/manage_paths.html"
     page_title = gettext_noop("Manage Multimedia Paths")
 
     @method_decorator(login_and_domain_required)
