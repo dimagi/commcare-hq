@@ -343,7 +343,7 @@ class BlacklistTranslations(BaseTranslationsView):
 class AppTranslations(BaseTranslationsView):
     page_title = gettext_lazy('App Translations')
     urlname = 'app_translations'
-    template_name = 'translations/app_translations.html'
+    template_name = 'translations/bootstrap3/app_translations.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppTranslations, self).dispatch(request, *args, **kwargs)
