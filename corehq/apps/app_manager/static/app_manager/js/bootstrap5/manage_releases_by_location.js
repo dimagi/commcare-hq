@@ -6,7 +6,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
 import "locations/js/search";
 import "hqwebapp/js/bootstrap5/widgets";  // using select2/dist/js/select2.full.min for ko-select2 on location select
-import "translations/js/app_translations";
+import "translations/js/bootstrap5/app_translations";
 
 $(function () {
     var enabledAppRelease = function (details) {
