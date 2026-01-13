@@ -24,7 +24,7 @@
     "></inline-edit>
   </div>
 
-  <div class="appmanager-edit-description">
+  <div class="appmanager-edit-description mt-2">
     <inline-edit params="
         value: '{{ app.short_comment|escapejs }}',
         url: '{% url "edit_app_attr" domain app.id 'comment' %}',
