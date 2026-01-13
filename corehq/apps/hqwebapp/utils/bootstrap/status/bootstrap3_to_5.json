@@ -226,6 +226,9 @@
       "js/enterprise_edit_identity_provider.js"
     ]
   },
+  "translations": {
+    "in_progress": true
+  },
   "user_importer": {
     "is_complete": true
   },
