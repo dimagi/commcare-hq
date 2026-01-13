@@ -14,6 +14,7 @@
       "partials/form_summary_header.html"
     ],
     "javascript": [
+      "js/app_exchange.js",
       "js/summary/case_summary.js",
       "js/summary/form_summary.js"
     ]
