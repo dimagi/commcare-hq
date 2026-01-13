@@ -30,7 +30,7 @@ class BaseMultimediaFileUploadController(object):
             'uploadURL': self.destination,
             'uploadParams': self.upload_params,
             'errorsTemplate': render_to_string("hqmedia/uploader/errors.html"),
-            'queueTemplate': render_to_string("hqmedia/uploader/queue_single.html"),
+            'queueTemplate': render_to_string("hqmedia/uploader/bootstrap3/queue_single.html"),
         }
         if hasattr(self, 'existing_file_template'):
             options.update({'existingFileTemplate': render_to_string(self.existing_file_template)})
