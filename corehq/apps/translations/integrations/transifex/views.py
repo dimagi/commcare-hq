@@ -73,7 +73,7 @@ class BaseTranslationsView(BaseDomainView):
 class ConvertTranslations(BaseTranslationsView):
     page_title = _('Convert Translations')
     urlname = 'convert_translations'
-    template_name = 'translations/convert_translations.html'
+    template_name = 'translations/bootstrap3/convert_translations.html'
 
     @property
     @memoized
