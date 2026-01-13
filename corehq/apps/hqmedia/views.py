@@ -513,7 +513,7 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
 @method_decorator(require_can_edit_apps, name='dispatch')
 class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
     urlname = "multimedia_audio_translator"
-    template_name = "hqmedia/audio_translator.html"
+    template_name = "hqmedia/bootstrap3/audio_translator.html"
     page_title = gettext_noop("Download Audio Translator Files")
 
     @property
