@@ -28,8 +28,8 @@
 <script type="text/html" id="CommcareSettings.widgets.multiSelect">
   <span>
     <span data-bind="if: valueIsLegal()">
-      <select multiple="multiple"  {# todo B5: css-select-form-control #}
-              class="col-md-3 form-control"
+      <select multiple="multiple"
+              class="col-md-3 form-select"
               data-bind="options: options,
                          selectedOptions: selectedOptions,
                          optionsText: 'label',
@@ -39,8 +39,8 @@
                          }"></select>
     </span>
     <span data-bind="if: !valueIsLegal()" >
-      <select multiple="multiple"  {# todo B5: css-select-form-control #}
-              class="col-md-3 form-control error"
+      <select multiple="multiple"
+              class="col-md-3 form-select error"
               data-bind="options: options,
                          selectedOptions: writeSelectedOptions,
                          optionsText: 'label',
