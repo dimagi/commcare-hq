@@ -255,7 +255,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
 class BulkUploadMultimediaView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload"
-    template_name = "hqmedia/bulk_upload.html"
+    template_name = "hqmedia/bootstrap3/bulk_upload.html"
     page_title = gettext_noop("Bulk Upload Multimedia")
 
     @property
