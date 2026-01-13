@@ -10,5 +10,5 @@
 +import UIInput from "hqwebapp/js/ui_elements/bootstrap5/ui-element-input";
 +import UISelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
  
- var mk_translation_ui = function (spec) {
-     var translation_ui = {
+ var mkTranslationUI = function (spec) {
+     var translationUI = {
