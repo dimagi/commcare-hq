@@ -1,6 +1,6 @@
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import uploadersModule from "hqmedia/js/uploaders";
+import uploadersModule from "hqmedia/js/bootstrap3/uploaders";
 
 let uploaders = {};
 
