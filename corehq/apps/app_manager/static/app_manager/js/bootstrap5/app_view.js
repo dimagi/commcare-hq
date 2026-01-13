@@ -5,6 +5,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import commcareSettings from "app_manager/js/settings/bootstrap5/commcare_settings";
 import supportedLanguages from "app_manager/js/bootstrap5/supported_languages";
@@ -266,4 +267,7 @@ $(function () {
         sectionChanger.attachToForm($saveContainer);
     })();
 
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map((tooltipTriggerEl) => new Tooltip(tooltipTriggerEl));
 });

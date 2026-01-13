@@ -11,7 +11,7 @@ import noopMetrics from "analytix/js/noopMetrics";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import main from "hqwebapp/js/bootstrap5/main";
 import menu from "app_manager/js/menu";
-import previewApp from "app_manager/js/preview_app";
+import previewApp from "app_manager/js/bootstrap5/preview_app";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
 import "select2/dist/js/select2.full.min";

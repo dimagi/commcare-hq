@@ -23,7 +23,7 @@ $appnav-secondary-width: 35px;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-size: 12px;
+  font-size: 0.75rem;
   .appnav-menu {
     min-height: $appnav-item-height/2;
   }
@@ -40,7 +40,7 @@ $appnav-secondary-width: 35px;
 }
 
 .appnav-primary-icon {
-  font-size: 1.7rem;
+  font-size: 1.0625rem;
   color: lighten($cc-text, 20);
 }
 
@@ -51,7 +51,7 @@ $appnav-secondary-width: 35px;
 }
 
 .appnav-primary-icon-lg {
-  font-size: 2rem;
+  font-size: 1.25rem;
 }
 
 .appnav-menu .appnav-primary-icon-lg {
@@ -91,9 +91,9 @@ $drag-icon-right: 10px;
 
   > span {
     position: relative;
-    line-height: 14px;
+    line-height: 0.875rem;
     display: inline-block;
-    margin-left: 22px;
+    margin-left: 1.375rem;
     padding: 8px 0;
   }
 
@@ -206,7 +206,7 @@ $l-shaped-line: "\f00b";
 
     &:before {
       content: $l-shaped-line;
-      left: -14px;
+      left: -0.875rem;
       margin-right: 1px;
     }
   }
@@ -225,9 +225,9 @@ $l-shaped-line: "\f00b";
       font-family: "WorkflowFontRegular";
       position: absolute;
       content: $t-shaped-line;
-      left: -15px;
+      left: -0.9375rem;
       top: -5px;
-      font-size: 4.6rem;
+      font-size: 2.875rem;
       color: lighten($cc-text, 60);
     }
   }
@@ -304,8 +304,8 @@ $l-shaped-line: "\f00b";
   padding: 5px 15px;
   text-transform: uppercase;
   color: white;
-  font-size: 10px;
-  line-height: 15px;
+  font-size: 0.625rem;
+  line-height: 0.9375rem;
   background-color: $cc-dark-cool-accent-mid;
   display: block;
   font-weight: bold;
@@ -329,8 +329,8 @@ $l-shaped-line: "\f00b";
   padding: 5px 15px;
   text-transform: uppercase;
   color: white;
-  font-size: 10px;
-  line-height: 15px;
+  font-size: 0.625rem;
+  line-height: 0.9375rem;
   background-color: $call-to-action-mid;
   display: block;
   font-weight: bold;
@@ -359,26 +359,14 @@ $l-shaped-line: "\f00b";
 }
 
 .appnav-language-select {
-  padding: 5px 15px 4px;
-  font-size: 11px;
+  padding: 7px 15px 6px;
+  font-size: 0.6875rem;
   background-color: $cc-brand-mid;
   color: white;
-  label {
-    font-weight: 400;
-    line-height: 13px;
-    padding-top: 1px;
-    display: inline-block;
-  }
   select {
-    width: 42px;
-    height: 16px;
-    display: inline;
-    float: right;
     background-color: darken($cc-brand-mid, 5);
     border: none;
     color: white;
-    margin-top: 2px;
-    padding: 0;
   }
 }
 
@@ -387,11 +375,11 @@ $l-shaped-line: "\f00b";
   border: none;
   color: lighten($cc-text, 10);
   vertical-align: top;
-  font-size: 9px;
+  font-size: 0.5625rem;
   margin-top: -1px;
   margin-right: 1px;
   padding-bottom: 3px;
-  line-height: 10px;
+  line-height: 0.625rem;
 }
 
 .appnav-section-name {
@@ -408,9 +396,9 @@ $l-shaped-line: "\f00b";
   position: relative;
   span {
     display: block;
-    line-height: 14px;
+    line-height: 0.875rem;
     padding: 8px 0;
-    margin-left: 22px;
+    margin-left: 1.375rem;
   }
   .appnav-primary-icon {
     margin-top: 2px;
@@ -432,7 +420,7 @@ $l-shaped-line: "\f00b";
   background-color: darken($cc-bg, 10);
   padding: 5px 15px 0 15px;
   font-weight: 600;
-  font-size: 10px;
+  font-size: 0.625rem;
 }
 
 .appnav-menu > li > .appnav-item.active {

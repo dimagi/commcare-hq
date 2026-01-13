@@ -1,22 +1,46 @@
 --- 
 +++ 
-@@ -16,8 +16,8 @@
+@@ -1,8 +1,4 @@
+ {% load i18n %}
+-
+-<!-- B5 TODO: hq-add-new-module-modal is a hack, should not be duplicated.
+- It overrides a lot of the default behavior of its child classes.
+- The entire modal should be refactored to use built-in bootstrap 5 utilities. -->
+ 
+ <div
+   class="modal fade hq-add-new-module-modal"
+@@ -11,47 +7,44 @@
+   role="dialog"
+   aria-labelledby="add-new-module"
+ >
+-  <div class="modal-dialog" role="document">
++  <div class="modal-dialog modal-dialog-scrollable" role="document">
+     <div class="modal-content">
        <div class="modal-header">
-         <button
-           type="button"
+-        <button
+-          type="button"
 -          class="close"
 -          data-dismiss="modal"
-+          class="btn-close"  {# todo B5: css-close #}
+-          aria-label="Close"
+-        >
+-          <span aria-hidden="true">&times;</span>
+-        </button>
+         <h4 class="modal-title" id="modal-title">
+           {% trans "Create a New Menu" %}
+         </h4>
++        <button
++          type="button"
++          class="btn-close"
 +          data-bs-dismiss="modal"
-           aria-label="Close"
-         >
-           <span aria-hidden="true">&times;</span>
-@@ -29,25 +29,25 @@
++          aria-label="Close"
++        ></button>
+       </div>
        <div class="modal-body">
-         <!-- TODO: Use the b5 flexbox utilities when migrating to bootstrap 5 -->
-         <div class="new-module-modal-flex-container">
+-        <!-- TODO: Use the b5 flexbox utilities when migrating to bootstrap 5 -->
+-        <div class="new-module-modal-flex-container">
 -          {% include 'app_manager/partials/module_options/bootstrap3/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
 -          {% include 'app_manager/partials/module_options/bootstrap3/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
++        <div class="row row-cols-sm-2 g-4">
 +          {% include 'app_manager/partials/module_options/bootstrap5/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
 +          {% include 'app_manager/partials/module_options/bootstrap5/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
            {% if show_biometric %}
@@ -45,3 +69,8 @@
            {% endif %}
          </div>
        </div>
+-      <div class="modal-footer">
++      <div class="modal-footer justify-content-center text-secondary">
+         {% trans "Please note you will not be able to change menu type later." %}
+       </div>
+     </div>

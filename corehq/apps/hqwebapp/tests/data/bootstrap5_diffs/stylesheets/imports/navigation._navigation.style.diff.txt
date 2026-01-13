@@ -13,7 +13,7 @@
    float: left;
  }
  
-@@ -11,12 +11,12 @@
+@@ -11,37 +11,37 @@
    margin-bottom: 20px;
  }
  
@@ -32,9 +32,11 @@
  
  .appnav-menu {
    list-style: none;
-@@ -25,23 +25,23 @@
+   margin: 0;
+   padding: 0;
    box-sizing: border-box;
-   font-size: 12px;
+-  font-size: 12px;
++  font-size: 0.75rem;
    .appnav-menu {
 -    min-height: @appnav-item-height/2;
 +    min-height: $appnav-item-height/2;
@@ -56,17 +58,24 @@
  }
  
  .appnav-primary-icon {
-   font-size: 1.7rem;
+-  font-size: 1.7rem;
 -  color: lighten(@cc-text, 20);
++  font-size: 1.0625rem;
 +  color: lighten($cc-text, 20);
  }
  
  .appnav-menu .appnav-primary-icon {
-@@ -54,38 +54,39 @@
-   font-size: 2rem;
+@@ -51,66 +51,67 @@
  }
  
+ .appnav-primary-icon-lg {
+-  font-size: 2rem;
+-}
+-
 -.appnav-menu .appnav-primary-icon-lg  {
++  font-size: 1.25rem;
++}
++
 +.appnav-menu .appnav-primary-icon-lg {
    top: 3px;
  }
@@ -118,7 +127,15 @@
    position: relative;
  
    > span {
-@@ -99,18 +100,18 @@
+     position: relative;
+-    line-height: 14px;
++    line-height: 0.875rem;
+     display: inline-block;
+-    margin-left: 22px;
++    margin-left: 1.375rem;
+     padding: 8px 0;
+   }
+ 
    > .appnav-drag-icon {
      position: absolute;
      top: 0;
@@ -239,15 +256,17 @@
    }
  
    > li:last-child > .appnav-item > a.appnav-title {
-@@ -201,7 +205,7 @@
+@@ -201,8 +205,8 @@
      padding-left: 11px;
  
      &:before {
 -      content: @l-shaped-line;
+-      left: -14px;
 +      content: $l-shaped-line;
-       left: -14px;
++      left: -0.875rem;
        margin-right: 1px;
      }
+   }
 @@ -211,19 +215,20 @@
    }
  }
@@ -264,11 +283,13 @@
        font-family: "WorkflowFontRegular";
        position: absolute;
 -      content: @t-shaped-line;
+-      left: -15px;
 +      content: $t-shaped-line;
-       left: -15px;
++      left: -0.9375rem;
        top: -5px;
-       font-size: 4.6rem;
+-      font-size: 4.6rem;
 -      color: lighten(@cc-text, 60);
++      font-size: 2.875rem;
 +      color: lighten($cc-text, 60);
      }
    }
@@ -349,11 +370,15 @@
    a {
      padding: 15px;
      display: block;
-@@ -295,22 +306,22 @@
+@@ -293,24 +304,24 @@
+   padding: 5px 15px;
+   text-transform: uppercase;
    color: white;
-   font-size: 10px;
-   line-height: 15px;
+-  font-size: 10px;
+-  line-height: 15px;
 -  background-color: @cc-dark-cool-accent-mid;
++  font-size: 0.625rem;
++  line-height: 0.9375rem;
 +  background-color: $cc-dark-cool-accent-mid;
    display: block;
    font-weight: bold;
@@ -384,16 +409,20 @@
    }
  }
  
-@@ -320,7 +331,7 @@
+@@ -318,9 +329,9 @@
+   padding: 5px 15px;
+   text-transform: uppercase;
    color: white;
-   font-size: 10px;
-   line-height: 15px;
+-  font-size: 10px;
+-  line-height: 15px;
 -  background-color: @call-to-action-mid;
++  font-size: 0.625rem;
++  line-height: 0.9375rem;
 +  background-color: $call-to-action-mid;
    display: block;
    font-weight: bold;
    position: relative;
-@@ -335,9 +346,14 @@
+@@ -335,51 +346,44 @@
      padding-top: 14px;
      padding-bottom: 13px;
      display: block;
@@ -411,25 +440,33 @@
      }
    }
  }
-@@ -345,7 +361,7 @@
+ 
  .appnav-language-select {
-   padding: 5px 15px 4px;
-   font-size: 11px;
+-  padding: 5px 15px 4px;
+-  font-size: 11px;
 -  background-color: @cc-brand-mid;
++  padding: 7px 15px 6px;
++  font-size: 0.6875rem;
 +  background-color: $cc-brand-mid;
    color: white;
-   label {
-     font-weight: 400;
-@@ -358,7 +374,7 @@
-     height: 16px;
-     display: inline;
-     float: right;
+-  label {
+-    font-weight: 400;
+-    line-height: 13px;
+-    padding-top: 1px;
+-    display: inline-block;
+-  }
+   select {
+-    width: 42px;
+-    height: 16px;
+-    display: inline;
+-    float: right;
 -    background-color: darken(@cc-brand-mid, 5);
 +    background-color: darken($cc-brand-mid, 5);
      border: none;
      color: white;
-     margin-top: 2px;
-@@ -367,9 +383,9 @@
+-    margin-top: 2px;
+-    padding: 0;
+   }
  }
  
  .appnav-menu .btn-langcode-preprocessed {
@@ -439,9 +476,13 @@
 -  color: lighten(@cc-text, 10);
 +  color: lighten($cc-text, 10);
    vertical-align: top;
-   font-size: 9px;
+-  font-size: 9px;
++  font-size: 0.5625rem;
    margin-top: -1px;
-@@ -379,7 +395,7 @@
+   margin-right: 1px;
+   padding-bottom: 3px;
+-  line-height: 10px;
++  line-height: 0.625rem;
  }
  
  .appnav-section-name {
@@ -450,7 +491,19 @@
    color: white;
    padding: 10px 15px;
    margin: 0;
-@@ -413,16 +429,16 @@
+@@ -392,9 +396,9 @@
+   position: relative;
+   span {
+     display: block;
+-    line-height: 14px;
++    line-height: 0.875rem;
+     padding: 8px 0;
+-    margin-left: 22px;
++    margin-left: 1.375rem;
+   }
+   .appnav-primary-icon {
+     margin-top: 2px;
+@@ -413,16 +417,16 @@
  }
  
  .appnav-toggle-label {
@@ -458,7 +511,8 @@
 +  background-color: darken($cc-bg, 10);
    padding: 5px 15px 0 15px;
    font-weight: 600;
-   font-size: 10px;
+-  font-size: 10px;
++  font-size: 0.625rem;
  }
  
  .appnav-menu > li > .appnav-item.active {
@@ -470,7 +524,7 @@
      word-break: break-word;
    }
    a {
-@@ -432,31 +448,33 @@
+@@ -432,31 +436,33 @@
        &:hover {
          color: white;
          cursor: move;

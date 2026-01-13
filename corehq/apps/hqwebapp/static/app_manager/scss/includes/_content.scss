@@ -1,6 +1,6 @@
 .appmanager-main-container {
   display: block;
-  margin-left: $app-manager-sidebar-width;
+  padding-left: 0;
   background-color: $cc-brand-low;
   position: relative;
   box-sizing: border-box;
@@ -164,11 +164,9 @@
   }
 }
 
-.appmanager-edit-title {
-  margin-right: 400px;
-}
+.appmanager-edit-title,
 .appmanager-edit-app-title {
-  margin-right: 400px;
+  margin-right: calc($app-page-actions-width + 2rem);
 }
 
 .appmanager-edit-title .ko-inline-edit {
@@ -182,20 +180,20 @@
   }
   .read-write {
     padding-top: 10px;
-    padding-bottom: 10px;
   }
-  .read-write.h3 input {
-    margin-left: 0;
-    width: 100%;
-  }
-  .read-write .form-group:first-child {
-    min-width: 80%;
+  .read-write.h3 {
+    min-width: unset;
+
+    .input-group {
+      margin-top: 3px;
+      width: 100%;
+    }
   }
 }
 .appmanager-edit-app-title .ko-inline-edit {
   .read-only {
     margin-left: -12px;
-    margin-top: 12px;
+    margin-top: 13px;
   }
 }
 .appmanager-edit-description .ko-inline-edit {
@@ -205,6 +203,7 @@
 .appmanager-page-actions {
   float: right;
   margin-top: 20px;
+  max-width: $app-page-actions-width;
 }
 
 .form-group .upgrade-message {
