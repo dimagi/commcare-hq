@@ -3,7 +3,7 @@ import ko from "knockout";
 import _ from "underscore";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import mediaReferenceModels from "hqmedia/js/media_reference_models";
+import mediaReferenceModels from "hqmedia/js/bootstrap3/media_reference_models";
 import "app_manager/js/download_async_modal";  // for the 'Download ZIP' button
 import "hqwebapp/js/components/pagination";
 
