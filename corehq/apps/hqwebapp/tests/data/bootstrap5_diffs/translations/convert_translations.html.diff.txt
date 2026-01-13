@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+-{% extends 'hqwebapp/bootstrap3/two_column.html' %}
++{% extends 'hqwebapp/bootstrap5/two_column.html' %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ 
+ {% block page_content %}
+   <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
+     <legend>{% trans "Convert Translations" %}</legend>
+-    {% crispy convert_translations_form %}
++    {% crispy convert_translations_form %}  {# todo B5: crispy #}
+   </form>
+ {% endblock %}

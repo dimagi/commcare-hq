@@ -1,11 +1,11 @@
 import $ from "jquery";
 import _ from "underscore";
-import hqMain from "hqwebapp/js/bootstrap3/main";
-import UIInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
-import UISelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
+import hqMain from "hqwebapp/js/bootstrap5/main";
+import UIInput from "hqwebapp/js/ui_elements/bootstrap5/ui-element-input";
+import UISelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
 
-var mk_translation_ui = function (spec) {
-    var translation_ui = {
+var mkTranslationUI = function (spec) {
+    var translationUI = {
             translations: {},
             $home: spec.$home,
             url: spec.url,
@@ -15,7 +15,6 @@ var mk_translation_ui = function (spec) {
             allow_autofill: spec.allow_autofill,
         },
         suggestionURL = spec.suggestion_url,
-        suggestionCache = {},
         key,
         Translation = (function () {
             var Translation = function (key, value) {
@@ -30,7 +29,7 @@ var mk_translation_ui = function (spec) {
 
                 self.$delete = $('<button class="btn btn-danger"><i class="fa fa-remove"></i></button>').click(function () {
                     $(this).remove();
-                    translation_ui.deleteTranslation(self.key.val());
+                    translationUI.deleteTranslation(self.key.val());
                 }).css({
                     cursor: 'pointer',
                 }).attr('title', gettext("Delete Translation"));
@@ -38,10 +37,10 @@ var mk_translation_ui = function (spec) {
                 self.$add = $('<button class="btn btn-default"><i class="fa fa-plus"></i></button>').click(function () {
                     // remove any trailing whitespace from the input box
                     self.key.val($.trim(self.key.val()));
-                    if (self.key.val() && !translation_ui.translations[self.key.val()]) {
-                        var hasError = translation_ui.addTranslation(self);
+                    if (self.key.val() && !translationUI.translations[self.key.val()]) {
+                        var hasError = translationUI.addTranslation(self);
                         if (!hasError) {
-                            translation_ui.appendAdder();
+                            translationUI.appendAdder();
                         }
                     } else {
                         self.key.$edit_view.focus();
@@ -60,7 +59,7 @@ var mk_translation_ui = function (spec) {
 
                 var helperFunction = function () {
                     if (self.solid) {
-                        translation_ui.saveButton.fire('change');
+                        translationUI.saveButton.fire('change');
                     }
                 };
 
@@ -77,7 +76,7 @@ var mk_translation_ui = function (spec) {
                         url: suggestionURL,
                         data: function () {
                             return {
-                                lang: translation_ui.lang,
+                                lang: translationUI.lang,
                                 key: self.key.val(),
                             };
                         },
@@ -128,14 +127,14 @@ var mk_translation_ui = function (spec) {
             url: suggestionURL,
             dataType: "json",
             data: {
-                lang: translation_ui.lang,
+                lang: translationUI.lang,
                 one: true,
             },
             success: function (data) {
                 var key;
                 for (key in data) {
-                    if (data.hasOwnProperty(key) && !translation_ui.translations[key]) {
-                        translation_ui.addTranslation(Translation.init(key, data[key]));
+                    if (Object.prototype.hasOwnProperty.call(data, key) && !translationUI.translations[key]) {
+                        translationUI.addTranslation(Translation.init(key, data[key]));
                     }
                 }
             },
@@ -148,37 +147,37 @@ var mk_translation_ui = function (spec) {
         "'></span>";
 
     for (key in spec.translations) {
-        if (spec.translations.hasOwnProperty(key)) {
-            translation_ui.translations[key] = Translation.init(key, spec.translations[key]);
+        if (Object.prototype.hasOwnProperty.call(spec.translations, key)) {
+            translationUI.translations[key] = Translation.init(key, spec.translations[key]);
         }
     }
 
-    translation_ui.saveButton = hqMain.initSaveButton({
+    translationUI.saveButton = hqMain.initSaveButton({
         unsavedMessage: gettext("You have unsaved user interface translations."),
         save: function () {
-            translation_ui.save();
+            translationUI.save();
         },
     });
-    translation_ui.$home.prepend(translation_ui.saveButton.ui);
-    translation_ui.$home.append($home);
+    translationUI.$home.prepend(translationUI.saveButton.ui);
+    translationUI.$home.append($home);
 
-    translation_ui.translate = function (key) {
-        return translation_ui.translations[key].value.val();
+    translationUI.translate = function (key) {
+        return translationUI.translations[key].value.val();
     };
 
-    translation_ui.save = function () {
+    translationUI.save = function () {
         var key,
             data = {};
         var error = false;
-        for (key in translation_ui.translations) {
-            if (translation_ui.translations.hasOwnProperty(key)) {
-                if (translation_ui.validate_translation(translation_ui.translations[key])) {
-                    translation_ui.translations[key].$error.text(gettext('Parameters formatting problem!'));
-                    translation_ui.translations[key].$error.show();
+        for (key in translationUI.translations) {
+            if (Object.prototype.hasOwnProperty.call(translationUI.translations, key)) {
+                if (translationUI.validate_translation(translationUI.translations[key])) {
+                    translationUI.translations[key].$error.text(gettext('Parameters formatting problem!'));
+                    translationUI.translations[key].$error.show();
                     error = true;
                 } else {
-                    translation_ui.translations[key].$error.hide();
-                    data[translation_ui.translations[key].key.val()] = translation_ui.translations[key].value.val();
+                    translationUI.translations[key].$error.hide();
+                    data[translationUI.translations[key].key.val()] = translationUI.translations[key].value.val();
                 }
             }
         }
@@ -186,10 +185,10 @@ var mk_translation_ui = function (spec) {
             this.saveButton.ajax({
                 type: "POST",
                 dataType: "json",
-                url: translation_ui.url,
+                url: translationUI.url,
                 data: {
-                    doc_id: JSON.stringify(translation_ui.doc_id),
-                    lang: JSON.stringify(translation_ui.lang),
+                    doc_id: JSON.stringify(translationUI.doc_id),
+                    lang: JSON.stringify(translationUI.lang),
                     translations: JSON.stringify(data),
                 },
                 context: this,
@@ -200,20 +199,20 @@ var mk_translation_ui = function (spec) {
         }
     };
 
-    translation_ui.deleteTranslation = function (key) {
-        translation_ui.saveButton.fire('change');
+    translationUI.deleteTranslation = function (key) {
+        translationUI.saveButton.fire('change');
         this.translations[key].ui.fadeOut(function () {
             $(this).remove();
         });
         delete this.translations[key];
     };
 
-    translation_ui.addTranslation = function (translation) {
-        var error = translation_ui.validate_translation(translation);
+    translationUI.addTranslation = function (translation) {
+        var error = translationUI.validate_translation(translation);
         if (!error) {
             translation.$error.hide();
-            translation_ui.saveButton.fire('change');
-            translation_ui.translations[translation.key.val()] = translation;
+            translationUI.saveButton.fire('change');
+            translationUI.translations[translation.key.val()] = translation;
             translation.ui.detach();
             translation.setSolid(true);
             $list.append(translation.ui.hide());
@@ -226,18 +225,18 @@ var mk_translation_ui = function (spec) {
         return error;
     };
 
-    translation_ui.appendAdder = function () {
+    translationUI.appendAdder = function () {
         var adder = Translation.init("", "");
         adder.setSolid(false);
         $adder.append(adder.ui);
     };
-    translation_ui.render = function () {
+    translationUI.render = function () {
         var key,
             keys = [],
             translation,
             i;
-        for (key in translation_ui.translations) {
-            if (translation_ui.translations.hasOwnProperty(key)) {
+        for (key in translationUI.translations) {
+            if (Object.prototype.hasOwnProperty.call(translationUI.translations, key)) {
                 keys.push(key);
             }
         }
@@ -245,7 +244,7 @@ var mk_translation_ui = function (spec) {
         if (keys.length) {
             for (i = 0; i < keys.length; i += 1) {
                 key = keys[i];
-                translation = translation_ui.translations[key];
+                translation = translationUI.translations[key];
                 translation.ui.appendTo($list);
             }
         }
@@ -253,16 +252,16 @@ var mk_translation_ui = function (spec) {
         $home.append($autoFill);
         $home.append($autoFillHelp);
 
-        if (!translation_ui.allow_autofill) {
+        if (!translationUI.allow_autofill) {
             $autoFill.attr('class', 'disabled btn btn-primary');
             $('.auto-fill-help').attr('data-content', gettext("Autofill is not available in English (en). " +
                 "Please change your language using the dropdown in the top left."));
         }
         hqMain.transformHelpTemplate($('.auto-fill-help'), true);
-        translation_ui.appendAdder();
+        translationUI.appendAdder();
         $home.append($home);
     };
-    translation_ui.validate_translation = function (translation) {
+    translationUI.validate_translation = function (translation) {
         var patt = /\$.*?}/g;
         var parameters = translation.value.val().match(patt);
         var error = false;
@@ -276,9 +275,9 @@ var mk_translation_ui = function (spec) {
         }
         return error;
     };
-    translation_ui.render();
+    translationUI.render();
 };
 
 export default {
-    makeTranslationUI: mk_translation_ui,
+    makeTranslationUI: mkTranslationUI,
 };
