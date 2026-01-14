@@ -4,7 +4,7 @@ import _ from "underscore";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import mediaReferenceModels from "hqmedia/js/bootstrap5/media_reference_models";
-import "app_manager/js/download_async_modal";  // for the 'Download ZIP' button
+import "app_manager/js/bootstrap5/download_async_modal";  // for the 'Download ZIP' button
 import "hqwebapp/js/components/pagination";
 
 function MultimediaReferenceController() {

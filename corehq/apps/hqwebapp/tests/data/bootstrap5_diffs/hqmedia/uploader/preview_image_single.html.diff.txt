@@ -1,14 +1,20 @@
 --- 
 +++ 
-@@ -2,11 +2,11 @@
+@@ -1,12 +1,15 @@
+ {% load i18n %}
  <p>
    <img src="<%-url %>?thumb=100" alt="uploaded image" />
-   <a href="<%- url %>"
+-  <a href="<%- url %>"
 -     class="btn btn-default existing-media"
-+     class="btn btn-outline-primary existing-media"
-      target="_blank"
+-     target="_blank"
 -     data-toggle="tooltip" data-title="Opens image in new tab.">{% trans 'View Full Size' %}</a>
-+     data-bs-toggle="tooltip" data-title="Opens image in new tab.">{% trans 'View Full Size' %}</a>
++  <a
++    href="<%- url %>"
++    class="btn btn-outline-primary existing-media"
++    target="_blank"
++    data-bs-toggle="tooltip"
++    data-bs-title="Opens image in new tab."
++  >{% trans 'View Full Size' %}</a>
  </p>
 -<p class="text-success hqm-upload-completed hide">
 -  <span class="label label-success">{% trans 'New Image Uploaded Successfully' %}</span>

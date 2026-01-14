@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,9 +1,9 @@
+@@ -1,10 +1,10 @@
  import $ from "jquery";
  import ko from "knockout";
  import _ from "underscore";
@@ -8,10 +8,12 @@
 +import alertUser from "hqwebapp/js/bootstrap5/alert_user";
  import initialPageData from "hqwebapp/js/initial_page_data";
 -import mediaReferenceModels from "hqmedia/js/bootstrap3/media_reference_models";
+-import "app_manager/js/bootstrap3/download_async_modal";  // for the 'Download ZIP' button
 +import mediaReferenceModels from "hqmedia/js/bootstrap5/media_reference_models";
- import "app_manager/js/download_async_modal";  // for the 'Download ZIP' button
++import "app_manager/js/bootstrap5/download_async_modal";  // for the 'Download ZIP' button
  import "hqwebapp/js/components/pagination";
  
+ function MultimediaReferenceController() {
 @@ -73,7 +73,7 @@
                      self.totalItems(data.total_rows);
                      self.totals(data.totals);
