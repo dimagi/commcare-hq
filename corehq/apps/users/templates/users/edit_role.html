@@ -31,8 +31,7 @@
     >
       <template x-if="role.upstream_id">
         <div class="row mb-4 d-flex">
-          <div class="col-md-6"></div>
-          <div class="col-md-4 d-flex justify-content-end gap-2">
+          <div class="col-md-12 d-flex justify-content-end gap-2">
             {% include 'users/partials/linked_roles_modal.html' %}
             <span x-show="allowEdit && !linkedRoleUnlocked">
               <button
@@ -83,7 +82,7 @@
         <label class="col-md-2 control-label" for="role-name">
           Role Name<span class="asteriskField">*</span>
         </label>
-        <div class="col-md-8 controls">
+        <div class="col-md-10 controls">
           <input
             x-model="role.name"
             type="text"
@@ -97,236 +96,248 @@
         </div>
       </div>
 
-      <fieldset class="active" :disabled="!isEditable">
-        <legend>
-          <a
-            class="accordion-toggle"
-            data-bs-toggle="collapse"
-            href="#access-areas-card"
-          >
-            <i class="fa fa-angle-double-down"></i>
-            {% trans "Area Access" %}
-          </a>
-        </legend>
-        <div id="access-areas-card" class="card-body collapse show">
-          <div class="row">
-            <div class="col-md-1">{% trans "Can Edit" %}</div>
-            <div class="col-md-1">{% trans "Can View" %}</div>
-            <div class="col-md-8"></div>
-          </div>
-          <template x-for="area in accessAreas" :key="area.editCheckboxLabel">
-            <div class="row" x-show="area.showOption">
-              <div class="col-md-1 controls" x-show="area.showEditCheckbox">
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="area.editCheckboxLabel"
-                    x-model="area.editPermission"
-                  />
-                  <label class="form-check-label" :for="area.editCheckboxLabel">
-                    <span
-                      class="sr-only"
-                      x-text="area.screenReaderEditAndViewText"
+      <div class="accordion" :disabled="!isEditable">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="access-areas-heading">
+            <button
+              class="accordion-button bg-light"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#access-areas-body"
+              aria-expanded="true"
+              aria-controls="access-areas-body"
+            >
+              {% trans "Area Access" %}
+            </button>
+          </h2>
+          <div id="access-areas-body" class="accordion-collapse collapse show" aria-labelledby="access-areas-heading">
+            <div class="accordion-body">
+              <div class="row">
+                <div class="col-md-1">{% trans "Can Edit" %}</div>
+                <div class="col-md-1">{% trans "Can View" %}</div>
+                <div class="col-md-10"></div>
+              </div>
+              <template x-for="area in accessAreas" :key="area.editCheckboxLabel">
+                <div class="row" x-show="area.showOption">
+                  <div class="col-md-1 controls" x-show="area.showEditCheckbox">
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        :id="area.editCheckboxLabel"
+                        x-model="area.editPermission"
+                      />
+                      <label class="form-check-label" :for="area.editCheckboxLabel">
+                        <span
+                          class="sr-only"
+                          x-text="area.screenReaderEditAndViewText"
+                        >
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-1 controls" x-show="!area.showEditCheckbox">
+                    <div class="form-check-placeholder"></div>
+                  </div>
+                  <div class="col-md-1 controls" x-show="area.showViewCheckbox">
+                    {# PLACEHOLDER checkbox when editPermission() is true #}
+                    <div class="form-check" x-show="area.editPermission">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        checked="checked"
+                        disabled="disabled"
+                        :id="area.viewCheckboxLabel + '-disabled'"
+                      />
+                      <label
+                        class="form-check-label"
+                        :for="area.viewCheckboxLabel + '-disabled'"
+                      >
+                        <span
+                          class="sr-only"
+                          x-text="area.screenReaderViewOnlyText"
+                        >
+                        </span>
+                      </label>
+                    </div>
+                    {# end PLACEHOLDER #}
+                    {# REAL checkbox that controls viewPermission when editPermission() is false #}
+                    <div class="form-check" x-show="!area.editPermission">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        :id="area.viewCheckboxLabel"
+                        x-model="area.viewPermission"
+                      />
+                      <label class="form-check-label" :for="area.viewCheckboxLabel">
+                        <span
+                          class="sr-only"
+                          x-text="area.screenReaderViewOnlyText"
+                        >
+                        </span>
+                      </label>
+                    </div>
+                    {# END REAL checkbox #}
+                  </div>
+                  <div class="col-md-1 controls" x-show="!area.showViewCheckbox">
+                    <div class="form-check-placeholder"></div>
+                  </div>
+                  <div class="col-md-10 form-label">
+                    <div x-html="area.text"></div>
+                    {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
+                    <div
+                      class="form-check"
+                      x-show="role.permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox"
                     >
-                    </span>
-                  </label>
-                </div>
-              </div>
-              <div class="col-md-1 controls" x-show="!area.showEditCheckbox">
-                <div class="form-check-placeholder"></div>
-              </div>
-              <div class="col-md-1 controls" x-show="area.showViewCheckbox">
-                {# PLACEHOLDER checkbox when editPermission() is true #}
-                <div class="form-check" x-show="area.editPermission">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    checked="checked"
-                    disabled="disabled"
-                    :id="area.viewCheckboxLabel + '-disabled'"
-                  />
-                  <label
-                    class="form-check-label"
-                    :for="area.viewCheckboxLabel + '-disabled'"
-                  >
-                    <span
-                      class="sr-only"
-                      x-text="area.screenReaderViewOnlyText"
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        checked="checked"
+                        disabled="disabled"
+                        :id="area.allowCheckboxId + '-disabled'"
+                      />
+                      <label
+                        class="form-check-label"
+                        x-text="area.allowCheckboxText"
+                        :for="area.allowCheckboxId + '-disabled'"
+                      ></label>
+                    </div>
+                    {# end PLACEHOLDER #}
+                    {# REAL checkbox for allowCheckboxPermission #}
+                    <div
+                      class="form-check"
+                      x-show="!role.permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox"
                     >
-                    </span>
-                  </label>
-                </div>
-                {# end PLACEHOLDER #}
-                {# REAL checkbox that controls viewPermission when editPermission() is false #}
-                <div class="form-check" x-show="!area.editPermission">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="area.viewCheckboxLabel"
-                    x-model="area.viewPermission"
-                  />
-                  <label class="form-check-label" :for="area.viewCheckboxLabel">
-                    <span
-                      class="sr-only"
-                      x-text="area.screenReaderViewOnlyText"
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        :id="area.allowCheckboxId"
+                        x-model="area.allowCheckboxPermission"
+                      />
+                      <label
+                        class="form-check-label"
+                        :for="area.allowCheckboxId"
+                        x-text="area.allowCheckboxText"
+                      ></label>
+                    </div>
+                    {# end REAL #}
+                    {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
+                    <div
+                      class="form-check"
+                      x-show="!area.editPermission && area.showAllowCheckbox"
                     >
-                    </span>
-                  </label>
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        disabled="disabled"
+                        :id="area.allowCheckboxId + '-disabled2'"
+                      />
+                      <label
+                        class="form-check-label"
+                        :for="area.allowCheckboxId + '-disabled2'"
+                        x-text="area.allowCheckboxText"
+                      ></label>
+                    </div>
+                    {# end PLACEHOLDER #}
+                  </div>
                 </div>
-                {# END REAL checkbox #}
-              </div>
-              <div class="col-md-1 controls" x-show="!area.showViewCheckbox">
-                <div class="form-check-placeholder"></div>
-              </div>
-              <div class="col-md-8 form-label">
-                <div x-html="area.text"></div>
-                {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
-                <div
-                  class="form-check"
-                  x-show="role.permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox"
-                >
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    checked="checked"
-                    disabled="disabled"
-                    :id="area.allowCheckboxId + '-disabled'"
-                  />
-                  <label
-                    class="form-check-label"
-                    x-text="area.allowCheckboxText"
-                    :for="area.allowCheckboxId + '-disabled'"
-                  ></label>
-                </div>
-                {# end PLACEHOLDER #}
-                {# REAL checkbox for allowCheckboxPermission #}
-                <div
-                  class="form-check"
-                  x-show="!role.permissions.edit_commcare_users && area.editPermission && area.showAllowCheckbox"
-                >
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="area.allowCheckboxId"
-                    x-model="area.allowCheckboxPermission"
-                  />
-                  <label
-                    class="form-check-label"
-                    :for="area.allowCheckboxId"
-                    x-text="area.allowCheckboxText"
-                  ></label>
-                </div>
-                {# end REAL #}
-                {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
-                <div
-                  class="form-check"
-                  x-show="!area.editPermission && area.showAllowCheckbox"
-                >
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    disabled="disabled"
-                    :id="area.allowCheckboxId + '-disabled2'"
-                  />
-                  <label
-                    class="form-check-label"
-                    :for="area.allowCheckboxId + '-disabled2'"
-                    x-text="area.allowCheckboxText"
-                  ></label>
-                </div>
-                {# end PLACEHOLDER #}
-              </div>
-            </div>
-          </template>
-        </div>
-      </fieldset>
-
-      <fieldset class="active"  :disabled="!isEditable" x-show="erm.visible">
-        <legend>
-          <a
-            class="accordion-toggle"
-            data-bs-toggle="collapse"
-            href="#erm-card"
-          >
-            <i class="fa fa-angle-double-down"></i>
-            <span x-text="erm.title"></span>
-          </a>
-        </legend>
-        <div id="erm-card" class="card-body collapse show">
-          <div class="row" x-data="erm.access_release_management">
-            <div class="col-md-2 form-label fw-bold" x-text="text"></div>
-            <div class="col-md-8 controls">
-              <div class="form-check pt-0">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  :id="checkboxLabel"
-                  x-model="checkboxPermission"
-                />
-                <label
-                  class="form-check-label"
-                  :for="checkboxLabel"
-                  x-text="checkboxText"
-                ></label>
-              </div>
-            </div>
-          </div>
-
-          <div class="row" x-data="erm.edit_linked_configs">
-            <div class="col-md-2 form-label fw-bold" x-text="text"></div>
-            <div class="col-md-8 controls">
-              <div class="form-check pt-0">
-                <template
-                  x-if="erm.access_release_management.checkboxPermission"
-                >
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    checked
-                    disabled
-                  />
-                </template>
-                <template
-                  x-if="!erm.access_release_management.checkboxPermission"
-                >
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="checkboxLabel"
-                    x-model="checkboxPermission"
-                  />
-                </template>
-                <label
-                  class="form-check-label"
-                  :for="checkboxLabel"
-                  x-text="checkboxText"
-                ></label>
-              </div>
+              </template>
             </div>
           </div>
         </div>
-      </fieldset>
 
-      <fieldset class="active" :disabled="!isEditable">
-        <legend>
-          <a
-            class="accordion-toggle"
-            data-bs-toggle="collapse"
-            href="#reports-card"
-          >
-            <i class="fa fa-angle-double-down"></i>
-            {% trans "Reports" %}
-          </a>
-        </legend>
-        <div id="reports-card" class="card-body collapse show">
+        <div class="accordion-item" x-show="erm.visible">
+          <h2 class="accordion-header" id="erm-heading">
+            <button
+              class="accordion-button bg-light"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#erm-body"
+              aria-expanded="true"
+              aria-controls="erm-body"
+              x-text="erm.title"
+            >
+            </button>
+          </h2>
+          <div id="erm-body" class="accordion-collapse collapse show" aria-labelledby="erm-heading">
+            <div class="accordion-body">
+              <div class="row" x-data="erm.access_release_management">
+                <div class="col-md-2 form-label fw-bold" x-text="text"></div>
+                <div class="col-md-10 controls">
+                  <div class="form-check pt-0">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      :id="checkboxLabel"
+                      x-model="checkboxPermission"
+                    />
+                    <label
+                      class="form-check-label"
+                      :for="checkboxLabel"
+                      x-text="checkboxText"
+                    ></label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row" x-data="erm.edit_linked_configs">
+                <div class="col-md-2 form-label fw-bold" x-text="text"></div>
+                <div class="col-md-10 controls">
+                  <div class="form-check pt-0">
+                    <template
+                      x-if="erm.access_release_management.checkboxPermission"
+                    >
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        checked
+                        disabled
+                      />
+                    </template>
+                    <template
+                      x-if="!erm.access_release_management.checkboxPermission"
+                    >
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        :id="checkboxLabel"
+                        x-model="checkboxPermission"
+                      />
+                    </template>
+                    <label
+                      class="form-check-label"
+                      :for="checkboxLabel"
+                      x-text="checkboxText"
+                    ></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="reports-heading">
+            <button
+              class="accordion-button bg-light"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#reports-body"
+              aria-expanded="true"
+              aria-controls="reports-body"
+            >
+              {% trans "Reports" %}
+            </button>
+          </h2>
+          <div id="reports-body" class="accordion-collapse collapse show" aria-labelledby="reports-heading">
+            <div class="accordion-body">
           <template x-for="report in reports">
             <div class="row" x-show="report.visibilityRestraint">
               <div
                 class="col-md-2 form-label fw-bold"
                 x-text="report.text"
               ></div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 <div class="form-check pt-0">
                   <input
                     class="form-check-input"
@@ -348,7 +359,7 @@
             <div class="col-md-2 form-label fw-bold">
               {% trans "Access Specific Reports" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <div class="card">
                 <div class="card-header">
                   {% trans "Select which reports the role can access:" %}
@@ -380,7 +391,7 @@
               <div class="col-md-2 form-label fw-bold">
                 {% trans "Access Specific Tableau Reports" %}
               </div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 <div class="card">
                   <div class="card-header">
                     {% trans "Select which Tableau reports the role can access:" %}
@@ -407,137 +418,153 @@
               </div>
             </div>
           {% endif %}
-        </div>
-      </fieldset>
-
-      {% if request|request_has_privilege:"CLOUDCARE" %}
-        <fieldset class="active" :disabled="!isEditable">
-          <legend>
-            <a
-              class="accordion-toggle"
-              data-bs-toggle="collapse"
-              href="#web-apps-card"
-            >
-              <i class="fa fa-angle-double-down"></i>
-              {% trans "Web Apps" %}
-            </a>
-          </legend>
-          <div id="web-apps-card" class="card-body collapse show">
-            <div x-data="webAppsPermissions">
-              {% include 'users/partials/select_permission.html' %}
             </div>
           </div>
-        </fieldset>
-      {% endif %}
+        </div>
 
-      {% if request|toggle_enabled:"DATA_REGISTRY" %}
-        <fieldset class="active" :disabled="!isEditable">
-          <legend>
-            <a
-              class="accordion-toggle"
+        {% if request|request_has_privilege:"CLOUDCARE" %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="web-apps-heading">
+            <button
+              class="accordion-button bg-light"
+              type="button"
               data-bs-toggle="collapse"
-              href="#data-registry-card"
+              data-bs-target="#web-apps-body"
+              aria-expanded="true"
+              aria-controls="web-apps-body"
             >
-              <i class="fa fa-angle-double-down"></i>
-              {% trans "Data Registries" %}
-            </a>
-          </legend>
-          <div id="data-registry-card" class="card-body collapse show">
-            <template x-for="p in registryPermissions">
-              <div x-data="p">
+              {% trans "Web Apps" %}
+            </button>
+          </h2>
+          <div id="web-apps-body" class="accordion-collapse collapse show" aria-labelledby="web-apps-heading">
+            <div class="accordion-body">
+              <div x-data="webAppsPermissions">
                 {% include 'users/partials/select_permission.html' %}
               </div>
-            </template>
+            </div>
           </div>
-        </fieldset>
-      {% endif %}
+        </div>
+        {% endif %}
 
-      {% if request|toggle_enabled:"SUPERSET_ANALYTICS" %}
-        <fieldset class="active" :disabled="!isEditable">
-          <legend>
-            <a
-              class="accordion-toggle"
+        {% if request|toggle_enabled:"DATA_REGISTRY" %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="data-registry-heading">
+            <button
+              class="accordion-button bg-light"
+              type="button"
               data-bs-toggle="collapse"
-              href="#analytics-card"
+              data-bs-target="#data-registry-body"
+              aria-expanded="true"
+              aria-controls="data-registry-body"
             >
-              <i class="fa fa-angle-double-down"></i>
+              {% trans "Data Registries" %}
+            </button>
+          </h2>
+          <div id="data-registry-body" class="accordion-collapse collapse show" aria-labelledby="data-registry-heading">
+            <div class="accordion-body">
+              <template x-for="p in registryPermissions">
+                <div x-data="p">
+                  {% include 'users/partials/select_permission.html' %}
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if request|toggle_enabled:"SUPERSET_ANALYTICS" %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="analytics-heading">
+            <button
+              class="accordion-button bg-light"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#analytics-body"
+              aria-expanded="true"
+              aria-controls="analytics-body"
+            >
               {% trans "CommCare Analytics" %}
-            </a>
-          </legend>
-          <div id="analytics-card" class="card-body collapse show">
-            <div class="row">
-              <div class="col-md-2 form-label fw-bold">
-                {% trans "All CommCare Analytics Roles" %}
-              </div>
-              <div class="col-md-8 controls">
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="commcare-analytics-all-roles-checkbox"
-                    x-model="commcareAnalyticsRoles.all"
-                  />
-                  <label
-                    class="form-check-label"
-                    for="commcare-analytics-all-roles-checkbox"
-                  >
-                    {% trans "Assign all commcare analytics roles to users with this role" %}
-                  </label>
+            </button>
+          </h2>
+          <div id="analytics-body" class="accordion-collapse collapse show" aria-labelledby="analytics-heading">
+            <div class="accordion-body">
+              <div class="row">
+                <div class="col-md-2 form-label fw-bold">
+                  {% trans "All CommCare Analytics Roles" %}
+                </div>
+                <div class="col-md-10 controls">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="commcare-analytics-all-roles-checkbox"
+                      x-model="commcareAnalyticsRoles.all"
+                    />
+                    <label
+                      class="form-check-label"
+                      for="commcare-analytics-all-roles-checkbox"
+                    >
+                      {% trans "Assign all commcare analytics roles to users with this role" %}
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="row" x-show="!commcareAnalyticsRoles.all" x-collapse>
-              <div class="col-md-2 form-label fw-bold">
-                {% trans "CommCare Analytics Roles" %}
-              </div>
-              <div class="col-md-8 controls">
-                <div class="card mt-2">
-                  <div class="card-header">
-                    {% trans "Commcare Analytics Roles:" %}
-                  </div>
-                  <div class="card-body">
-                    <template x-for="s in commcareAnalyticsRoles.specific">
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          x-model="s.value"
-                          :id="'cca-role-' + s.slug + '-checkbox'"
-                        />
-                        <label
-                          class="form-check-label"
-                          :for="'cca-role-' + s.slug + '-checkbox'"
-                        >
-                          <span x-text="s.name"></span>
-                        </label>
-                      </div>
-                    </template>
+              <div class="row" x-show="!commcareAnalyticsRoles.all" x-collapse>
+                <div class="col-md-2 form-label fw-bold">
+                  {% trans "CommCare Analytics Roles" %}
+                </div>
+                <div class="col-md-10 controls">
+                  <div class="card mt-2">
+                    <div class="card-header">
+                      {% trans "Commcare Analytics Roles:" %}
+                    </div>
+                    <div class="card-body">
+                      <template x-for="s in commcareAnalyticsRoles.specific">
+                        <div class="form-check">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            x-model="s.value"
+                            :id="'cca-role-' + s.slug + '-checkbox'"
+                          />
+                          <label
+                            class="form-check-label"
+                            :for="'cca-role-' + s.slug + '-checkbox'"
+                          >
+                            <span x-text="s.name"></span>
+                          </label>
+                        </div>
+                      </template>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </fieldset>
-      {% endif %}
+        </div>
+        {% endif %}
 
-      <fieldset class="active" :disabled="!isEditable">
-        <legend>
-          <a
-            class="accordion-toggle"
-            data-bs-toggle="collapse"
-            href="#other-card"
-          >
-            <i class="fa fa-angle-double-down"></i>
-            {% trans "Other Settings" %}
-          </a>
-        </legend>
-        <div id="other-card" class="card-body collapse show">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="other-heading">
+            <button
+              class="accordion-button bg-light"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#other-body"
+              aria-expanded="true"
+              aria-controls="other-body"
+            >
+              {% trans "Other Settings" %}
+            </button>
+          </h2>
+          <div id="other-body" class="accordion-collapse collapse show" aria-labelledby="other-heading">
+            <div class="accordion-body">
           {% if show_integration %}
             <div class="row">
               <div class="col-md-2 form-label fw-bold">
                 {% trans "Integration Access" %}
               </div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 <div class="form-check">
                   <input
                     class="form-check-input"
@@ -558,7 +585,7 @@
             <div class="col-md-2 form-label fw-bold">
               {% trans "Manage Subscription Info" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -582,7 +609,7 @@
             <div class="col-md-2 form-label fw-bold">
               {% trans "Full Organization Access" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -629,7 +656,7 @@
             <div class="col-md-2 form-label fw-bold">
               {% trans "Login-As All Users" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -652,7 +679,7 @@
               <div class="col-md-2 form-label fw-bold">
                 {% trans "Limit Login-As" %}
               </div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 {# PLACEHOLDER WHEN login_as_all_users IS TRUE #}
                 <div
                   class="form-check"
@@ -694,7 +721,7 @@
               <div class="col-md-2 form-label fw-bold">
                 {% trans "Login-As Default User" %}
               </div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 {# Placeholder disabled checkbox when not using limited log in as #}
                 <div
                   class="form-check"
@@ -739,7 +766,7 @@
             <div class="col-md-2 form-label fw-bold">
               {% trans "Mobile App Access" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -758,7 +785,7 @@
             <div class="col-md-2 form-label fw-bold" for="landing-page">
               {% trans "Default Landing Page" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <select
                 class="form-select my-2"
                 id="landing-page"
@@ -776,7 +803,7 @@
             <div class="col-md-2 form-label fw-bold">
               {% trans "Allow Reporting Issues" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -794,7 +821,7 @@
             <div class="col-md-2 form-label fw-bold">
               {% trans "Non-admin Editable" %}
             </div>
-            <div class="col-md-8 controls">
+            <div class="col-md-10 controls">
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -817,7 +844,7 @@
               {% trans "Manage Role Assignment" %}
             </div>
             <div
-              class="col-md-8 controls"
+              class="col-md-10 controls"
               ,
               :class="showRestrictedLocationRoleAssignmentWarning ? 'has-error' : ''"
             >
@@ -868,7 +895,7 @@
               <div class="col-md-2 form-label fw-bold">
                 {% trans "Assign All User Profiles" %}
               </div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 <div class="form-check">
                   <input
                     class="form-check-input"
@@ -893,7 +920,7 @@
               <div class="col-md-2 form-label fw-bold">
                 {% trans "Assign Specific User Profiles" %}
               </div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 <div class="card my-2">
                   <div class="card-header">
                     {% trans "Select which user profiles the role can assign to mobile workers and web users:" %}
@@ -926,7 +953,7 @@
               <div class="col-md-2 form-label fw-bold">
                 {% trans "Manage Project Alerts" %}
               </div>
-              <div class="col-md-8 controls">
+              <div class="col-md-10 controls">
                 <div class="form-check">
                   <input
                     class="form-check-input"
@@ -945,12 +972,12 @@
               </div>
             </div>
           {% endif %}
+            </div>
+          </div>
         </div>
-      </fieldset>
+      </div>
 
-      <div class="border-top my-2" x-show="isEditable"></div>
-
-      <div class="row mb-4" x-show="isEditable">
+      <div class="row mb-4 mt-2" x-show="isEditable">
         <div class="col-sm-2">
           <button type="submit" class="btn btn-primary" :disabled="isSaving">
             <span x-show="!isSaving">{% trans "Save" %}</span>
