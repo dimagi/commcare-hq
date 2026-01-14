@@ -1,22 +1,20 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
-
-{% js_entry_b3 'events/js/new_event' %}
+{% js_entry 'events/js/new_event' %}
 
 {% block page_content %}
   {% initial_page_data 'current_values' form.current_values %}
   {% registerurl "get_attendees_and_attendance_takers" domain %}
 
-  <div id="attendance-list-error" class="alert alert-danger hidden">
-    <p>
-      {% blocktrans %}
-      There was a problem fetching the list of attendees and attendance takers. Please try again.
-      {% endblocktrans %}
-    </p>
+  <div id="attendance-list-error" class="alert alert-danger d-none">
+    {% blocktrans %}
+      There was a problem fetching the list of attendees and attendance takers.
+      Please try again.
+    {% endblocktrans %}
   </div>
-  <form id="tracking-event-form" class="form-horizontal disable-on-submit" method="post">
+  <form id="tracking-event-form" class="disable-on-submit" method="post">
     {% crispy form %}
   </form>
 {% endblock %}
