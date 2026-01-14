@@ -356,6 +356,22 @@
                   {% trans "View Role" %}
                 </span>
               </button>
+              <a data-bind="attr: { href: $data.editUrl }">
+                <button class="btn btn-default" data-bind="visible: $data._id">
+                  <span
+                    data-bind="if: $root.allowEdit"
+                  >
+                    <i class="fa fa-edit"></i>
+                    {% trans "Edit Role (view)" %}
+                  </span>
+                  <span
+                    data-bind="ifnot: $root.allowEdit"
+                  >
+                    <i class="fa-solid fa-eye"></i>
+                    {% trans "View Role (view)" %}
+                  </span>
+                </button>
+              </a>
               <button
                 class="btn btn-outline-danger"
                 data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
@@ -383,6 +399,13 @@
           <i class="fa fa-plus"></i>
           {% trans "Add Role" %}
         </button>
+        <a
+          href="{% url 'create_role' domain %}"
+          class="btn btn-outline-primary"
+        >
+          <i class="fa fa-plus"></i>
+          {% trans "Add Role (view)" %}
+        </a>
         <div
           data-bind="modal: roleBeingDeleted"
           tabindex="-1"
