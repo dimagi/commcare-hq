@@ -116,6 +116,9 @@
   "enterprise": {
     "is_complete": true
   },
+  "events": {
+    "is_complete": true
+  },
   "export": {
     "is_complete": true
   },
