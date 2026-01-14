@@ -4,7 +4,7 @@ import ko from "knockout";
 import multiselectUtils from "hqwebapp/js/multiselect_utils";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import locationsWidgets from "locations/js/widgets";
-import "hqwebapp/js/bootstrap3/widgets";
+import "hqwebapp/js/bootstrap5/widgets";
 import "jquery-ui/ui/widgets/datepicker";
 import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
 
