@@ -1,11 +1,67 @@
 --- 
 +++ 
-@@ -49,7 +49,7 @@
-             self.$existingFile.addClass('hide');
+@@ -1,5 +1,6 @@
+ import $ from "jquery";
+ import _ from "underscore";
++import { Tooltip } from "bootstrap5";
+ import assertProperties from "hqwebapp/js/assert_properties";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ 
+@@ -29,28 +30,28 @@
+             self.$uploadButton.addClass('disabled');
+         }
+         if (spin) {
+-            self.$uploadButton.find(".fa-spin").removeClass("hide");
+-            self.$uploadButton.find(".fa-cloud-arrow-up").addClass("hide");
++            self.$uploadButton.find(".fa-spin").removeClass("d-none");
++            self.$uploadButton.find(".fa-cloud-arrow-up").addClass("d-none");
+         } else {
+-            self.$uploadButton.find(".fa-spin").addClass("hide");
+-            self.$uploadButton.find(".fa-cloud-arrow-up").removeClass("hide");
++            self.$uploadButton.find(".fa-spin").addClass("d-none");
++            self.$uploadButton.find(".fa-cloud-arrow-up").removeClass("d-none");
+         }
+     };
+ 
+     self.updateUploadFormUI = function () {
+-        self.$container.find(self.uploadCompleteLabelSelector).addClass('hide');
++        self.$container.find(self.uploadCompleteLabelSelector).addClass("d-none");
+ 
+         if (self.currentReference && self.currentReference.getUrl() && self.currentReference.isMediaMatched()) {
+-            self.$existingFile.removeClass('hide');
++            self.$existingFile.removeClass("d-none");
+             self.$existingFile.find('.hqm-existing-controls').html(_.template(options.existingFileTemplate)({
+                 url: self.currentReference.getUrl(),
+             }));
+         } else {
+-            self.$existingFile.addClass('hide');
++            self.$existingFile.addClass("d-none");
              self.$existingFile.find('.hqm-existing-controls').empty();
          }
 -        $('.existing-media').tooltip({
-+        $('.existing-media').tooltip({  /* todo B5: js-tooltip */
-             placement: 'bottom',
+-            placement: 'bottom',
++        _.each($('.existing-media'), (element) => {
++            new Tooltip(element, { placement: 'bottom' });
          });
      };
+ 
+@@ -116,16 +117,16 @@
+                 self.$uploadStatusContainer.empty();
+                 self.updateUploadButton(false, false);
+                 self.updateUploadFormUI();
+-                self.$container.find(self.uploadCompleteLabelSelector).removeClass('hide');
++                self.$container.find(self.uploadCompleteLabelSelector).removeClass("d-none");
+                 self.allowClose = true;
+             },
+             error: function (response) {
+                 response = JSON.parse(response.responseText);
+-                self.$container.find(".hqm-error").removeClass('hide');
++                self.$container.find(".hqm-error").removeClass("d-none");
+                 self.$container.find(".hqm-errors").html(_.template(options.errorsTemplate)({
+                     errors: response.errors,
+                 }));
+-                self.$container.find(".hqm-begin").hide();
++                self.$container.find(".hqm-begin").addClass("d-none");
+                 self.updateUploadButton(false, false);
+                 self.allowClose = true;
+             },
