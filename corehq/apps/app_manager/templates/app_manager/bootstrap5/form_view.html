@@ -295,6 +295,6 @@
 {% block modals %}
   {{ block.super }}
   {% include "app_manager/partials/forms/bootstrap5/form_view_modals.html" %}
-  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
-  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
+  {% include "hqmedia/partials/bootstrap5/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+  {% include "hqmedia/partials/bootstrap5/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
 {% endblock modals %}

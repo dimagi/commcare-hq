@@ -160,6 +160,6 @@
 {% block modals %}{{ block.super }}
   {% include 'app_manager/partials/modules/bootstrap5/graph_configuration_modal.html' %}
   {% include 'app_manager/partials/modules/bootstrap5/style_configuration_modal.html' %}
-  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
-  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
+  {% include "hqmedia/partials/bootstrap5/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+  {% include "hqmedia/partials/bootstrap5/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
 {% endblock modals %}
