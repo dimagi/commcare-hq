@@ -177,7 +177,7 @@ Alpine.data('initRole', (roleJson) => {
         landingPageChoices: initialPageData.get("landing_page_choices"),
         init() {
             const self = this;
-            this.accessAreas = [
+            self.accessAreas = [
                 {
                     showOption: true,
                     get editPermission() {
@@ -585,7 +585,7 @@ Alpine.data('initRole', (roleJson) => {
             const linkedTitle = privileges.hasPrivilege('release_management') ?
                 gettext("Enterprise Release Management") : gettext("Multi-Environment Release Management");
 
-            this.erm = {
+            self.erm = {
                 title: linkedTitle,
                 get visible() {
                     return privileges.hasPrivilege('release_management') ||
@@ -615,7 +615,7 @@ Alpine.data('initRole', (roleJson) => {
                 },
             };
 
-            this.reportPermissions = {
+            self.reportPermissions = {
                 get all() {
                     return self.role.permissions.view_reports;
                 },
@@ -642,7 +642,7 @@ Alpine.data('initRole', (roleJson) => {
                 })),
             };
 
-            this.tableauPermissions = {
+            self.tableauPermissions = {
                 get all() {
                     return self.role.permissions.view_tableau;
                 },
@@ -669,7 +669,7 @@ Alpine.data('initRole', (roleJson) => {
                 })),
             };
 
-            this.reports = [
+            self.reports = [
                 {
                     get visibilityRestraint() {
                         return self.role.permissions.access_all_locations;
@@ -687,7 +687,7 @@ Alpine.data('initRole', (roleJson) => {
             ];
             if (toggles.toggleEnabled('USER_CONFIGURABLE_REPORTS')) {
                 if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
-                    this.reports.push({
+                    self.reports.push({
                         get visibilityRestraint() {
                             return self.role.permissions.access_all_locations;
                         },
@@ -702,7 +702,7 @@ Alpine.data('initRole', (roleJson) => {
                         checkboxText: gettext("Allow role to create and edit custom web reports."),
                     });
                 } else {
-                    this.reports.push({
+                    self.reports.push({
                         get visibilityRestraint() {
                             return self.role.permissions.access_all_locations;
                         },
@@ -719,7 +719,7 @@ Alpine.data('initRole', (roleJson) => {
                 }
             }
             const hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
-            this.reports.push({
+            self.reports.push({
                 visibilityRestraint: true,
                 text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
                 checkboxLabel: "access-all-reports-checkbox",
@@ -734,7 +734,7 @@ Alpine.data('initRole', (roleJson) => {
                     : gettext("Allow role to access all reports."),
             });
 
-            this.reports.push({
+            self.reports.push({
                 get visibilityRestraint() {
                     return self.reportPermissions.all || _.any(self.reportPermissions.specific, (p) => p.value);
                 },
@@ -749,7 +749,7 @@ Alpine.data('initRole', (roleJson) => {
                 checkboxText: gettext("Allow role to download and email report data."),
             });
             if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
-                this.reports.push({
+                self.reports.push({
                     visibilityRestraint: true,
                     text: gettext("Access All Tableau Reports"),
                     checkboxLabel: "view-tableau-checkbox",
@@ -763,7 +763,7 @@ Alpine.data('initRole', (roleJson) => {
                 });
             }
 
-            this.webAppsPermissions = createNoneAllSelectedPermissionModel({
+            self.webAppsPermissions = createNoneAllSelectedPermissionModel({
                 text: gettext("Use Web Apps for online data entry"),
                 listHeading: gettext("Select which web apps..."),
                 showAlreadyConfiguredWarning: initialPageData.get('has_restricted_application_access'),
@@ -773,7 +773,7 @@ Alpine.data('initRole', (roleJson) => {
                 listChoices: initialPageData.get("web_apps_choices"),
             });
 
-            this.registryPermissions = [
+            self.registryPermissions = [
                 createNoneAllSelectedPermissionModel({
                     text: gettext("Manage Registries"),
                     listHeading: gettext("Select which registries the role can manage:"),
@@ -792,7 +792,7 @@ Alpine.data('initRole', (roleJson) => {
                 }),
             ];
 
-            this.commcareAnalyticsRoles = createAllOrSelectedPermissionModel({
+            self.commcareAnalyticsRoles = createAllOrSelectedPermissionModel({
                 permissionObj: self.role.permissions,
                 accessKey: 'commcare_analytics_roles',
                 listKey: 'commcare_analytics_roles_list',
@@ -804,7 +804,7 @@ Alpine.data('initRole', (roleJson) => {
                 getIdentifier: (item) => item.slug,
             });
 
-            this.manageRoleAssignments = createAllOrSelectedPermissionModel({
+            self.manageRoleAssignments = createAllOrSelectedPermissionModel({
                 permissionObj: self.role,
                 accessKey: 'is_non_admin_editable',
                 listKey: 'assignable_by',
@@ -817,7 +817,7 @@ Alpine.data('initRole', (roleJson) => {
                 getIdentifier: (item) => item.path,
             });
 
-            this.profilePermissions = createAllOrSelectedPermissionModel({
+            self.profilePermissions = createAllOrSelectedPermissionModel({
                 permissionObj: self.role.permissions,
                 accessKey: 'edit_user_profile',
                 listKey: 'edit_user_profile_list',
@@ -829,11 +829,11 @@ Alpine.data('initRole', (roleJson) => {
                 getIdentifier: (item) => item.slug,
             });
 
-            this.toggleLinkedRoleLock = () => {
-                this.linkedRoleUnlocked = !this.linkedRoleUnlocked;
+            self.toggleLinkedRoleLock = () => {
+                self.linkedRoleUnlocked = !self.linkedRoleUnlocked;
             };
 
-            this.saveRole = () => {
+            self.saveRole = () => {
                 self.isSaving = true;
                 $.ajax({
                     method: 'POST',
