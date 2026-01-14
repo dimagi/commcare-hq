@@ -1,0 +1,8 @@
+{% extends "mocha/base.html" %}
+{% load hq_shared_tags %}
+
+{% js_entry_b3 "app_manager/spec/bootstrap3/main" %}
+
+{% block fixtures %}
+  {% include 'app_manager/partials/bootstrap3/download_async_modal.html' with element_id='download-zip-modal-test' %}
+{% endblock %}

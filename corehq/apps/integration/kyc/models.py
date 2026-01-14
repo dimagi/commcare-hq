@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext as _
@@ -12,7 +11,6 @@ from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
-from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 
 
@@ -79,6 +77,12 @@ class KycConfig(models.Model):
     )
     phone_number_field = models.CharField(max_length=126, null=True, blank=True)
     passing_threshold = jsonfield.JSONField(default=dict)
+    connection_settings = models.ForeignKey(
+        ConnectionSettings,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         constraints = [
@@ -100,32 +104,6 @@ class KycConfig(models.Model):
         elif self.user_data_store != UserDataStore.OTHER_CASE_TYPE:
             self.other_case_type = None
 
-    def get_connection_settings(self):
-        if self.provider == KycProviders.MTN_KYC:
-            kyc_settings = settings.MTN_KYC_CONNECTION_SETTINGS
-            return ConnectionSettings(
-                domain=self.domain,
-                name=KycProviders.MTN_KYC.label,
-                url=kyc_settings['url'],
-                auth_type=OAUTH2_CLIENT,
-                client_id=kyc_settings['client_id'],
-                client_secret=kyc_settings['client_secret'],
-                token_url=kyc_settings['token_url'],
-            )
-        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
-            kyc_settings = settings.ORANGE_CAMEROON_CONNECTION_SETTINGS
-            return ConnectionSettings(
-                domain=self.domain,
-                name=KycProviders.ORANGE_CAMEROON_KYC.label,
-                url=kyc_settings['url'],
-                auth_type=OAUTH2_CLIENT,
-                client_id=kyc_settings['client_id'],
-                client_secret=kyc_settings['client_secret'],
-                token_url=kyc_settings['token_url'],
-            )
-        else:
-            raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
-
     def get_required_threshold_fields(self):
         """
         Returns the list of required threshold fields for the configured provider.
@@ -139,8 +117,8 @@ class KycConfig(models.Model):
             from corehq.apps.integration.kyc.services import mtn_kyc_verify
             return mtn_kyc_verify
         elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
-            from corehq.apps.integration.kyc.services import orange_cameroon_verify
-            return orange_cameroon_verify
+            from corehq.apps.integration.kyc.services import orange_cameroon_kyc_verify
+            return orange_cameroon_kyc_verify
         else:
             raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
 

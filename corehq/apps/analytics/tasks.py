@@ -65,18 +65,6 @@ logger.setLevel('DEBUG')
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
-HUBSPOT_FORM_BUILDER_FORM_ID = "4f118cda-3c73-41d9-a5d1-e371b23b1fb5"
-HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
-HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
-HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935a"
-HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
-HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
-HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
-HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
-HUBSPOT_CREATED_EXPORT_FORM_ID = "f8a1ab5e-3fb5-4f68-948f-3355d09cf611"
-HUBSPOT_DOWNLOADED_EXPORT_FORM_ID = "7db9de47-2dd1-44d0-a4ec-bb67d8052a9e"
-HUBSPOT_SAVED_APP_FORM_ID = "8494a26a-8576-4241-97de-a28dc8bf927c"
-HUBSPOT_SAVED_UCR_FORM_ID = "a0d64c4a-2e37-4f48-9700-b9831acdd1d9"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
@@ -374,36 +362,11 @@ def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
 
 
 @analytics_task()
-def track_clicked_deploy_on_hubspot(webuser_id, hubspot_cookie, meta):
-    webuser = WebUser.get_by_user_id(webuser_id)
-    num = deterministic_random(webuser.username + 'a_b_variable_deploy')
-    ab = {'a_b_variable_deploy': 'A' if num > 0.5 else 'B'}
-    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
-
-
-@analytics_task()
 def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
     }
     _track_on_hubspot_by_email(user_email, properties=properties)
-
-
-@analytics_task()
-def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
-    data = {'lifecyclestage': 'subscriber'}
-    number = deterministic_random(email + 'a_b_test_variable_newsletter')
-    if number < 0.33:
-        data['a_b_test_variable_newsletter'] = 'A'
-    elif number < 0.67:
-        data['a_b_test_variable_newsletter'] = 'B'
-    else:
-        data['a_b_test_variable_newsletter'] = 'C'
-    if email:
-        _send_form_to_hubspot(
-            HUBSPOT_CLICKED_SIGNUP_FORM, None, hubspot_cookie,
-            meta, extra_fields=data, email=email
-        )
 
 
 def track_workflow_noop(email, event, properties=None):

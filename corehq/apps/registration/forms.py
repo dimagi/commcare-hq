@@ -667,7 +667,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 ),
                 crispy.HTML(
                     render_to_string(
-                        'users/partials/waiting_to_verify_email_message.html',
+                        'users/partials/bootstrap3/waiting_to_verify_email_message.html',
                         {}
                     ),
                 ),

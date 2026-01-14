@@ -1563,7 +1563,7 @@ class TestFormsExpressionSpec(TestCase):
         cls.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=cls.domain)
         [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
-        cls.forms = [f.to_json() for f in XFormInstance.objects.get_forms(cls.case.xform_ids, cls.domain)]
+        cls.forms = [f.to_json() for f in XFormInstance.objects.get_forms(cls.case.xform_ids)]
         #  redundant case to create extra forms that shouldn't be in the results for cls.case
         [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
 

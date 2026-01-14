@@ -116,7 +116,7 @@ def mtn_kyc_verify(kyc_user, config):
 
     user_data = get_user_data_for_api(kyc_user, config)
     _validate_schema('kycVerify/v1', user_data)  # See kyc-verify-v1.json
-    requests = config.get_connection_settings().get_requests()
+    requests = config.connection_settings.get_requests()
     response = requests.post(
         f'/kycVerify/v1/customers/{user_data["phoneNumber"]}',
         json=user_data,
@@ -145,7 +145,7 @@ def _mock_api_result_for_testing():
     return testing_outcome[choice]
 
 
-def orange_cameroon_verify(kyc_user, config):
+def orange_cameroon_kyc_verify(kyc_user, config):
     """
     Verify a user using the Orange Cameroon KYC API.
 
@@ -171,18 +171,20 @@ def orange_cameroon_verify(kyc_user, config):
     #         "lastName": "Last"
     #     }
     # }
-
     # This is for testing only since we don't have a working testing environment for verification yet
     return _mock_api_result_for_testing()
 
     user_data = get_user_data_for_api(kyc_user, config)
-    requests = config.get_connection_settings().get_requests()
+    requests = config.connection_settings.get_requests()
     response = requests.post(
-        f'/omcoreapis/1.0.2/infos/subscriber/custome/{user_data["phoneNumber"]}',
+        f'/omcoreapis/1.0.2/infos/subscriber/customer/{user_data["phoneNumber"]}',
         json={
-            "pin": settings.ORANGE_CAMEROON_CONNECTION_SETTINGS['channel_pin'],
-            "channelMsisdn": settings.ORANGE_CAMEROON_CONNECTION_SETTINGS['channel_msisdn'],
+            "pin": settings.ORANGE_CAMEROON_API_CREDS['channel_pin'],
+            "channelMsisdn": settings.ORANGE_CAMEROON_API_CREDS['channel_msisdn'],
         },
+        headers={
+            'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
+        }
     )
     response.raise_for_status()
     user_info = response.json().get('data', {})

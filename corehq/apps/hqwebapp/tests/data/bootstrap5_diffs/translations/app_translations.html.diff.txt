@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'hqwebapp/bootstrap3/two_column.html' %}
++{% extends 'hqwebapp/bootstrap5/two_column.html' %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 "translations/js/bootstrap3/app_translations" %}
++{% js_entry "translations/js/bootstrap5/app_translations" %}
+ 
+ 
+ {% block page_content %}
+@@ -11,7 +11,7 @@
+ 
+   {% if not transifex_details_available %}
+     <p class="text-error">
+-      <span class="label label-danger">
++      <span class="badge text-bg-danger">
+           {% trans 'Transifex integration not set for this domain' %}
+       </span>
+     </p>
+@@ -55,7 +55,7 @@
+             </p>
+         {% endif %}
+         </br>
+-        {% crispy trans_form %}
++        {% crispy trans_form %}  {# todo B5: crispy #}
+       </form>
+     </div>
+   {% endif %}

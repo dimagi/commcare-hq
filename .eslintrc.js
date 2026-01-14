@@ -71,5 +71,5 @@ module.exports = {
         "space-infix-ops": ["error"],   // match flake8 E225
         "strict": ["warn", "global"],
     },
-    "ignorePatterns": ["**/vellum/src/*.js"],
+    "ignorePatterns": ["**/vellum/src/*.js", "**/_design/**/*.js"],
 };

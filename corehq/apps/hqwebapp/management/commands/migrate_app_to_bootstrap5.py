@@ -23,12 +23,14 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     update_gruntfile,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    get_working_directory,
     has_pending_git_changes,
     get_commit_string,
     apply_commit,
     ensure_no_pending_changes_before_continuing,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
+    SUBMODULE_APPS,
     get_app_template_folder,
     get_app_static_folder,
     get_short_path,
@@ -91,6 +93,7 @@ class Command(BaseCommand):
         selected_filename = options.get('filename')
 
         is_app_migration_complete = is_app_completed(app_name)
+        working_directory = get_working_directory(app_name)
 
         if is_app_migration_complete and not selected_filename:
             self.show_completed_message(app_name)
@@ -123,17 +126,32 @@ class Command(BaseCommand):
                     show_apply_commit=not has_changes
                 )
 
+        is_submodule_app = app_name in SUBMODULE_APPS
+        if not self.no_split and is_submodule_app:
+            self.stdout.write(self.style.ERROR(
+                f"\n--no-split must be used when migrating submodule apps like '{app_name}'.\n"
+            ))
+            self.stdout.write(
+                "\nThis is because it is very challenging to keep split files in sync outside of the main repo.\n"
+                "Please re-run the command with --no-split.\n\n"
+            )
+            return
+
         self.skip_all = options.get('skip_all')
-        if self.skip_all and self.no_split:
+        if self.skip_all and self.no_split and not is_submodule_app:
             self.stderr.write(
                 "\n--skip-all and --no-split cannot be used at the same time.\n"
             )
             return
 
-        if self.skip_all and has_pending_git_changes():
+        if self.skip_all and has_pending_git_changes(working_directory):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
+            if working_directory:
+                self.stdout.write(self.style.MIGRATE_HEADING(
+                    f"[FYI] For the app '{app_name}', the working directory is: {working_directory}\n"
+                ))
             ensure_no_pending_changes_before_continuing()
 
         spec = get_spec('bootstrap_3_to_5')
@@ -149,12 +167,13 @@ class Command(BaseCommand):
         app_javascript = self.get_js_files_for_migration(app_name, selected_filename)
         self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
-        mocha_paths = [path for path in migrated_templates
-                       if f'{app_name}/spec/' in str(path)]
-        if mocha_paths:
-            mocha_paths = [get_short_path(app_name, path, True)
-                           for path in mocha_paths]
-            self.make_updates_to_gruntfile(app_name, mocha_paths)
+        if not is_submodule_app:
+            mocha_paths = [path for path in migrated_templates
+                        if f'{app_name}/spec/' in str(path)]
+            if mocha_paths:
+                mocha_paths = [get_short_path(app_name, path, True)
+                            for path in mocha_paths]
+                self.make_updates_to_gruntfile(app_name, mocha_paths)
 
         self.show_next_steps(app_name)
 
@@ -183,13 +202,15 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             self.format_header(f"All done with Step 2 of migrating {app_name}!")
         ))
-        self.stdout.write(self.style.WARNING(
-            "IMPORTANT: If this is the first time running this command, "
-            "it's recommended to re-run the command\nat least one more "
-            "time in the event of nested dependencies / inheritance "
-            "in split files.\n\n"
-        ))
         if not self.no_split:
+            self.stdout.write(self.style.WARNING(
+                "IMPORTANT: If this is the first time running this command, "
+                "it's recommended to re-run the command\nat least one more "
+                "time in the event of nested dependencies / inheritance "
+                "in split files.\n\n"
+            ))
+        is_submodule_app = app_name in SUBMODULE_APPS
+        if not self.no_split and not is_submodule_app:
             self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
                               "using the command below and follow the next steps after.\n\n")
             self.stdout.write(self.style.MIGRATE_HEADING(
@@ -308,7 +329,12 @@ class Command(BaseCommand):
                 saved_line, line_changelog = self.confirm_and_get_line_changes(
                     line_number, old_line, new_line, renames, flags, review_changes
                 )
-                saved_line = add_todo_comments_for_flags(flags, saved_line, is_template)
+                saved_line = add_todo_comments_for_flags(
+                    flags,
+                    saved_line,
+                    is_template,
+                    is_submodule_app=app_name in SUBMODULE_APPS,
+                )
 
                 new_lines.append(saved_line)
                 if saved_line != old_line or flags:
@@ -325,7 +351,7 @@ class Command(BaseCommand):
                 if self.no_split:
                     self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
                     if is_template:
-                        self.show_next_steps_after_migrating_file_in_place(short_path)
+                        self.show_next_steps_after_migrating_file_in_place(app_name, short_path)
                 elif is_split_path(file_path):
                     self.migrate_file_again(app_name, file_path, new_lines, is_template)
                 else:
@@ -398,23 +424,30 @@ class Command(BaseCommand):
 
     def migrate_file_in_place(self, app_name, file_path, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
-        confirm = get_confirmation(f"Apply changes to '{short_path}'?", default='y')
-        if not confirm:
-            self.write_response("ok, discarding changes...")
+        is_submodule_app = app_name in SUBMODULE_APPS
+        if not is_submodule_app:
+            confirm = get_confirmation(f"Apply changes to '{short_path}'?", default='y')
+            if not confirm:
+                self.write_response("ok, discarding changes...")
+                return
 
-        has_changes = has_pending_git_changes()
+        working_directory = get_working_directory(app_name)
+        has_changes = has_pending_git_changes(working_directory)
         if has_changes:
             self.prompt_user_to_commit_changes()
-            has_changes = has_pending_git_changes()
+            has_changes = has_pending_git_changes(working_directory)
 
         with open(file_path, 'w') as file:
             file.writelines(bootstrap5_lines)
         self.suggest_commit_message(
             f"initial auto-migration for {short_path}, migrated in-place",
-            show_apply_commit=not has_changes
+            show_apply_commit=not has_changes,
+            working_directory=working_directory,
         )
 
-    def show_next_steps_after_migrating_file_in_place(self, short_path):
+    def show_next_steps_after_migrating_file_in_place(self, app_name, short_path):
+        if app_name in SUBMODULE_APPS:
+            return
         self.stdout.write(self.style.MIGRATE_LABEL(
             "\n\nPlease take a moment now to search for all views referencing\n"
         ))
@@ -429,12 +462,14 @@ class Command(BaseCommand):
             "See: https://www.commcarehq.org/styleguide/b5/migration/#migrating-views"
         )
         enter_to_continue()
-        if has_pending_git_changes():
+        working_directory = get_working_directory(app_name)
+        if has_pending_git_changes(working_directory):
             self.stdout.write(self.style.WARNING(
                 "\n\nDon't forget to commit these changes!"
             ))
             self.suggest_commit_message(
-                f"added use_bootstrap5 decorator to views referencing {short_path}"
+                f"added use_bootstrap5 decorator to views referencing {short_path}",
+                working_directory=working_directory,
             )
 
     def migrate_file_again(self, app_name, file_path, bootstrap5_lines, is_template):
@@ -454,21 +489,23 @@ class Command(BaseCommand):
             self.write_response("ok, skipping save...")
             return
 
-        has_changes = has_pending_git_changes()
+        working_directory = get_working_directory(app_name)
+        has_changes = has_pending_git_changes(working_directory)
         if has_changes:
             self.prompt_user_to_commit_changes()
-            has_changes = has_pending_git_changes()
+            has_changes = has_pending_git_changes(working_directory)
 
         with open(bootstrap5_path, 'w') as bootstrap5_file:
             bootstrap5_file.writelines(bootstrap5_lines)
 
-        if has_pending_git_changes():
+        if has_pending_git_changes(working_directory):
             self.stdout.write(
                 f"\nChanges applied to {bootstrap5_short_path}."
             )
             self.suggest_commit_message(
                 f"re-ran migration for {migrated_file_short_path}",
-                show_apply_commit=not has_changes
+                show_apply_commit=not has_changes,
+                working_directory=working_directory,
             )
         else:
             self.stdout.write("\nNo changes were necessary!\n")
@@ -484,10 +521,11 @@ class Command(BaseCommand):
                 self.write_response("ok, canceling split and rolling back changes...")
                 return
 
-        has_changes = has_pending_git_changes()
+        working_directory = get_working_directory(app_name)
+        has_changes = has_pending_git_changes(working_directory)
         if has_changes:
             self.prompt_user_to_commit_changes()
-            has_changes = has_pending_git_changes()
+            has_changes = has_pending_git_changes(working_directory)
 
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
         bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
@@ -499,12 +537,13 @@ class Command(BaseCommand):
             file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
         )
         self.stdout.write("\nUpdating references...")
-        references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
+        references = update_and_get_references(app_name, short_path, bootstrap3_short_path, is_template)
         if not is_template:
             # also check extension-less references for javascript files
             references.extend(update_and_get_references(
-                get_requirejs_reference(short_path),
-                get_requirejs_reference(bootstrap3_short_path),
+                app_name,
+                get_requirejs_reference(app_name, short_path),
+                get_requirejs_reference(app_name, bootstrap3_short_path),
                 is_template=False
             ))
         if references:
@@ -514,7 +553,8 @@ class Command(BaseCommand):
             self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
         self.suggest_commit_message(
             f"initial auto-migration for {short_path}, splitting templates",
-            show_apply_commit=not has_changes
+            show_apply_commit=not has_changes,
+            working_directory=working_directory,
         )
 
     @staticmethod
@@ -548,14 +588,16 @@ class Command(BaseCommand):
             new_reference = get_short_path(app_name, file_path, is_template)
             old_reference = new_reference.replace("/bootstrap3/", "/")
             references = update_and_get_references(
+                app_name,
                 old_reference,
                 new_reference,
                 is_template
             )
             if not is_template:
                 references.extend(update_and_get_references(
-                    get_requirejs_reference(old_reference),
-                    get_requirejs_reference(new_reference),
+                    app_name,
+                    get_requirejs_reference(app_name, old_reference),
+                    get_requirejs_reference(app_name, new_reference),
                     is_template=False
                 ))
             if references:
@@ -563,7 +605,11 @@ class Command(BaseCommand):
                     f"\n\nUpdated references to {old_reference} in these files:"
                 ))
                 self.stdout.write("\n".join(references))
-                self.suggest_commit_message(f"updated path references to '{references}'")
+                working_directory = get_working_directory(app_name)
+                self.suggest_commit_message(
+                    f"updated path references to '{references}'",
+                    working_directory=working_directory,
+                )
         self.stdout.write("\n\nDone.\n\n")
 
     @staticmethod
@@ -655,9 +701,9 @@ class Command(BaseCommand):
             "\nYou have un-committed changes! Please commit these changes before proceeding. Thank you!"
         ))
 
-    def suggest_commit_message(self, message, show_apply_commit=False):
+    def suggest_commit_message(self, message, show_apply_commit=False, working_directory=None):
         if self.skip_all and show_apply_commit:
-            apply_commit(message)
+            apply_commit(message, working_directory)
             return
 
         self.stdout.write("\nNow would be a good time to review changes with git and "
@@ -665,9 +711,9 @@ class Command(BaseCommand):
         if show_apply_commit:
             confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
             if confirm:
-                apply_commit(message)
+                apply_commit(message, working_directory)
                 return
-        commit_string = get_commit_string(message)
+        commit_string = get_commit_string(message, working_directory)
         self.stdout.write("\n\nSuggested command:\n")
         self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")

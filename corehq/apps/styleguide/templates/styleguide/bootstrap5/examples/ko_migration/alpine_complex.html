@@ -1,0 +1,43 @@
+
+<!--
+  We can't use template tags in this file, but we would define
+  x-data in the <div> below as follows:
+  <div
+    x-data="complexExample({{ complex_initial_value|JSON }})"
+  >
+-->
+<div x-data="complexExample([{&quot;key&quot;: &quot;color&quot;, &quot;value&quot;: &quot;Purple&quot;}])">
+  <template x-for="(pair, index) in keyValuePairs">
+    <div class="d-flex">
+      <div class="flex-fill">
+        <input
+          type="text"
+          class="form-control"
+          x-model="pair.key"
+        />
+      </div>
+      <p class="py-1 px-3">&rarr;</p>
+      <div class="flex-fill">
+        <input
+          type="text"
+          class="form-control"
+          x-model="pair.value"
+        />
+      </div>
+      <p class="ps-3">
+        <button
+          type="button"
+          class="btn btn-outline-danger"
+          @click="removeKeyValuePair(index)"
+        ><i class="fa fa-remove"></i></button>
+      </p>
+    </div>
+  </template>
+  <p>
+    <button
+      type="button"
+      class="btn btn-primary"
+      @click="addKeyValuePair"
+    ><i class="fa fa-plus"></i> Add</button>
+  </p>
+</div>
