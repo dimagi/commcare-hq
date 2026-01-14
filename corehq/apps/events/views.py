@@ -271,6 +271,7 @@ class EventEditView(EventCreateView):
         return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class AttendeesListView(JSONResponseMixin, BaseEventView):
     urlname = "event_attendees"
     template_name = 'events/event_attendees.html'
