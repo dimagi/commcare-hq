@@ -150,22 +150,28 @@ def _get_single_case(request, case_id):
 
 
 def _handle_ext_get(request, external_id):
+    # Use PG instead of ES to ensure immediate consistency
     try:
-        bulk_fetch_results_dict = get_bulk(
+        case = CommCareCase.objects.get_case_by_external_id(
             request.domain,
-            request.couch_user,
-            case_ids=[],
-            external_ids=[external_id],
+            external_id,
+            raise_multiple=True,
         )
-    except UserError as err:
-        return JsonResponse({'error': str(err)}, status=400)
-    case = bulk_fetch_results_dict['cases'][0]
-    if case.get('error') == 'not found':
+    except CommCareCase.MultipleObjectsReturned as err:
+        case_ids = [case.case_id for case in err.cases]
+        return JsonResponse(
+            {'error': f"Multiple cases found with external_id '{external_id}': "
+                      f"{', '.join(case_ids)}"},
+            status=400,
+        )
+    if case is None:
         return JsonResponse(
             {'error': f"Case '{external_id}' not found"},
             status=404,
         )
-    return JsonResponse(case)
+
+    # Fetch full case data from ES for serialization
+    return _get_single_case(request, case.case_id)
 
 
 def _handle_bulk_fetch(request):

@@ -122,3 +122,37 @@ class TestCaseAPIGet(TestCase):
         res = self.client.get(reverse('case_api_detail', args=(self.domain, self.other_domain_case_id)))
         assert res.status_code == 404
         assert res.json()['error'] == f"Case '{self.other_domain_case_id}' not found"
+
+    def test_get_case_by_external_id_with_duplicates(self):
+        external_id = 'duplicate-external-id-get'
+        case_block_1 = CaseBlock(
+            case_id=str(uuid.uuid4()),
+            case_type='player',
+            case_name='Player 1',
+            external_id=external_id,
+            owner_id=self.web_user.get_id,
+            create=True,
+        ).as_text()
+        case_block_2 = CaseBlock(
+            case_id=str(uuid.uuid4()),
+            case_type='player',
+            case_name='Player 2',
+            external_id=external_id,
+            owner_id=self.web_user.get_id,
+            create=True,
+        ).as_text()
+        _, (case1, case2) = submit_case_blocks(
+            [case_block_1, case_block_2],
+            domain=self.domain,
+        )
+        populate_case_search_index([case1, case2])  # needed for permission checks
+
+        url = reverse('case_api_detail_ext', args=(self.domain, external_id))
+        res = self.client.get(url)
+
+        assert res.status_code == 400
+        error_response = res.json()
+        assert 'Multiple cases found' in error_response['error']
+        assert external_id in error_response['error']
+        assert case1.case_id in error_response['error']
+        assert case2.case_id in error_response['error']
