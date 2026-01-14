@@ -498,6 +498,27 @@ xform_id  ID of the (single) form generated to update all cases
 cases     Serialized version of the new state of the cases provided
 ========= =========================================================
 
+Upsert
+^^^^^^
+
+If a case update includes a value for "external_id" and does not include
+a value for "case_id", then the "create" field may be omitted, and the
+API will upsert the case based on the value of "external_id". This
+operation is slower than if the "create" field is included. Ensure that
+the upserted cases in a single request are unique, and that concurrent
+requests cannot include the same cases.
+
+.. DANGER::
+   If a single request tries to upsert the same case more than once,
+   **duplicate cases will be created!** This is because CommCare HQ
+   searches for all upserted cases by their external IDs before any
+   changes are made.
+
+.. WARNING::
+   This operation is vulnerable to a race condition where, if two
+   simultaneous requests try to upsert the same case, two cases could be
+   created.
+
 .. _limitations-1:
 
 Limitations
