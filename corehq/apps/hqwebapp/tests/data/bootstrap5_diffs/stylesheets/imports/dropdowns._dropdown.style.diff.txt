@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -24,98 +24,76 @@
+@@ -24,87 +24,78 @@
    border-color: transparent;
    border-style: solid;
    border-width: 5px 0 5px 5px;
@@ -78,6 +78,7 @@
 -      text-decoration: none;
 -      outline: 0;
 -      background-color: @dropdown-link-active-bg;
+-    }
 +
 +  .dropdown-menu .login-container {
 +    padding: 2px 20px 5px;
@@ -110,23 +111,16 @@
 +  .dropdown-toggle::after {
 +    vertical-align: 2.48px;
 +    margin-left: 2px;
-+  }
-+}
-+
-+@media (max-width: map-get($grid-breakpoints, "lg")) {
-+  .navbar-hq-main-menu {
-+
-+    .dropdown-menu {
-+      box-shadow: none;
-     }
    }
  }
--
+ 
 -.dropdown-menu .login-container,
 -.dropdown-menu .server-location {
 -  padding: 2px 20px 5px;
 -}
--
++@media (max-width: map-get($grid-breakpoints, "lg")) {
++  .navbar-hq-main-menu {
+ 
 -.dropdown-menu .dropdown-icon {
 -  margin-right: 4px;
 -}
@@ -144,17 +138,10 @@
 -.dropdown-menu .dropdown-divider {
 -  margin-top: 0px;
 -  margin-bottom: 0px;
--}
--
--.checklist {
--  i.fa-check {
--    display: none;
--    width: auto;
--  }
--
--  .selected i.fa-check {
--    display: inline-block;
--    margin-left: -14px;
--    margin-right: 2px;
--  }
--}
++    .dropdown-menu {
++      box-shadow: none;
++    }
++  }
+ }
+ 
+ .checklist {
