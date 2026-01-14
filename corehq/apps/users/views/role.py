@@ -313,16 +313,19 @@ class EditRoleView(RoleContextMixin, BaseRoleAccessView):
     template_name = 'users/edit_role.html'
 
     @property
+    def role_id(self):
+        return self.kwargs.get('role_id')
+
+    @property
     def page_title(self):
-        if self.kwargs.get('role_id'):
+        if self.role_id:
             return gettext_lazy("Edit Role")
         return gettext_lazy("Create Role")
 
     @property
     def page_url(self):
-        role_id = self.kwargs.get('role_id')
-        if role_id:
-            return reverse(self.urlname, kwargs={'domain': self.domain, 'role_id': role_id})
+        if self.role_id:
+            return reverse(self.urlname, kwargs={'domain': self.domain, 'role_id': self.role_id})
         return reverse('create_role', kwargs={'domain': self.domain})
 
     @property
@@ -343,7 +346,7 @@ class EditRoleView(RoleContextMixin, BaseRoleAccessView):
 
     def _get_role_data(self):
         """Returns role data for editing or a blank structure for creating."""
-        role_id = self.kwargs.get("role_id")
+        role_id = self.role_id
         if role_id:
             role = self._get_existing_role(role_id)
             return role.to_json() if role else self._get_blank_role_data()
@@ -377,7 +380,7 @@ class EditRoleView(RoleContextMixin, BaseRoleAccessView):
     @property
     def role(self):
         """Returns the role being edited, or None for new roles."""
-        role_id = self.kwargs.get("role_id")
+        role_id = self.role_id
         if not role_id:
             return None
         return self._get_existing_role(role_id)
