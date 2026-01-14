@@ -235,6 +235,7 @@
   "users": {
     "in_progress": true,
     "templates": [
+      "partials/linked_roles_modal.html",
       "roles_and_permissions.html"
     ]
   }
