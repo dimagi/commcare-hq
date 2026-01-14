@@ -117,7 +117,7 @@ class RoleContextMixin:
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class ListRolesView(RoleContextMixin, BaseRoleAccessView):
-    template_name = 'users/bootstrap5/roles_and_permissions.html'
+    template_name = 'users/roles_and_permissions.html'
     page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 

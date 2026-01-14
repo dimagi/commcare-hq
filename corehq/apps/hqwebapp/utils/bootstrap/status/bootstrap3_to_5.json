@@ -233,6 +233,9 @@
     "in_progress": true
   },
   "users": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "roles_and_permissions.html"
+    ]
   }
 }
