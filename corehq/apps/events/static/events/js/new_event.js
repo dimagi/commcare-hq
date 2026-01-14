@@ -89,7 +89,7 @@ $(function () {
                     'location_id': newLocation,
                 },
                 success: function (data) {
-                    $("#attendance-list-error").addClass("hidden");
+                    $("#attendance-list-error").addClass("d-none");
 
                     rebuildList("id_expected_attendees", data.attendees);
                     rebuildList("id_attendance_takers", data.attendance_takers);
@@ -97,7 +97,7 @@ $(function () {
                     multiselectUtils.rebuildMultiselect('id_attendance_takers', ATTENDANCE_TAKER_PROPS);
                 },
                 error: function () {
-                    $("#attendance-list-error").removeClass("hidden");
+                    $("#attendance-list-error").removeClass("d-none");
                 },
             });
         });
