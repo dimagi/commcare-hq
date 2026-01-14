@@ -329,6 +329,7 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
         return {'error': _("Form validation failed: {}").format(err)}
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class AttendeeEditView(BaseEventView):
     urlname = 'edit_attendee'
     template_name = "events/edit_attendee.html"
