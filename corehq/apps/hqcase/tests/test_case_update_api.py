@@ -9,6 +9,8 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -21,6 +23,7 @@ from corehq.util.test_utils import (
 from ..utils import submit_case_blocks
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
 @sharded
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
@@ -788,3 +791,62 @@ class TestCaseAPI(TestCase):
         mock_xform.form_id = "test-form-id"
         mock_case = MagicMock(spec=CommCareCase)
         return mock_xform, mock_case
+
+    def test_upsert_by_external_id_is_idempotent(self):
+        """
+        Test that sending the same PUT request twice to the external_id
+        endpoint is idempotent.
+
+        The first request should create a case, and the second should update it,
+        not create a duplicate.
+        """
+        external_id = 'idempotency-test-123'
+        payload = {
+            'case_type': 'player',
+            'case_name': 'Magnus Carlsen',
+            'owner_id': 'world_chess',
+            'properties': {
+                'rank': '2800',
+                'country': 'Norway',
+            },
+        }
+
+        # First request - should create the case
+        res1 = self.client.put(
+            reverse('case_api_detail_ext', args=(self.domain, external_id)),
+            payload,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
+        assert res1.status_code == 200
+        case_id_1 = res1.json()['case']['case_id']
+
+        # Second request - should update the same case, not create a duplicate
+        res2 = self.client.put(
+            reverse('case_api_detail_ext', args=(self.domain, external_id)),
+            payload,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
+        assert res2.status_code == 200
+        case_id_2 = res2.json()['case']['case_id']
+
+        # Verify idempotency - both requests should reference the same case
+        assert case_id_1 == case_id_2, (
+            "Expected the same case to be updated, not a duplicate created"
+        )
+
+        # Verify only one case exists with this external_id
+        cases = CommCareCase.objects.get_case_ids_in_domain(self.domain)
+        assert len(cases) == 1, f"Expected 1 case, found {len(cases)}"
+
+        # Verify the case has the correct properties
+        case = CommCareCase.objects.get_case(case_id_1, self.domain)
+        assert case.external_id == external_id
+        assert case.name == 'Magnus Carlsen'
+        assert case.type == 'player'
+        assert case.owner_id == 'world_chess'
+        assert case.dynamic_case_properties() == {
+            'rank': '2800',
+            'country': 'Norway',
+        }
