@@ -238,6 +238,9 @@
       "partials/edit_role_modal.html",
       "partials/linked_roles_modal.html",
       "roles_and_permissions.html"
+    ],
+    "javascript": [
+      "js/roles_and_permissions.js"
     ]
   }
 }
