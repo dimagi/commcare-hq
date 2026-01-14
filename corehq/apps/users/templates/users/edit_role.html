@@ -29,6 +29,56 @@
       @submit.prevent="saveRole($data.formData)"
       x-cloak
     >
+      <template x-if="role.upstream_id">
+        <div class="row mb-4 d-flex">
+          <div class="col-md-6"></div>
+          <div class="col-md-4 d-flex justify-content-end gap-2">
+            {% include 'users/partials/bootstrap5/linked_roles_modal.html' %}
+            <span x-show="allowEdit && !linkedRoleUnlocked">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#modal_linked_roles"
+              >
+                <i class="fa fa-link"></i>
+                {% trans 'Unlock Linked Role For Me' %}
+              </button>
+            </span>
+            <span x-show="allowEdit && linkedRoleUnlocked">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                @click="toggleLinkedRoleLock()"
+              >
+                <i class="fa fa-link"></i>
+                {% trans 'Lock Linked Role For Me' %}
+              </button>
+            </span>
+
+            <span x-show="!allowEdit">
+              <i class="fa fa-link"></i>
+              Contains Linked Roles
+            </span>
+
+            <span
+              class="hq-help-template"
+              data-placement="left"
+              data-title="{% trans 'Linked Configurations' %}"
+              data-content="{% blocktrans %}
+                Linked configurations are controlled from a separate, linked project
+                space.
+                <a
+                  href="https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management"
+                  target="_blank"
+                  >Learn more</a
+                >.
+              {% endblocktrans %}"
+            >
+            </span>
+          </div>
+        </div>
+      </template>
       <div class="row mb-4">
         <label class="col-md-2 control-label" for="role-name">
           Role Name<span class="asteriskField">*</span>
@@ -42,11 +92,12 @@
             pattern="\S.*"
             title="{% trans_html_attr "The name must start with a valid character." %}"
             required
+            :disabled="!isEditable"
           />
         </div>
       </div>
 
-      <fieldset class="active">
+      <fieldset class="active" :disabled="!isEditable">
         <legend>
           <a
             class="accordion-toggle"
@@ -191,7 +242,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="active" x-show="erm.visible">
+      <fieldset class="active"  :disabled="!isEditable" x-show="erm.visible">
         <legend>
           <a
             class="accordion-toggle"
@@ -257,7 +308,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="active">
+      <fieldset class="active" :disabled="!isEditable">
         <legend>
           <a
             class="accordion-toggle"
@@ -360,7 +411,7 @@
       </fieldset>
 
       {% if request|request_has_privilege:"CLOUDCARE" %}
-        <fieldset class="active">
+        <fieldset class="active" :disabled="!isEditable">
           <legend>
             <a
               class="accordion-toggle"
@@ -380,7 +431,7 @@
       {% endif %}
 
       {% if request|toggle_enabled:"DATA_REGISTRY" %}
-        <fieldset class="active">
+        <fieldset class="active" :disabled="!isEditable">
           <legend>
             <a
               class="accordion-toggle"
@@ -402,7 +453,7 @@
       {% endif %}
 
       {% if request|toggle_enabled:"SUPERSET_ANALYTICS" %}
-        <fieldset class="active">
+        <fieldset class="active" :disabled="!isEditable">
           <legend>
             <a
               class="accordion-toggle"
@@ -469,7 +520,7 @@
         </fieldset>
       {% endif %}
 
-      <fieldset class="active">
+      <fieldset class="active" :disabled="!isEditable">
         <legend>
           <a
             class="accordion-toggle"
@@ -897,9 +948,9 @@
         </div>
       </fieldset>
 
-      <div class="border-top my-2"></div>
+      <div class="border-top my-2" x-show="isEditable"></div>
 
-      <div class="row mb-4">
+      <div class="row mb-4" x-show="isEditable">
         <div class="col-sm-2">
           <button type="submit" class="btn btn-primary" :disabled="isSaving">
             <span x-show="!isSaving">{% trans "Save" %}</span>

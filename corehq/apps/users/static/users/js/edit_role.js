@@ -170,6 +170,10 @@ Alpine.data('initRole', (roleJson) => {
         get showRestrictedLocationRoleAssignmentWarning() {
             return this.role.permissions.access_all_locations && this.restrictRoleChecked;
         },
+        linkedRoleUnlocked: false,
+        get isEditable() {
+            return initialPageData.get("can_edit_roles") && (!this.role.upstream_id || this.linkedRoleUnlocked);
+        },
         landingPageChoices: initialPageData.get("landing_page_choices"),
         init() {
             const self = this;
@@ -824,6 +828,10 @@ Alpine.data('initRole', (roleJson) => {
                 }),
                 getIdentifier: (item) => item.slug,
             });
+
+            this.toggleLinkedRoleLock = () => {
+                this.linkedRoleUnlocked = !this.linkedRoleUnlocked;
+            };
 
             this.saveRole = () => {
                 self.isSaving = true;

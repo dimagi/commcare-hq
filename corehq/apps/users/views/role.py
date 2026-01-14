@@ -135,9 +135,8 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
             role_data = role.to_json()
             role_view_data.append(role_data)
 
-            if self.can_edit_roles:
-                role_data["editUrl"] = reverse(EditRoleView.urlname,
-                    kwargs={'domain': self.domain, 'role_id': role_data.get('_id')})
+            role_data["editUrl"] = reverse(EditRoleView.urlname,
+                kwargs={'domain': self.domain, 'role_id': role_data.get('_id')})
 
             if role.is_commcare_user_default:
                 role_data["preventRoleDelete"] = True
