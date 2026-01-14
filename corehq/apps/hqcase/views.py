@@ -150,7 +150,6 @@ def _get_single_case(request, case_id):
 
 
 def _handle_ext_get(request, external_id):
-    # Use PG instead of ES to ensure immediate consistency
     try:
         case = CommCareCase.objects.get_case_by_external_id(
             request.domain,
@@ -170,8 +169,22 @@ def _handle_ext_get(request, external_id):
             status=404,
         )
 
-    # Fetch full case data from ES for serialization
-    return _get_single_case(request, case.case_id)
+    try:
+        if case.domain != request.domain:
+            raise NotFoundError()
+        if not user_can_access_case(request.domain, request.couch_user, case):
+            raise PermissionDenied()
+    except NotFoundError:
+        return JsonResponse(
+            {'error': f"Case '{case.case_id}' not found"},
+            status=404,
+        )
+    except PermissionDenied:
+        return JsonResponse(
+            {'error': f"Insufficent permission for Case '{case.case_id}'"},
+            status=403,
+        )
+    return JsonResponse(serialize_case(case))
 
 
 def _handle_bulk_fetch(request):

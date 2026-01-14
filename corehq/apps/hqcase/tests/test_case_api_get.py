@@ -13,7 +13,7 @@ from corehq.apps.es.tests.utils import (
     es_test,
     populate_case_search_index,
 )
-from corehq.apps.hqcase.api.core import serialize_es_case
+from corehq.apps.hqcase.api.core import serialize_case
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -91,8 +91,7 @@ class TestCaseAPIGet(TestCase):
         )
         _, [case] = submit_case_blocks(case_block.as_text(), domain=self.domain)
         populate_case_search_index([case])
-        es_doc = case_search_adapter.get(case_id)
-        expected = serialize_es_case(es_doc)
+        expected = serialize_case(case)
 
         base_url = reverse('case_api', args=(self.domain,))
         if not base_url.endswith('/'):
@@ -101,7 +100,10 @@ class TestCaseAPIGet(TestCase):
         res = self.client.get(url)
 
         assert res.status_code == 200
-        assert res.json() == expected
+        response_data = res.json()
+        response_data.pop('indexed_on')  # milliseconds won't match
+        expected.pop('indexed_on')
+        assert response_data == expected
 
     def test_get_case_by_external_id_not_found(self):
         base_url = reverse('case_api', args=(self.domain,))
