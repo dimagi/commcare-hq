@@ -210,29 +210,35 @@ msgstr "Grafico"
 msgid "Show All Dates"
 msgstr "Mostra tutte le date"
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 #: corehq/apps/locations/static/locations/js/location_types.js
 msgid "You have unsaved changes."
 msgstr "Hai modifiche non salvate."
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 msgid "There was an error saving."
 msgstr "Si è verificato un errore durante il salvataggio."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "Hide Past Versions"
 msgstr "Nascondi versioni precedenti"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "See Past Versions"
 msgstr "Vedi versioni precedenti"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "I tipi di caso possono includere solo i caratteri a-z, 0-9, '-' e '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "This is a reserved case type. Refer to <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
@@ -242,36 +248,45 @@ msgstr ""
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
 " target=\"_blank\" rel=\"noopener\">documentazione</a> prima dell'utilizzo."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "Questo è un tipo di caso riservato. Scegli un altro nome."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This case type has been deprecated in the Data Dictionary."
 msgstr "Questo tipo di caso è stato deprecato nel Dizionario Dati."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 msgid "Add"
 msgstr "Aggiungi"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Moved successfully."
 msgstr "Spostato con successo."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "You have unsaved changes"
 msgstr "Hai modifiche non salvate"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Add a new case type or use an existing one"
 msgstr "Aggiungi un nuovo tipo di caso o usane uno esistente"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Survey Menu?"
 msgstr "Cos'è un Menu Sondaggio?"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Surveys are used to collect independent forms that do not need to be tracked"
 " over time. Common examples include satisfaction surveys or anonymous "
@@ -281,11 +296,13 @@ msgstr ""
 "devono essere tracciati nel tempo. Esempi comuni includono sondaggi di "
 "soddisfazione o moduli di feedback anonimi."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Case List?"
 msgstr "Cos'è una Lista Casi?"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Case Lists are used to register and track related data (cases) over time. "
 "This data can be referenced in other forms and by other cases. Common "
@@ -296,23 +313,329 @@ msgstr ""
 " altri casi. Esempi comuni includono salute materna, presenza degli studenti"
 " o monitoraggio delle colture."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Application name is required"
 msgstr "Il nome dell'applicazione è obbligatorio"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Project name is required"
 msgstr "Il nome del progetto è obbligatorio"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Invalid Project Selected"
 msgstr "Progetto selezionato non valido"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 "Ops, si è verificato un problema nel caricamento di questa sezione. Riprova."
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Active"
+msgstr "Attivo"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Inactive"
+msgstr "Inattivo"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Deactivate"
+msgstr "Disattiva"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Activate"
+msgstr "Attiva"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
+#: corehq/apps/sms/static/sms/js/add_gateway.js
+msgid "Remove"
+msgstr "Rimuovi"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/source_files.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/source_files.js
+msgid "Please enter a version to compare"
+msgstr "Inserisci una versione da confrontare"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Warning: unrecognized language"
+msgstr "Attenzione: lingua non riconosciuta"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You have unsaved changes in your supported languages"
+msgstr "Hai modifiche non salvate nelle lingue supportate"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "There are errors in your configuration"
+msgstr "Ci sono errori nella configurazione"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You must have at least one language"
+msgstr "Devi avere almeno una lingua"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Please enter language"
+msgstr "Inserisci la lingua"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Invalid language code"
+msgstr "Codice lingua non valido"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Language appears twice"
+msgstr "La lingua compare due volte"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "This conflicts with a current language"
+msgstr "Questo è in conflitto con una lingua attuale"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache"
+msgstr "Cache"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Lazy Load"
+msgstr "Caricamento Pigro"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache & Lazy Load"
+msgstr "Cache e Caricamento Pigro"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Tab Name"
+msgstr "Nome Scheda"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Display Condition"
+msgstr "Condizione di Visualizzazione"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"Attenzione: La proprietà calcolata utilizzata non è compatibile con la "
+"memorizzazione nella cache e potrebbe causare dati obsoleti nelle proprietà "
+"dell'elenco dei casi"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Oct 31, "
+msgstr "31 Ott "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Format "
+msgstr " Formato "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Days late "
+msgstr " Giorni di ritardo "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Years since date"
+msgstr "Anni dalla data"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months since date"
+msgstr "Mesi dalla data"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks since date"
+msgstr "Settimane dalla data"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days since date"
+msgstr "Giorni dalla data"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days until date"
+msgstr "Giorni fino alla data"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks until date"
+msgstr "Settimane fino alla data"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months until date"
+msgstr "Mesi fino alla data"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Measuring "
+msgstr " Misurazione "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Custom Expression"
+msgstr "Scheda Dati: Espressione Personalizzata"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Child Cases: "
+msgstr "Scheda Dati: Casi Figli: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid "Edit Graph"
+msgstr "Modifica Grafico"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Copied!"
+msgstr "Copiato!"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid ""
+"It is recommended that you leave this value blank. Future changes to your "
+"report's chart configuration will not be reflected here."
+msgstr ""
+"Si consiglia di lasciare questo valore vuoto. Le future modifiche alla "
+"configurazione del grafico del report non saranno riflesse qui."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "Non usare Case Tiles"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Manually configure Case Tiles"
+msgstr "Configura manualmente Case Tiles"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Edit Custom Variables"
+msgstr "Modifica Variabili Personalizzate"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You have unsaved detail screen configurations."
+msgstr "Hai configurazioni della schermata dei dettagli non salvate."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your tab: "
+msgstr "C'è un errore nella tua scheda: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your property name: "
+msgstr "C'è un errore nel nome della proprietà: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr "Puoi avere solo una proprietà con il formato 'Immagine'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "All properties must be below a tab."
+msgstr "Tutte le proprietà devono essere sotto una scheda."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid ""
+"Search Properties and Default Search Filters can't have common properties. "
+"Please update following properties: "
+msgstr ""
+"Le Proprietà di Ricerca e i Filtri di Ricerca Predefiniti non possono avere "
+"proprietà in comune. Aggiorna le seguenti proprietà: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There are errors in your configuration."
+msgstr "Ci sono errori nella tua configurazione."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr "<%- name %> (Proprietà Calcolata #<%- index %>)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (a, b, c)"
+msgstr "Crescente (a, b, c)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (May 1st, May 2nd)"
+msgstr "Crescente (1 Maggio, 2 Maggio)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1, 2, 3)"
+msgstr "Crescente (1, 2, 3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1.1, 1.2, 1.3)"
+msgstr "Crescente (1.1, 1.2, 1.3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (c, b, a)"
+msgstr "Decrescente (c, b, a)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (May 2nd, May 1st)"
+msgstr "Decrescente (2 Maggio, 1 Maggio)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (3, 2, 1)"
+msgstr "Decrescente (3, 2, 1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (1.3, 1.2, 1.1)"
+msgstr "Decrescente (1.3, 1.2, 1.1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort calculation."
+msgstr "Calcolo dell'ordinamento mancante."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort property."
+msgstr "Proprietà di ordinamento mancante."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Mobile UCR Options"
@@ -331,7 +654,8 @@ msgid "Lookup Table Options"
 msgstr "Opzioni Tabella di Riferimento"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Lookup Table"
 msgstr "Tabella di Riferimento"
 
@@ -339,108 +663,9 @@ msgstr "Tabella di Riferimento"
 msgid "Select a Lookup Table..."
 msgstr "Seleziona una tabella di riferimento..."
 
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache"
-msgstr "Cache"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Lazy Load"
-msgstr "Caricamento Pigro"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache & Lazy Load"
-msgstr "Cache e Caricamento Pigro"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Tab Name"
-msgstr "Nome Scheda"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Display Condition"
-msgstr "Condizione di Visualizzazione"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid ""
-"Warning: Calculated property used is not compatible with caching and may "
-"result in stale data on case list properties"
-msgstr ""
-"Attenzione: La proprietà calcolata utilizzata non è compatibile con la "
-"memorizzazione nella cache e potrebbe causare dati obsoleti nelle proprietà "
-"dell'elenco dei casi"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Oct 31, "
-msgstr "31 Ott "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Format "
-msgstr " Formato "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Days late "
-msgstr " Giorni di ritardo "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Years since date"
-msgstr "Anni dalla data"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months since date"
-msgstr "Mesi dalla data"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks since date"
-msgstr "Settimane dalla data"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days since date"
-msgstr "Giorni dalla data"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days until date"
-msgstr "Giorni fino alla data"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks until date"
-msgstr "Settimane fino alla data"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months until date"
-msgstr "Mesi fino alla data"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Measuring "
-msgstr " Misurazione "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Custom Expression"
-msgstr "Scheda Dati: Espressione Personalizzata"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Child Cases: "
-msgstr "Scheda Dati: Casi Figli: "
-
 #: corehq/apps/app_manager/static/app_manager/js/details/fixture_select.js
 msgid "Select One"
 msgstr "Seleziona uno"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid "Edit Graph"
-msgstr "Modifica Grafico"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
-msgid "Copied!"
-msgstr "Copiato!"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid ""
-"It is recommended that you leave this value blank. Future changes to your "
-"report's chart configuration will not be reflected here."
-msgstr ""
-"Si consiglia di lasciare questo valore vuoto. Le future modifiche alla "
-"configurazione del grafico del report non saranno riflesse qui."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 #: corehq/apps/export/static/export/js/models.js
@@ -454,94 +679,6 @@ msgstr "Genitore"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr "Menu sconosciuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Don't Use Case Tiles"
-msgstr "Non usare Case Tiles"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Manually configure Case Tiles"
-msgstr "Configura manualmente Case Tiles"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Edit Custom Variables"
-msgstr "Modifica Variabili Personalizzate"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You have unsaved detail screen configurations."
-msgstr "Hai configurazioni della schermata dei dettagli non salvate."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your tab: "
-msgstr "C'è un errore nella tua scheda: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your property name: "
-msgstr "C'è un errore nel nome della proprietà: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You can only have one property with the 'Image' format"
-msgstr "Puoi avere solo una proprietà con il formato 'Immagine'"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "All properties must be below a tab."
-msgstr "Tutte le proprietà devono essere sotto una scheda."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid ""
-"Search Properties and Default Search Filters can't have common properties. "
-"Please update following properties: "
-msgstr ""
-"Le Proprietà di Ricerca e i Filtri di Ricerca Predefiniti non possono avere "
-"proprietà in comune. Aggiorna le seguenti proprietà: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There are errors in your configuration."
-msgstr "Ci sono errori nella tua configurazione."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
-msgid "<%- name %> (Calculated Property #<%- index %>)"
-msgstr "<%- name %> (Proprietà Calcolata #<%- index %>)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (a, b, c)"
-msgstr "Crescente (a, b, c)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (May 1st, May 2nd)"
-msgstr "Crescente (1 Maggio, 2 Maggio)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1, 2, 3)"
-msgstr "Crescente (1, 2, 3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1.1, 1.2, 1.3)"
-msgstr "Crescente (1.1, 1.2, 1.3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (c, b, a)"
-msgstr "Decrescente (c, b, a)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (May 2nd, May 1st)"
-msgstr "Decrescente (2 Maggio, 1 Maggio)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (3, 2, 1)"
-msgstr "Decrescente (3, 2, 1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (1.3, 1.2, 1.1)"
-msgstr "Decrescente (1.3, 1.2, 1.1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort calculation."
-msgstr "Calcolo dell'ordinamento mancante."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort property."
-msgstr "Proprietà di ordinamento mancante."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
@@ -630,106 +767,131 @@ msgstr ""
 "Spiacenti, si è verificato un errore durante il download. Se vedi questo "
 "messaggio ripetutamente, segnala un problema."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Type required"
 msgstr "Tipo di caso richiesto"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag required"
 msgstr "Tag caso richiesto"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "Tag caso: sono consentiti solo lettere, numeri, '-', e '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag already in use"
 msgstr "Tag caso già in uso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "subcase of"
 msgstr "sottocaso di"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "autoselect mode: "
 msgstr "modalità autoselezione: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid " (from fixture)"
 msgstr " (da fixture)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Autoselect mode required"
 msgstr "Modalità autoselezione richiesta"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Property required"
 msgstr "Proprietà richiesta"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case required"
 msgstr "Caso richiesto"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Lookup table tag required"
 msgstr "Tag tabella di ricerca richiesto"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Expected case type required"
 msgstr "Tipo di caso previsto richiesto"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "Riferimento al genitore del sottocaso mancante"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "ID di riferimento al genitore richiesto per i sottocasi: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 "Il sottocaso deve essere nello stesso contesto di ripetizione del genitore "
 "\""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Select parent"
 msgstr "Seleziona genitore"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Raw"
 msgstr "Grezzo"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Data"
 msgstr "Dati utente"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Properties"
 msgstr "Proprietà utente"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Case Index"
 msgstr "Indice caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "Carica / Aggiorna / Chiudi un caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "Selezione automatica del caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "Carica caso da fixture"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Open a Case"
 msgstr "Apri un caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "Proprietà aggiornata da due domande"
 
@@ -738,7 +900,8 @@ msgid "Reserved word: "
 msgstr "Parola riservata: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "All'interno della ripetizione sbagliata!"
 
@@ -752,17 +915,60 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr "Due proprietà caricate sulla stessa domanda"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged case settings"
 msgstr "Hai impostazioni del caso non modificate"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "Hai impostazioni delle proprietà utente non modificate"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La proprietà utilizza un prefisso non riconosciuto <strong>"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
+msgid "Edit Form"
+msgstr "Modifica modulo"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
+msgid "Form Settings"
+msgstr "Impostazioni modulo"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "This form either no longer exists or has a different case type"
+msgstr "Questo modulo non esiste più o ha un tipo di caso diverso"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Unrecognized value"
+msgstr "Valore non riconosciuto"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr "Collegamento manuale dei dati"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr "Imposta i dati necessari per navigare al modulo o menu selezionato"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Datum ID"
+msgstr "ID dato"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "XPath Expression"
+msgstr "Espressione XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -782,158 +988,129 @@ msgstr ""
 msgid "Select a Question"
 msgstr "Seleziona una domanda"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js
-msgid "Edit Form"
-msgstr "Modifica modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Form Settings"
-msgstr "Impostazioni modulo"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "This form either no longer exists or has a different case type"
-msgstr "Questo modulo non esiste più o ha un tipo di caso diverso"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Unrecognized value"
-msgstr "Valore non riconosciuto"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Manual Linking Datums"
-msgstr "Collegamento manuale dei dati"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Set datums required to navigate to the selected form or menu"
-msgstr "Imposta i dati necessari per navigare al modulo o menu selezionato"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Datum ID"
-msgstr "ID dato"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "XPath Expression"
-msgstr "Espressione XPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "Attivo"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "Inattivo"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "Disattiva"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "Attiva"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/sms/static/sms/js/add_gateway.js
-msgid "Remove"
-msgstr "Rimuovi"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Menu Settings"
 msgstr "Impostazioni menu"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Case type is required."
 msgstr "Il tipo di caso è obbligatorio."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Go back to case list"
 msgstr "Torna all'elenco dei casi"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Proceed with registered case"
 msgstr "Procedi con il caso registrato"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Show All"
 msgstr "Mostra tutto"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Display text is required"
 msgstr "Il testo visualizzato è obbligatorio"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "You have unsaved changes in your report list module"
 msgstr "Hai modifiche non salvate nel modulo elenco report"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "This code is used in multiple places."
 msgstr "Questo codice è utilizzato in più punti."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/app_view_release_manager.js
 msgid "Releases"
 msgstr "Rilasci"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "You have unsaved changes to your application profiles"
 msgstr "Hai modifiche non salvate nei profili dell'applicazione"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "There was an error saving"
 msgstr "Si è verificato un errore durante il salvataggio"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "Select a user"
 msgstr "Seleziona un utente"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "(Default)"
 msgstr "(Predefinito)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Unknown App"
 msgstr "App sconosciuta"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 "Si è verificato un errore. Ricarica la pagina e fai clic su Crea nuova "
 "versione per riprovare."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Spiacenti, l'operazione non è andata a buon fine. Ricarica la pagina e "
 "riprova"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "The versions list has changed since you loaded the page."
 msgstr "L'elenco delle versioni è cambiato da quando hai caricato la pagina."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "No new changes!"
 msgstr "Nessuna nuova modifica!"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
 msgstr "Hai modifiche non salvate nelle impostazioni del prompt"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr "Esegui l'upgrade a CommCare %s per questa opzione!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr "Esegui l'upgrade a CommCare %s!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Auto-set by "
 msgstr "Impostato automaticamente da "
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid ""
 "This value is currently inherited from the master app. Once this page is "
 "saved, it will no longer be inherited."
@@ -941,32 +1118,35 @@ msgstr ""
 "Questo valore è attualmente ereditato dall'app principale. Una volta salvata"
 " questa pagina, non sarà più ereditato."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "You have unsaved settings."
 msgstr "Hai impostazioni non salvate."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: corehq/apps/app_manager/static/app_manager/js/source_files.js
-msgid "Please enter a version to compare"
-msgstr "Inserisci una versione da confrontare"
-
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "Filter properties"
 msgstr "Filtra proprietà"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "View All Cases"
 msgstr "Visualizza tutti i casi"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_summary.js
 msgid "View All Forms"
 msgstr "Visualizza tutti i moduli"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
 msgid "View Changed Items"
 msgstr "Visualizza elementi modificati"
 
@@ -1084,41 +1264,62 @@ msgstr "Ultimo salvato"
 msgid "[unknown]"
 msgstr "[sconosciuto]"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Warning: unrecognized language"
-msgstr "Attenzione: lingua non riconosciuta"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/129.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/414.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/437.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/879.js
+msgid "\n"
+msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You have unsaved changes in your supported languages"
-msgstr "Hai modifiche non salvate nelle lingue supportate"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getCurrentMugInput"
+msgstr "getCurrentMugInput"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "There are errors in your configuration"
-msgstr "Ci sono errori nella configurazione"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Streets"
+msgid "jstree"
+msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You must have at least one language"
-msgstr "Devi avere almeno una lingua"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Please enter language"
-msgstr "Inserisci la lingua"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getData"
+msgstr "ottieniDati"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Invalid language code"
-msgstr "Codice lingua non valido"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "load"
+msgid "loadXML"
+msgstr "loadXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Language appears twice"
-msgstr "La lingua compare due volte"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "createXML"
+msgstr "creaXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "This conflicts with a current language"
-msgstr "Questo è in conflitto con una lingua attuale"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "loadXFormOrError"
+msgstr "loadXFormOrError"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
-msgid "New Form"
-msgstr "Nuovo modulo"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Add Question"
+msgid "addQuestion"
+msgstr "aggiungiDomanda"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "nodeIDFromLabel"
+msgstr "nodeIDDaEtichetta"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Questions"
+msgid "getSections"
+msgstr "ottieniSezioni"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Clear selection"
+msgid "collapseSection"
+msgstr "collassaSezione"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
@@ -1160,39 +1361,27 @@ msgstr "Vero quando TUTTE le espressioni sono vere."
 msgid "True when ANY of the expressions are true."
 msgstr "Vero quando QUALSIASI delle espressioni è vera."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} non è un genitore dati valido"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "createXML"
-msgstr "creaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getData"
-msgstr "ottieniDati"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Command Bar"
 msgstr "Barra dei comandi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Basic"
 msgstr "Base"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Logic"
 msgstr "Logica"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -1208,7 +1397,8 @@ msgid "no comment"
 msgstr "nessun commento"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
-#: corehq/apps/translations/static/translations/js/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/app_translations.js
 msgid "Select Profile"
 msgstr "Seleziona Profilo"
 
@@ -3424,23 +3614,28 @@ msgstr ""
 "Impossibile caricare gli utenti. Riprova più tardi o segnala un problema se "
 "il problema persiste."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Delete Translation"
 msgstr "Elimina traduzione"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Add Translation"
 msgstr "Aggiungi traduzione"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto fill translations"
 msgstr "Compila automaticamente le traduzioni"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto Fill translations"
 msgstr "Compila automaticamente le traduzioni"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
@@ -3448,15 +3643,18 @@ msgstr ""
 "Questo selezionerà le traduzioni più comuni per la lingua scelta. Potrai poi"
 " modificarle se necessario."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "You have unsaved user interface translations."
 msgstr "Hai traduzioni dell'interfaccia utente non salvate."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Parameters formatting problem!"
 msgstr "Problema di formattazione dei parametri!"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "Autofill is not available in English (en). Please change your language using"
 " the dropdown in the top left."
@@ -4306,6 +4504,9 @@ msgstr "Fallito! La risposta è: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
+#~ msgid "New Form"
+#~ msgstr "Nuovo modulo"
+
 #~ msgid "Your location"
 #~ msgstr "La tua posizione"
 
@@ -4339,9 +4540,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 #~ msgid "2-digit"
 #~ msgstr "2 cifre"
 
-#~ msgid "Questions"
-#~ msgstr "Domande"
-
 #~ msgid "Copy"
 #~ msgstr "Copia"
 
@@ -4353,9 +4551,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
 #~ msgid "Bulk Update All Questions"
 #~ msgstr "Aggiorna in blocco tutte le domande"
-
-#~ msgid "Add Question"
-#~ msgstr "Aggiungi domanda"
 
 #~ msgid "Click {btn} to start building your form."
 #~ msgstr "Fai clic su {btn} per iniziare a costruire il modulo."
