@@ -1,10 +1,10 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'events/js/edit_attendee' %}
+{% js_entry 'events/js/edit_attendee' %}
 
 {% block page_content %}
   {% initial_page_data "attendee_id" attendee_id %}
@@ -12,7 +12,7 @@
     {% csrf_token %}
     <fieldset>
       <legend>{% trans 'Attendee' %}</legend>
-      {% crispy form %}
+      {% crispy form %}  {# todo B5: crispy #}
     </fieldset>
     {% if attendee_has_attended_events %}
       <div class="alert alert-warning">
@@ -26,12 +26,12 @@
     {% endif %}
 
     <div class="form-actions">
-      <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+      <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
         <button type="submit" class="btn btn-primary disable-on-submit">
           {% trans 'Update Attendee' %}
         </button>
-        <a class="btn btn-danger {% if attendee_has_attended_events %}disabled{% endif %}"
-            data-toggle="modal" href="#delete_attendee_{{ attendee_id }}">
+        <a class="btn btn-outline-danger {% if attendee_has_attended_events %}disabled{% endif %}"
+            data-bs-toggle="modal" href="#delete_attendee_{{ attendee_id }}">
           <i class="fa-regular fa-trash-can"></i>
           {% trans "Delete Attendee" %}
         </a>
@@ -45,14 +45,14 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
           <h4 class="modal-title">
             {% trans "Delete Attendee" %} {{ attendee_name }}
             <small>Permanent Action</small>
           </h4>
         </div>
         <form class="form-horizontal"
-              style="margin: 0; padding: 0"
+              style="margin: 0; padding: 0"  {# todo B5: inline-style #}
               action="{% url 'delete_attendee' domain attendee_id %}"
               method="post"
               data-bind="submit: submit">
@@ -79,8 +79,8 @@
             </div>
           </div>
           <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-            <button type="submit" class="btn btn-danger">
+            <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-outline-danger">
               {% trans "Delete Attendee" %}
             </button>
           </div>
