@@ -2,6 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Modal } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import RMI from "jquery.rmi/jquery.rmi";
 import locationsWidgets from "locations/js/widgets";
@@ -111,12 +112,12 @@ var mobileWorkerAttendees = function () {
         var button = document.getElementById("mobileWorkerAttendeeButton");
         if (self.mobileWorkerAttendeesEnabled()) {
             button.innerHTML = gettext("Disable Mobile Worker Attendees");
-            // Appending btn-danger will override btn-default
-            button.classList.add("btn-danger");
+            // Appending btn-outline-danger will override btn-outline-primary
+            button.classList.add("btn-outline-danger");
         } else {
             button.innerHTML = gettext("Enable Mobile Worker Attendees");
-            // Simply removing btn-danger will effectively enable btn-default
-            button.classList.remove("btn-danger");
+            // Simply removing btn-outline-danger will effectively enable btn-outline-primary
+            button.classList.remove("btn-outline-danger");
         }
     };
 
@@ -161,7 +162,7 @@ var newAttendeeCreationModel = function () {
     };
 
     self.submitNewAttendee = function () {
-        $("#new-attendee-modal").modal('hide');  /* todo B5: js-modal */
+        Modal.getInstance($("#new-attendee-modal")).hide();
         //var newAttendee = ko.mapping.toJS(self.stagedAttendee);
         var newAttendee = attendeeModel(ko.mapping.toJS(self.stagedAttendee));
         self.newAttendees.push(newAttendee);
