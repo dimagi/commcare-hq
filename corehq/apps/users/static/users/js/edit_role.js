@@ -95,6 +95,23 @@ const createNoneAllSelectedPermissionModel = (args) => {
     return handler;
 };
 
+/**
+ * Creates a permission model for "all or selected" type permissions.
+ *
+ * This model manages permissions that can either apply to all items (via a boolean flag)
+ * or to specific selected items (via a list of identifiers). When "all" is checked,
+ * the specific list is cleared. When "all" is unchecked, the cached specific selections
+ * are restored.
+ *
+ * @param {Object} args - Configuration object
+ * @param {Object} args.permissionObj - The permission object to bind to (typically role.permissions or role)
+ * @param {string} args.accessKey - Key in permissionObj for the boolean "all" flag
+ * @param {string} args.listKey - Key in permissionObj for the array of specific item identifiers
+ * @param {Array} args.listChoices - Available items that can be selected
+ * @param {Function} args.getProperties - Function to extract/transform properties from a list choice item
+ * @param {Function} args.getIdentifier - Function to get the unique identifier from a mapped item
+ * @returns {Object} Model with `all` getter/setter, `specificCache`, and `specific` array with value getters/setters
+ */
 const createAllOrSelectedPermissionModel = (args) => {
     const {
         permissionObj,
