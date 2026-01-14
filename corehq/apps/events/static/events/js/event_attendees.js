@@ -5,7 +5,7 @@ import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import RMI from "jquery.rmi/jquery.rmi";
 import locationsWidgets from "locations/js/widgets";
-import "hqwebapp/js/bootstrap3/widgets";
+import "hqwebapp/js/bootstrap5/widgets";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
 
@@ -161,7 +161,7 @@ var newAttendeeCreationModel = function () {
     };
 
     self.submitNewAttendee = function () {
-        $("#new-attendee-modal").modal('hide');
+        $("#new-attendee-modal").modal('hide');  /* todo B5: js-modal */
         //var newAttendee = ko.mapping.toJS(self.stagedAttendee);
         var newAttendee = attendeeModel(ko.mapping.toJS(self.stagedAttendee));
         self.newAttendees.push(newAttendee);
