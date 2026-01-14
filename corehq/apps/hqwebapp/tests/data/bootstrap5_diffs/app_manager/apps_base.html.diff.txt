@@ -1,0 +1,70 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+-{% extends 'hqwebapp/bootstrap3/two_column.html' %}
++{% extends 'hqwebapp/bootstrap5/two_column.html' %}
+ {% load xforms_extras %}
+ {% load url_extras %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% load compress %}
+ 
+-{% js_entry_b3 "app_manager/js/bootstrap3/app_manager" %}
++{% js_entry "app_manager/js/bootstrap5/app_manager" %}
+ 
+ {% block page_sidebar_classes %}
+   appmanager-sidebar
+@@ -18,7 +18,7 @@
+ {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
+ 
+ {% block stylesheets %}{{ block.super }}
+-  {% include 'app_manager/partials/bootstrap3/apps_stylesheets.html' %}
++  {% include 'app_manager/partials/bootstrap5/apps_stylesheets.html' %}
+   <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
+ {% endblock %}
+ 
+@@ -31,14 +31,14 @@
+     </div>
+     <nav class="appmanager-content">
+ 
+-      {% include 'app_manager/partials/bootstrap3/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page linked_name=linked_name linked_version=app.upstream_version %}
++      {% include 'app_manager/partials/bootstrap5/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page linked_name=linked_name linked_version=app.upstream_version %}
+ 
+       {% if app.get_doc_type == 'Application' %}
+         {% if not app.is_remote_app and app.langs|length > 1%}
+-          {% include 'app_manager/partials/bootstrap3/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
++          {% include 'app_manager/partials/bootstrap5/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
+         {% endif %}
+ 
+-        {% include 'app_manager/partials/menu/bootstrap3/appnav_menu.html' %}
++        {% include 'app_manager/partials/menu/bootstrap5/appnav_menu.html' %}
+       {% endif %}
+     </nav>
+   {% endif %}
+@@ -71,7 +71,7 @@
+     {% registerurl "all_case_types" domain %}
+     {% block pre_form_content %}{% endblock %}
+     {% block form-view %}{% endblock %}
+-    {% include 'app_manager/partials/bootstrap3/add_item_templates.html' %}
++    {% include 'app_manager/partials/bootstrap5/add_item_templates.html' %}
+     <script type="text/html" id="XPathValidator.template">
+       <div class="js-xpath-input-target control-group" data-bind="css: {error: xpathValidator.error}">
+         <textarea class="form-control vertical-resize" spellcheck="false"
+@@ -90,12 +90,12 @@
+ {% block modals %}
+   {{ block.super }}
+   {% if app.is_deleted %}
+-    {% include 'app_manager/partials/bootstrap3/undo_delete_app.html' %}
++    {% include 'app_manager/partials/bootstrap5/undo_delete_app.html' %}
+   {% endif %}
+-  {% include "hqwebapp/bootstrap3/rollout_revert_modal.html" %}
+-  {% include 'app_manager/partials/bootstrap3/confirm_delete_app.html' %}
+-  {% include 'app_manager/partials/bootstrap3/add_new_module_modal.html' %}
+-  {% include 'app_manager/partials/bootstrap3/define_case_type_modal.html' %}
++  {% include "hqwebapp/bootstrap5/rollout_revert_modal.html" %}
++  {% include 'app_manager/partials/bootstrap5/confirm_delete_app.html' %}
++  {% include 'app_manager/partials/bootstrap5/add_new_module_modal.html' %}
++  {% include 'app_manager/partials/bootstrap5/define_case_type_modal.html' %}
+ {% endblock modals %}
+ 
+ {% block page_row_classes %}appmanager-content-row{% endblock %}

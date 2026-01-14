@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -7,13 +7,13 @@
 
 {% block stylesheets %}{{ block.super }}
 
-  {% include 'app_manager/partials/apps_stylesheets.html' %}
+  {% include 'app_manager/partials/bootstrap5/apps_stylesheets.html' %}
 
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'app_manager/less/summary.less' %}" />
+          href="{% static 'app_manager/scss/summary.scss' %}" />
   {% endcompress %}
 
 {% endblock stylesheets %}
@@ -36,9 +36,9 @@
       <div id="hq-sidebar" class="appmanager-sidebar col-hq-sidebar nav-hq-sidebar appsummary-sidebar" role="navigation">
 
         <nav class="ko-template">
-          {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True linked_name=linked_name linked_version=linked_version %}
+          {% include 'app_manager/partials/bootstrap5/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True linked_name=linked_name linked_version=linked_version %}
 
-          {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app_langs langs=langs %}
+          {% include 'app_manager/partials/bootstrap5/appnav_menu_langs.html' with app_langs=app_langs langs=langs %}
 
           <ul class="nav nav-hq-sidebar appnav-menu">
             <li role="presentation">
@@ -138,11 +138,19 @@
 
   {# Question label/id switcher #}
   <script type="text/html" id="label-id-toggle">
-    <div class="btn-group btn-group-separated" role="group" >
-      <button type="button" class="btn btn-default" data-bind="click: toggleLabels, css: { 'active': showLabels }">
+    <div class="me-4">
+      <button
+        type="button"
+        class="btn btn-outline-primary rounded-pill mb-1"
+        data-bind="click: toggleLabels, css: { 'active': showLabels }"
+      >
         {% trans "Labels" %}
       </button>
-      <button type="button" class="btn btn-default" data-bind="click: toggleIds, css: { 'active': showIds }">
+      <button
+        type="button"
+        class="btn btn-outline-primary rounded-pill mb-1"
+        data-bind="click: toggleIds, css: { 'active': showIds }"
+      >
         {% trans "Question IDs" %}
       </button>
     </div>

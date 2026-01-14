@@ -213,29 +213,35 @@ msgstr "Chati"
 msgid "Show All Dates"
 msgstr "Onyesha Tarehe Zote"
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 #: corehq/apps/locations/static/locations/js/location_types.js
 msgid "You have unsaved changes."
 msgstr "Una mabadiliko ambayo hujahifadhi."
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 msgid "There was an error saving."
 msgstr "Kulikuwa na hitilafu wakati wa kuhifadhi."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "Hide Past Versions"
 msgstr "Ficha Matoleo ya Zamani"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "See Past Versions"
 msgstr "Angalia Matoleo ya Zamani"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "Aina za kesi zinaweza kujumuisha tu herufi a-z, 0-9, '-' na '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "This is a reserved case type. Refer to <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
@@ -245,36 +251,45 @@ msgstr ""
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
 " target=\"_blank\" rel=\"noopener\">hati</a> kabla ya kutumia."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "Hii ni aina ya kesi iliyohifadhiwa. Tafadhali chagua jina lingine."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This case type has been deprecated in the Data Dictionary."
 msgstr "Aina hii ya kesi imeondolewa kwenye Kamusi ya Data."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 msgid "Add"
 msgstr "Ongeza"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Moved successfully."
 msgstr "Imehamishwa kwa mafanikio."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "You have unsaved changes"
 msgstr "Una mabadiliko ambayo hujahifadhi"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Add a new case type or use an existing one"
 msgstr "Ongeza aina mpya ya kesi au tumia iliyopo"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Survey Menu?"
 msgstr "Menyu ya Utafiti ni nini?"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Surveys are used to collect independent forms that do not need to be tracked"
 " over time. Common examples include satisfaction surveys or anonymous "
@@ -284,11 +299,13 @@ msgstr ""
 " Mifano ya kawaida ni pamoja na tafiti za kuridhika au fomu za maoni "
 "zisizojulikana."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Case List?"
 msgstr "Orodha ya Kesi ni nini?"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Case Lists are used to register and track related data (cases) over time. "
 "This data can be referenced in other forms and by other cases. Common "
@@ -299,23 +316,329 @@ msgstr ""
 "Mifano ya kawaida ni pamoja na afya ya uzazi, mahudhurio ya wanafunzi, au "
 "ufuatiliaji wa mazao."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Application name is required"
 msgstr "Jina la programu linahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Project name is required"
 msgstr "Jina la mradi linahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Invalid Project Selected"
 msgstr "Mradi Batili Umechaguliwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 "Samahani, kulikuwa na tatizo kupakia sehemu hii. Tafadhali jaribu tena."
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Active"
+msgstr "Hai"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Inactive"
+msgstr "Haifanyi kazi"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Deactivate"
+msgstr "Zima"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Activate"
+msgstr "Washa"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
+#: corehq/apps/sms/static/sms/js/add_gateway.js
+msgid "Remove"
+msgstr "Ondoa"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/source_files.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/source_files.js
+msgid "Please enter a version to compare"
+msgstr "Tafadhali ingiza toleo la kulinganisha"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Warning: unrecognized language"
+msgstr "Onyo: lugha haijatambulika"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You have unsaved changes in your supported languages"
+msgstr ""
+"Una mabadiliko ambayo hayajahifadhiwa katika lugha zako zinazoungwa mkono"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "There are errors in your configuration"
+msgstr "Kuna makosa katika usanidi wako"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You must have at least one language"
+msgstr "Lazima uwe na angalau lugha moja"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Please enter language"
+msgstr "Tafadhali ingiza lugha"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Invalid language code"
+msgstr "Msimbo wa lugha si sahihi"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Language appears twice"
+msgstr "Lugha inaonekana mara mbili"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "This conflicts with a current language"
+msgstr "Hii inakinzana na lugha iliyopo sasa"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache"
+msgstr "Kumbukumbu"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Lazy Load"
+msgstr "Upakiaji Polepole"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache & Lazy Load"
+msgstr "Kumbukumbu & Upakiaji Polepole"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Tab Name"
+msgstr "Jina la Tab"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Display Condition"
+msgstr "Hali ya Kuonyesha"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"Onyo: Mali iliyohesabiwa inayotumika haitangamani na uhifadhi wa akiba na "
+"inaweza kusababisha data iliyopitwa na wakati kwenye mali za orodha ya kesi"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Oct 31, "
+msgstr "Okt 31, "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Format "
+msgstr " Muundo "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Days late "
+msgstr " Siku zilizochelewa "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Years since date"
+msgstr "Miaka tangu tarehe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months since date"
+msgstr "Miezi tangu tarehe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks since date"
+msgstr "Wiki tangu tarehe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days since date"
+msgstr "Siku tangu tarehe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days until date"
+msgstr "Siku hadi tarehe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks until date"
+msgstr "Wiki hadi tarehe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months until date"
+msgstr "Miezi hadi tarehe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Measuring "
+msgstr " Kipimo "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Custom Expression"
+msgstr "Tab ya Data: Usemi Maalum"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Child Cases: "
+msgstr "Tab ya Data: Kesi za Mtoto: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid "Edit Graph"
+msgstr "Hariri Grafu"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Copied!"
+msgstr "Imenakiliwa!"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid ""
+"It is recommended that you leave this value blank. Future changes to your "
+"report's chart configuration will not be reflected here."
+msgstr ""
+"Inashauriwa uache thamani hii ikiwa tupu. Mabadiliko yajayo kwenye usanidi "
+"wa chati ya ripoti yako hayatadhihirika hapa."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "Usitumie Vigae vya Kesi"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Manually configure Case Tiles"
+msgstr "Sanidi Vigae vya Kesi Kwenyewe"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Edit Custom Variables"
+msgstr "Hariri Vigezo Maalum"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You have unsaved detail screen configurations."
+msgstr "Una usanidi wa skrini ya maelezo ambao haujahifadhiwa."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your tab: "
+msgstr "Kuna hitilafu kwenye tab yako: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your property name: "
+msgstr "Kuna hitilafu kwenye jina la sifa yako: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr "Unaweza kuwa na sifa moja tu yenye muundo wa 'Picha'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "All properties must be below a tab."
+msgstr "Sifa zote lazima ziwe chini ya tab."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid ""
+"Search Properties and Default Search Filters can't have common properties. "
+"Please update following properties: "
+msgstr ""
+"Sifa za Utafutaji na Vichujio Chaguo-msingi vya Utafutaji haziwezi kuwa na "
+"sifa zinazofanana. Tafadhali sasisha sifa zifuatazo: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There are errors in your configuration."
+msgstr "Kuna makosa kwenye usanidi wako."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr "<%- name %> (Sifa Iliyohesabiwa #<%- index %>)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (a, b, c)"
+msgstr "Inaongezeka (a, b, c)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (May 1st, May 2nd)"
+msgstr "Inaongezeka (Mei 1, Mei 2)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1, 2, 3)"
+msgstr "Inaongezeka (1, 2, 3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1.1, 1.2, 1.3)"
+msgstr "Inaongezeka (1.1, 1.2, 1.3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (c, b, a)"
+msgstr "Inapungua (c, b, a)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (May 2nd, May 1st)"
+msgstr "Inapungua (Mei 2, Mei 1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (3, 2, 1)"
+msgstr "Inapungua (3, 2, 1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (1.3, 1.2, 1.1)"
+msgstr "Inapungua (1.3, 1.2, 1.1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort calculation."
+msgstr "Hesabu ya upangaji haipo."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort property."
+msgstr "Sifa ya upangaji haipo."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Mobile UCR Options"
@@ -334,7 +657,8 @@ msgid "Lookup Table Options"
 msgstr "Chaguzi za Jedwali la Utafutaji"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Lookup Table"
 msgstr "Jedwali la Utafutaji"
 
@@ -342,107 +666,9 @@ msgstr "Jedwali la Utafutaji"
 msgid "Select a Lookup Table..."
 msgstr "Chagua Jedwali la Utafutaji..."
 
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache"
-msgstr "Kumbukumbu"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Lazy Load"
-msgstr "Upakiaji Polepole"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache & Lazy Load"
-msgstr "Kumbukumbu & Upakiaji Polepole"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Tab Name"
-msgstr "Jina la Tab"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Display Condition"
-msgstr "Hali ya Kuonyesha"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid ""
-"Warning: Calculated property used is not compatible with caching and may "
-"result in stale data on case list properties"
-msgstr ""
-"Onyo: Mali iliyohesabiwa inayotumika haitangamani na uhifadhi wa akiba na "
-"inaweza kusababisha data iliyopitwa na wakati kwenye mali za orodha ya kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Oct 31, "
-msgstr "Okt 31, "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Format "
-msgstr " Muundo "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Days late "
-msgstr " Siku zilizochelewa "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Years since date"
-msgstr "Miaka tangu tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months since date"
-msgstr "Miezi tangu tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks since date"
-msgstr "Wiki tangu tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days since date"
-msgstr "Siku tangu tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days until date"
-msgstr "Siku hadi tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks until date"
-msgstr "Wiki hadi tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months until date"
-msgstr "Miezi hadi tarehe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Measuring "
-msgstr " Kipimo "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Custom Expression"
-msgstr "Tab ya Data: Usemi Maalum"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Child Cases: "
-msgstr "Tab ya Data: Kesi za Mtoto: "
-
 #: corehq/apps/app_manager/static/app_manager/js/details/fixture_select.js
 msgid "Select One"
 msgstr "Chagua Moja"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid "Edit Graph"
-msgstr "Hariri Grafu"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
-msgid "Copied!"
-msgstr "Imenakiliwa!"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid ""
-"It is recommended that you leave this value blank. Future changes to your "
-"report's chart configuration will not be reflected here."
-msgstr ""
-"Inashauriwa uache thamani hii ikiwa tupu. Mabadiliko yajayo kwenye usanidi "
-"wa chati ya ripoti yako hayatadhihirika hapa."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 #: corehq/apps/export/static/export/js/models.js
@@ -456,95 +682,6 @@ msgstr "Mzazi"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr "Menyu isiyojulikana"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Don't Use Case Tiles"
-msgstr "Usitumie Vigae vya Kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Manually configure Case Tiles"
-msgstr "Sanidi Vigae vya Kesi Kwenyewe"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Edit Custom Variables"
-msgstr "Hariri Vigezo Maalum"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You have unsaved detail screen configurations."
-msgstr "Una usanidi wa skrini ya maelezo ambao haujahifadhiwa."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your tab: "
-msgstr "Kuna hitilafu kwenye tab yako: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your property name: "
-msgstr "Kuna hitilafu kwenye jina la sifa yako: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You can only have one property with the 'Image' format"
-msgstr "Unaweza kuwa na sifa moja tu yenye muundo wa 'Picha'"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "All properties must be below a tab."
-msgstr "Sifa zote lazima ziwe chini ya tab."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid ""
-"Search Properties and Default Search Filters can't have common properties. "
-"Please update following properties: "
-msgstr ""
-"Sifa za Utafutaji na Vichujio Chaguo-msingi vya Utafutaji haziwezi kuwa na "
-"sifa zinazofanana. Tafadhali sasisha sifa zifuatazo: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There are errors in your configuration."
-msgstr "Kuna makosa kwenye usanidi wako."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
-msgid "<%- name %> (Calculated Property #<%- index %>)"
-msgstr "<%- name %> (Sifa Iliyohesabiwa #<%- index %>)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (a, b, c)"
-msgstr "Inaongezeka (a, b, c)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (May 1st, May 2nd)"
-msgstr "Inaongezeka (Mei 1, Mei 2)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1, 2, 3)"
-msgstr "Inaongezeka (1, 2, 3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1.1, 1.2, 1.3)"
-msgstr "Inaongezeka (1.1, 1.2, 1.3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (c, b, a)"
-msgstr "Inapungua (c, b, a)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (May 2nd, May 1st)"
-msgstr "Inapungua (Mei 2, Mei 1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (3, 2, 1)"
-msgstr "Inapungua (3, 2, 1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (1.3, 1.2, 1.1)"
-msgstr "Inapungua (1.3, 1.2, 1.1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-#| msgid "Fetching your location..."
-msgid "Missing sort calculation."
-msgstr "Hesabu ya upangaji haipo."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort property."
-msgstr "Sifa ya upangaji haipo."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
@@ -632,104 +769,129 @@ msgstr ""
 "Samahani, kuna tatizo limetokea wakati wa kupakua. Ikiwa utaona hili mara "
 "kwa mara tafadhali ripoti tatizo."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Type required"
 msgstr "Aina ya Kesi inahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag required"
 msgstr "Lebo ya Kesi inahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "Lebo ya Kesi: herufi, nambari, '-', na '_' tu zinakubalika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag already in use"
 msgstr "Lebo ya Kesi tayari inatumika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "subcase of"
 msgstr "kesi ndogo ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "autoselect mode: "
 msgstr "hali ya kuchagua kiotomatiki: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid " (from fixture)"
 msgstr " (kutoka kwa fixture)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Autoselect mode required"
 msgstr "Hali ya kuchagua kiotomatiki inahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Property required"
 msgstr "Kipengele kinahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case required"
 msgstr "Kesi inahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Lookup table tag required"
 msgstr "Lebo ya jedwali la utafutaji inahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Expected case type required"
 msgstr "Aina ya kesi inayotarajiwa inahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "Marejeleo ya mzazi wa kesi ndogo hayapo"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "Kitambulisho cha marejeleo ya mzazi kinahitajika kwa kesi ndogo: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr "Kesi ndogo lazima iwe katika muktadha sawa wa kurudia kama mzazi \""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Select parent"
 msgstr "Chagua mzazi"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Raw"
 msgstr "Raw"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Data"
 msgstr "Data ya Mtumiaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Properties"
 msgstr "Sifa za Mtumiaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Case Index"
 msgstr "Faharasa ya Kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "Pakia / Sasisha / Funga kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "Uteuzi wa Kesi Kiotomatiki"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "Pakia Kesi Kutoka kwa Fixture"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Open a Case"
 msgstr "Fungua Kesi"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "Kipengele kimesasishwa na maswali mawili"
 
@@ -738,7 +900,8 @@ msgid "Reserved word: "
 msgstr "Neno lililohifadhiwa: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "Uko ndani ya kurudia isiyo sahihi!"
 
@@ -750,17 +913,60 @@ msgstr "Marejeleo ya sifa za mzazi hayaruhusiwi kwa kesi ndogo"
 msgid "Two properties load to the same question"
 msgstr "Vipengele viwili vinapakia kwenye swali moja"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged case settings"
 msgstr "Una mipangilio ya kesi ambayo haijabadilishwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "Una mipangilio ya mali za mtumiaji ambayo haijabadilishwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "Mali inatumia kiambishi kisichotambulika <strong>"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
+msgid "Edit Form"
+msgstr "Hariri Fomu"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
+msgid "Form Settings"
+msgstr "Mipangilio ya Fomu"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "This form either no longer exists or has a different case type"
+msgstr "Fomu hii haipo tena au ina aina tofauti ya kesi"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Unrecognized value"
+msgstr "Thamani isiyotambulika"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr "Kuunganisha Datums Kwa Mkono"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr "Weka datums zinazohitajika ili kufikia fomu au menyu iliyochaguliwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Datum ID"
+msgstr "Kitambulisho cha Datum"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "XPath Expression"
+msgstr "Usemi wa XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -780,157 +986,128 @@ msgstr ""
 msgid "Select a Question"
 msgstr "Chagua Swali"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js
-msgid "Edit Form"
-msgstr "Hariri Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Form Settings"
-msgstr "Mipangilio ya Fomu"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "This form either no longer exists or has a different case type"
-msgstr "Fomu hii haipo tena au ina aina tofauti ya kesi"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Unrecognized value"
-msgstr "Thamani isiyotambulika"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Manual Linking Datums"
-msgstr "Kuunganisha Datums Kwa Mkono"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Set datums required to navigate to the selected form or menu"
-msgstr "Weka datums zinazohitajika ili kufikia fomu au menyu iliyochaguliwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Datum ID"
-msgstr "Kitambulisho cha Datum"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "XPath Expression"
-msgstr "Usemi wa XPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "Hai"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "Haifanyi kazi"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "Zima"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "Washa"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/sms/static/sms/js/add_gateway.js
-msgid "Remove"
-msgstr "Ondoa"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Menu Settings"
 msgstr "Mipangilio ya Menyu"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Case type is required."
 msgstr "Aina ya kesi inahitajika."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Go back to case list"
 msgstr "Rudi kwenye orodha ya kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Proceed with registered case"
 msgstr "Endelea na kesi iliyosajiliwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Show All"
 msgstr "Onyesha Zote"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Display text is required"
 msgstr "Maandishi ya kuonyesha yanahitajika"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "You have unsaved changes in your report list module"
 msgstr "Una mabadiliko ambayo hujahifadhi kwenye moduli ya orodha ya ripoti"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "This code is used in multiple places."
 msgstr "Nambari hii inatumika katika sehemu nyingi."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/app_view_release_manager.js
 msgid "Releases"
 msgstr "Matoleo"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "You have unsaved changes to your application profiles"
 msgstr "Una mabadiliko ambayo hujahifadhi kwenye wasifu wa programu yako"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "There was an error saving"
 msgstr "Kulikuwa na hitilafu wakati wa kuhifadhi"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "Select a user"
 msgstr "Chagua mtumiaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "(Default)"
 msgstr "(Chaguomsingi)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Unknown App"
 msgstr "Programu Isiyotambulika"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 "Hitilafu imetokea. Pakia upya ukurasa na bonyeza Tengeneza Toleo Jipya "
 "kujaribu tena."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Samahani, haikufanikiwa. Tafadhali pakia upya ukurasa wako na jaribu tena"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "The versions list has changed since you loaded the page."
 msgstr "Orodha ya matoleo imebadilika tangu ulipopakia ukurasa."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "No new changes!"
 msgstr "Hakuna mabadiliko mapya!"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
 msgstr "Una mabadiliko ambayo hujahifadhi kwenye mipangilio ya kidokezo chako"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr "Boresha hadi CommCare %s kwa chaguo hili!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr "Boresha hadi CommCare %s!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Auto-set by "
 msgstr "Imewekwa kiotomatiki na "
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid ""
 "This value is currently inherited from the master app. Once this page is "
 "saved, it will no longer be inherited."
@@ -938,32 +1115,35 @@ msgstr ""
 "Thamani hii kwa sasa imerithiwa kutoka kwenye programu kuu. Ukihifadhi "
 "ukurasa huu, haitarithiwa tena."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "You have unsaved settings."
 msgstr "Una mipangilio ambayo hujahifadhi."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Settings"
 msgstr "Mipangilio"
 
-#: corehq/apps/app_manager/static/app_manager/js/source_files.js
-msgid "Please enter a version to compare"
-msgstr "Tafadhali ingiza toleo la kulinganisha"
-
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "Filter properties"
 msgstr "Chuja mali"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "View All Cases"
 msgstr "Tazama Kesi Zote"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_summary.js
 msgid "View All Forms"
 msgstr "Tazama Fomu Zote"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
 msgid "View Changed Items"
 msgstr "Tazama Vitu Vilivyobadilika"
 
@@ -1081,42 +1261,62 @@ msgstr "Iliyohifadhiwa hivi karibuni"
 msgid "[unknown]"
 msgstr "[haijulikani]"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Warning: unrecognized language"
-msgstr "Onyo: lugha haijatambulika"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/129.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/414.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/437.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/879.js
+msgid "\n"
+msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You have unsaved changes in your supported languages"
-msgstr ""
-"Una mabadiliko ambayo hayajahifadhiwa katika lugha zako zinazoungwa mkono"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getCurrentMugInput"
+msgstr "pataMugInputWaSasa"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "There are errors in your configuration"
-msgstr "Kuna makosa katika usanidi wako"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Streets"
+msgid "jstree"
+msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You must have at least one language"
-msgstr "Lazima uwe na angalau lugha moja"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Please enter language"
-msgstr "Tafadhali ingiza lugha"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getData"
+msgstr "pataData"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Invalid language code"
-msgstr "Msimbo wa lugha si sahihi"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "load"
+msgid "loadXML"
+msgstr "pakiaXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Language appears twice"
-msgstr "Lugha inaonekana mara mbili"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "createXML"
+msgstr "undaXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "This conflicts with a current language"
-msgstr "Hii inakinzana na lugha iliyopo sasa"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "loadXFormOrError"
+msgstr "pakiaXFormAuHitilafu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
-msgid "New Form"
-msgstr "Fomu Mpya"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Add Question"
+msgid "addQuestion"
+msgstr "ongezaSwali"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "nodeIDFromLabel"
+msgstr "kitambulishoChaNodeKutokaKwaLebo"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Questions"
+msgid "getSections"
+msgstr "pataSehemu"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Clear selection"
+msgid "collapseSection"
+msgstr "kunjaSehemu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
@@ -1158,39 +1358,27 @@ msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
 msgid "True when ANY of the expressions are true."
 msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "createXML"
-msgstr "undaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getData"
-msgstr "pataData"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Command Bar"
 msgstr "Upau wa Amri"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Basic"
 msgstr "Msingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Logic"
 msgstr "Mantiki"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -1205,7 +1393,8 @@ msgid "no comment"
 msgstr "hakuna maoni"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
-#: corehq/apps/translations/static/translations/js/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/app_translations.js
 msgid "Select Profile"
 msgstr "Chagua Wasifu"
 
@@ -3418,23 +3607,28 @@ msgstr ""
 "Imeshindikana kupakia watumiaji. Tafadhali jaribu tena baadaye au ripoti "
 "tatizo hili kama litaendelea."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Delete Translation"
 msgstr "Futa Tafsiri"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Add Translation"
 msgstr "Ongeza Tafsiri"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto fill translations"
 msgstr "Jaza tafsiri kiotomatiki"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto Fill translations"
 msgstr "Jaza Tafsiri Kiotomatiki"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
@@ -3442,15 +3636,18 @@ msgstr ""
 "Hii itachagua tafsiri zinazotumika sana kwa lugha uliyochagua. Unaweza "
 "kuhariri baadaye kama inavyohitajika."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "You have unsaved user interface translations."
 msgstr "Una tafsiri za kiolesura cha mtumiaji ambazo hujahifadhi."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Parameters formatting problem!"
 msgstr "Tatizo la uundaji wa vigezo!"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "Autofill is not available in English (en). Please change your language using"
 " the dropdown in the top left."
@@ -4292,6 +4489,9 @@ msgstr "Imeshindikana! Majibu ni: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
+#~ msgid "New Form"
+#~ msgstr "Fomu Mpya"
+
 #~ msgid "Your location"
 #~ msgstr "Eneo lako"
 
@@ -4325,9 +4525,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 #~ msgid "2-digit"
 #~ msgstr "tarakimu 2"
 
-#~ msgid "Questions"
-#~ msgstr "Maswali"
-
 #~ msgid "Copy"
 #~ msgstr "Nakili"
 
@@ -4339,9 +4536,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
 #~ msgid "Bulk Update All Questions"
 #~ msgstr "Sasisha Maswali Yote kwa Wingi"
-
-#~ msgid "Add Question"
-#~ msgstr "Ongeza Swali"
 
 #~ msgid "Click {btn} to start building your form."
 #~ msgstr "Bofya {btn} kuanza kujenga fomu yako."

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -49,7 +49,7 @@
+             self.$existingFile.addClass('hide');
+             self.$existingFile.find('.hqm-existing-controls').empty();
+         }
+-        $('.existing-media').tooltip({
++        $('.existing-media').tooltip({  /* todo B5: js-tooltip */
+             placement: 'bottom',
+         });
+     };

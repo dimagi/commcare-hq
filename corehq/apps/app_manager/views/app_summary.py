@@ -30,6 +30,7 @@ from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 
 
@@ -79,6 +80,7 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         return reverse(self.urlname, args=[self.domain, self.app_id])
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
     template_name = 'app_manager/case_summary.html'
@@ -100,6 +102,7 @@ class AppCaseSummaryView(AppSummaryView):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
     template_name = 'app_manager/form_summary.html'
@@ -116,6 +119,7 @@ class AppFormSummaryView(AppSummaryView):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class FormSummaryDiffView(AppSummaryView):
     urlname = "app_form_summary_diff"
     template_name = 'app_manager/form_summary_diff.html'

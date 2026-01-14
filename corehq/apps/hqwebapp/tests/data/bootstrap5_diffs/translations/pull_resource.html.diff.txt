@@ -1,0 +1,28 @@
+--- 
++++ 
+@@ -1,21 +1,21 @@
+-{% extends 'hqwebapp/bootstrap3/two_column.html' %}
++{% extends 'hqwebapp/bootstrap5/two_column.html' %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 "hqwebapp/js/bootstrap3/widgets" %}
++{% js_entry "hqwebapp/js/bootstrap5/widgets" %}
+ 
+ {% block page_content %}
+   {% if not transifex_details_available %}
+     <p class="text-error">
+-      <span class="label label-danger">
++      <span class="badge text-bg-danger">
+           {% trans 'Transifex integration not set for this domain' %}
+       </span>
+     </p>
+   {% else %}
+     <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
+       <legend>{% trans "Pull Resource" %}</legend>
+-      {% crispy pull_resource_form %}
++      {% crispy pull_resource_form %}  {# todo B5: crispy #}
+     </form>
+   {% endif %}
+ {% endblock %}

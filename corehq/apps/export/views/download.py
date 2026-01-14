@@ -29,7 +29,10 @@ from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
 
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_api_key,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, ALL_CASE_TYPE_EXPORT
 from corehq.apps.export.exceptions import (
@@ -597,7 +600,7 @@ def add_export_email_request(request, domain):
     return HttpResponse(gettext_lazy('Export e-mail request sent.'))
 
 
-@method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(login_or_api_key, name='dispatch')
 class DownloadDETSchemaView(View):
     urlname = 'download-det-schema'
 

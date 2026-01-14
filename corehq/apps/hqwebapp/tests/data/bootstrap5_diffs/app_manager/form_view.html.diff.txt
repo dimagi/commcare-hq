@@ -1,0 +1,151 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+-{% extends "app_manager/bootstrap3/apps_base.html" %}
++{% extends "app_manager/bootstrap5/apps_base.html" %}
+ {% load xforms_extras %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ {% load i18n %}
+ 
+ {% block title %}{# controlled by app_manager/js/forms/form_view.js #}{% endblock %}
+-{% js_entry_b3 "app_manager/js/forms/bootstrap3/form_view" %}
++{% js_entry "app_manager/js/forms/bootstrap5/form_view" %}
+ 
+ {% block stylesheets %}
+   {{ block.super }}
+@@ -27,10 +27,10 @@
+ 
+ {% block pre_form_content %}
+   <div class="appmanager-page-actions">
+-    {% include 'app_manager/partials/bootstrap3/app_summary_button.html' %}
+-    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-default' %}
++    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
++    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
+     <a
+-      class="btn btn-default"
++      class="btn btn-outline-primary"
+       href="{% url "form_source" domain app.id form.unique_id %}"
+     >
+       <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
+@@ -114,13 +114,13 @@
+   {% registerurl "get_form_datums" domain app.id %}
+ 
+   <div class="tabbable appmanager-tabs-container">
+-    <ul class="nav nav-tabs sticky-tabs">
++    <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
+       {% if form.uses_cases %}
+         <li>
+           <a
+             id="case-configuration-tab"
+             href="#case-configuration"
+-            data-toggle="tab"
++            data-bs-toggle="tab"
+           >
+             {% trans "Case Management" %}
+           </a>
+@@ -128,7 +128,7 @@
+       {% endif %}
+ 
+       <li>
+-        <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
++        <a href="#form-settings" data-bs-toggle="tab">{% trans "Settings" %}</a>
+       </li>
+ 
+       {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
+@@ -136,7 +136,7 @@
+           <a
+             id="usercase-configuration-tab"
+             href="#usercase-configuration"
+-            data-toggle="tab"
++            data-bs-toggle="tab"
+           >
+             {% trans "User Properties" %}
+           </a>
+@@ -146,7 +146,7 @@
+       {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+         {% if module.has_schedule %}
+           <li>
+-            <a href="#visit-scheduler" data-toggle="tab">
++            <a href="#visit-scheduler" data-bs-toggle="tab">
+               {% trans "Visit Scheduler" %}
+             </a>
+           </li>
+@@ -155,12 +155,12 @@
+ 
+       {% if form.form_type != "shadow_form" %}
+         <li>
+-          <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
++          <a href="#advanced" data-bs-toggle="tab">{% trans "Actions" %}</a>
+         </li>
+       {% endif %}
+     </ul>
+ 
+-    {% include 'app_manager/partials/forms/bootstrap3/case_config_ko_templates.html' %}
++    {% include 'app_manager/partials/forms/bootstrap5/case_config_ko_templates.html' %}
+ 
+     <div class="tab-content appmanager-tab-content">
+       {% if form.uses_cases %}
+@@ -204,9 +204,9 @@
+             <div class="casexml" id="casexml_home">
+               {% if module.doc_type == 'AdvancedModule' %}
+                 {% initial_page_data 'schedule_options' schedule_options %}
+-                {% include 'app_manager/partials/forms/bootstrap3/case_config_advanced.html' %}
++                {% include 'app_manager/partials/forms/bootstrap5/case_config_advanced.html' %}
+               {% else %}
+-                {% include 'app_manager/partials/forms/bootstrap3/case_config.html' %}
++                {% include 'app_manager/partials/forms/bootstrap5/case_config.html' %}
+               {% endif %}
+             </div>
+           {% else %}
+@@ -218,7 +218,7 @@
+       {% endif %}
+ 
+       {% if nav_form %}
+-        {% include "app_manager/partials/forms/bootstrap3/form_tab_settings.html" %}
++        {% include "app_manager/partials/forms/bootstrap5/form_tab_settings.html" %}
+       {% endif %}
+ 
+       {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
+@@ -261,14 +261,14 @@
+                       </a>
+                       <a
+                         href="{% url 'drop_usercase' domain app.id %}"
+-                        class="btn btn-danger"
++                        class="btn btn-outline-danger"
+                       >
+                         {% trans "Remove User Properties" %}
+                       </a>
+                     </p>
+                   </div>
+                 {% endif %}
+-                {% include 'app_manager/partials/forms/bootstrap3/usercase_config.html' %}
++                {% include 'app_manager/partials/forms/bootstrap5/usercase_config.html' %}
+               {% endblock %}
+             </div>
+           {% else %}
+@@ -281,11 +281,11 @@
+ 
+       {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+         {% if module.has_schedule %}
+-          {% include "app_manager/partials/forms/bootstrap3/form_tab_visit_scheduler.html" %}
++          {% include "app_manager/partials/forms/bootstrap5/form_tab_visit_scheduler.html" %}
+         {% endif %}
+       {% endif %}
+       {% if form.form_type != "shadow_form" %}
+-        {% include "app_manager/partials/forms/bootstrap3/form_tab_advanced.html" %}
++        {% include "app_manager/partials/forms/bootstrap5/form_tab_advanced.html" %}
+       {% endif %}
+     </div>
+   </div>
+@@ -294,7 +294,7 @@
+ 
+ {% block modals %}
+   {{ block.super }}
+-  {% include "app_manager/partials/forms/bootstrap3/form_view_modals.html" %}
+-  {% include "hqmedia/partials/bootstrap3/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+-  {% include "hqmedia/partials/bootstrap3/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
++  {% include "app_manager/partials/forms/bootstrap5/form_view_modals.html" %}
++  {% include "hqmedia/partials/bootstrap5/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
++  {% include "hqmedia/partials/bootstrap5/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
+ {% endblock modals %}

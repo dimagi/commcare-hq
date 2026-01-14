@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,16 +1,16 @@
+ {% load i18n %}
+ <div class="clearfix">
+-  <div class="alert alert-success" style="margin-bottom: 2px; margin-top: 10px;">
++  <div class="alert alert-success" style="margin-bottom: 2px; margin-top: 10px;">  {# todo B5: inline-style #}
+     <i class="fa fa-check"></i> <%- file_name %> <strong>[<%- file_size %> MB]</strong>
+   </div>
+   <div class="hqm-progress">
+     <p class="text-success hqm-begin">
+       {% blocktrans %}Ready to upload. Click <strong>Begin Upload</strong> below to start.{% endblocktrans %}
+     </p>
+-    <p class="text-error hqm-error hide">
+-      <span class="label label-danger">{% trans 'There were errors' %}</span>
++    <p class="text-error hqm-error d-none">
++      <span class="badge text-bg-danger">{% trans 'There were errors' %}</span>
+     </p>
+-    <a href="#" class="btn btn-danger btn-xs pull-right hqm-cancel hide">
++    <a href="#" class="btn btn-outline-danger btn-sm float-end hqm-cancel d-none">
+       <i class="fa fa-remove"></i> {% trans 'Cancel Upload' %}
+     </a>
+   </div>

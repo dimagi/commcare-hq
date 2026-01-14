@@ -211,29 +211,35 @@ msgstr "Діаграма"
 msgid "Show All Dates"
 msgstr "Показати всі дати"
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 #: corehq/apps/locations/static/locations/js/location_types.js
 msgid "You have unsaved changes."
 msgstr "У вас є незбережені зміни."
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 msgid "There was an error saving."
 msgstr "Сталася помилка під час збереження."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "Hide Past Versions"
 msgstr "Сховати попередні версії"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "See Past Versions"
 msgstr "Переглянути попередні версії"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "Типи справ можуть містити лише символи a-z, 0-9, '-' та '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "This is a reserved case type. Refer to <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
@@ -243,36 +249,45 @@ msgstr ""
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
 " target=\"_blank\" rel=\"noopener\">документацією</a>."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "Це зарезервований тип справи. Будь ласка, виберіть іншу назву."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This case type has been deprecated in the Data Dictionary."
 msgstr "Цей тип справи застарів у словнику даних."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 msgid "Add"
 msgstr "Додати"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Moved successfully."
 msgstr "Успішно переміщено."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "You have unsaved changes"
 msgstr "У вас є незбережені зміни"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Add a new case type or use an existing one"
 msgstr "Додайте новий тип справи або використайте існуючий"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Survey Menu?"
 msgstr "Що таке меню опитування?"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Surveys are used to collect independent forms that do not need to be tracked"
 " over time. Common examples include satisfaction surveys or anonymous "
@@ -282,11 +297,13 @@ msgstr ""
 "відстежувати з часом. Поширені приклади: опитування задоволеності або "
 "анонімні форми зворотного зв’язку."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Case List?"
 msgstr "Що таке список справ?"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Case Lists are used to register and track related data (cases) over time. "
 "This data can be referenced in other forms and by other cases. Common "
@@ -297,24 +314,329 @@ msgstr ""
 "справами. Поширені приклади: материнське здоров’я, відвідуваність учнів або "
 "моніторинг врожаю."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Application name is required"
 msgstr "Потрібна назва застосунку"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Project name is required"
 msgstr "Потрібна назва проєкту"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Invalid Project Selected"
 msgstr "Вибрано некоректний проєкт"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 "Ой, виникла проблема з завантаженням цього розділу. Будь ласка, спробуйте ще"
 " раз."
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Active"
+msgstr "Активно"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Inactive"
+msgstr "Неактивно"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Deactivate"
+msgstr "Деактивувати"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Activate"
+msgstr "Активувати"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
+#: corehq/apps/sms/static/sms/js/add_gateway.js
+msgid "Remove"
+msgstr "Видалити"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/source_files.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/source_files.js
+msgid "Please enter a version to compare"
+msgstr "Будь ласка, введіть версію для порівняння"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Warning: unrecognized language"
+msgstr "Попередження: невідома мова"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You have unsaved changes in your supported languages"
+msgstr "У вас є незбережені зміни у підтримуваних мовах"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "There are errors in your configuration"
+msgstr "У вашій конфігурації є помилки"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You must have at least one language"
+msgstr "Має бути принаймні одна мова"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Please enter language"
+msgstr "Будь ласка, введіть мову"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Invalid language code"
+msgstr "Недійсний код мови"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Language appears twice"
+msgstr "Мова вказана двічі"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "This conflicts with a current language"
+msgstr "Це конфліктує з поточною мовою"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache"
+msgstr "Кеш"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Lazy Load"
+msgstr "Ліниве завантаження"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache & Lazy Load"
+msgstr "Кеш і ліниве завантаження"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Tab Name"
+msgstr "Назва вкладки"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Display Condition"
+msgstr "Умова відображення"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"Попередження: Використана обчислювана властивість несумісна з кешуванням і "
+"може призвести до застарілих даних у властивостях списку справ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Oct 31, "
+msgstr "31 жовтня, "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Format "
+msgstr " Формат "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Days late "
+msgstr " Днів прострочено "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Years since date"
+msgstr "Роки з дати"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months since date"
+msgstr "Місяці з дати"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks since date"
+msgstr "Тижні з дати"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days since date"
+msgstr "Дні з дати"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days until date"
+msgstr "Днів до дати"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks until date"
+msgstr "Тижнів до дати"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months until date"
+msgstr "Місяців до дати"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Measuring "
+msgstr " Вимірювання "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Custom Expression"
+msgstr "Вкладка даних: Користувацький вираз"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Child Cases: "
+msgstr "Вкладка даних: Дочірні кейси: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid "Edit Graph"
+msgstr "Редагувати графік"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Copied!"
+msgstr "Скопійовано!"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid ""
+"It is recommended that you leave this value blank. Future changes to your "
+"report's chart configuration will not be reflected here."
+msgstr ""
+"Рекомендується залишити це значення порожнім. Майбутні зміни в налаштуванні "
+"діаграми звіту не будуть тут відображені."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "Не використовувати плитки кейсів"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Manually configure Case Tiles"
+msgstr "Налаштувати плитки кейсів вручну"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Edit Custom Variables"
+msgstr "Редагувати користувацькі змінні"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You have unsaved detail screen configurations."
+msgstr "У вас є незбережені налаштування екрану деталей."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your tab: "
+msgstr "У вашій вкладці є помилка: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your property name: "
+msgstr "У назві властивості є помилка: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr "Можна мати лише одну властивість з форматом 'Зображення'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "All properties must be below a tab."
+msgstr "Усі властивості мають бути під вкладкою."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid ""
+"Search Properties and Default Search Filters can't have common properties. "
+"Please update following properties: "
+msgstr ""
+"Властивості пошуку та фільтри за замовчуванням не можуть мати спільних "
+"властивостей. Оновіть такі властивості: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There are errors in your configuration."
+msgstr "У вашій конфігурації є помилки."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr "<%- name %> (Обчислювана властивість №<%- index %>)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (a, b, c)"
+msgstr "Зростання (a, b, c)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (May 1st, May 2nd)"
+msgstr "Зростання (1 травня, 2 травня)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1, 2, 3)"
+msgstr "Зростання (1, 2, 3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1.1, 1.2, 1.3)"
+msgstr "Зростання (1.1, 1.2, 1.3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (c, b, a)"
+msgstr "Спадання (c, b, a)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (May 2nd, May 1st)"
+msgstr "Спадання (2 травня, 1 травня)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (3, 2, 1)"
+msgstr "Спадання (3, 2, 1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (1.3, 1.2, 1.1)"
+msgstr "Спадання (1.3, 1.2, 1.1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort calculation."
+msgstr "Відсутній розрахунок сортування."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort property."
+msgstr "Відсутня властивість сортування."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Mobile UCR Options"
@@ -333,7 +655,8 @@ msgid "Lookup Table Options"
 msgstr "Параметри таблиці пошуку"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Lookup Table"
 msgstr "Таблиця пошуку"
 
@@ -341,107 +664,9 @@ msgstr "Таблиця пошуку"
 msgid "Select a Lookup Table..."
 msgstr "Виберіть таблицю пошуку..."
 
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache"
-msgstr "Кеш"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Lazy Load"
-msgstr "Ліниве завантаження"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache & Lazy Load"
-msgstr "Кеш і ліниве завантаження"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Tab Name"
-msgstr "Назва вкладки"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Display Condition"
-msgstr "Умова відображення"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid ""
-"Warning: Calculated property used is not compatible with caching and may "
-"result in stale data on case list properties"
-msgstr ""
-"Попередження: Використана обчислювана властивість несумісна з кешуванням і "
-"може призвести до застарілих даних у властивостях списку справ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Oct 31, "
-msgstr "31 жовтня, "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Format "
-msgstr " Формат "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Days late "
-msgstr " Днів прострочено "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Years since date"
-msgstr "Роки з дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months since date"
-msgstr "Місяці з дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks since date"
-msgstr "Тижні з дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days since date"
-msgstr "Дні з дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days until date"
-msgstr "Днів до дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks until date"
-msgstr "Тижнів до дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months until date"
-msgstr "Місяців до дати"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Measuring "
-msgstr " Вимірювання "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Custom Expression"
-msgstr "Вкладка даних: Користувацький вираз"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Child Cases: "
-msgstr "Вкладка даних: Дочірні кейси: "
-
 #: corehq/apps/app_manager/static/app_manager/js/details/fixture_select.js
 msgid "Select One"
 msgstr "Виберіть одне"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid "Edit Graph"
-msgstr "Редагувати графік"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
-msgid "Copied!"
-msgstr "Скопійовано!"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid ""
-"It is recommended that you leave this value blank. Future changes to your "
-"report's chart configuration will not be reflected here."
-msgstr ""
-"Рекомендується залишити це значення порожнім. Майбутні зміни в налаштуванні "
-"діаграми звіту не будуть тут відображені."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 #: corehq/apps/export/static/export/js/models.js
@@ -455,95 +680,6 @@ msgstr "Батьківський"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr "Невідоме меню"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Don't Use Case Tiles"
-msgstr "Не використовувати плитки кейсів"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Manually configure Case Tiles"
-msgstr "Налаштувати плитки кейсів вручну"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Edit Custom Variables"
-msgstr "Редагувати користувацькі змінні"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You have unsaved detail screen configurations."
-msgstr "У вас є незбережені налаштування екрану деталей."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your tab: "
-msgstr "У вашій вкладці є помилка: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your property name: "
-msgstr "У назві властивості є помилка: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You can only have one property with the 'Image' format"
-msgstr "Можна мати лише одну властивість з форматом 'Зображення'"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "All properties must be below a tab."
-msgstr "Усі властивості мають бути під вкладкою."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid ""
-"Search Properties and Default Search Filters can't have common properties. "
-"Please update following properties: "
-msgstr ""
-"Властивості пошуку та фільтри за замовчуванням не можуть мати спільних "
-"властивостей. Оновіть такі властивості: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There are errors in your configuration."
-msgstr "У вашій конфігурації є помилки."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
-msgid "<%- name %> (Calculated Property #<%- index %>)"
-msgstr "<%- name %> (Обчислювана властивість №<%- index %>)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (a, b, c)"
-msgstr "Зростання (a, b, c)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (May 1st, May 2nd)"
-msgstr "Зростання (1 травня, 2 травня)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1, 2, 3)"
-msgstr "Зростання (1, 2, 3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1.1, 1.2, 1.3)"
-msgstr "Зростання (1.1, 1.2, 1.3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (c, b, a)"
-msgstr "Спадання (c, b, a)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (May 2nd, May 1st)"
-msgstr "Спадання (2 травня, 1 травня)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (3, 2, 1)"
-msgstr "Спадання (3, 2, 1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (1.3, 1.2, 1.1)"
-msgstr "Спадання (1.3, 1.2, 1.1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-#| msgid "Fetching your location..."
-msgid "Missing sort calculation."
-msgstr "Відсутній розрахунок сортування."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort property."
-msgstr "Відсутня властивість сортування."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
@@ -631,104 +767,129 @@ msgstr ""
 "Вибачте, щось пішло не так із завантаженням. Якщо це повторюється, будь "
 "ласка, повідомте про проблему."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Type required"
 msgstr "Потрібен тип справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag required"
 msgstr "Потрібен тег справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "Тег справи: дозволені лише літери, цифри, '-', і '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag already in use"
 msgstr "Тег справи вже використовується"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "subcase of"
 msgstr "підсправа для"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "autoselect mode: "
 msgstr "режим автоселекту: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid " (from fixture)"
 msgstr " (з фікстури)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Autoselect mode required"
 msgstr "Потрібен режим автоселекту"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Property required"
 msgstr "Потрібна властивість"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case required"
 msgstr "Потрібна справа"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Lookup table tag required"
 msgstr "Потрібен тег таблиці пошуку"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Expected case type required"
 msgstr "Потрібен очікуваний тип справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "Відсутнє посилання на батьківську підсправу"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "Потрібен ідентифікатор посилання на батьківську підсправу: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr "Підсправа повинна бути в тому ж контексті повтору, що й батьківська \""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Select parent"
 msgstr "Виберіть батьківську справу"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Raw"
 msgstr "Сирий"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Data"
 msgstr "Дані користувача"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Properties"
 msgstr "Властивості користувача"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Case Index"
 msgstr "Індекс справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "Завантажити / Оновити / Закрити справу"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "Автоматичний вибір справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "Завантажити справу з фікстури"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Open a Case"
 msgstr "Відкрити справу"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "Властивість оновлюється двома питаннями"
 
@@ -737,7 +898,8 @@ msgid "Reserved word: "
 msgstr "Зарезервоване слово: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "Всередині неправильного повтору!"
 
@@ -750,17 +912,60 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr "Дві властивості завантажуються в одне питання"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged case settings"
 msgstr "У вас немає змінених налаштувань справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "У вас незмінені налаштування властивостей користувача"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "Властивість використовує невідомий префікс <strong>"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
+msgid "Edit Form"
+msgstr "Редагувати форму"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
+msgid "Form Settings"
+msgstr "Налаштування форми"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "This form either no longer exists or has a different case type"
+msgstr "Ця форма або більше не існує, або має інший тип справи"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Unrecognized value"
+msgstr "Нерозпізнане значення"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr "Ручне зв'язування датумів"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr "Встановіть датум, необхідний для переходу до вибраної форми або меню"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Datum ID"
+msgstr "ID датуму"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "XPath Expression"
+msgstr "XPath-вираз"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -780,158 +985,129 @@ msgstr ""
 msgid "Select a Question"
 msgstr "Виберіть питання"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js
-msgid "Edit Form"
-msgstr "Редагувати форму"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Form Settings"
-msgstr "Налаштування форми"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "This form either no longer exists or has a different case type"
-msgstr "Ця форма або більше не існує, або має інший тип справи"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Unrecognized value"
-msgstr "Нерозпізнане значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Manual Linking Datums"
-msgstr "Ручне зв'язування датумів"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Set datums required to navigate to the selected form or menu"
-msgstr "Встановіть датум, необхідний для переходу до вибраної форми або меню"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Datum ID"
-msgstr "ID датуму"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "XPath Expression"
-msgstr "XPath-вираз"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "Активно"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "Неактивно"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "Деактивувати"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "Активувати"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/sms/static/sms/js/add_gateway.js
-msgid "Remove"
-msgstr "Видалити"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Menu Settings"
 msgstr "Налаштування меню"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Case type is required."
 msgstr "Тип справи є обов'язковим."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Go back to case list"
 msgstr "Повернутися до списку справ"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Proceed with registered case"
 msgstr "Продовжити з зареєстрованою справою"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Show All"
 msgstr "Показати все"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Display text is required"
 msgstr "Потрібно вказати текст для відображення"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "You have unsaved changes in your report list module"
 msgstr "У вас є незбережені зміни у модулі списку звітів"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "This code is used in multiple places."
 msgstr "Цей код використовується у кількох місцях."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/app_view_release_manager.js
 msgid "Releases"
 msgstr "Випуски"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "You have unsaved changes to your application profiles"
 msgstr "У вас є незбережені зміни у профілях додатка"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "There was an error saving"
 msgstr "Сталася помилка під час збереження"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "Select a user"
 msgstr "Виберіть користувача"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "(Default)"
 msgstr "(За замовчуванням)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Unknown App"
 msgstr "Невідома програма"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 "Виникла помилка. Перезавантажте сторінку та натисніть \"Створити нову "
 "версію\", щоб спробувати ще раз."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Вибачте, не вдалося виконати дію. Будь ласка, перезавантажте сторінку і "
 "спробуйте ще раз"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "The versions list has changed since you loaded the page."
 msgstr "Список версій змінився з моменту завантаження сторінки."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "No new changes!"
 msgstr "Немає нових змін!"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
 msgstr "У вас є незбережені зміни у налаштуваннях підказки"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr "Оновіть до CommCare %s для цієї опції!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr "Оновіть до CommCare %s!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Auto-set by "
 msgstr "Автоматично встановлено "
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid ""
 "This value is currently inherited from the master app. Once this page is "
 "saved, it will no longer be inherited."
@@ -939,32 +1115,35 @@ msgstr ""
 "Це значення наразі успадковується з головного додатка. Після збереження цієї"
 " сторінки воно більше не буде успадковуватися."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "You have unsaved settings."
 msgstr "У вас є незбережені налаштування."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Settings"
 msgstr "Налаштування"
 
-#: corehq/apps/app_manager/static/app_manager/js/source_files.js
-msgid "Please enter a version to compare"
-msgstr "Будь ласка, введіть версію для порівняння"
-
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "Filter properties"
 msgstr "Фільтрувати властивості"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "View All Cases"
 msgstr "Переглянути всі справи"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_summary.js
 msgid "View All Forms"
 msgstr "Переглянути всі форми"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
 msgid "View Changed Items"
 msgstr "Переглянути змінені елементи"
 
@@ -1082,41 +1261,62 @@ msgstr "Останнє збережене"
 msgid "[unknown]"
 msgstr "[невідомо]"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Warning: unrecognized language"
-msgstr "Попередження: невідома мова"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/129.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/414.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/437.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/879.js
+msgid "\n"
+msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You have unsaved changes in your supported languages"
-msgstr "У вас є незбережені зміни у підтримуваних мовах"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getCurrentMugInput"
+msgstr "отриматиПоточнеВведенняMug"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "There are errors in your configuration"
-msgstr "У вашій конфігурації є помилки"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Streets"
+msgid "jstree"
+msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You must have at least one language"
-msgstr "Має бути принаймні одна мова"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Please enter language"
-msgstr "Будь ласка, введіть мову"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getData"
+msgstr "getData"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Invalid language code"
-msgstr "Недійсний код мови"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "load"
+msgid "loadXML"
+msgstr "завантажитиXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Language appears twice"
-msgstr "Мова вказана двічі"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "createXML"
+msgstr "createXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "This conflicts with a current language"
-msgstr "Це конфліктує з поточною мовою"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "loadXFormOrError"
+msgstr "завантажитиXFormАбоПомилку"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
-msgid "New Form"
-msgstr "Нова форма"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Add Question"
+msgid "addQuestion"
+msgstr "додатиПитання"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "nodeIDFromLabel"
+msgstr "nodeIDЗМітки"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Questions"
+msgid "getSections"
+msgstr "отриматиРозділи"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Clear selection"
+msgid "collapseSection"
+msgstr "згорнутиРозділ"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
@@ -1158,39 +1358,27 @@ msgstr "Правда, якщо ВСІ вирази істинні."
 msgid "True when ANY of the expressions are true."
 msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} не є дійсним батьківським елементом даних"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "createXML"
-msgstr "createXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getData"
-msgstr "getData"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Command Bar"
 msgstr "Панель команд"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Basic"
 msgstr "Базовий"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Logic"
 msgstr "Логіка"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -1206,7 +1394,8 @@ msgid "no comment"
 msgstr "без коментарів"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
-#: corehq/apps/translations/static/translations/js/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/app_translations.js
 msgid "Select Profile"
 msgstr "Виберіть профіль"
 
@@ -3418,23 +3607,28 @@ msgstr ""
 "Не вдалося завантажити користувачів. Будь ласка, спробуйте пізніше або "
 "повідомте про проблему, якщо вона не зникає."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Delete Translation"
 msgstr "Видалити переклад"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Add Translation"
 msgstr "Додати переклад"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto fill translations"
 msgstr "Автоматично заповнити переклади"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto Fill translations"
 msgstr "Автоматичне заповнення перекладів"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
@@ -3442,15 +3636,18 @@ msgstr ""
 "Буде вибрано найпоширеніші переклади для обраної мови. Ви зможете "
 "відредагувати їх за потреби."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "You have unsaved user interface translations."
 msgstr "У вас є незбережені переклади інтерфейсу користувача."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Parameters formatting problem!"
 msgstr "Проблема з форматуванням параметрів!"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "Autofill is not available in English (en). Please change your language using"
 " the dropdown in the top left."
@@ -4297,6 +4494,9 @@ msgstr "Помилка! Відповідь: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ не вдалося виконати запит: "
 
+#~ msgid "New Form"
+#~ msgstr "Нова форма"
+
 #~ msgid "Your location"
 #~ msgstr "Ваше місцезнаходження"
 
@@ -4329,9 +4529,6 @@ msgstr "CommCare HQ не вдалося виконати запит: "
 #~ msgid "2-digit"
 #~ msgstr "2-значний"
 
-#~ msgid "Questions"
-#~ msgstr "Питання"
-
 #~ msgid "Copy"
 #~ msgstr "Копіювати"
 
@@ -4343,9 +4540,6 @@ msgstr "CommCare HQ не вдалося виконати запит: "
 
 #~ msgid "Bulk Update All Questions"
 #~ msgstr "Масове оновлення всіх питань"
-
-#~ msgid "Add Question"
-#~ msgstr "Додати питання"
 
 #~ msgid "Click {btn} to start building your form."
 #~ msgstr "Натисніть {btn}, щоб почати створювати форму."

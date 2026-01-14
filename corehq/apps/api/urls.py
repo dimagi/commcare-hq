@@ -149,7 +149,7 @@ urlpatterns = [
     url(r'case/v2/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch'),
     url(r'case/v2/?$', case_api, name='case_api'),
     url(r'case/v2/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_detail'),
-    path('case/v2/ext/<path:external_id>/', case_api),
+    path('case/v2/ext/<path:external_id>/', case_api, name='case_api_detail_ext'),
 
     path('', include(list(versioned_apis(_OLD_API_LIST)))),
     url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view()),
@@ -191,6 +191,7 @@ urlpatterns = [
     v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
     v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
     v1_0.InvitationResource.get_urlpattern('v1'),
+    v1_0.DETExportInstanceResource.get_urlpattern('v1'),
 ]
 
 

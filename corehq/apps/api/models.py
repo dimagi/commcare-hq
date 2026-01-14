@@ -225,7 +225,7 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     def get_forms(self):
         from corehq.apps.api.util import form_to_es_form
-        forms = XFormInstance.objects.get_forms(self.xform_ids, self.domain)
+        forms = XFormInstance.objects.get_forms(self.xform_ids)
         return list(filter(None, [form_to_es_form(form) for form in forms]))
 
     @property

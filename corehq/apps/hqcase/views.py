@@ -197,6 +197,11 @@ def _handle_ext_put(request, external_id):
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+    if not isinstance(data, dict):
+        return JsonResponse(
+            {'error': "Payload must be a single JSON object"},
+            status=400,
+        )
     if 'external_id' not in data:
         data['external_id'] = external_id
 

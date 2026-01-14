@@ -550,6 +550,30 @@ class TestCaseAPI(TestCase):
         assert res.status_code == 400
         assert res.json()['error'] == "Could not find a case with external_id 'notarealcaseid'"
 
+    def test_update_by_external_id_with_bad_create(self):
+        case = self._make_case()
+        res = self.client.put(
+            reverse('case_api', args=(self.domain,)),
+            {
+                'external_id': case.external_id,
+                'properties': {'champion': 'true'},
+                'create': True,  # Only valid in bulk operations
+            },
+            content_type="application/json;charset=utf-8",
+        )
+        assert res.status_code == 400
+        assert res.json()['error'] == "'create' is not a valid field."
+
+    def test_single_update_with_list(self):
+        case = self._make_case()
+        res = self.client.put(
+            reverse('case_api_detail_ext', args=(self.domain, case.external_id)),
+            [{'properties': {'champion': 'true'}}],
+            content_type="application/json;charset=utf-8",
+        )
+        assert res.status_code == 400
+        assert res.json()['error'] == 'Payload must be a single JSON object'
+
     def test_bulk_update_by_external_id(self):
         case = self._make_case()
         res = self._bulk_update_cases([{

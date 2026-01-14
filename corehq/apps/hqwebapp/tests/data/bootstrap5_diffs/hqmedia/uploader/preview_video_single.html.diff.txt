@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+ {% load i18n %}
+ <p>
+   <a href="<%- url %>"
+-     class="btn btn-default existing-media"
++     class="btn btn-outline-primary existing-media"
+      target="_blank"
+-     data-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'Watch Video' %}</a>
++     data-bs-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'Watch Video' %}</a>
+ </p>
+-<p class="text-success hqm-upload-completed hide">
+-  <span class="label label-success">{% trans 'New Video Uploaded Successfully' %}</span>
++<p class="text-success hqm-upload-completed d-none">
++  <span class="badge text-bg-success">{% trans 'New Video Uploaded Successfully' %}</span>
+ </p>

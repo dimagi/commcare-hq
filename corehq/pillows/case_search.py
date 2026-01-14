@@ -20,7 +20,6 @@ from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import manager
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
-from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
@@ -31,9 +30,8 @@ from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
 from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.reindexer.change_providers.case import (
     get_domain_case_change_provider,
 )
@@ -107,22 +105,14 @@ def _add_gps_smart_types(dynamic_properties, gps_props):
                 prop[GEOPOINT_VALUE] = None
 
 
-class CaseSearchPillowProcessor(ElasticProcessor):
+class CaseSearchPillowProcessor(BulkElasticProcessor):
 
-    def process_change(self, change):
-        assert isinstance(change, Change)
-        if self.change_filter_fn and self.change_filter_fn(change):
-            return
-
-        if change.metadata is not None:
-            # Comes from KafkaChangeFeed (i.e. running pillowtop)
+    def __init__(self, adapter):
+        def change_filter_fn(change):
             domain = change.metadata.domain
-        else:
-            # comes from ChangeProvider (i.e reindexing)
-            domain = change.get_document()['domain']
+            return not (domain and domain_needs_search_index(domain))
 
-        if domain and domain_needs_search_index(domain):
-            super(CaseSearchPillowProcessor, self).process_change(change)
+        super().__init__(adapter, change_filter_fn=change_filter_fn)
 
 
 def get_case_search_processor():
@@ -134,10 +124,7 @@ def get_case_search_processor():
     Writes to:
       - Case Search ES index
     """
-    return CaseSearchPillowProcessor(
-        adapter=case_search_adapter,
-        change_filter_fn=is_couch_change_for_sql_domain
-    )
+    return CaseSearchPillowProcessor(adapter=case_search_adapter)
 
 
 def _fail_gracefully_and_tell_admins():

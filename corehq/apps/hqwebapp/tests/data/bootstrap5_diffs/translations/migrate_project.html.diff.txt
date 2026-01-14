@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
++{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 "translations/js/bootstrap3/app_translations" %}
++{% js_entry "translations/js/bootstrap5/app_translations" %}
+ 
+ {% block page_content %}
+ 
+@@ -14,7 +14,7 @@
+   {% else %}
+     <div id="download-trans-form">
+       <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
+-        {% crispy migration_form %}
++        {% crispy migration_form %}  {# todo B5: crispy #}
+       </form>
+     </div>
+   {% endif %}

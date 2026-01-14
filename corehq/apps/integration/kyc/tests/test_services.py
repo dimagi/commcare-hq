@@ -11,6 +11,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.integration.kyc.models import (
     KycConfig,
+    KycProviders,
     KycUser,
     KycVerificationFailureCause,
     KycVerificationStatus,
@@ -23,6 +24,7 @@ from corehq.apps.integration.kyc.services import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
+from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
 
@@ -81,10 +83,19 @@ class BaseKycUserSetup(TestCase):
             None, None,
             first_name='abc',
         )
+        self.connection_settings = ConnectionSettings.objects.create(
+            domain=self.domain,
+            name='test-conn-settings',
+            username='test-username',
+            password='test-password',
+            url='http://test-url.com',
+        )
         self.config = KycConfig.objects.create(
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=self._sample_api_field_to_user_data_map(),
+            passing_threshold=self._sample_passing_thresholds(),
+            connection_settings=self.connection_settings,
         )
         self.kyc_user = KycUser(self.config, self.user)
 
@@ -102,6 +113,19 @@ class BaseKycUserSetup(TestCase):
             "nationality": {
                 "data_field": "nationality"
             }
+        }
+
+    def _sample_passing_thresholds(self):
+        return {
+            "firstName": 100,
+            "lastName": 100,
+            "phoneNumber": 100,
+            "emailAddress": 100,
+            "nationalIdNumber": 100,
+            "streetAddress": 100,
+            "city": 100,
+            "postCode": 100,
+            "country": 100,
         }
 
 
@@ -199,13 +223,48 @@ class TestVerifyUser(BaseKycUserSetup):
     @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
     @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
     @patch('corehq.motech.requests.Requests.post')
-    def test_kyc_success(self, mock_post, *args):
+    def test_mtn_kyc_verify_success(self, mock_post, *args):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = self._sample_response_json()
         mock_post.return_value = mock_response
 
         verification_status, error = verify_user(self.kyc_user, self.config)
+
+        assert verification_status == KycVerificationStatus.PASSED
+        assert error is None
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch(
+        'corehq.apps.integration.kyc.services.get_user_data_for_api',
+        return_value={'phoneNumber': 1234, 'firstName': 'abc', 'lastName': 'def'}
+    )
+    @patch('corehq.motech.requests.Requests.post')
+    def test_orange_cameroon_kyc_verify_success(self, mock_post, *args):
+        config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            provider=KycProviders.ORANGE_CAMEROON_KYC,
+            passing_threshold={
+                "firstName": 100,
+                "lastName": 100,
+            },
+            connection_settings=self.connection_settings,
+        )
+        kyc_user = KycUser(config, self.user)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "message": "customer 1234567890 successfully retrieve full name.",
+            "data": {
+                "firstName": "abc",
+                "lastName": "def"
+            }
+        }
+        mock_post.return_value = mock_response
+
+        verification_status, error = verify_user(kyc_user, config)
 
         assert verification_status == KycVerificationStatus.PASSED
         assert error is None

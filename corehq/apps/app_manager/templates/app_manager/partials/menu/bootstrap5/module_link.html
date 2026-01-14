@@ -1,0 +1,128 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+<div class="appnav-item {% if module.unique_id == selected_module.unique_id %}{% if not form %}active{% endif %}{% endif %}">
+  {% if module.user_deletable %}
+    {# Don't show the delete button for child-shadow modules #}
+    <a href="#module_confirm_delete_{{ module.unique_id }}"
+       data-bs-toggle="modal"
+       class="appnav-delete">
+      <i class="fa-regular fa-trash-can"></i>
+    </a>
+  {% else %}
+    <a class="appnav-delete">
+      <i class="fa fa-ban"></i>
+    </a>
+  {% endif %}
+
+    <a href="{% url "view_module" domain app.id module.unique_id %}"
+       class="appnav-title{% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %} appnav-title-secondary{% endif %} appnav-responsive">
+        <i class="drag_handle appnav-drag-icon js-appnav-drag-module"></i>
+        {% if module.module_type == 'advanced' %}
+          <i class="fa fa-flask appmanager-icon-type appnav-primary-icon"
+        {% elif module.module_type == 'report' %}
+          <i class="fa-regular fa-chart-bar appmanager-icon-type appnav-primary-icon"
+        {% elif module.module_type == 'shadow' %}
+          <i class="fa-regular fa-folder-open appmanager-icon-type appnav-primary-icon"
+        {% elif module.is_training_module %}
+          <i class="fa fa-book appnav-primary-icon"
+        {% elif not module.is_surveys %}
+          <i class="fa-solid fa-list-check appnav-primary-icon"
+        {% else %}
+          <i class="fa fa-folder-open appnav-primary-icon"
+        {% endif %}
+            title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with module.id as index %}This is menu {{ index }}{% endblocktrans %}{% endif %}"
+            data-bs-toggle="tooltip"
+            data-bs-placement="right"
+            data-bs-container="body"></i>
+        <span
+          {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}
+          {% if module.case_type %}
+            title="{% blocktrans  with module.case_type as case_type %}case type: {{case_type}}{% endblocktrans %}"
+            data-bs-toggle="tooltip"
+            data-bs-placement="right"
+            data-bs-container="body"
+          {% endif %}
+        >
+            {{ module.name|html_trans_prefix:langs }}
+        </span>
+    </a>
+
+    {% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
+    <a href="#"
+       class="appnav-secondary js-add-new-item"
+       data-slug="form"
+       data-module-unique-id="{{ module.unique_id }}"
+       data-new-form-url="{% url 'new_form' domain app.id module.unique_id %}"
+       data-show-survey="{% if module.is_surveys and not module.is_training_module %}1{% endif %}"
+       data-show-training="{% if module.is_training_module %}1{% endif %}"
+       data-show-case-forms="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
+       data-show-advanced="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
+       data-show-shadow="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
+    >
+        <i class="fa fa-plus"></i>
+    </a>
+    {% endif %}
+
+    <!-- Deletion confirmation modal -->
+    <div id="module_confirm_delete_{{ module.unique_id }}" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            {% if module.module_type == 'basic' %}
+              {% if module.is_surveys %}
+                {% trans "Survey Menu" as menu %}
+              {% else %}
+                {% trans "Case List" as menu %}
+              {% endif %}
+            {% elif module.module_type == 'report' %}
+              {% trans "Report Menu" as menu %}
+            {% elif module.module_type == 'advanced' %}
+              {% trans "Advanced Menu" as menu %}
+            {% elif module.module_type == 'shadow' %}
+              {% trans "Shadow Menu" as menu %}
+            {% else %}
+              {% trans "menu" as menu %}
+            {% endif %}
+            <h4 class="modal-title">
+              {% blocktrans %}
+                Are you sure you want to delete this {{ menu }}?
+              {% endblocktrans %}
+            </h4>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <form action="{% url "delete_module" domain app.id module.unique_id %}"
+                method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+              <p class="lead">
+                {% blocktrans %}You are about to delete{% endblocktrans %}
+                <strong>{{ module.name|html_trans:langs }}</strong>!
+              </p>
+              <p>
+                {% blocktrans %}
+                This action will also delete all forms in this {{ menu }}.
+                {% endblocktrans %}
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="submit" class="disable-on-submit btn btn-outline-danger">
+                  <i class="fa-regular fa-trash-can"></i>
+                  {% trans "Delete" %} {{ module.name|html_trans:langs }}
+              </button>
+            </div>
+          </form>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</div>
