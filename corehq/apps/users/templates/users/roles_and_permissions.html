@@ -358,15 +358,11 @@
               </button>
               <a data-bind="attr: { href: $data.editUrl }">
                 <button class="btn btn-default" data-bind="visible: $data._id">
-                  <span
-                    data-bind="if: $root.allowEdit"
-                  >
+                  <span data-bind="if: $root.allowEdit">
                     <i class="fa fa-edit"></i>
                     {% trans "Edit Role (view)" %}
                   </span>
-                  <span
-                    data-bind="ifnot: $root.allowEdit"
-                  >
+                  <span data-bind="ifnot: $root.allowEdit">
                     <i class="fa-solid fa-eye"></i>
                     {% trans "View Role (view)" %}
                   </span>
