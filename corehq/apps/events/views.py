@@ -1,13 +1,16 @@
 from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponseServerError
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 from django.shortcuts import render
+
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -151,6 +154,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EventCreateView(BaseEventView):
     urlname = 'add_attendance_tracking_event'
     template_name = "events/new_event.html"
@@ -212,6 +216,7 @@ class EventCreateView(BaseEventView):
         return None
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EventEditView(EventCreateView):
     urlname = 'edit_attendance_tracking_event'
     template_name = "events/new_event.html"
