@@ -48,7 +48,7 @@ def multimedia_ajax(request, domain, app_id):
                 'import_app_counts': import_app_counts,
             })
 
-        return render(request, "app_manager/partials/settings/bootstrap5/multimedia_ajax.html", context)
+        return render(request, "app_manager/partials/settings/multimedia_ajax.html", context)
     else:
         raise Http404()
 

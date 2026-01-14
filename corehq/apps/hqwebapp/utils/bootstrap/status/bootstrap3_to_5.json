@@ -17,7 +17,8 @@
       "partials/form_summary_header.html",
       "partials/settings/add_ons.html",
       "partials/settings/app_settings.html",
-      "partials/settings/commcare_settings.html"
+      "partials/settings/commcare_settings.html",
+      "partials/settings/multimedia_ajax.html"
     ],
     "javascript": [
       "js/app_exchange.js",
