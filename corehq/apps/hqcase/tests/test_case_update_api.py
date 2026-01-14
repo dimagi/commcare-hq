@@ -9,8 +9,6 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -23,7 +21,6 @@ from corehq.util.test_utils import (
 from ..utils import submit_case_blocks
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
 @sharded
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
@@ -850,3 +847,36 @@ class TestCaseAPI(TestCase):
             'rank': '2800',
             'country': 'Norway',
         }
+
+    def test_upsert_by_external_id_with_duplicate_external_ids(self):
+        """
+        Test that when multiple cases exist with the same external_id,
+        the API returns a helpful error message.
+        """
+        external_id = 'duplicate-external-id'
+
+        # Create two cases with the same external_id (simulating data corruption)
+        case1 = self._make_case()
+        case1.external_id = external_id
+        case1.save()
+
+        case2 = self._make_case()
+        case2.external_id = external_id
+        case2.save()
+
+        # Attempt to update via external_id should fail with informative error
+        res = self.client.put(
+            reverse('case_api_detail_ext', args=(self.domain, external_id)),
+            {
+                'case_name': 'Updated Name',
+            },
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
+
+        assert res.status_code == 400
+        error_response = res.json()
+        assert 'Multiple cases found' in error_response['error']
+        assert external_id in error_response['error']
+        assert case1.case_id in error_response['error']
+        assert case2.case_id in error_response['error']
