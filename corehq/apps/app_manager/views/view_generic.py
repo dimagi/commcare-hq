@@ -129,7 +129,7 @@ def view_generic(
         template = get_module_template(request.user, module)
         context.update(get_module_view_context(request, app, module, lang))
     else:
-        template = 'app_manager/bootstrap5/app_view_settings.html'
+        template = 'app_manager/app_view_settings.html'
         context.update(get_app_view_context(request, app))
 
         if release_manager:

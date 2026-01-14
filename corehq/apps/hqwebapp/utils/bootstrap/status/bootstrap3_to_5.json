@@ -6,6 +6,7 @@
     "in_progress": true,
     "templates": [
       "app_exchange.html",
+      "app_view_settings.html",
       "base_summary.html",
       "case_summary.html",
       "form_summary.html",
