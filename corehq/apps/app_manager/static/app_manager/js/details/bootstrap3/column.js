@@ -15,6 +15,7 @@ import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import main from "hqwebapp/js/bootstrap3/main";
+import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import Utils from "app_manager/js/details/utils";
 import uiElementInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
 import uiElementKeyValueMapping from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping";
@@ -304,33 +305,84 @@ export default function (col, screen) {
         return false;
     }, self);
 
-    // Add the graphing option if self is a graph so self we can set the value to graph
-    let menuOptions = Utils.getFieldFormats();
-    if (self.original.format === "graph") {
-        menuOptions = menuOptions.concat([{
-            value: "graph",
-            label: "",
-        }]);
-    }
+    const filterFormats = function (menuOptions, currentFormatValue) {
+        let filteredOptions = menuOptions;
+        // Add the graphing option if self is a graph so self we can set the value to graph
+        if (currentFormatValue === "graph") {
+            filteredOptions = filteredOptions.concat([{
+                value: "graph",
+                label: "",
+            }]);
+        }
 
-    if (self.useXpathExpression) {
-        const menuOptionsToRemove = ['picture', 'audio'];
-        for (let i = 0; i < menuOptionsToRemove.length; i++) {
-            for (let j = 0; j < menuOptions.length; j++) {
-                if (
-                    menuOptions[j].value !== self.original.format
-                    && menuOptions[j].value === menuOptionsToRemove[i]
-                ) {
-                    menuOptions.splice(j, 1);
+        if (self.useXpathExpression) {
+            const menuOptionsToRemove = ['picture', 'audio'];
+            for (let i = 0; i < menuOptionsToRemove.length; i++) {
+                for (let j = 0; j < filteredOptions.length; j++) {
+                    if (
+                        filteredOptions[j].value !== self.original.format
+                        && filteredOptions[j].value === menuOptionsToRemove[i]
+                    ) {
+                        filteredOptions.splice(j, 1);
+                    }
                 }
             }
+        } else {
+            // Restrict Translatable Text usage to Calculated Properties only
+            const index = filteredOptions.findIndex(f => f.value.includes('translatable-enum'));
+            if (index !== -1) {
+                filteredOptions.splice(index, 1);
+            }
         }
-    } else {
-        // Restrict Translatable Text usage to Calculated Properties only
-        menuOptions.splice(-1);
-    }
 
+        // Filter formats based on screen type (short=case list, long=case detail)
+        const formatDeps = Utils.dynamicFormats.COLUMN_FORMAT_DEPENDENCIES;
+        filteredOptions = filteredOptions.filter(option => {
+            const config = formatDeps[option.value];
+            if (!config || option.value === currentFormatValue) {
+                return true;
+            }
+            if (config.display === 'short') {
+                return screen.columnKey === 'short';
+            } else if (config.display === 'long') {
+                return screen.columnKey === 'long';
+            }
+            return true;
+        });
+
+        return filteredOptions;
+    };
+
+    let menuOptions = filterFormats(Utils.getFieldFormats(), self.original.format);
     self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
+    self.previousFormat = self.format.val();
+
+    self.updateFormatOptions = function (dynamicFormats, formatsToInclude) {
+        let updateMenuOptions = Utils.getFieldFormats();
+        updateMenuOptions = updateMenuOptions.filter(function (option) {
+            if (!dynamicFormats.includes(option.value)) {
+                return true;
+            }
+            return formatsToInclude.includes(option.value);
+        });
+
+        const currentFormatValue = self.format && self.format.val ? self.format.val() : null;
+        updateMenuOptions = filterFormats(updateMenuOptions, currentFormatValue);
+
+        self.format.setOptions(updateMenuOptions);
+
+        const shouldClearSelection = currentFormatValue && dynamicFormats.includes(currentFormatValue) &&
+            !formatsToInclude.includes(currentFormatValue);
+        if (shouldClearSelection) {
+            self.format.val('plain');
+            self.format.ui.find('select').val('plain');
+            const message = Utils.dynamicFormats.getDependencyAlertMessage(currentFormatValue);
+            alertUser.alert_user(message, 'warning', false, true);
+        } else if (currentFormatValue !== null) {
+            self.format.val(currentFormatValue);
+        }
+    };
+
     self.supportsOptimizations = ko.observable(false);
     self.setSupportOptimizations = function () {
         let optimizationsSupported = (
