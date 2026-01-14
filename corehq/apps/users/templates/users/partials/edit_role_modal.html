@@ -73,8 +73,7 @@
                     class="col-md-2 controls"
                     data-bind="visible: !ko.utils.unwrapObservable(showEditCheckbox)"
                   >
-                    <div class="form-check-placeholder">
-                    </div>
+                    <div class="form-check-placeholder"></div>
                   </div>
                   <div
                     class="col-md-2 controls"
@@ -131,8 +130,7 @@
                     class="col-md-2 controls "
                     data-bind="visible: !showViewCheckbox"
                   >
-                    <div class="form-check-placeholder">
-                    </div>
+                    <div class="form-check-placeholder"></div>
                   </div>
                   <div class="col-md-8 form-label">
                     <div data-bind="html: text"></div>
@@ -333,7 +331,10 @@
                             class="form-check-label"
                             data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }"
                           >
-                            <span data-bind="text: name" class="text-break"></span>
+                            <span
+                              data-bind="text: name"
+                              class="text-break"
+                            ></span>
                           </label>
                         </div>
                       </div>
@@ -848,7 +849,10 @@
             <button type="submit" class="btn btn-primary disable-on-submit">
               {% trans "Save" %}
             </button>
-            <span class="form-text text-danger" data-bind="text: $root.roleError"></span>
+            <span
+              class="form-text text-danger"
+              data-bind="text: $root.roleError"
+            ></span>
           </div>
           <div data-bind="ifnot: isEditable">
             <button
@@ -874,14 +878,14 @@
       <div data-bind="text: text"></div>
       <!-- ko if: id === 'access_web_apps' && hasRestrictedApplicationAccess -->
       <span class="help-block">
-        {% url "cloudcare_app_settings" domain as manage_web_apps_permissions_url %}
-        {% blocktrans %}
-          This permission is already configured via
-          <a target="_blank" href="{{ manage_web_apps_permissions_url }}">
-            Manage Web Apps Permissions
-          </a>
-          . Please remove this configuration before updating access here.
-        {% endblocktrans %}
+        {% url "cloudcare_app_settings" domain as
+        manage_web_apps_permissions_url %} {% blocktrans %} This permission is
+        already configured via
+        <a target="_blank" href="{{ manage_web_apps_permissions_url }}">
+          Manage Web Apps Permissions
+        </a>
+        . Please remove this configuration before updating access here. {%
+        endblocktrans %}
       </span>
       <!-- /ko -->
     </div>

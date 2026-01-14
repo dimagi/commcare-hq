@@ -265,16 +265,33 @@
                  data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null"
                >
                  <span
-@@ -358,7 +357,7 @@
+@@ -357,8 +356,24 @@
+                   {% trans "View Role" %}
                  </span>
                </button>
++              <a data-bind="attr: { href: $data.editUrl }">
++                <button class="btn btn-default" data-bind="visible: $data._id">
++                  <span
++                    data-bind="if: $root.allowEdit"
++                  >
++                    <i class="fa fa-edit"></i>
++                    {% trans "Edit Role (view)" %}
++                  </span>
++                  <span
++                    data-bind="ifnot: $root.allowEdit"
++                  >
++                    <i class="fa-solid fa-eye"></i>
++                    {% trans "View Role (view)" %}
++                  </span>
++                </button>
++              </a>
                <button
 -                class="btn btn-danger"
 +                class="btn btn-outline-danger"
                  data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
                  click: $data._id ? $root.setRoleBeingDeleted : null"
                >
-@@ -378,25 +377,29 @@
+@@ -378,25 +393,36 @@
        </table>
        {% if can_edit_roles %}
          <button
@@ -286,6 +303,13 @@
            {% trans "Add Role" %}
          </button>
 -        <div data-bind="modal: roleBeingDeleted" tabindex="-1" role="dialog">
++        <a
++          href="{% url 'create_role' domain %}"
++          class="btn btn-outline-primary"
++        >
++          <i class="fa fa-plus"></i>
++          {% trans "Add Role (view)" %}
++        </a>
 +        <div
 +          data-bind="modal: roleBeingDeleted"
 +          tabindex="-1"
@@ -309,7 +333,7 @@
                </div>
                <div class="modal-body">
                  <h4 data-bind="text: modalConfirmation"></h4>
-@@ -404,7 +407,7 @@
+@@ -404,7 +430,7 @@
                <div class="modal-footer">
                  <button
                    type="button"
@@ -318,7 +342,7 @@
                    data-bind="click: $root.unsetRoleBeingDeleted"
                  >
                    {% trans "Cancel" %}
-@@ -417,12 +420,12 @@
+@@ -417,12 +443,12 @@
            </div>
          </div>
        {% endif %}
