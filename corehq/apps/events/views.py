@@ -60,6 +60,7 @@ class BaseEventView(BaseDomainView):
         return reverse(BaseEventView.urlname, args=(self.domain,))
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EventsView(BaseEventView, CRUDPaginatedViewMixin):
     urlname = "events_page"
     template_name = 'events/events_list.html'
