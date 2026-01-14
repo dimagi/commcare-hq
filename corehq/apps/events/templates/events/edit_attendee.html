@@ -8,20 +8,18 @@
 
 {% block page_content %}
   {% initial_page_data "attendee_id" attendee_id %}
-  <form id="attendee_form" class="form-horizontal" name="" method="post">
+  <form id="attendee_form" name="" method="post">
     {% csrf_token %}
     <fieldset>
       <legend>{% trans 'Attendee' %}</legend>
-      {% crispy form %}  {# todo B5: crispy #}
+      {% crispy form %}
     </fieldset>
     {% if attendee_has_attended_events %}
       <div class="alert alert-warning">
-        <p>
-          {% blocktrans %}
-            This attendee cannot be deleted as <strong>{{ attendee_name }}</strong> has been tracked as
-            having attended one or more events.
-          {% endblocktrans %}
-        </p>
+        {% blocktrans %}
+          This attendee cannot be deleted as <strong>{{ attendee_name }}</strong> has been tracked as
+          having attended one or more events.
+        {% endblocktrans %}
       </div>
     {% endif %}
 
@@ -45,14 +43,18 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
           <h4 class="modal-title">
             {% trans "Delete Attendee" %} {{ attendee_name }}
             <small>Permanent Action</small>
           </h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="{% trans 'Close' %}"
+          ></button>
         </div>
-        <form class="form-horizontal"
-              style="margin: 0; padding: 0"  {# todo B5: inline-style #}
+        <form class="m-0 p-0"
               action="{% url 'delete_attendee' domain attendee_id %}"
               method="post"
               data-bind="submit: submit">
@@ -70,12 +72,10 @@
               {% endblocktrans %}
             </p>
             <div class="alert alert-warning">
-              <p>
-                <i class="fa fa-warning"></i>
-                {% blocktrans %}
-                  This action cannot be undone.
-                {% endblocktrans %}
-              </p>
+              <i class="fa fa-warning"></i>
+              {% blocktrans %}
+                This action cannot be undone.
+              {% endblocktrans %}
             </div>
           </div>
           <div class="modal-footer">
