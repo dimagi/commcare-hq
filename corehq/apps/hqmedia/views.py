@@ -163,7 +163,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
 class MultimediaReferencesView(BaseMultimediaUploaderView):
     urlname = "hqmedia_references"
-    template_name = "hqmedia/references.html"
+    template_name = "hqmedia/bootstrap3/references.html"
     page_title = gettext_noop("Multimedia Reference Checker")
 
     @property
@@ -255,7 +255,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
 class BulkUploadMultimediaView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload"
-    template_name = "hqmedia/bulk_upload.html"
+    template_name = "hqmedia/bootstrap3/bulk_upload.html"
     page_title = gettext_noop("Bulk Upload Multimedia")
 
     @property
@@ -297,13 +297,13 @@ class BulkUploadMultimediaPollView(BaseMultimediaTemplateView):
             return HttpResponseServerError()
         status = BulkMultimediaStatusCache.get(processing_id)
         context.update(status.get_response())
-        return render(request, 'hqmedia/partials/bulk_upload_status.html', context)
+        return render(request, 'hqmedia/partials/bootstrap3/bulk_upload_status.html', context)
 
 
 class BulkUploadMultimediaStatusView(BaseMultimediaTemplateView):
     urlname = "hqmedia_bulk_upload_status"
     page_title = gettext_noop('Bulk Upload Multimedia Status')
-    template_name = "hqmedia/bulk_upload_status.html"
+    template_name = "hqmedia/bootstrap3/bulk_upload_status.html"
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -329,7 +329,7 @@ class BulkUploadMultimediaStatusView(BaseMultimediaTemplateView):
 @method_decorator(require_can_edit_apps, name='dispatch')
 class ManageMultimediaPathsView(BaseMultimediaTemplateView):
     urlname = "manage_multimedia_paths"
-    template_name = "hqmedia/manage_paths.html"
+    template_name = "hqmedia/bootstrap3/manage_paths.html"
     page_title = gettext_noop("Manage Multimedia Paths")
 
     @method_decorator(login_and_domain_required)
@@ -443,7 +443,7 @@ def download_multimedia_paths(request, domain, app_id):
 @method_decorator(require_can_edit_apps, name='dispatch')
 class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
     urlname = "multimedia_translations_coverage"
-    template_name = "hqmedia/translations_coverage.html"
+    template_name = "hqmedia/bootstrap3/translations_coverage.html"
     page_title = gettext_noop("Translations Coverage")
 
     @property
@@ -513,7 +513,7 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
 @method_decorator(require_can_edit_apps, name='dispatch')
 class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
     urlname = "multimedia_audio_translator"
-    template_name = "hqmedia/audio_translator.html"
+    template_name = "hqmedia/bootstrap3/audio_translator.html"
     page_title = gettext_noop("Download Audio Translator Files")
 
     @property

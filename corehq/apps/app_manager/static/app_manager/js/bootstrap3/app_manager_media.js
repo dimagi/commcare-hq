@@ -2,7 +2,7 @@ import $ from "jquery";
 import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import google from "analytix/js/google";
-import uploaders from "app_manager/js/nav_menu_media_common";
+import uploaders from "app_manager/js/bootstrap3/nav_menu_media_common";
 import "jquery-textchange/jquery.textchange";  // textchange is referenced in bindings in nav_menu_media_single_type.html
 
 var appMenuMediaManager = function (o) {
