@@ -1,16 +1,16 @@
-{% extends 'app_manager/bootstrap5/base_summary.html' %}
+{% extends 'app_manager/base_summary.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block title %}{% trans "Case Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
 
-{% js_entry 'app_manager/js/summary/bootstrap5/case_summary' %}
+{% js_entry 'app_manager/js/summary/case_summary' %}
 
 {% block content_extra %}
   <div class="ko-template" id="case-summary-header">
     {% initial_page_data 'case_metadata' case_metadata %}
     {% registerurl 'app_case_summary' domain '---' %}
-    <div class="page-header" style="margin-top: 0;">  {# todo B5: css-page-header, inline-style #}
+    <div class="mt-3 mb-4">
       <h3>
         <i class="fcc fcc-fd-external-case"></i>
         {% trans "Case Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-select" data-bind="value: firstAppId"></select>
@@ -58,15 +58,15 @@
     <div class="row">
       <div class="col-md-12">
         <!-- ko foreach: caseTypes -->
-        <div class="card panel-appmanager" data-bind="visible: isVisible">  {# todo B5: css-panel #}
+        <div class="card panel-appmanager" data-bind="visible: isVisible">
           <div class="card-header">
-            <h4 class="card-title card-title-nolink">
+            <h4 class="card-title card-title-nolink mt-2">
               <i class="fcc fcc-fd-external-case"></i>
               <!-- ko text: name --><!-- /ko -->
             </h4>
           </div>
           <div class="card-body">
-            <div class="card case-relationships">  {# todo B5: css-well #}
+            <div class="card case-relationships pt-3 px-2">
               <div class="row">
                 <div class="col-lg-4">
                   <strong>{% trans "Relationships:" %}</strong>
@@ -104,7 +104,7 @@
               </div>
               <!-- /ko -->
             </div>
-            <table class="case-properties table">
+            <table class="table case-properties mt-3">
               <thead>
               <tr>
                 <th>{% trans "Case Property" %}</th>
