@@ -13,6 +13,7 @@
       "form_summary_base.html",
       "form_summary_diff.html",
       "languages.html",
+      "partials/bulk_upload_app_translations.html",
       "partials/form_summary_header.html",
       "partials/settings/app_settings.html"
     ],
