@@ -207,12 +207,14 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
             payment_record.amount,
             account=account,
             payment_record=payment_record,
+            payment_type=PaymentType.CC_ONE_TIME,
         )
         CreditLine.add_credit(
             -payment_record.amount,
             account=account,
             invoice=subscription_invoice,
-            customer_invoice=customer_invoice
+            customer_invoice=customer_invoice,
+            payment_type=PaymentType.CC_ONE_TIME,
         )
         self.invoice.update_balance()
         self.invoice.save()
@@ -289,20 +291,24 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
                     deduct_amount,
                     account=account,
                     payment_record=payment_record,
+                    payment_type=PaymentType.CC_ONE_TIME,
                 )
                 CreditLine.add_credit(
                     -deduct_amount,
                     account=account,
                     invoice=subscription_invoice,
-                    customer_invoice=customer_invoice
+                    customer_invoice=customer_invoice,
+                    payment_type=PaymentType.CC_ONE_TIME,
                 )
                 invoice.update_balance()
                 invoice.save()
         if amount:
             account = BillingAccount.get_or_create_account_by_domain(self.domain)[0]
             CreditLine.add_credit(
-                amount, account=account,
+                amount,
+                account=account,
                 payment_record=payment_record,
+                payment_type=PaymentType.CC_ONE_TIME,
             )
 
     def get_email_context(self):
@@ -363,6 +369,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     account=self.account,
                     subscription=self.subscription,
                     payment_record=payment_record,
+                    payment_type=PaymentType.CC_ONE_TIME,
                 ))
 
 
