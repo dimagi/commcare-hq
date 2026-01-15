@@ -2497,12 +2497,12 @@ class AdjustBalanceForm(forms.Form):
     @transaction.atomic
     def adjust_balance(self, web_user=None):
         reason = self.cleaned_data['adjustment_reason']
+        payment_type = self.cleaned_data['payment_type']
         kwargs = {
-            'account': (self.invoice.account if self.invoice.is_customer_invoice
-                        else self.invoice.subscription.account),
+            'account': self.invoice.account,
             'note': self.cleaned_data['note'],
             'reason': reason,
-            'payment_type': self.cleaned_data['payment_type'],
+            'payment_type': payment_type,
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
@@ -2555,6 +2555,9 @@ class AdjustBalanceForm(forms.Form):
 
         self.invoice.update_balance()
         self.invoice.save()
+
+        self.invoice.account.last_payment_method = payment_type
+        self.invoice.account.save()
 
 
 class InvoiceInfoForm(forms.Form):
