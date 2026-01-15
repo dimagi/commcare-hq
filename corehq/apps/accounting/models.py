@@ -3815,6 +3815,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
     reason = models.CharField(max_length=25, default=CreditAdjustmentReason.MANUAL,
                               choices=CreditAdjustmentReason.CHOICES)
+    payment_type = models.CharField(max_length=25, choices=PaymentType.CHOICES, null=True, blank=True)
     note = models.TextField(blank=True)
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)
