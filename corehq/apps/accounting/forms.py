@@ -2398,7 +2398,7 @@ class AdjustBalanceForm(forms.Form):
         required=False,
     )
 
-    method = forms.ChoiceField(
+    adjustment_reason = forms.ChoiceField(
         choices=(
             (CreditAdjustmentReason.MANUAL, "Register back office payment"),
             (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
@@ -2456,7 +2456,7 @@ class AdjustBalanceForm(forms.Form):
                         </div>
                     </div>
                 '''),
-                crispy.Field('method'),
+                crispy.Field('adjustment_reason'),
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
                 'adjust',
@@ -2493,16 +2493,16 @@ class AdjustBalanceForm(forms.Form):
 
     @transaction.atomic
     def adjust_balance(self, web_user=None):
-        method = self.cleaned_data['method']
+        reason = self.cleaned_data['adjustment_reason']
         kwargs = {
             'account': (self.invoice.account if self.invoice.is_customer_invoice
                         else self.invoice.subscription.account),
             'note': self.cleaned_data['note'],
-            'reason': method,
+            'reason': reason,
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
-        if method in [
+        if reason in [
             CreditAdjustmentReason.MANUAL,
             CreditAdjustmentReason.FRIENDLY_WRITE_OFF,
         ]:
@@ -2523,7 +2523,7 @@ class AdjustBalanceForm(forms.Form):
                 permit_inactive=True,
                 **kwargs
             )
-        elif method == CreditAdjustmentReason.TRANSFER:
+        elif reason == CreditAdjustmentReason.TRANSFER:
             if self.invoice.is_customer_invoice:
                 subscription_invoice = None
                 customer_invoice = self.invoice
