@@ -1716,7 +1716,7 @@ CUSTOM_ICON_BADGES = FrozenPrivilegeToggle(
     privilege_slug=privileges.CUSTOM_ICON_BADGES,
     slug='custom_icon_badges',
     label='Custom Icon Badges for modules and forms',
-    tag=TAG_SOLUTIONS_LIMITED,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1880,7 +1880,7 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = FrozenPrivilegeToggle(
     privilege_slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
     slug='location_columns_app_status_report',
     label='Enables location columns to app status report',
-    tag=TAG_SOLUTIONS_LIMITED,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -2058,7 +2058,7 @@ TWO_STAGE_USER_PROVISIONING = FrozenPrivilegeToggle(
     privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Two-Stage+Mobile+Worker+Account+Creation',
 )
@@ -2338,7 +2338,7 @@ CASE_IMPORT_DATA_DICTIONARY_VALIDATION = FrozenPrivilegeToggle(
     privileges.DATA_DICT_TYPES,
     'case_import_data_dictionary_validaton',
     'USH: Validate data per data dictionary definitions during case import',
-    TAG_CUSTOM,
+    TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",  # noqa: E501
 )
@@ -2612,7 +2612,7 @@ FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
     privileges.FORM_LINK_WORKFLOW,
     'form_link_workflow',
     'Form linking workflow available on forms',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
@@ -2621,7 +2621,7 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     privileges.PHONE_APK_HEARTBEAT,
     'phone_apk_heartbeat',
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -2630,7 +2630,7 @@ MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
     privileges.PRACTICE_MOBILE_WORKERS,
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS_OPEN,
+    TAG_GA_PATH,
     help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -2640,7 +2640,7 @@ VIEW_APP_CHANGES = FrozenPrivilegeToggle(
     privileges.VIEW_APP_DIFF,
     'app-changes-with-improved-diff',
     'Improved app changes view',
-    TAG_SOLUTIONS_OPEN,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
@@ -2650,7 +2650,7 @@ CASE_LIST_EXPLORER = FrozenPrivilegeToggle(
     privileges.CASE_LIST_EXPLORER,
     'case_list_explorer',
     label='Show the case list explorer report',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_ensure_search_index_is_enabled,
     help_link='https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer',
@@ -2662,7 +2662,7 @@ DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     'data_file_download',
     label='Offer hosting and sharing data files for downloading from a secure '
           'dropzone',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
               'sharing+data+files+for+downloading+from+a+secure+dropzone',
@@ -2672,7 +2672,7 @@ REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
     privileges.REGEX_FIELD_VALIDATION,
     'regex_field_validation',
     label='Regular Expression Validation for Custom Data Fields',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description="This flag adds the option to specify a regular expression "
                 "(regex) to validate custom user data, custom location data, "
@@ -2684,7 +2684,7 @@ LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
     privileges.LOCATION_SAFE_CASE_IMPORTS,
     'location_safe_case_imports',
     label='Location-restricted users can import cases at their location or below',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow location-restricted users to import cases owned at their location or below',
 )
@@ -2693,7 +2693,7 @@ FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
     privileges.FORM_CASE_IDS_CASE_IMPORTER,
     'form_case_ids_case_importer',
     label='Download buttons for Form- and Case IDs on Case Importer',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
 )
@@ -2702,7 +2702,7 @@ EXPORT_MULTISORT = FrozenPrivilegeToggle(
     privileges.EXPORT_MULTISORT,
     'export_multisort',
     label='Sort multiple rows in exports simultaneously',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Sort multiple rows in exports simultaneously',
 )
@@ -2711,7 +2711,7 @@ EXPORT_OWNERSHIP = FrozenPrivilegeToggle(
     privileges.EXPORT_OWNERSHIP,
     'export_ownership',
     label='Allow exports to have ownership',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow exports to have ownership',
 )
@@ -2727,7 +2727,7 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
     privileges.FILTERED_BULK_USER_DOWNLOAD,
     'filtered_bulk_user_download',
     label='Bulk user management features',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
         For mobile users, enables bulk deletion page and bulk lookup page.
@@ -2750,7 +2750,7 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     privileges.DATA_DICTIONARY,
     'data_dictionary',
     label='Project level data dictionary of cases',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Project level data dictionary of cases',
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
@@ -2760,7 +2760,7 @@ CASE_DEDUPE = FrozenPrivilegeToggle(
     privileges.CASE_DEDUPE,
     'case_dedupe',
     label='Case deduplication feature',
-    tag=TAG_SOLUTIONS_LIMITED,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
@@ -2785,7 +2785,7 @@ SUPPORT_GEO_JSON_EXPORT = FrozenPrivilegeToggle(
     privileges.GEOJSON_EXPORT,
     'support_geo_json_export',
     label='Support GeoJSON export in Case Exporter',
-    tag=TAG_SOLUTIONS_CONDITIONAL,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='The Case Export page now supports the exporting of GeoJSON data.',
 )
