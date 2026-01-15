@@ -788,3 +788,95 @@ class TestCaseAPI(TestCase):
         mock_xform.form_id = "test-form-id"
         mock_case = MagicMock(spec=CommCareCase)
         return mock_xform, mock_case
+
+    def test_upsert_by_external_id_is_idempotent(self):
+        """
+        Test that sending the same PUT request twice to the external_id
+        endpoint is idempotent.
+
+        The first request should create a case, and the second should update it,
+        not create a duplicate.
+        """
+        external_id = 'idempotency-test-123'
+        payload = {
+            'case_type': 'player',
+            'case_name': 'Magnus Carlsen',
+            'owner_id': 'world_chess',
+            'properties': {
+                'rank': '2800',
+                'country': 'Norway',
+            },
+        }
+
+        # First request - should create the case
+        res1 = self.client.put(
+            reverse('case_api_detail_ext', args=(self.domain, external_id)),
+            payload,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
+        assert res1.status_code == 200
+        case_id_1 = res1.json()['case']['case_id']
+
+        # Second request - should update the same case, not create a duplicate
+        res2 = self.client.put(
+            reverse('case_api_detail_ext', args=(self.domain, external_id)),
+            payload,
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
+        assert res2.status_code == 200
+        case_id_2 = res2.json()['case']['case_id']
+
+        # Verify idempotency - both requests should reference the same case
+        assert case_id_1 == case_id_2, (
+            "Expected the same case to be updated, not a duplicate created"
+        )
+
+        # Verify only one case exists with this external_id
+        cases = CommCareCase.objects.get_case_ids_in_domain(self.domain)
+        assert len(cases) == 1, f"Expected 1 case, found {len(cases)}"
+
+        # Verify the case has the correct properties
+        case = CommCareCase.objects.get_case(case_id_1, self.domain)
+        assert case.external_id == external_id
+        assert case.name == 'Magnus Carlsen'
+        assert case.type == 'player'
+        assert case.owner_id == 'world_chess'
+        assert case.dynamic_case_properties() == {
+            'rank': '2800',
+            'country': 'Norway',
+        }
+
+    def test_upsert_by_external_id_with_duplicate_external_ids(self):
+        """
+        Test that when multiple cases exist with the same external_id,
+        the API returns a helpful error message.
+        """
+        external_id = 'duplicate-external-id'
+
+        # Create two cases with the same external_id (simulating data corruption)
+        case1 = self._make_case()
+        case1.external_id = external_id
+        case1.save()
+
+        case2 = self._make_case()
+        case2.external_id = external_id
+        case2.save()
+
+        # Attempt to update via external_id should fail with informative error
+        res = self.client.put(
+            reverse('case_api_detail_ext', args=(self.domain, external_id)),
+            {
+                'case_name': 'Updated Name',
+            },
+            content_type="application/json;charset=utf-8",
+            HTTP_USER_AGENT="user agent string",
+        )
+
+        assert res.status_code == 400
+        error_response = res.json()
+        assert 'Multiple cases found' in error_response['error']
+        assert external_id in error_response['error']
+        assert case1.case_id in error_response['error']
+        assert case2.case_id in error_response['error']

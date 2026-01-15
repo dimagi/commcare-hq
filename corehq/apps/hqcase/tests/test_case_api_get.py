@@ -13,7 +13,7 @@ from corehq.apps.es.tests.utils import (
     es_test,
     populate_case_search_index,
 )
-from corehq.apps.hqcase.api.core import serialize_es_case
+from corehq.apps.hqcase.api.core import serialize_case
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -91,8 +91,7 @@ class TestCaseAPIGet(TestCase):
         )
         _, [case] = submit_case_blocks(case_block.as_text(), domain=self.domain)
         populate_case_search_index([case])
-        es_doc = case_search_adapter.get(case_id)
-        expected = serialize_es_case(es_doc)
+        expected = serialize_case(case)
 
         base_url = reverse('case_api', args=(self.domain,))
         if not base_url.endswith('/'):
@@ -101,7 +100,10 @@ class TestCaseAPIGet(TestCase):
         res = self.client.get(url)
 
         assert res.status_code == 200
-        assert res.json() == expected
+        response_data = res.json()
+        response_data.pop('indexed_on')  # milliseconds won't match
+        expected.pop('indexed_on')
+        assert response_data == expected
 
     def test_get_case_by_external_id_not_found(self):
         base_url = reverse('case_api', args=(self.domain,))
@@ -122,3 +124,37 @@ class TestCaseAPIGet(TestCase):
         res = self.client.get(reverse('case_api_detail', args=(self.domain, self.other_domain_case_id)))
         assert res.status_code == 404
         assert res.json()['error'] == f"Case '{self.other_domain_case_id}' not found"
+
+    def test_get_case_by_external_id_with_duplicates(self):
+        external_id = 'duplicate-external-id-get'
+        case_block_1 = CaseBlock(
+            case_id=str(uuid.uuid4()),
+            case_type='player',
+            case_name='Player 1',
+            external_id=external_id,
+            owner_id=self.web_user.get_id,
+            create=True,
+        ).as_text()
+        case_block_2 = CaseBlock(
+            case_id=str(uuid.uuid4()),
+            case_type='player',
+            case_name='Player 2',
+            external_id=external_id,
+            owner_id=self.web_user.get_id,
+            create=True,
+        ).as_text()
+        _, (case1, case2) = submit_case_blocks(
+            [case_block_1, case_block_2],
+            domain=self.domain,
+        )
+        populate_case_search_index([case1, case2])  # needed for permission checks
+
+        url = reverse('case_api_detail_ext', args=(self.domain, external_id))
+        res = self.client.get(url)
+
+        assert res.status_code == 400
+        error_response = res.json()
+        assert 'Multiple cases found' in error_response['error']
+        assert external_id in error_response['error']
+        assert case1.case_id in error_response['error']
+        assert case2.case_id in error_response['error']
