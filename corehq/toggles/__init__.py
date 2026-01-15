@@ -133,25 +133,15 @@ TAG_GA_PATH = Tag(
     css_class='release',
     description='This is a feature that we plan to move to General Availability in the future.',
 )
-# Order roughly corresponds to how much we want you to use it
-ALL_TAG_GROUPS = [
-    TAG_GA_PATH,
-    TAG_DEPRECATED,
-    TAG_FROZEN,
-    TAG_INTERNAL,
 
-    # No longer used, but still applies to some FrozenPrivilegeToggles:
-    TAG_SOLUTIONS,
-    TAG_PRODUCT,
-    TAG_CUSTOM,
+ALL_TAG_GROUPS = [
     TAG_RELEASE,
+    TAG_GA_PATH,
+    TAG_FROZEN,
+    TAG_DEPRECATED,
+    TAG_INTERNAL,
 ]
-ALL_TAGS = [
-    TAG_SOLUTIONS_OPEN,
-    TAG_SOLUTIONS_CONDITIONAL,
-    TAG_SOLUTIONS_LIMITED,
-    TAG_SAAS_CONDITIONAL,
-] + ALL_TAG_GROUPS
+ALL_TAGS = ALL_TAG_GROUPS
 
 
 class StaticToggle(object):
