@@ -1888,7 +1888,7 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'disable_case_update_rule_task',
     'Disable the `run_case_update_rules` periodic task '
     'while investigating database performance issues.',
-    TAG_GA_PATH,
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -2168,7 +2168,7 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
     'USH-BHA: Control which domains will be included in the prime formplayer task runs',
-    TAG_GA_PATH,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2963013633/Prime+Formplayer+DBS+BHA"
 )
@@ -2564,7 +2564,7 @@ CUSTOM_EMAIL_GATEWAY = StaticToggle(
 ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
     'allow_web_apps_restriction',
     'Makes domain eligible to be restricted from using web apps/app preview.',
-    tag=TAG_GA_PATH,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     When enabled, the domain is eligible to be restricted from using web apps/app preview. The intention is
@@ -2884,13 +2884,13 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
-    tag=TAG_GA_PATH,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
 CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     slug='convert_xml_group_separator',
     label='Convert the group separator to a symbol XML can support',
-    tag=TAG_CUSTOM,
+    tag=TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN]
 )
