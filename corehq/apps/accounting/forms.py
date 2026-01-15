@@ -2409,6 +2409,8 @@ class AdjustBalanceForm(forms.Form):
         )
     )
 
+    payment_type = forms.ChoiceField(choices=PaymentType.CHOICES)
+
     note = forms.CharField(
         required=True,
         widget=forms.Textarea(attrs={"class": "vertical-resize"}),
@@ -2457,6 +2459,7 @@ class AdjustBalanceForm(forms.Form):
                     </div>
                 '''),
                 crispy.Field('adjustment_reason'),
+                crispy.Field('payment_type'),
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
                 'adjust',
@@ -2499,6 +2502,7 @@ class AdjustBalanceForm(forms.Form):
                         else self.invoice.subscription.account),
             'note': self.cleaned_data['note'],
             'reason': reason,
+            'payment_type': self.cleaned_data['payment_type'],
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }

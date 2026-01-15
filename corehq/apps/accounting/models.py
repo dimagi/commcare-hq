@@ -3300,10 +3300,20 @@ class CreditLine(models.Model):
         if self.subscription:
             get_credits_available_for_product_in_subscription.clear(self.subscription)
 
-    def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None, customer_invoice=None,
-                              payment_record=None, related_credit=None,
-                              reason=None, web_user=None):
+    def adjust_credit_balance(
+        self,
+        amount,
+        is_new=False,
+        note=None,
+        line_item=None,
+        invoice=None,
+        customer_invoice=None,
+        payment_record=None,
+        related_credit=None,
+        reason=None,
+        payment_type=None,
+        web_user=None,
+    ):
         note = note or ""
         if line_item is not None and (invoice is not None or customer_invoice is not None):
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
@@ -3326,6 +3336,7 @@ class CreditLine(models.Model):
             note=note,
             amount=amount,
             reason=reason,
+            payment_type=payment_type,
             payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
@@ -3473,10 +3484,24 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
-    def add_credit(cls, amount, account=None, subscription=None,
-                   is_product=False, feature_type=None, payment_record=None,
-                   invoice=None, customer_invoice=None, line_item=None, related_credit=None,
-                   note=None, reason=None, web_user=None, permit_inactive=False):
+    def add_credit(
+        cls,
+        amount,
+        account=None,
+        subscription=None,
+        is_product=False,
+        feature_type=None,
+        payment_record=None,
+        invoice=None,
+        customer_invoice=None,
+        line_item=None,
+        related_credit=None,
+        note=None,
+        reason=None,
+        payment_type=None,
+        web_user=None,
+        permit_inactive=False,
+    ):
         if account is None and subscription is None:
             raise CreditLineError(
                 "You must specify either a subscription "
@@ -3523,11 +3548,19 @@ class CreditLine(models.Model):
                 feature_type=feature_type,
             )
             is_new = True
-        credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
-                                          payment_record=payment_record,
-                                          invoice=invoice, customer_invoice=customer_invoice, line_item=line_item,
-                                          related_credit=related_credit,
-                                          reason=reason, web_user=web_user)
+        credit_line.adjust_credit_balance(
+            amount,
+            is_new=is_new,
+            note=note,
+            payment_record=payment_record,
+            invoice=invoice,
+            customer_invoice=customer_invoice,
+            line_item=line_item,
+            related_credit=related_credit,
+            reason=reason,
+            payment_type=payment_type,
+            web_user=web_user,
+        )
         return credit_line
 
     @classmethod
