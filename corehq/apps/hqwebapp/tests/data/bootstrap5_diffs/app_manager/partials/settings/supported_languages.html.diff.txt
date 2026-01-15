@@ -1,14 +1,15 @@
 --- 
 +++ 
-@@ -3,35 +3,35 @@
+@@ -2,46 +2,57 @@
+ <div data-bind="saveButton: saveButton"></div>
  <table class="table table-languages">
    <tbody data-bind="sortable: languages">
-   <tr data-bind="
+-  <tr data-bind="
 -                css: {'has-error': show_error},
-+                css: {'has-error': show_error},  {# todo B5: css-has-error #}
-                 attr: {'data-order': _sortableOrder}
-                 ">
+-                attr: {'data-order': _sortableOrder}
+-                ">
 -    <td class="col-sm-1" data-bind="css: {'sortable-handle': $root.canSortLanguages}">
++  <tr data-bind="attr: {'data-order': _sortableOrder}">
 +    <td class="col-md-1" data-bind="css: {'sortable-handle': $root.canSortLanguages}">
        <i class="fa-solid fa-up-down" data-bind="visible: $root.canSortLanguages"></i>
      </td>
@@ -26,8 +27,14 @@
 +      <span class="badge text-bg-secondary" data-bind="visible: isDefaultLang()">default</span>
      </td>
 -    <td class="col-sm-4">
+-      <p class="help-block" data-bind="text: message"></p>
 +    <td class="col-md-4">
-       <p class="help-block" data-bind="text: message"></p>
++      <p
++        class="help-block"
++        data-bind="
++          text: message,
++          css: {'text-danger': show_error}"
++      ></p>
        <p class="help-block" data-bind="text: originalLangcodeMessage, visible: originalLangcode() !== langcode()"></p>
      </td>
 -    <td class="col-sm-2">
@@ -48,16 +55,31 @@
    <i class="fa fa-plus"></i>
    {% trans "Add Language" %}
  </button>
-@@ -39,7 +39,7 @@
+ <span class='help-block' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
  {% if show_smart_lang_option %}
-   <div data-bind="visible: showSmartLangDisplayOption">
-     <br/>
+-  <div data-bind="visible: showSmartLangDisplayOption">
+-    <br/>
 -    <input type="checkbox" data-bind="checked: smartLangDisplay"/>
-+    <input type="checkbox" data-bind="checked: smartLangDisplay"/>  {# todo B5: css-checkbox #}
-     {% trans "Smart language display in forms" %}.
-     <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms" target="_blank">Learn more</a>
+-    {% trans "Smart language display in forms" %}.
+-    <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms" target="_blank">Learn more</a>
++  <div class="form-check" data-bind="visible: showSmartLangDisplayOption">
++    <input
++      type="checkbox"
++      class="form-check-input"
++      id="smart-lang-checkbox"
++      data-bind="checked: smartLangDisplay"
++    />
++    <label class="form-check-label" for="smart-lang-checkbox">
++      {% trans "Smart language display in forms" %}.
++      <a
++        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms"
++        target="_blank"
++      >Learn more</a>
++    </label>
    </div>
-@@ -50,7 +50,7 @@
+ {% endif %}
+ <div data-bind="if: removedLanguages().length" class="removed-languages">
+@@ -50,7 +61,7 @@
      <tbody data-bind="foreach: removedLanguages">
      <tr>
        <td><p data-bind="text: langcode"></p></td>
