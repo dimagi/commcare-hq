@@ -162,7 +162,7 @@ var newAttendeeCreationModel = function () {
     };
 
     self.submitNewAttendee = function () {
-        Modal.getInstance($("#new-attendee-modal")).hide();
+        Modal.getInstance("#new-attendee-modal").hide();
         //var newAttendee = ko.mapping.toJS(self.stagedAttendee);
         var newAttendee = attendeeModel(ko.mapping.toJS(self.stagedAttendee));
         self.newAttendees.push(newAttendee);
