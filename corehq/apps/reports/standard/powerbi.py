@@ -101,19 +101,19 @@ def get_powerbi_embed_token(request, domain):
         # Get Azure AD access token
         access_token = app.get_access_token()
 
-        # Generate embed token for the report
-        embed_token_url = f'{workspace.api_endpoint}/v1.0/myorg/GenerateToken'
+        # Generate embed token for the report using workspace-specific endpoint
+        embed_token_url = (
+            f'{workspace.api_endpoint}/v1.0/myorg/groups/{workspace.workspace_id}'
+            f'/reports/{report.report_id}/GenerateToken'
+        )
 
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {access_token}'
         }
 
-        # Request body for embed token generation
-        body = {
-            'reports': [{'id': report.report_id}],
-            'targetWorkspaces': [{'id': workspace.workspace_id}]
-        }
+        # Workspace-specific endpoint doesn't require a body, but we can pass an empty one
+        body = {}
 
         response = requests.post(embed_token_url, json=body, headers=headers)
         response.raise_for_status()
