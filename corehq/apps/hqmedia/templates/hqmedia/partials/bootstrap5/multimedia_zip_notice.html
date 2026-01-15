@@ -19,11 +19,20 @@
 
 {% if multimedia_state.has_media %}
   {% if not include_modal and build_profile_access and not app.is_remote_app and app.build_profiles %}
-    <div class="form-inline">  {# todo B5: css-form-inline #}
-      <label style="font-weight: normal">{% trans "Application Profile" %}:</label>  {# todo B5: inline-style #}
-      <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-select"></select>  {# todo B5: inline-style #}
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <label for="multimedia-build-profile" class="col-form-label fw-normal">
+          {% trans "Application Profile" %}:
+        </label>
+      </div>
+      <div class="col-md-9">
+        <select
+          class="form-select"
+          id="multimedia-build-profile"
+          data-bind="optstr: build_profiles(), value: build_profile"
+        ></select>
+      </div>
     </div>
-    <br/>
   {% endif %}
   <p>
     <a class="btn btn-info{% if include_modal %} download-zip{% endif %}"

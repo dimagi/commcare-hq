@@ -2,10 +2,7 @@
 <div data-bind="saveButton: saveButton"></div>
 <table class="table table-languages">
   <tbody data-bind="sortable: languages">
-  <tr data-bind="
-                css: {'has-error': show_error},  {# todo B5: css-has-error #}
-                attr: {'data-order': _sortableOrder}
-                ">
+  <tr data-bind="attr: {'data-order': _sortableOrder}">
     <td class="col-md-1" data-bind="css: {'sortable-handle': $root.canSortLanguages}">
       <i class="fa-solid fa-up-down" data-bind="visible: $root.canSortLanguages"></i>
     </td>
@@ -19,7 +16,12 @@
       <span class="badge text-bg-secondary" data-bind="visible: isDefaultLang()">default</span>
     </td>
     <td class="col-md-4">
-      <p class="help-block" data-bind="text: message"></p>
+      <p
+        class="help-block"
+        data-bind="
+          text: message,
+          css: {'text-danger': show_error}"
+      ></p>
       <p class="help-block" data-bind="text: originalLangcodeMessage, visible: originalLangcode() !== langcode()"></p>
     </td>
     <td class="col-md-2">
@@ -37,11 +39,20 @@
 </button>
 <span class='help-block' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
 {% if show_smart_lang_option %}
-  <div data-bind="visible: showSmartLangDisplayOption">
-    <br/>
-    <input type="checkbox" data-bind="checked: smartLangDisplay"/>  {# todo B5: css-checkbox #}
-    {% trans "Smart language display in forms" %}.
-    <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms" target="_blank">Learn more</a>
+  <div class="form-check" data-bind="visible: showSmartLangDisplayOption">
+    <input
+      type="checkbox"
+      class="form-check-input"
+      id="smart-lang-checkbox"
+      data-bind="checked: smartLangDisplay"
+    />
+    <label class="form-check-label" for="smart-lang-checkbox">
+      {% trans "Smart language display in forms" %}.
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms"
+        target="_blank"
+      >Learn more</a>
+    </label>
   </div>
 {% endif %}
 <div data-bind="if: removedLanguages().length" class="removed-languages">
