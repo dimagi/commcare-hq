@@ -11,8 +11,8 @@ from corehq.apps.accounting.models import (
     CreditLine,
     CustomerInvoice,
     Invoice,
-    LastPayment,
     PaymentRecord,
+    PaymentType,
     PreOrPostPay,
     StripePaymentMethod,
 )
@@ -62,7 +62,7 @@ class BaseStripePaymentHandler(object):
         raise NotImplementedError("you must implement update_credits")
 
     def update_payment_information(self, account):
-        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.last_payment_method = PaymentType.CC_ONE_TIME
         account.pre_or_post_pay = PreOrPostPay.POSTPAY
         account.save()
 
@@ -350,7 +350,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def update_payment_information(self, account):
-        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.last_payment_method = PaymentType.CC_ONE_TIME
         account.pre_or_post_pay = PreOrPostPay.PREPAY
         account.save()
 
@@ -439,7 +439,7 @@ class AutoPayInvoicePaymentHandler(object):
                 log_accounting_error(f"[Autopay] {invoice_label.title()} was double charged {invoice.id}")
             else:
                 invoice.pay_invoice(payment_record)
-                account.last_payment_method = LastPayment.CC_AUTO
+                account.last_payment_method = PaymentType.CC_AUTO
                 account.save()
                 self._send_payment_receipt(invoice, payment_record)
 

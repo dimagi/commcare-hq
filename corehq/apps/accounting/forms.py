@@ -59,7 +59,7 @@ from corehq.apps.accounting.models import (
     FundingSource,
     Invoice,
     InvoicingPlan,
-    LastPayment,
+    PaymentType,
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlan,
@@ -152,7 +152,7 @@ class BillingAccountBasicForm(forms.Form):
     )
     last_payment_method = forms.ChoiceField(
         label=gettext_lazy("Last Payment Method"),
-        choices=LastPayment.CHOICES
+        choices=PaymentType.CHOICES
     )
     pre_or_post_pay = forms.ChoiceField(
         label=gettext_lazy("Prepay or Postpay"),
@@ -206,7 +206,7 @@ class BillingAccountBasicForm(forms.Form):
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
                 'entry_point': EntryPoint.CONTRACTED,
-                'last_payment_method': LastPayment.NONE,
+                'last_payment_method': PaymentType.NONE,
                 'pre_or_post_pay': PreOrPostPay.POSTPAY,
                 'invoicing_plan': InvoicingPlan.MONTHLY
             }

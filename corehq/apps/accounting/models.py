@@ -313,7 +313,7 @@ class EntryPoint(object):
     )
 
 
-class LastPayment(object):
+class PaymentType(object):
     CC_ONE_TIME = "CC_ONE_TIME"
     CC_AUTO = "CC_AUTO"
     WIRE = "WIRE"
@@ -427,8 +427,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
-        default=LastPayment.NONE,
-        choices=LastPayment.CHOICES,
+        default=PaymentType.NONE,
+        choices=PaymentType.CHOICES,
     )
     pre_or_post_pay = models.CharField(
         max_length=25,
@@ -466,7 +466,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
                                   pre_or_post_pay=None):
         account_type = account_type or BillingAccountType.INVOICE_GENERATED
         entry_point = entry_point or EntryPoint.NOT_SET
-        last_payment_method = last_payment_method or LastPayment.NONE
+        last_payment_method = last_payment_method or PaymentType.NONE
         pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
         default_name = DEFAULT_ACCOUNT_FORMAT % domain
         name = get_account_name_from_default_name(default_name)
