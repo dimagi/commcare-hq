@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
@@ -36,14 +35,6 @@ class Tag:
         return ALL_TAGS.index(self)
 
 
-TAG_CUSTOM = Tag(
-    name='One-Off / Custom',
-    slug='custom',
-    css_class='warning',
-    description="This feature flag was created for one specific project. "
-                "Please don't enable it for any other projects. "
-                "This is NOT SUPPORTED outside of that project and may break other features.",
-)
 TAG_DEPRECATED = Tag(
     name='Deprecated',
     slug='deprecated',
@@ -58,14 +49,7 @@ TAG_FROZEN = Tag(
     description="This feature flag will be removed with an alternative solution in future. "
                 "Do not add new projects to this list."
 )
-TAG_PRODUCT = Tag(
-    name='Product',
-    slug='product',
-    css_class='success',
-    description="This is a core-product feature that you should feel free to "
-                "use.  We've feature-flagged until release.",
-)
-TAG_PREVIEW = Tag(
+TAG_PREVIEW = Tag(  # Used by FeaturePreview
     name='Preview',
     slug='preview',
     css_class='default',
@@ -76,50 +60,6 @@ TAG_RELEASE = Tag(
     slug='release',
     css_class='release',
     description='This is a feature that is in the process of being released.',
-)
-TAG_SAAS_CONDITIONAL = Tag(
-    name='SaaS - Conditional Use',
-    slug='saas_conditional',
-    css_class='primary',
-    description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
-                "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "  # noqa: E501
-                "customer."
-)
-TAG_SOLUTIONS = Tag(
-    name='Solutions',
-    slug='solutions',
-    css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription."
-)
-TAG_SOLUTIONS_OPEN = Tag(
-    name='Solutions - Open Use',
-    slug='solutions_open',
-    css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "  # noqa: E501
-                "enabled by GS."
-)
-TAG_SOLUTIONS_CONDITIONAL = Tag(
-    name='Solutions - Conditional Use',
-    slug='solutions_conditional',
-    css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "  # noqa: E501
-                "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."  # noqa: E501
-)
-TAG_SOLUTIONS_LIMITED = Tag(
-    name='Solutions - Limited Use',
-    slug='solutions_limited',
-    css_class='info',
-    description=mark_safe(  # nosec: no user input
-        'These features are only available for our services projects. This '
-        'may affect support and pricing when the project is transitioned to a '
-        'subscription. Limited Use Solutions Feature Flags cannot be enabled '
-        'by GS before submitting a <a href="https://docs.google.com/forms/d/e/'
-        '1FAIpQLSfsX0K05nqflGdboeRgaa40HMfFb2DjGUbP4cKJL76ieS_TAA/viewform">'
-        'SolTech Feature Flag Request</a>.'
-    )
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
@@ -357,7 +297,7 @@ class FrozenPrivilegeToggle(StaticToggle):
         MY_DOMAIN_TOGGLE = StaticToggle(
             'toggle_name',
             'Title',
-            TAG_PRODUCT,
+            TAG_GA_PATH,
             namespaces=[NAMESPACE_DOMAIN],
             description='Description'
         )
@@ -366,7 +306,7 @@ class FrozenPrivilegeToggle(StaticToggle):
             privilege_name
             'toggle_name',
             'Title',
-            TAG_PRODUCT,
+            TAG_GA_PATH,
             namespaces=[NAMESPACE_DOMAIN],
             description='Description'
         )

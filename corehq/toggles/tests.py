@@ -9,7 +9,7 @@ from django.test.client import RequestFactory
 from corehq.toggles import (
     NAMESPACE_USER,
     NAMESPACE_DOMAIN,
-    TAG_CUSTOM,
+    TAG_INTERNAL,
     PredictablyRandomToggle,
     StaticToggle,
     deterministic_random,
@@ -139,7 +139,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER, NAMESPACE_DOMAIN],
             randomness=0.99
         )
@@ -149,7 +149,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER],
             randomness=0.99
         )
@@ -160,7 +160,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_DOMAIN],
             randomness=0.99
         )
@@ -171,7 +171,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER],
             randomness=0.99
         )
@@ -181,7 +181,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_DOMAIN],
             randomness=0.99
         )
@@ -214,7 +214,7 @@ class PredictablyRandomToggleTests(TestCase):
         toggle = PredictablyRandomToggle(
             'user_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER],
             randomness=0.01
         )
@@ -225,7 +225,7 @@ class PredictablyRandomToggleTests(TestCase):
         toggle = PredictablyRandomToggle(
             'user_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER],
             randomness=1.00
         )
@@ -238,7 +238,7 @@ class PredictablyRandomToggleTests(TestCase):
         toggle = PredictablyRandomToggle(
             'domain_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_DOMAIN],
             randomness=0.01
         )
@@ -249,7 +249,7 @@ class PredictablyRandomToggleTests(TestCase):
         toggle = PredictablyRandomToggle(
             'domain_toggle',
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_DOMAIN],
             randomness=1.00
         )
@@ -265,7 +265,7 @@ class DynamicPredictablyRandomToggleTests(TestCase):
             toggle = DynamicallyPredictablyRandomToggle(
                 'dynamic_toggle_no_doc{}'.format(randomness),
                 'A toggle for testing',
-                TAG_CUSTOM,
+                TAG_INTERNAL,
                 [NAMESPACE_USER],
                 default_randomness=randomness,
             )
@@ -276,7 +276,7 @@ class DynamicPredictablyRandomToggleTests(TestCase):
             toggle = DynamicallyPredictablyRandomToggle(
                 'dynamic_toggle_no_value{}'.format(randomness),
                 'A toggle for testing',
-                TAG_CUSTOM,
+                TAG_INTERNAL,
                 [NAMESPACE_USER],
                 default_randomness=randomness,
             )
@@ -303,7 +303,7 @@ class DynamicPredictablyRandomToggleTests(TestCase):
         toggle = DynamicallyPredictablyRandomToggle(
             'override_dynamic_toggle_{}'.format(test_id),
             'A toggle for testing',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER],
             default_randomness=default_randomness,
         )
@@ -340,7 +340,7 @@ class ShortcutTests(TestCase):
         user_toggle = StaticToggle(
             'user_toggle',
             'A test toggle',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER]
         )
         users = find_users_with_toggle_enabled(user_toggle)
@@ -350,7 +350,7 @@ class ShortcutTests(TestCase):
         domain_toggle = StaticToggle(
             'domain_toggle',
             'A test toggle',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER]
         )
         domain, = find_domains_with_toggle_enabled(domain_toggle)
@@ -392,7 +392,7 @@ class NamespaceTests(TestCase):
         email_domain_toggle = StaticToggle(
             'email_domain_namespace_toggle',
             'A test toggle',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_EMAIL_DOMAIN]
         )
         email_domain_toggle.set('somedomain.com', True, namespace=NAMESPACE_EMAIL_DOMAIN)
@@ -405,7 +405,7 @@ class NamespaceTests(TestCase):
         domain_toggle = StaticToggle(
             'domain_namespace_toggle',
             'A test toggle',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_DOMAIN]
         )
         domain_toggle.set(self.domain.name, True, namespace=NAMESPACE_DOMAIN)
@@ -418,7 +418,7 @@ class NamespaceTests(TestCase):
         user_toggle = StaticToggle(
             'user_namespace_toggle',
             'A test toggle',
-            TAG_CUSTOM,
+            TAG_INTERNAL,
             [NAMESPACE_USER]
         )
         user_toggle.set(self.user.username, True, namespace=NAMESPACE_USER)
@@ -435,14 +435,14 @@ class TestToggleEditPermissionShortcuts(TestCase):
         super().setUpClass()
         cls.users = ['arthur', 'diane']
         cls.tag_custom_edit_permission = ToggleEditPermission.objects.create(
-            tag_slug=TAG_CUSTOM.slug,
+            tag_slug=TAG_INTERNAL.slug,
             enabled_users=['arthur']
         )
         cls.addClassCleanup(cls.tag_custom_edit_permission.delete)
 
     def test_get_tags_with_edit_permission(self):
         allowed_tags = get_editable_toggle_tags_for_user('arthur')
-        assert allowed_tags == [TAG_CUSTOM]
+        assert allowed_tags == [TAG_INTERNAL]
 
         allowed_tags = get_editable_toggle_tags_for_user('diane')
         assert allowed_tags == []
