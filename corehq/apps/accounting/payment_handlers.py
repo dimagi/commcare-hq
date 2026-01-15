@@ -445,7 +445,7 @@ class AutoPayInvoicePaymentHandler(object):
             except IntegrityError:
                 log_accounting_error(f"[Autopay] {invoice_label.title()} was double charged {invoice.id}")
             else:
-                invoice.pay_invoice(payment_record)
+                invoice.pay_invoice(payment_record, payment_type=PaymentType.CC_AUTO)
                 account.last_payment_method = PaymentType.CC_AUTO
                 account.save()
                 self._send_payment_receipt(invoice, payment_record)

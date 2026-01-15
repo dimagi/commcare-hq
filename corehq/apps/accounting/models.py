@@ -2189,10 +2189,11 @@ class Invoice(InvoiceBase):
             invoices = invoices.filter(date_due=date_due)
         return invoices
 
-    def pay_invoice(self, payment_record):
+    def pay_invoice(self, payment_record, payment_type=None):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
 
         self.update_balance()
@@ -2281,10 +2282,11 @@ class CustomerInvoice(InvoiceBase):
         credit_lines = CreditLine.get_credits_for_customer_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
 
-    def pay_invoice(self, payment_record):
+    def pay_invoice(self, payment_record, payment_type=None):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
 
         self.update_balance()
@@ -3579,7 +3581,7 @@ class CreditLine(models.Model):
                 balance -= adjustment_amount
 
     @classmethod
-    def make_payment_towards_invoice(cls, invoice, payment_record):
+    def make_payment_towards_invoice(cls, invoice, payment_record, payment_type=None):
         """ Make a payment for a billing account towards an invoice """
         if invoice.is_customer_invoice:
             billing_account = invoice.account
@@ -3589,6 +3591,7 @@ class CreditLine(models.Model):
             payment_record.amount,
             account=billing_account,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
         cls.add_credit(
             -payment_record.amount,
