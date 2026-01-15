@@ -11,7 +11,7 @@ import supportedLanguages from "app_manager/js/bootstrap3/supported_languages";
 import google from "analytix/js/google";
 import widgets from "hqwebapp/js/bootstrap3/widgets";
 import main from "hqwebapp/js/bootstrap3/main";
-import translations from "translations/js/translations";
+import translations from "translations/js/bootstrap3/translations";
 import appManager from "app_manager/js/bootstrap3/app_manager";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/select2_knockout_bindings.ko";

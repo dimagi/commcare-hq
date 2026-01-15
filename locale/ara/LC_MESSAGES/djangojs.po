@@ -206,29 +206,35 @@ msgstr "مخطط"
 msgid "Show All Dates"
 msgstr "عرض جميع التواريخ"
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 #: corehq/apps/locations/static/locations/js/location_types.js
 msgid "You have unsaved changes."
 msgstr "لديك تغييرات غير محفوظة."
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 msgid "There was an error saving."
 msgstr "حدث خطأ أثناء الحفظ."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "Hide Past Versions"
 msgstr "إخفاء الإصدارات السابقة"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
 msgid "See Past Versions"
 msgstr "عرض الإصدارات السابقة"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr "يمكن أن تتضمن أنواع الحالات فقط الأحرف a-z، والأرقام 0-9، و'-' و'_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "This is a reserved case type. Refer to <a "
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
@@ -238,36 +244,45 @@ msgstr ""
 "href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
 " target=\"_blank\" rel=\"noopener\">الوثيقة</a> قبل الاستخدام."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
 msgstr "هذا نوع حالة محجوز. يرجى اختيار اسم آخر."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "This case type has been deprecated in the Data Dictionary."
 msgstr "تم إيقاف استخدام نوع الحالة هذا في قاموس البيانات."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
 msgid "Add"
 msgstr "إضافة"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Moved successfully."
 msgstr "تم النقل بنجاح."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "You have unsaved changes"
 msgstr "لديك تغييرات غير محفوظة"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "Add a new case type or use an existing one"
 msgstr "أضف نوع حالة جديد أو استخدم نوعًا موجودًا"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Survey Menu?"
 msgstr "ما هو قائمة الاستبيانات؟"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Surveys are used to collect independent forms that do not need to be tracked"
 " over time. Common examples include satisfaction surveys or anonymous "
@@ -276,11 +291,13 @@ msgstr ""
 "تُستخدم الاستبيانات لجمع نماذج مستقلة لا تحتاج إلى تتبعها مع مرور الوقت. من "
 "الأمثلة الشائعة استبيانات الرضا أو نماذج الملاحظات المجهولة."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid "What is a Case List?"
 msgstr "ما هي قائمة الحالات؟"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 msgid ""
 "Case Lists are used to register and track related data (cases) over time. "
 "This data can be referenced in other forms and by other cases. Common "
@@ -290,22 +307,327 @@ msgstr ""
 "الوقت. يمكن الرجوع إلى هذه البيانات في نماذج أخرى أو من خلال حالات أخرى. من "
 "الأمثلة الشائعة: صحة الأم، حضور الطلاب، أو مراقبة المحاصيل."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Application name is required"
 msgstr "اسم التطبيق مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Project name is required"
 msgstr "اسم المشروع مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
 msgid "Invalid Project Selected"
 msgstr "تم اختيار مشروع غير صالح"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr "عذرًا، حدثت مشكلة في تحميل هذا القسم. يرجى المحاولة مرة أخرى."
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Active"
+msgstr "نشط"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Inactive"
+msgstr "غير نشط"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Deactivate"
+msgstr "إلغاء التفعيل"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Activate"
+msgstr "تفعيل"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
+#: corehq/apps/sms/static/sms/js/add_gateway.js
+msgid "Remove"
+msgstr "إزالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/source_files.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/source_files.js
+msgid "Please enter a version to compare"
+msgstr "يرجى إدخال إصدار للمقارنة"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Warning: unrecognized language"
+msgstr "تحذير: لغة غير معروفة"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You have unsaved changes in your supported languages"
+msgstr "لديك تغييرات غير محفوظة في اللغات المدعومة"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "There are errors in your configuration"
+msgstr "هناك أخطاء في الإعدادات"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You must have at least one language"
+msgstr "يجب أن يكون لديك لغة واحدة على الأقل"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Please enter language"
+msgstr "يرجى إدخال اللغة"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Invalid language code"
+msgstr "رمز لغة غير صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Language appears twice"
+msgstr "اللغة مكررة"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "This conflicts with a current language"
+msgstr "هذا يتعارض مع لغة حالية"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache"
+msgstr "التخزين المؤقت"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Lazy Load"
+msgstr "التحميل الكسول"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache & Lazy Load"
+msgstr "التخزين المؤقت والتحميل الكسول"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Tab Name"
+msgstr "اسم التبويب"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Display Condition"
+msgstr "شرط العرض"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"تحذير: الخاصية المحسوبة المستخدمة غير متوافقة مع التخزين المؤقت وقد تؤدي إلى"
+" بيانات قديمة في خصائص قائمة الحالات"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Oct 31, "
+msgstr "31 أكتوبر، "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Format "
+msgstr " تنسيق "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Days late "
+msgstr " أيام متأخرة "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Years since date"
+msgstr "سنوات منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months since date"
+msgstr "أشهر منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks since date"
+msgstr "أسابيع منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days since date"
+msgstr "أيام منذ التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days until date"
+msgstr "أيام حتى التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks until date"
+msgstr "أسابيع حتى التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months until date"
+msgstr "أشهر حتى التاريخ"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Measuring "
+msgstr " القياس "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Custom Expression"
+msgstr "علامة التبويب البيانات: تعبير مخصص"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Child Cases: "
+msgstr "علامة التبويب البيانات: الحالات الفرعية: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid "Edit Graph"
+msgstr "تعديل الرسم البياني"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Copied!"
+msgstr "تم النسخ!"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid ""
+"It is recommended that you leave this value blank. Future changes to your "
+"report's chart configuration will not be reflected here."
+msgstr ""
+"يُنصح بترك هذه القيمة فارغة. لن تنعكس التغييرات المستقبلية على إعدادات مخطط "
+"التقرير هنا."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "لا تستخدم مربعات الحالة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Manually configure Case Tiles"
+msgstr "تكوين مربعات الحالة يدويًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Edit Custom Variables"
+msgstr "تعديل المتغيرات المخصصة"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You have unsaved detail screen configurations."
+msgstr "لديك إعدادات شاشة تفاصيل غير محفوظة."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your tab: "
+msgstr "هناك خطأ في التبويب الخاص بك: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your property name: "
+msgstr "هناك خطأ في اسم الخاصية: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr "يمكنك فقط وجود خاصية واحدة بتنسيق 'صورة'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "All properties must be below a tab."
+msgstr "يجب أن تكون جميع الخصائص تحت تبويب."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid ""
+"Search Properties and Default Search Filters can't have common properties. "
+"Please update following properties: "
+msgstr ""
+"لا يمكن أن يكون لخصائص البحث ومرشحات البحث الافتراضية خصائص مشتركة. يرجى "
+"تحديث الخصائص التالية: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There are errors in your configuration."
+msgstr "هناك أخطاء في إعداداتك."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr "<%- name %> (خاصية محسوبة رقم <%- index %>)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (a, b, c)"
+msgstr "تصاعدي (أ، ب، ج)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (May 1st, May 2nd)"
+msgstr "تصاعدي (1 مايو، 2 مايو)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1, 2, 3)"
+msgstr "تصاعدي (1، 2، 3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1.1, 1.2, 1.3)"
+msgstr "تصاعدي (1.1، 1.2، 1.3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (c, b, a)"
+msgstr "تنازلي (ج، ب، أ)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (May 2nd, May 1st)"
+msgstr "تنازلي (2 مايو، 1 مايو)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (3, 2, 1)"
+msgstr "تنازلي (3، 2، 1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (1.3, 1.2, 1.1)"
+msgstr "تنازلي (1.3، 1.2، 1.1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort calculation."
+msgstr "حساب الترتيب مفقود."
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort property."
+msgstr "خاصية الترتيب مفقودة."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Mobile UCR Options"
@@ -324,7 +646,8 @@ msgid "Lookup Table Options"
 msgstr "خيارات جدول البحث"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Lookup Table"
 msgstr "جدول البحث"
 
@@ -332,107 +655,9 @@ msgstr "جدول البحث"
 msgid "Select a Lookup Table..."
 msgstr "اختر جدول بحث..."
 
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache"
-msgstr "التخزين المؤقت"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Lazy Load"
-msgstr "التحميل الكسول"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache & Lazy Load"
-msgstr "التخزين المؤقت والتحميل الكسول"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Tab Name"
-msgstr "اسم التبويب"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Display Condition"
-msgstr "شرط العرض"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid ""
-"Warning: Calculated property used is not compatible with caching and may "
-"result in stale data on case list properties"
-msgstr ""
-"تحذير: الخاصية المحسوبة المستخدمة غير متوافقة مع التخزين المؤقت وقد تؤدي إلى"
-" بيانات قديمة في خصائص قائمة الحالات"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Oct 31, "
-msgstr "31 أكتوبر، "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Format "
-msgstr " تنسيق "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Days late "
-msgstr " أيام متأخرة "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Years since date"
-msgstr "سنوات منذ التاريخ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months since date"
-msgstr "أشهر منذ التاريخ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks since date"
-msgstr "أسابيع منذ التاريخ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days since date"
-msgstr "أيام منذ التاريخ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days until date"
-msgstr "أيام حتى التاريخ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks until date"
-msgstr "أسابيع حتى التاريخ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months until date"
-msgstr "أشهر حتى التاريخ"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Measuring "
-msgstr " القياس "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Custom Expression"
-msgstr "علامة التبويب البيانات: تعبير مخصص"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Child Cases: "
-msgstr "علامة التبويب البيانات: الحالات الفرعية: "
-
 #: corehq/apps/app_manager/static/app_manager/js/details/fixture_select.js
 msgid "Select One"
 msgstr "اختر واحدًا"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid "Edit Graph"
-msgstr "تعديل الرسم البياني"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
-msgid "Copied!"
-msgstr "تم النسخ!"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid ""
-"It is recommended that you leave this value blank. Future changes to your "
-"report's chart configuration will not be reflected here."
-msgstr ""
-"يُنصح بترك هذه القيمة فارغة. لن تنعكس التغييرات المستقبلية على إعدادات مخطط "
-"التقرير هنا."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 #: corehq/apps/export/static/export/js/models.js
@@ -446,94 +671,6 @@ msgstr "الأصل"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr "قائمة غير معروفة"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Don't Use Case Tiles"
-msgstr "لا تستخدم مربعات الحالة"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Manually configure Case Tiles"
-msgstr "تكوين مربعات الحالة يدويًا"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Edit Custom Variables"
-msgstr "تعديل المتغيرات المخصصة"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You have unsaved detail screen configurations."
-msgstr "لديك إعدادات شاشة تفاصيل غير محفوظة."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your tab: "
-msgstr "هناك خطأ في التبويب الخاص بك: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your property name: "
-msgstr "هناك خطأ في اسم الخاصية: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You can only have one property with the 'Image' format"
-msgstr "يمكنك فقط وجود خاصية واحدة بتنسيق 'صورة'"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "All properties must be below a tab."
-msgstr "يجب أن تكون جميع الخصائص تحت تبويب."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid ""
-"Search Properties and Default Search Filters can't have common properties. "
-"Please update following properties: "
-msgstr ""
-"لا يمكن أن يكون لخصائص البحث ومرشحات البحث الافتراضية خصائص مشتركة. يرجى "
-"تحديث الخصائص التالية: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There are errors in your configuration."
-msgstr "هناك أخطاء في إعداداتك."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
-msgid "<%- name %> (Calculated Property #<%- index %>)"
-msgstr "<%- name %> (خاصية محسوبة رقم <%- index %>)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (a, b, c)"
-msgstr "تصاعدي (أ، ب، ج)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (May 1st, May 2nd)"
-msgstr "تصاعدي (1 مايو، 2 مايو)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1, 2, 3)"
-msgstr "تصاعدي (1، 2، 3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1.1, 1.2, 1.3)"
-msgstr "تصاعدي (1.1، 1.2، 1.3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (c, b, a)"
-msgstr "تنازلي (ج، ب، أ)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (May 2nd, May 1st)"
-msgstr "تنازلي (2 مايو، 1 مايو)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (3, 2, 1)"
-msgstr "تنازلي (3، 2، 1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (1.3, 1.2, 1.1)"
-msgstr "تنازلي (1.3، 1.2، 1.1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort calculation."
-msgstr "حساب الترتيب مفقود."
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort property."
-msgstr "خاصية الترتيب مفقودة."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
@@ -619,104 +756,129 @@ msgid ""
 "please report an issue."
 msgstr "عذراً، حدث خطأ أثناء التنزيل. إذا تكرر ذلك يرجى الإبلاغ عن المشكلة."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Type required"
 msgstr "نوع الحالة مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag required"
 msgstr "وسم الحالة مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "وسم الحالة: مسموح فقط بالأحرف أو الأرقام أو '-' أو '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag already in use"
 msgstr "وسم الحالة مستخدم بالفعل"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "subcase of"
 msgstr "حالة فرعية لـ"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "autoselect mode: "
 msgstr "وضع التحديد التلقائي: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid " (from fixture)"
 msgstr " (من التثبيت)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Autoselect mode required"
 msgstr "وضع التحديد التلقائي مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Property required"
 msgstr "خاصية مطلوبة"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case required"
 msgstr "الحالة مطلوبة"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Lookup table tag required"
 msgstr "وسم جدول البحث مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Expected case type required"
 msgstr "نوع الحالة المتوقع مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "مرجع الوالد للحالة الفرعية مفقود"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "معرف مرجع الوالد مطلوب للحالات الفرعية: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr "يجب أن تكون الحالة الفرعية في نفس سياق التكرار مثل الوالد \""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Select parent"
 msgstr "اختر الوالد"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Raw"
 msgstr "خام"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Data"
 msgstr "بيانات المستخدم"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Properties"
 msgstr "خصائص المستخدم"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Case Index"
 msgstr "فهرس الحالة"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "تحميل / تحديث / إغلاق حالة"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "اختيار الحالة تلقائياً"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "تحميل الحالة من التثبيت"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Open a Case"
 msgstr "فتح حالة"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "تم تحديث الخاصية بواسطة سؤالين"
 
@@ -725,7 +887,8 @@ msgid "Reserved word: "
 msgstr "كلمة محجوزة: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "داخل تكرار خاطئ!"
 
@@ -737,17 +900,60 @@ msgstr "مراجع خصائص الوالد غير مسموحة للحالات ا
 msgid "Two properties load to the same question"
 msgstr "خاصيتان يتم تحميلهما لنفس السؤال"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged case settings"
 msgstr "لديك إعدادات حالة لم تتغير"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "لديك إعدادات خصائص المستخدم غير معدلة"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "تستخدم الخاصية بادئة غير معروفة <strong>"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
+msgid "Edit Form"
+msgstr "تعديل النموذج"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
+msgid "Form Settings"
+msgstr "إعدادات النموذج"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "This form either no longer exists or has a different case type"
+msgstr "هذا النموذج إما لم يعد موجودًا أو لديه نوع حالة مختلف"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Unrecognized value"
+msgstr "قيمة غير معروفة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr "ربط البيانات يدويًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr "تعيين البيانات المطلوبة للتنقل إلى النموذج أو القائمة المحددة"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Datum ID"
+msgstr "معرّف البيانات"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "XPath Expression"
+msgstr "تعبير XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -767,155 +973,126 @@ msgstr ""
 msgid "Select a Question"
 msgstr "اختر سؤالاً"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js
-msgid "Edit Form"
-msgstr "تعديل النموذج"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Form Settings"
-msgstr "إعدادات النموذج"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "This form either no longer exists or has a different case type"
-msgstr "هذا النموذج إما لم يعد موجودًا أو لديه نوع حالة مختلف"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Unrecognized value"
-msgstr "قيمة غير معروفة"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Manual Linking Datums"
-msgstr "ربط البيانات يدويًا"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Set datums required to navigate to the selected form or menu"
-msgstr "تعيين البيانات المطلوبة للتنقل إلى النموذج أو القائمة المحددة"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Datum ID"
-msgstr "معرّف البيانات"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "XPath Expression"
-msgstr "تعبير XPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "نشط"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "غير نشط"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "إلغاء التفعيل"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "تفعيل"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/sms/static/sms/js/add_gateway.js
-msgid "Remove"
-msgstr "إزالة"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Menu Settings"
 msgstr "إعدادات القائمة"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Case type is required."
 msgstr "نوع الحالة مطلوب."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Go back to case list"
 msgstr "العودة إلى قائمة الحالات"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Proceed with registered case"
 msgstr "المتابعة مع الحالة المسجلة"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Show All"
 msgstr "عرض الكل"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Display text is required"
 msgstr "نص العرض مطلوب"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "You have unsaved changes in your report list module"
 msgstr "لديك تغييرات غير محفوظة في وحدة قائمة التقارير"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "This code is used in multiple places."
 msgstr "يتم استخدام هذا الرمز في أماكن متعددة."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/app_view_release_manager.js
 msgid "Releases"
 msgstr "الإصدارات"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "You have unsaved changes to your application profiles"
 msgstr "لديك تغييرات غير محفوظة في ملفات تعريف التطبيق"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "There was an error saving"
 msgstr "حدث خطأ أثناء الحفظ"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "Select a user"
 msgstr "اختر مستخدمًا"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "(Default)"
 msgstr "(افتراضي)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Unknown App"
 msgstr "تطبيق غير معروف"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 "حدث خطأ. أعد تحميل الصفحة وانقر على إنشاء إصدار جديد للمحاولة مرة أخرى."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr "عذرًا، لم تكتمل العملية. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "The versions list has changed since you loaded the page."
 msgstr "تغيرت قائمة الإصدارات منذ تحميلك للصفحة."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "No new changes!"
 msgstr "لا توجد تغييرات جديدة!"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
 msgstr "لديك تغييرات غير محفوظة في إعداد المطالبة"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr "قم بالترقية إلى CommCare %s لهذا الخيار!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr "قم بالترقية إلى CommCare %s!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Auto-set by "
 msgstr "تم التعيين تلقائيًا بواسطة "
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid ""
 "This value is currently inherited from the master app. Once this page is "
 "saved, it will no longer be inherited."
@@ -923,32 +1100,35 @@ msgstr ""
 "هذه القيمة موروثة حاليًا من التطبيق الرئيسي. بمجرد حفظ هذه الصفحة، لن تكون "
 "موروثة بعد ذلك."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "You have unsaved settings."
 msgstr "لديك إعدادات غير محفوظة."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Settings"
 msgstr "الإعدادات"
 
-#: corehq/apps/app_manager/static/app_manager/js/source_files.js
-msgid "Please enter a version to compare"
-msgstr "يرجى إدخال إصدار للمقارنة"
-
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "Filter properties"
 msgstr "تصفية الخصائص"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
 msgid "View All Cases"
 msgstr "عرض جميع الحالات"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_summary.js
 msgid "View All Forms"
 msgstr "عرض جميع النماذج"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
 msgid "View Changed Items"
 msgstr "عرض العناصر التي تم تغييرها"
 
@@ -1066,41 +1246,62 @@ msgstr "آخر حفظ"
 msgid "[unknown]"
 msgstr "[غير معروف]"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Warning: unrecognized language"
-msgstr "تحذير: لغة غير معروفة"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/129.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/414.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/437.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/879.js
+msgid "\n"
+msgstr "\n"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You have unsaved changes in your supported languages"
-msgstr "لديك تغييرات غير محفوظة في اللغات المدعومة"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getCurrentMugInput"
+msgstr "الحصول على إدخال الكوب الحالي"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "There are errors in your configuration"
-msgstr "هناك أخطاء في الإعدادات"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Streets"
+msgid "jstree"
+msgstr "شجرة JS"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You must have at least one language"
-msgstr "يجب أن يكون لديك لغة واحدة على الأقل"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Please enter language"
-msgstr "يرجى إدخال اللغة"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "getData"
+msgstr "الحصول على البيانات"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Invalid language code"
-msgstr "رمز لغة غير صالح"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "load"
+msgid "loadXML"
+msgstr "تحميل XML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Language appears twice"
-msgstr "اللغة مكررة"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "createXML"
+msgstr "إنشاءXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "This conflicts with a current language"
-msgstr "هذا يتعارض مع لغة حالية"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "loadXFormOrError"
+msgstr "تحميل XForm أو خطأ"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
-msgid "New Form"
-msgstr "نموذج جديد"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Add Question"
+msgid "addQuestion"
+msgstr "إضافة سؤال"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+msgid "nodeIDFromLabel"
+msgstr "معرّف العقدة من التسمية"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Questions"
+msgid "getSections"
+msgstr "الحصول على الأقسام"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#| msgid "Clear selection"
+msgid "collapseSection"
+msgstr "طي القسم"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
@@ -1142,39 +1343,27 @@ msgstr "صحيح عندما تكون جميع التعابير صحيحة."
 msgid "True when ANY of the expressions are true."
 msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} ليس أصل بيانات صالح"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "createXML"
-msgstr "إنشاءXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getData"
-msgstr "الحصول على البيانات"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Command Bar"
 msgstr "شريط الأوامر"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Basic"
 msgstr "أساسي"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Logic"
 msgstr "المنطق"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -1189,7 +1378,8 @@ msgid "no comment"
 msgstr "لا يوجد تعليق"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
-#: corehq/apps/translations/static/translations/js/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/app_translations.js
 msgid "Select Profile"
 msgstr "اختر الملف الشخصي"
 
@@ -3353,23 +3543,28 @@ msgstr ""
 "تعذر تحميل المستخدمين. يرجى المحاولة مرة أخرى لاحقًا أو الإبلاغ عن المشكلة "
 "إذا استمرت."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Delete Translation"
 msgstr "حذف الترجمة"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Add Translation"
 msgstr "إضافة ترجمة"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto fill translations"
 msgstr "إكمال الترجمة تلقائيًا"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto Fill translations"
 msgstr "إكمال الترجمة تلقائيًا"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
@@ -3377,15 +3572,18 @@ msgstr ""
 "سيتم اختيار الترجمات الأكثر شيوعًا للغة التي اخترتها. يمكنك تعديلها لاحقًا "
 "حسب الحاجة."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "You have unsaved user interface translations."
 msgstr "لديك ترجمات لواجهة المستخدم غير محفوظة."
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Parameters formatting problem!"
 msgstr "مشكلة في تنسيق المعاملات!"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "Autofill is not available in English (en). Please change your language using"
 " the dropdown in the top left."
@@ -4214,6 +4412,9 @@ msgstr "فشل! الاستجابة هي: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
+#~ msgid "New Form"
+#~ msgstr "نموذج جديد"
+
 #~ msgid "Your location"
 #~ msgstr "موقعك"
 
@@ -4244,9 +4445,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 #~ msgid "2-digit"
 #~ msgstr "رقمان"
 
-#~ msgid "Questions"
-#~ msgstr "الأسئلة"
-
 #~ msgid "Copy"
 #~ msgstr "نسخ"
 
@@ -4258,9 +4456,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
 #~ msgid "Bulk Update All Questions"
 #~ msgstr "تحديث جميع الأسئلة دفعة واحدة"
-
-#~ msgid "Add Question"
-#~ msgstr "إضافة سؤال"
 
 #~ msgid "Click {btn} to start building your form."
 #~ msgstr "انقر على {btn} للبدء في بناء النموذج."

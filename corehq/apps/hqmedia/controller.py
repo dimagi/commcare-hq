@@ -30,7 +30,7 @@ class BaseMultimediaFileUploadController(object):
             'uploadURL': self.destination,
             'uploadParams': self.upload_params,
             'errorsTemplate': render_to_string("hqmedia/uploader/errors.html"),
-            'queueTemplate': render_to_string("hqmedia/uploader/queue_single.html"),
+            'queueTemplate': render_to_string("hqmedia/uploader/bootstrap3/queue_single.html"),
         }
         if hasattr(self, 'existing_file_template'):
             options.update({'existingFileTemplate': render_to_string(self.existing_file_template)})
@@ -44,7 +44,7 @@ class BaseMultimediaFileUploadController(object):
 
 class MultimediaImageUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("image")
-    existing_file_template = "hqmedia/uploader/preview_image_single.html"
+    existing_file_template = "hqmedia/uploader/bootstrap3/preview_image_single.html"
 
 
 class MultimediaLogoUploadController(MultimediaImageUploadController):
@@ -54,10 +54,10 @@ class MultimediaLogoUploadController(MultimediaImageUploadController):
 class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("audio")
 
-    existing_file_template = "hqmedia/uploader/preview_audio_single.html"
+    existing_file_template = "hqmedia/uploader/bootstrap3/preview_audio_single.html"
 
 
 class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("video")
 
-    existing_file_template = "hqmedia/uploader/preview_video_single.html"
+    existing_file_template = "hqmedia/uploader/bootstrap3/preview_video_single.html"

@@ -5,13 +5,14 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import commcareSettings from "app_manager/js/settings/bootstrap5/commcare_settings";
 import supportedLanguages from "app_manager/js/bootstrap5/supported_languages";
 import google from "analytix/js/google";
 import widgets from "hqwebapp/js/bootstrap5/widgets";
 import main from "hqwebapp/js/bootstrap5/main";
-import translations from "translations/js/translations";
+import translations from "translations/js/bootstrap5/translations";
 import appManager from "app_manager/js/bootstrap5/app_manager";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/select2_knockout_bindings.ko";
@@ -266,4 +267,7 @@ $(function () {
         sectionChanger.attachToForm($saveContainer);
     })();
 
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map((tooltipTriggerEl) => new Tooltip(tooltipTriggerEl));
 });

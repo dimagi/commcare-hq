@@ -76,12 +76,16 @@ self.actions = {
             $content = $(self.selector.content),
             $appmanager = $(self.selector.appmanager);
 
+        let availableHeight;
+        let contentHeight;
+        let newSidebarHeight;
+
         if ($appmanager.length) {
-            var availableHeight = self.utils.getAvailableContentHeight(),
-                contentHeight = $appmanager.outerHeight();
+            availableHeight = self.utils.getAvailableContentHeight();
+            contentHeight = $appmanager.outerHeight();
 
             if ($sidebar.length) {
-                var newSidebarHeight = Math.max(availableHeight, contentHeight);
+                newSidebarHeight = Math.max(availableHeight, contentHeight);
                 $sidebar.css('min-height', newSidebarHeight + 'px');
 
                 if ($sidebar.outerHeight() >  $appmanager.outerHeight()) {
@@ -91,8 +95,8 @@ self.actions = {
             }
 
         } else if ($content.length) {
-            var availableHeight = self.utils.getAvailableContentHeight(),
-                contentHeight = $content.innerHeight();
+            availableHeight = self.utils.getAvailableContentHeight();
+            contentHeight = $content.innerHeight();
 
             if (contentHeight > availableHeight) {
                 $content.css('padding-bottom', 15 + 'px');
@@ -100,7 +104,7 @@ self.actions = {
             }
 
             if ($sidebar.length && !self.values.isAppbuilderResizing) {
-                var newSidebarHeight = Math.max(availableHeight, contentHeight);
+                newSidebarHeight = Math.max(availableHeight, contentHeight);
                 $sidebar.css('min-height', newSidebarHeight + 'px');
             } else {
                 if ($sidebar.outerHeight() >  $content.outerHeight()) {
@@ -128,10 +132,10 @@ self.actions = {
         });
     },
     showPublishStatus: function () {
-        $(self.selector.publishStatus).fadeIn();
+        $(self.selector.publishStatus).removeClass('d-none').fadeIn();
     },
     hidePublishStatus: function () {
-        $(self.selector.publishStatus).fadeOut();
+        $(self.selector.publishStatus).addClass('d-none').fadeOut();
     },
 };
 
