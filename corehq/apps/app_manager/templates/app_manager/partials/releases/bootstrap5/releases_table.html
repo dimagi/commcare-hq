@@ -1,7 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-<div id="releases-table" class="d-none" data-bind="css: {hide: false}">
-  <div class="alert alert-danger d-none" data-bind="visible: brokenBuilds, css: {hide: false}">
+<div id="releases-table" class="d-none" data-bind="css: { 'd-none': false }">
+  <div
+    class="alert alert-danger d-none"
+    data-bind="visible: brokenBuilds, css: { 'd-none': false }
+  ">
     <p>
       <i class="fa fa-exclamation-circle"></i>
       {% blocktrans %}
@@ -90,7 +93,7 @@
   </div>
 
   <div class="alert alert-danger d-none"
-       data-bind="visible: buildState() == 'error', css: {hide: false}">
+       data-bind="visible: buildState() == 'error', css: { 'd-none': false }">
     <span data-bind="visible: buildErrorCode() === 403">
       {% trans "Sorry, you don't have permission to do this action!" %}
     </span>
@@ -101,19 +104,22 @@
   </div>
 
   <h4 id="loading" class="d-none"
-      data-bind="visible: showLoadingSpinner(), css: {hide: false}">
+      data-bind="visible: showLoadingSpinner(), css: { 'd-none': false }">
     <i class="fa fa-spin fa-spinner"></i>
     {% trans "Loading versions..." %}
   </h4>
 
   <div class="alert alert-danger d-none"
-       data-bind="visible: fetchState() === 'error', css: {hide: false}">
+       data-bind="visible: fetchState() === 'error', css: { 'd-none': false }">
     {% trans "An error occurred while fetching versions. Reload the page to try again." %}
   </div>
 
-  <div class="releases-container"
-       data-bind="css: {hide: false},
-                    template: {foreach: savedApps}" >
+  <div
+    class="releases-container"
+    data-bind="
+      css: { 'd-none': false },
+      template: {foreach: savedApps}"
+  >
 
     <div class="card panel-release"  {# todo B5: css-panel #}
          data-bind="css: {
@@ -125,19 +131,29 @@
       <div class="card-header">
         {% if request|toggle_enabled:"SUPPORT" %}
           <div class="release-trash-container">
-            <a href="#"
-               class="d-none release-remove"
-               data-bind="openModal: 'delete-build-modal-template',
-                                  visible: !_deleteState(),
-                                  css: {hide: false}">
+            <a
+              href="#"
+              class="d-none release-remove"
+              data-bind="
+                openModal: 'delete-build-modal-template',
+                visible: !_deleteState(),
+                css: { 'd-none': false }"
+            >
               <i class="fa-regular fa-trash-can"></i>
             </a>
-            <div class="pending d-none" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+            <div
+              class="pending d-none"
+              data-bind="
+                visible: _deleteState() == 'pending', css: { 'd-none': false }"
+            >
               <i class="fa fa-spin fa-spinner"></i>
             </div>
-            <i class="fa fa-exclamation-circle d-none"
-               data-bind="visible: _deleteState() == 'error',
-                                  css: {hide: false}"></i>
+            <i
+              class="fa fa-exclamation-circle d-none"
+              data-bind="
+                visible: _deleteState() == 'error',
+                css: { 'd-none': false }"
+            ></i>
           </div>
         {% endif %}
         <div class="build-is-released">
@@ -227,11 +243,13 @@
             {% trans "View Changes" %}
           </a>
         {% endif %}
-        <button class="btn btn-outline-primary d-none"
-                data-bind="
-                             openModal: 'revert-build-modal-template',
-                             visible: version() !== $root.currentAppVersion(),
-                             css: {hide: false}">
+        <button
+          class="btn btn-outline-primary d-none"
+          data-bind="
+            openModal: 'revert-build-modal-template',
+            visible: version() !== $root.currentAppVersion(),
+            css: { 'd-none': false }"
+        >
           <i class="fa fa-recycle"></i>
           {% trans "Revert to this Version" %}
         </button>
@@ -242,8 +260,10 @@
                     css: {'btn-primary': !build_broken(), 'btn-outline-danger': build_broken},
                     click: clickDeploy
                     ">
-              <span class="fa fa-exclamation-circle d-none"
-                    data-bind="visible: build_broken, css: {hide: false}">
+              <span
+                class="fa fa-exclamation-circle d-none"
+                data-bind="visible: build_broken, css: { 'd-none': false }"
+              >
               </span>
               {% trans "Publish" %}
           </a>
