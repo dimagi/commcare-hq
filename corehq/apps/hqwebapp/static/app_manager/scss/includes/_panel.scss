@@ -76,61 +76,20 @@
   border-radius: 0;
 }
 
-.panel-release {
-  border: none;
-  background-color: lighten($cc-bg, 3);
+.card-header .release-trash-container .release-remove {
+  color: $text-color;
+  transition: all 500ms ease-in-out;
+  font-size: 15px;
 
-  &.build-latest-release {
-    box-shadow: 0 0 10px rgba($cc-brand-mid, 0.4);
+  &:hover {
+    color: $cc-att-neg-mid;
   }
 }
 
-.panel-release-title {
-  margin-left: 15px;
-  margin-right: 50px;
-  padding: 15px 0 5px;
-  font-size: 12px;
-  font-weight: 400;
-  color: lighten($cc-text, 40);
-  strong {
-    color: $cc-text;
-  }
-}
-.panel-release > .panel-heading {
-  padding: 0;
-  background-color: $cc-bg;
-
-  .release-trash-container {
-    float: right;
-    padding: 11px 18px 13px;
-
-    .release-remove {
-      color: $text-color;
-      transition: all 500ms ease-in-out;
-      font-size: 15px;
-      display: block;
-      &:hover {
-        color: $cc-att-neg-mid;
-      }
-    }
-  }
-  .build-is-released {
-    float: right;
-    padding: 13px 0;
-  }
-}
-
-.panel-release > .panel-footer {
-  border-top: 0;
-  background-color: transparent;
-  padding-top: 0;
-}
-
-.panel-release > .panel-body {
-  padding: 5px 15px;
+.card-body .comment-container {
   .prefixed-icon {
     position: absolute;
-    left: 30px;
+    left: 10px;
     padding-right: 10px;
   }
   .read-only {

@@ -118,19 +118,20 @@
     class="releases-container"
     data-bind="
       css: { 'd-none': false },
-      template: {foreach: savedApps}"
+      template: { foreach: savedApps }"
   >
-
-    <div class="card panel-release"  {# todo B5: css-panel #}
-         data-bind="css: {
-                'build-released': is_released(),
-                'build-unreleased': !is_released(),
-                'build-latest-release': version() === $root.latestReleasedVersion(),
-                'error': build_broken
-            }">
+    <div
+      class="card mb-3"
+      data-bind="css: {
+        'build-released': is_released(),
+        'build-unreleased': !is_released(),
+        'shadow': version() === $root.latestReleasedVersion(),
+        'error': build_broken
+      }"
+    >
       <div class="card-header">
         {% if request|toggle_enabled:"SUPPORT" %}
-          <div class="release-trash-container">
+          <div class="release-trash-container float-end py-1 ps-3">
             <a
               href="#"
               class="d-none release-remove"
@@ -156,7 +157,7 @@
             ></i>
           </div>
         {% endif %}
-        <div class="build-is-released">
+        <div class="float-end py-1">
           <!--ko if: is_released() == 'error' -->
 
           <span class="badge text-bg-danger">{% trans "Could not update" %}</span>
@@ -195,7 +196,7 @@
 
           <!--/ko-->
         </div>
-        <h4 class="panel-release-title">
+        <h6 class="card-title mt-2">
           <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong>
           <span data-bind="if: doc_type() == 'LinkedApplication'">
             (<a data-bind="text: upstream_app_name(), attr: {href: upstream_app_url()}"></a>
@@ -209,9 +210,9 @@
           <span data-bind="text: menu_item_label()"></span>
           <!--/ko-->
           <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
-        </h4>
-      </div>
-      <div class="card-body">
+        </h6>
+      </div><!-- .card-header -->
+      <div class="card-body py-2">
         <div class="comment-container">
           <inline-edit params="
                   value: build_comment,
@@ -226,36 +227,34 @@
                   disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
               "></inline-edit>
         </div>
-      </div><!-- .panel-body -->
-      <div class="card-footer clearfix">
-        {% if can_view_app_diff %}
-          <a class="btn btn-outline-primary" data-bind="
-                    attr: {href: $parent.reverse(
-                            'app_form_summary_diff',
-                            $parent.previousBuildId($index()),
-                            $data.id())
-                          },
-                    click: function () {
-                        return $root.trackClick('Compare App Versions: Clicked View Changes');
-                    }
-                    visible: $parent.previousBuildId($index())">
-            <i class="fa-solid fa-right-left"></i>
-            {% trans "View Changes" %}
-          </a>
-        {% endif %}
-        <button
-          class="btn btn-outline-primary d-none"
-          data-bind="
-            openModal: 'revert-build-modal-template',
-            visible: version() !== $root.currentAppVersion(),
-            css: { 'd-none': false }"
-        >
-          <i class="fa fa-recycle"></i>
-          {% trans "Revert to this Version" %}
-        </button>
-        <span class="float-end">
-          <a class="btn"
-             data-bind="
+        <div class="clearfix my-1">
+          {% if can_view_app_diff %}
+            <a class="btn btn-outline-primary" data-bind="
+                      attr: {href: $parent.reverse(
+                              'app_form_summary_diff',
+                              $parent.previousBuildId($index()),
+                              $data.id())
+                            },
+                      click: function () {
+                          return $root.trackClick('Compare App Versions: Clicked View Changes');
+                      }
+                      visible: $parent.previousBuildId($index())">
+              <i class="fa-solid fa-right-left"></i>
+              {% trans "View Changes" %}
+            </a>
+          {% endif %}
+          <button
+            class="btn btn-outline-primary fw-normal d-none"
+            data-bind="
+              openModal: 'revert-build-modal-template',
+              visible: version() !== $root.currentAppVersion(),
+              css: { 'd-none': false }"
+          >
+            <i class="fa fa-recycle"></i>
+            {% trans "Revert to this Version" %}
+          </button>
+          <a class="btn float-end fw-bold"
+            data-bind="
                     openModal: 'deploy-build-modal-template',
                     css: {'btn-primary': !build_broken(), 'btn-outline-danger': build_broken},
                     click: clickDeploy
@@ -267,9 +266,9 @@
               </span>
               {% trans "Publish" %}
           </a>
-        </span>
-      </div><!-- .panel-footer -->
-    </div><!-- .panel-release -->
+        </div><!-- .clearfix -->
+      </div><!-- .card-body -->
+    </div><!-- .card- -->
   </div> <!-- .releases-container -->
 
   <pagination data-apply-bindings="false"
