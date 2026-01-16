@@ -116,8 +116,16 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     return ("{}-" + format_str).format(fn.__name__, **callargs)
 
 
-def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=3,
-                queue='background_queue', ignore_result=True, serializer=None, durable=False):
+def serial_task(
+    unique_key,
+    default_retry_delay=30,
+    timeout=5 * 60,
+    max_retries=3,
+    queue='background_queue',
+    ignore_result=True,
+    serializer=None,
+    durable=False,
+):
     """
     Define a task to be executed one at a time.  If another serial_task with
     the same unique_key is currently in process, this will retry after a delay.
@@ -149,8 +157,15 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
         # register task with celery.  Note that this still happens on import
         from dimagi.utils.couch import get_redis_lock, release_lock
 
-        @task(bind=True, queue=queue, ignore_result=ignore_result, default_retry_delay=default_retry_delay,
-              max_retries=max_retries, durable=durable, **task_kwargs)
+        @task(
+            bind=True,
+            queue=queue,
+            ignore_result=ignore_result,
+            default_retry_delay=default_retry_delay,
+            max_retries=max_retries,
+            durable=durable,
+            **task_kwargs,
+        )
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
@@ -171,23 +186,41 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
     return decorator
 
 
-def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue', serializer='json', durable=False):
-    '''
-        defines a task that posts data to one of our analytics endpoints. It retries the task
-        up to 3 times if the post returns with a status code indicating an error with the post
-        that is not our fault.
-    '''
+def analytics_task(
+    default_retry_delay=10,
+    max_retries=3,
+    queue='analytics_queue',
+    serializer='json',
+    durable=False,
+):
+    """
+    Defines a task that posts data to one of our analytics endpoints. It
+    retries the task up to 3 times if the post returns with a status code
+    indicating an error with the post that is not our fault.
+    """
     def decorator(func):
-        @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
-              default_retry_delay=default_retry_delay, max_retries=max_retries, serializer=serializer, durable=durable)
+        @task(
+            bind=True,
+            queue=queue,
+            ignore_result=True,
+            acks_late=True,
+            default_retry_delay=default_retry_delay,
+            max_retries=max_retries,
+            serializer=serializer,
+            durable=durable,
+        )
         @wraps(func)
         def _inner(self, *args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except requests.exceptions.HTTPError as e:
-                # if its a bad request, raise the exception because it is our fault
+                # if bad request, raise exception because it is our fault
                 res = e.response
-                status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
+                status_code = (
+                    res.status_code
+                    if isinstance(res, requests.models.Response)
+                    else res.status
+                )
                 if status_code == 400:
                     raise
                 else:
