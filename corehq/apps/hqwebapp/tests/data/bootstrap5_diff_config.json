@@ -280,10 +280,6 @@
           "_tables.scss"
         ],
         [
-          "tabs.less",
-          "_tabs.scss"
-        ],
-        [
           "typography.less",
           "_type.scss"
         ],
