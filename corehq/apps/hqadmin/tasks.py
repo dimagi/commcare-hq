@@ -34,6 +34,13 @@ from .utils import check_for_rewind
 _soft_assert_superusers = soft_assert(notify_admins=True)
 
 
+@periodic_task(run_every=crontab(minute='*'), queue='background_queue')
+def test_task_execution():
+    from datetime import datetime
+    now = datetime.utcnow()
+    print(f"Ran test_task_execution task for {now}")
+
+
 @periodic_task(run_every=crontab(hour=0, minute=0), queue='background_queue')
 def check_pillows_for_rewind():
     for pillow in get_couch_pillow_instances():
