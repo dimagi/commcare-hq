@@ -548,7 +548,7 @@ def _filter_subscriptions_for_reminder_emails(days_left, **kwargs):
     return ending_subscriptions
 
 
-@task(ignore_result=True, acks_late=True)
+@task(ignore_result=True, acks_late=True, durable=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 amount,
@@ -604,7 +604,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(ignore_result=True, acks_late=True, durable=True)
 def send_purchase_receipt(
     payment_record_id, domain_name, account_id, template_html, template_plaintext, additional_context
 ):
@@ -624,7 +624,7 @@ def send_purchase_receipt(
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@task(queue='background_queue', ignore_result=True, acks_late=True, durable=True)
 def send_autopay_failed(invoice_id, is_customer_invoice=False):
     context = get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=is_customer_invoice)
 
