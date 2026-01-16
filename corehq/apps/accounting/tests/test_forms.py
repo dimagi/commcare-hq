@@ -23,6 +23,7 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     FormSubmittingMobileWorkerHistory,
     Invoice,
+    PaymentType,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     Subscription,
@@ -58,7 +59,8 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
             {
                 'adjustment_type': 'credit',
                 'custom_amount': adjustment_amount,
-                'method': CreditAdjustmentReason.MANUAL,
+                'adjustment_reason': CreditAdjustmentReason.MANUAL,
+                'payment_type': PaymentType.OTHER,
                 'note': 'some text',
                 'invoice_id': self.invoice.id,
             }
@@ -83,7 +85,8 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
             {
                 'adjustment_type': 'credit',
                 'custom_amount': adjustment_amount,
-                'method': CreditAdjustmentReason.TRANSFER,
+                'adjustment_reason': CreditAdjustmentReason.TRANSFER,
+                'payment_type': PaymentType.OTHER,
                 'note': 'some text',
                 'invoice_id': self.invoice.id,
             }
@@ -112,7 +115,8 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
             {
                 'adjustment_type': 'credit',
                 'custom_amount': adjustment_amount,
-                'method': CreditAdjustmentReason.TRANSFER,
+                'adjustment_reason': CreditAdjustmentReason.TRANSFER,
+                'payment_type': PaymentType.OTHER,
                 'note': 'some text',
                 'invoice_id': self.invoice.id,
             }
@@ -149,7 +153,8 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
             {
                 'adjustment_type': 'credit',
                 'custom_amount': adjustment_amount,
-                'method': CreditAdjustmentReason.MANUAL,
+                'adjustment_reason': CreditAdjustmentReason.MANUAL,
+                'payment_type': PaymentType.OTHER,
                 'note': 'some text',
                 'invoice_id': self.invoice.id,
             }
@@ -173,7 +178,8 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
             {
                 'adjustment_type': 'credit',
                 'custom_amount': adjustment_amount,
-                'method': CreditAdjustmentReason.TRANSFER,
+                'adjustment_reason': CreditAdjustmentReason.TRANSFER,
+                'payment_type': PaymentType.OTHER,
                 'note': 'some text',
                 'invoice_id': self.invoice.id,
             }
@@ -201,7 +207,8 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
             {
                 'adjustment_type': 'credit',
                 'custom_amount': adjustment_amount,
-                'method': CreditAdjustmentReason.TRANSFER,
+                'adjustment_reason': CreditAdjustmentReason.TRANSFER,
+                'payment_type': PaymentType.OTHER,
                 'note': 'some text',
                 'invoice_id': self.invoice.id,
             }

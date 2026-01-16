@@ -99,6 +99,7 @@
           <tr>
             <th>{% trans "Date" %}</th>
             <th>{% trans "Reason" %}</th>
+            <th>{% trans "Payment Type" %}</th>
             <th>{% trans "Note" %}</th>
             <th>{% trans "User" %}</th>
             <th>{% trans "Amount" %}</th>
@@ -109,6 +110,7 @@
             <tr>
               <td>{{ adjustment.date_created }} UTC</td>
               <td>{{ adjustment.reason }}</td>
+              <td>{{ adjustment.payment_type }}</td>
               <td>{{ adjustment.note }}</td>
               <td>{{ adjustment.web_user }}</td>
               <td>{{ adjustment.amount }}</td>

@@ -135,6 +135,7 @@ accounting
  0113_geojson_export_priv
  0114_custom_icon_badges_priv
  0115_loc_cols_in_user_last_activity_priv
+ 0116_creditadjustment_payment_type
 admin
  0001_initial
  0002_logentry_remove_auto_add
