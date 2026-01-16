@@ -161,7 +161,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                 'error': er,
             }
         )
-        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or isinstance(er, ESError):
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
             report_state = {
