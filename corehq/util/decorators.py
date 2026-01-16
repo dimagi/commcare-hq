@@ -117,7 +117,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
 
 
 def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=3,
-                queue='background_queue', ignore_result=True, serializer=None):
+                queue='background_queue', ignore_result=True, serializer=None, durable=False):
     """
     Define a task to be executed one at a time.  If another serial_task with
     the same unique_key is currently in process, this will retry after a delay.
@@ -150,7 +150,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
         from dimagi.utils.couch import get_redis_lock, release_lock
 
         @task(bind=True, queue=queue, ignore_result=ignore_result, default_retry_delay=default_retry_delay,
-              max_retries=max_retries, **task_kwargs)
+              max_retries=max_retries, durable=durable, **task_kwargs)
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
@@ -171,7 +171,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
     return decorator
 
 
-def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue', serializer='json'):
+def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue', serializer='json', durable=False):
     '''
         defines a task that posts data to one of our analytics endpoints. It retries the task
         up to 3 times if the post returns with a status code indicating an error with the post
@@ -179,7 +179,7 @@ def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue
     '''
     def decorator(func):
         @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
-              default_retry_delay=default_retry_delay, max_retries=max_retries, serializer=serializer)
+              default_retry_delay=default_retry_delay, max_retries=max_retries, serializer=serializer, durable=durable)
         @wraps(func)
         def _inner(self, *args, **kwargs):
             try:
