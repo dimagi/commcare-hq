@@ -3,7 +3,7 @@ from functools import wraps
 
 from django.conf import settings
 
-from corehq.apps.celery import task
+from corehq.apps.celery.shared_task import task
 
 
 def serial_task(

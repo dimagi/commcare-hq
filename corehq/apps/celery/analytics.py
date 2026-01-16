@@ -2,7 +2,7 @@ from functools import wraps
 
 import requests
 
-from corehq.apps.celery import task
+from corehq.apps.celery.shared_task import task
 
 
 def analytics_task(
