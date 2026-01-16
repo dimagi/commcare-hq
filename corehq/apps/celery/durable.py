@@ -44,7 +44,10 @@ class DurableTask(Task):
             update_fields=list(defaults) if is_retry else None,
         )
         try:
-            return super().apply_async(args=args, kwargs=kwargs, task_id=record.task_id, **opts)
+            return super().apply_async(
+                # celery expects task_id to be a string
+                args=args, kwargs=kwargs, task_id=str(record.task_id), **opts
+            )
         except Exception as e:
             error = f"{type(e).__name__}: {e}"
             TaskRecord.objects.filter(task_id=record.task_id).update(error=error)
