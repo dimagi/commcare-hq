@@ -14,7 +14,7 @@ from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import (
     UnsupportedScheduledReportError,
@@ -25,7 +25,6 @@ from corehq.apps.saved_reports.scheduled import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import ESError
-from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
 from .exceptions import ReportNotFound

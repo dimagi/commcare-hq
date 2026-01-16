@@ -10,6 +10,7 @@ from corehq.apps.celery.periodic import (  # noqa F401;
     periodic_task_when_true,
 )
 from corehq.apps.celery.shared_task import task  # noqa F401;
+from corehq.apps.celery.serial import serial_task  # noqa F401;
 
 
 class Config(AppConfig):
