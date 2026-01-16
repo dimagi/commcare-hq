@@ -26,18 +26,36 @@
     {% include 'app_manager/partials/releases/bootstrap5/releases_table.html' %}
   {% else%}
     <div class="tabbable">
-      <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
-        <li><a href="#versions-tab" data-bs-toggle="tab">
-          {% trans "Versions" %}</a>
+      <ul class="nav nav-tabs sticky-tabs">
+        <li class="nav-item">
+          <a href="#versions-tab" class="nav-link" data-bs-toggle="tab">
+            {% trans "Versions" %}
+          </a>
         </li>
         {% if enable_update_prompts %}
-          <li><a href="#prompt-settings-tab" data-bs-toggle="tab">{% trans "Manage Update Settings" %}</a></li>
+          <li class="nav-item">
+            <a
+              href="#prompt-settings-tab"
+              class="nav-link"
+              data-bs-toggle="tab"
+            >
+              {% trans "Manage Update Settings" %}
+            </a>
+          </li>
         {% endif %}
         {% if build_profile_access %}
-          <li><a href="#profiles-tab" data-bs-toggle="tab">{% trans "Application Profiles" %}</a></li>
+          <li class="nav-item">
+            <a href="#profiles-tab" class="nav-link" data-bs-toggle="tab">
+              {% trans "Application Profiles" %}
+            </a>
+          </li>
         {% endif %}
         {% if request|toggle_enabled:"APPLICATION_RELEASE_LOGS" %}
-          <li><a href="#release-logs-tab" data-bs-toggle="tab">{% trans "Application Release Logs" %}</a></li>
+          <li class="nav-item">
+            <a href="#release-logs-tab" class="nav-link" data-bs-toggle="tab">
+              {% trans "Application Release Logs" %}
+            </a>
+          </li>
         {% endif %}
       </ul>
       <div class="spacer"></div>
