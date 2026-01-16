@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,19 +1,20 @@
+@@ -1,19 +1,19 @@
 -@import '../../hqwebapp/less/_hq/includes/variables.less';
 -@import '../../hqwebapp/less/_hq/includes/mixins.less';
 +@import "../../hqwebapp/scss/commcarehq/variables";
@@ -31,7 +31,6 @@
 +@import "includes/content";
 +@import "includes/case_tile_preview";
 +@import "includes/popover";
-+@import "includes/tabs";
 +@import "includes/savebtn";
 +@import "includes/panel";
 +@import "includes/table";
