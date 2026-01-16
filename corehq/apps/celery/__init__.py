@@ -3,14 +3,15 @@ from django.apps import AppConfig
 from celery import Celery
 from celery.signals import setup_logging
 
+from corehq.apps.celery.analytics import analytics_task # noqa F401;
 # Imported to give an idea of where decorators are defined and
 # we will be importing these decorators from this file in tasks
 from corehq.apps.celery.periodic import (  # noqa F401;
     periodic_task,
     periodic_task_when_true,
 )
-from corehq.apps.celery.shared_task import task  # noqa F401;
 from corehq.apps.celery.serial import serial_task  # noqa F401;
+from corehq.apps.celery.shared_task import task  # noqa F401;
 
 
 class Config(AppConfig):

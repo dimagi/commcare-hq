@@ -5,11 +5,8 @@ from functools import wraps
 
 from django.conf import settings
 
-import requests
-
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.celery import task
 from corehq.util.global_request import get_request
 
 
@@ -99,31 +96,6 @@ class require_debug_true(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-
-
-def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue', serializer='json'):
-    '''
-        defines a task that posts data to one of our analytics endpoints. It retries the task
-        up to 3 times if the post returns with a status code indicating an error with the post
-        that is not our fault.
-    '''
-    def decorator(func):
-        @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
-              default_retry_delay=default_retry_delay, max_retries=max_retries, serializer=serializer)
-        @wraps(func)
-        def _inner(self, *args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except requests.exceptions.HTTPError as e:
-                # if its a bad request, raise the exception because it is our fault
-                res = e.response
-                status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
-                if status_code == 400:
-                    raise
-                else:
-                    self.retry(exc=e)
-        return _inner
-    return decorator
 
 
 def hqnottest(func):
