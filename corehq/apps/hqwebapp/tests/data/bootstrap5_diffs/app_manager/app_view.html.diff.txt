@@ -26,7 +26,15 @@
      <inline-edit params="
          value: '{{ app.short_comment|escapejs }}',
          url: '{% url "edit_app_attr" domain app.id 'comment' %}',
-@@ -45,7 +45,7 @@
+@@ -38,14 +38,14 @@
+ 
+ {% block form-view %}
+   {% registerurl "edit_add_ons" domain app.id %}
+-  <div class="appmanager-tabs-container">
++  <div class="mt-3">
+     {% block app_view_tabs %}{% endblock app_view_tabs %}
+   </div>
+ {% endblock %}
  
  {% block modals %}{{ block.super }}
    {% for uploader in uploaders %}

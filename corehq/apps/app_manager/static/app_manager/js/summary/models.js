@@ -89,7 +89,7 @@ var contentItemModel = function (options) {
 
     var basePopoverOptions = {
         "trigger": "hover",
-        "placement": "auto right",
+        "placement": "right",
         "container": "body",
         "html": true,
     };
