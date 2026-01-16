@@ -3,9 +3,8 @@ import warnings
 from contextlib import ContextDecorator, contextmanager
 from functools import wraps
 
-from django.conf import settings
-
 from dimagi.utils.logging import notify_exception
+from django.conf import settings
 
 from corehq.util.global_request import get_request
 

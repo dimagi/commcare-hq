@@ -6,8 +6,15 @@ from django.conf import settings
 from corehq.apps.celery import task
 
 
-def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=3,
-                queue='background_queue', ignore_result=True, serializer=None):
+def serial_task(
+    unique_key,
+    default_retry_delay=30,
+    timeout=5 * 60,
+    max_retries=3,
+    queue='background_queue',
+    ignore_result=True,
+    serializer=None,
+):
     """
     Define a task to be executed one at a time.  If another serial_task with
     the same unique_key is currently in process, this will retry after a delay.
@@ -39,8 +46,14 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
         # register task with celery.  Note that this still happens on import
         from dimagi.utils.couch import get_redis_lock, release_lock
 
-        @task(bind=True, queue=queue, ignore_result=ignore_result, default_retry_delay=default_retry_delay,
-              max_retries=max_retries, **task_kwargs)
+        @task(
+            bind=True,
+            queue=queue,
+            ignore_result=ignore_result,
+            default_retry_delay=default_retry_delay,
+            max_retries=max_retries,
+            **task_kwargs,
+        )
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
@@ -55,9 +68,12 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
                     release_lock(lock, True)
             else:
                 msg = "Could not acquire lock '{}' for task '{}'.".format(
-                    key, fn.__name__)
-                self.retry(exc=CouldNotAcquireLock(msg))
+                    key, fn.__name__
+                )
+                self.retry(exc=CouldNotAcquireLockError(msg))
+
         return _inner
+
     return decorator
 
 
@@ -71,5 +87,5 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     return ("{}-" + format_str).format(fn.__name__, **callargs)
 
 
-class CouldNotAcquireLock(Exception):
-    pass
+class CouldNotAcquireLockError(Exception):
+    """Used when a serial_task is unable to obtain lock to run"""
