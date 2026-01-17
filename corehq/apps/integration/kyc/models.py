@@ -39,7 +39,7 @@ class KycProviderThresholdFields:
     Defines the required threshold fields for each KYC provider.
     When adding a new provider, add its required fields here.
     """
-    MTN_KYC_REQUIRED_FIELDS = [
+    MTN_KYC = [
         'firstName',
         'lastName',
         'phoneNumber',
@@ -50,22 +50,22 @@ class KycProviderThresholdFields:
         'postCode',
         'country',
     ]
-    ORANGE_CAMEROON_KYC_REQUIRED_FIELDS = [
+    ORANGE_CAMEROON = [
         'firstName',
         'lastName',
     ]
-    ORANGE_CAMEROON_KYC_REQUIRED_FIELDS_FULL_NAME = [
+    ORANGE_CAMEROON_FULL_NAME = [
         'fullName',
     ]
 
     @classmethod
     def get_required_fields(cls, provider, stores_full_name):
         if provider == KycProviders.MTN_KYC:
-            return cls.MTN_KYC_REQUIRED_FIELDS
+            return cls.MTN_KYC
         elif provider == KycProviders.ORANGE_CAMEROON_KYC:
             if stores_full_name:
-                return cls.ORANGE_CAMEROON_KYC_REQUIRED_FIELDS_FULL_NAME
-            return cls.ORANGE_CAMEROON_KYC_REQUIRED_FIELDS
+                return cls.ORANGE_CAMEROON_FULL_NAME
+            return cls.ORANGE_CAMEROON
         else:
             raise ValueError(f'Unable to determine required threshold fields for KYC provider {provider!r}.')
 
