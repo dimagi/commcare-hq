@@ -54,12 +54,17 @@ class KycProviderThresholdFields:
         'firstName',
         'lastName',
     ]
+    ORANGE_CAMEROON_KYC_REQUIRED_FIELDS_FULL_NAME = [
+        'fullName',
+    ]
 
     @classmethod
-    def get_required_fields(cls, provider):
+    def get_required_fields(cls, provider, stores_full_name):
         if provider == KycProviders.MTN_KYC:
             return cls.MTN_KYC_REQUIRED_FIELDS
         elif provider == KycProviders.ORANGE_CAMEROON_KYC:
+            if stores_full_name:
+                return cls.ORANGE_CAMEROON_KYC_REQUIRED_FIELDS_FULL_NAME
             return cls.ORANGE_CAMEROON_KYC_REQUIRED_FIELDS
         else:
             raise ValueError(f'Unable to determine required threshold fields for KYC provider {provider!r}.')
@@ -111,7 +116,7 @@ class KycConfig(models.Model):
 
         :return: List of required field names
         """
-        return KycProviderThresholdFields.get_required_fields(self.provider)
+        return KycProviderThresholdFields.get_required_fields(self.provider, self.stores_full_name)
 
     def get_kyc_api_method(self):
         if self.provider == KycProviders.MTN_KYC:

@@ -166,10 +166,11 @@ class KycConfigureForm(forms.ModelForm):
         cleaned_data = super().clean()
         provider = cleaned_data.get('provider')
         passing_threshold = cleaned_data.get('passing_threshold')
+        stores_full_name = cleaned_data.get('stores_full_name')
 
         if provider and passing_threshold:
             try:
-                required_fields = KycProviderThresholdFields.get_required_fields(provider)
+                required_fields = KycProviderThresholdFields.get_required_fields(provider, stores_full_name)
                 missing_fields = [field for field in required_fields if field not in passing_threshold]
 
                 if missing_fields:
