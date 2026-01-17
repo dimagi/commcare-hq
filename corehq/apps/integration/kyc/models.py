@@ -83,6 +83,7 @@ class KycConfig(models.Model):
         null=True,
         blank=True,
     )
+    stores_full_name = models.BooleanField(null=True)
 
     class Meta:
         constraints = [
