@@ -28,6 +28,7 @@ class KycConfigureForm(forms.ModelForm):
         fields = [
             'user_data_store',
             'other_case_type',
+            'stores_full_name',
             'provider',
             'connection_settings',
             'api_field_to_user_data_map',
@@ -43,6 +44,15 @@ class KycConfigureForm(forms.ModelForm):
     other_case_type = forms.ChoiceField(
         label=_('Other Case Type'),
         required=False,
+    )
+    stores_full_name = forms.BooleanField(
+        label=_('Stores Full Name'),
+        required=False,
+        initial=False,
+        help_text=_(
+            "Check this box if the project stores the beneficiary's full name in a single field "
+            "instead of separate first and last name fields."
+        ),
     )
     provider = forms.ChoiceField(
         label=_('Provider'),
@@ -104,9 +114,16 @@ class KycConfigureForm(forms.ModelForm):
                     x_show='otherCaseTypeChoice === user_data_store',
                 ),
                 crispy.Div(
-                    'provider',
-                    x_init='provider = $el.value',
+                    crispy.Field(
+                        'provider',
+                        x_model='provider',
+                        x_init='provider = $el.value',
+                    ),
                     x_show='showProvider',
+                ),
+                crispy.Div(
+                    'stores_full_name',
+                    x_show=f"otherCaseTypeChoice === user_data_store && provider === '{KycProviders.ORANGE_CAMEROON_KYC}'"
                 ),
                 crispy.Div(
                     'connection_settings',
@@ -131,6 +148,7 @@ class KycConfigureForm(forms.ModelForm):
                 ),
                 x_data=json.dumps({
                     'user_data_store': self.instance.user_data_store,
+                    'provider': self.instance.provider,
                     'showProvider': len(KycProviders.choices) > 1,
                     'otherCaseTypeChoice': UserDataStore.OTHER_CASE_TYPE,
                 }),
@@ -160,6 +178,9 @@ class KycConfigureForm(forms.ModelForm):
                     ).format(', '.join(missing_fields)))
             except ValueError as e:
                 self.add_error('provider', str(e))
+
+        if provider != KycProviders.ORANGE_CAMEROON_KYC:
+            cleaned_data['stores_full_name'] = None
 
         return cleaned_data
 
