@@ -239,7 +239,7 @@ class TestVerifyUser(BaseKycUserSetup):
     @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
     @patch(
         'corehq.apps.integration.kyc.services.get_user_data_for_api',
-        return_value={'phoneNumber': 1234, 'firstName': 'abc', 'lastName': 'def'}
+        return_value={'firstName': 'John', 'lastName': 'Doe', 'phoneNumber': 1234}
     )
     @patch('corehq.motech.requests.Requests.post')
     def test_orange_cameroon_kyc_verify_success(self, mock_post, *args):
@@ -252,6 +252,7 @@ class TestVerifyUser(BaseKycUserSetup):
                 "lastName": 100,
             },
             connection_settings=self.connection_settings,
+            stores_full_name=False,
         )
         kyc_user = KycUser(config, self.user)
 
@@ -260,8 +261,8 @@ class TestVerifyUser(BaseKycUserSetup):
         mock_response.json.return_value = {
             "message": "customer 1234567890 successfully retrieve full name.",
             "data": {
-                "firstName": "abc",
-                "lastName": "def"
+                "firstName": "john",
+                "lastName": "doe"
             }
         }
         mock_post.return_value = mock_response
@@ -282,6 +283,42 @@ class TestVerifyUser(BaseKycUserSetup):
         mock_post.return_value = mock_response
 
         verification_status, error = verify_user(self.kyc_user, self.config)
+
+        assert verification_status == KycVerificationStatus.FAILED
+        assert error == KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch(
+        'corehq.apps.integration.kyc.services.get_user_data_for_api',
+        return_value={'firstName': 'John', 'lastName': 'Doe', 'phoneNumber': 1234}
+    )
+    @patch('corehq.motech.requests.Requests.post')
+    def test_orange_cameroon_kyc_failed(self, mock_post, *args):
+        config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            provider=KycProviders.ORANGE_CAMEROON_KYC,
+            passing_threshold={
+                "firstName": 100,
+                "lastName": 100,
+            },
+            connection_settings=self.connection_settings,
+            stores_full_name=False,
+        )
+        kyc_user = KycUser(config, self.user)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "message": "customer 1234567890 successfully retrieve full name.",
+            "data": {
+                "firstName": "jane",  # different first name
+                "lastName": "doe"
+            }
+        }
+        mock_post.return_value = mock_response
+
+        verification_status, error = verify_user(kyc_user, config)
 
         assert verification_status == KycVerificationStatus.FAILED
         assert error == KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
