@@ -2,6 +2,7 @@ import json
 import os
 import re
 from collections import defaultdict
+from pyphonetics.distance_metrics import levenshtein_distance
 
 from django.conf import settings
 from django.utils.text import camel_case_to_spaces
@@ -216,3 +217,32 @@ def _kebab_case(value):
     value = camel_case_to_spaces(value)
     value = re.sub(r"[^\w\s-]", "-", value.lower())
     return re.sub(r"[-\s]+", "-", value).strip("-_")
+
+
+def order_and_case_insensitive_matching_score(value1, value2):
+    """Case insensitive and order insensitive percent matching score between two strings
+    based on Levenshtein distance.
+    """
+    if value1 is None or value2 is None:
+        raise ValueError('Both values are required')
+
+    if value1 == '' and value2 == '':
+        return 100.0
+
+    parts1 = sorted(value1.lower().split())
+    parts2 = sorted(value2.lower().split())
+    return get_percent_matching_score(" ".join(parts1), " ".join(parts2))
+
+
+def get_percent_matching_score(value1, value2):
+    """Case sensitive percent matching score between two strings based on Levenshtein distance.
+    """
+    if value1 is None or value2 is None:
+        raise ValueError('Both values are required')
+
+    if value1 == '' and value2 == '':
+        return 100.0
+
+    dist = levenshtein_distance(value1, value2)
+    max_len = max(len(value1), len(value2))
+    return (1.0 - dist / max_len) * 100
