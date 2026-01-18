@@ -1,7 +1,7 @@
 import doctest
 from unittest.mock import Mock, patch
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 import jsonschema
 import pytest
@@ -19,7 +19,9 @@ from corehq.apps.integration.kyc.models import (
 )
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
+    get_percent_matching_score,
     get_user_data_for_api,
+    order_and_case_insensitive_matching_score,
     verify_user,
 )
 from corehq.apps.users.models import CommCareUser
@@ -310,3 +312,105 @@ class TestVerifyUser(BaseKycUserSetup):
         verification_status, error = verify_user(self.kyc_user, self.config)
         assert error == KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
         assert verification_status == KycVerificationStatus.ERROR
+
+
+class TestGetPercentMatchingScore(SimpleTestCase):
+
+    def test_exact_match(self):
+        score = get_percent_matching_score("john doe", "john doe")
+        assert score == 100.0
+
+    def test_case_sensitive_exact_match(self):
+        score = get_percent_matching_score("JOHN DOE", "john doe")
+        assert score < 100.0
+
+    def test_completely_different_strings(self):
+        score = get_percent_matching_score("john", "xyz")
+        assert score < 50.0
+
+    def test_single_character_difference(self):
+        score = get_percent_matching_score("john", "joan")
+        assert score > 70.0
+        assert score < 100.0
+
+    def test_substring_match(self):
+        score = get_percent_matching_score("john", "john doe")
+        assert score == 50.0
+
+    def test_empty_string_comparison(self):
+        score = get_percent_matching_score("", "john")
+        assert score == 0
+
+    def test_both_empty_strings_perfect_match(self):
+        score = get_percent_matching_score("", "")
+        assert score == 100.0
+
+    def test_none_value_raises_error(self):
+        with pytest.raises(ValueError, match='Both values are required'):
+            get_percent_matching_score(None, "john")
+
+    def test_full_name_matching(self):
+        # Very similar names
+        score = get_percent_matching_score("john doe", "john doy")
+        assert score > 85.0
+
+        # Names with middle name vs without
+        score = get_percent_matching_score("john michael doe", "john doe")
+        assert score < 100.0
+
+
+class TestOrderInsensitiveMatchingScore(SimpleTestCase):
+
+    def test_same_order(self):
+        score = order_and_case_insensitive_matching_score("john doe", "john doe")
+        assert score == 100.0
+
+    def test_reversed_order(self):
+        score = order_and_case_insensitive_matching_score("john doe", "doe john")
+        assert score == 100.0
+
+    def test_different_order_three_words(self):
+        score = order_and_case_insensitive_matching_score("john michael doe", "doe john michael")
+        assert score == 100.0
+
+    def test_case_insensitive(self):
+        score = order_and_case_insensitive_matching_score("John Doe", "doe john")
+        assert score == 100.0
+
+    def test_similar_words_different_order(self):
+        score = order_and_case_insensitive_matching_score("john doe", "doe joan")
+        assert score > 70.0
+        assert score < 100.0
+
+    def test_extra_word_in_one_string(self):
+        score = order_and_case_insensitive_matching_score("john doe smith", "john doe")
+        assert score > 50.0
+        assert score < 100.0
+
+    def test_completely_different_names(self):
+        score = order_and_case_insensitive_matching_score("john doe", "alice bob")
+        assert score < 50.0
+
+    def test_single_word_match(self):
+        score = order_and_case_insensitive_matching_score("john", "john")
+        assert score == 100.0
+
+    def test_empty_string_comparison(self):
+        score = order_and_case_insensitive_matching_score("", "john doe")
+        assert score == 0
+
+    def test_both_empty_strings_perfect_match(self):
+        score = order_and_case_insensitive_matching_score("", "")
+        assert score == 100.0
+
+    def test_none_value_raises_error(self):
+        with pytest.raises(ValueError, match='Both values are required'):
+            order_and_case_insensitive_matching_score(None, "john doe")
+
+    def test_leading_trailing_whitespace(self):
+        score = order_and_case_insensitive_matching_score("  john doe  ", "doe john")
+        assert score == 100.0
+
+    def test_special_characters_in_names(self):
+        score = order_and_case_insensitive_matching_score("o'brien smith", "smith o'brien")
+        assert score == 100.0
