@@ -165,11 +165,21 @@ def orange_cameroon_kyc_verify(kyc_user, config):
     )
     response.raise_for_status()
     user_info = response.json().get('data', {})
-    # TODO Add Comparison logic for firstName and lastName. For now, we directly compare them.
-    if (user_info['firstName'].lower() == user_data['firstName'].lower()
-            and user_info['lastName'].lower() == user_data['lastName'].lower()):
-        return KycVerificationStatus.PASSED
-    return KycVerificationStatus.FAILED
+    if config.stores_full_name:
+        api_full_name = f"{user_info['firstName']} {user_info['lastName']}".strip()
+        user_full_name = user_data['fullName'].strip()
+        score = order_and_case_insensitive_matching_score(api_full_name, user_full_name)
+        if score < config.passing_threshold['fullName']:
+            return KycVerificationStatus.FAILED
+    else:
+        for field, threshold_value in config.passing_threshold.items():
+            api_value = user_info[field].strip().lower()
+            user_value = user_data[field].strip().lower()
+            score = get_percent_matching_score(api_value, user_value)
+            if score < threshold_value:
+                return KycVerificationStatus.FAILED
+
+    return KycVerificationStatus.PASSED
 
 
 def _report_verification_failure_metric(domain, errors_with_count):
