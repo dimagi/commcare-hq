@@ -27,7 +27,7 @@
                    href="#panel-android"
                    aria-expanded="true"
                    aria-controls="panel-android"
-@@ -38,18 +38,18 @@
+@@ -38,23 +38,23 @@
                </h4>
              </div>
              <div class="panel-collapse in collapse" id="panel-android">
@@ -50,6 +50,12 @@
                            {% trans "Offline Install" %}
                          </a>
                        </li>
+                     </ul>
+-                    <div class="tab-content appmanager-tab-content">
++                    <div class="tab-content mt-3">
+                       <div class="tab-pane active" id="online-install-tab">
+                         <p>
+                           {% trans "Download" %}
 @@ -64,25 +64,25 @@
                            {% trans "to your Android device." %}
                          </p>

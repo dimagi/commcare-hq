@@ -24,8 +24,12 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -54,25 +54,25 @@
-   <div class="tabbable appmanager-tabs-container">
+@@ -51,28 +51,28 @@
+   {% registerurl "edit_module_detail_screens" domain app.id module.unique_id %}
+   {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
+   {% registerurl "existing_case_types" domain %}
+-  <div class="tabbable appmanager-tabs-container">
++  <div class="tabbable mt-3">
  
      {% if not module.is_surveys %}
 -      <ul class="nav nav-tabs sticky-tabs" id="module-view-tabs">
