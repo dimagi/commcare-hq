@@ -1,35 +1,37 @@
 .webapp-markdown-output {
-    table {
-        word-break: normal !important;  // override .text-break on parent element
-        padding: 0;
-        tr {
-            background-color: white;
-            margin: 0;
-            padding: 0;
+  table {
+    word-break: normal !important; // override .text-break on parent element
+    padding: 0;
 
-            &:nth-child(2n) {
-                background-color: #f8f8f8;
-            }
+    tr {
+      background-color: white;
+      margin: 0;
+      padding: 0;
 
-            th, td {
-                border: 1px solid #ccc;
-                text-align: left;
-                margin: 0;
-                padding: 6px 13px;
-                &:first-child {
-                    margin-top: 0;
-                }
-                &:last-child {
-                    margin-bottom: 0;
-                }
-            }
+      &:nth-child(2n) {
+        background-color: #f8f8f8;
+      }
 
-            th {
-                font-weight: bold;
-                background-color: #ddd;     // override tr background color
-            }
+      th,
+      td {
+        border: 1px solid #ccc;
+        text-align: left;
+        margin: 0;
+        padding: 6px 13px;
+        &:first-child {
+          margin-top: 0;
         }
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      th {
+        font-weight: bold;
+        background-color: #ddd; // override tr background color
+      }
     }
+  }
 }
 
 .text-center {
