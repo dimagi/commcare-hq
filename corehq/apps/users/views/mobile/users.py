@@ -103,6 +103,7 @@ from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
     require_can_edit_web_users,
+    require_can_edit_or_view_web_users,
     require_can_use_filtered_user_download,
 )
 from corehq.apps.users.exceptions import (
@@ -1137,7 +1138,22 @@ class CommcareUserUploadJobPollView(UserUploadJobPollView):
 
 @require_can_edit_or_view_commcare_users
 @location_safe
-def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
+def commcare_user_download_job_poll(
+    request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"
+):
+    return _user_download_job_poll(request, domain, download_id, template)
+
+
+@require_can_edit_or_view_web_users
+@location_safe
+def web_user_download_job_poll(
+    request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"
+):
+    return _user_download_job_poll(request, domain, download_id, template)
+
+
+@location_safe
+def _user_download_job_poll(request, domain, download_id, template):
     try:
         context = get_download_context(download_id, 'Preparing download')
         context.update({'link_text': _('Download Users')})
@@ -1167,7 +1183,7 @@ class DownloadUsersStatusView(BaseUserSettingsView):
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('user_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': reverse('commcare_user_download_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Download Users Status"),
             'progress_text': _("Preparing user download."),
             'error_text': _("There was an unexpected error! Please try again or report an issue."),
