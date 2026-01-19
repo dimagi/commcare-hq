@@ -2189,7 +2189,7 @@ class Invoice(InvoiceBase):
             invoices = invoices.filter(date_due=date_due)
         return invoices
 
-    def pay_invoice(self, payment_record, payment_type=None):
+    def pay_invoice(self, payment_record, payment_type):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
@@ -2282,7 +2282,7 @@ class CustomerInvoice(InvoiceBase):
         credit_lines = CreditLine.get_credits_for_customer_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
 
-    def pay_invoice(self, payment_record, payment_type=None):
+    def pay_invoice(self, payment_record, payment_type):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
