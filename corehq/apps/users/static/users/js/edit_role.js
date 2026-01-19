@@ -666,18 +666,17 @@ Alpine.data('initRole', (roleJson) => {
                 set all(value) {
                     self.role.permissions.view_tableau = value;
                 },
-                specific: _.map(initialPageData.get("tableau_list"), (report) => ({
-                    path: report.path,
-                    slug: report.slug,
-                    name: report.name,
+                specific: _.map(initialPageData.get("tableau_list"), (viz) => ({
+                    slug: String(viz.id),
+                    name: viz.name,
                     get value() {
-                        return self.role.permissions.view_tableau_list.indexOf(report.path) !== -1;
+                        return self.role.permissions.view_tableau_list.indexOf(this.slug) !== -1;
                     },
                     set value(value) {
                         if (value) {
-                            self.role.permissions.view_tableau_list.push(report.path);
+                            self.role.permissions.view_tableau_list.push(this.slug);
                         } else {
-                            const index = self.role.permissions.view_tableau_list.indexOf(report.path);
+                            const index = self.role.permissions.view_tableau_list.indexOf(this.slug);
                             if (index > -1) {
                                 self.role.permissions.view_tableau_list.splice(index, 1);
                             }
