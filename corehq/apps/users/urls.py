@@ -75,7 +75,8 @@ from .views.mobile.users import (
     restore_commcare_user,
     toggle_demo_mode,
     update_user_groups,
-    user_download_job_poll,
+    commcare_user_download_job_poll,
+    web_user_download_job_poll,
     CommCareUserConfirmAccountViewByEmailView,
     send_confirmation_email,
     send_confirmation_sms,
@@ -127,6 +128,11 @@ urlpatterns = [
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
     url(r'^web/download/$', download_web_users, name='download_web_users'),
+    url(
+        r'^web/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        web_user_download_job_poll,
+        name='web_user_download_job_poll'
+    ),
     url(
         r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         DownloadWebUsersStatusView.as_view(),
@@ -239,8 +245,8 @@ urlpatterns = [
     ),
     url(
         r'^commcare/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        user_download_job_poll,
-        name='user_download_job_poll'
+        commcare_user_download_job_poll,
+        name='commcare_user_download_job_poll'
     ),
     url(
         r'^commcare/confirm_charges/$',
