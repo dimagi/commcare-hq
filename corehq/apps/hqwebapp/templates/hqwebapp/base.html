@@ -94,6 +94,7 @@
             translations-url="{% static 'ocs-widget/' %}{{ LANGUAGE_CODE }}.json"
             user-id="{{ request.couch_user.user_id }}"
             user-name="{{ request.couch_user.username }}"
+            allow-attachments="true"
             >
           </open-chat-studio-widget>
         </div>
