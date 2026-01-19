@@ -52,7 +52,7 @@
                   type="submit"
                   data-bind="enable: enableSubmitButton">
             <i class="fa fa-spin fa-refresh"
-               data-bind="visible: !enableSubmitButton(){% if environment == "web-apps" %} && erroredQuestions.length != 0{% endif %}"
+               data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"
             ></i>
             <!-- ko text: submitText --><!-- /ko -->
           </button>
