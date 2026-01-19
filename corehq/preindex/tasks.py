@@ -2,10 +2,9 @@ import logging
 
 from django.conf import settings
 
-from corehq.apps.celery import periodic_task
+from corehq.apps.celery import periodic_task, serial_task
 from corehq.preindex.accessors import get_preindex_designs, index_design_doc
 from corehq.util.celery_utils import deserialize_run_every_setting
-from corehq.util.decorators import serial_task
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from corehq.apps.celery import task
+from corehq.apps.celery import serial_task, task
 from corehq.apps.commtrack.models import close_supply_point_case
 from corehq.apps.data_interfaces.models import LocationFilterDefinition
 from corehq.apps.fixtures.models import UserLookupTableStatus
@@ -22,7 +22,6 @@ from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import LOCATIONS_IN_UCR
-from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
 

@@ -1,11 +1,10 @@
 from celery.schedules import crontab
-from corehq.apps.celery import task
+from corehq.apps.celery import serial_task, task
 
 from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
     send_abnormal_usage_alert,
 )
-from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_gauge_task
 from corehq.util.metrics.const import MPM_MAX
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
