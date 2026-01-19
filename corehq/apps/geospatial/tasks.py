@@ -39,7 +39,7 @@ def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict):
         celery_task_tracker.mark_completed()
 
 
-@task(queue='geospatial_queue', ignore_result=True)
+@task(queue='geospatial_queue', ignore_result=True, durable=True)
 def index_es_docs_with_location_props(domain):
     celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
     geo_case_prop = get_geo_case_property(domain)
