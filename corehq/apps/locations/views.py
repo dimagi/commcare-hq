@@ -706,8 +706,8 @@ def archive_location(request, domain, loc_id):
 
 @require_http_methods(['DELETE'])
 @can_edit_location
-@lock_locations
 @location_safe
+@lock_locations
 def delete_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.full_delete()
