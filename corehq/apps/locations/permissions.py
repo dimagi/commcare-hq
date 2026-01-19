@@ -251,6 +251,9 @@ def _view_obj_is_safe(obj, request, *view_args, **view_kwargs):
 
 def is_location_safe(view_fn, request, view_args, view_kwargs):
     """
+    This decorator marks a view as safe to access for any user, including those
+    restricted to a specific location.
+
     Check if view_fn had the @location_safe decorator applied.
     request, view_args and kwargs are also needed because view_fn alone doesn't always
     contain enough information
