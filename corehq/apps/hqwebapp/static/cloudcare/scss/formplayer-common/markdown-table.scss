@@ -1,5 +1,6 @@
 .webapp-markdown-output {
     table {
+        word-break: normal !important;  // override .text-break on parent element
         padding: 0;
         tr {
             background-color: white;
