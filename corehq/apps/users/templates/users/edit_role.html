@@ -25,6 +25,7 @@
       x-data="initRole({{ data }})"
       @submit.prevent="saveRole($data.formData)"
       x-cloak
+      @input="isDirty = true"
     >
       <template x-if="role.upstream_id">
         <div class="row mb-4 d-flex">
@@ -1038,8 +1039,13 @@
 
       <div class="row mb-4 mt-2" x-show="isEditable">
         <div class="col-sm-2">
-          <button type="submit" class="btn btn-primary" :disabled="isSaving">
-            <span x-show="!isSaving">{% trans "Save" %}</span>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            :disabled="isSaving || !isDirty"
+          >
+            <span x-show="!isSaving && isDirty">{% trans "Save" %}</span>
+            <span x-show="!isSaving && !isDirty">{% trans "Saved" %}</span>
             <span x-show="isSaving">{% trans "Saving ..." %}</span>
           </button>
         </div>

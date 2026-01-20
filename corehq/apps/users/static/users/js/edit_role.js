@@ -162,6 +162,7 @@ const createAllOrSelectedPermissionModel = (args) => {
 
 Alpine.data('initRole', (roleJson) => {
     return {
+        isDirty: false,
         role: roleJson,
         isSaving: false,
         roleError: '',
@@ -857,7 +858,10 @@ Alpine.data('initRole', (roleJson) => {
                     data: JSON.stringify(self.role, null, 2),
                     dataType: 'json',
                     success: () => {
-                        self.isSaving = false;
+                        setTimeout(() => {
+                            self.isSaving = false;
+                            self.isDirty = false;
+                        }, 500);
                     },
                     error: (response) => {
                         self.isSaving = false;
