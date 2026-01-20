@@ -57,6 +57,7 @@ please review CommCare's API Authentication Documentation:
     location-types
     fixture
     ota-api-restore
+    det-exports
 
 
 User APIs
