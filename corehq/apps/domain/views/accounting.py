@@ -62,8 +62,8 @@ from corehq.apps.accounting.models import (
     EntryPoint,
     Invoice,
     InvoicePdf,
-    LastPayment,
     PaymentMethodType,
+    PaymentType,
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
@@ -832,7 +832,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             created_by=self.request.user.username,
             account_type=BillingAccountType.USER_CREATED,
             entry_point=EntryPoint.SELF_STARTED,
-            last_payment_method=LastPayment.CC_ONE_TIME,
+            last_payment_method=PaymentType.CC_ONE_TIME,
         )[0]
 
     def get_payment_handler(self):
