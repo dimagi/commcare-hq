@@ -40,17 +40,23 @@
           </ul>
         </div>
       </div>
-      <div id="submit-button" class="form-actions noprint-sub-container"
-           data-bind="
-              visible: showSubmitButton,
-              css: { 'sticky-submit': isAnchoredSubmitStyle }"
+      <div
+        id="submit-button" class="form-actions noprint-sub-container"
+        data-bind="
+          visible: showSubmitButton,
+          css: {
+            'sticky-submit': isAnchoredSubmitStyle {% if environment == 'preview-app' %}&& !(erroredQuestions().length > 0){% endif %}
+          }"
       >
         <div class="col-12 text-center submit">
-          <button class="submit btn btn-primary"
-                  type="submit"
-                  data-bind="enable: enableSubmitButton">
-            <i class="fa fa-spin fa-refresh"
-               data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"
+          <button 
+            class="submit btn btn-primary"
+            type="submit"
+            data-bind="enable: enableSubmitButton"
+          >
+            <i 
+              class="fa fa-spin fa-refresh"
+              data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"
             ></i>
             <!-- ko text: submitText --><!-- /ko -->
           </button>
