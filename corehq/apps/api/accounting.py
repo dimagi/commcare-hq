@@ -275,7 +275,7 @@ class CreditAdjustmentResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = CreditAdjustment.objects.all().order_by('pk')
-        fields = ['id', 'reason', 'note', 'amount', 'date_created', 'web_user', 'last_modified']
+        fields = ['id', 'reason', 'payment_type', 'note', 'amount', 'date_created', 'web_user', 'last_modified']
         resource_name = 'credit_adjustment'
 
 
