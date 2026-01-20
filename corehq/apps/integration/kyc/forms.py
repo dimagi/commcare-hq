@@ -123,7 +123,8 @@ class KycConfigureForm(forms.ModelForm):
                 ),
                 crispy.Div(
                     'stores_full_name',
-                    x_show=f"otherCaseTypeChoice === user_data_store && provider === '{KycProviders.ORANGE_CAMEROON_KYC}'"
+                    x_show=f"otherCaseTypeChoice === user_data_store && "
+                           f"provider === '{KycProviders.ORANGE_CAMEROON_KYC}'"
                 ),
                 crispy.Div(
                     'connection_settings',
