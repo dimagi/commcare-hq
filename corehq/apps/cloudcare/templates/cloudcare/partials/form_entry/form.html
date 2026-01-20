@@ -19,29 +19,27 @@
       <div class="question-container">
         <div class="mb-3" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
       </div>
-      {% if environment == "web-apps" %}
-        <div class="row" data-bind="visible: erroredQuestions().length > 0">
-          <div class="alert alert-danger">
-            {% blocktrans %}
-              Please correct the answers below before submitting.
-              <br>
-              You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
-            {% endblocktrans %}
-            <ul data-bind="foreach: erroredQuestions">
-                <li>
-                    <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
-                    <span data-bind="visible: serverError, text: serverError"></span>
-                    <span data-bind="if: error">
-                      <!-- ko text: error --><!-- /ko -->
-                    </span>
-                    <span data-bind="visible: !serverError() && !error()">
-                      {% trans "An answer is required." %}
-                    </span>
-                </li>
-            </ul>
-          </div>
+      <div class="row" data-bind="visible: erroredQuestions().length > 0">
+        <div class="alert alert-danger">
+          {% blocktrans %}
+            Please correct the answers below before submitting.
+            <br>
+            You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
+          {% endblocktrans %}
+          <ul data-bind="foreach: erroredQuestions">
+              <li>
+                  <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
+                  <span data-bind="visible: serverError, text: serverError"></span>
+                  <span data-bind="if: error">
+                    <!-- ko text: error --><!-- /ko -->
+                  </span>
+                  <span data-bind="visible: !serverError() && !error()">
+                    {% trans "An answer is required." %}
+                  </span>
+              </li>
+          </ul>
         </div>
-      {% endif %}
+      </div>
       <div id="submit-button" class="form-actions noprint-sub-container"
            data-bind="
               visible: showSubmitButton,
