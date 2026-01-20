@@ -60,7 +60,7 @@ def _import_case_type(domain, case_type, csv_filename, user):
 def _update_case_id_properties(domain, user):
     """Some case properties store the ID of related cases.  This updates those IDs"""
     case_ids = CommCareCase.objects.get_case_ids_in_domain(domain)
-    cases = CommCareCase.objects.get_cases(case_ids, domain)
+    cases = CommCareCase.objects.get_cases(case_ids)
     case_ids_by_external_id = {c.external_id: c.case_id for c in cases}
 
     case_blocks = []

@@ -24,7 +24,7 @@ class Command(BaseCommand):
                 self.stdout.write("Handling domain %s" % domain)
                 form_ids = XFormInstance.objects.get_form_ids_in_domain(domain)
                 form_ids.extend(XFormInstance.objects.get_form_ids_in_domain(domain, 'XFormArchived'))
-                forms = XFormInstance.objects.iter_forms(form_ids, domain)
+                forms = XFormInstance.objects.iter_forms(form_ids)
                 for form in with_progress_bar(forms, len(form_ids)):
                     meta = form.get_attachment_meta(ATTACHMENT_NAME)
                     if not meta or not blob_db.exists(key=meta.key):

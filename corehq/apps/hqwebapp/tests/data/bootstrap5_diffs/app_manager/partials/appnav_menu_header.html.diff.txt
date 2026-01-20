@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -7,7 +7,7 @@
+       <i
+         class="fa-solid fa-gear"
+         title="{% trans 'Application Settings' %}"
+-        data-toggle="tooltip"
++        data-bs-toggle="tooltip"
+         data-placement="left"
+       ></i>
+     </a>
+@@ -20,7 +20,7 @@
+   </h2>
+   <div id="js-publish-status"
+        class="appnav-name-publish"
+-       style="display: none;">
++       style="display: none;">  {# todo B5: inline-style #}
+     {% trans "Updates Available to Publish" %}
+   </div>
+   {% if linked_name and linked_version %}

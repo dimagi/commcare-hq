@@ -1,0 +1,94 @@
+--- 
++++ 
+@@ -9,9 +9,9 @@
+   </style>
+ {% endblock %}
+ 
+-<ul class="nav nav-tabs sticky-tabs">
+-  <li><a href="#settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+-  <li><a href="#reports" data-toggle="tab">{% trans "Reports" %}</a></li>
++<ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
++  <li><a href="#settings" data-bs-toggle="tab">{% trans "Settings" %}</a></li>
++  <li><a href="#reports" data-bs-toggle="tab">{% trans "Reports" %}</a></li>
+ </ul>
+ 
+ <div class="spacer"></div>
+@@ -24,11 +24,11 @@
+   <div class="tab-pane" id="settings">
+     <div class="form-horizontal">
+       <fieldset>
+-        <div class="panel panel-appmanager">
+-          <div class="panel-body">
+-            {% include "app_manager/partials/modules/bootstrap3/module_filter.html" with ko_value="currentModuleFilter" %}
+-            {% include 'app_manager/partials/bootstrap3/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+-            {% include "app_manager/partials/modules/bootstrap3/report_context_tile.html" with observable="reportContextTile" %}
++        <div class="card panel-appmanager">  {# todo B5: css-panel #}
++          <div class="card-body">
++            {% include "app_manager/partials/modules/bootstrap5/module_filter.html" with ko_value="currentModuleFilter" %}
++            {% include 'app_manager/partials/bootstrap5/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
++            {% include "app_manager/partials/modules/bootstrap5/report_context_tile.html" with observable="reportContextTile" %}
+           </div>
+         </div>
+       </fieldset>
+@@ -71,7 +71,7 @@
+             <i class="grip sortable-handle fa-solid fa-up-down"></i>
+           </td>
+           <td>
+-            <select class="form-control"
++            <select class="form-select"
+                     data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
+             </select>
+             <a href="#" data-bind="click: toggleCodes">
+@@ -82,18 +82,18 @@
+             <div data-bind="visible: showCodes">
+               <label>{% trans "UUID:" %}</label>
+               <span data-bind="text: uuid"></span>
+-              <div class="form-inline"
+-                   data-bind="css: { 'has-error': $root.validateSlug(instanceId()) },
++              <div class="form-inline"  {# todo B5: css-form-inline #}
++                   data-bind="css: { 'has-error': $root.validateSlug(instanceId()) },  {# todo B5: css-has-error #}
+                                                 visible: $root.supportCustomUcrSlug">
+                 <label>{% trans "Custom alias:" %}</label>
+                 <input type="text" class="form-control" data-bind="value: instanceId">
+                 <p class="help-block" data-bind="text: $root.validateSlug(instanceId())"></p>
+               </div>
+             </div>
+-            {% include 'app_manager/partials/modules/bootstrap3/filter_configs.html' %}
++            {% include 'app_manager/partials/modules/bootstrap5/filter_configs.html' %}
+             {% include 'app_manager/partials/modules/graph_configs.html' %}
+           </td>
+-          <td data-bind="css: { 'has-error': validateDisplay }">
++          <td data-bind="css: { 'has-error': validateDisplay }">  {# todo B5: css-has-error #}
+             <input type="text" class="form-control" data-bind="value: display">
+             <p class="help-block" data-bind="text: validateDisplay"></p>
+           </td>
+@@ -103,7 +103,7 @@
+             <input type="text" class="form-control"
+                    data-bind="value: localizedDescription, visible: !useXpathDescription()">
+             <label>
+-              <input type="checkbox" data-bind="checked: useXpathDescription">
++              <input type="checkbox" data-bind="checked: useXpathDescription">  {# todo B5: css-checkbox #}
+               {% trans "Use xpath expression" %}
+             </label>
+             <div data-bind="visible: useXpathDescription" class="help-block">
+@@ -125,17 +125,17 @@
+           </td>
+           <td>
+             <label>
+-              <input type="checkbox" data-bind="checked: showDataTable">
++              <input type="checkbox" data-bind="checked: showDataTable">  {# todo B5: css-checkbox #}
+             </label>
+           </td>
+           <td>
+-            <i title="{% trans 'Delete' %}" style="cursor: pointer;"
++            <i title="{% trans 'Delete' %}" style="cursor: pointer;"  {# todo B5: inline-style #}
+                class="fa fa-remove" data-bind="click: $root.removeReport"></i>
+           </td>
+         </tr>
+         </tbody>
+       </table>
+-      <button class="btn btn-default" data-bind="click: addReport" id="add-report-btn">
++      <button class="btn btn-outline-primary" data-bind="click: addReport" id="add-report-btn">
+         <i class="fa fa-plus"></i>
+         {% trans "Add Report" %}
+       </button>
