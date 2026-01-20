@@ -1,0 +1,40 @@
+--- 
++++ 
+@@ -19,16 +19,25 @@
+ 
+ {% if multimedia_state.has_media %}
+   {% if not include_modal and build_profile_access and not app.is_remote_app and app.build_profiles %}
+-    <div class="form-inline">
+-      <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
+-      <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
++    <div class="row mb-3">
++      <div class="col-md-3">
++        <label for="multimedia-build-profile" class="col-form-label fw-normal">
++          {% trans "Application Profile" %}:
++        </label>
++      </div>
++      <div class="col-md-9">
++        <select
++          class="form-select"
++          id="multimedia-build-profile"
++          data-bind="optstr: build_profiles(), value: build_profile"
++        ></select>
++      </div>
+     </div>
+-    <br/>
+   {% endif %}
+   <p>
+     <a class="btn btn-info{% if include_modal %} download-zip{% endif %}"
+       {% if include_modal %}
+-       href="#multimedia-zip-modal" data-toggle="modal"
++       href="#multimedia-zip-modal" data-bs-toggle="modal"
+ 
+       {% else %}
+         {# This happens when the template gets included in app_manager/partials/releases/releases.html #}
+@@ -52,5 +61,5 @@
+ 
+ {% if include_modal %}
+   {% url "download_multimedia_zip" domain app.get_id as multimedia_url %}
+-  {% include 'app_manager/partials/bootstrap3/download_async_modal.html' with element_id='multimedia-zip-modal' url=multimedia_url %}
++  {% include 'app_manager/partials/bootstrap5/download_async_modal.html' with element_id='multimedia-zip-modal' url=multimedia_url %}
+ {% endif %}

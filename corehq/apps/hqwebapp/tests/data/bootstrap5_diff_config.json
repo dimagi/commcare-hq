@@ -280,10 +280,6 @@
           "_tables.scss"
         ],
         [
-          "tabs.less",
-          "_tabs.scss"
-        ],
-        [
           "typography.less",
           "_type.scss"
         ],
@@ -1169,15 +1165,6 @@
       "file_type": "javascript",
       "label": "javascript/app_manager/js/settings",
       "compare_all_files": true
-    },
-    {
-      "directories": [
-        "summary/bootstrap3",
-        "summary/bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/app_manager/js/summary",
-      "compare_all_files": true
     }
   ],
   "apps/app_manager/static/app_manager/spec": [
@@ -1325,6 +1312,46 @@
       ],
       "file_type": "javascript",
       "label": "javascript/translations/js",
+      "compare_all_files": true
+    }
+  ],
+  "apps/hqmedia/templates/hqmedia": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqmedia",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqmedia/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "uploader/bootstrap3",
+        "uploader/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqmedia/uploader",
+      "compare_all_files": true
+    }
+  ],
+  "apps/hqmedia/static/hqmedia/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqmedia/js",
       "compare_all_files": true
     }
   ]
