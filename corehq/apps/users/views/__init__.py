@@ -622,7 +622,7 @@ class DownloadWebUsersStatusView(BaseUserSettingsView):
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('user_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': reverse('web_user_download_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Download Web Users Status"),
             'progress_text': _("Preparing web user download."),
             'error_text': _("There was an unexpected error! Please try again or report an issue."),
