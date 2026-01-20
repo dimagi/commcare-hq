@@ -46,6 +46,33 @@ def is_valid_date(txt):
     return False
 
 
+# Regex pattern to match ISO datetime strings with fractional seconds
+# Captures: datetime prefix, fractional seconds (if any), and timezone suffix (if any)
+_DATE_FRACTIONAL_SECONDS_PATTERN = re.compile(
+    r'^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})'  # datetime prefix
+    r'\.(\d{7,})'  # fractional seconds with 7+ digits
+    r'(.*)$'  # timezone suffix (Z, +00:00, etc.)
+)
+
+
+def normalize_date_for_es(txt):
+    """
+    Normalize a date string to be compatible with Elasticsearch.
+
+    ES date mappings at present only support at most 6 fractional second digits (microseconds).
+    Dates with 7+ digits (like "2026-01-20T07:23:45.1498543Z") will not be parsed correctly.
+    This function truncates fractional seconds to 6 digits.
+    """
+    if not txt:
+        return txt
+
+    match = _DATE_FRACTIONAL_SECONDS_PATTERN.match(txt)
+    if match:
+        prefix, fractional, suffix = match.groups()
+        return f"{prefix}.{fractional[:6]}{suffix}"
+    return txt
+
+
 # modified from: http://stackoverflow.com/questions/6027558/flatten-nested-python-dictionaries-compressing-keys
 def flatten(d, parent_key='', delimiter='/'):
     items = []
