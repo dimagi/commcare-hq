@@ -152,6 +152,7 @@ def orange_cameroon_kyc_verify(kyc_user, config):
     # }
 
     user_data = get_user_data_for_api(kyc_user, config)
+    _validate_name_fields(config, user_data)
     requests = config.connection_settings.get_requests()
     response = requests.post(
         f'/omcoreapis/1.0.2/infos/subscriber/customer/{user_data["phoneNumber"]}',
@@ -180,6 +181,17 @@ def orange_cameroon_kyc_verify(kyc_user, config):
                 return KycVerificationStatus.FAILED
 
     return KycVerificationStatus.PASSED
+
+
+def _validate_name_fields(config, user_data):
+    if config.stores_full_name:
+        field = 'fullName'
+    else:
+        # User may not have last name, but first name is required
+        field = 'firstName'
+    value = user_data.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise jsonschema.exceptions.ValidationError(f'{field} is required')
 
 
 def _report_verification_failure_metric(domain, errors_with_count):
