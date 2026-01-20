@@ -576,11 +576,8 @@ def toggle_demo_mode(request, domain, user_id):
     return HttpResponseRedirect(edit_user_url)
 
 
+@method_decorator(require_can_edit_or_view_commcare_users, name='dispatch')
 class BaseManageCommCareUserView(BaseUserSettingsView):
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -590,6 +587,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
         }]
 
 
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
     template_name = 'users/bootstrap3/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
@@ -612,6 +610,7 @@ class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class DemoRestoreStatusView(BaseManageCommCareUserView):
     urlname = 'demo_restore_status'
     page_title = gettext_noop('Demo User Status')
@@ -1103,6 +1102,7 @@ class UploadCommCareUsers(BaseUploadUser):
 
 
 @location_safe
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = gettext_noop('Mobile Worker Upload Status')
@@ -1212,15 +1212,12 @@ class FilteredUserDownload(BaseUserSettingsView):
 
 
 @location_safe
+@method_decorator(require_can_edit_or_view_commcare_users, name='dispatch')
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
     page_title = gettext_noop('Filter and Download Mobile Workers')
     urlname = 'filter_and_download_commcare_users'
     user_type = MOBILE_USER_TYPE
     count_view = 'count_commcare_users'
-
-    @method_decorator(require_can_edit_commcare_users)
-    def get(self, request, domain, *args, **kwargs):
-        return super().get(request, domain, *args, **kwargs)
 
 
 @location_safe
@@ -1449,7 +1446,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         return outfile.getvalue()
 
 
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 @location_safe
 def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
@@ -1793,6 +1790,7 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
 
     @method_decorator(require_POST)
     @method_decorator(csrf_protect)
+    @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         if not user_can_access_other_user(self.domain, self.request.couch_user, self.editable_user):
             return HttpResponse(status=401)
