@@ -174,7 +174,14 @@ def orange_cameroon_kyc_verify(kyc_user, config):
             return KycVerificationStatus.FAILED
     else:
         for field, threshold_value in config.passing_threshold.items():
-            api_value = user_info[field].strip().lower()
+            # lastName is optional in user data, but if API returns it and user doesn't have it, fail
+            if field == 'lastName' and field not in user_data:
+                if field in user_info and user_info[field].strip():
+                    # API has lastName but user doesn't - this is a mismatch
+                    return KycVerificationStatus.FAILED
+                # Both don't have lastName - skip validation
+                continue
+            api_value = user_info.get(field, '').strip().lower()
             user_value = user_data[field].strip().lower()
             score = get_percent_matching_score(api_value, user_value)
             if score < threshold_value:
