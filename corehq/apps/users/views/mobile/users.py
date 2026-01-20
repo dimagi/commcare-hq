@@ -102,7 +102,6 @@ from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
-    require_can_edit_web_users,
     require_can_edit_or_view_web_users,
     require_can_use_filtered_user_download,
 )
@@ -1221,16 +1220,12 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
 
 
 @location_safe
-@method_decorator([require_can_use_filtered_user_download], name='dispatch')
+@method_decorator([require_can_use_filtered_user_download, require_can_edit_or_view_web_users], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
     page_title = gettext_noop('Filter and Download Users')
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
     count_view = 'count_web_users'
-
-    @method_decorator(require_can_edit_web_users)
-    def get(self, request, domain, *args, **kwargs):
-        return super().get(request, domain, *args, **kwargs)
 
 
 class UsernameUploadMixin(object):
@@ -1452,7 +1447,7 @@ def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
 
 
-@require_can_edit_web_users
+@require_can_edit_or_view_web_users
 @require_can_use_filtered_user_download
 @location_safe
 def count_web_users(request, domain):

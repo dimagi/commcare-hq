@@ -894,12 +894,8 @@ def check_sso_trust(request, domain):
     return JsonResponse(response)
 
 
+@method_decorator([always_allow_project_access, require_can_edit_or_view_web_users], name='dispatch')
 class BaseManageWebUserView(BaseUserSettingsView):
-
-    @method_decorator(always_allow_project_access)
-    @method_decorator(require_can_edit_web_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseManageWebUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -910,6 +906,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 
 
 @location_safe
+@method_decorator(require_can_edit_web_users, name='dispatch')
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/bootstrap3/invite_web_user.html"
     urlname = 'invite_web_user'
@@ -1291,6 +1288,7 @@ class UploadWebUsers(BaseUploadUser):
 
 
 @location_safe
+@method_decorator(require_can_edit_web_users, name='dispatch')
 class WebUserUploadStatusView(BaseManageWebUserView):
     urlname = 'web_user_upload_status'
     page_title = gettext_noop('Web User Upload Status')
@@ -1332,14 +1330,11 @@ class UserUploadJobPollView(BaseUserSettingsView):
 
 
 @location_safe
+@method_decorator(require_can_edit_web_users, name='dispatch')
 class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
     urlname = "web_user_upload_job_poll"
     on_complete_long = 'Web Worker upload has finished'
     user_type = 'web users'
-
-    @method_decorator(require_can_edit_web_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(WebUserUploadJobPollView, self).dispatch(request, *args, **kwargs)
 
 
 @require_POST
