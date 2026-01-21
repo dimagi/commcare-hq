@@ -19,10 +19,19 @@ var self = {
 };
 
 self.sourceOptions = ko.computed(function () {
-    return _.union(
-        self.sourcesMap[self.application()]?.[self.sourceType()],
+    let sourceData = [];
+    if (self.sourceType() === 'case') {
+        sourceData = self.sourcesMap['_all']?.[self.sourceType()];
+    } else {
+        sourceData = self.sourcesMap[self.application()]?.[self.sourceType()];
+    }
+
+    const unionResult = _.union(
+        sourceData,
         self.sourcesMap[self.registrySlug()]?.[self.sourceType()],
     );
+
+    return unionResult;
 });
 
 export default self;

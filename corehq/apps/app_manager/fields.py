@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
+from crispy_forms import layout as crispy
 from memoized import memoized
 
 from couchforms.analytics import get_exports_by_form
@@ -109,7 +110,7 @@ class ApplicationDataSourceUIHelper(object):
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
         self.application_field.choices = sorted(
-            [(app_id, source['name']) for app_id, source in self.all_sources.items()],
+            [(app_id, source['name']) for app_id, source in self.all_sources.items() if app_id != '_all'],
             key=lambda id_name_tuple: (id_name_tuple[1] or '').lower()
         )
         if self.enable_registry:
@@ -128,7 +129,7 @@ class ApplicationDataSourceUIHelper(object):
 
         _add_choices(
             self.source_field,
-            [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
+            [(ct['value'], ct['text']) for ct in self.all_sources['_all']['case']]
         )
         _add_choices(
             self.source_field,
@@ -188,7 +189,7 @@ class ApplicationDataSourceUIHelper(object):
                 optionsText: function(item){return item.text},
                 optionsValue: function(item){return item.value},
                 value: sourceId,
-                options: sourcesMap[application()][sourceType()]
+                options: sourceOptions,
             '''}
 
     def get_fields(self):
@@ -212,10 +213,14 @@ class ApplicationDataSourceUIHelper(object):
 
     def get_crispy_fields(self):
         help_texts = self.get_crispy_filed_help_texts()
-        return [
-            hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)
-            for name, help_text in help_texts.items()
-        ]
+        fields = []
+        for name, help_text in help_texts.items():
+            field = hqcrispy.FieldWithHelpBubble(name, help_bubble_text=help_text)
+            if name == 'application':
+                fields.append(crispy.Div(field, data_bind="visible: sourceType() !== 'case'"))
+            else:
+                fields.append(field)
+        return fields
 
     def get_app_source(self, data_dict):
         return DataSource(data_dict['application'], data_dict['source_type'], data_dict['source'],
@@ -224,19 +229,31 @@ class ApplicationDataSourceUIHelper(object):
 
 def get_app_sources(domain):
     apps = get_apps_in_domain(domain, include_remote=False)
-    return {
+
+    sources_map = {
         app._id: {
             "name": app.name,
-            "case": [{"text": t, "value": t} for t in app.get_case_types()],
             "form": [
                 {
                     "text": '{} / {}'.format(form.get_module().default_name(), form.default_name()),
                     "value": form.get_unique_id()
                 } for form in app.get_forms()
-            ]
+            ],
+            "case": []
         }
         for app in apps
     }
+
+    sources_map["_all"] = {
+        "name": "All Case Types",
+        "case": [
+            {"text": t, "value": t}
+            for t in sorted(get_case_types_for_domain(domain), key=lambda s: s.lower())
+        ],
+        "form": []
+    }
+
+    return sources_map
 
 
 def get_registry_case_sources(domain):
