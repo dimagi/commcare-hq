@@ -689,11 +689,11 @@ def show_outer_spaces(value):
     """Replace leading and/or trailing space with a bullet
 
     Convenient for disambiguating values like 'thing' and 'thing '.
-    The bullet character was chosen based on the convention of IDE's
-    that render spaces at the end of a line as a dot.
+    The "middle dot" character was chosen based on the convention of
+    IDE's that render spaces at the end of a line as a dot.
     """
     if value.startswith(" "):
-        value = '\u2022' + value[1:]
+        value = '\u00b7' + value[1:]
     if value.endswith(" "):
-        value = value[:-1] + '\u2022'
+        value = value[:-1] + '\u00b7'
     return value
