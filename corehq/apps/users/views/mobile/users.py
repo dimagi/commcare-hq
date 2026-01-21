@@ -1211,7 +1211,6 @@ class FilteredUserDownload(BaseUserSettingsView):
 
 
 @location_safe
-@method_decorator(require_can_edit_or_view_commcare_users, name='dispatch')
 class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserView):
     page_title = gettext_noop('Filter and Download Mobile Workers')
     urlname = 'filter_and_download_commcare_users'
@@ -1220,7 +1219,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
 
 
 @location_safe
-@method_decorator([require_can_use_filtered_user_download, require_can_edit_or_view_web_users], name='dispatch')
+@method_decorator(require_can_use_filtered_user_download, name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
     page_title = gettext_noop('Filter and Download Users')
     urlname = 'filter_and_download_web_users'
