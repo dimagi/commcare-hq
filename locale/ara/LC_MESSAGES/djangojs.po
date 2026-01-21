@@ -206,6 +206,32 @@ msgstr "مخطط"
 msgid "Show All Dates"
 msgstr "عرض جميع التواريخ"
 
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+msgid "Hide Past Versions"
+msgstr "إخفاء الإصدارات السابقة"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+msgid "See Past Versions"
+msgstr "عرض الإصدارات السابقة"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Application name is required"
+msgstr "اسم التطبيق مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Project name is required"
+msgstr "اسم المشروع مطلوب"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Invalid Project Selected"
+msgstr "تم اختيار مشروع غير صالح"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
+msgid "Oops, there was a problem loading this section. Please try again."
+msgstr "عذرًا، حدثت مشكلة في تحميل هذا القسم. يرجى المحاولة مرة أخرى."
+
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
@@ -217,16 +243,6 @@ msgstr "لديك تغييرات غير محفوظة."
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 msgid "There was an error saving."
 msgstr "حدث خطأ أثناء الحفظ."
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
-msgid "Hide Past Versions"
-msgstr "إخفاء الإصدارات السابقة"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
-msgid "See Past Versions"
-msgstr "عرض الإصدارات السابقة"
 
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
@@ -307,27 +323,13 @@ msgstr ""
 "الوقت. يمكن الرجوع إلى هذه البيانات في نماذج أخرى أو من خلال حالات أخرى. من "
 "الأمثلة الشائعة: صحة الأم، حضور الطلاب، أو مراقبة المحاصيل."
 
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-msgid "Application name is required"
-msgstr "اسم التطبيق مطلوب"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-msgid "Project name is required"
-msgstr "اسم المشروع مطلوب"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-msgid "Invalid Project Selected"
-msgstr "تم اختيار مشروع غير صالح"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
-msgid "Oops, there was a problem loading this section. Please try again."
-msgstr "عذرًا، حدثت مشكلة في تحميل هذا القسم. يرجى المحاولة مرة أخرى."
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/download_async_modal.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/download_async_modal.js
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
+msgid ""
+"Sorry, something went wrong with the download. If you see this repeatedly "
+"please report an issue."
+msgstr "عذراً، حدث خطأ أثناء التنزيل. إذا تكرر ذلك يرجى الإبلاغ عن المشكلة."
 
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
@@ -557,6 +559,30 @@ msgstr "يمكنك فقط وجود خاصية واحدة بتنسيق 'صورة'
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+#| msgid "You can only have one property with the 'Image' format"
+msgid "You can only have one property with the 'Geo Boundary' format"
+msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'الحدود الجغرافية'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+#| msgid "You can only have one property with the 'Image' format"
+msgid "You can only have one property with the 'Geo Boundary Color' format"
+msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'لون الحدود الجغرافية'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+#| msgid "You can only have one property with the 'Image' format"
+msgid "You can only have one property with the 'Geo Points' format"
+msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'النقاط الجغرافية'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+#| msgid "You can only have one property with the 'Image' format"
+msgid "You can only have one property with the 'Geo Points Colors' format"
+msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'ألوان النقاط الجغرافية'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
 msgid "All properties must be below a tab."
 msgstr "يجب أن تكون جميع الخصائص تحت تبويب."
 
@@ -718,6 +744,22 @@ msgid "Markdown"
 msgstr "ماركداون"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Boundary (Mobile only)"
+msgstr "الحدود الجغرافية (للجوال فقط)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Boundary Color (Mobile only)"
+msgstr "لون الحدود الجغرافية (للجوال فقط)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Points (Mobile only)"
+msgstr "النقاط الجغرافية (للجوال فقط)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Points Colors (Mobile only)"
+msgstr "ألوان النقاط الجغرافية (للجوال فقط)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Address Popup (Web Apps only)"
 msgstr "نافذة منبثقة للعنوان (تطبيقات الويب فقط)"
 
@@ -749,12 +791,9 @@ msgstr "نص قابل للترجمة"
 msgid "Image"
 msgstr "صورة"
 
-#: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js
-#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
-msgid ""
-"Sorry, something went wrong with the download. If you see this repeatedly "
-"please report an issue."
-msgstr "عذراً، حدث خطأ أثناء التنزيل. إذا تكرر ذلك يرجى الإبلاغ عن المشكلة."
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s."
+msgstr "تنسيق \"%(format)s\" يتطلب أعمدة بالتنسيقات التالية: %(dependencies)s."
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
@@ -1110,25 +1149,20 @@ msgstr "لديك إعدادات غير محفوظة."
 msgid "Settings"
 msgstr "الإعدادات"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
 msgid "Filter properties"
 msgstr "تصفية الخصائص"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
 msgid "View All Cases"
 msgstr "عرض جميع الحالات"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_summary.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js
 msgid "View All Forms"
 msgstr "عرض جميع النماذج"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
 msgid "View Changed Items"
 msgstr "عرض العناصر التي تم تغييرها"
 
@@ -1259,7 +1293,6 @@ msgid "getCurrentMugInput"
 msgstr "الحصول على إدخال الكوب الحالي"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Streets"
 msgid "jstree"
 msgstr "شجرة JS"
 
@@ -1272,7 +1305,6 @@ msgid "getData"
 msgstr "الحصول على البيانات"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "load"
 msgid "loadXML"
 msgstr "تحميل XML"
 
@@ -1285,7 +1317,6 @@ msgid "loadXFormOrError"
 msgstr "تحميل XForm أو خطأ"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Add Question"
 msgid "addQuestion"
 msgstr "إضافة سؤال"
 
@@ -1294,12 +1325,10 @@ msgid "nodeIDFromLabel"
 msgstr "معرّف العقدة من التسمية"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Questions"
 msgid "getSections"
 msgstr "الحصول على الأقسام"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Clear selection"
 msgid "collapseSection"
 msgstr "طي القسم"
 
@@ -1347,23 +1376,23 @@ msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
 msgid "{path} is not a valid data parent"
 msgstr "{path} ليس أصل بيانات صالح"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Command Bar"
 msgstr "شريط الأوامر"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Basic"
 msgstr "أساسي"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Logic"
 msgstr "المنطق"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -2448,7 +2477,8 @@ msgstr "فشل في الحفظ "
 msgid "Please wait and do not navigate away..."
 msgstr "يرجى الانتظار وعدم مغادرة الصفحة..."
 
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js
+#: corehq/apps/hqmedia/static/hqmedia/js/bootstrap3/references_main.js
+#: corehq/apps/hqmedia/static/hqmedia/js/bootstrap5/references_main.js
 msgid ""
 "Error fetching multimedia, please try again or report an issue if the "
 "problem persists."
