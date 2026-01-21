@@ -1254,6 +1254,7 @@ toggles
  0004_alter_toggleeditpermission_tag_slug
  0005_alter_toggleeditpermission_tag_slug
  0006_alter_toggleeditpermission_tag_slug
+ 0007_sync_toggle_edit_permissions
 translations
  0001_initial
  0002_transifexblacklist
