@@ -633,7 +633,7 @@ class ApplicationDataRMIHelper(object):
         all_case_type_names = get_case_types_for_domain(self.domain)
         all_case_type_objs = [RMIDataChoice(
             id=case_type,
-            text=case_type,
+            text=show_outer_spaces(case_type),
             data={
                 'unknown': True
             }
@@ -683,3 +683,17 @@ class ApplicationDataRMIHelper(object):
         response = self.get_form_rmi_response()
         response.update(self.get_case_rmi_response())
         return response
+
+
+def show_outer_spaces(value):
+    """Replace leading and/or trailing space with a bullet
+
+    Convenient for disambiguating values like 'thing' and 'thing '.
+    The bullet character was chosen based on the convention of IDE's
+    that render spaces at the end of a line as a dot.
+    """
+    if value.startswith(" "):
+        value = '\u2022' + value[1:]
+    if value.endswith(" "):
+        value = value[:-1] + '\u2022'
+    return value
