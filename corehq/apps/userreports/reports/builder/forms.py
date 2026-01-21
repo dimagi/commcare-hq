@@ -1091,6 +1091,9 @@ class DataSourceForm(forms.Form):
         """
         cleaned_data = super(DataSourceForm, self).clean()
 
+        if cleaned_data['source_type'] == DATA_SOURCE_TYPE_CASE:
+            cleaned_data['application'] = ''
+
         existing_reports = get_report_and_registry_report_configs_for_domain(self.domain)
         builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
         if has_report_builder_access(self.domain) and len(builder_reports) >= self.max_allowed_reports:

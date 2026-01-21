@@ -529,7 +529,7 @@ class ConfigureReport(ReportBuilderView):
                 self.source_type = DATA_SOURCE_TYPE_CASE
                 self.app = None
             else:
-                self.app = Application.get(self.app_id)
+                self.app = Application.get(self.app_id) if self.app_id else None
                 self.source_type = self.request.GET['source_type']
 
         if self.registry_slug and not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
@@ -538,7 +538,8 @@ class ConfigureReport(ReportBuilderView):
                 allow_delete=False
             )
 
-        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug \
+           and self.source_type != DATA_SOURCE_TYPE_CASE:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
