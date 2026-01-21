@@ -2409,7 +2409,9 @@ class AdjustBalanceForm(forms.Form):
         )
     )
 
-    payment_type = forms.ChoiceField(choices=PaymentType.CHOICES)
+    payment_type = forms.ChoiceField(
+        choices=[(value, label) for value, label in PaymentType.CHOICES if value != PaymentType.NONE],
+    )
 
     note = forms.CharField(
         required=True,
