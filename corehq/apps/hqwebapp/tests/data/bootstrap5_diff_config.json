@@ -280,10 +280,6 @@
           "_tables.scss"
         ],
         [
-          "tabs.less",
-          "_tabs.scss"
-        ],
-        [
           "typography.less",
           "_type.scss"
         ],
@@ -1168,15 +1164,6 @@
       ],
       "file_type": "javascript",
       "label": "javascript/app_manager/js/settings",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "summary/bootstrap3",
-        "summary/bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/app_manager/js/summary",
       "compare_all_files": true
     }
   ],

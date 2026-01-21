@@ -42,10 +42,21 @@
   color: #ffffff;
 }
 
-input::file-selector-button {
-  @extend .btn;
-  @extend .btn-sm;
-  @extend .btn-outline-primary;
+input[type="file"] {
+  &::file-selector-button {
+    @extend .btn;
+    @extend .btn-sm;
+    @extend .btn-outline-primary;
+  }
+
+  &.form-control {
+    border: unset;
+
+    &:hover::file-selector-button {
+      // override .form-control gray hover effect
+      background-color: $primary !important;
+    }
+  }
 }
 
 .btn-wiggle {

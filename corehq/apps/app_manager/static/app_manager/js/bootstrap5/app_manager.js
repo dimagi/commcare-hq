@@ -604,7 +604,7 @@ var _initNewModuleOptionClicks = function () {
 
                 function displayError(errorMsg) {
                     $formGroup.addClass('has-error');
-                    $error.text(errorMsg);
+                    $error.html(errorMsg);
                     $error.show();
                     $help.hide();
                     $createBtn.prop('disabled', true);

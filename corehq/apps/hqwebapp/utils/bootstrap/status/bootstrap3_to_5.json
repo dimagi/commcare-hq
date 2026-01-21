@@ -6,15 +6,23 @@
     "in_progress": true,
     "templates": [
       "app_exchange.html",
+      "app_view_settings.html",
       "base_summary.html",
       "case_summary.html",
       "form_summary.html",
       "form_summary_base.html",
       "form_summary_diff.html",
-      "partials/form_summary_header.html"
+      "languages.html",
+      "partials/bulk_upload_app_translations.html",
+      "partials/form_summary_header.html",
+      "partials/settings/add_ons.html",
+      "partials/settings/app_settings.html",
+      "partials/settings/commcare_settings.html",
+      "partials/settings/multimedia_ajax.html"
     ],
     "javascript": [
       "js/app_exchange.js",
+      "js/app_view.js",
       "js/summary/case_summary.js",
       "js/summary/form_diff.js",
       "js/summary/form_summary.js"
@@ -114,6 +122,9 @@
     "is_complete": true
   },
   "enterprise": {
+    "is_complete": true
+  },
+  "events": {
     "is_complete": true
   },
   "export": {

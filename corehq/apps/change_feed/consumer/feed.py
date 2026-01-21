@@ -68,7 +68,7 @@ class KafkaChangeFeed(ChangeFeed):
         """
         timeout = MAX_TIMEOUT if forever else MIN_TIMEOUT
         start_from_latest = since is None
-        reset = 'largest' if start_from_latest else 'smallest'
+        reset = 'latest' if start_from_latest else 'earliest'
         self._init_consumer(timeout, auto_offset_reset=reset)
 
         since = self._filter_offsets(since)
@@ -137,7 +137,7 @@ class KafkaChangeFeed(ChangeFeed):
             return self._init_consumer()
         return self._consumer
 
-    def _init_consumer(self, timeout=MIN_TIMEOUT, auto_offset_reset='smallest'):
+    def _init_consumer(self, timeout=MIN_TIMEOUT, auto_offset_reset='earliest'):
         """Allow re-initing the consumer if necessary
         """
         config = {

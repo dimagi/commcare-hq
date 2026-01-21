@@ -1,11 +1,13 @@
 --- 
 +++ 
-@@ -14,14 +14,14 @@
+@@ -14,15 +14,15 @@
  import ko from "knockout";
  import _ from "underscore";
  import initialPageData from "hqwebapp/js/initial_page_data";
 -import main from "hqwebapp/js/bootstrap3/main";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 +import main from "hqwebapp/js/bootstrap5/main";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
  import Utils from "app_manager/js/details/utils";
 -import uiElementInput from "hqwebapp/js/ui_elements/bootstrap3/ui-element-input";
 -import uiElementKeyValueMapping from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping";
@@ -21,7 +23,7 @@
  import google from "analytix/js/google";
  
  const microCaseImageName = 'cc_case_image';
-@@ -146,7 +146,7 @@
+@@ -147,7 +147,7 @@
          $modalDiv.koApplyBindings(self);
          const $modal = $modalDiv.find('.modal');
          $modal.appendTo('body');

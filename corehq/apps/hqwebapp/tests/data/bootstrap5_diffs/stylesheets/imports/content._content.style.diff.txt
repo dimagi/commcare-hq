@@ -114,7 +114,7 @@
  
  .appmanager-loading {
 -  @dim: 4rem;
-+  $dim: 4rem;
++  $dim: 2.5rem;
    display: block;
    position: absolute;
 -  font-size: @dim;
@@ -130,7 +130,7 @@
 +  left: calc(50% - $dim / 2);
 +  left: -moz-calc(50% - $dim / 2);
 +  left: -webkit-calc(50% - $dim / 2);
-+  color: fadeOut($cc-text, 40);
++  color: rgba($cc-text, 0.6);
  }
  
  .appmanager-loading-nav {

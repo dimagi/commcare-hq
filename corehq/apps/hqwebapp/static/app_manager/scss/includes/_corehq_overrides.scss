@@ -16,3 +16,12 @@ body {
 .hq-container {
   padding-bottom: 0;
 }
+
+.toggle-badge {
+  // tag_css_class on feature flag labels is set in Python for B3 defaults
+  // restyle manually until all pages using it are on B5
+  &.bg-default,
+  &.bg-release {
+    background-color: $secondary;
+  }
+}

@@ -26,6 +26,7 @@ from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 from corehq.apps.locations.permissions import user_can_access_case
 from corehq.apps.locations.permissions import location_safe
+from corehq.form_processor.models import CommCareCase
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
@@ -150,21 +151,40 @@ def _get_single_case(request, case_id):
 
 def _handle_ext_get(request, external_id):
     try:
-        bulk_fetch_results_dict = get_bulk(
+        case = CommCareCase.objects.get_case_by_external_id(
             request.domain,
-            request.couch_user,
-            case_ids=[],
-            external_ids=[external_id],
+            external_id,
+            raise_multiple=True,
         )
-    except UserError as err:
-        return JsonResponse({'error': str(err)}, status=400)
-    case = bulk_fetch_results_dict['cases'][0]
-    if case.get('error') == 'not found':
+    except CommCareCase.MultipleObjectsReturned as err:
+        case_ids = [case.case_id for case in err.cases]
+        return JsonResponse(
+            {'error': f"Multiple cases found with external_id '{external_id}': "
+                      f"{', '.join(case_ids)}"},
+            status=400,
+        )
+    if case is None:
         return JsonResponse(
             {'error': f"Case '{external_id}' not found"},
             status=404,
         )
-    return JsonResponse(case)
+
+    try:
+        if case.domain != request.domain:
+            raise NotFoundError()
+        if not user_can_access_case(request.domain, request.couch_user, case):
+            raise PermissionDenied()
+    except NotFoundError:
+        return JsonResponse(
+            {'error': f"Case '{case.case_id}' not found"},
+            status=404,
+        )
+    except PermissionDenied:
+        return JsonResponse(
+            {'error': f"Insufficent permission for Case '{case.case_id}'"},
+            status=403,
+        )
+    return JsonResponse(serialize_case(case))
 
 
 def _handle_bulk_fetch(request):
@@ -206,22 +226,26 @@ def _handle_ext_put(request, external_id):
         data['external_id'] = external_id
 
     try:
-        bulk_fetch_results_dict = get_bulk(
+        # Use PG instead of ES to ensure immediate consistency
+        case = CommCareCase.objects.get_case_by_external_id(
             request.domain,
-            request.couch_user,
-            case_ids=[],
-            external_ids=[external_id],
+            external_id,
+            raise_multiple=True,
         )
-    except UserError as err:
-        return JsonResponse({'error': str(err)}, status=400)
-    case = bulk_fetch_results_dict['cases'][0]
-    if case.get('error') == 'not found':
+    except CommCareCase.MultipleObjectsReturned as err:
+        case_ids = [case.case_id for case in err.cases]
+        return JsonResponse(
+            {'error': f"Multiple cases found with external_id '{external_id}': "
+                      f"{', '.join(case_ids)}"},
+            status=400,
+        )
+    if case is None:
         is_creation = True
     else:
         is_creation = False
         if 'case_id' not in data:
-            data['case_id'] = case['case_id']
-        elif data['case_id'] != case['case_id']:
+            data['case_id'] = case.case_id
+        elif data['case_id'] != case.case_id:
             return JsonResponse(
                 {'error': 'The given value of "case_id" does not match the '
                           'existing value for the case identified by '
