@@ -3581,7 +3581,7 @@ class CreditLine(models.Model):
                 balance -= adjustment_amount
 
     @classmethod
-    def make_payment_towards_invoice(cls, invoice, payment_record, payment_type=None):
+    def make_payment_towards_invoice(cls, invoice, payment_record, payment_type):
         """ Make a payment for a billing account towards an invoice """
         if invoice.is_customer_invoice:
             billing_account = invoice.account
