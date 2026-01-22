@@ -255,3 +255,44 @@ class TestGetDateRangeWhere(AuditcareTest):
         self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
         self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
 
+
+class TestNavigationEventsWithDatetime(AuditcareTest):
+    """Test navigation queries with datetime objects for time-based filtering."""
+
+    username = "datetime_test@test.com"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # Create events at different times on the same day
+        cls.event_times = [
+            datetime(2021, 2, 15, 8, 0),   # 08:00
+            datetime(2021, 2, 15, 12, 0),  # 12:00
+            datetime(2021, 2, 15, 16, 0),  # 16:00
+            datetime(2021, 2, 15, 20, 0),  # 20:00
+        ]
+        headers = {"REQUEST_METHOD": "GET"}
+        NavigationEventAudit.objects.bulk_create([
+            NavigationEventAudit(
+                user=cls.username,
+                event_date=event_time,
+                headers=headers
+            )
+            for event_time in cls.event_times
+        ])
+
+    def test_filter_by_time_range(self):
+        # Filter for events between 10:00 and 18:00 on 2021-02-15
+        start = datetime(2021, 2, 15, 10, 0)
+        end = datetime(2021, 2, 15, 18, 0)
+        events = list(navigation_events_by_user(
+            self.username, start_date=start, end_date=end
+        ))
+        event_times = [e.event_date for e in events]
+        # Should only include 12:00 and 16:00 events
+        self.assertEqual(len(events), 2)
+        self.assertIn(datetime(2021, 2, 15, 12, 0), event_times)
+        self.assertIn(datetime(2021, 2, 15, 16, 0), event_times)
+        # Should not include 08:00 or 20:00
+        self.assertNotIn(datetime(2021, 2, 15, 8, 0), event_times)
+        self.assertNotIn(datetime(2021, 2, 15, 20, 0), event_times)
