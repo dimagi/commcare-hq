@@ -7,6 +7,9 @@ on:
     - mjr/add-change-meta-context
     - mjr/new_dedupe_model
     - mjr/dedupe_handle_closed_cases
+    - mjr/github-actions-tests
+    paths-ignore:
+      - 'locale/**'
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
