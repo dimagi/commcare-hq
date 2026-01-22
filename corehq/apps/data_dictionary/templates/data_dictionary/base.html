@@ -23,8 +23,8 @@
       <!-- ko foreach: caseTypes -->
       <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
         {# navigation handle by URL hash #}
-        <a data-bind="attr: {href: $data.url}">
-          <span data-bind="text: $data.name" style="display: inline-block">
+        <a data-bind="attr: {href: $data.url, 'data-target': $data.bootstrap3TabSelector}">
+          <span data-bind="text: $data.displayName" style="display: inline-block">
           </span>
           <span
             data-bind="visible: $data.deprecated"
@@ -201,14 +201,14 @@
     {% if not request.is_view_only %}
       <div
         id="gtm-save-btn"
-        data-bind="saveButton: saveButton, visible: $root.activeCaseType()"
+        data-bind="saveButton: saveButton, visible: $root.getActiveCaseType()"
       ></div>
     {% endif %}
     <div class="row">
       <div class="col-xs-12">
         <div>
           <h3
-            data-bind="text: $root.activeCaseType()"
+            data-bind="text: $root.getActiveCaseType().displayName"
             style="display: inline-block;"
           ></h3>
           <span
@@ -291,7 +291,7 @@
             {% trans "Delete Case Type" %}
           </a>
         {% endif %}
-        <div data-bind="visible: $root.activeCaseType()">
+        <div data-bind="visible: $root.getActiveCaseType()">
           <button
             data-bind="click: $root.showDeprecated, visible: !showAll()"
             class="btn btn-default pull-right"
