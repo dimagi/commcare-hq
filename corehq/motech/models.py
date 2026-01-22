@@ -354,7 +354,7 @@ class RequestLog(models.Model):
     # requests to send its payload.
     payload_id = models.CharField(max_length=126, blank=True, null=True, db_index=True)
     request_method = models.CharField(max_length=12)
-    request_url = models.CharField(max_length=255, db_index=True)
+    request_url = models.CharField(max_length=500, db_index=True)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
     request_body = models.TextField(blank=True, null=True)
