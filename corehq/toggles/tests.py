@@ -433,12 +433,12 @@ class TestToggleEditPermissionShortcuts(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.users = ['arthur', 'diane']
-        cls.tag_custom_edit_permission = ToggleEditPermission.objects.create(
-            tag_slug=TAG_INTERNAL.slug,
-            enabled_users=['arthur']
+        cls.tag_custom_edit_permission, __ = (
+            ToggleEditPermission.objects.update_or_create(
+                tag_slug=TAG_INTERNAL.slug,
+                defaults={'enabled_users': ['arthur']},
+            )
         )
-        cls.addClassCleanup(cls.tag_custom_edit_permission.delete)
 
     def test_get_tags_with_edit_permission(self):
         allowed_tags = get_editable_toggle_tags_for_user('arthur')
