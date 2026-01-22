@@ -2356,7 +2356,7 @@ class SubscriptionAdjustment(models.Model):
         return adjustment
 
 
-class CreditApplicationMixin:
+class BillingRecordCreditsMixin:
     """
     Mixin providing consolidated credit application logic for billing records.
 
@@ -2728,7 +2728,7 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
         return web_user.is_domain_admin(self.invoice.get_domain())
 
 
-class BillingRecord(CreditApplicationMixin, BillingRecordBase):
+class BillingRecord(BillingRecordCreditsMixin, BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/email/invoice_contracted.html'
     INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted.txt'
@@ -2827,9 +2827,7 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
 
         return context
 
-    # Implementation of CreditApplicationMixin abstract methods
     def get_subscription_credit_lines(self, feature_type=None, is_product=False):
-        """Get credit lines for the single subscription associated with this invoice."""
         return CreditLine.get_credits_by_subscription_and_features(
             self.invoice.subscription,
             feature_type=feature_type,
@@ -2837,7 +2835,6 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
         )
 
     def get_account_credit_lines(self, feature_type=None, is_product=False):
-        """Get credit lines for the account associated with this invoice."""
         return CreditLine.get_credits_for_account(
             self.invoice.subscription.account,
             feature_type=feature_type,
@@ -2845,14 +2842,12 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
         )
 
     def get_credit_adjustments_for_invoice(self, **filters):
-        """Get credit adjustments for this invoice with optional filters."""
         return CreditAdjustment.objects.filter(
             invoice=self.invoice,
             **filters
         )
 
     def has_subscription_credit_adjustments(self, credit_adjustments):
-        """Check if credit adjustments reference this invoice's subscription."""
         return credit_adjustments.filter(
             credit_line__subscription=self.invoice.subscription
         ).exists()
@@ -2871,7 +2866,7 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
         return web_user.is_domain_admin(self.invoice.get_domain())
 
 
-class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
+class CustomerBillingRecord(BillingRecordCreditsMixin, BillingRecordBase):
     invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)
     INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
     INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
@@ -2936,9 +2931,7 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
 
         return context
 
-    # Implementation of CreditApplicationMixin abstract methods
     def get_subscription_credit_lines(self, feature_type=None, is_product=False):
-        """Get credit lines for the multiple subscriptions associated with this invoice."""
         return CreditLine.get_credits_for_subscriptions(
             self.invoice.subscriptions,
             feature_type=feature_type,
@@ -2946,7 +2939,6 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
         )
 
     def get_account_credit_lines(self, feature_type=None, is_product=False):
-        """Get credit lines for the account associated with this invoice."""
         return CreditLine.get_credits_for_account(
             self.invoice.account,
             feature_type=feature_type,
@@ -2954,14 +2946,12 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
         )
 
     def get_credit_adjustments_for_invoice(self, **filters):
-        """Get credit adjustments for this customer invoice with optional filters."""
         return CreditAdjustment.objects.filter(
             customer_invoice=self.invoice,
             **filters
         )
 
     def has_subscription_credit_adjustments(self, credit_adjustments):
-        """Check if credit adjustments reference any of this invoice's subscriptions."""
         for subscription in self.invoice.subscriptions.all():
             if credit_adjustments.filter(credit_line__subscription=subscription).exists():
                 return True
