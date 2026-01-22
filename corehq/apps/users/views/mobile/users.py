@@ -102,7 +102,7 @@ from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
-    require_can_edit_web_users,
+    require_can_edit_or_view_web_users,
     require_can_use_filtered_user_download,
 )
 from corehq.apps.users.exceptions import (
@@ -575,11 +575,8 @@ def toggle_demo_mode(request, domain, user_id):
     return HttpResponseRedirect(edit_user_url)
 
 
+@method_decorator(require_can_edit_or_view_commcare_users, name='dispatch')
 class BaseManageCommCareUserView(BaseUserSettingsView):
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -589,6 +586,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
         }]
 
 
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
     template_name = 'users/bootstrap3/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
@@ -611,6 +609,7 @@ class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class DemoRestoreStatusView(BaseManageCommCareUserView):
     urlname = 'demo_restore_status'
     page_title = gettext_noop('Demo User Status')
@@ -1102,6 +1101,7 @@ class UploadCommCareUsers(BaseUploadUser):
 
 
 @location_safe
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = gettext_noop('Mobile Worker Upload Status')
@@ -1137,7 +1137,22 @@ class CommcareUserUploadJobPollView(UserUploadJobPollView):
 
 @require_can_edit_or_view_commcare_users
 @location_safe
-def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
+def commcare_user_download_job_poll(
+    request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"
+):
+    return _user_download_job_poll(request, domain, download_id, template)
+
+
+@require_can_edit_or_view_web_users
+@location_safe
+def web_user_download_job_poll(
+    request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"
+):
+    return _user_download_job_poll(request, domain, download_id, template)
+
+
+@location_safe
+def _user_download_job_poll(request, domain, download_id, template):
     try:
         context = get_download_context(download_id, 'Preparing download')
         context.update({'link_text': _('Download Users')})
@@ -1167,7 +1182,7 @@ class DownloadUsersStatusView(BaseUserSettingsView):
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
-            'poll_url': reverse('user_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'poll_url': reverse('commcare_user_download_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _("Download Users Status"),
             'progress_text': _("Preparing user download."),
             'error_text': _("There was an unexpected error! Please try again or report an issue."),
@@ -1202,22 +1217,14 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
     user_type = MOBILE_USER_TYPE
     count_view = 'count_commcare_users'
 
-    @method_decorator(require_can_edit_commcare_users)
-    def get(self, request, domain, *args, **kwargs):
-        return super().get(request, domain, *args, **kwargs)
-
 
 @location_safe
-@method_decorator([require_can_use_filtered_user_download], name='dispatch')
+@method_decorator(require_can_use_filtered_user_download, name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
     page_title = gettext_noop('Filter and Download Users')
     urlname = 'filter_and_download_web_users'
     user_type = WEB_USER_TYPE
     count_view = 'count_web_users'
-
-    @method_decorator(require_can_edit_web_users)
-    def get(self, request, domain, *args, **kwargs):
-        return super().get(request, domain, *args, **kwargs)
 
 
 class UsernameUploadMixin(object):
@@ -1262,6 +1269,7 @@ class UsernameUploadMixin(object):
         return sheet
 
 
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
     page_title = gettext_noop('Bulk Delete')
@@ -1389,6 +1397,7 @@ class ClearCommCareUsers(DeleteCommCareUsers):
         )
 
 
+@method_decorator(require_can_edit_commcare_users, name='dispatch')
 class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'commcare_users_lookup'
     page_title = gettext_noop('Mobile Workers Bulk Lookup')
@@ -1433,13 +1442,13 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         return outfile.getvalue()
 
 
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 @location_safe
 def count_commcare_users(request, domain):
     return _count_users(request, domain, MOBILE_USER_TYPE)
 
 
-@require_can_edit_web_users
+@require_can_edit_or_view_web_users
 @require_can_use_filtered_user_download
 @location_safe
 def count_web_users(request, domain):
@@ -1777,6 +1786,7 @@ class CommCareUserPasswordResetView(BaseManageCommCareUserView, FormView):
 
     @method_decorator(require_POST)
     @method_decorator(csrf_protect)
+    @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         if not user_can_access_other_user(self.domain, self.request.couch_user, self.editable_user):
             return HttpResponse(status=401)
