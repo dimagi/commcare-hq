@@ -1,8 +1,7 @@
 import datetime
 
-from time_machine import travel
-
 from django.test import TestCase
+from time_machine import travel
 
 from corehq.apps.saved_reports.models import (
     ReportNotification,
