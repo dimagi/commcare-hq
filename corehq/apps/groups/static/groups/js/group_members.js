@@ -35,9 +35,7 @@ $(function () {
     // Delete group event
     var $deleteGroupModalForm = $("#delete_group_modal form");
     $("button:submit", $deleteGroupModalForm).click(function () {
-        googleAnalytics.track.event("Editing Group", "Deleted Group", initialPageData.get("group_id"), "", {}, function () {
-            $deleteGroupModalForm.submit();
-        });
+        $deleteGroupModalForm.submit();
         return false;
     });
 
