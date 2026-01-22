@@ -2481,6 +2481,23 @@ class CreditApplicationMixin:
             })
         return credits
 
+    def credits(self):
+        """
+        Calculate and return all credits applicable to this billing record.
+
+        Returns a dictionary with 'account' and 'subscription' keys, each containing
+        credit information for product, user, sms, and general categories.
+        """
+        credits = {
+            'account': {},
+            'subscription': {},
+        }
+        self._add_product_credits(credits)
+        self._add_user_credits(credits)
+        self._add_sms_credits(credits)
+        self._add_general_credits(credits)
+        return credits
+
     # Abstract methods to be implemented by subclasses
     def get_subscription_credit_lines(self, feature_type=None, is_product=False):
         """Return credit lines for the subscription(s) associated with this billing record."""
@@ -2840,17 +2857,6 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
             credit_line__subscription=self.invoice.subscription
         ).exists()
 
-    def credits(self):
-        credits = {
-            'account': {},
-            'subscription': {},
-        }
-        self._add_product_credits(credits)
-        self._add_user_credits(credits)
-        self._add_sms_credits(credits)
-        self._add_general_credits(credits)
-        return credits
-
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
         return "Your %(month)s CommCare Billing Statement for Project Space %(domain)s" % {
@@ -2960,17 +2966,6 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
             if credit_adjustments.filter(credit_line__subscription=subscription).exists():
                 return True
         return False
-
-    def credits(self):
-        credits = {
-            'account': {},
-            'subscription': {},
-        }
-        self._add_product_credits(credits)
-        self._add_user_credits(credits)
-        self._add_sms_credits(credits)
-        self._add_general_credits(credits)
-        return credits
 
     def _subscriptions_in_credit_adjustments(self, credit_adjustments):
         for subscription in self.invoice.subscriptions.all():
