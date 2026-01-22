@@ -14,6 +14,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.models import CommCareCase, XFormInstance
 
+# from celery.utils.log import get_task_logger
+# logger = get_task_logger('data_interfaces')
+
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
     from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -191,11 +194,13 @@ def _get_sql_repeat_record(domain, record_id):
         return None
 
 
-def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None):
+def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type,
+                             db=None, progress_helper=None, curr_updates=0):
     from corehq.apps.data_interfaces.models import (
         CaseRuleActionResult,
         DomainCaseRuleRun,
     )
+    # logger.info(f"Starting iter_cases_and_run_rules for domain: {domain}, case type: {case_type}")
     HALT_AFTER = 23 * 60 * 60
 
     domain_obj = Domain.get_by_name(domain)
@@ -213,10 +218,13 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
 
         time_elapsed = datetime.utcnow() - start_run
         if (
-            time_elapsed.seconds > HALT_AFTER or case_update_result.total_updates >= max_allowed_updates
+            time_elapsed.seconds > HALT_AFTER
+            or (case_update_result.total_updates + curr_updates) >= max_allowed_updates
             or migration_in_progress
         ):
             notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
+            # logger.info(f"Halting run for domain: {domain}, case type: {case_type}. \
+            # Max updates: {max_allowed_updates}, Current updates: {curr_updates}")
 
             return DomainCaseRuleRun.done(
                 run_id, cases_checked, case_update_result, db=db, halted=True
@@ -226,6 +234,8 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
         if progress_helper is not None:
             progress_helper.increment_current_case_count()
         cases_checked += 1
+    # logger.info(f"Finished iter_cases_and_run_rules for domain: {domain}, case type: {case_type}. \
+        #   Cases checked: {cases_checked}")
     return DomainCaseRuleRun.done(run_id, cases_checked, case_update_result, db=db)
 
 
