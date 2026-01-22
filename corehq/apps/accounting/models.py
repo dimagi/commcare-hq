@@ -2356,6 +2356,16 @@ class SubscriptionAdjustment(models.Model):
         return adjustment
 
 
+class CreditApplicationMixin:
+    """
+    Mixin providing consolidated credit application logic for billing records.
+
+    This mixin will contain the common credit calculation logic that is currently
+    duplicated between BillingRecord and CustomerBillingRecord.
+    """
+    pass
+
+
 class BillingRecordBase(models.Model):
     """
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
