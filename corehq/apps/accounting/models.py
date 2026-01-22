@@ -2372,6 +2372,33 @@ class CreditApplicationMixin:
             if credit_lines else Decimal('0.0')
         )
 
+    def _add_product_credits(self, credits):
+        """Add product-level credits to the credits dictionary."""
+        credit_adjustments = self.get_credit_adjustments_for_invoice(
+            line_item__product_rate__isnull=False
+        )
+
+        subscription_credits = self._get_total_balance(
+            self.get_subscription_credit_lines(is_product=True)
+        )
+        if subscription_credits or self.has_subscription_credit_adjustments(credit_adjustments):
+            credits['subscription'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = self._get_total_balance(
+            self.get_account_credit_lines(is_product=True)
+        )
+        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
+            credits['account'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+        return credits
+
     # Abstract methods to be implemented by subclasses
     def get_subscription_credit_lines(self, feature_type=None, is_product=False):
         """Return credit lines for the subscription(s) associated with this billing record."""
@@ -2701,6 +2728,36 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
 
         return context
 
+    # Implementation of CreditApplicationMixin abstract methods
+    def get_subscription_credit_lines(self, feature_type=None, is_product=False):
+        """Get credit lines for the single subscription associated with this invoice."""
+        return CreditLine.get_credits_by_subscription_and_features(
+            self.invoice.subscription,
+            feature_type=feature_type,
+            is_product=is_product,
+        )
+
+    def get_account_credit_lines(self, feature_type=None, is_product=False):
+        """Get credit lines for the account associated with this invoice."""
+        return CreditLine.get_credits_for_account(
+            self.invoice.subscription.account,
+            feature_type=feature_type,
+            is_product=is_product,
+        )
+
+    def get_credit_adjustments_for_invoice(self, **filters):
+        """Get credit adjustments for this invoice with optional filters."""
+        return CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            **filters
+        )
+
+    def has_subscription_credit_adjustments(self, credit_adjustments):
+        """Check if credit adjustments reference this invoice's subscription."""
+        return credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription
+        ).exists()
+
     def credits(self):
         credits = {
             'account': {},
@@ -2710,44 +2767,6 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
         self._add_user_credits(credits)
         self._add_sms_credits(credits)
         self._add_general_credits(credits)
-        return credits
-
-    def _add_product_credits(self, credits):
-        credit_adjustments = CreditAdjustment.objects.filter(
-            invoice=self.invoice,
-            line_item__product_rate__isnull=False,
-        )
-
-        subscription_credits = self._get_total_balance(
-            CreditLine.get_credits_by_subscription_and_features(
-                self.invoice.subscription,
-                is_product=True,
-            )
-        )
-        if subscription_credits or credit_adjustments.filter(
-            credit_line__subscription=self.invoice.subscription,
-        ):
-            credits['subscription'].update({
-                'product': {
-                    'amount': quantize_accounting_decimal(subscription_credits),
-                }
-            })
-
-        account_credits = self._get_total_balance(
-            CreditLine.get_credits_for_account(
-                self.invoice.subscription.account,
-                is_product=True,
-            )
-        )
-        if account_credits or credit_adjustments.filter(
-            credit_line__subscription=None,
-        ):
-            credits['account'].update({
-                'product': {
-                    'amount': quantize_accounting_decimal(account_credits),
-                }
-            })
-
         return credits
 
     def _add_user_credits(self, credits):
@@ -2942,6 +2961,37 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
 
         return context
 
+    # Implementation of CreditApplicationMixin abstract methods
+    def get_subscription_credit_lines(self, feature_type=None, is_product=False):
+        """Get credit lines for the multiple subscriptions associated with this invoice."""
+        return CreditLine.get_credits_for_subscriptions(
+            self.invoice.subscriptions,
+            feature_type=feature_type,
+            is_product=is_product,
+        )
+
+    def get_account_credit_lines(self, feature_type=None, is_product=False):
+        """Get credit lines for the account associated with this invoice."""
+        return CreditLine.get_credits_for_account(
+            self.invoice.account,
+            feature_type=feature_type,
+            is_product=is_product,
+        )
+
+    def get_credit_adjustments_for_invoice(self, **filters):
+        """Get credit adjustments for this customer invoice with optional filters."""
+        return CreditAdjustment.objects.filter(
+            customer_invoice=self.invoice,
+            **filters
+        )
+
+    def has_subscription_credit_adjustments(self, credit_adjustments):
+        """Check if credit adjustments reference any of this invoice's subscriptions."""
+        for subscription in self.invoice.subscriptions.all():
+            if credit_adjustments.filter(credit_line__subscription=subscription).exists():
+                return True
+        return False
+
     def credits(self):
         credits = {
             'account': {},
@@ -2951,38 +3001,6 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
         self._add_user_credits(credits)
         self._add_sms_credits(credits)
         self._add_general_credits(credits)
-        return credits
-
-    def _add_product_credits(self, credits):
-        credit_adjustments = CreditAdjustment.objects.filter(
-            customer_invoice=self.invoice,
-            line_item__product_rate__isnull=False
-        )
-        subscription_credits = self._get_total_balance(
-            CreditLine.get_credits_for_subscriptions(
-                self.invoice.subscriptions,
-                is_product=True
-            )
-        )
-        if subscription_credits or self._subscriptions_in_credit_adjustments(credit_adjustments):
-            credits['subscription'].update({
-                'product': {
-                    'amount': quantize_accounting_decimal(subscription_credits)
-                }
-            })
-
-        account_credits = self._get_total_balance(
-            CreditLine.get_credits_for_account(
-                self.invoice.account,
-                is_product=True
-            )
-        )
-        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
-            credits['account'].update({
-                'product': {
-                    'amount': quantize_accounting_decimal(account_credits)
-                }
-            })
         return credits
 
     def _add_user_credits(self, credits):
