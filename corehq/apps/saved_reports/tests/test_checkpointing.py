@@ -16,9 +16,9 @@ from corehq.apps.saved_reports.tests.test_scheduled_reports import (
 
 
 class ScheduledReportsCheckpointTest(TestCase):
-    def tearDown(self):
-        delete_all_report_notifications()
-        ScheduledReportsCheckpoint.objects.all().delete()
+    def setUp(self):
+        self.addCleanup(delete_all_report_notifications)
+        self.addCleanup(ScheduledReportsCheckpoint.objects.all().delete)
 
     def test_checkpoint_created(self):
         point_1 = datetime.datetime(2019, 3, 22, 22, 46, 0, 439979)
