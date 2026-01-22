@@ -1523,6 +1523,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
 
         if not self.user.is_staff:
+            # This restriction exists to give SaaS more control over this setting,
+            # since it impacts infrastructure
             self.fields['auto_case_update_limit'].disabled = True
             self.fields['auto_case_update_limit'].help_text = _(
                 'Case update rule limits are only modifiable by Dimagi admins. '
