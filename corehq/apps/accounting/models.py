@@ -2372,6 +2372,23 @@ class CreditApplicationMixin:
             if credit_lines else Decimal('0.0')
         )
 
+    # Abstract methods to be implemented by subclasses
+    def get_subscription_credit_lines(self, feature_type=None, is_product=False):
+        """Return credit lines for the subscription(s) associated with this billing record."""
+        raise NotImplementedError("Subclasses must implement get_subscription_credit_lines")
+
+    def get_account_credit_lines(self, feature_type=None, is_product=False):
+        """Return credit lines for the account associated with this billing record."""
+        raise NotImplementedError("Subclasses must implement get_account_credit_lines")
+
+    def get_credit_adjustments_for_invoice(self, **filters):
+        """Return credit adjustments for this invoice with optional additional filters."""
+        raise NotImplementedError("Subclasses must implement get_credit_adjustments_for_invoice")
+
+    def has_subscription_credit_adjustments(self, credit_adjustments):
+        """Check if the given credit adjustments reference subscription(s)."""
+        raise NotImplementedError("Subclasses must implement has_subscription_credit_adjustments")
+
 
 class BillingRecordBase(models.Model):
     """
