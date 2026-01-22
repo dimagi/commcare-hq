@@ -2426,6 +2426,33 @@ class CreditApplicationMixin:
             })
         return credits
 
+    def _add_sms_credits(self, credits):
+        """Add SMS-level credits to the credits dictionary."""
+        credit_adjustments = self.get_credit_adjustments_for_invoice(
+            line_item__feature_rate__feature__feature_type=FeatureType.SMS
+        )
+
+        subscription_credits = self._get_total_balance(
+            self.get_subscription_credit_lines(feature_type=FeatureType.SMS)
+        )
+        if subscription_credits or self.has_subscription_credit_adjustments(credit_adjustments):
+            credits['subscription'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = self._get_total_balance(
+            self.get_account_credit_lines(feature_type=FeatureType.SMS)
+        )
+        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
+            credits['account'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+        return credits
+
     # Abstract methods to be implemented by subclasses
     def get_subscription_credit_lines(self, feature_type=None, is_product=False):
         """Return credit lines for the subscription(s) associated with this billing record."""
@@ -2796,44 +2823,6 @@ class BillingRecord(CreditApplicationMixin, BillingRecordBase):
         self._add_general_credits(credits)
         return credits
 
-    def _add_sms_credits(self, credits):
-        credit_adjustments = CreditAdjustment.objects.filter(
-            invoice=self.invoice,
-            line_item__feature_rate__feature__feature_type=FeatureType.SMS,
-        )
-
-        subscription_credits = self._get_total_balance(
-            CreditLine.get_credits_by_subscription_and_features(
-                self.invoice.subscription,
-                feature_type=FeatureType.SMS,
-            )
-        )
-        if subscription_credits or credit_adjustments.filter(
-            credit_line__subscription=self.invoice.subscription,
-        ):
-            credits['subscription'].update({
-                'sms': {
-                    'amount': quantize_accounting_decimal(subscription_credits),
-                }
-            })
-
-        account_credits = self._get_total_balance(
-            CreditLine.get_credits_for_account(
-                self.invoice.subscription.account,
-                feature_type=FeatureType.SMS,
-            )
-        )
-        if account_credits or credit_adjustments.filter(
-            credit_line__subscription=None,
-        ):
-            credits['account'].update({
-                'sms': {
-                    'amount': quantize_accounting_decimal(account_credits),
-                }
-            })
-
-        return credits
-
     def _add_general_credits(self, credits):
         credit_adjustments = CreditAdjustment.objects.filter(
             invoice=self.invoice,
@@ -2990,38 +2979,6 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
         self._add_user_credits(credits)
         self._add_sms_credits(credits)
         self._add_general_credits(credits)
-        return credits
-
-    def _add_sms_credits(self, credits):
-        credit_adjustments = CreditAdjustment.objects.filter(
-            customer_invoice=self.invoice,
-            line_item__feature_rate__feature__feature_type=FeatureType.SMS
-        )
-        subscription_credits = self._get_total_balance(
-            CreditLine.get_credits_for_subscriptions(
-                self.invoice.subscriptions,
-                feature_type=FeatureType.SMS
-            )
-        )
-        if subscription_credits or self._subscriptions_in_credit_adjustments(credit_adjustments):
-            credits['subscription'].update({
-                'sms': {
-                    'amount': quantize_accounting_decimal(subscription_credits)
-                }
-            })
-
-        account_credits = self._get_total_balance(
-            CreditLine.get_credits_for_account(
-                self.invoice.account,
-                feature_type=FeatureType.SMS
-            )
-        )
-        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
-            credits['account'].update({
-                'sms': {
-                    'amount': quantize_accounting_decimal(account_credits)
-                }
-            })
         return credits
 
     def _add_general_credits(self, credits):
