@@ -2363,7 +2363,14 @@ class CreditApplicationMixin:
     This mixin will contain the common credit calculation logic that is currently
     duplicated between BillingRecord and CustomerBillingRecord.
     """
-    pass
+
+    @staticmethod
+    def _get_total_balance(credit_lines):
+        """Calculate total balance from a queryset of credit lines."""
+        return (
+            sum([credit_line.balance for credit_line in credit_lines])
+            if credit_lines else Decimal('0.0')
+        )
 
 
 class BillingRecordBase(models.Model):
@@ -2578,7 +2585,7 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
         return web_user.is_domain_admin(self.invoice.get_domain())
 
 
-class BillingRecord(BillingRecordBase):
+class BillingRecord(CreditApplicationMixin, BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/email/invoice_contracted.html'
     INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted.txt'
@@ -2694,7 +2701,7 @@ class BillingRecord(BillingRecordBase):
             line_item__product_rate__isnull=False,
         )
 
-        subscription_credits = BillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_by_subscription_and_features(
                 self.invoice.subscription,
                 is_product=True,
@@ -2709,7 +2716,7 @@ class BillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = BillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.subscription.account,
                 is_product=True,
@@ -2732,7 +2739,7 @@ class BillingRecord(BillingRecordBase):
             line_item__feature_rate__feature__feature_type=FeatureType.USER,
         )
 
-        subscription_credits = BillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_by_subscription_and_features(
                 self.invoice.subscription,
                 feature_type=FeatureType.USER,
@@ -2747,7 +2754,7 @@ class BillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = BillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.subscription.account,
                 feature_type=FeatureType.USER,
@@ -2770,7 +2777,7 @@ class BillingRecord(BillingRecordBase):
             line_item__feature_rate__feature__feature_type=FeatureType.SMS,
         )
 
-        subscription_credits = BillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_by_subscription_and_features(
                 self.invoice.subscription,
                 feature_type=FeatureType.SMS,
@@ -2785,7 +2792,7 @@ class BillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = BillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.subscription.account,
                 feature_type=FeatureType.SMS,
@@ -2809,7 +2816,7 @@ class BillingRecord(BillingRecordBase):
             line_item__product_rate=None,
         )
 
-        subscription_credits = BillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_by_subscription_and_features(
                 self.invoice.subscription,
             )
@@ -2823,7 +2830,7 @@ class BillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = BillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.subscription.account,
             )
@@ -2849,18 +2856,11 @@ class BillingRecord(BillingRecordBase):
     def email_from(self):
         return get_dimagi_from_email()
 
-    @staticmethod
-    def _get_total_balance(credit_lines):
-        return (
-            sum([credit_line.balance for credit_line in credit_lines])
-            if credit_lines else Decimal('0.0')
-        )
-
     def can_view_statement(self, web_user):
         return web_user.is_domain_admin(self.invoice.get_domain())
 
 
-class CustomerBillingRecord(BillingRecordBase):
+class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
     invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)
     INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
     INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
@@ -2941,7 +2941,7 @@ class CustomerBillingRecord(BillingRecordBase):
             customer_invoice=self.invoice,
             line_item__product_rate__isnull=False
         )
-        subscription_credits = CustomerBillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_for_subscriptions(
                 self.invoice.subscriptions,
                 is_product=True
@@ -2954,7 +2954,7 @@ class CustomerBillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = CustomerBillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.account,
                 is_product=True
@@ -2973,7 +2973,7 @@ class CustomerBillingRecord(BillingRecordBase):
             customer_invoice=self.invoice,
             line_item__feature_rate__feature__feature_type=FeatureType.USER
         )
-        subscription_credits = CustomerBillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_for_subscriptions(
                 self.invoice.subscriptions,
                 feature_type=FeatureType.USER
@@ -2986,7 +2986,7 @@ class CustomerBillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = CustomerBillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.account,
                 feature_type=FeatureType.USER
@@ -3005,7 +3005,7 @@ class CustomerBillingRecord(BillingRecordBase):
             customer_invoice=self.invoice,
             line_item__feature_rate__feature__feature_type=FeatureType.SMS
         )
-        subscription_credits = CustomerBillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_for_subscriptions(
                 self.invoice.subscriptions,
                 feature_type=FeatureType.SMS
@@ -3018,7 +3018,7 @@ class CustomerBillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = CustomerBillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.account,
                 feature_type=FeatureType.SMS
@@ -3038,7 +3038,7 @@ class CustomerBillingRecord(BillingRecordBase):
             line_item__feature_rate=None,
             line_item__product_rate=None
         )
-        subscription_credits = CustomerBillingRecord._get_total_balance(
+        subscription_credits = self._get_total_balance(
             CreditLine.get_credits_for_subscriptions(
                 self.invoice.subscriptions
             )
@@ -3050,7 +3050,7 @@ class CustomerBillingRecord(BillingRecordBase):
                 }
             })
 
-        account_credits = CustomerBillingRecord._get_total_balance(
+        account_credits = self._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.account
             )
@@ -3080,13 +3080,6 @@ class CustomerBillingRecord(BillingRecordBase):
 
     def email_from(self):
         return get_dimagi_from_email()
-
-    @staticmethod
-    def _get_total_balance(credit_lines):
-        return (
-            sum([credit_line.balance for credit_line in credit_lines])
-            if credit_lines else Decimal('0.0')
-        )
 
     def can_view_statement(self, web_user):
         for subscription in self.invoice.subscriptions.all():
