@@ -14,6 +14,7 @@ from ..utils.export import (
     AuditWindowQuery,
     ForeignKeyAccessError,
     get_all_log_events,
+    get_date_range_where,
     get_domain_first_access_times,
     get_foreign_names,
     navigation_events_by_user,
@@ -199,3 +200,58 @@ def patch_window_size(size):
         qry = AuditWindowQuery("ignored")
         assert qry.window_size == size, f"patch failed ({qry.window_size})"
         yield
+
+
+class TestGetDateRangeWhere(AuditcareTest):
+    """Test get_date_range_where with various date/datetime inputs."""
+
+    def test_with_datetime_objects(self):
+        start = datetime(2021, 2, 5, 9, 30)
+        end = datetime(2021, 2, 15, 17, 45)
+        where = get_date_range_where(start, end)
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 9, 30))
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 15, 17, 45))
+
+    def test_with_date_objects(self):
+        from datetime import date
+        start = date(2021, 2, 5)
+        end = date(2021, 2, 15)
+        where = get_date_range_where(start, end)
+        # Date objects should be converted to datetime at start of day
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
+        # End date should be inclusive (add 1 day for lt)
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
+    def test_with_string_dates(self):
+        start = "2021-02-05"
+        end = "2021-02-15"
+        where = get_date_range_where(start, end)
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
+        # String dates should have 1 day added for inclusive behavior
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
+    def test_with_none_start(self):
+        end = datetime(2021, 2, 15, 17, 45)
+        where = get_date_range_where(None, end)
+        self.assertNotIn("event_date__gt", where)
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 15, 17, 45))
+
+    def test_with_none_end(self):
+        start = datetime(2021, 2, 5, 9, 30)
+        where = get_date_range_where(start, None)
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 9, 30))
+        self.assertNotIn("event_date__lt", where)
+
+    def test_with_both_none(self):
+        where = get_date_range_where(None, None)
+        self.assertEqual(where, {})
+
+    def test_with_midnight_datetime_as_end(self):
+        """Datetime at midnight should be treated as a date (inclusive of full day)."""
+        start = datetime(2021, 2, 5)  # midnight
+        end = datetime(2021, 2, 15)  # midnight
+        where = get_date_range_where(start, end)
+        # End at midnight should add 1 day to include the full day
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
