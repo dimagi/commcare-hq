@@ -2967,14 +2967,6 @@ class CustomerBillingRecord(CreditApplicationMixin, BillingRecordBase):
                 return True
         return False
 
-    def _subscriptions_in_credit_adjustments(self, credit_adjustments):
-        for subscription in self.invoice.subscriptions.all():
-            if credit_adjustments.filter(
-                    credit_line__subscription=subscription
-            ):
-                return True
-        return False
-
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
         return "Your %(month)s CommCare Billing Statement for Customer Account %(account_name)s" % {
