@@ -86,7 +86,7 @@ class ConnectionSettings(models.Model):
     """
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=255)
-    url = models.CharField(max_length=255)
+    url = models.CharField(max_length=500)
     auth_type = models.CharField(
         max_length=16, null=True, blank=True,
         choices=(
@@ -104,8 +104,8 @@ class ConnectionSettings(models.Model):
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
-    token_url = models.CharField(max_length=255, blank=True, null=True)
-    refresh_url = models.CharField(max_length=255, blank=True, null=True)
+    token_url = models.CharField(max_length=500, blank=True, null=True)
+    refresh_url = models.CharField(max_length=500, blank=True, null=True)
     pass_credentials_in_header = models.BooleanField(default=None, null=True)
     include_client_id = models.BooleanField(default=None, null=True)
     scope = models.TextField(null=True, blank=True)
