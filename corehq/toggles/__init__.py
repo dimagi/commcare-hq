@@ -2824,3 +2824,10 @@ CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     tag=TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+DEMO_CASE_PILLOW = StaticToggle(
+    slug='demo_case_pillow',
+    label='Process case changes on separate queue',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
