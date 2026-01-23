@@ -1,11 +1,13 @@
 import csv
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from itertools import chain
 
-import attr
-from dimagi.utils.parsing import string_to_datetime
 from django.contrib.auth.models import User
 from django.db.models import ForeignKey, Min
+
+import attr
+
+from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
@@ -168,14 +170,43 @@ def write_export_from_all_log_events(file_obj, start, end):
 
 
 def get_date_range_where(start_date, end_date):
-    """Get ORM filter kwargs for inclusive event_date range"""
+    """Get ORM filter kwargs for inclusive event_date range.
+
+    Args:
+        start_date: Can be a datetime object, date object, or string.
+        end_date: Can be a datetime object, date object, or string.
+
+    For date objects, date strings, and datetime objects at midnight,
+    filtering is inclusive of the full day.
+    For datetime objects with a non-midnight time, filtering uses the exact time.
+    """
+
+    def _is_midnight(dt):
+        return dt.hour == 0 and dt.minute == 0 and dt.second == 0 and dt.microsecond == 0
+
     where = {}
     if start_date:
-        start_date = string_to_datetime(start_date).replace(tzinfo=None)
-        where["event_date__gt"] = start_date
+        if isinstance(start_date, datetime):
+            start_datetime = start_date.replace(tzinfo=None)
+        elif isinstance(start_date, date):
+            start_datetime = datetime.combine(start_date, datetime.min.time())
+        else:
+            start_datetime = string_to_datetime(start_date).replace(tzinfo=None)
+        where["event_date__gt"] = start_datetime
+
     if end_date:
-        end_date = string_to_datetime(end_date).replace(tzinfo=None)
-        where["event_date__lt"] = end_date + timedelta(days=1)
+        if isinstance(end_date, datetime):
+            end_datetime = end_date.replace(tzinfo=None)
+            # If the datetime is at midnight, treat it as a date (inclusive of full day)
+            # This keeps the existing behaviour intact
+            if _is_midnight(end_datetime):
+                end_datetime = end_datetime + timedelta(days=1)
+        elif isinstance(end_date, date):
+            end_datetime = datetime.combine(end_date, datetime.min.time()) + timedelta(days=1)
+        else:
+            end_datetime = string_to_datetime(end_date).replace(tzinfo=None) + timedelta(days=1)
+        where["event_date__lt"] = end_datetime
+
     return where
 
 
