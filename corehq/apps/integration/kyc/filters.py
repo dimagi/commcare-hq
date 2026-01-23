@@ -14,7 +14,7 @@ class KycVerifiedByFilter(BaseSingleOptionFilter):
     def options(self):
         query = UserES().domain(self.domain).web_users()
         return [
-            user_details for user_details in query.values_list('username', 'username')
+            (username, username) for username in query.values_list('username', flat=True)
         ]
 
 
