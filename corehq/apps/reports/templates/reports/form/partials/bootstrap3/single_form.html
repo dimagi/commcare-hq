@@ -333,7 +333,7 @@
               {% if not forloop.first %}<br>{% endif %}
               <dt>{{ key }}</dt>
               {% if attachment.is_image %}
-                <dd><img src="{% url "api_form_attachment" domain=domain instance_id=instance.form_id attachment_id=key %}"></dd>
+                <dd><img src="{% url "api_form_attachment" domain=domain instance_id=instance.form_id attachment_id=key %}" class="img-responsive"></dd>
               {% else %}
                 <dd><a href="{% url "api_form_attachment" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a></dd>
               {% endif %}
