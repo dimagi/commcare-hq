@@ -83,7 +83,7 @@ define('analytix/js/google', [
      */
     var trackEvent = function (eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
         var originalArgs = arguments;
-        const safeCallback = utils.createSafeCallback(eventCallback, 2000);
+        const safeCallback = utils.createSafeCallback(eventCallback);
         _ready.done(function () {
             var params = {
                 event_category: eventCategory,
