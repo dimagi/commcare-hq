@@ -330,9 +330,9 @@
         {% for key, attachment, question in attachments %}
           <tr><td>
             {% if question %}
-            <div class="span6 mb-2" title="{{ question.value }}">
-              {% include 'reports/form/partials/single_form_label.html' %}
-            </div>
+              <div class="mb-2" title="{{ question.value }}">
+                {% include 'reports/form/partials/single_form_label.html' %}
+              </div>
             {% endif %}
             <div class="mb-2">{{ key }}</div>
             <div>
