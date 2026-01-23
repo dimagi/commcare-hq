@@ -3,29 +3,38 @@
 
 <div class="tab-pane">
   <div data-bind="visible: sms_odk_url() && !generating_url()">
-    <div class="checkbox">  {# todo B5: css-checkbox #}
-      <label data-bind="visible: allow_media_install">
-        <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">  {# todo B5: css-checkbox #}
-        {% trans "Include Multimedia" %}
-        <span data-bind="visible: !mm_supported()" class="badge text-bg-secondary">
-                  {% trans "Only supported for versions made after 2013-10-15" %}
-              </span>
-      </label>
+    <div class="form-check mb-3">
+      <input
+        type="checkbox"
+        class="form-check-input"
+        id="include-multimedia-checkbox"
+        data-bind="checked: include_media, enable: mm_supported()"
+      />
+      <span data-bind="visible: !mm_supported()" class="badge text-bg-secondary">
+        {% trans "Only supported for versions made after 2013-10-15" %}
+      </span>
+      <label
+        for="include-multimedia-checkbox"
+        class="form-check-label"
+        data-bind="visible: allow_media_install"
+      >{% trans "Include Multimedia" %}</label>
     </div>
     <form method="post" action="{% url "send_to_recipients" domain %}">
       {% csrf_token %}
-      <div class="form-group">  {# todo B5: css-form-group #}
-        <label>{% trans "Send to" %}</label>
+      <div class="mb-3">
+        <label for="sms-recipients" class="form-label">{% trans "Send to:" %}</label>
         <select name="recipients" id="sms-recipients" class="form-select" multiple data-bind="staticSelect2: {}">
           {% for contact in sms_contacts %}
             <option>{{ contact }}</option>
           {% endfor %}
         </select>
       </div>
-      <div class="form-group">  {# todo B5: css-form-group #}
-                <textarea class="bitly form-control vertical-resize" name="message"
-                          data-bind="text: 'Update to CommCare: ' + sms_odk_url() + ' (&quot;' + short_name() + '&quot; v. ' + version() + ')'">
-                </textarea>
+      <div class="mb-3">
+        <textarea
+          class="bitly form-control vertical-resize"
+          name="message"
+          data-bind="text: 'Update to CommCare: ' + sms_odk_url() + ' (&quot;' + short_name() + '&quot; v. ' + version() + ')'"
+        ></textarea>
       </div>
       <div class="alert alert-warning text-center">
         <i class="fa-solid fa-triangle-exclamation"></i> <strong>{% trans "SMS charges will incur." %}</strong>
@@ -37,8 +46,8 @@
     <i class='fa fa-spin fa-spinner'></i>
   </div>
   <div data-bind="visible: !sms_odk_url() && !generating_url()">
-        <span class="badge text-bg-danger">
-          {% trans "No URL was found for this app, try rebuilding." %}
-        </span>
+    <span class="badge text-bg-danger">
+      {% trans "No URL was found for this app, try rebuilding." %}
+    </span>
   </div>
 </div>
