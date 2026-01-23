@@ -165,9 +165,9 @@ def orange_cameroon_kyc_verify(kyc_user, config):
         }
     )
     response.raise_for_status()
-    user_info = response.json().get('data', {})
+    api_data = response.json().get('data', {})
     if config.stores_full_name:
-        api_full_name = f"{user_info['firstName']} {user_info['lastName']}".strip()
+        api_full_name = f"{api_data['firstName']} {api_data['lastName']}".strip()
         user_full_name = user_data['fullName'].strip()
         score = order_and_case_insensitive_matching_score(api_full_name, user_full_name)
         if score < config.passing_threshold['fullName']:
@@ -176,12 +176,12 @@ def orange_cameroon_kyc_verify(kyc_user, config):
         for field, threshold_value in config.passing_threshold.items():
             # lastName is optional in user data, but if API returns it and user doesn't have it, fail
             if field == 'lastName' and field not in user_data:
-                if field in user_info and user_info[field].strip():
+                if field in api_data and api_data[field].strip():
                     # API has lastName but user doesn't - this is a mismatch
                     return KycVerificationStatus.FAILED
                 # Both don't have lastName - skip validation
                 continue
-            api_value = user_info.get(field, '').strip().lower()
+            api_value = api_data.get(field, '').strip().lower()
             user_value = user_data[field].strip().lower()
             score = get_percent_matching_score(api_value, user_value)
             if score < threshold_value:
