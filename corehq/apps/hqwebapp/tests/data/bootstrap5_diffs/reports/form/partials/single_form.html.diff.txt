@@ -203,16 +203,16 @@
      </div>
    {% endif %}
  
-@@ -329,7 +329,7 @@
-       <table class="table table-striped table-hover">
-         {% for key, attachment in instance.attachments.items %}
-           <tr><td>
--            <dl class="dl-horizontal">
-+            <dl class="dl-horizontal">  {# todo B5: css:dl-horizontal #}
-               {% if not forloop.first %}<br>{% endif %}
-               <dt>{{ key }}</dt>
+@@ -337,7 +337,7 @@
+             <div>{{ key }}</div>
+             <div>
                {% if attachment.is_image %}
-@@ -345,10 +345,10 @@
+-                <img src="{% url "api_form_attachment" domain=domain instance_id=instance.form_id attachment_id=key %}" class="img-responsive">
++                <img src="{% url "api_form_attachment" domain=domain instance_id=instance.form_id attachment_id=key %}" class="img-fluid">
+               {% else %}
+                 <a href="{% url "api_form_attachment" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a>
+               {% endif %}
+@@ -349,10 +349,10 @@
    {% endif %}
    <div class="tab-pane" id="form-xml">
      <p class="btn-group">
@@ -225,7 +225,7 @@
          <i class="fa-regular fa-files"></i>&nbsp;{% trans "Copy XML to clipboard" %}
        </button>
      </p>
-@@ -358,15 +358,15 @@
+@@ -362,15 +362,15 @@
  
  {% if show_edit_options %}
    {% if show_edit_submission %}
@@ -244,7 +244,7 @@
          <h4 class="modal-title">{% trans 'Permanently Delete Form' %}</h4>
        </div>
        <div class="modal-body">
-@@ -383,10 +383,10 @@
+@@ -387,10 +387,10 @@
              {% endblocktrans %}
            </p>
            <div class="modal-footer">
