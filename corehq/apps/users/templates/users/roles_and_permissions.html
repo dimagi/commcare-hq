@@ -292,10 +292,10 @@
             {% endif %}
             <td>
               <div class="d-flex flex-wrap gap-1">
-                <a data-bind="attr: { href: $data.editUrl }, visible: $data._id">
-                  <button
-                    class="btn btn btn-outline-primary"
-                  >
+                <a
+                  data-bind="attr: { href: $data.editUrl }, visible: $data._id"
+                >
+                  <button class="btn btn btn-outline-primary">
                     <span data-bind="if: $root.allowEdit">
                       <i class="fa fa-edit"></i>
                       {% trans "Edit Role" %}
@@ -327,7 +327,7 @@
         </tbody>
       </table>
       {% if can_edit_roles %}
-        <a href="{% url 'create_role' domain %}" >
+        <a href="{% url 'create_role' domain %}">
           <button class="btn btn-outline-primary">
             <i class="fa fa-plus"></i>
             {% trans "Add Role" %}

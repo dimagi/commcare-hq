@@ -124,7 +124,10 @@
                   :key="area.editCheckboxLabel"
                 >
                   <div class="row" x-show="area.showOption">
-                    <div class="col-md-1 controls" x-show="area.showEditCheckbox">
+                    <div
+                      class="col-md-1 controls"
+                      x-show="area.showEditCheckbox"
+                    >
                       <div class="form-check">
                         <input
                           class="form-check-input"
@@ -150,7 +153,10 @@
                     >
                       <div class="form-check-placeholder"></div>
                     </div>
-                    <div class="col-md-1 controls" x-show="area.showViewCheckbox">
+                    <div
+                      class="col-md-1 controls"
+                      x-show="area.showViewCheckbox"
+                    >
                       {# PLACEHOLDER checkbox when editPermission() is true #}
                       <div class="form-check" x-show="area.editPermission">
                         <input
@@ -428,7 +434,9 @@
                           {% trans "Select which Tableau reports the role can access:" %}
                         </div>
                         <div class="card-body">
-                          <template x-for="report in tableauPermissions.specific">
+                          <template
+                            x-for="report in tableauPermissions.specific"
+                          >
                             <div class="form-check">
                               <input
                                 class="form-check-input"
@@ -569,7 +577,9 @@
                           {% trans "Commcare Analytics Roles:" %}
                         </div>
                         <div class="card-body">
-                          <template x-for="s in commcareAnalyticsRoles.specific">
+                          <template
+                            x-for="s in commcareAnalyticsRoles.specific"
+                          >
                             <div class="form-check">
                               <input
                                 class="form-check-input"
@@ -650,7 +660,10 @@
                         id="edit-billing-checkbox"
                         x-model="role.permissions.edit_billing"
                       />
-                      <label class="form-check-label" for="edit-billing-checkbox">
+                      <label
+                        class="form-check-label"
+                        for="edit-billing-checkbox"
+                      >
                         {% trans "Allow role to manage subscription information." %}
                       </label>
                     </div>
@@ -695,8 +708,9 @@
                     >
                       {% blocktrans %}
                         Organization-based data access restrictions are only
-                        available on the Pro plan and above. Saving this role will
-                        enable full organization access for the assigned users.
+                        available on the Pro plan and above. Saving this role
+                        will enable full organization access for the assigned
+                        users.
                       {% endblocktrans %}
                     </div>
                     <div
@@ -705,8 +719,8 @@
                     >
                       {% blocktrans %}
                         With the current configuration, this role will have full
-                        organization access and roles that can assign it will not.
-                        This is not recommended.
+                        organization access and roles that can assign it will
+                        not. This is not recommended.
                       {% endblocktrans %}
                     </div>
                   </div>
@@ -834,7 +848,10 @@
                         id="edit-mobile-checkbox"
                         x-model="role.permissions.access_mobile_endpoints"
                       />
-                      <label class="form-check-label" for="edit-mobile-checkbox">
+                      <label
+                        class="form-check-label"
+                        for="edit-mobile-checkbox"
+                      >
                         {% trans "Allow mobile users access to offline mobile application" %}
                       </label>
                     </div>
@@ -853,7 +870,10 @@
                       x-init="$nextTick(() => { role.default_landing_page = '{{ role.default_landing_page }}' || role.default_landing_page })"
                     >
                       <template x-for="choice in landingPageChoices">
-                        <option :value="choice.id" x-text="choice.name"></option>
+                        <option
+                          :value="choice.id"
+                          x-text="choice.name"
+                        ></option>
                       </template>
                     </select>
                   </div>
@@ -871,7 +891,10 @@
                         id="report-issue-checkbox"
                         x-model="role.permissions.report_an_issue"
                       />
-                      <label class="form-check-label" for="report-issue-checkbox">
+                      <label
+                        class="form-check-label"
+                        for="report-issue-checkbox"
+                      >
                         {% trans "Allow this role to report issues." %}
                       </label>
                     </div>
@@ -939,9 +962,10 @@
                       data-bind="visible: showRestrictedLocationRoleAssignmentWarning"
                     >
                       {% blocktrans %}
-                        If the highlighted roles are selected, this role will have
-                        full organization access and be assignable by a role that
-                        does not. This is not recommended configuration.
+                        If the highlighted roles are selected, this role will
+                        have full organization access and be assignable by a
+                        role that does not. This is not recommended
+                        configuration.
                       {% endblocktrans %}
                     </div>
                   </div>
