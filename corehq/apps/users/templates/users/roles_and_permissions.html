@@ -51,54 +51,6 @@
         {% endblocktrans %}
       </p>
     </div>
-    <div class="col-md-4 col-lg-3" data-bind="if: hasLinkedRoles">
-      <p class="float-end">
-        <!-- ko if: allowEdit -->
-        <span data-bind="ifnot: unlockLinkedRoles">
-          <button
-            type="button"
-            class="btn btn-outline-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#modal_linked_roles"
-          >
-            <i class="fa fa-link"></i>
-            {% trans 'Unlock Linked Roles For Me' %}
-          </button>
-        </span>
-        <span data-bind="if: unlockLinkedRoles">
-          <button
-            type="button"
-            class="btn btn-outline-primary"
-            data-bind="click: toggleLinkedRoles"
-          >
-            <i class="fa fa-link"></i>
-            {% trans 'Lock Linked Roles For Me' %}
-          </button>
-        </span>
-        <!-- /ko -->
-        <!-- ko ifnot: allowEdit -->
-        <span>
-          <i class="fa fa-link"></i>
-          Contains Linked Roles
-        </span>
-        <!-- /ko -->
-        <span
-          class="hq-help-template"
-          data-placement="left"
-          data-title="{% trans 'Linked Configurations' %}"
-          data-content="{% blocktrans %}
-            Linked configurations are controlled from a separate, linked project
-            space.
-            <a
-              href="https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management"
-              target="_blank"
-              >Learn more</a
-            >.
-          {% endblocktrans %}"
-        >
-        </span>
-      </p>
-    </div>
   </div>
 
   {% if not can_edit_roles and is_domain_admin %}
