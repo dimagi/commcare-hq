@@ -324,20 +324,24 @@
     </div>
   {% endif %}
 
-  {% if instance.attachments %}
+  {% if attachments %}
     <div class="tab-pane" id="form-attachments">
       <table class="table table-striped table-hover">
-        {% for key, attachment in instance.attachments.items %}
+        {% for key, attachment, question in attachments %}
           <tr><td>
-            <dl class="dl-horizontal">
-              {% if not forloop.first %}<br>{% endif %}
-              <dt>{{ key }}</dt>
+            {% if question %}
+            <div class="span6" title="{{ question.value }}">
+              {% include 'reports/form/partials/single_form_label.html' %}
+            </div>
+            {% endif %}
+            <div>{{ key }}</div>
+            <div>
               {% if attachment.is_image %}
-                <dd><img src="{% url "api_form_attachment" domain=domain instance_id=instance.form_id attachment_id=key %}" class="img-responsive"></dd>
+                <img src="{% url "api_form_attachment" domain=domain instance_id=instance.form_id attachment_id=key %}" class="img-responsive">
               {% else %}
-                <dd><a href="{% url "api_form_attachment" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a></dd>
+                <a href="{% url "api_form_attachment" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a>
               {% endif %}
-            </dl>
+            </div>
           </td></tr>
         {% endfor %}
       </table>
