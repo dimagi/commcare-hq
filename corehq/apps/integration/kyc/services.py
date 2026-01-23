@@ -251,6 +251,13 @@ def _kebab_case(value):
 def order_and_case_insensitive_matching_score(value1, value2):
     """Case insensitive and order insensitive percent matching score between two strings
     based on Levenshtein distance.
+    This is useful for comparing full names where the order of first and last names may vary,
+    which commonly occurs in HQ projects.
+
+    >>> order_and_case_insensitive_matching_score("Jeanne d'Arc", "D'ARC Jeanne")
+    100.0
+    >>> order_and_case_insensitive_matching_score("D'ARC Jeanne", "Jehanne Darc")
+    83.33333333333334
     """
     if value1 is None or value2 is None:
         raise ValueError('Both values are required')
@@ -265,6 +272,13 @@ def order_and_case_insensitive_matching_score(value1, value2):
 
 def get_percent_matching_score(value1, value2):
     """Case sensitive percent matching score between two strings based on Levenshtein distance.
+
+    >>> get_percent_matching_score("Jessica", "Jessica")
+    100.0
+    >>> get_percent_matching_score("Jessica", "jessica")
+    85.71428571428572
+    >>> get_percent_matching_score("Jessica", "Jessika")
+    85.71428571428572
     """
     if value1 is None or value2 is None:
         raise ValueError('Both values are required')
