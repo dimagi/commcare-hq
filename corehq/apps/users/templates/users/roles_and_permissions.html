@@ -339,43 +339,30 @@
               </td>
             {% endif %}
             <td>
-              <button
-                class="btn btn-outline-primary"
-                data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null"
-              >
-                <span
-                  data-bind="if: $root.allowEdit && (!upstream_id() || $parent.unlockLinkedRoles())"
+              <div class="d-flex flex-wrap gap-1">
+                <a data-bind="attr: { href: $data.editUrl }, visible: $data._id">
+                  <button
+                    class="btn btn btn-outline-primary"
+                  >
+                    <span data-bind="if: $root.allowEdit">
+                      <i class="fa fa-edit"></i>
+                      {% trans "Edit Role" %}
+                    </span>
+                    <span data-bind="ifnot: $root.allowEdit">
+                      <i class="fa-solid fa-eye"></i>
+                      {% trans "View Role" %}
+                    </span>
+                  </button>
+                </a>
+                <button
+                  class="btn btn-outline-danger"
+                  data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
+                  click: $data._id ? $root.setRoleBeingDeleted : null"
                 >
-                  <i class="fa fa-edit"></i>
-                  {% trans "Edit Role" %}
-                </span>
-                <span
-                  data-bind="ifnot: $root.allowEdit && (!upstream_id() || $parent.unlockLinkedRoles())"
-                >
-                  <i class="fa-solid fa-eye"></i>
-                  {% trans "View Role" %}
-                </span>
-              </button>
-              <a data-bind="attr: { href: $data.editUrl }">
-                <button class="btn btn-default" data-bind="visible: $data._id">
-                  <span data-bind="if: $root.allowEdit">
-                    <i class="fa fa-edit"></i>
-                    {% trans "Edit Role (view)" %}
-                  </span>
-                  <span data-bind="ifnot: $root.allowEdit">
-                    <i class="fa-solid fa-eye"></i>
-                    {% trans "View Role (view)" %}
-                  </span>
+                  <i class="fa-regular fa-trash-can"></i>
+                  {% trans "Delete" %}
                 </button>
-              </a>
-              <button
-                class="btn btn-outline-danger"
-                data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
-                click: $data._id ? $root.setRoleBeingDeleted : null"
-              >
-                <i class="fa-regular fa-trash-can"></i>
-                {% trans "Delete" %}
-              </button>
+              </div>
             </td>
             {% if is_managed_by_upstream_domain %}
               <td class="text-center">
@@ -388,19 +375,11 @@
         </tbody>
       </table>
       {% if can_edit_roles %}
-        <button
-          class="btn btn-outline-primary"
-          data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}"
-        >
-          <i class="fa fa-plus"></i>
-          {% trans "Add Role" %}
-        </button>
-        <a
-          href="{% url 'create_role' domain %}"
-          class="btn btn-outline-primary"
-        >
-          <i class="fa fa-plus"></i>
-          {% trans "Add Role (view)" %}
+        <a href="{% url 'create_role' domain %}" >
+          <button class="btn btn-outline-primary">
+            <i class="fa fa-plus"></i>
+            {% trans "Add Role" %}
+          </button>
         </a>
         <div
           data-bind="modal: roleBeingDeleted"
