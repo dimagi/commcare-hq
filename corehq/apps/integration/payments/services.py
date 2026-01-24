@@ -365,11 +365,7 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
 
     try:
         payment_status_api_method = config.get_payment_status_api_method()
-        response = payment_status_api_method(transaction_id, config)
-        response_data = response.json()
-
-        status = response_data.get('status', '').lower()
-        error_code = response_data.get('reason')
+        status, error_code = payment_status_api_method(transaction_id, config)
     except requests.exceptions.HTTPError as err:
         # https://momodeveloper.mtn.com/api-documentation/common-error
         status_code = err.response.status_code
@@ -393,7 +389,10 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
                 _("Failed to fetch payment status with code: {}".format(status_code))
             )
         # Unexpected HTTP errors, this is considered as an error status
-        error_code = _get_http_error_code(status_code, err.response)
+        if config.provider == MoMoProviders.MTN_MONEY:
+            error_code = _get_http_error_code(status_code, err.response)
+        else:
+            error_code = "HttpError{}".format(status_code)
         return _get_status_details(PaymentStatus.ERROR, error_code)
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         raise PaymentRequestError(
@@ -417,7 +416,24 @@ def make_mtn_payment_status_request(reference_id, config):
         }
     )
     response.raise_for_status()
-    return response
+    response_data = response.json()
+    return response_data.get('status', '').lower(), response_data.get('reason')
+
+
+def make_orange_cameroon_payment_status_request(reference_id, config):
+    connection_settings = config.connection_settings
+    requests = connection_settings.get_requests()
+    response = requests.get(
+        f'/omcoreapis/1.0.2/cashin/paymentstatus/{reference_id}',
+        headers={
+            'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
+        }
+    )
+    response.raise_for_status()
+    response_data = response.json()
+    status = response_data['data']['status'].lower()
+    error_code = response_data.get('message', '') if status == PaymentStatus.FAILED else ''
+    return status, error_code
 
 
 def _get_status_details(status, error_code=None):
