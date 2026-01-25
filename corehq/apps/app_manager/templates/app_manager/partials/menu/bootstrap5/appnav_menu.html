@@ -71,15 +71,13 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
+        <h4 class="modal-title">{% trans "Your menus were reordered" %}</h4>
         <button
           type="button"
-          class="btn-close"  {# todo B5: css-close #}
+          class="btn-close"
           data-bs-dismiss="modal"
           aria-label="Close"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">{% trans "Your menus were reordered" %}</h4>
+        ></button>
       </div>
       <form
         action="{% url "move_child_modules_after_parents" domain app.id %}"

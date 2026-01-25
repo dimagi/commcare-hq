@@ -11,7 +11,7 @@ import noopMetrics from "analytix/js/noopMetrics";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import main from "hqwebapp/js/bootstrap3/main";
 import menu from "app_manager/js/menu";
-import previewApp from "app_manager/js/preview_app";
+import previewApp from "app_manager/js/bootstrap3/preview_app";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
 import "select2/dist/js/select2.full.min";
@@ -604,7 +604,7 @@ var _initNewModuleOptionClicks = function () {
 
                 function displayError(errorMsg) {
                     $formGroup.addClass('has-error');
-                    $error.text(errorMsg);
+                    $error.html(errorMsg);
                     $error.show();
                     $help.hide();
                     $createBtn.prop('disabled', true);

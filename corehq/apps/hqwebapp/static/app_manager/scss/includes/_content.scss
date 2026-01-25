@@ -1,0 +1,280 @@
+.appmanager-main-container {
+  display: block;
+  padding-left: 0;
+  background-color: $cc-brand-low;
+  position: relative;
+  box-sizing: border-box;
+
+  width: -webkit-calc(100% - $app-manager-sidebar-width);
+  width: -moz-calc(100% - $app-manager-sidebar-width);
+  width: calc(100% - $app-manager-sidebar-width);
+
+  min-height: 100%;
+
+  transition: all 1s;
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2);
+
+  &.formdesigner-content-wrapper {
+    padding: 0;
+  }
+  #formdesigner {
+    background-color: $cc-brand-low !important;
+    opacity: 100;
+    transition: opacity 1s;
+
+    &.loading {
+      opacity: 0;
+    }
+
+    .fd-content-right .fd-head,
+    .fd-content-right .fd-form-actions {
+      // There is a 2px white line between the right edge of form player and the
+      // right edge of the screen. This gets rid of it. If I make the container
+      // 2px bigger, all of formplayer bumps down to the next line --B
+      margin-right: -2px;
+    }
+  }
+}
+
+.appmanager-loading-bg {
+  width: 224px;
+  height: 224px;
+
+  position: absolute;
+  top: 15vh;
+  left: 50%;
+  margin-left: -112px;
+
+  background-image: url("img/loading_flower.png");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 100% auto;
+
+  &:before {
+    display: block;
+    content: "";
+    width: 100%;
+    height: 100%;
+    background-image: url("img/loading_spiral.png");
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    animation: spin 4s infinite linear;
+    -webkit-animation: spin 4s infinite linear;
+  }
+
+  @include media-breakpoint-down(md) {
+    // todo B5: verify this breakpoint looks correct
+    display: none;
+  }
+}
+
+@keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+.appmanager-content {
+  display: none;
+  position: relative;
+}
+
+#js-appmanager-body.appmanager-settings-content {
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2);
+  background-color: white;
+  padding-top: 9px;
+  padding-left: 20px;
+  padding-right: $preview-toggler-width + 20px;
+  padding-bottom: 60px;
+  min-height: 100%;
+  position: absolute;
+  width: 100%;
+  top: 0;
+
+  &.offset-for-preview {
+    padding-right: 20px;
+  }
+}
+
+.appmanager-loading-container {
+  position: relative;
+}
+
+.appmanager-loading {
+  $dim: 2.5rem;
+  display: block;
+  position: absolute;
+  font-size: $dim;
+  width: $dim;
+  height: $dim;
+  left: calc(50% - $dim / 2);
+  left: -moz-calc(50% - $dim / 2);
+  left: -webkit-calc(50% - $dim / 2);
+  color: rgba($cc-text, 0.6);
+}
+
+.appmanager-loading-nav {
+  top: 30px;
+}
+
+.removed-languages {
+  margin-top: 2rem;
+}
+
+.ko-inline-edit {
+  .read-only .prefixed-icon i {
+    color: $cc-text;
+  }
+  .read-only .text.app-title {
+    margin-left: 2px;
+  }
+  .inline-edit-icon {
+    vertical-align: top;
+    i {
+      transition: color 1s;
+    }
+  }
+  .inline-edit-icon.h3 {
+    font-size: 16px;
+  }
+  &:hover {
+    .read-only .inline-edit-icon i {
+      color: $cc-brand-mid;
+    }
+  }
+}
+
+.ko-inline-edit {
+  .read-write.h3 {
+    margin-top: 7.5px;
+    margin-bottom: 2px;
+  }
+}
+
+.appmanager-edit-title,
+.appmanager-edit-app-title {
+  margin-right: calc($app-page-actions-width + 2rem);
+}
+
+.appmanager-edit-title .ko-inline-edit {
+  width: 100%;
+  .read-only {
+    margin-left: 15px;
+    margin-top: 8px;
+  }
+  .read-only .prefixed-icon {
+    margin-left: -30px;
+  }
+  .read-write {
+    padding-top: 10px;
+  }
+  .read-write.h3 {
+    min-width: unset;
+
+    .input-group {
+      margin-top: 3px;
+      width: 100%;
+    }
+  }
+}
+.appmanager-edit-app-title .ko-inline-edit {
+  .read-only {
+    margin-left: -12px;
+    margin-top: 13px;
+  }
+}
+.appmanager-edit-description .ko-inline-edit {
+  margin-left: -8px;
+}
+
+.appmanager-page-actions {
+  float: right;
+  margin-top: 20px;
+  max-width: $app-page-actions-width;
+}
+
+.form-group .upgrade-message {
+  padding-top: 7px;
+  margin-left: -5px;
+  display: inline-block;
+}
+
+.appmanager-tab-content p {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.ko-inline-edit .read-only .btn-langcode-preprocessed {
+  background-color: darken($cc-bg, 10);
+  border: none;
+  color: $cc-text;
+  vertical-align: top;
+  margin-top: 6px;
+}
+
+.appmanager-content-row {
+  background-color: $cc-brand-low;
+
+  @include media-breakpoint-down(md) {
+    // todo B5: verify this breakpoint looks correct
+    overflow: hidden;
+  }
+}
+
+.app-preview-icon::before {
+  font-size: 2.3rem;
+  vertical-align: middle;
+  top: -15px;
+  left: -1px;
+  position: absolute;
+}
+.app-preview-icon {
+  position: relative;
+  width: 10px;
+}
+
+.app-preview-toggle-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.btn-preview {
+  $btn-preview-width: 30px;
+  width: $btn-preview-width;
+  height: $btn-preview-width;
+  padding: 4px 10px;
+  border-radius: $btn-preview-width/2;
+}
+
+.appmanager-content-single-page {
+  background: white;
+  padding: 20px 20px;
+}
+
+.auto-release-notes {
+  line-height: 20px;
+  padding-top: 10px;
+}
+
+.releases-container {
+  padding-top: 5px;
+}
+
+.refresh-form-questions-container > p {
+  margin-top: 10px;
+  margin-bottom: -10px;
+}

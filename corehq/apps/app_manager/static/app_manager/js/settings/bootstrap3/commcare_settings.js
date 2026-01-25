@@ -4,7 +4,7 @@ import _ from "underscore";
 import appManager from "app_manager/js/bootstrap3/app_manager";
 import sectionChanger from "app_manager/js/section_changer";
 import main from "hqwebapp/js/bootstrap3/main";
-import appLogos from "app_manager/js/settings/app_logos";
+import appLogos from "app_manager/js/settings/bootstrap3/app_logos";
 
 function CommcareSettings(options) {
     var self = this;
