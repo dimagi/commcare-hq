@@ -189,9 +189,9 @@ def orange_cameroon_kyc_verify(kyc_user, config):
         }
     )
     response.raise_for_status()
-    user_info = response.json().get('data', {})
+    api_data = response.json().get('data', {})
     if config.stores_full_name:
-        api_full_name = f"{user_info['firstName']} {user_info['lastName']}".strip()
+        api_full_name = f"{api_data['firstName']} {api_data['lastName']}".strip()
         user_full_name = user_data['fullName'].strip()
         score = order_and_case_insensitive_matching_score(api_full_name, user_full_name)
         if score < config.passing_threshold['fullName']:
@@ -200,12 +200,12 @@ def orange_cameroon_kyc_verify(kyc_user, config):
         for field, threshold_value in config.passing_threshold.items():
             # lastName is optional in user data, but if API returns it and user doesn't have it, fail
             if field == 'lastName' and field not in user_data:
-                if field in user_info and user_info[field].strip():
+                if field in api_data and api_data[field].strip():
                     # API has lastName but user doesn't - this is a mismatch
                     return KycVerificationStatus.FAILED
                 # Both don't have lastName - skip validation
                 continue
-            api_value = user_info.get(field, '').strip().lower()
+            api_value = api_data.get(field, '').strip().lower()
             user_value = user_data[field].strip().lower()
             score = get_percent_matching_score(api_value, user_value)
             if score < threshold_value:
@@ -275,6 +275,13 @@ def _kebab_case(value):
 def order_and_case_insensitive_matching_score(value1, value2):
     """Case insensitive and order insensitive percent matching score between two strings
     based on Levenshtein distance.
+    This is useful for comparing full names where the order of first and last names may vary,
+    which commonly occurs in HQ projects.
+
+    >>> order_and_case_insensitive_matching_score("Jeanne d'Arc", "D'ARC Jeanne")
+    100.0
+    >>> order_and_case_insensitive_matching_score("D'ARC Jeanne", "Jehanne Darc")
+    83.33333333333334
     """
     if value1 is None or value2 is None:
         raise ValueError('Both values are required')
@@ -289,6 +296,13 @@ def order_and_case_insensitive_matching_score(value1, value2):
 
 def get_percent_matching_score(value1, value2):
     """Case sensitive percent matching score between two strings based on Levenshtein distance.
+
+    >>> get_percent_matching_score("Jessica", "Jessica")
+    100.0
+    >>> get_percent_matching_score("Jessica", "jessica")
+    85.71428571428572
+    >>> get_percent_matching_score("Jessica", "Jessika")
+    85.71428571428572
     """
     if value1 is None or value2 is None:
         raise ValueError('Both values are required')
