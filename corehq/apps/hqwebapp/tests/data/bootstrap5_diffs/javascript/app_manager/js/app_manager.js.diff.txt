@@ -156,25 +156,35 @@
              $form.submit();
          }
      });
-@@ -594,7 +606,7 @@
+@@ -586,15 +598,13 @@
+ 
+             $caseType.on('change', function () {
+                 var valueNoSpaces = $(this).val();
+-                var $formGroup = $(this).closest('.form-group');
+                 var $help = $('#new-case-type-help');
+                 var $error = $('#new-case-type-error');
+                 var $createBtn = $('#case-type-create-btn');
+ 
                  // Reset error states
-                 $formGroup.removeClass('has-error');
+-                $formGroup.removeClass('has-error');
                  $help.show();
 -                $error.hide();
 +                $error.addClass('d-none');
                  $createBtn.prop('disabled', false);
  
                  if (!valueNoSpaces) {
-@@ -605,7 +617,7 @@
+@@ -603,9 +613,8 @@
+                 }
+ 
                  function displayError(errorMsg) {
-                     $formGroup.addClass('has-error');
+-                    $formGroup.addClass('has-error');
                      $error.html(errorMsg);
 -                    $error.show();
 +                    $error.removeClass('d-none');
                      $help.hide();
                      $createBtn.prop('disabled', true);
                  }
-@@ -642,14 +654,14 @@
+@@ -642,14 +651,14 @@
          newCaseTypeHiddenInput.val(value);
  
          $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
@@ -192,7 +202,7 @@
      });
  
      // Clear selection when modal is hidden
-@@ -671,7 +683,7 @@
+@@ -671,7 +680,7 @@
      $('.new-module-option').each(function () {
          var type = $(this).data('type');
          if (hoverHelpTexts[type]) {
