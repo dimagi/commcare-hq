@@ -2,6 +2,7 @@ import json
 import os
 import re
 from collections import defaultdict
+from pyphonetics.distance_metrics import levenshtein_distance
 
 from django.conf import settings
 from django.utils.text import camel_case_to_spaces
@@ -65,6 +66,24 @@ def verify_user(kyc_user, config):
     return verification_status, verification_error
 
 
+def _mock_api_result_for_testing():
+    import random
+    testing_outcome = {
+        "passed": KycVerificationStatus.PASSED,
+        "failed": KycVerificationStatus.FAILED
+    }
+    weights = {
+        "passed": 0.8,  # 80%
+        "failed": 0.2,  # 20%
+    }
+    choice = random.choices(
+        population=list(testing_outcome.keys()),
+        weights=list(weights.values()),
+        k=1,
+    )[0]
+    return testing_outcome[choice]
+
+
 def mtn_kyc_verify(kyc_user, config):
     """
     Verify a user using the Chenosis MTN KYC API.
@@ -110,6 +129,9 @@ def mtn_kyc_verify(kyc_user, config):
     #         }
     #     }
 
+    # This is for testing only since we don't have a working testing environment for verification yet
+    return _mock_api_result_for_testing()
+
     user_data = get_user_data_for_api(kyc_user, config)
     _validate_schema('kycVerify/v1', user_data)  # See kyc-verify-v1.json
     requests = config.connection_settings.get_requests()
@@ -150,7 +172,11 @@ def orange_cameroon_kyc_verify(kyc_user, config):
     #     }
     # }
 
+    # This is for testing only since we don't have a working testing environment for verification yet
+    return _mock_api_result_for_testing()
+
     user_data = get_user_data_for_api(kyc_user, config)
+    _validate_name_fields(config, user_data)
     requests = config.connection_settings.get_requests()
     response = requests.post(
         f'/omcoreapis/1.0.2/infos/subscriber/customer/{user_data["phoneNumber"]}',
@@ -163,12 +189,40 @@ def orange_cameroon_kyc_verify(kyc_user, config):
         }
     )
     response.raise_for_status()
-    user_info = response.json().get('data', {})
-    # TODO Add Comparison logic for firstName and lastName. For now, we directly compare them.
-    if (user_info['firstName'].lower() == user_data['firstName'].lower()
-            and user_info['lastName'].lower() == user_data['lastName'].lower()):
-        return KycVerificationStatus.PASSED
-    return KycVerificationStatus.FAILED
+    api_data = response.json().get('data', {})
+    if config.stores_full_name:
+        api_full_name = f"{api_data['firstName']} {api_data['lastName']}".strip()
+        user_full_name = user_data['fullName'].strip()
+        score = order_and_case_insensitive_matching_score(api_full_name, user_full_name)
+        if score < config.passing_threshold['fullName']:
+            return KycVerificationStatus.FAILED
+    else:
+        for field, threshold_value in config.passing_threshold.items():
+            # lastName is optional in user data, but if API returns it and user doesn't have it, fail
+            if field == 'lastName' and field not in user_data:
+                if field in api_data and api_data[field].strip():
+                    # API has lastName but user doesn't - this is a mismatch
+                    return KycVerificationStatus.FAILED
+                # Both don't have lastName - skip validation
+                continue
+            api_value = api_data.get(field, '').strip().lower()
+            user_value = user_data[field].strip().lower()
+            score = get_percent_matching_score(api_value, user_value)
+            if score < threshold_value:
+                return KycVerificationStatus.FAILED
+
+    return KycVerificationStatus.PASSED
+
+
+def _validate_name_fields(config, user_data):
+    if config.stores_full_name:
+        field = 'fullName'
+    else:
+        # User may not have last name, but first name is required
+        field = 'firstName'
+    value = user_data.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise jsonschema.exceptions.ValidationError(f'{field} is required')
 
 
 def _report_verification_failure_metric(domain, errors_with_count):
@@ -216,3 +270,46 @@ def _kebab_case(value):
     value = camel_case_to_spaces(value)
     value = re.sub(r"[^\w\s-]", "-", value.lower())
     return re.sub(r"[-\s]+", "-", value).strip("-_")
+
+
+def order_and_case_insensitive_matching_score(value1, value2):
+    """Case insensitive and order insensitive percent matching score between two strings
+    based on Levenshtein distance.
+    This is useful for comparing full names where the order of first and last names may vary,
+    which commonly occurs in HQ projects.
+
+    >>> order_and_case_insensitive_matching_score("Jeanne d'Arc", "D'ARC Jeanne")
+    100.0
+    >>> order_and_case_insensitive_matching_score("D'ARC Jeanne", "Jehanne Darc")
+    83.33333333333334
+    """
+    if value1 is None or value2 is None:
+        raise ValueError('Both values are required')
+
+    if value1 == '' and value2 == '':
+        return 100.0
+
+    parts1 = sorted(value1.lower().split())
+    parts2 = sorted(value2.lower().split())
+    return get_percent_matching_score(" ".join(parts1), " ".join(parts2))
+
+
+def get_percent_matching_score(value1, value2):
+    """Case sensitive percent matching score between two strings based on Levenshtein distance.
+
+    >>> get_percent_matching_score("Jessica", "Jessica")
+    100.0
+    >>> get_percent_matching_score("Jessica", "jessica")
+    85.71428571428572
+    >>> get_percent_matching_score("Jessica", "Jessika")
+    85.71428571428572
+    """
+    if value1 is None or value2 is None:
+        raise ValueError('Both values are required')
+
+    if value1 == '' and value2 == '':
+        return 100.0
+
+    dist = levenshtein_distance(value1, value2)
+    max_len = max(len(value1), len(value2))
+    return (1.0 - dist / max_len) * 100
