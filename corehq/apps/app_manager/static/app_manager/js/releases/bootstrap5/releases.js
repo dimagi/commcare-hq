@@ -225,7 +225,7 @@ function savedAppModel(appData, releasesMain) {
     self.handleScanModal = function () {
         // Hide the main deploy modal, then re-open
         // it when the scan barcode modal is closed
-        const deployModal = Modal.getInstance('.modal.fade.show');
+        const deployModal = Modal.getOrCreateInstance('.modal.fade.show');
         deployModal.hide();
         $('body').one("hide.bs.modal", function () {
             deployModal.show();
@@ -295,15 +295,12 @@ function releasesMainModel(o) {
         }
         self.asyncDownloader.generateDownload(url, params);
         // Hide the open modal so they don't overlap
-        Modal.getInstance('.modal.fade.show').hide();
-        try {
-            const downloadModal = Modal.getOrCreateInstance(self.downloadModalId);
-            downloadModal.show();
-        } catch (e) {
-            // do nothing. this error only shows up in mocha tests when run
-            // via grunt rather than the browser due to how the DOM is
-            // interpreted. this runs fine in the browser.
+        const openModal = Modal.getInstance('.modal.fade.show');
+        if (openModal) {
+            openModal.hide();
         }
+        const downloadModal = Modal.getOrCreateInstance(self.downloadModalId);
+        downloadModal.show();
     };
 
     self.buildButtonEnabled = ko.computed(function () {
