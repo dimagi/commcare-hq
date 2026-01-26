@@ -20,6 +20,7 @@
       "partials/releases/build_profiles.html",
       "partials/releases/releases.html",
       "partials/releases/releases_deploy_modal.html",
+      "partials/releases/releases_deploy_modal_sms.html",
       "partials/releases/releases_table.html",
       "partials/settings/add_ons.html",
       "partials/settings/app_settings.html",
