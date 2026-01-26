@@ -1,6 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Modal } from "bootstrap5";
 import google from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
 import downloadAsyncModal from "app_manager/js/bootstrap5/download_async_modal";
@@ -222,13 +223,12 @@ function savedAppModel(appData, releasesMain) {
     };
 
     self.handleScanModal = function () {
-
         // Hide the main deploy modal, then re-open
         // it when the scan barcode modal is closed
-        var $deployModal = $('.modal.fade.in');
-        $deployModal.modal('hide');  /* todo B5: js-modal */
+        const deployModal = Modal.getInstance('.modal.fade.show');
+        deployModal.hide();
         $('body').one("hide.bs.modal", function () {
-            $deployModal.modal({ show: true });  /* todo B5: js-modal */
+            deployModal.show();
         });
     };
 
