@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from lxml import etree
 
 from django.test import SimpleTestCase
 
@@ -9,7 +10,8 @@ from ..exceptions import (
     XFormValidationError,
     XFormValidationFailed,
 )
-from ..xform import parse_xml, validate_xform
+from corehq.apps.app_manager.models import Form, FormActions
+from ..xform import parse_xml, validate_xform, XForm
 
 
 class ParseXMLTests(SimpleTestCase):
@@ -106,3 +108,225 @@ class ValidateXFormTests(SimpleTestCase):
             validate_xform(xml)
         except XFormValidationFailed as e:
             self.fail(f"validate_xform raised {e} unexpectedly")
+
+
+class XForm_CreateCaseMappingsTests(SimpleTestCase):
+    def test_creates_mappings(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'q1'},
+                    'two': {'question_path': 'q2'}
+                }
+            }
+        })
+
+        form = Form(actions=actions)
+
+        tree = XForm.create_case_mappings(form)
+        rendered_tree = etree.tostring(tree, encoding='unicode', pretty_print=True).strip()
+
+        assert rendered_tree == """
+<ns0:case_mappings xmlns:ns0="http://www.w3.org/2002/xforms">
+  <ns0:mapping property="one">
+    <ns0:question question_path="q1" update_mode="always"/>
+  </ns0:mapping>
+  <ns0:mapping property="two">
+    <ns0:question question_path="q2" update_mode="always"/>
+  </ns0:mapping>
+</ns0:case_mappings>
+""".strip()
+
+    def test_creates_open_case_mappings(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'name'}
+            }
+        })
+
+        form = Form(actions=actions)
+
+        tree = XForm.create_case_mappings(form)
+        rendered_tree = etree.tostring(tree, encoding='unicode', pretty_print=True).strip()
+
+        assert rendered_tree == """
+<ns0:case_mappings xmlns:ns0="http://www.w3.org/2002/xforms">
+  <ns0:mapping property="name">
+    <ns0:question question_path="name" update_mode="always"/>
+  </ns0:mapping>
+</ns0:case_mappings>
+""".strip()
+
+    def test_uses_name_from_open_case(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'open_case_name'}
+            },
+            'update_case': {
+                'update': {
+                    'name': {'question_path': 'update_case_name'}
+                }
+            }
+        })
+
+        form = Form(actions=actions)
+
+        tree = XForm.create_case_mappings(form)
+        rendered_tree = etree.tounicode(tree, pretty_print=True).strip()
+
+        assert rendered_tree == """
+<ns0:case_mappings xmlns:ns0="http://www.w3.org/2002/xforms">
+  <ns0:mapping property="name">
+    <ns0:question question_path="open_case_name" update_mode="always"/>
+  </ns0:mapping>
+</ns0:case_mappings>
+""".strip()
+
+
+class XForm_AddCaseMappingsTests(SimpleTestCase):
+    def test_adds_case_mappings(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'q1'}
+                }
+            }
+        })
+        form = Form(actions=actions)
+        xform = self._create_minimal_xform()
+
+        xform.add_case_mappings(form)
+
+        assert xform.find('case_mappings') is not None
+
+    def test_handles_no_mappings(self):
+        actions = FormActions()
+        form = Form(actions=actions)
+        xform = self._create_minimal_xform()
+
+        xform.add_case_mappings(form)
+
+        mappings_node = xform.find('case_mappings')
+        assert len(mappings_node) == 0
+
+    def test_does_not_create_duplicate_mapping_nodes(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'q1'}
+                }
+            }
+        })
+        form = Form(actions=actions)
+        xform = self._create_minimal_xform()
+
+        xform.add_case_mappings(form)
+        xform.add_case_mappings(form)
+
+        case_mapping_nodes = xform.findall('{f}case_mappings')
+        assert len(case_mapping_nodes) == 1
+
+    def _create_minimal_xform(self):
+        return XForm('''
+<html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml">
+    <h:head>
+        <model>
+            <instance>
+                <data></data>
+            </instance>
+        </model>
+    </h:head>
+</html>
+''')
+
+
+class XForm_GetFormActionsTests(SimpleTestCase):
+    def test_no_mappings_returns_empty_dict(self):
+        xform = self._create_minimal_xform()
+        assert xform.get_form_actions() == {}
+
+    def test_returns_update_mappings(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'q1'},
+                    'two': {'question_path': 'q2'},
+                }
+            }
+        })
+        form = Form(actions=actions)
+        xform = self._create_minimal_xform()
+
+        xform.add_case_mappings(form)
+
+        mappings = xform.get_form_actions()
+
+        case_updates = mappings['update_case']['update_multi']
+
+        assert set(case_updates.keys()) == {'one', 'two'}
+        assert case_updates['one'] == [{'question_path': 'q1', 'update_mode': 'always'}]
+        assert case_updates['two'] == [{'question_path': 'q2', 'update_mode': 'always'}]
+
+    def test_name_updates_for_registration_forms_use_open_case(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'test_name'}
+            }
+        })
+        form = Form(actions=actions)
+        xform = self._create_minimal_xform()
+
+        xform.add_case_mappings(form)
+
+        mappings = xform.get_form_actions(for_registration_form=True)
+
+        name_updates = mappings['open_case']['name_update_multi']
+
+        assert name_updates == [{'question_path': 'test_name', 'update_mode': 'always'}]
+        assert 'update_case' not in mappings
+
+    def test_name_updates_for_update_forms_use_update_case(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {'name': {'question_path': 'test_name'}},
+            }
+        })
+        form = Form(actions=actions)
+        xform = self._create_minimal_xform()
+
+        xform.add_case_mappings(form)
+
+        mappings = xform.get_form_actions(for_registration_form=False)
+
+        case_updates = mappings['update_case']['update_multi']
+
+        assert case_updates['name'] == [{'question_path': 'test_name', 'update_mode': 'always'}]
+        assert 'open_case' not in mappings
+
+    def test_can_be_turned_into_form_actions_object(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {'name': {'question_path': 'test_name'}},
+            }
+        })
+        form = Form(actions=actions)
+        xform = self._create_minimal_xform()
+
+        xform.add_case_mappings(form)
+
+        mappings = xform.get_form_actions()
+        result = FormActions(mappings)
+        assert result.update_case.update_multi['name'][0].question_path == 'test_name'
+
+    def _create_minimal_xform(self):
+        return XForm('''
+<html xmlns="http://www.w3.org/2002/xforms" xmlns:h="http://www.w3.org/1999/xhtml">
+    <h:head>
+        <model>
+            <instance>
+                <data></data>
+            </instance>
+        </model>
+    </h:head>
+</html>
+''')
