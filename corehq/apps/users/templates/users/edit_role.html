@@ -22,7 +22,7 @@
 
   <div class="container mx-0">
     <form
-      x-data="initRole({{ data }})"
+      x-data='initRole({% html_attr data %})'
       @submit.prevent="saveRole($data.formData)"
       x-cloak
       @input="isDirty = true"
