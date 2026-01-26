@@ -19,6 +19,7 @@
       "partials/releases/app_release_logs.html",
       "partials/releases/build_profiles.html",
       "partials/releases/releases.html",
+      "partials/releases/releases_deploy_modal.html",
       "partials/releases/releases_table.html",
       "partials/settings/add_ons.html",
       "partials/settings/app_settings.html",
