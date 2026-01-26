@@ -794,6 +794,8 @@ motech
  0017_connectionsettings_use_aes_cbc_encryption
  0018_openmrsimporter_use_aes_cbc_encryption
  0019_connectionsettings_custom_headers
+ 0020_alter_connectionsettings_increase_max_url_lengths
+ 0021_alter_requestlog_request_url
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
