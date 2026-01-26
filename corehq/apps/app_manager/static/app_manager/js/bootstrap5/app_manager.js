@@ -2,6 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Modal, Popover } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqLayout from "hqwebapp/js/layout";
 import toggles from "hqwebapp/js/toggles";
@@ -179,25 +180,30 @@ var _initCommcareVersion = function (args) {
  * @private
  */
 var _initAddItemPopovers = function () {
-    $('.js-add-new-item').popover({  /* todo B5: js-popover */
-        title: gettext("Add"),
-        container: 'body',
-        sanitize: false,
-        content: function () {
-            var template = $('.js-popover-template-add-item-content[data-slug="form"]').text();
-            return _.template(template)($(this).data());
-        },
-        html: true,
-        trigger: 'manual',
-        placement: 'right',
-        template: $('#js-popover-template-add-item').text(),
-    }).on('show.bs.popover', function () {
+    const $popoverEls = $('.js-add-new-item');
+    _.each($popoverEls, (el) => {
+        new Popover(el ,{
+            title: gettext("Add"),
+            container: 'body',
+            sanitize: false,
+            content: function () {
+                var template = $('.js-popover-template-add-item-content[data-slug="form"]').text();
+                return _.template(template)($(el).data());
+            },
+            html: true,
+            trigger: 'manual',
+            placement: 'right',
+            template: $('#js-popover-template-add-item').text(),
+        });
+    });
+    $popoverEls.on('show.bs.popover', function () {
         // Close any other open popover
-        $('.js-add-new-item').not($(this)).popover('hide');  /* todo B5: js-popover */
+        const $otherEls = $('.js-add-new-item').not($(this));
+        _.each($otherEls, (el) => Popover.getInstance(el).hide());
     }).one('shown.bs.popover', function () {
         var pop = this;
         $('.popover-additem').on('click', function (e) {
-            $(pop).popover('hide');  /* todo B5: js-popover */
+            Popover.getInstance(pop).hide();
             var dataType = $(e.target).closest('button').data('type'),
                 stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                 $form;
@@ -207,7 +213,7 @@ var _initAddItemPopovers = function () {
             }
 
             var caseAction =  $(e.target).closest('button').data('case-action'),
-                $popoverContent = $(e.target).closest(".popover-content > *"),
+                $popoverContent = $(e.target).closest(".popover-body > *"),
                 moduleId = $popoverContent.data("module-unique-id"),
                 $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
 
@@ -222,13 +228,13 @@ var _initAddItemPopovers = function () {
         });
     }).on('click', function (e) {
         e.preventDefault();
-        $(this).popover('show');  /* todo B5: js-popover */
+        Popover.getInstance(this).show();
     });
 
     // Close any open popover when user clicks elsewhere on the page
     $('body').click(function (event) {
         if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
-            $('.js-add-new-item').popover('hide');  /* todo B5: js-popover */
+            _.each($popoverEls, (el) => Popover.getInstance(el).hide());
         }
     });
 };
@@ -671,7 +677,7 @@ var _initNewModuleOptionClicks = function () {
     $('.new-module-option').each(function () {
         var type = $(this).data('type');
         if (hoverHelpTexts[type]) {
-            $(this).popover({  /* todo B5: js-popover */
+            new Popover(this, {
                 title: hoverHelpTexts[type].title,
                 content: hoverHelpTexts[type].content,
                 trigger: 'hover',
