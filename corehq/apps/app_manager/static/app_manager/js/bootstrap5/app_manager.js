@@ -598,13 +598,11 @@ var _initNewModuleOptionClicks = function () {
 
             $caseType.on('change', function () {
                 var valueNoSpaces = $(this).val();
-                var $formGroup = $(this).closest('.form-group');
                 var $help = $('#new-case-type-help');
                 var $error = $('#new-case-type-error');
                 var $createBtn = $('#case-type-create-btn');
 
                 // Reset error states
-                $formGroup.removeClass('has-error');
                 $help.show();
                 $error.addClass('d-none');
                 $createBtn.prop('disabled', false);
@@ -615,7 +613,6 @@ var _initNewModuleOptionClicks = function () {
                 }
 
                 function displayError(errorMsg) {
-                    $formGroup.addClass('has-error');
                     $error.html(errorMsg);
                     $error.removeClass('d-none');
                     $help.hide();
