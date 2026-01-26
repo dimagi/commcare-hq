@@ -21,12 +21,12 @@
       </small>
     </p>
   </div>
-  <div class="float-end auto-release-notes" data-bind="visible: savedApps().length || onlyShowReleased()">
+  <div class="float-end" data-bind="visible: savedApps().length || onlyShowReleased()">
     <a href="#" data-bind="click: toggleLimitToReleased"><span data-bind="visible: !onlyShowReleased()">{% trans 'Show only released versions' %}</span></a>
     <span data-bind="visible: onlyShowReleased()">
             {% trans 'Released versions only' %}
         </span>
-    <a href="#" data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()" class="btn btn-outline-primary btn-sm">{% trans 'show all' %}</a>
+    <a href="#" data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()" class="btn btn-outline-primary btn-sm">{% trans 'Show All' %}</a>
 
     <span class="hq-help-template"
           data-title="Released Versions"
@@ -200,8 +200,10 @@
 
           <!--/ko-->
         </div>
-        <h6 class="card-title mt-2">
-          <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong>
+        <h6 class="card-title text-secondary mt-2">
+          <strong class="text-dark">
+            {% trans "Version" %} <span data-bind="text: version"></span>
+          </strong>
           <span data-bind="if: doc_type() == 'LinkedApplication'">
             (<a data-bind="text: upstream_app_name(), attr: {href: upstream_app_url()}"></a>
               v<span data-bind="text: upstream_version"></span>)
