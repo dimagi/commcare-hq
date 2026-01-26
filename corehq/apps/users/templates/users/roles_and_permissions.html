@@ -4,26 +4,9 @@
 {% load hq_shared_tags %}
 {% js_entry 'users/js/roles_and_permissions' %}
 {% block page_content %}
-  {% registerurl "post_user_role" domain %}
   {% registerurl "delete_user_role" domain %}
   {% initial_page_data "user_roles" user_roles %}
-  {% initial_page_data "non_admin_roles" non_admin_roles %}
   {% initial_page_data "can_edit_roles" can_edit_roles %}
-  {% initial_page_data "default_role" default_role %}
-  {% initial_page_data "tableau_list" tableau_list %}
-  {% initial_page_data "profile_list" profile_list %}
-  {% initial_page_data "report_list" report_list %}
-  {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
-  {% initial_page_data "landing_page_choices" landing_page_choices %}
-  {% initial_page_data "web_apps_choices" web_apps_choices %}
-  {% initial_page_data "attendance_tracking_privilege" attendance_tracking_privilege %}
-  {% initial_page_data "has_report_builder_access" has_report_builder_access %}
-  {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
-  {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
-  {% initial_page_data "data_registry_choices" data_registry_choices %}
-  {% initial_page_data "can_edit_linked_data" can_edit_linked_data %}
-  {% initial_page_data "commcare_analytics_roles" commcare_analytics_roles %}
-  {% initial_page_data "has_restricted_application_access" has_restricted_application_access %}
 
   <p class="lead">
     {% if can_edit_roles %}
@@ -119,7 +102,7 @@
           <tr>
             <th>
               <span data-bind="visible: name, text: name"></span>
-              <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
+              <h6 data-bind="visible: !name">({% trans "No Name" %})</h6>
               <span
                 data-bind="visible: is_commcare_user_default, makeHqHelp: {}"
                 data-title="{% trans "Mobile Worker Default Role" %}"
@@ -215,16 +198,16 @@
             {% endif %}
             <td class="text-center">
               <div
-                data-bind="visible: reportPermissions.all(),
+                data-bind="visible: permissions.view_reports,
                              permissionIcon: {
                                  manage: true
                              }"
               ></div>
               <div
-                data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length"
+                data-bind="visible: !permissions.view_reports && permissions.view_report_list.length"
               >
                 <strong>{% trans "Only" %}</strong><br />
-                <span data-bind="foreach: reportPermissions.specific">
+                <span data-bind="foreach: permissions.view_report_list">
                   <span
                     class="badge text-bg-secondary"
                     data-bind="text: name, visible: value"
@@ -370,7 +353,6 @@
           </div>
         </div>
       {% endif %}
-      {% include 'users/partials/edit_role_modal.html' %}
     </div>
   </div>
 {% endblock %}
