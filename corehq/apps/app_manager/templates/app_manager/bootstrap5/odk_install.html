@@ -14,27 +14,38 @@
     </div>
     <div class="modal-body text-center">
       <p>
-        <img src="{{ qr_code }}" width=250 alt="{% trans "Download" %}" >
+        <img src="{{ qr_code }}" width="250" alt="{% trans "Download" %}" />
       </p>
       <p>
         {% blocktrans %}
           You can also click
           <strong>
-            <a class="track-usage-link" href="{{ profile_url }}"
-               data-category="App Manager" data-action="Initiate Install"
-               data-label="Mobile Browser Link">here</a>
-          </strong> in your mobile browser.
+            <a
+              class="track-usage-link"
+              href="{{ profile_url }}"
+              data-category="App Manager"
+              data-action="Initiate Install"
+              data-label="Mobile Browser Link"
+              >here</a
+            >
+          </strong>
+          in your mobile browser.
         {% endblocktrans %}
       </p>
       <p>
         {% trans "For help installing CommCare, visit " %}
-        <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices" target="_blank">
+        <a
+          href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices"
+          target="_blank"
+        >
           {% trans "Install CommCare" %}
         </a>
       </p>
     </div>
     <div class="modal-footer">
-      <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Close" %}</a>
+      <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal"
+        >{% trans "Close" %}</a
+      >
     </div>
   </div>
 </div>

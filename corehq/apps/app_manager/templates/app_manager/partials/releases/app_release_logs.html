@@ -3,9 +3,7 @@
 
 <div class="card">
   <div class="card-header pt-3">
-    <h5 class="card-title">
-      {% trans "Application Release Logs" %}
-    </h5>
+    <h5 class="card-title">{% trans "Application Release Logs" %}</h5>
   </div>
   <div class="card-body">
     <table id="release-logs-table" class="table table-striped">
@@ -41,10 +39,12 @@
   </div>
 </div>
 
-<pagination data-apply-bindings="false"
-              params="goToPage: goToPage,
-                      perPage: fetchLimit,
-                      slug: 'release-logs-table',
-                      totalItems: totalItems,
-                      onLoad: onPaginationLoad,
-                      showSpinner: showPaginationSpinner"></pagination>
+<pagination
+  data-apply-bindings="false"
+  params="goToPage: goToPage,
+    perPage: fetchLimit,
+    slug: 'release-logs-table',
+    totalItems: totalItems,
+    onLoad: onPaginationLoad,
+    showSpinner: showPaginationSpinner"
+></pagination>

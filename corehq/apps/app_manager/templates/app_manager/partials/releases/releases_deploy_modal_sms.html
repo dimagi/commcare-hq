@@ -10,20 +10,32 @@
         id="include-multimedia-checkbox"
         data-bind="checked: include_media, enable: mm_supported()"
       />
-      <span data-bind="visible: !mm_supported()" class="badge text-bg-secondary">
+      <span
+        data-bind="visible: !mm_supported()"
+        class="badge text-bg-secondary"
+      >
         {% trans "Only supported for versions made after 2013-10-15" %}
       </span>
       <label
         for="include-multimedia-checkbox"
         class="form-check-label"
         data-bind="visible: allow_media_install"
-      >{% trans "Include Multimedia" %}</label>
+        >{% trans "Include Multimedia" %}</label
+      >
     </div>
     <form method="post" action="{% url "send_to_recipients" domain %}">
       {% csrf_token %}
       <div class="mb-3">
-        <label for="sms-recipients" class="form-label">{% trans "Send to:" %}</label>
-        <select name="recipients" id="sms-recipients" class="form-select" multiple data-bind="staticSelect2: {}">
+        <label for="sms-recipients" class="form-label"
+          >{% trans "Send to:" %}</label
+        >
+        <select
+          name="recipients"
+          id="sms-recipients"
+          class="form-select"
+          multiple
+          data-bind="staticSelect2: {}"
+        >
           {% for contact in sms_contacts %}
             <option>{{ contact }}</option>
           {% endfor %}
@@ -37,13 +49,18 @@
         ></textarea>
       </div>
       <div class="alert alert-warning text-center">
-        <i class="fa-solid fa-triangle-exclamation"></i> <strong>{% trans "SMS charges will incur." %}</strong>
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <strong>{% trans "SMS charges will incur." %}</strong>
       </div>
-      <input type="submit" class="btn btn-outline-primary" value="{% trans "Send" %}"/>
+      <input
+        type="submit"
+        class="btn btn-outline-primary"
+        value="{% trans "Send" %}"
+      />
     </form>
   </div>
   <div data-bind="visible: generating_url()">
-    <i class='fa fa-spin fa-spinner'></i>
+    <i class="fa fa-spin fa-spinner"></i>
   </div>
   <div data-bind="visible: !sms_odk_url() && !generating_url()">
     <span class="badge text-bg-danger">

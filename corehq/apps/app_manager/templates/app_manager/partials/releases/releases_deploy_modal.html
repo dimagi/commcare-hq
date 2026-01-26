@@ -4,7 +4,9 @@
 <div class="modal-dialog" data-bind="attr: { id: 'id()' }">
   <div class="modal-content">
     <div class="modal-header">
-      <h4 class="modal-title">{% trans "Version" %} <span data-bind="text: version"></span></h4>
+      <h4 class="modal-title">
+        {% trans "Version" %} <span data-bind="text: version"></span>
+      </h4>
       <button
         type="button"
         class="btn-close"
@@ -16,10 +18,13 @@
       {% if not has_mobile_workers %}
         <div class="alert alert-danger">
           {% blocktrans %}
-            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.
-            Before you can publish your application,
+            Your project does not have any mobile workers! Only mobile workers
+            can log into a CommCare application. Before you can publish your
+            application,
           {% endblocktrans %}
-          <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
+          <a href="{% url "mobile_workers" domain %}"
+            >{% trans "create your first mobile worker" %}</a
+          >.
         </div>
       {% else %}
         <div
@@ -76,8 +81,9 @@
                             Download
                             <a
                               href="https://play.google.com/store/apps/details?id=org.commcare.dalvik"
-                            >CommCare from Google Play</a> to your Android
-                            device.
+                              >CommCare from Google Play</a
+                            >
+                            to your Android device.
                           {% endblocktrans %}
                         </div>
                         {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
@@ -86,7 +92,8 @@
                               <label
                                 for="online-build-profile-select"
                                 class="form-label col-form-label"
-                              >{% trans "Application Profile" %}:</label>
+                                >{% trans "Application Profile" %}:</label
+                              >
                             </div>
                             <div class="col-sm-8">
                               <select
@@ -100,11 +107,13 @@
                         {% if multimedia_state.has_media %}
                           <div class="form-check mb-2">
                             <input
-                             type="checkbox"
-                             class="form-check-input"
-                             id="include-multimedia-checkbox"
-                             data-bind="checked: include_media, enable: mm_supported()"
-                            >
+                              type="checkbox"
+                              class="form-check-input"
+                              id="include-multimedia-checkbox"
+                              data-bind="
+                                checked: include_media,
+                                enable: mm_supported()"
+                            />
                             <label
                               for="include-multimedia-checkbox"
                               class="form-check-label"
@@ -133,11 +142,13 @@
                           <label
                             for="target-version-checkbox"
                             class="form-check-label"
-                          >{% trans "Download Targeted Version" %}</label>
+                            >{% trans "Download Targeted Version" %}</label
+                          >
                         </div>
                         <div class="mb-2">
                           {% blocktrans %}
-                            Open the app on your Android and use one of the following installation methods:
+                            Open the app on your Android and use one of the
+                            following installation methods:
                           {% endblocktrans %}
                         </div>
                         <ul>
@@ -147,29 +158,40 @@
                               data-bind="
                                 openRemoteModal: full_odk_install_url,
                                 click: clickScan
-                            ">
+                              "
+                            >
                               {% trans "Scan Application Barcode" %}
                             </a>
                           </li>
                           <li>
-                            <a href="#" data-bind="
-                                                          click: click_app_code,
-                                                          visible: !app_code() && !failed_url_generation() && !generating_url()
-                                                          ">
+                            <a
+                              href="#"
+                              data-bind="
+                                click: click_app_code,
+                                visible: !app_code() && !failed_url_generation() && !generating_url()
+                              "
+                            >
                               {% trans "Enter App Code" %}
                             </a>
                             <span data-bind="visible: app_code">
-                                                          {% trans "Enter app code on installation screen: " %}
-                                                          <code class="bitly" data-bind="text: app_code"></code>
-                                                      </span>
-                            <i data-bind="visible: generating_url()" class='fa fa-spin fa-spinner'></i>
+                              {% trans "Enter app code on installation screen: " %}
+                              <code
+                                class="bitly"
+                                data-bind="text: app_code"
+                              ></code>
+                            </span>
+                            <i
+                              data-bind="visible: generating_url()"
+                              class="fa fa-spin fa-spinner"
+                            ></i>
                             <span
                               class="text-warning-emphasis"
                               data-bind="visible: failed_url_generation() && !generating_url()"
                             >
                               {% blocktrans %}
-                                (No app code available. If you would like to use an app code instead
-                                of scanning the application barcode, try making another version.)
+                                (No app code available. If you would like to use
+                                an app code instead of scanning the application
+                                barcode, try making another version.)
                               {% endblocktrans %}
                             </span>
                           </li>
@@ -182,14 +204,17 @@
                         <div data-bind="ifnot: allow_media_install">
                           Offline install is unavailable for Remote Apps.
                         </div>
-                        <div data-bind="if: allowOfflineInstall() && allow_media_install()">
+                        <div
+                          data-bind="if: allowOfflineInstall() && allow_media_install()"
+                        >
                           {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
                             <div class="row mb-3">
                               <div class="col-sm-4">
                                 <label
                                   for="offline-build-profile-select"
                                   class="form-label col-form-label"
-                                >{% trans "Application Profile" %}:</label>
+                                  >{% trans "Application Profile" %}:</label
+                                >
                               </div>
                               <div class="col-sm-8">
                                 <select
@@ -209,7 +234,10 @@
                                   click: function () {
                                     downloadApplicationZip(false, build_profile());
                                   }"
-                                >CommCare_v<span data-bind="text: version"></span>.ccz
+                                >CommCare_v<span
+                                  data-bind="text: version"
+                                ></span
+                                >.ccz
                               </a>
                             </li>
                             <li>
@@ -230,12 +258,16 @@
                           {% if multimedia_state.has_media %}
                             <div>
                               {% blocktrans %}
-                                Note: Offline install automatically installs all multimedia
-                                included in your form. All subsequent remote updates will also
-                                include multimedia which could require a lot of data. See the
-                                <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices">
+                                Note: Offline install automatically installs all
+                                multimedia included in your form. All subsequent
+                                remote updates will also include multimedia
+                                which could require a lot of data. See the
+                                <a
+                                  href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices"
+                                >
                                   Help Site
-                                </a> for more info.
+                                </a>
+                                for more info.
                               {% endblocktrans %}
                             </div>
                           {% endif %}
@@ -349,7 +381,9 @@
       {% endif %}
     </div>
     <div class="modal-footer">
-      <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Close" %}</a>
+      <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal"
+        >{% trans "Close" %}</a
+      >
     </div>
   </div>
 </div>

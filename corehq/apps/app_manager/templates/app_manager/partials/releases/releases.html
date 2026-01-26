@@ -4,20 +4,21 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-
 {% if intro_only %}
   <div id="new-app-start">
     <div class="helpbubble helpbubble-primary helpbubble-left float-start">
       {% blocktrans %}
         <p class="lead">
-          Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
+          Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to
+          start building your App!
         </p>
       {% endblocktrans %}
     </div>
     <div class="helpbubble helpbubble-secondary helpbubble-right float-end">
       {% blocktrans %}
         <p class="lead">
-          As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
+          As you build your App, check out the <strong>App Preview</strong> to
+          demo it in real time!
         </p>
       {% endblocktrans %}
     </div>
@@ -26,7 +27,7 @@
 
   {% if not build_profile_access and not enable_update_prompts %}
     {% include 'app_manager/partials/releases/releases_table.html' %}
-  {% else%}
+  {% else %}
     <div class="tabbable">
       <ul class="nav nav-tabs sticky-tabs">
         <li class="nav-item">
@@ -82,9 +83,9 @@
           </div>
         {% endif %}
       </div>
-    </div><!-- .tabbable -->
-  {% endif%}
-
+    </div>
+    <!-- .tabbable -->
+  {% endif %}
 {% endif %}<!-- intro_only condition -->
 
 <!-- Async Download Modals -->
