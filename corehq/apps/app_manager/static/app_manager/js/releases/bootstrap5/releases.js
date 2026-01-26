@@ -267,8 +267,8 @@ function releasesMainModel(o) {
     self.showReleaseOperations = ko.observable(true);
     self.depCaseTypes = ko.observableArray();
 
-    self.download_modal = $(self.options.download_modal_id);
-    self.async_downloader = asyncDownloader(self.download_modal);
+    self.downloadModalId = self.options.downloadModalId;
+    self.asyncDownloader = asyncDownloader($(self.downloadModalId));
     self.savedApps.subscribe(() => {
         self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
     });
@@ -293,12 +293,12 @@ function releasesMainModel(o) {
         if (buildProfile) {
             params.profile = buildProfile;
         }
-        self.async_downloader.generateDownload(url, params);
-        // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
-        // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
-        $('.modal.fade.in').modal('hide');  /* todo B5: js-modal */
+        self.asyncDownloader.generateDownload(url, params);
+        // Hide the open modal so they don't overlap
+        Modal.getInstance('.modal.fade.show').hide();
         try {
-            self.download_modal.modal({show: true});  /* todo B5: js-modal */
+            const downloadModal = Modal.getOrCreateInstance(self.downloadModalId);
+            downloadModal.show();
         } catch (e) {
             // do nothing. this error only shows up in mocha tests when run
             // via grunt rather than the browser due to how the DOM is
