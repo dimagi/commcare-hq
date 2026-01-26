@@ -2,12 +2,11 @@
 {% load hq_shared_tags %}
 
 <div data-bind="saveButton: saveButton"></div>
-<div class="card panel-appmanager">  {# todo B5: css-panel #}
-  <div class="card-header">
-    <h4 class="card-title-nolink">
+<div class="card">
+  <div class="card-header pt-3">
+    <h5>
       {% trans "Current Profiles" %}
-    </h4>
-
+    </h5>
   </div>
   <div class="card-body">
     {% if app.is_remote_app %}
@@ -32,51 +31,50 @@
     </div>
     <table class="table table-profiles">
       <thead>
-      <tr class="row form-group">  {# todo B5: css-form-group #}
-        <th>{% trans "Profile Name" %}</th>
-        <th>{% trans "Languages" %}</th>
-        <th>{% trans "Default Language" %}</th>
-        <th>{% trans "Practice Mobile Worker" %}
-          <div class="text-warning"  data-bind="visible: !$data.enable_practice_users">
-            <i class="fa fa-arrow-down"></i>
-            {% trans "Upgrade to CommCare 2.30!" %}
-          </div>
-        </th>
-        <th></th>
-      </tr>
+        <tr>
+          <th>{% trans "Profile Name" %}</th>
+          <th>{% trans "Languages" %}</th>
+          <th>{% trans "Default Language" %}</th>
+          <th>{% trans "Practice Mobile Worker" %}
+            <div class="text-warning"  data-bind="visible: !$data.enable_practice_users">
+              <i class="fa fa-arrow-down"></i>
+              {% trans "Upgrade to CommCare 2.30!" %}
+            </div>
+          </th>
+          <th></th>
+        </tr>
       </thead>
       <tbody data-bind="foreach: app_profiles">
-      <tr class="row form-group">  {# todo B5: css-form-group #}
-        <td class="col-md-3">
-                    <span class="form-inline">  {# todo B5: css-form-inline #}
-                        <input class="form-control" data-bind="value: $data.name"/>
-                      {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
-                        <div data-bind="visible: $data.latestEnabledVersion">
-                            <b>
-                            {% trans "Latest Enabled Version:" %}
-                            <span data-bind="text: $data.latestEnabledVersion"></span>
-                            </b>
-                        </div>
-                      {% endif %}
-                    </span>
+      <tr>
+        <td class="w-25">
+          <input class="form-control" data-bind="value: $data.name"/>
+          {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+            <div data-bind="visible: $data.latestEnabledVersion">
+              <b>{% trans "Latest Enabled Version:" %}
+              <span data-bind="text: $data.latestEnabledVersion"></span>
+              </b>
+            </div>
+          {% endif %}
         </td>
-        <td class="col-md-3">
+        <td class="w-25">
           <select class="language-select form-select"
                   multiple="true"
                   data-bind="options: $root.app_langs, selectedOptions: langs, attr: {id: 'profile-' + $index()}">
           </select>
         </td>
-        <td class="col-md-3">
-                    <span class="form-inline">  {# todo B5: css-form-inline #}
-                        <select class="form-select" data-bind="value: defaultLang, options: langs"></select>
-                    </span>
+        <td class="w-25">
+          <select class="form-select" data-bind="value: defaultLang, options: langs"></select>
         </td>
-        <td class="col-md-3">
-                    <span class="form-inline">  {# todo B5: css-form-inline #}
-                        <select class="practice-user" data-bind="foreach: $root.practice_users,  attr: {id: 'practice-user-' + $index()}, value: $data.practiceUser, enable: $root.enable_practice_users">  {# todo B5: css-select-form-control #}
-                            <option data-bind="value: $data.id, text: $data.text"></option>
-                        </select>
-                    </span>
+        <td class="w-25">
+          <select
+            class="practice-user form-select"
+            data-bind="
+              foreach: $root.practice_users,
+              attr: { id: 'practice-user-' + $index() },
+              value: $data.practiceUser,
+              enable: $root.enable_practice_users"
+          ><option data-bind="value: $data.id, text: $data.text"></option>
+          </select>
         </td>
         <td>
           <button class="btn btn-outline-danger" data-bind="click: $root.removeProfile">
