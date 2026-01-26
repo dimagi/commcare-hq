@@ -267,8 +267,4 @@ $(function () {
         saveButton.ui.appendTo($saveContainer);
         sectionChanger.attachToForm($saveContainer);
     })();
-
-    // Initialize tooltips
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    [...tooltipTriggerList].map((tooltipTriggerEl) => new Tooltip(tooltipTriggerEl));
 });
