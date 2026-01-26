@@ -236,6 +236,15 @@ class UserAuditReport(AdminReport, DatespanMixin):
             )
         return query[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
 
+    def _is_invalid_time_range(self):
+        """Check if start date equals end date and end time is before start time."""
+        if (
+            self.datespan.startdate and self.datespan.enddate
+            and self.datespan.startdate == self.datespan.enddate
+        ):
+            return self.end_time < self.start_time
+        return False
+
     @property
     def report_context(self):
         context = super().report_context
@@ -243,6 +252,9 @@ class UserAuditReport(AdminReport, DatespanMixin):
         if not (self.selected_domain or self.selected_user):
             context['warning_message'] = _("You must specify either a username or a domain. "
                     "Requesting all audit events across all users and domains would exceed system limits.")
+        elif self._is_invalid_time_range():
+            context['warning_message'] = _("The end time cannot be earlier than the start time when "
+                    "both dates are the same. Please adjust your time range.")
         elif self._is_limit_exceeded():
             context['warning_message'] = self._get_limit_exceeded_message()
 
