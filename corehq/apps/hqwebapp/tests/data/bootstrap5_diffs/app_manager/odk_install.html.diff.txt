@@ -1,29 +1,67 @@
 --- 
 +++ 
-@@ -2,7 +2,7 @@
- <div class="modal-dialog modal-lg">
+@@ -1,37 +1,51 @@
+ {% load i18n %}
+-<div class="modal-dialog modal-lg">
++<div class="modal-dialog">
    <div class="modal-content">
      <div class="modal-header">
 -      <button type="button" class="close" data-dismiss="modal">
-+      <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
-         <span aria-hidden="true">&times;</span>
-       </button>
+-        <span aria-hidden="true">&times;</span>
+-      </button>
        <h4 class="modal-title">
-@@ -10,7 +10,7 @@
+         {% trans "Install to Android by taking a picture of the image below on your phone." %}
        </h4>
++      <button
++        type="button"
++        class="btn-close"
++        data-bs-dismiss="modal"
++        aria-label="{% trans "Close" %}"
++      ></button>
      </div>
-     <div class="modal-body">
+-    <div class="modal-body">
 -      <p style="text-align:center;">
-+      <p style="text-align:center;">  {# todo B5: inline-style #}
-         <img src="{{ qr_code }}" width=250 alt="{% trans "Download" %}" >
+-        <img src="{{ qr_code }}" width=250 alt="{% trans "Download" %}" >
++    <div class="modal-body text-center">
++      <p>
++        <img src="{{ qr_code }}" width="250" alt="{% trans "Download" %}" />
        </p>
        <p>
-@@ -31,7 +31,7 @@
+         {% blocktrans %}
+           You can also click
+           <strong>
+-            <a class="track-usage-link" href="{{ profile_url }}"
+-               data-category="App Manager" data-action="Initiate Install"
+-               data-label="Mobile Browser Link">here</a>
+-          </strong> in your mobile browser.
++            <a
++              class="track-usage-link"
++              href="{{ profile_url }}"
++              data-category="App Manager"
++              data-action="Initiate Install"
++              data-label="Mobile Browser Link"
++              >here</a
++            >
++          </strong>
++          in your mobile browser.
+         {% endblocktrans %}
+       </p>
+       <p>
+         {% trans "For help installing CommCare, visit " %}
+-        <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices" target="_blank">
++        <a
++          href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices"
++          target="_blank"
++        >
+           {% trans "Install CommCare" %}
+         </a>
        </p>
      </div>
      <div class="modal-footer">
 -      <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</a>
-+      <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Close" %}</a>
++      <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal"
++        >{% trans "Close" %}</a
++      >
      </div>
    </div>
  </div>
