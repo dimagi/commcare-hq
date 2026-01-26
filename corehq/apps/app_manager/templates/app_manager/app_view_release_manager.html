@@ -56,15 +56,15 @@
       {% else %}
         <div id="release-control" class="float-end hidden">
       {% endif %}
-          {% trans "Release Mode" %}
-            <button id="btn-release-locked" class="btn btn-outline-primary">
-              <i class="fa fa-lock fa-fw"></i>
-            </button>
-            <button id="btn-release-unlocked" class="btn btn-outline-primary">
-              <i class="fa fa-unlock fa-fw"></i>
-            </button>
-        </div>
+        {% trans "Release Mode" %}
+        <button id="btn-release-locked" class="btn btn-outline-primary">
+          <i class="fa fa-lock fa-fw"></i>
+        </button>
+        <button id="btn-release-unlocked" class="btn btn-outline-primary">
+          <i class="fa fa-unlock fa-fw"></i>
+        </button>
+      </div>
     {% endif %}
-    {% include "app_manager/partials/releases/bootstrap5/releases.html" %}
+    {% include "app_manager/partials/releases/releases.html" %}
   </div>
 {% endblock app_view_tabs %}
