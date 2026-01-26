@@ -2940,7 +2940,7 @@ class CustomerBillingRecord(BillingRecordBase):
             )
         )
         if subscription_credits or self._subscriptions_in_credit_adjustments(credit_adjustments):
-            credit_adjustments['subscription'].update({
+            credits['subscription'].update({
                 'product': {
                     'amount': quantize_accounting_decimal(subscription_credits)
                 }
