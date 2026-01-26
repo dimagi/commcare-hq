@@ -536,15 +536,15 @@ var _initNewModuleOptionClicks = function () {
         var $form = $('#new-module-form');
 
         if (moduleType === "case") {
-            $('#add-new-module-modal').modal('hide');  /* todo B5: js-modal */
-            $('#define-case-type-modal').modal('show');  /* todo B5: js-modal */
+            Modal.getInstance('#add-new-module-modal').hide();
+            Modal.getOrCreateInstance('#define-case-type-modal').show();
         } else {
             if (moduleType === "survey") {
                 google.track.event("Added Surveys Menu");
                 noopMetrics.track.event("Added Surveys Menu");
             }
             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-            $('#add-new-module-modal').modal('hide');  /* todo B5: js-modal */
+            Modal.getInstance('#add-new-module-modal').hide();
             $form.submit();
         }
     });
@@ -594,7 +594,7 @@ var _initNewModuleOptionClicks = function () {
                 // Reset error states
                 $formGroup.removeClass('has-error');
                 $help.show();
-                $error.hide();
+                $error.addClass('d-none');
                 $createBtn.prop('disabled', false);
 
                 if (!valueNoSpaces) {
@@ -605,7 +605,7 @@ var _initNewModuleOptionClicks = function () {
                 function displayError(errorMsg) {
                     $formGroup.addClass('has-error');
                     $error.html(errorMsg);
-                    $error.show();
+                    $error.removeClass('d-none');
                     $help.hide();
                     $createBtn.prop('disabled', true);
                 }
@@ -642,14 +642,14 @@ var _initNewModuleOptionClicks = function () {
         newCaseTypeHiddenInput.val(value);
 
         $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-        $('#define-case-type-modal').modal('hide');  /* todo B5: js-modal */
+        Modal.getInstance('#define-case-type-modal').hide();
         $form.submit();
     });
 
     // Handle "Go Back" button click
     $('#case-type-go-back-btn').on('click', function () {
-        $('#define-case-type-modal').modal('hide');  /* todo B5: js-modal */
-        $('#add-new-module-modal').modal('show');  /* todo B5: js-modal */
+        Modal.getInstance('#define-case-type-modal').hide();
+        Modal.getOrCreateInstance('#add-new-module-modal').show();
     });
 
     // Clear selection when modal is hidden
