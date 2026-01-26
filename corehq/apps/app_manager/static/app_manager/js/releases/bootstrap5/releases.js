@@ -203,8 +203,8 @@ function savedAppModel(appData, releasesMain) {
         return self.short_odk_url();
     };
 
-    self.download_application_zip = function (multimediaOnly, buildProfile) {
-        releasesMain.download_application_zip(
+    self.downloadApplicationZip = function (multimediaOnly, buildProfile) {
+        releasesMain.downloadApplicationZip(
             self.id(), multimediaOnly, buildProfile, self.download_targeted_version(),
         );
     };
@@ -284,7 +284,7 @@ function releasesMainModel(o) {
         }
     });
 
-    self.download_application_zip = function (appId, multimediaOnly, buildProfile, downloadTargetedVersion) {
+    self.downloadApplicationZip = function (appId, multimediaOnly, buildProfile, downloadTargetedVersion) {
         var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
         var url = self.reverse(urlSlug, appId);
         var params = {};
