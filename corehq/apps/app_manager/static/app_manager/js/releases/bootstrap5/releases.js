@@ -401,7 +401,7 @@ function releasesMainModel(o) {
 
     self.toggleRelease = function (savedApp, event) {
         self.releaseErrorMessage(null);
-        $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
+        $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('d-none');
         var isReleased = savedApp.is_released();
         var savedAppId = savedApp.id();
         if (savedApp.is_released() !== 'pending') {
@@ -419,18 +419,18 @@ function releasesMainModel(o) {
                 success: function (data) {
                     if (data.error) {
                         self.releaseErrorMessage(data.error);
-                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('d-none');
                         savedApp.is_released(isReleased);
                     } else {
                         savedApp.is_released(data.is_released);
                         self.latestReleasedVersion(data.latest_released_version);
-                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('d-none');
                         self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
                     }
                 },
                 error: function () {
                     savedApp.is_released('error');
-                    $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                    $(event.currentTarget).parent().prev('.js-release-waiting').addClass('d-none');
                 },
             });
         }
