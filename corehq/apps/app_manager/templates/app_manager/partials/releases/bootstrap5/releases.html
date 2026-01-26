@@ -6,19 +6,21 @@
 
 
 {% if intro_only %}
-  <div class="helpbubble helpbubble-primary helpbubble-left float-start" style="max-width: 300px;">  {# todo B5: inline-style #}
-    {% blocktrans %}
-      <p class="lead">
-        Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
-      </p>
-    {% endblocktrans %}
-  </div>
-  <div class="helpbubble helpbubble-secondary helpbubble-right float-end" style="max-width: 300px;">  {# todo B5: inline-style #}
-    {% blocktrans %}
-      <p class="lead">
-        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
-      </p>
-    {% endblocktrans %}
+  <div id="new-app-start">
+    <div class="helpbubble helpbubble-primary helpbubble-left float-start">
+      {% blocktrans %}
+        <p class="lead">
+          Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
+        </p>
+      {% endblocktrans %}
+    </div>
+    <div class="helpbubble helpbubble-secondary helpbubble-right float-end">
+      {% blocktrans %}
+        <p class="lead">
+          As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
+        </p>
+      {% endblocktrans %}
+    </div>
   </div>
 {% else %}
 
@@ -65,7 +67,7 @@
         </div>
         {% if enable_update_prompts %}
           <div id="prompt-settings-tab" class="tab-pane">
-            {% crispy prompt_settings_form %}  {# todo B5: crispy #}
+            {% crispy prompt_settings_form %}
             <div data-bind="saveButton: saveButton"></div>
           </div>
         {% endif %}
