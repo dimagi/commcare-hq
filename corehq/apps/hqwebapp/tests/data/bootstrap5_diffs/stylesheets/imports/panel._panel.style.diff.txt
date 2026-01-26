@@ -50,7 +50,7 @@
    }
    .form-group {
      margin-top: 15px;
-@@ -68,21 +68,20 @@
+@@ -68,70 +68,28 @@
  .panel-appmanager-form-danger {
    .form-actions {
      border-top: 0;
@@ -65,51 +65,81 @@
 +  border-radius: 0;
  }
  
- .panel-release {
-   border: none;
+-.panel-release {
+-  border: none;
 -  background-color: lighten(@cc-bg, 3);
-+  background-color: lighten($cc-bg, 3);
++.card-header .release-trash-container .release-remove {
++  color: $text-color;
++  transition: all 500ms ease-in-out;
++  font-size: 15px;
  
-   &.build-latest-release {
+-  &.build-latest-release {
 -    .box-shadow(0 0 10px fade(@cc-brand-mid, 40));
-+    box-shadow: 0 0 10px rgba($cc-brand-mid, 0.4);
++  &:hover {
++    color: $cc-att-neg-mid;
    }
  }
  
-@@ -92,26 +91,26 @@
-   padding: 15px 0 5px;
-   font-size: 12px;
-   font-weight: 400;
+-.panel-release-title {
+-  margin-left: 15px;
+-  margin-right: 50px;
+-  padding: 15px 0 5px;
+-  font-size: 12px;
+-  font-weight: 400;
 -  color: lighten(@cc-text, 40);
-+  color: lighten($cc-text, 40);
-   strong {
+-  strong {
 -    color: @cc-text;
-+    color: $cc-text;
-   }
- }
- .panel-release > .panel-heading {
-   padding: 0;
+-  }
+-}
+-.panel-release > .panel-heading {
+-  padding: 0;
 -  background-color: @cc-bg;
-+  background-color: $cc-bg;
- 
-   .release-trash-container {
-     float: right;
-     padding: 11px 18px 13px;
- 
-     .release-remove {
+-
+-  .release-trash-container {
+-    float: right;
+-    padding: 11px 18px 13px;
+-
+-    .release-remove {
 -      color: @text-color;
 -      .transition(all 500ms ease-in-out);
-+      color: $text-color;
-+      transition: all 500ms ease-in-out;
-       font-size: 15px;
-       display: block;
-       &:hover {
+-      font-size: 15px;
+-      display: block;
+-      &:hover {
 -        color: @cc-att-neg-mid;
-+        color: $cc-att-neg-mid;
-       }
+-      }
+-    }
+-  }
+-  .build-is-released {
+-    float: right;
+-    padding: 13px 0;
+-  }
+-}
+-
+-.panel-release > .panel-footer {
+-  border-top: 0;
+-  background-color: transparent;
+-  padding-top: 0;
+-}
+-
+-.panel-release > .panel-body {
+-  padding: 5px 15px;
++.card-body .comment-container {
+   .prefixed-icon {
+     position: absolute;
+-    left: 30px;
++    left: 10px;
+     padding-right: 10px;
+   }
+   .read-only {
+@@ -144,7 +102,6 @@
+     .read-write textarea {
+       margin-top: 1px;
+       margin-bottom: 1px;
+-      width: 100%;
      }
    }
-@@ -156,18 +155,18 @@
+ }
+@@ -156,18 +113,18 @@
    right: 10px;
    top: 8px;
    > .btn {
