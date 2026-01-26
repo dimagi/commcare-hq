@@ -2,7 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import { Modal, Popover } from "bootstrap5";
+import { Modal, Popover, Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqLayout from "hqwebapp/js/layout";
 import toggles from "hqwebapp/js/toggles";
@@ -349,7 +349,7 @@ var _initMenuItemSorting = function () {
         });
     }
     function promptToSaveOrdering() {
-        $("#reorder_modules_modal").modal('show');  /* todo B5: js-modal */
+        Modal.getOrCreateInstance("#reorder_modules_modal").show();
     }
     function initSortable($sortable) {
         var options = {
@@ -486,7 +486,9 @@ $(function () {
         }
     });
 
-    $('[data-toggle="tooltip"]').tooltip();  /* todo B5: js-tooltip */
+    _.each($('[data-bs-toggle="tooltip"]'), (el) => {
+        Tooltip.getOrCreateInstance(el);
+    });
 
     // https://github.com/twitter/bootstrap/issues/6122
     // this is necessary to get popovers to be able to extend
@@ -514,13 +516,17 @@ $(function () {
     });
 
     // Handling for popup displayed when accessing a deleted app
-    $('#deleted-app-modal').modal({  /* todo B5: js-modal */
-        backdrop: 'static',
-        keyboard: false,
-        show: true,
-    }).on('hide.bs.modal', function () {
-        window.location = initialPageData.reverse('dashboard_default');
-    });
+    const $deletedAppModalEl = $('#deleted-app-modal');
+    if ($deletedAppModalEl.length) {
+        new Modal($deletedAppModalEl, {
+            backdrop: 'static',
+            keyboard: false,
+            show: true,
+        });
+        $deletedAppModalEl.on('hide.bs.modal', function () {
+            window.location = initialPageData.reverse('dashboard_default');
+        });
+    }
 
     // Set up app preview
     previewApp.initPreviewWindow();
