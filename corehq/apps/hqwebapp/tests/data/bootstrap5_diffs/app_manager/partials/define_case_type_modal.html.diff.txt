@@ -1,10 +1,9 @@
 --- 
 +++ 
-@@ -8,28 +8,25 @@
-   id="define-case-type-modal"
+@@ -9,27 +9,24 @@
  >
    <div class="modal-dialog" role="document">
--    <div class="modal-content">
+     <div class="modal-content">
 -      <!-- B5 TODO: Replace inline styles with B5 utility classes -->
 -      <div class="modal-header" style="border-bottom: 1px solid lightgray;">
 -        <button
@@ -15,7 +14,6 @@
 -        >
 -          <span aria-hidden="true">&times;</span>
 -        </button>
-+    <div class="modal-content border-bottom border-secondary">
 +      <div class="modal-header">
          <h4 class="modal-title">
            <i class="fa-solid fa-list-check"></i> {% trans "Case List" %}
