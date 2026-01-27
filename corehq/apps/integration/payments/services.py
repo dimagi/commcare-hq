@@ -230,7 +230,7 @@ def _get_transfer_details(payee_case: CommCareCase, config: MoMoConfig):
             pin=settings.ORANGE_CAMEROON_API_CREDS['channel_pin'],
             amount=case_json.get(PaymentProperties.AMOUNT),
             subscriberMsisdn=case_json.get(PaymentProperties.PHONE_NUMBER),
-            orderId=case_json.get(PaymentProperties.USER_OR_CASE_ID),
+            orderId=payee_case.case_id[:20],
             description=case_json.get(PaymentProperties.PAYER_MESSAGE),
         )
     else:
@@ -439,8 +439,11 @@ def make_orange_cameroon_payment_status_request(reference_id, config):
 
 
 def _get_status_details(status, error_code=None):
+    # Orange Cameroon API returns 'successfull' instead of 'successful'
+    if status == 'successfull':
+        status = PaymentStatus.SUCCESSFUL
     # Just a future proofing measure in case API returns an unexpected status value
-    if status not in (
+    elif status not in (
             PaymentStatus.SUCCESSFUL,
             PaymentStatus.FAILED,
             PaymentStatus.PENDING_PROVIDER,
