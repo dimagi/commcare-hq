@@ -6,9 +6,7 @@ from collections import namedtuple
 from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
-from dimagi.utils.parsing import string_to_boolean
 
-from django.urls import re_path as url
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
@@ -16,13 +14,14 @@ from django.db.models.functions import TruncDate
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotFound,
-    HttpResponseBadRequest,
     JsonResponse,
     QueryDict,
 )
 from django.test import override_settings
+from django.urls import re_path as url
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
@@ -37,6 +36,7 @@ from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource
 
+from dimagi.utils.parsing import string_to_boolean
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -65,18 +65,25 @@ from corehq.apps.api.resources.meta import (
 )
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import (
+    cursor_based_query_for_datasource,
     django_date_filter,
     get_obj,
     make_date_filter,
     parse_str_to_date,
-    cursor_based_query_for_datasource
 )
-from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
+from corehq.apps.api.validation import (
+    WebUserResourceSpec,
+    WebUserValidationException,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.forms import send_password_reset_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
@@ -85,7 +92,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
-from corehq.apps.reports.models import TableauUser, TableauConnectedApp
+from corehq.apps.reports.models import TableauConnectedApp, TableauUser
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
@@ -113,7 +120,9 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
     get_report_config_or_not_found,
 )
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
 from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
     get_user_id_by_username,
@@ -129,12 +138,11 @@ from corehq.apps.users.models import (
 )
 from corehq.apps.users.util import (
     generate_mobile_username,
-    raw_username,
     log_user_change,
+    raw_username,
     verify_modify_user_conditions,
 )
 from corehq.apps.users.validation import validate_profile_required
-from corehq.apps.domain.forms import send_password_reset_email
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -151,7 +159,11 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+from .pagination import (
+    DoesNothingPaginator,
+    NoCountingPaginator,
+    response_for_cursor_based_pagination,
+)
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -267,6 +279,36 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                                                           api_name=self.api_name,
                                                           pk=obj._id))
 
+    @staticmethod
+    def _get_profile_name_for_validation(bundle_data, domain):
+        """
+        Get the profile name for validation from either user_profile or user_data.commcare_profile.
+
+        The API accepts profile assignment via two methods:
+        1. Top-level 'user_profile' field (profile name)
+        2. 'user_data.commcare_profile' field (profile ID)
+
+        This method checks both and returns the profile name for validation.
+        """
+        user_profile = bundle_data.get('user_profile')
+        if user_profile:
+            return user_profile
+
+        # Check user_data.commcare_profile (profile ID)
+        user_data = bundle_data.get('user_data', {})
+        profile_id = user_data.get(PROFILE_SLUG)
+        if profile_id:
+            try:
+                profile = CustomDataFieldsProfile.objects.get(
+                    id=int(profile_id),
+                    definition__domain=domain
+                )
+                return profile.name
+            except (CustomDataFieldsProfile.DoesNotExist, ValueError, TypeError):
+                # Profile doesn't exist or invalid ID - let validation handle the error
+                pass
+        return None
+
     def obj_create(self, bundle, **kwargs):
         try:
             username = generate_mobile_username(bundle.data['username'], kwargs['domain'])
@@ -280,7 +322,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if connect_username and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
         try:
-            validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
+            profile_name = self._get_profile_name_for_validation(bundle.data, kwargs['domain'])
+            validate_profile_required(profile_name, kwargs['domain'])
         except ValidationError as e:
             raise BadRequest(e.message)
         try:

@@ -1,5 +1,5 @@
 import json
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -27,11 +27,11 @@ from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.models import (
     CommCareUser,
     ConnectIDUserLink,
+    Invitation,
+    InvitationHistory,
     UserHistory,
     UserRole,
     WebUser,
-    Invitation,
-    InvitationHistory,
 )
 from corehq.apps.users.role_utils import (
     UserRolePresets,
@@ -589,6 +589,132 @@ class TestCommCareUserResource(APIResourceTest):
         mock_send_password_reset_email.assert_called_once()
         args, kwargs = mock_send_password_reset_email.call_args
         self.assertEqual(args[0], [dj_user])
+
+    def test_create_user_with_required_profile_via_user_data(self):
+        """Test that user can be created with commcare_profile in user_data when profile is required."""
+        # Set profile as required for mobile workers
+        self.definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        self.addCleanup(self._reset_profile_requirement)
+
+        user_json = {
+            "username": "profileuser",
+            "password": "qwer1234",
+            "user_data": {
+                PROFILE_SLUG: str(self.profile.id),
+            }
+        }
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+
+        # Clean up the created user
+        users = CommCareUser.by_domain(self.domain.name)
+        for user in users:
+            if user.username == f"profileuser@{self.domain.name}.commcarehq.org":
+                self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+    def test_create_user_fails_without_profile_when_required(self):
+        """Test that user creation fails when profile is required but not provided."""
+        # Set profile as required for mobile workers
+        self.definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        self.addCleanup(self._reset_profile_requirement)
+
+        user_json = {
+            "username": "noprofileuser",
+            "password": "qwer1234",
+        }
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("profile assignment is required", response.content.decode().lower())
+
+    def test_create_user_with_required_profile_via_user_profile_field(self):
+        """Test that user can be created with user_profile field when profile is required."""
+        # Set profile as required for mobile workers
+        self.definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        self.addCleanup(self._reset_profile_requirement)
+
+        user_json = {
+            "username": "profileuser2",
+            "password": "qwer1234",
+            "user_profile": self.profile.name,
+        }
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+
+        # Clean up the created user
+        users = CommCareUser.by_domain(self.domain.name)
+        for user in users:
+            if user.username == f"profileuser2@{self.domain.name}.commcarehq.org":
+                self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+    def _reset_profile_requirement(self):
+        """Reset profile requirement to default (not required)."""
+        self.definition.profile_required_for_user_type = []
+        self.definition.save()
+
+    def test_get_profile_name_for_validation_with_user_data(self):
+        """Test _get_profile_name_for_validation extracts profile from user_data."""
+        bundle_data = {
+            'user_data': {
+                PROFILE_SLUG: str(self.profile.id),
+            }
+        }
+        result = v0_5.CommCareUserResource._get_profile_name_for_validation(
+            bundle_data, self.domain.name
+        )
+        self.assertEqual(result, self.profile.name)
+
+    def test_get_profile_name_for_validation_with_user_profile(self):
+        """Test _get_profile_name_for_validation uses user_profile field."""
+        bundle_data = {
+            'user_profile': 'some_profile_name',
+        }
+        result = v0_5.CommCareUserResource._get_profile_name_for_validation(
+            bundle_data, self.domain.name
+        )
+        self.assertEqual(result, 'some_profile_name')
+
+    def test_get_profile_name_for_validation_prefers_user_profile(self):
+        """Test _get_profile_name_for_validation prefers user_profile over user_data."""
+        bundle_data = {
+            'user_profile': 'preferred_profile',
+            'user_data': {
+                PROFILE_SLUG: str(self.profile.id),
+            }
+        }
+        result = v0_5.CommCareUserResource._get_profile_name_for_validation(
+            bundle_data, self.domain.name
+        )
+        self.assertEqual(result, 'preferred_profile')
+
+    def test_get_profile_name_for_validation_returns_none_for_invalid_id(self):
+        """Test _get_profile_name_for_validation returns None for invalid profile ID."""
+        bundle_data = {
+            'user_data': {
+                PROFILE_SLUG: '99999',
+            }
+        }
+        result = v0_5.CommCareUserResource._get_profile_name_for_validation(
+            bundle_data, self.domain.name
+        )
+        self.assertIsNone(result)
 
 
 @es_test(requires=[user_adapter])
