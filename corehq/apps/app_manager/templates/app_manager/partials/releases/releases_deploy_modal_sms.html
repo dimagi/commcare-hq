@@ -45,7 +45,7 @@
         <textarea
           class="bitly form-control vertical-resize"
           name="message"
-          data-bind="text: `${gettext('Update to CommCare:')} ${sms_odk_url()} (&quot;${short_name()}&quot; v. ${version()})`"
+          data-bind="text: `{% trans 'Update to CommCare:' %} ${sms_odk_url()} (&quot;${short_name()}&quot; v. ${version()})`"
         ></textarea>
       </div>
       <div class="alert alert-warning text-center">
