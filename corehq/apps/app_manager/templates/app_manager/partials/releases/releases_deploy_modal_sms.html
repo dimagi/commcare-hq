@@ -45,12 +45,12 @@
         <textarea
           class="bitly form-control vertical-resize"
           name="message"
-          data-bind="text: 'Update to CommCare: ' + sms_odk_url() + ' (&quot;' + short_name() + '&quot; v. ' + version() + ')'"
+          data-bind="text: `${gettext('Update to CommCare:')} ${sms_odk_url()} (&quot;${short_name()}&quot; v. ${version()})`"
         ></textarea>
       </div>
       <div class="alert alert-warning text-center">
         <i class="fa-solid fa-triangle-exclamation"></i>
-        <strong>{% trans "SMS charges will incur." %}</strong>
+        <strong>{% trans "SMS charges will be incurred." %}</strong>
       </div>
       <input
         type="submit"
