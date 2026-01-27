@@ -432,7 +432,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
-    if should_edit("custom_icon_form"):
+    if should_edit("custom_icon_type"):
         handle_custom_icon_edits(request, form, lang)
 
     if should_edit('session_endpoint_id'):
@@ -812,7 +812,7 @@ def get_form_view_context(
             {'test': assertion.test, 'text': assertion.text.get(current_lang)}
             for assertion in form.custom_assertions
         ],
-        'form_icon': None,
+        'form_custom_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
@@ -823,8 +823,8 @@ def get_form_view_context(
         }
     }
 
-    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
-        context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
+    if domain_has_privilege(domain, privileges.CUSTOM_ICON_BADGES):
+        context['form_custom_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)

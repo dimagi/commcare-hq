@@ -6,7 +6,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import assertProperties from "hqwebapp/js/assert_properties";
 import models from "app_manager/js/summary/models";
 import "app_manager/js/menu";  // enable lang switcher and "Updates to publish" banner
-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // popover
+import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // popover
 import "hqwebapp/js/components/search_box";
 
 var caseTypeModel = function (caseType) {

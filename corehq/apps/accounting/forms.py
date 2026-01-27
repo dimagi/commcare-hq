@@ -59,7 +59,7 @@ from corehq.apps.accounting.models import (
     FundingSource,
     Invoice,
     InvoicingPlan,
-    LastPayment,
+    PaymentType,
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlan,
@@ -67,11 +67,16 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
     SoftwareProductRate,
+    StripePaymentMethod,
     Subscription,
     SubscriptionType,
     WireBillingRecord,
 )
-from corehq.apps.accounting.tasks import send_subscription_reminder_emails
+from corehq.apps.accounting.tasks import (
+    send_renewal_reminder_emails,
+    send_subscription_ending_emails,
+    send_subscription_reminder_emails_dimagi_contact,
+)
 from corehq.apps.accounting.utils import (
     get_account_name_from_default_name,
     get_money_str,
@@ -147,7 +152,7 @@ class BillingAccountBasicForm(forms.Form):
     )
     last_payment_method = forms.ChoiceField(
         label=gettext_lazy("Last Payment Method"),
-        choices=LastPayment.CHOICES
+        choices=PaymentType.CHOICES
     )
     pre_or_post_pay = forms.ChoiceField(
         label=gettext_lazy("Prepay or Postpay"),
@@ -166,6 +171,12 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=False,
         help_text="Include Web Users in invoice (requires a subscription with Web User Feature)"
+    )
+    require_auto_pay = forms.BooleanField(
+        label="Require Autopay",
+        required=False,
+        initial=False,
+        help_text="Require this account to have an autopay card on file"
     )
 
     def __init__(self, account, *args, **kwargs):
@@ -189,12 +200,13 @@ class BillingAccountBasicForm(forms.Form):
                 'pre_or_post_pay': account.pre_or_post_pay,
                 'block_hubspot_data_for_all_users': account.block_hubspot_data_for_all_users,
                 'bill_web_user': account.bill_web_user,
+                'require_auto_pay': account.require_auto_pay,
             }
         else:
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
                 'entry_point': EntryPoint.CONTRACTED,
-                'last_payment_method': LastPayment.NONE,
+                'last_payment_method': PaymentType.NONE,
                 'pre_or_post_pay': PreOrPostPay.POSTPAY,
                 'invoicing_plan': InvoicingPlan.MONTHLY
             }
@@ -274,6 +286,10 @@ class BillingAccountBasicForm(forms.Form):
                 hqcrispy.B3MultiField(
                     "Bill Web Users",
                     hqcrispy.MultiInlineField('bill_web_user'),
+                ),
+                hqcrispy.B3MultiField(
+                    "Require Auto Pay",
+                    hqcrispy.MultiInlineField('require_auto_pay'),
                 ),
             ])
         self.helper.layout = crispy.Layout(
@@ -416,6 +432,7 @@ class BillingAccountBasicForm(forms.Form):
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
         account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
         account.bill_web_user = self.cleaned_data['bill_web_user']
+        account.require_auto_pay = self.cleaned_data['require_auto_pay']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -1136,8 +1153,9 @@ class RemoveAutopayForm(forms.Form):
         )
 
     def remove_autopay_user_from_account(self):
-        self.account.auto_pay_user = None
-        self.account.save()
+        payment_method = StripePaymentMethod.objects.get(web_user=self.account.auto_pay_user)
+        autopay_card = payment_method.get_autopay_card(self.account)
+        payment_method.unset_autopay(autopay_card, self.account)
 
 
 class CancelForm(forms.Form):
@@ -2318,13 +2336,16 @@ class TriggerBookkeeperEmailForm(forms.Form):
 
 
 class TestReminderEmailFrom(forms.Form):
-    days = forms.ChoiceField(
-        label="Days Until Subscription Ends",
+    reminder_type = forms.ChoiceField(
+        label="Type of Reminder to Trigger",
         choices=(
-            (1, 1),
-            (10, 10),
-            (30, 30),
+            ('renewal_reminder', _("Renewal Reminder")),
+            ('subscription_ending', _("Subscription Ending")),
+            ('dimagi_contact', _("Dimagi Contact Subscription Reminder")),
         )
+    )
+    days = forms.IntegerField(
+        label="Days Until Subscription Ends"
     )
 
     def __init__(self, *args, **kwargs):
@@ -2338,6 +2359,7 @@ class TestReminderEmailFrom(forms.Form):
             crispy.Fieldset(
                 "Test Subscription Reminder Emails",
                 'days',
+                'reminder_type',
             ),
             crispy.Div(
                 crispy.HTML(
@@ -2357,7 +2379,14 @@ class TestReminderEmailFrom(forms.Form):
         )
 
     def send_emails(self):
-        send_subscription_reminder_emails(int(self.cleaned_data['days']))
+        reminder_type = self.cleaned_data['reminder_type']
+        days = int(self.cleaned_data['days'])
+        if reminder_type == 'renewal_reminder':
+            send_renewal_reminder_emails(days)
+        elif reminder_type == 'subscription_ending':
+            send_subscription_ending_emails(days)
+        elif reminder_type == 'dimagi_contact':
+            send_subscription_reminder_emails_dimagi_contact(days)
 
 
 class AdjustBalanceForm(forms.Form):
@@ -2369,7 +2398,7 @@ class AdjustBalanceForm(forms.Form):
         required=False,
     )
 
-    method = forms.ChoiceField(
+    adjustment_reason = forms.ChoiceField(
         choices=(
             (CreditAdjustmentReason.MANUAL, "Register back office payment"),
             (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
@@ -2378,6 +2407,10 @@ class AdjustBalanceForm(forms.Form):
                 "Forgive amount with a friendly write-off"
             ),
         )
+    )
+
+    payment_type = forms.ChoiceField(
+        choices=[(value, label) for value, label in PaymentType.CHOICES if value != PaymentType.NONE],
     )
 
     note = forms.CharField(
@@ -2427,7 +2460,8 @@ class AdjustBalanceForm(forms.Form):
                         </div>
                     </div>
                 '''),
-                crispy.Field('method'),
+                crispy.Field('adjustment_reason'),
+                crispy.Field('payment_type'),
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
                 'adjust',
@@ -2464,16 +2498,17 @@ class AdjustBalanceForm(forms.Form):
 
     @transaction.atomic
     def adjust_balance(self, web_user=None):
-        method = self.cleaned_data['method']
+        reason = self.cleaned_data['adjustment_reason']
+        payment_type = self.cleaned_data['payment_type']
         kwargs = {
-            'account': (self.invoice.account if self.invoice.is_customer_invoice
-                        else self.invoice.subscription.account),
+            'account': self.invoice.account,
             'note': self.cleaned_data['note'],
-            'reason': method,
+            'reason': reason,
+            'payment_type': payment_type,
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
-        if method in [
+        if reason in [
             CreditAdjustmentReason.MANUAL,
             CreditAdjustmentReason.FRIENDLY_WRITE_OFF,
         ]:
@@ -2494,7 +2529,7 @@ class AdjustBalanceForm(forms.Form):
                 permit_inactive=True,
                 **kwargs
             )
-        elif method == CreditAdjustmentReason.TRANSFER:
+        elif reason == CreditAdjustmentReason.TRANSFER:
             if self.invoice.is_customer_invoice:
                 subscription_invoice = None
                 customer_invoice = self.invoice
@@ -2522,6 +2557,9 @@ class AdjustBalanceForm(forms.Form):
 
         self.invoice.update_balance()
         self.invoice.save()
+
+        self.invoice.account.last_payment_method = payment_type
+        self.invoice.account.save()
 
 
 class InvoiceInfoForm(forms.Form):
@@ -2847,6 +2885,36 @@ class TriggerAutopaymentsForm(forms.Form):
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Autopayments for Project",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+
+class TriggerAutoRenewalForm(forms.Form):
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Auto-Renewal',
+                crispy.Field(
+                    'domain',
+                    css_class="input-xxlarge accounting-async-select2",
+                    placeholder="Search for Project"
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Auto-Renewal for Project",
                     css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),

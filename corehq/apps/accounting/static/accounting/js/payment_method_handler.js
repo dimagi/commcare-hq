@@ -110,6 +110,12 @@ var paymentMethodHandler = function (formId, opts) {
 
     self = billingHandler.apply(self, arguments);
     self.paymentMethod = ko.observable(self.CREDIT_CARD);
+    self.autopayCard = ko.observable();
+    if (opts.autopayCard) {
+        var autopayStripeCard = stripeCardModel();
+        autopayStripeCard.loadSavedData(opts.autopayCard);
+        self.autopayCard(autopayStripeCard);
+    }
 
     self.submitURL = self.submitURL || ko.computed(function () {
         var url = opts.credit_card_url;
@@ -121,33 +127,29 @@ var paymentMethodHandler = function (formId, opts) {
 
     // Stripe can't attach the card UI to the page until its container exists.
     // Its container is removed and re-added from the DOM depending on the user's
-    // selections, so mount and unmount it as needed. This is called in a number
+    // selections, so create stripe card elements as needed. This is called in a number
     // of places because several different observables affect the visiblity of the card UI.
-    self.cardElementPromise = getCardElementPromise(initialPageData.get("stripe_public_key"));
-    self.cardElementMounted = false;
-    self.showOrHideStripeUI = function (show) {
-        self.cardElementPromise.then(function (cardElement) {
-            const stripeSelector = '#' + formId + ' .stripe-card-container';
-            if (show) {
-                if ($(stripeSelector).length && !self.cardElementMounted) {
-                    cardElement.mount(stripeSelector);
-                    self.cardElementMounted = true;
-                }
-            } else {
-                cardElement.unmount();
-                self.cardElementMounted = false;
-            }
-        });
+    self.stripeKey = initialPageData.get("stripe_public_key");
+    self.resetStripeCardUI = (shouldCreateElement) => {
+        const stripeSelector = '#' + formId + ' .stripe-card-container';
+        if (shouldCreateElement && $(stripeSelector).length) {
+            getCardElementPromise(self.stripeKey).then(cardElement => {
+                cardElement.mount(stripeSelector);
+            });
+        }
     };
 
     self.savedCards = ko.observableArray();
     self.savedCards.subscribe(function (newValue) {
-        _.delay(function () { self.showOrHideStripeUI(newValue); });
+        _.delay(function () { self.resetStripeCardUI(newValue); });
     });
 
     self.selectedSavedCard = ko.observable();
     self.selectedCardType = ko.observable();
 
+    self.isAutopayCard = ko.computed(function () {
+        return self.selectedCardType() === 'autopay';
+    });
     self.isSavedCard = ko.computed(function () {
         return self.selectedCardType() === 'saved';
     });
@@ -155,7 +157,7 @@ var paymentMethodHandler = function (formId, opts) {
         return self.selectedCardType() === 'new';
     });
     self.isNewCard.subscribe(function (newValue) {
-        _.delay(function () { self.showOrHideStripeUI(newValue); });
+        _.delay(function () { self.resetStripeCardUI(newValue); });
     });
 
     self.newCard = ko.observable(stripeCardModel());
@@ -165,6 +167,8 @@ var paymentMethodHandler = function (formId, opts) {
     self.selectedCard = ko.computed(function () {
         if (self.isSavedCard()) {
             return self.selectedSavedCard();
+        } else if (self.isAutopayCard()) {
+            return self.autopayCard();
         }
         return self.newCard();
     });
@@ -180,13 +184,22 @@ var paymentMethodHandler = function (formId, opts) {
     }
 
     self.mustCreateNewCard = ko.computed(function () {
-        return self.paymentIsNotComplete() && self.savedCards().length === 0;
+        return self.paymentIsNotComplete() && self.savedCards().length === 0 && !self.autopayCard();
     });
+
     self.mustCreateNewCard.subscribe(function (newValue) {
-        _.delay(function () { self.showOrHideStripeUI(newValue); });
+        _.delay(function () { self.resetStripeCardUI(newValue); });
     });
+
     self.canSelectCard = ko.computed(function () {
+        return self.paymentIsNotComplete() && (self.savedCards().length > 0 || self.autopayCard());
+    });
+
+    self.canSelectSavedCard = ko.computed(function () {
         return self.paymentIsNotComplete() && self.savedCards().length > 0;
+    });
+    self.canSelectAutopayCard = ko.computed(function () {
+        return self.paymentIsNotComplete() && !!self.autopayCard();
     });
 
     self.isSubmitDisabled = ko.computed(function () {
@@ -203,7 +216,9 @@ var paymentMethodHandler = function (formId, opts) {
             stripeCard.loadSavedData(card);
             self.savedCards.push(stripeCard);
         });
-        if (self.savedCards().length > 0) {
+        if (self.autopayCard()) {
+            self.selectedCardType('autopay');
+        } else if (self.savedCards().length > 0) {
             self.selectedCardType('saved');
         }
     };
@@ -212,11 +227,7 @@ var paymentMethodHandler = function (formId, opts) {
         self.paymentIsComplete(false);
         self.serverErrorMsg('');
         self.newCard().reset();
-        if (self.cardElementMounted) {
-            self.cardElementPromise.then(function (cardElement) {
-                cardElement.clear();
-            });
-        }
+        self.resetStripeCardUI(true);
     };
 
     self.processPayment = function () {
@@ -263,7 +274,7 @@ var paymentMethodHandler = function (formId, opts) {
     };
 
     // Initial showing (or not) of Stripe UI
-    self.showOrHideStripeUI(self.mustCreateNewCard());
+    self.resetStripeCardUI(self.mustCreateNewCard());
 
     return self;
 };
@@ -492,6 +503,7 @@ var stripeCardModel = function () {
     self.expYear = ko.observable();
     self.errorMsg = ko.observable();
     self.token = ko.observable();
+    self.owner = ko.observable();
     self.isTestMode = ko.observable(false);
     self.isProcessing = ko.observable(false);
     self.newSavedCard = ko.observable(false);
@@ -531,6 +543,7 @@ var stripeCardModel = function () {
         self.expYear(data.exp_year);
         self.token(data.id);
         self.isSaved(true);
+        self.owner(data.owner);
     };
 
     self.process = function (callbackOnSuccess) {

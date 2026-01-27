@@ -246,6 +246,18 @@ class Command(BaseCommand):
              name='Two Stage Mobile Worker Account Creation',
              description='Allows two-stage user provisioning '
                          '(users confirm and set their own passwords via email)'),
+        Role(slug=privileges.DATA_DICT_TYPES,
+             name='Data Dictionary case properties have data types',
+             description='Data Dictionary case properties have data types.'),
+        Role(slug=privileges.GEOJSON_EXPORT,
+             name='Case Export supports the GeoJSON data format',
+             description='Case Export supports exporting geolocated data in '
+                         'GeoJSON format.'),
+        Role(slug=privileges.CUSTOM_ICON_BADGES, name='Custom Icon Badges',
+             description='Add text or xpath based custom icon badges to menus and forms'),
+        Role(slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
+             name='Location columns in user last activity report',
+             description="Add primary location's hierarchy to excel export in User Last Activity Report"),
     ]
 
     BOOTSTRAP_PLANS = [

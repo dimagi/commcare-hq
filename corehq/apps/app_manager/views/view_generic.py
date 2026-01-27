@@ -7,6 +7,7 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -44,6 +45,7 @@ from corehq.apps.hqmedia.views import (
     ProcessAudioFileUploadView,
     ProcessImageFileUploadView,
 )
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 from corehq.apps.linked_domain.dbaccessors import (
     get_accessible_downstream_domains,
     get_upstream_domain_link,
@@ -115,7 +117,7 @@ def view_generic(
         })
 
     if form:
-        template = "app_manager/form_view.html"
+        template = "app_manager/bootstrap3/form_view.html"
         context.update(get_form_view_context(
             request,
             domain,
@@ -131,8 +133,10 @@ def view_generic(
         context.update(get_app_view_context(request, app))
 
         if release_manager:
-            template = 'app_manager/app_view_release_manager.html'
+            template = 'app_manager/bootstrap3/app_view_release_manager.html'
             context.update(get_releases_context(request, domain, app_id))
+        else:
+            set_bootstrap_version5()
 
         context['is_app_settings_page'] = not release_manager
 
@@ -239,7 +243,7 @@ def _handle_bad_states(
     if app.application_version == APP_V1:
         _assert = soft_assert()
         _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, "app_manager/no_longer_supported.html", {
+        return render(request, "app_manager/bootstrap3/no_longer_supported.html", {
             'domain': domain,
             'app': app,
         })
@@ -297,13 +301,13 @@ def _get_multimedia_context(
         }
     })
 
-    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
+    if domain_has_privilege(domain, privileges.CUSTOM_ICON_BADGES):
         if module.custom_icon:
-            multimedia_context['module_icon'] = module.custom_icon
+            multimedia_context['module_custom_icon'] = module.custom_icon
         else:
-            multimedia_context['module_icon'] = CustomIcon()
+            multimedia_context['module_custom_icon'] = CustomIcon()
     else:
-        multimedia_context['module_icon'] = None
+        multimedia_context['module_custom_icon'] = None
 
     multimedia_context['nav_menu_media_specifics'] = _get_specific_media(
         username,

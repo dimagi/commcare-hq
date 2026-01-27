@@ -5,6 +5,7 @@
 
 {% block page_content %}
   {% initial_page_data "stripe_public_key" stripe_public_key %}
+  {% initial_page_data "autopay_card" autopay_card|JSON %}
   {% initial_page_data "payment_error_messages" payment_error_messages %}
   {% initial_page_data "wire_email" user_email %}
   {% initial_page_data "plan" plan %}
@@ -179,6 +180,13 @@
               {% endif %}
               (<a href="{{ manage_autopay_url }}#payment-methods">Manage</a>)
             </p>
+            {% if autopay_date %}
+              <p>
+                {% blocktrans %}
+                  Payment is scheduled for {{ autopay_date }}.
+                {% endblocktrans %}
+              </p>
+            {% endif %}
           </div>
         </div>
         {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}

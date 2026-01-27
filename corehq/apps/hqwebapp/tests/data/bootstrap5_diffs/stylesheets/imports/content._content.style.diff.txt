@@ -1,0 +1,277 @@
+--- 
++++ 
+@@ -1,26 +1,26 @@
+ .appmanager-main-container {
+   display: block;
+-  margin-left: @app-manager-sidebar-width;
+-  background-color: @cc-brand-low;
+-  position:relative;
++  padding-left: 0;
++  background-color: $cc-brand-low;
++  position: relative;
+   box-sizing: border-box;
+ 
+-  width: -webkit-calc(~"100% - " @app-manager-sidebar-width);
+-  width: -moz-calc(~"100% - " @app-manager-sidebar-width);
+-  width: calc(~"100% - " @app-manager-sidebar-width);
++  width: -webkit-calc(100% - $app-manager-sidebar-width);
++  width: -moz-calc(100% - $app-manager-sidebar-width);
++  width: calc(100% - $app-manager-sidebar-width);
+ 
+   min-height: 100%;
+ 
+-  .transition(all 1s);
+-  .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
++  transition: all 1s;
++  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2);
+ 
+   &.formdesigner-content-wrapper {
+     padding: 0;
+   }
+   #formdesigner {
+-    background-color: @cc-brand-low !important;
++    background-color: $cc-brand-low !important;
+     opacity: 100;
+-    .transition(opacity 1s);
++    transition: opacity 1s;
+ 
+     &.loading {
+       opacity: 0;
+@@ -45,17 +45,17 @@
+   left: 50%;
+   margin-left: -112px;
+ 
+-  background-image: url('img/loading_flower.png');
++  background-image: url("img/loading_flower.png");
+   background-repeat: no-repeat;
+   background-position: 0 0;
+   background-size: 100% auto;
+ 
+   &:before {
+     display: block;
+-    content: '';
++    content: "";
+     width: 100%;
+     height: 100%;
+-    background-image: url('img/loading_spiral.png');
++    background-image: url("img/loading_spiral.png");
+     background-size: 100% auto;
+     background-repeat: no-repeat;
+     background-position: 0 0;
+@@ -63,19 +63,28 @@
+     -webkit-animation: spin 4s infinite linear;
+   }
+ 
+-  @media(max-width: @screen-sm-max) {
++  @include media-breakpoint-down(md) {
++    // todo B5: verify this breakpoint looks correct
+     display: none;
+   }
+ }
+ 
+ @keyframes spin {
+-  0%  {-webkit-transform: rotate(0deg);}
+-  100% {-webkit-transform: rotate(360deg);}
++  0% {
++    -webkit-transform: rotate(0deg);
++  }
++  100% {
++    -webkit-transform: rotate(360deg);
++  }
+ }
+ 
+ @-webkit-keyframes spin {
+-  0%  {-webkit-transform: rotate(0deg);}
+-  100% {-webkit-transform: rotate(360deg);}
++  0% {
++    -webkit-transform: rotate(0deg);
++  }
++  100% {
++    -webkit-transform: rotate(360deg);
++  }
+ }
+ 
+ .appmanager-content {
+@@ -84,13 +93,13 @@
+ }
+ 
+ #js-appmanager-body.appmanager-settings-content {
+-  .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
++  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2);
+   background-color: white;
+   padding-top: 9px;
+   padding-left: 20px;
+-  padding-right: @preview-toggler-width + 20px;
++  padding-right: $preview-toggler-width + 20px;
+   padding-bottom: 60px;
+-  min-height:  100%;
++  min-height: 100%;
+   position: absolute;
+   width: 100%;
+   top: 0;
+@@ -105,16 +114,16 @@
+ }
+ 
+ .appmanager-loading {
+-  @dim: 4rem;
++  $dim: 2.5rem;
+   display: block;
+   position: absolute;
+-  font-size: @dim;
+-  width: @dim;
+-  height: @dim;
+-  left: calc(~"50% - " @dim / 2);
+-  left: -moz-calc(~"50% - " @dim / 2);
+-  left: -webkit-calc(~"50% - " @dim / 2);
+-  color: fadeOut(@cc-text, 40);
++  font-size: $dim;
++  width: $dim;
++  height: $dim;
++  left: calc(50% - $dim / 2);
++  left: -moz-calc(50% - $dim / 2);
++  left: -webkit-calc(50% - $dim / 2);
++  color: rgba($cc-text, 0.6);
+ }
+ 
+ .appmanager-loading-nav {
+@@ -125,10 +134,9 @@
+   margin-top: 2rem;
+ }
+ 
+-
+ .ko-inline-edit {
+   .read-only .prefixed-icon i {
+-    color: @cc-text;
++    color: $cc-text;
+   }
+   .read-only .text.app-title {
+     margin-left: 2px;
+@@ -136,7 +144,7 @@
+   .inline-edit-icon {
+     vertical-align: top;
+     i {
+-      .transition(color 1s);
++      transition: color 1s;
+     }
+   }
+   .inline-edit-icon.h3 {
+@@ -144,23 +152,21 @@
+   }
+   &:hover {
+     .read-only .inline-edit-icon i {
+-      color: @cc-brand-mid;
++      color: $cc-brand-mid;
+     }
+   }
+ }
+ 
+ .ko-inline-edit {
+   .read-write.h3 {
+-     margin-top: 7.5px;
+-     margin-bottom: 2px;
+-  }
+-}
+-
+-.appmanager-edit-title {
+-  margin-right: 400px;
+-}
++    margin-top: 7.5px;
++    margin-bottom: 2px;
++  }
++}
++
++.appmanager-edit-title,
+ .appmanager-edit-app-title {
+-  margin-right: 400px;
++  margin-right: calc($app-page-actions-width + 2rem);
+ }
+ 
+ .appmanager-edit-title .ko-inline-edit {
+@@ -174,20 +180,20 @@
+   }
+   .read-write {
+     padding-top: 10px;
+-    padding-bottom: 10px;
+-  }
+-  .read-write.h3 input{
+-    margin-left: 0;
+-    width: 100%
+-  }
+-  .read-write .form-group:first-child {
+-    min-width: 80%;
++  }
++  .read-write.h3 {
++    min-width: unset;
++
++    .input-group {
++      margin-top: 3px;
++      width: 100%;
++    }
+   }
+ }
+ .appmanager-edit-app-title .ko-inline-edit {
+   .read-only {
+     margin-left: -12px;
+-    margin-top: 12px;
++    margin-top: 13px;
+   }
+ }
+ .appmanager-edit-description .ko-inline-edit {
+@@ -197,6 +203,7 @@
+ .appmanager-page-actions {
+   float: right;
+   margin-top: 20px;
++  max-width: $app-page-actions-width;
+ }
+ 
+ .form-group .upgrade-message {
+@@ -211,17 +218,18 @@
+ }
+ 
+ .ko-inline-edit .read-only .btn-langcode-preprocessed {
+-  background-color: darken(@cc-bg, 10);
++  background-color: darken($cc-bg, 10);
+   border: none;
+-  color: @cc-text;
++  color: $cc-text;
+   vertical-align: top;
+   margin-top: 6px;
+ }
+ 
+ .appmanager-content-row {
+-  background-color: @cc-brand-low;
+-
+-  @media(max-width: @screen-sm-max) {
++  background-color: $cc-brand-low;
++
++  @include media-breakpoint-down(md) {
++    // todo B5: verify this breakpoint looks correct
+     overflow: hidden;
+   }
+ }
+@@ -245,12 +253,11 @@
+ }
+ 
+ .btn-preview {
+-  @btn-preview-width: 30px;
+-  width: @btn-preview-width;
+-  height: @btn-preview-width;
++  $btn-preview-width: 30px;
++  width: $btn-preview-width;
++  height: $btn-preview-width;
+   padding: 4px 10px;
+-  .border-top-radius(@btn-preview-width/2);
+-  .border-bottom-radius(@btn-preview-width/2);
++  border-radius: $btn-preview-width/2;
+ }
+ 
+ .appmanager-content-single-page {
+@@ -259,7 +266,7 @@
+ }
+ 
+ .auto-release-notes {
+-  line-height:  20px;
++  line-height: 20px;
+   padding-top: 10px;
+ }
+ 

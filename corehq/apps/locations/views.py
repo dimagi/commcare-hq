@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 
+from functools import wraps
 from memoized import memoized
 
 from dimagi.utils.couch import get_redis_lock, release_lock
@@ -90,6 +91,7 @@ def default(request, domain):
 
 def lock_locations(func):
     # Decorate a post/delete method of a view to ensure concurrent locations edits don't happen.
+    @wraps(func)
     def func_wrapper(request, *args, **kwargs):
         key = "import_locations_async-{domain}".format(domain=request.domain)
         lock = get_redis_lock(

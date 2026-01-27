@@ -13,7 +13,9 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.const import CUSTOM_ICON_TYPE_TEXT, CUSTOM_ICON_TYPE_XPATH
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
@@ -289,29 +291,33 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
 
 def handle_custom_icon_edits(request, form_or_module, lang):
-    if toggles.CUSTOM_ICON_BADGES.enabled(request.domain):
-        icon_text_body = request.POST.get("custom_icon_text_body")
-        icon_xpath = request.POST.get("custom_icon_xpath")
-        icon_form = request.POST.get("custom_icon_form")
+    if domain_has_privilege(request.domain, privileges.CUSTOM_ICON_BADGES):
+        icon_text_body = None
+        icon_xpath = None
+        custom_icon_type = request.POST.get("custom_icon_type")
+
+        if custom_icon_type == CUSTOM_ICON_TYPE_TEXT:
+            icon_text_body = request.POST.get("custom_icon_text_body")
+        elif custom_icon_type == CUSTOM_ICON_TYPE_XPATH:
+            icon_xpath = request.POST.get("custom_icon_xpath")
 
         # if there is a request to set custom icon
-        if icon_form:
-            # validate that only of either text or xpath should be present
-            if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
-                raise AppMisconfigurationError(_("Please enter either text body or xpath for custom icon"))
-
-            # a form should have just one custom icon for now
+        if icon_text_body or icon_xpath:
+            # a form should have just one custom icon
             # so this just adds a new one with params or replaces the existing one with new params
-            form_custom_icon = (form_or_module.custom_icon if form_or_module.custom_icon else CustomIcon())
-            form_custom_icon.form = icon_form
-            form_custom_icon.text[lang] = icon_text_body
-            form_custom_icon.xpath = icon_xpath
+            new_custom_icon = (form_or_module.custom_icon if form_or_module.custom_icon else CustomIcon())
+            if icon_xpath:
+                new_custom_icon.text = {}
+                new_custom_icon.xpath = icon_xpath
+            elif icon_text_body:
+                new_custom_icon.xpath = None
+                new_custom_icon.text[lang] = icon_text_body
 
-            form_or_module.custom_icons = [form_custom_icon]
-
-        # if there is a request to unset custom icon
-        if not icon_form and form_or_module.custom_icon:
-            form_or_module.custom_icons = []
+            form_or_module.custom_icons = [new_custom_icon]
+        else:
+            # if there is a request to unset custom icon
+            if form_or_module.custom_icon:
+                form_or_module.custom_icons = []
 
 
 def update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email):

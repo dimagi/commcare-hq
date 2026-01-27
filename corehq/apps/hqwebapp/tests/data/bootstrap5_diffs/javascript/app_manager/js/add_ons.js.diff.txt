@@ -1,0 +1,56 @@
+--- 
++++ 
+@@ -1,7 +1,8 @@
+ import $ from "jquery";
+ import ko from "knockout";
++import { Collapse } from "bootstrap5";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ 
+ function EditAddOns(addOns, layout, saveUrl) {
+     const self = this;
+@@ -11,19 +12,8 @@
+         self.addOns[slug] = ko.observable(enabled);
+     });
+ 
+-    self.getStorageKey = function (section) {
+-        return `app-manager-collapse-add-ons-${section}`;
+-    };
+-
+-    self.shouldCollapse = function (section, defaultCollapse) {
+-        const key = self.getStorageKey(section);
+-        const stored = localStorage.getItem(key);
+-        return stored !== null ? stored === 'true' : defaultCollapse;
+-    };
+-
+     self.sections = layout.map(s => ({
+         ...s,
+-        collapse: ko.observable(self.shouldCollapse(s.slug, s.collapse)),
+     }));
+ 
+     self.saveButton = hqMain.initSaveButton({
+@@ -52,19 +42,15 @@
+         });
+     });
+ 
+-    self.toggleSection = function (section) {
+-        const newCollapseState = !section.collapse();
+-        section.collapse(newCollapseState);
+-        const key = self.getStorageKey(section.slug);
+-        localStorage.setItem(key, newCollapseState.toString());
+-    };
+-
+     self.enableAll = function () {
+         Object.entries(self.addOns).forEach(([_slug, observable]) => {
+             observable(true);
+         });
+         self.sections.forEach((section) => {
+-            section.collapse(false);
++            const $collapseEl = $('#collapse-' + section.slug);
++            if ($collapseEl.length) {
++                Collapse.getOrCreateInstance($collapseEl).show();
++            }
+         });
+     };
+ }

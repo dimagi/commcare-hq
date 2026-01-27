@@ -1,0 +1,85 @@
+<div
+  id="kv-list-container"
+  hx-swap="outerHTML"
+>
+  <div class="d-flex flex-column gap-2 mb-3">
+    {% for pair in pairs %}
+      <div class="d-flex align-items-center">
+        <div class="flex-fill me-2">
+          <input
+            type="text"
+            class="form-control"
+            name="key"
+            value="{{ pair.key }}"
+            hx-post="{{ request.path_info }}"
+            hq-hx-action="update_pair"
+            {# note: with hx-vals, make sure you don't have a trailing comma and use double quotes in the JSON #}
+            hx-vals='{
+              "id": "{{ pair.id }}",
+              "field": "key"
+            }'
+            hx-trigger="change, blur"
+            {# if we use outerHTML here, we loose state of where the keyboard is focused #}
+            hx-swap="none"
+            hx-disabled-elt="this"
+          />
+        </div>
+        <span class="px-2">&rarr;</span>
+        <div class="flex-fill me-2">
+          {# this id below will come in handy for validation #}
+          <div id="pair-{{ pair.id }}-value">
+            <input
+              type="text"
+              class="form-control"
+              name="value"
+              value="{{ pair.value }}"
+              hx-post="{{ request.path_info }}"
+              hq-hx-action="update_pair"
+              hx-vals='{
+                "id": "{{ pair.id }}",
+                "field": "value"
+              }'
+              hx-trigger="change, blur"
+              {# if we use outerHTML here, we loose state of where the keyboard is focused #}
+              hx-swap="none"
+              hx-disabled-elt="this"
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-outline-danger"
+          hx-post="{{ request.path_info }}"
+          hq-hx-action="delete_pair"
+          hx-vals='{
+            "id": "{{ pair.id }}"
+          }'
+          hx-target="#kv-list-container"
+          hx-swap="outerHTML"
+          hx-disabled-elt="this"
+        >
+          <i class="fa fa-remove"></i>
+        </button>
+      </div>
+    {% empty %}
+      <p class="text-muted fst-italic mb-0">
+        No key/value pairs yet.
+      </p>
+    {% endfor %}
+  </div>
+
+  <p>
+    <button
+      type="button"
+      class="btn btn-primary"
+      hx-post="{{ request.path_info }}"
+      hq-hx-action="add_pair"
+      hx-target="#kv-list-container"
+      hx-swap="outerHTML"
+      hx-disabled-elt="this"
+    >
+      <i class="fa fa-plus"></i>
+      Add
+    </button>
+  </p>
+</div>

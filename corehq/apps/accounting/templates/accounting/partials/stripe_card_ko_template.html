@@ -8,7 +8,40 @@
         {% trans "Card" %}
       </label>
       <div class="col-sm-9">
-        <div class="radio">
+        <div
+          class="radio"
+          data-bind="visible: canSelectAutopayCard"
+        >
+          <label>
+            <input
+              type="radio"
+              name="selectedCardType"
+              data-bind="checked: selectedCardType"
+              value="autopay"
+            />
+            {% trans "Use account autopay card" %}
+          </label>
+        </div>
+        <div
+          data-bind="visible: isAutopayCard"
+          class="row"
+        >
+          <div
+            class="col-sm-8"
+            data-bind="with: autopayCard"
+          >
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <p data-bind="text: cardName"></p>
+                <div><strong>{% trans "Owner" %}:</strong> <span data-bind="text: owner"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="radio"
+          data-bind="visible: canSelectSavedCard"
+        >
           <label>
             <input
               type="radio"
@@ -27,9 +60,9 @@
             <select
               class="form-control m-0"
               data-bind="
-                options: savedCards,
-                optionsText: 'cardName',
-                value: selectedSavedCard
+                  options: savedCards,
+                  optionsText: 'cardName',
+                  value: selectedSavedCard
               "
             ></select>
           </div>
@@ -49,20 +82,29 @@
     </div>
     <div
       data-bind="
-        template: {
-          data: selectedSavedCard,
-          name: 'saved-stripe-card-ko-template',
-          if: isSavedCard,
-        }
+          template: {
+              data: autopayCard,
+              name: 'saved-stripe-card-ko-template',
+              if: isAutopayCard,
+          }
       "
     ></div>
     <div
       data-bind="
-        template: {
-          data: newCard,
-          name: 'new-stripe-card-ko-template',
-          if: isNewCard
-        }
+          template: {
+              data: selectedSavedCard,
+              name: 'saved-stripe-card-ko-template',
+              if: isSavedCard,
+          }
+      "
+    ></div>
+    <div
+      data-bind="
+          template: {
+              data: newCard,
+              name: 'new-stripe-card-ko-template',
+              if: isNewCard
+          }
       "
     ></div>
   </fieldset>
@@ -73,10 +115,10 @@
     <legend>{% trans "Card Information" %}</legend>
     <div
       data-bind="
-        template: {
-          data: $data,
-          name: 'new-stripe-card-ko-template',
-        }
+          template: {
+              data: $data,
+              name: 'new-stripe-card-ko-template',
+          }
       "
     ></div>
   </fieldset>

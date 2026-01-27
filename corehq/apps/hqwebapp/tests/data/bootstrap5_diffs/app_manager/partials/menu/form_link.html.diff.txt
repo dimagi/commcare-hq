@@ -1,0 +1,67 @@
+--- 
++++ 
+@@ -6,7 +6,7 @@
+ 
+     <a href="#form_confirm_delete_{{ module.unique_id }}_{{ form.unique_id }}"
+        class="appnav-delete"
+-       data-toggle="modal">
++       data-bs-toggle="modal">
+         <i class="fa-regular fa-trash-can"></i>
+     </a>
+ 
+@@ -29,7 +29,7 @@
+         <i
+         {% if form.get_action_type == 'open' %}
+             class="fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg"
+-        {% elif form.get_action_type == 'close' %}
++        {% elif form.get_action_type == 'btn-close' %}
+             class="fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg"
+         {% elif form.get_action_type == 'update' %}
+             class="fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg"
+@@ -39,10 +39,10 @@
+             class="fa-regular fa-file appnav-primary-icon"
+         {% endif %}
+             title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with form.id as index %}This is form {{ index }}<br>{% endblocktrans %} {% endif %}{{ form.get_icon_help_text }}"
+-            data-toggle="tooltip"
+-            data-placement="right"
+-            data-container="body"
+-            data-html="true"
++            data-bs-toggle="tooltip"
++            data-bs-placement="right"
++            data-bs-container="body"
++            data-bs-html="true"
+             >
+         </i>
+         <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
+@@ -67,12 +67,17 @@
+       <div class="modal-dialog" role="document">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+             <h4 class="modal-title">
+               {% blocktrans %}
+                 Are you sure you want to delete this form?
+               {% endblocktrans %}
+             </h4>
++            <button
++              type="button"
++              class="btn-close"
++              data-bs-dismiss="modal"
++              aria-label="Close"
++            ></button>
+           </div>
+ 
+           <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}"
+@@ -85,10 +90,10 @@
+               </p>
+             </div>
+             <div class="modal-footer">
+-              <button type="button" class="btn btn-default" data-dismiss="modal">
++              <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+                 {% trans "Cancel" %}
+               </button>
+-              <button type="submit" class="disable-on-submit btn btn-danger">
++              <button type="submit" class="disable-on-submit btn btn-outline-danger">
+                 <i class="fa-regular fa-trash-can"></i>
+                 {% trans "Delete Form" %}
+               </button>

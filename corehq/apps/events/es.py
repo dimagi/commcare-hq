@@ -57,5 +57,5 @@ def get_paginated_attendees(domain, limit, page, query=None):
         )
     paginator = Paginator(case_ids, limit)
     case_ids_page = list(paginator.get_page(page))
-    cases = CommCareCase.objects.get_cases(case_ids_page, domain)
+    cases = CommCareCase.objects.get_cases(case_ids_page)
     return cases, paginator.count

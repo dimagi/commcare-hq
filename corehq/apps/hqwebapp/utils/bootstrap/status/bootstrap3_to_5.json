@@ -1,4 +1,33 @@
 {
+  "analytics": {
+    "in_progress": true
+  },
+  "app_manager": {
+    "in_progress": true,
+    "templates": [
+      "app_exchange.html",
+      "app_view_settings.html",
+      "base_summary.html",
+      "case_summary.html",
+      "form_summary.html",
+      "form_summary_base.html",
+      "form_summary_diff.html",
+      "languages.html",
+      "partials/bulk_upload_app_translations.html",
+      "partials/form_summary_header.html",
+      "partials/settings/add_ons.html",
+      "partials/settings/app_settings.html",
+      "partials/settings/commcare_settings.html",
+      "partials/settings/multimedia_ajax.html"
+    ],
+    "javascript": [
+      "js/app_exchange.js",
+      "js/app_view.js",
+      "js/summary/case_summary.js",
+      "js/summary/form_diff.js",
+      "js/summary/form_summary.js"
+    ]
+  },
   "builds": {
     "is_complete": true,
     "templates": [
@@ -95,6 +124,9 @@
   "enterprise": {
     "is_complete": true
   },
+  "events": {
+    "is_complete": true
+  },
   "export": {
     "is_complete": true
   },
@@ -107,13 +139,17 @@
   "hqcase": {
     "is_complete": true
   },
+  "hqmedia": {
+    "in_progress": true
+  },
   "hqwebapp": {
     "in_progress": true,
     "templates": [
-      "maintenance_alerts.html",
       "close_window.html",
       "crispy/field/multifield.html",
-      "includes/create_item_form.html"
+      "includes/create_item_form.html",
+      "includes/modal_eula.html",
+      "maintenance_alerts.html"
     ]
   },
   "integration": {
@@ -157,6 +193,26 @@
   "programs": {
     "is_complete": true
   },
+  "registration": {
+    "in_progress": true,
+    "templates": [
+      "base.html",
+      "confirmation_error.html",
+      "confirmation_resend.html",
+      "confirmation_sent.html",
+      "confirmation_waiting.html",
+      "domain_request.html",
+      "email/base_templates/_base.html",
+      "email/base_templates/_base_container_project_logo.html",
+      "email/password_reset_email_hq.html",
+      "register_new_user.html"
+    ],
+    "javascript": [
+      "js/password_reset_confirm.js",
+      "js/password_reset_form.js",
+      "js/register_new_user.js"
+    ]
+  },
   "registry": {
     "is_complete": true
   },
@@ -199,10 +255,16 @@
       "js/enterprise_edit_identity_provider.js"
     ]
   },
+  "translations": {
+    "in_progress": true
+  },
   "user_importer": {
     "is_complete": true
   },
   "userreports": {
+    "in_progress": true
+  },
+  "users": {
     "in_progress": true
   }
 }

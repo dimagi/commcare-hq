@@ -1141,18 +1141,17 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
         return deduplicate_action_definition
 
-    def properties_fit_definition(self, updated_case_properties):
-        """Given a list of case properties, returns whether these will be pertinent in
+    def properties_fit_definition(self, case_properties):
+        """Given a set of case properties, returns whether these will be pertinent in
         finding duplicate cases.
         """
 
         definition_properties = set(self.case_properties)
-        updated_case_properties = set(updated_case_properties)
 
         if self.match_type == CaseDeduplicationMatchTypeChoices.ALL:
-            return updated_case_properties.issuperset(definition_properties)
+            return case_properties.issuperset(definition_properties)
         elif self.match_type == CaseDeduplicationMatchTypeChoices.ANY:
-            return updated_case_properties.intersection(definition_properties)
+            return case_properties.intersection(definition_properties)
 
         raise ValueError(f"Unknown match type: {self.match_type}")
 
@@ -1291,8 +1290,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def _update_cases(self, domain, rule, duplicate_case_ids):
         """Updates all the duplicate cases according to the rule
         """
-        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids), domain)
-        case_updates = self._get_case_updates(duplicate_cases)
+        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids))
+        case_updates = self._get_case_updates(duplicate_cases, domain)
         for case_update_batch in chunked(case_updates, 100):
             result = bulk_update_cases(
                 domain,
@@ -1303,10 +1302,11 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             rule.log_submission(result[0].form_id)
         return len(case_updates)
 
-    def _get_case_updates(self, duplicate_cases):
+    def _get_case_updates(self, duplicate_cases, domain):
         cases_to_update = defaultdict(dict)
         for duplicate_case in duplicate_cases:
-            cases_to_update.update(self.get_case_and_ancestor_updates(duplicate_case))
+            if duplicate_case.domain == domain:
+                cases_to_update.update(self.get_case_and_ancestor_updates(duplicate_case))
         return [
             (case_id, case_properties, False) for case_id, case_properties in cases_to_update.items()
         ]
@@ -1855,7 +1855,7 @@ class CaseRuleUndoer(object):
 
         for form_id_chunk in form_id_chunks:
             archived_form_ids = []
-            for form in XFormInstance.objects.iter_forms(form_id_chunk, self.domain):
+            for form in XFormInstance.objects.iter_forms(form_id_chunk):
                 result['processed'] += 1
 
                 if not form.is_normal or any([u.creates_case() for u in get_case_updates(form)]):

@@ -120,9 +120,14 @@ def _create_case_blocks(session, records):
     blocks = []
     errored_doc_ids = []
     case_ids = [rec.doc_id for rec in records]
-    cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids, session.domain)}
+    cases = {c.case_id: c
+             for c in CommCareCase.objects.get_cases(case_ids)
+             if c.domain == session.domain}
     for record in records:
-        case = cases[record.doc_id]
+        try:
+            case = cases[record.doc_id]
+        except KeyError:
+            continue  # case not in domain or does not exist
         try:
             update = record.get_edited_case_properties(case)
         except Exception as error:  # todo: catch specific errors seen with case interactions

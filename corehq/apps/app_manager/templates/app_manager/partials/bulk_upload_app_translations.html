@@ -1,4 +1,4 @@
-{% extends "hqwebapp/partials/bootstrap3/bulk_upload.html" %}
+{% extends "hqwebapp/partials/bootstrap5/bulk_upload.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -9,7 +9,7 @@
         {% trans "Select a language." %}
       </p>
       <p>
-        <select class="form-control hqwebapp-select2" data-bind="value: lang">
+        <select class="form-select hqwebapp-select2" data-bind="value: lang">
           <option value="">{% trans "All" %}</option>
           {% for lang in langs %}
             <option>{{ lang }}</option>
@@ -22,20 +22,21 @@
         {% trans "Select a format." %}
       </p>
       <p>
-        <select-toggle data-apply-bindings="false"
-                       params="
-                         value: format,
-                         options: [
-                           {
-                             id: 'multi',
-                             text: '{% trans_html_attr 'One sheet for each menu and form' %}',
-                           },
-                           {
-                             id: 'single',
-                             text: '{% trans_html_attr 'Single sheet for all translations' %}',
-                           },
-                         ],
-                       "></select-toggle>
+        <select-toggle
+          data-apply-bindings="false"
+          params="
+            value: format,
+            options: [
+              {
+                id: 'multi',
+                text: '{% trans_html_attr 'One sheet for each menu and form' %}',
+              },
+              {
+                id: 'single',
+                text: '{% trans_html_attr 'Single sheet for all translations' %}',
+              },
+            ],
+          "></select-toggle>
       </p>
     </li>
     {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
@@ -44,21 +45,22 @@
         {% trans "Download only translations eligible for Transifex?" %}
       </p>
       <p>
-        <select-toggle data-apply-bindings="false"
-                       params="
-                         value: skipBlacklisted,
-                         id: 'skip_blacklisted',
-                         options: [
-                           {
-                             id: 'true',
-                             text: '{% trans_html_attr 'Only Transifex references' %}',
-                           },
-                           {
-                             id: 'false',
-                             text: '{% trans_html_attr 'All translations' %}',
-                           },
-                         ],
-                       "></select-toggle>
+        <select-toggle
+          data-apply-bindings="false"
+          params="
+            value: skipBlacklisted,
+            id: 'skip_blacklisted',
+            options: [
+              {
+                id: 'true',
+                text: '{% trans_html_attr 'Only Transifex references' %}',
+              },
+              {
+                id: 'false',
+                text: '{% trans_html_attr 'All translations' %}',
+              },
+            ],
+          "></select-toggle>
       </p>
     </li>
     {% endif %}
@@ -76,8 +78,8 @@
       </button>
     </a>
   </p>
-  <div class="has-error" data-bind="visible: disableDownload">
-    <p class="help-block">
+  <div data-bind="visible: disableDownload">
+    <p class="help-block text-danger">
       {% blocktrans %}
         The single-sheet format is only available when downloading a single language.
         <br>Please either select a language or choose the multi-sheet format.

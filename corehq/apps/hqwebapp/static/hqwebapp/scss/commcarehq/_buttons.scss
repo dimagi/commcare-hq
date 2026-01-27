@@ -5,7 +5,7 @@
 };
 
 .btn-purple {
-  @include button-variant($white, $cc-dark-cool-accent-mid, darken($cc-dark-cool-accent-mid, 5));
+  @include button-variant($cc-dark-cool-accent-mid, $cc-dark-cool-accent-mid, $white, darken($cc-dark-cool-accent-mid, 5));
 }
 
 .btn-full-width {
@@ -42,10 +42,21 @@
   color: #ffffff;
 }
 
-input::file-selector-button {
-  @extend .btn;
-  @extend .btn-sm;
-  @extend .btn-outline-primary;
+input[type="file"] {
+  &::file-selector-button {
+    @extend .btn;
+    @extend .btn-sm;
+    @extend .btn-outline-primary;
+  }
+
+  &.form-control {
+    border: unset;
+
+    &:hover::file-selector-button {
+      // override .form-control gray hover effect
+      background-color: $primary !important;
+    }
+  }
 }
 
 .btn-wiggle {

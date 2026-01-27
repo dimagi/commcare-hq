@@ -5,24 +5,25 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Modal, Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import commcareSettings from "app_manager/js/settings/commcare_settings";
-import supportedLanguages from "app_manager/js/supported_languages";
+import commcareSettings from "app_manager/js/settings/bootstrap5/commcare_settings";
+import supportedLanguages from "app_manager/js/bootstrap5/supported_languages";
 import google from "analytix/js/google";
-import widgets from "hqwebapp/js/bootstrap3/widgets";
-import main from "hqwebapp/js/bootstrap3/main";
-import translations from "translations/js/translations";
-import appManager from "app_manager/js/app_manager";
+import widgets from "hqwebapp/js/bootstrap5/widgets";
+import main from "hqwebapp/js/bootstrap5/main";
+import translations from "translations/js/bootstrap5/translations";
+import appManager from "app_manager/js/bootstrap5/app_manager";
 import sectionChanger from "app_manager/js/section_changer";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 import "app_manager/js/widgets";  // app version widget when copying an app
-import "app_manager/js/download_async_modal";  // for the "Download ZIP" button on the multimedia tab
-import "hqwebapp/js/bootstrap3/widgets";
-import "app_manager/js/add_ons";
+import "app_manager/js/bootstrap5/download_async_modal";  // for the "Download ZIP" button on the multimedia tab
+import "hqwebapp/js/bootstrap5/widgets";
+import "app_manager/js/bootstrap5/add_ons";
 import "app_manager/js/settings/translations";
 import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/select_toggle";
-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";
+import "hqwebapp/js/bootstrap5/knockout_bindings.ko";
 import "jquery-textchange/jquery.textchange";   // textchange is referenced in ko bindings in app_settings.html
 
 $(function () {
@@ -68,7 +69,7 @@ $(function () {
         var $submit = $(this),
             $form = $submit.closest("form"),
             domain = $form.find("#id_domain").val(),
-            $modal = $("#copy-toggles");
+            $modalEl = $("#copy-toggles");
 
         if (!isCopyApplicationFormValid($form)) {
             return false;
@@ -84,16 +85,17 @@ $(function () {
                 },
                 success: function (toggles) {
                     if (toggles.length) {
-                        var template = _.template($modal.find("script").html()),
-                            $ul = $modal.find("ul").html(""),
+                        var template = _.template($modalEl.find("script").html()),
+                            $ul = $modalEl.find("ul").html(""),
                             flagsUrl = initialPageData.reverse("feature_flags_and_privileges", domain);
 
-                        $modal.find("#feature-flags-link").attr("href", flagsUrl);
+                        $modalEl.find("#feature-flags-link").attr("href", flagsUrl);
 
                         _.each(toggles, function (toggle) {
                             $ul.append(template(toggle));
                         });
-                        $modal.modal().one("click", ".btn-primary", function () {
+                        new Modal($modalEl).show();
+                        $modalEl.one("click", ".btn-primary", function () {
                             $(this).disableButton();
                             $form.submit();
                         }).one("hide.bs.modal", function () {
@@ -235,7 +237,7 @@ $(function () {
                 }
             };
         $("#multimedia-tab").koApplyBindings(multimediaTab);
-        if ($('[href="#multimedia-tab"]').parent().hasClass("active")) {
+        if ($('[href="#multimedia-tab"]').hasClass("active")) {
             // Multimedia tab has already been selected
             initializeMultimediaTab();
         }
@@ -266,4 +268,7 @@ $(function () {
         sectionChanger.attachToForm($saveContainer);
     })();
 
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map((tooltipTriggerEl) => new Tooltip(tooltipTriggerEl));
 });

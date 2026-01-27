@@ -1,0 +1,76 @@
+{% load i18n %}
+
+<div class="modal fade" id="{{ id }}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          {% if type == "image" %}
+            {% trans 'Upload Icon Image' %}
+          {% elif type == "audio" %}
+            {% trans 'Upload Audio' %}
+          {% elif type == "video" %}
+            {% trans 'Upload Video' %}
+          {% elif type == "logo" %}
+            {% trans 'Upload Logo' %}
+          {% else %}
+            {% trans 'Upload File' %}
+          {% endif %}
+        </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+      </div>
+      <div class="modal-body form">
+        <div class="row mb-3">
+          <label for="hqm-select-files-input" class="col-form-label col-md-3">
+            {% if type == "image" %}
+              {% trans 'Select Icon Image' %}
+            {% elif type == "audio" %}
+              {% trans 'Select Menu Audio' %}
+            {% elif type == "video" %}
+              {% trans 'Select Video' %}
+            {% elif type == "logo" %}
+              {% trans 'Select Logo' %}
+            {% else %}
+              {% trans 'Select File' %}
+            {% endif %}
+          </label>
+          <div class="col-md-9">
+            <div class="hqm-select-files-container">
+              <button class="btn btn-primary" type="button">{% trans "Select" %}</button>
+              <input
+                type="file"
+                class="form-control d-none"
+                id="hqm-select-files-input"
+              />
+            </div>
+            <div class="hqm-upload-status"></div>
+          </div>
+        </div>
+        <div class="row mb-3 hqm-existing d-none">
+          <span class="col-form-label col-md-3">
+            {% if type == "image" %}
+              {% trans 'Current Icon' %}
+            {% elif type == "audio" %}
+              {% trans 'Current Audio' %}
+            {% elif type == "video" %}
+              {% trans 'Current Video' %}
+            {% elif type == "logo" %}
+              {% trans 'Current Logo' %}
+            {% else %}
+              {% trans 'Current File' %}
+            {% endif %}
+          </span>
+          <div class="col-md-9 hqm-existing-controls"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Close' %}</a>
+        <a href="#" class="btn btn-primary disabled hqm-upload hqm-upload-confirm">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <i class="fa-solid fa-spin fa-refresh d-none"></i>
+          {% trans "Begin Upload" %}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

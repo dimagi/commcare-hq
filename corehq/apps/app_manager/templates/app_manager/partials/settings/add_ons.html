@@ -21,7 +21,7 @@
     {% if request|request_has_privilege:"SHOW_ENABLE_ALL_ADD_ONS" %}
     <button
       type="button"
-      class="btn btn-default pull-right"
+      class="btn btn-outline-primary float-end"
       data-bind="click: enableAll"
     >
       {% trans "Enable All Add-Ons" %}
@@ -34,70 +34,66 @@
       {% endblocktrans %}
     </p>
 
-    <div data-bind="foreach: sections">
+    <div class="accordion" data-bind="foreach: sections">
       <div
-        class="panel panel-appmanager"
+        class="accordion-item"
         data-bind="attr: {'data-slug': slug}"
       >
-        <div
-          class="panel-heading"
-          style="cursor: pointer;"
-          data-bind="click: $root.toggleSection"
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bind="attr: { 'data-bs-target': '#collapse-' + slug }"
         >
-          <h4 class="panel-title">
-            <i
-              class="fa"
-              data-bind="css: {
-                'fa-chevron-down': !collapse(),
-                'fa-chevron-right': collapse()
-              }"
-            ></i>
+          <h5 class="accordion-header">
             <span data-bind="text: name"></span> &nbsp;
             <small data-bind="text: description"></small>
-          </h4>
-        </div>
+          </h5>
+        </button>
         <div
-          class="panel-body"
-          data-bind="foreach: add_ons, visible: !collapse()"
+          class="accordion-body accordion-collapse collapse"
+          data-bind="
+            foreach: add_ons,
+            attr: { 'id': 'collapse-' + slug }"
         >
-          <div class="checkbox">
-            <label>
-              <input type="checkbox"
-                     data-bind="attr: {
-                                  name: slug,
-                                  id: 'check-' + slug,
-                                },
-                                disable: show_upgrade,
-                                checked: $root.addOns[slug]" />
-              <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              data-bind="
+                attr: {
+                  name: slug,
+                  id: 'check-' + slug,
+                },
+                disable: show_upgrade,
+                checked: $root.addOns[slug]"
+              />
+            <label data-bind="attr: { 'for': 'check-' + slug }" class="form-check-label">
+              <span data-bind="text: name" class="clickable"></span>
               <div class="help-block">
                 <span data-bind="text: description"></span>
                 <a target="_blank" data-bind="if: help_link, attr:{href: help_link}">{% trans "Learn more." %}</a>
               </div>
-              <!-- ko if: show_upgrade -->
-                <div class="well well-sm">
-                  <p>
-                    <i class="fa fa-info-circle"></i>
-                    <span data-bind="text: upgrade_text"></span>
-                    {% include 'hqwebapp/partials/generic_feature_upgrade.html' %}
-                  </p>
-
-                  <!-- ko if: $root.addOns[slug] -->
-                    <p>
-                      {% blocktrans %}
-                        You have previously enabled this feature in your app, but have since lost access
-                        to it.
-                      {% endblocktrans %}
-                      <br />
-                      {% blocktrans %}
-                        Your application will continue to function in places that utilized this feature, but
-                        you will not be able to edit any related functionality until you upgrade.
-                      {% endblocktrans %}
-                    </p>
-                  <!-- /ko -->
-                </div>
-              <!-- /ko -->
             </label>
+            <!-- ko if: show_upgrade -->
+              <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i>
+                <span data-bind="text: upgrade_text"></span>
+                {% include 'hqwebapp/partials/generic_feature_upgrade.html' %}
+
+                <!-- ko if: $root.addOns[slug] -->
+                  {% blocktrans %}
+                    You have previously enabled this feature in your app, but have since lost access
+                    to it.
+                  {% endblocktrans %}
+                  <br />
+                  {% blocktrans %}
+                    Your application will continue to function in places that utilized this feature, but
+                    you will not be able to edit any related functionality until you upgrade.
+                  {% endblocktrans %}
+                <!-- /ko -->
+              </div>
+            <!-- /ko -->
           </div>
         </div>
       </div>

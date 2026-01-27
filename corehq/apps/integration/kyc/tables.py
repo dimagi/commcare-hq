@@ -44,6 +44,7 @@ def serialize_kyc_data_for_table(kyc_user, kyc_config):
             "error_message": kyc_user.kyc_verification_error_message,
         },
         "kyc_last_verified_at": kyc_user.kyc_last_verified_at,
+        "kyc_verified_by": kyc_user.kyc_verified_by,
     }
 
     for provider_field, field in kyc_config.get_api_field_to_user_data_map_values().items():
@@ -139,6 +140,7 @@ class KycVerifyTable(BaseHtmxTable, ElasticTable):
             (KycProperties.KYC_LAST_VERIFIED_AT, DateTimeStringColumn(
                 verbose_name=_('Last Verified')
             )),
+            (KycProperties.KYC_VERIFIED_BY, columns.Column(verbose_name=_('Verified By'))),
             ('verify_btn', columns.TemplateColumn(
                 template_name='kyc/partials/kyc_verify_button.html',
                 verbose_name=_('Verify')

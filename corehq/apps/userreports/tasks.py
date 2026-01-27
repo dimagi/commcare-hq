@@ -22,7 +22,7 @@ from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 from soil.util import expose_download, get_download_file_path
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
@@ -30,7 +30,6 @@ from corehq.apps.export.const import MAX_DAILY_EXPORT_SIZE
 from corehq.apps.reports.util import send_report_download_email
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.decorators import serial_task
 from corehq.util.es.elasticsearch import ConnectionTimeout
 from corehq.util.metrics import (
     metrics_counter,

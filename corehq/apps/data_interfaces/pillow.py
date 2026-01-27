@@ -1,15 +1,15 @@
 from datetime import datetime
 
-from casexml.apps.case.xform import get_case_updates
 from pillowtop.processors import PillowProcessor
 
 from corehq.apps.data_interfaces.deduplication import is_dedupe_xmlns
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CaseDeduplicationActionDefinition
+from corehq.apps.data_interfaces.deduplication import CASE_UI_PROPERTIES
 from corehq.apps.data_interfaces.utils import run_rules_for_case
+from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.models.forms import XFormInstance
-from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 from corehq.util.soft_assert import soft_assert
 
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -38,11 +38,11 @@ class CaseDeduplicationProcessor(PillowProcessor):
             # Duplicates are meant to surface user duplicates, not system ones
             return
 
-        rules = self._get_applicable_rules(change)
+        case = CommCareCase.objects.get_case(change.id, domain)
+        rules = self._get_applicable_rules(change, case)
         if not rules:
             return
 
-        case = CommCareCase.objects.get_case(change.id, domain)
         return run_rules_for_case(case, rules, datetime.utcnow())
 
     @staticmethod
@@ -59,14 +59,14 @@ class CaseDeduplicationProcessor(PillowProcessor):
 
         return False
 
-    def _get_applicable_rules(self, change):
+    def _get_applicable_rules(self, change, case):
         domain = change.metadata.domain
-        associated_form_id = change.metadata.associated_document_id
+        form_id = change.metadata.associated_document_id
 
         # TODO: feels like there should be some enforced order for running through rules?
         rules = self._get_rules(domain)
 
-        if not associated_form_id or associated_form_id == UPDATE_REASON_RESAVE:
+        if not form_id or form_id == UPDATE_REASON_RESAVE:
             # no associated form occurs whenever a form is rebuilt. Forms can be rebuilt
             # when a deletion is being undone or a form is being restored. In either case,
             # all rules may be interested in these changes
@@ -74,8 +74,9 @@ class CaseDeduplicationProcessor(PillowProcessor):
         else:
             associated_form = self._get_associated_form(change)
             if associated_form and not is_dedupe_xmlns(associated_form.xmlns):
-                case_updates = get_case_updates(associated_form, for_case=change.id)
-                applicable_rules = [rule for rule in rules if self._has_applicable_changes(case_updates, rule)]
+                case_properties = set(case.case_json) | CASE_UI_PROPERTIES
+                applicable_rules = [rule for rule in rules
+                                    if self._is_applicable(rule, case, case_properties, form_id)]
             else:
                 applicable_rules = []
 
@@ -100,17 +101,18 @@ class CaseDeduplicationProcessor(PillowProcessor):
 
         return associated_form
 
-    def _has_applicable_changes(self, case_updates, rule):
-        action_definition = CaseDeduplicationActionDefinition.from_rule(rule)
-        if not action_definition.include_closed:
-            # If the rule shouldn't include closed cases, then a case being closed is an actionable event
-            closes_case = any(case_update.closes_case() for case_update in case_updates)
-            if closes_case:
-                return True
+    def _is_applicable(self, rule, case, case_properties, form_id):
+        def form_closes_case(form_id, case):
+            # When this returns True the rule is applicable because it may
+            # delete a related <CaseDuplicateNew>
+            return any(tx.form_id == form_id for tx in case.get_closing_transactions())
 
-        changed_properties_iter = (
-            case_update.get_normalized_update_property_names() for case_update in case_updates
-        )
-        return any(
-            action_definition.properties_fit_definition(properties) for properties in changed_properties_iter
+        if case.type != rule.case_type:
+            return False
+        action_definition = CaseDeduplicationActionDefinition.from_rule(rule)
+        return action_definition.properties_fit_definition(case_properties) and (
+            not case.closed
+            or action_definition.include_closed
+            # check last to avoid transactions DB hit unless required
+            or form_closes_case(form_id, case)
         )
