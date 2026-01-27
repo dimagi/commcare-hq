@@ -958,6 +958,30 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+CASE_SEARCH_DEPRECATED = StaticToggle(
+    'case_search_deprecated',
+    'Case Search: Deprecated',
+    TAG_DEPRECATED,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_ADVANCED = StaticToggle(
+    'case_search_advanced',
+    'Advanced Case Search',
+    TAG_FROZEN,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
+    'case_search_related_lookups',
+    'Case Search: Related Lookups',
+    TAG_FROZEN,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     'ush_case_list_multi_select',
     'USH: Allow selecting multiple cases from the case list',
