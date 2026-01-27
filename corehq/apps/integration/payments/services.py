@@ -77,7 +77,8 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
             PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_REQUEST_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
-        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        error = e.response.text if hasattr(e, 'response') else str(e)
+        details = _get_notify_error_details(config.domain, payment_case.case_id, error)
         notify_error("[MoMo Payments] Request error occurred while making payment", details=details)
     except Exception as e:
         # We need to know when anything goes wrong
