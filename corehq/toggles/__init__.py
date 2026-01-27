@@ -952,9 +952,9 @@ WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
-    'Enable synchronous mobile searching and case claiming',
+    'Simple Case Search',
     TAG_GA_PATH,
-    help_link='https://confluence.dimagi.com/display/saas/Case+Search+and+Claim',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
