@@ -952,9 +952,33 @@ WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
-    'Enable synchronous mobile searching and case claiming',
+    'Simple Case Search',
     TAG_GA_PATH,
-    help_link='https://confluence.dimagi.com/display/saas/Case+Search+and+Claim',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_DEPRECATED = StaticToggle(
+    'case_search_deprecated',
+    'Case Search: Deprecated',
+    TAG_DEPRECATED,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_ADVANCED = StaticToggle(
+    'case_search_advanced',
+    'Advanced Case Search',
+    TAG_FROZEN,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
+    'case_search_related_lookups',
+    'Case Search: Related Lookups',
+    TAG_FROZEN,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
