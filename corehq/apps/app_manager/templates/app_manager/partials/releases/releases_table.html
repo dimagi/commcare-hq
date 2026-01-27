@@ -120,7 +120,7 @@
     </p>
   </div>
   <div class="row my-1 mt-lg-0">
-    <div class="col-lg-4 col-xl-3 offset-lg-8 offset-xl-9">
+    <div class="col-lg-5 col-xl-4 offset-lg-7 offset-xl-8">
       <search-box
         data-apply-bindings="false"
         params="
@@ -171,9 +171,7 @@
     <div
       class="card mb-3"
       data-bind="css: {
-        'build-released': is_released(),
-        'build-unreleased': !is_released(),
-        'shadow': version() === $root.latestReleasedVersion(),
+        'border-primary shadow': version() === $root.latestReleasedVersion(),
         'error': build_broken
       }"
     >
@@ -225,28 +223,26 @@
           <div class="btn-group">
             <button
               type="button"
-              class="btn btn-sm"
+              class="btn btn-sm btn-outline-dark"
               data-bind="
                 click: $root.toggleRelease,
                 attr: { disabled: !$root.showReleaseOperations() },
                 css: {
                   'active': is_released(),
-                  'btn-primary': is_released(),
-                  'btn-outline-primary': !is_released(),
+                  'fw-normal': !is_released(),
                 }"
             >
               {% trans "Released" %}
             </button>
             <button
               type="button"
-              class="btn btn-sm btn-outline-primary"
+              class="btn btn-sm btn-outline-dark"
               data-bind="
                 click: $root.toggleRelease,
                 attr: { disabled: !$root.showReleaseOperations() },
                 css: {
                   'active': !is_released(),
-                  'btn-primary': !is_released(),
-                  'btn-outline-primary': is_released(),
+                  'fw-normal': is_released(),
                 }"
             >
               {% trans "In Test" %}
