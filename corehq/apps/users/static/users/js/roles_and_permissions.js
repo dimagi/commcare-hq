@@ -57,23 +57,7 @@ $(function () {
 
     userRoles.initUserRoles($userRolesTable, $linkedRolesModal, $infoBar, {
         userRoles: initialPageData.get("user_roles"),
-        nonAdminRoles: initialPageData.get("non_admin_roles"),
-        defaultRole: initialPageData.get("default_role"),
-        saveUrl: url("post_user_role"),
         deleteUrl: url("delete_user_role"),
-        reportOptions: initialPageData.get("report_list"),
-        tableauOptions: initialPageData.get("tableau_list"),
-        profileOptions: initialPageData.get("profile_list"),
         allowEdit: initialPageData.get("can_edit_roles"),
-        canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
-        landingPageChoices: initialPageData.get("landing_page_choices"),
-        webAppsChoices: initialPageData.get("web_apps_choices"),
-        attendanceTrackingPrivilege: initialPageData.get("attendance_tracking_privilege"),
-        DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
-        ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
-        dataRegistryChoices: initialPageData.get("data_registry_choices"),
-        canEditLinkedData: initialPageData.get("can_edit_linked_data"),
-        commcareAnalyticsRoles: initialPageData.get('commcare_analytics_roles'),
-        hasRestrictedApplicationAccess: initialPageData.get('has_restricted_application_access'),
     });
 });
