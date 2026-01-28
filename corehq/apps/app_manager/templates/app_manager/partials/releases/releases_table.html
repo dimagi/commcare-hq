@@ -168,16 +168,21 @@
       css: { 'd-none': false },
       template: { foreach: savedApps }"
   >
+    <span
+      class="badge text-bg-info shadow rounded-bottom-0 fs-6 px-3 ms-1"
+      data-bind="visible: version() === $root.latestReleasedVersion() && is_released() != 'error'"
+      >{% trans "Latest" %}</span
+    >
     <div
       class="card mb-3"
       data-bind="css: {
-        'border-primary shadow': version() === $root.latestReleasedVersion(),
+        'shadow': version() === $root.latestReleasedVersion(),
         'error': build_broken
       }"
     >
       <div class="card-header">
         {% if request|toggle_enabled:"SUPPORT" %}
-          <div class="release-trash-container float-end py-1 ps-3">
+          <div class="release-trash-container float-end ps-3">
             <a
               href="#"
               class="d-none release-remove"
@@ -203,7 +208,7 @@
             ></i>
           </div>
         {% endif %}
-        <div class="float-end py-1">
+        <div class="float-end">
           <!--ko if: is_released() == 'error' -->
 
           <span class="badge text-bg-danger"
@@ -212,12 +217,6 @@
 
           <!--/ko-->
           <!--ko if: is_released() != 'error' -->
-
-          <span
-            class="badge text-bg-info"
-            data-bind="visible: version() === $root.latestReleasedVersion()"
-            >{% trans "Latest" %}</span
-          >
 
           <i class="fa fa-spin fa-refresh d-none js-release-waiting"></i>
           <div class="btn-group">
@@ -251,7 +250,7 @@
 
           <!--/ko-->
         </div>
-        <h6 class="card-title text-secondary mt-2">
+        <h6 class="card-title text-secondary my-1">
           <strong class="text-dark">
             {% trans "Version" %} <span data-bind="text: version"></span>
           </strong>
