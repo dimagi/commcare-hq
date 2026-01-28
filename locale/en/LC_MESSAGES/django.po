@@ -3405,6 +3405,10 @@ msgid "Reason"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+msgid "Payment Type"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
@@ -14863,12 +14867,12 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> "
-"Next Error</strong> button on the left-hand side of the screen to navigate "
+"            Please correct the answers below before submitting.\n"
+"            <br>\n"
+"            You can use the <strong><i class='fa fa-fast-forward'></i> Next "
+"Error</strong> button on the left-hand side of the screen to navigate "
 "between required fields.\n"
-"            "
+"          "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html

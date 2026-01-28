@@ -559,25 +559,21 @@ msgstr "يمكنك فقط وجود خاصية واحدة بتنسيق 'صورة'
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary' format"
 msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'الحدود الجغرافية'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary Color' format"
 msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'لون الحدود الجغرافية'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points' format"
 msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'النقاط الجغرافية'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points Colors' format"
 msgstr "يمكنك فقط أن تملك خاصية واحدة بتنسيق 'ألوان النقاط الجغرافية'"
 
