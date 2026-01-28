@@ -1,0 +1,440 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div id="releases-table" class="d-none" data-bind="css: { 'd-none': false }">
+  <div
+    class="alert alert-danger d-none"
+    data-bind="visible: brokenBuilds, css: { 'd-none': false }
+  "
+  >
+    <p>
+      <i class="fa fa-exclamation-circle"></i>
+      {% blocktrans %}
+        One or more of your versions is broken, please make sure it is not
+        marked as released. Make a new version if needed, and update any live
+        deployments as soon as possible.
+      {% endblocktrans %}
+    </p>
+    <p>
+      <small>
+        {% blocktrans %}
+          All new versions should work, so if problems persist, please report
+          the issue.
+        {% endblocktrans %}
+      </small>
+    </p>
+  </div>
+  <div
+    class="float-end"
+    data-bind="visible: savedApps().length || onlyShowReleased()"
+  >
+    <a href="#" data-bind="click: toggleLimitToReleased"
+      ><span data-bind="visible: !onlyShowReleased()"
+        >{% trans 'Show only released versions' %}</span
+      ></a
+    >
+    <span data-bind="visible: onlyShowReleased()">
+      {% trans 'Released versions only' %}
+    </span>
+    <a
+      href="#"
+      data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()"
+      class="btn btn-outline-primary btn-sm"
+      >{% trans 'Show All' %}</a
+    >
+
+    <span
+      class="hq-help-template"
+      data-title="Released Versions"
+      data-container="body"
+      data-content="Mark versions as Released for automatically updating CommCare applications. If the Auto-Update app setting is set to Daily or Weekly, any application versions that are marked as Released will update to the latest Released version automatically. When the user clicks 'Update App' from mobile, the latest Released version will be downloaded."
+      data-placement="left"
+    >
+    </span>
+  </div>
+  <div>
+    {% if can_view_app_diff %}
+      <a
+        class="btn btn-outline-primary"
+        data-bind="
+                attr: {href: compareUnbuiltChangesUrl},
+                visible: savedApps().length,
+                click: function () { return $root.trackClick('Compare App Versions: Clicked Version Preview'); }
+                "
+      >
+        <i class="fa-solid fa-right-left"></i>
+        {% trans "Preview" %}
+      </a>
+    {% endif %}
+    {% if user.is_superuser %}
+      <a
+        class="btn btn-outline-primary"
+        href="{% url "app_build_timings" %}?app_id={{ app.id }}"
+        target="_blank"
+      >
+        <i class="fa-regular fa-clock"></i>
+        {% trans "Timing" %}
+      </a>
+    {% endif %}
+    <button
+      class="btn btn-primary"
+      data-bind="
+            click: function() {
+              $root.trackClick('Clicked Make New Version');
+              return makeNewBuild();
+            },
+            attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
+            css: {disabled: !buildButtonEnabled()}"
+    >
+      <i
+        class="fa fa-spin fa-spinner"
+        data-bind="visible: buildState() === 'pending'"
+      ></i>
+      {% trans 'Make New Version' %}
+    </button>
+  </div>
+
+  <div id="build-errors-wrapper" class="mt-2"></div>
+  <div
+    class="alert alert-warning"
+    data-bind="visible: depCaseTypes().length"
+    id="deprecated-case-types-warning"
+  >
+    <p>
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        The new application build contains the following deprecated case types:
+      {% endblocktrans %}
+    </p>
+    <ul id="deprecated-case-types-list" data-bind="foreach: depCaseTypes">
+      <li data-bind="text: $data"></li>
+    </ul>
+    <p>
+      {% blocktrans %}
+        For more information on deprecated case types, see the following
+        <a
+          target="_blank"
+          href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%26-Delete-Case-Types-and-Case-Properties"
+          >documentation</a
+        >.
+      {% endblocktrans %}
+    </p>
+  </div>
+  <div class="row my-1 mt-lg-0">
+    <div class="col-lg-5 col-xl-4 offset-lg-7 offset-xl-8">
+      <search-box
+        data-apply-bindings="false"
+        params="
+          value: buildComment,
+          action: function() { goToPage(1); },
+          placeholder: '{% trans_html_attr "Version or comment" %}'"
+      ></search-box>
+    </div>
+  </div>
+
+  <div
+    class="alert alert-danger d-none mt-2"
+    data-bind="visible: buildState() == 'error', css: { 'd-none': false }"
+  >
+    <span data-bind="visible: buildErrorCode() === 403">
+      {% trans "Sorry, you don't have permission to do this action!" %}
+    </span>
+    <span data-bind="visible: buildErrorCode() !== 403, text: errorMessage">
+    </span>
+  </div>
+  <div
+    class="alert alert-danger mt-2"
+    data-bind="html: releaseErrorMessage, visible: releaseErrorMessage"
+  ></div>
+
+  <h4
+    id="loading"
+    class="d-none"
+    data-bind="visible: showLoadingSpinner(), css: { 'd-none': false }"
+  >
+    <i class="fa fa-spin fa-spinner"></i>
+    {% trans "Loading versions..." %}
+  </h4>
+
+  <div
+    class="alert alert-danger d-none"
+    data-bind="visible: fetchState() === 'error', css: { 'd-none': false }"
+  >
+    {% trans "An error occurred while fetching versions. Reload the page to try again." %}
+  </div>
+
+  <div
+    class="releases-container"
+    data-bind="
+      css: { 'd-none': false },
+      template: { foreach: savedApps }"
+  >
+    <div
+      class="card mb-3"
+      data-bind="css: {
+        'border-primary shadow': version() === $root.latestReleasedVersion(),
+        'error': build_broken
+      }"
+    >
+      <div class="card-header">
+        {% if request|toggle_enabled:"SUPPORT" %}
+          <div class="release-trash-container float-end py-1 ps-3">
+            <a
+              href="#"
+              class="d-none release-remove"
+              data-bind="
+                openModal: 'delete-build-modal-template',
+                visible: !_deleteState(),
+                css: { 'd-none': false }"
+            >
+              <i class="fa-regular fa-trash-can"></i>
+            </a>
+            <div
+              class="pending d-none"
+              data-bind="
+                visible: _deleteState() == 'pending', css: { 'd-none': false }"
+            >
+              <i class="fa fa-spin fa-spinner"></i>
+            </div>
+            <i
+              class="fa fa-exclamation-circle d-none"
+              data-bind="
+                visible: _deleteState() == 'error',
+                css: { 'd-none': false }"
+            ></i>
+          </div>
+        {% endif %}
+        <div class="float-end py-1">
+          <!--ko if: is_released() == 'error' -->
+
+          <span class="badge text-bg-danger"
+            >{% trans "Could not update" %}</span
+          >
+
+          <!--/ko-->
+          <!--ko if: is_released() != 'error' -->
+
+          <span
+            class="badge text-bg-info"
+            data-bind="visible: version() === $root.latestReleasedVersion()"
+            >{% trans "Latest" %}</span
+          >
+
+          <i class="fa fa-spin fa-refresh d-none js-release-waiting"></i>
+          <div class="btn-group">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-dark"
+              data-bind="
+                click: $root.toggleRelease,
+                attr: { disabled: !$root.showReleaseOperations() },
+                css: {
+                  'active': is_released(),
+                  'fw-normal': !is_released(),
+                }"
+            >
+              {% trans "Released" %}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-dark"
+              data-bind="
+                click: $root.toggleRelease,
+                attr: { disabled: !$root.showReleaseOperations() },
+                css: {
+                  'active': !is_released(),
+                  'fw-normal': is_released(),
+                }"
+            >
+              {% trans "In Test" %}
+            </button>
+          </div>
+
+          <!--/ko-->
+        </div>
+        <h6 class="card-title text-secondary mt-2">
+          <strong class="text-dark">
+            {% trans "Version" %} <span data-bind="text: version"></span>
+          </strong>
+          <span data-bind="if: doc_type() == 'LinkedApplication'">
+            (<a
+              data-bind="text: upstream_app_name(), attr: {href: upstream_app_url()}"
+            ></a>
+            v<span data-bind="text: upstream_version"></span>)
+          </span>
+          |
+          <span data-bind="text: built_on_date"></span>
+          <span data-bind="text: built_on_time"></span> {% trans 'by' %}
+          <span data-bind="text: comment_user_name"></span>
+          <!--ko if: menu_item_label() -->
+          {% trans "with CommCare v." %}
+          <span data-bind="text: menu_item_label()"></span>
+          <!--/ko-->
+          <span data-bind="if: !built_with.signed()"
+            >{% trans "Unsigned Jar" %}</span
+          >
+        </h6>
+      </div>
+      <!-- .card-header -->
+      <div class="card-body py-2">
+        <div class="comment-container">
+          <inline-edit
+            params="
+              value: build_comment,
+              iconClass: 'fa fa-comment',
+              rows: 1,
+              cols: 60,
+              placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
+              url: '{% url "update_build_comment" domain app.id %}',
+              saveParams: {'build_id': id},
+              saveValueName: 'comment',
+              errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+              disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
+              "
+          ></inline-edit>
+        </div>
+        <div class="clearfix my-1">
+          {% if can_view_app_diff %}
+            <a
+              class="btn btn-outline-primary"
+              data-bind="
+                attr: {href: $parent.reverse(
+                        'app_form_summary_diff',
+                        $parent.previousBuildId($index()),
+                        $data.id())
+                      },
+                click: function () {
+                    return $root.trackClick('Compare App Versions: Clicked View Changes');
+                },
+                visible: $parent.previousBuildId($index())"
+            >
+              <i class="fa-solid fa-right-left"></i>
+              {% trans "View Changes" %}
+            </a>
+          {% endif %}
+          <button
+            class="btn btn-outline-primary fw-normal d-none"
+            data-bind="
+              openModal: 'revert-build-modal-template',
+              visible: version() !== $root.currentAppVersion(),
+              css: { 'd-none': false }"
+          >
+            <i class="fa fa-recycle"></i>
+            {% trans "Revert to this Version" %}
+          </button>
+          <a
+            class="btn float-end fw-bold"
+            data-bind="
+              openModal: 'deploy-build-modal-template',
+              css: {'btn-primary': !build_broken(), 'btn-outline-danger': build_broken},
+              click: clickDeploy"
+          >
+            <span
+              class="fa fa-exclamation-circle d-none"
+              data-bind="visible: build_broken, css: { 'd-none': false }"
+            >
+            </span>
+            {% trans "Publish" %}
+          </a>
+        </div>
+        <!-- .clearfix -->
+      </div>
+      <!-- .card-body -->
+    </div>
+    <!-- .card- -->
+  </div>
+  <!-- .releases-container -->
+
+  <pagination
+    data-apply-bindings="false"
+    params="
+      goToPage: goToPage,
+      perPage: fetchLimit,
+      slug: 'releases-table',
+      totalItems: totalItems,
+      onLoad: onPaginationLoad,
+      showSpinner: showPaginationSpinner"
+  ></pagination>
+
+  <script type="text/html" id="delete-build-modal-template">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">{% trans "Delete Version?" %}</h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="{% trans 'Close' %}"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <p>
+            {% trans "Are you sure you want to delete this version" %} (<span
+              data-bind="text: version"
+            ></span
+            >)?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal"
+            >{% trans "Cancel" %}</a
+          >
+          <a
+            class="btn btn-outline-danger"
+            href="#"
+            data-bind="click: $root.deleteSavedApp"
+            data-bs-dismiss="modal"
+            >{% trans "Delete Version" %}</a
+          >
+        </div>
+      </div>
+    </div>
+  </script>
+  <script type="text/html" id="revert-build-modal-template">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">{% trans "Revert to Version?" %}</h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="{% trans 'Close' %}"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div
+            class="alert alert-danger"
+            data-bind="visible: !vellum_case_management()"
+          >
+            {% blocktrans %}
+              This version uses an outdated form of case
+              management. We advise against reverting back to this version.
+            {% endblocktrans %}
+          </div>
+          <p>
+            {% blocktrans %} Are you sure you want to revert to version
+            <span data-bind="text: version"></span>?
+          </p>
+          {% endblocktrans %}
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal"
+            >{% trans "Cancel" %}</a
+          >
+          <a
+            href="#"
+            class="btn btn-outline-danger"
+            data-bind="click: $root.revertSavedApp"
+            data-bs-dismiss="modal"
+            >{% trans "Revert" %}</a
+          >
+        </div>
+      </div>
+    </div>
+  </script>
+  <script type="text/html" id="deploy-build-modal-template">
+    {% include 'app_manager/partials/releases/releases_deploy_modal.html' %}
+  </script>
+</div>
+<!-- #releases-table -->
