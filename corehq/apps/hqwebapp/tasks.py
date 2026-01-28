@@ -54,6 +54,11 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
         )
 
 
+@periodic_task(run_every=crontab(minute="*/5"), durable=True)
+def grahams_simple_periodic_task():
+    print("success")
+
+
 @task(durable=True)
 def grahams_simple_test_task():
     print("success")
