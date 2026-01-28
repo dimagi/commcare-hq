@@ -4,6 +4,7 @@
   background: linear-gradient(#fdfdfd, #f4f4f4);
   margin-bottom: 0px;
   min-height: $navbar-height;
+  z-index: $zindex-navbar;
 
   .navbar-brand {
     padding-top: 11px;
@@ -68,7 +69,6 @@
 .nav-settings-bar {
   margin-left: auto;
   order: 2;
-  padding-right: 8px;
 }
 
 @media(max-width: 1057px) {

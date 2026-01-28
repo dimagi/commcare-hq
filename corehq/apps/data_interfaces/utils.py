@@ -75,7 +75,7 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
     if task:
         DownloadBase.set_progress(task, 0, len(form_ids))
 
-    for xform in XFormInstance.objects.iter_forms(form_ids, domain):
+    for xform in XFormInstance.objects.iter_forms(form_ids):
         missing_forms.discard(xform.form_id)
 
         if xform.domain != domain:

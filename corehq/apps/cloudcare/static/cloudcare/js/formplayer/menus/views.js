@@ -828,7 +828,7 @@ const CaseListView = Marionette.CollectionView.extend({
     getConfigStorageId: function (user) {
         const urlObject = formplayerUtils.currentUrlToObject();
         const selectionsWithoutUuid = urlObject.selections.map(function (s) {
-            if (s.match('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$')) {
+            if (s.match('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')) {
                 return 'uuid';
             } else {
                 return s;
@@ -1065,7 +1065,6 @@ const CaseListView = Marionette.CollectionView.extend({
         try {
             const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
             const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
-            const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
             let initialLat = 30;
             let initialLon = 15;
@@ -1168,13 +1167,6 @@ const CaseListView = Marionette.CollectionView.extend({
                     }
                 });
 
-            if (sessionStorage.locationLat) {
-                const homeCoordinates = [sessionStorage.locationLat, sessionStorage.locationLon];
-                L.marker(homeCoordinates, { icon: homeLocationIcon })
-                    .bindPopup(gettext("Your location"))
-                    .addTo(addressMap);
-                allCoordinates.push(homeCoordinates);
-            }
             if (allCoordinates.length > 0) {
                 addressMap.fitBounds(allCoordinates, {maxZoom: 14});
             } else if (defaultGeocoderLocation.bbox) {

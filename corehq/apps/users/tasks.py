@@ -42,6 +42,7 @@ from corehq.util.celery_utils import (
     run_periodic_task_again,
 )
 from corehq.util.metrics import metrics_counter
+from corehq.util.queries import queryset_to_iterator
 
 logger = get_task_logger(__name__)
 
@@ -126,7 +127,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
     deleted_cases = deleted_cases or set()
     cases_to_rebuild = set()
 
-    for form in XFormInstance.objects.iter_forms(form_id_list, domain):
+    for form in XFormInstance.objects.iter_forms(form_id_list):
         if form.domain != domain or not form.is_normal:
             continue
 
@@ -169,7 +170,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         # all cases touched by this form are deleted
         return True
 
-    all_forms = XFormInstance.objects.iter_forms(form_ids_to_modify, domain)
+    all_forms = XFormInstance.objects.iter_forms(form_ids_to_modify)
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 
@@ -302,18 +303,16 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     """Removes all unused custom data fields from all users in the domain"""
     from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-    from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+    from corehq.apps.users.user_data import SQLUserData
     from corehq.apps.users.views.mobile.custom_data_fields import (
         CUSTOM_USER_DATA_FIELD_TYPE,
     )
     fields_definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
     assert fields_definition, 'remove_unused_custom_fields_from_users_task called without a valid definition'
     schema_fields = {f.slug for f in fields_definition.get_fields()}
-    for user in get_all_commcare_users_by_domain(domain):
-        user_data = user.get_user_data(domain)
-        changed = user_data.remove_unrecognized(schema_fields)
-        if changed:
-            user.save()
+    for sql_user_data in queryset_to_iterator(SQLUserData.objects.filter(domain=domain), SQLUserData):
+        if sql_user_data.remove_unrecognized(schema_fields):
+            sql_user_data.save()
 
 
 @task()

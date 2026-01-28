@@ -17,6 +17,7 @@ from django.views.generic.base import TemplateView, View
 
 from memoized import memoized
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -24,20 +25,21 @@ from dimagi.utils.web import get_ip
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
-    HUBSPOT_COOKIE,
-    track_clicked_signup_on_hubspot,
     track_confirmed_account_on_hubspot,
     track_web_user_registration_hubspot,
-    track_workflow_noop,
 )
-from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import (
     ErrorInitializingDomain,
     NameUnavailableException,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.domain.models import (
+    EULA_CURRENT_VERSION,
+    Domain,
+    LicenseAgreement,
+    LicenseAgreementType,
+)
 from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
@@ -59,7 +61,6 @@ from corehq.apps.registration.utils import (
 )
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.users.models import (
-    EULA_CURRENT_VERSION,
     CouchUser,
     Invitation,
     WebUser,
@@ -118,14 +119,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
             persona = reg_form.cleaned_data['persona']
             persona_other = reg_form.cleaned_data['persona_other']
-
-            track_workflow_noop(email, "Requested New Account", {
-                'environment': settings.SERVER_ENVIRONMENT,
-            })
-            track_workflow_noop(email, "Persona Field Filled Out", {
-                'personachoice': persona,
-                'personaother': persona_other,
-            })
 
             if not additional_hubspot_data:
                 additional_hubspot_data = {}
@@ -220,8 +213,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
             current_location = current_env_data['short_name'] if current_env_data else _("current")
             message = _(
                 'This email is already registered in the {location} cloud location. '
-                'Please <a href="{login_link}">sign in here</a>.'
-            ).format(location=current_location, login_link=reverse('login'))
+            ).format(location=current_location)
         else:
             domain = email[email.find("@") + 1:]
             for account in BillingAccount.get_enterprise_restricted_signup_accounts():
@@ -251,6 +243,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         return response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
@@ -270,10 +263,6 @@ class UserRegistrationView(BasePageView):
         return response
 
     def post(self, request, *args, **kwargs):
-        if self.prefilled_email:
-            meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(
-                self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
@@ -285,19 +274,38 @@ class UserRegistrationView(BasePageView):
         return self.request.GET.get('internal', False)
 
     @property
+    def can_select_cloud(self):
+        return settings.SERVER_ENVIRONMENT in ServerLocation.get_envs()
+
+    @property
+    def skip_cloud_step(self):
+        return self.request.GET.get('skipCloudStep', not self.can_select_cloud)
+
+    @property
     def page_context(self):
         prefills = {
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
         context = {
-            'reg_form': RegisterWebUserForm(initial=prefills),
+            'reg_form': RegisterWebUserForm(initial=prefills, can_select_cloud=self.can_select_cloud),
             'reg_form_defaults': prefills,
             'hide_password_feedback': has_custom_clean_password(),
+            'skip_cloud_step': self.skip_cloud_step,
+            'initial_subdomain': (
+                ServerLocation.get_subdomains()[settings.SERVER_ENVIRONMENT]
+                if self.can_select_cloud else ''
+            )
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
                 ab_tests.DEMO_WORKFLOW_V2, self.request).context
+        if self.can_select_cloud:
+            context['server_choices'] = [
+                server for env, server in ServerLocation.get_envs().items()
+                if env != ServerLocation.STAGING
+            ]
+
         return context
 
     @property
@@ -305,6 +313,7 @@ class UserRegistrationView(BasePageView):
         return reverse(self.urlname)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class RegisterDomainView(TemplateView):
 
     template_name = 'registration/domain_request.html'
@@ -388,7 +397,6 @@ class RegisterDomainView(TemplateView):
                 'requested_domain': domain_name,
                 'current_page': {'page_name': _('Confirm Account')},
             })
-            track_workflow_noop(self.request.user.email, "Created new project")
             return render(request, 'registration/confirmation_sent.html', context)
 
         if nextpage:
@@ -434,6 +442,7 @@ class RegisterDomainView(TemplateView):
 
 @transaction.atomic
 @login_required
+@use_bootstrap5
 def resend_confirmation(request):
     try:
         dom_req = RegistrationRequest.get_request_for_username(request.user.username)
@@ -489,6 +498,7 @@ def resend_confirmation(request):
 
 
 @transaction.atomic
+@use_bootstrap5
 def confirm_domain(request, guid=''):
     with CriticalSection(['confirm_domain_' + guid]):
         error = None
@@ -537,7 +547,6 @@ def confirm_domain(request, guid=''):
                 'Your account has been successfully activated.  Thank you for taking '
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
-        track_workflow_noop(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot.delay(requesting_user.get_id)
         request.session['CONFIRM'] = True
 
@@ -559,7 +568,7 @@ def eula_agreement(request):
             agreement.date = datetime.utcnow()
             agreement.user_ip = get_ip(request)
         else:
-            new_agreement = LicenseAgreement(type="End User License Agreement", version=EULA_CURRENT_VERSION)
+            new_agreement = LicenseAgreement(type=LicenseAgreementType.EULA, version=EULA_CURRENT_VERSION)
             new_agreement.signed = True
             new_agreement.date = datetime.utcnow()
             new_agreement.user_ip = get_ip(request)

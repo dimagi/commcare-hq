@@ -37,11 +37,11 @@
  
  .btn-purple {
 -  .button-variant(white; @cc-dark-cool-accent-mid; darken(@cc-dark-cool-accent-mid, 5));
-+  @include button-variant($white, $cc-dark-cool-accent-mid, darken($cc-dark-cool-accent-mid, 5));
++  @include button-variant($cc-dark-cool-accent-mid, $cc-dark-cool-accent-mid, $white, darken($cc-dark-cool-accent-mid, 5));
  }
  
  .btn-full-width {
-@@ -38,25 +15,40 @@
+@@ -38,25 +15,51 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -88,10 +88,21 @@
 +  color: #ffffff;
 +}
 +
-+input::file-selector-button {
-+  @extend .btn;
-+  @extend .btn-sm;
-+  @extend .btn-outline-primary;
++input[type="file"] {
++  &::file-selector-button {
++    @extend .btn;
++    @extend .btn-sm;
++    @extend .btn-outline-primary;
++  }
++
++  &.form-control {
++    border: unset;
++
++    &:hover::file-selector-button {
++      // override .form-control gray hover effect
++      background-color: $primary !important;
++    }
++  }
 +}
 +
 +.btn-wiggle {

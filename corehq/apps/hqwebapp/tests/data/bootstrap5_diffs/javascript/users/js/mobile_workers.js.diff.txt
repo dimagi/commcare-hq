@@ -1,0 +1,87 @@
+--- 
++++ 
+@@ -26,10 +26,10 @@
+ import RMI from "jquery.rmi/jquery.rmi";
+ import zxcvbn from "zxcvbn/dist/zxcvbn";
+ import locationsWidgets from "locations/js/widgets";
+-import customDataFields from "users/js/bootstrap3/custom_data_fields";
++import customDataFields from "users/js/bootstrap5/custom_data_fields";
+ import "hqwebapp/js/components/pagination";
+ import "hqwebapp/js/components/search_box";
+-import "hqwebapp/js/bootstrap3/validators.ko";  // email address validation
++import "hqwebapp/js/bootstrap5/validators.ko";  // email address validation
+ import "eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min";
+ 
+ // These are used as css classes, so the values of success/warning/error need to be what they are.
+@@ -139,7 +139,7 @@
+             url: initialPageData.reverse(urlName, userIdOrName),
+             data: bodyData,
+             success: function (data) {
+-                $modal.modal('hide');
++                $modal.modal('hide');  /* todo B5: js-modal */
+                 if (data.success) {
+                     self.action_error('');
+                 } else {
+@@ -147,7 +147,7 @@
+                 }
+             },
+             error: function () {
+-                $modal.modal('hide');
++                $modal.modal('hide');  /* todo B5: js-modal */
+                 self.action_error(gettext("Issue communicating with server. Try again."));
+             },
+         });
+@@ -162,7 +162,7 @@
+             url: initialPageData.reverse(urlName, self.user_id()),
+             success: function (data) {
+                 $modal.find(".btn").enableButton();
+-                $modal.modal('hide');
++                $modal.modal('hide');  /* todo B5: js-modal */
+                 if (data.success) {
+                     self.action_error('');
+                     self.confirmation_sent_at(new Date());
+@@ -173,7 +173,7 @@
+             },
+             error: function () {
+                 $modal.find(".btn").enableButton();
+-                $modal.modal('hide');
++                $modal.modal('hide');  /* todo B5: js-modal */
+                 self.action_error(gettext("Issue communicating with server. Try again."));
+             },
+         });
+@@ -188,7 +188,7 @@
+             method: 'POST',
+             url: initialPageData.reverse(urlName, self.user_id()),
+             success: function (data) {
+-                $modal.modal('hide');
++                $modal.modal('hide');  /* todo B5: js-modal */
+                 if (data.success) {
+                     self.action_error('');
+                     self.confirmation_sent_at(new Date());
+@@ -198,7 +198,7 @@
+ 
+             },
+             error: function () {
+-                $modal.modal('hide');
++                $modal.modal('hide');  /* todo B5: js-modal */
+                 $modal.find(".btn").removeSpinnerFromButton();
+                 self.action_error(gettext("Issue communicating with server. Try again."));
+             },
+@@ -563,7 +563,7 @@
+         }
+ 
+         if (options.show_deactivate_after_date) {
+-            $('#id_deactivate_after_date').datetimepicker({
++            $('#id_deactivate_after_date').datetimepicker({  /* todo B5: js-datetimepicker */
+                 format: 'MM-y',
+             });
+         }
+@@ -615,7 +615,7 @@
+     });
+ 
+     self.submitNewUser = function () {
+-        $("#new-user-modal").modal('hide');
++        $("#new-user-modal").modal('hide');  /* todo B5: js-modal */
+         var newUser = userModel(ko.mapping.toJS(self.stagedUser));
+         self.newUsers.push(newUser);
+         newUser.creation_status(STATUS.PENDING);

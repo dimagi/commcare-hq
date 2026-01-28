@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from django_digest.models import PartialDigest, UserNonce
 
-from .models import HQApiKey, UserHistory
+from .models import HQApiKey, Invitation, InvitationHistory, UserHistory
 from .user_data import SQLUserData
 
 
@@ -102,3 +102,5 @@ class UserDataAdmin(admin.ModelAdmin):
 
 
 admin.site.register(SQLUserData, UserDataAdmin)
+admin.site.register(InvitationHistory)
+admin.site.register(Invitation)

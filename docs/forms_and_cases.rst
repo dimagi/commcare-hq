@@ -86,8 +86,8 @@ name in order to know which DB needs to be queried.
 **Forms**
 
 - XFormInstance.objects.get_form(form_id, domain)
-- XFormInstance.objects.get_forms(form_ids, domain)
-- XFormInstance.objects.iter_forms(form_ids, domain)
+- XFormInstance.objects.get_forms(form_ids)
+- XFormInstance.objects.iter_forms(form_ids)
 - XFormInstance.objects.save_new_form(form)
 
   - only for new forms
@@ -99,8 +99,8 @@ name in order to know which DB needs to be queried.
 **Cases**
 
 - CommCareCase.objects.get_case(case_id, domain)
-- CommCareCase.objects.get_cases(case_ids, domain)
-- CommCareCase.objects.iter_cases(case_ids, domain)
+- CommCareCase.objects.get_cases(case_ids)
+- CommCareCase.objects.iter_cases(case_ids)
 - CommCareCase.objects.get_case_ids_in_domain(domain, type='dog')
 
 **Ledgers**

@@ -54,6 +54,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
+    FormActionsDiffException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -72,6 +73,7 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
+    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -225,7 +227,11 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    form.actions = _get_updates(form.actions, request.POST)
+    allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    try:
+        form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
+    except FormActionsDiffException as e:
+        return HttpResponseBadRequest(e.get_user_message())
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -242,10 +248,10 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
-def _get_updates(existing_actions, data):
+def _get_updates(existing_actions, data, allow_conflicts):
     updates = json.loads(data['actions'])
-    update_diff = json.loads(data['update_diff']) if 'update_diff' in data else {}
-    return existing_actions.with_updates(updates, update_diff)
+    update_diff = FormActionsDiff(json.loads(data['update_diff']) if 'update_diff' in data else {})
+    return existing_actions.with_updates(updates, update_diff, allow_conflicts)
 
 
 @waf_allow('XSS_BODY')
@@ -426,7 +432,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
-    if should_edit("custom_icon_form"):
+    if should_edit("custom_icon_type"):
         handle_custom_icon_edits(request, form, lang)
 
     if should_edit('session_endpoint_id'):
@@ -806,7 +812,7 @@ def get_form_view_context(
             {'test': assertion.test, 'text': assertion.text.get(current_lang)}
             for assertion in form.custom_assertions
         ],
-        'form_icon': None,
+        'form_custom_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
@@ -817,8 +823,8 @@ def get_form_view_context(
         }
     }
 
-    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
-        context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
+    if domain_has_privilege(domain, privileges.CUSTOM_ICON_BADGES):
+        context['form_custom_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
@@ -864,6 +870,8 @@ def get_form_view_context(
                 'schedule_options': schedule_options,
             })
     else:
+        # TODO: figure out a cleaner method
+        form.actions.make_multi()
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })

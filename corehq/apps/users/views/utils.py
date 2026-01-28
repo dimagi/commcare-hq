@@ -1,7 +1,11 @@
 from collections import defaultdict
 from itertools import chain
 
+from django.conf import settings
+from django.utils.timezone import now
 from django.utils.translation import gettext as _
+
+import requests
 
 from corehq.apps.api.es import flatten_list
 from corehq.apps.es import filters
@@ -12,6 +16,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
+    ConnectIDUserLink,
     DomainMembershipError,
     StaticRole,
     UserRole,
@@ -218,3 +223,27 @@ def filter_user_query_by_locations_accessible_to_user(user_es, domain, couch_use
 def user_can_access_invite(domain, couch_user, invite):
     return (couch_user.has_permission(domain, 'access_all_locations')
         or invite.assigned_locations.all().accessible_to_user(domain, couch_user).exists())
+
+
+def send_hq_sso_date_metric(link: ConnectIDUserLink):
+    # Check if the user has only this link and the link is not for a
+    # connect user or for a domain that is excluded for this metric.
+    has_other_links = (
+        ConnectIDUserLink.objects.filter(connectid_username=link.connectid_username)
+        .exclude(id=link.id)
+        .exists()
+    )
+    excluded_domains = ["ccc", "chc", "connect", "kangaroo", "qa", "test", "world-vision-ethiopia", "wellme"]
+    is_connect_user = link.commcare_user.username.startswith(link.connectid_username.lower())
+    is_domain_excluded = any(domain in link.domain for domain in excluded_domains)
+    is_valid = not (has_other_links or is_connect_user or is_domain_excluded)
+
+    if settings.CONNECTID_ADD_USER_ANALYTICS_URL and is_valid:
+        requests.post(
+            settings.CONNECTID_ADD_USER_ANALYTICS_URL,
+            json={
+                "username": link.connectid_username,
+                "hq_sso_date": now().isoformat() + "Z",
+            },
+            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY),
+        )

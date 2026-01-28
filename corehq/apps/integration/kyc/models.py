@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext as _
@@ -12,7 +11,6 @@ from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
-from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 
 
@@ -31,7 +29,40 @@ class KycProviders(models.TextChoices):
     # When adding a new provider:
     # 1. Add connection settings to `settings.py` if necessary
     # 2. Add it to `KycConfig.get_connections_settings()`
+    # 3. Add required threshold fields to `KycProviderThresholdFields`
     MTN_KYC = 'mtn_kyc', _('MTN KYC')
+    ORANGE_CAMEROON_KYC = 'orange_cameroon_kyc', _('Orange Cameroon KYC')
+
+
+class KycProviderThresholdFields:
+    """
+    Defines the required threshold fields for each KYC provider.
+    When adding a new provider, add its required fields here.
+    """
+    MTN_KYC_REQUIRED_FIELDS = [
+        'firstName',
+        'lastName',
+        'phoneNumber',
+        'emailAddress',
+        'nationalIdNumber',
+        'streetAddress',
+        'city',
+        'postCode',
+        'country',
+    ]
+    ORANGE_CAMEROON_KYC_REQUIRED_FIELDS = [
+        'firstName',
+        'lastName',
+    ]
+
+    @classmethod
+    def get_required_fields(cls, provider):
+        if provider == KycProviders.MTN_KYC:
+            return cls.MTN_KYC_REQUIRED_FIELDS
+        elif provider == KycProviders.ORANGE_CAMEROON_KYC:
+            return cls.ORANGE_CAMEROON_KYC_REQUIRED_FIELDS
+        else:
+            raise ValueError(f'Unable to determine required threshold fields for KYC provider {provider!r}.')
 
 
 class KycConfig(models.Model):
@@ -43,6 +74,14 @@ class KycConfig(models.Model):
         max_length=25,
         choices=KycProviders.choices,
         default=KycProviders.MTN_KYC,
+    )
+    phone_number_field = models.CharField(max_length=126, null=True, blank=True)
+    passing_threshold = jsonfield.JSONField(default=dict)
+    connection_settings = models.ForeignKey(
+        ConnectionSettings,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -65,21 +104,23 @@ class KycConfig(models.Model):
         elif self.user_data_store != UserDataStore.OTHER_CASE_TYPE:
             self.other_case_type = None
 
-    def get_connection_settings(self):
+    def get_required_threshold_fields(self):
+        """
+        Returns the list of required threshold fields for the configured provider.
+
+        :return: List of required field names
+        """
+        return KycProviderThresholdFields.get_required_fields(self.provider)
+
+    def get_kyc_api_method(self):
         if self.provider == KycProviders.MTN_KYC:
-            kyc_settings = settings.MTN_KYC_CONNECTION_SETTINGS
-            return ConnectionSettings(
-                domain=self.domain,
-                name=KycProviders.MTN_KYC.label,
-                url=kyc_settings['url'],
-                auth_type=OAUTH2_CLIENT,
-                client_id=kyc_settings['client_id'],
-                client_secret=kyc_settings['client_secret'],
-                token_url=kyc_settings['token_url'],
-            )
-        # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
+            from corehq.apps.integration.kyc.services import mtn_kyc_verify
+            return mtn_kyc_verify
+        elif self.provider == KycProviders.ORANGE_CAMEROON_KYC:
+            from corehq.apps.integration.kyc.services import orange_cameroon_kyc_verify
+            return orange_cameroon_kyc_verify
         else:
-            raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
+            raise ValueError(f'Unable to determine KYC API method for provider {self.provider!r}.')
 
     def get_kyc_users_query(self):
         if self.user_data_store == UserDataStore.CUSTOM_USER_DATA:
@@ -155,6 +196,7 @@ class KycConfig(models.Model):
 class KycProperties:
     KYC_VERIFICATION_STATUS = 'kyc_verification_status'
     KYC_LAST_VERIFIED_AT = 'kyc_last_verified_at'
+    KYC_VERIFIED_BY = 'kyc_verified_by'
     KYC_VERIFICATION_ERROR = 'kyc_verification_error'
     KYC_PROVIDER = 'kyc_provider'
 
@@ -247,10 +289,14 @@ class KycUser:
         return value
 
     @property
+    def kyc_verified_by(self):
+        return self.user_data.get(KycProperties.KYC_VERIFIED_BY)
+
+    @property
     def kyc_provider(self):
         return self.user_data.get(KycProperties.KYC_PROVIDER)
 
-    def update_verification_status(self, verification_status, device_id=None, error_message=None):
+    def update_verification_status(self, verification_status, verified_by, device_id=None, error_message=None):
         from corehq.apps.hqcase.utils import update_case
 
         assert verification_status in [
@@ -262,12 +308,15 @@ class KycUser:
             KycProperties.KYC_PROVIDER: self.kyc_config.provider,
             KycProperties.KYC_LAST_VERIFIED_AT: datetime.utcnow().isoformat(),
             KycProperties.KYC_VERIFICATION_STATUS: verification_status,
+            KycProperties.KYC_VERIFIED_BY: verified_by,
             KycProperties.KYC_VERIFICATION_ERROR: error_message if error_message else '',
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
             user_data_obj.update(update)
             user_data_obj.save()
+            # Save the user to trigger ES update via couch_user_post_save signal
+            CommCareUser.get(self._user_or_case_obj.user_id).save()
         else:
             if isinstance(self._user_or_case_obj, CommCareUser):
                 case_id = self._user_or_case_obj.get_usercase().case_id
@@ -280,7 +329,7 @@ class KycUser:
                 device_id=device_id or f'{__name__}.update_status',
             )
             if isinstance(self._user_or_case_obj, CommCareCase):
-                self._user_or_case_obj.refresh_from_db()
+                self._user_or_case_obj = CommCareCase.objects.get_case(case_id, self.kyc_config.domain)
         self._user_data = None
 
 

@@ -23,8 +23,8 @@
       <!-- ko foreach: caseTypes -->
       <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
         {# navigation handle by URL hash #}
-        <a data-bind="attr: {href: $data.url}">
-          <span data-bind="text: $data.name" style="display: inline-block">
+        <a data-bind="attr: {href: $data.url, 'data-target': $data.bootstrap3TabSelector}">
+          <span data-bind="text: $data.displayName" style="display: inline-block">
           </span>
           <span
             data-bind="visible: $data.deprecated"
@@ -184,6 +184,7 @@
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   {% initial_page_data 'casePropertyLimit' case_property_limit %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
+  {% initial_page_data 'uses_data_type_validation' uses_data_type_validation %}
   {% url 'geospatial_settings' domain as geospatial_settings_url %}
   <h4 id="dd-loading">
     <i class="fa fa-spin fa-spinner"></i>
@@ -200,14 +201,14 @@
     {% if not request.is_view_only %}
       <div
         id="gtm-save-btn"
-        data-bind="saveButton: saveButton, visible: $root.activeCaseType()"
+        data-bind="saveButton: saveButton, visible: $root.getActiveCaseType()"
       ></div>
     {% endif %}
     <div class="row">
       <div class="col-xs-12">
         <div>
           <h3
-            data-bind="text: $root.activeCaseType()"
+            data-bind="text: $root.getActiveCaseType().displayName"
             style="display: inline-block;"
           ></h3>
           <span
@@ -290,7 +291,7 @@
             {% trans "Delete Case Type" %}
           </a>
         {% endif %}
-        <div data-bind="visible: $root.activeCaseType()">
+        <div data-bind="visible: $root.getActiveCaseType()">
           <button
             data-bind="click: $root.showDeprecated, visible: !showAll()"
             class="btn btn-default pull-right"
@@ -301,21 +302,19 @@
           >{% trans "Hide Deprecated" %}</button>
           <div id="data-dictionary-table">
             <div class="table-row table-header">
-            <div class="row-item-small"></div>
+            <div class="row-item-tiny"></div>
             <div class="row-item">{% trans "Case Property" %}</div>
             <div class="row-item">{% trans "Label" %}</div>
-            {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+            {% if uses_data_type_validation %}
               <div class="row-item">{% trans "Data Type" %}</div>
+              <div class="row-item">
+                {% include "data_dictionary/partials/valid_values_th_content.html" %}
+              </div>
             {% endif %}
             <div class="row-item-big">{% trans "Description" %}</div>
             {% if fhir_integration_enabled %}
               <div class="row-item">
                 {% trans "FHIR Resource Property Path" %}
-              </div>
-            {% endif %}
-            {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-              <div class="row-item">
-                {% include "data_dictionary/partials/valid_values_th_content.html" %}
               </div>
             {% endif %}
             {% if not request.is_view_only %}
@@ -353,7 +352,7 @@
                     css: { 'group-deprecated': toBeDeprecated() },
                     visible: !deprecated || $root.showAll()"
                 >
-                  <div class="row-item-small">
+                  <div class="row-item-tiny">
                     {% if not request.is_view_only %}
                       <i class="sortable-handle fa-solid fa-up-down"></i>
                     {% endif %}
@@ -383,10 +382,11 @@
                   <div class="row-item">
                     &nbsp;{# Empty cell where "Label" is in case property rows #}
                   </div>
-                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                  {% if uses_data_type_validation %}
                     <div class="row-item">
                       {% trans "Case Property Group" %}
                     </div>
+                    <div class="row-item"></div>
                   {% endif %}
                   <div class="row-item-big">
                     <!-- ko if: name() !== ''-->
@@ -398,9 +398,6 @@
                     <!-- /ko -->
                   </div>
                   {% if fhir_integration_enabled %}
-                    <div class="row-item"></div>
-                  {% endif %}
-                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
                     <div class="row-item"></div>
                   {% endif %}
                   {% if not request.is_view_only %}
@@ -436,7 +433,7 @@
                     class="table-row"
                     data-bind="visible: expanded() && (!deprecated() || $root.showAll()) && !deleted()"
                   >
-                    <div class="row-item-small">
+                    <div class="row-item-tiny">
                     {% if not request.is_view_only %}
                       <i class="sortable-handle fa-solid fa-up-down"></i>
                     {% endif %}
@@ -455,7 +452,7 @@
                           attr: {'placeholder': 'Click here to add a label'}"
                       />
                     </div>
-                    {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+                    {% if uses_data_type_validation %}
                       <div class="row-item main-form">
                         <select
                           class="form-control"
@@ -479,6 +476,17 @@
                         >
                           <i class="fa fa-question-circle icon-question-sign"></i>
                         </span>
+                      </div>
+                      <div class="row-item">
+                        <div data-bind="visible: canHaveAllowedValues()">
+                          <div data-bind="jqueryElement: $allowedValues"></div>
+                        </div>
+                        <div
+                          data-bind="visible: dataType() === 'date'"
+                          class="help-block"
+                        >
+                          {% trans "YYYY-MM-DD" %}
+                        </div>
                       </div>
                     {% endif %}
                     <div class="row-item-big main-form">
@@ -510,19 +518,6 @@
                         class="fa fa-undo"
                       ></button>
                       <!-- /ko -->
-                    </div>
-                  {% endif %}
-                  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-                    <div class="row-item">
-                      <div data-bind="visible: canHaveAllowedValues()">
-                        <div data-bind="jqueryElement: $allowedValues"></div>
-                      </div>
-                      <div
-                        data-bind="visible: dataType() === 'date'"
-                        class="help-block"
-                      >
-                        {% trans "YYYY-MM-DD" %}
-                      </div>
                     </div>
                   {% endif %}
                   {% if not request.is_view_only %}

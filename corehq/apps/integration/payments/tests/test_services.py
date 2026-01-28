@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from json import JSONDecodeError
 from unittest.mock import Mock, patch
 
@@ -18,7 +19,7 @@ from corehq.apps.integration.payments.const import (
     PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
-from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.models import MoMoConfig, MoMoProviders
 from corehq.apps.integration.payments.services import (
     _request_payment,
     request_payment_status,
@@ -137,6 +138,7 @@ class TestPaymentRequest(TestCase):
             domain=cls.domain,
             connection_settings=connection_settings,
             environment='sandbox',
+            provider=MoMoProviders.MTN_MONEY,
         )
         cls.case_list = []
 
@@ -190,7 +192,7 @@ class TestPaymentRequest(TestCase):
         with pytest.raises(PaymentRequestError, match="Invalid payee details"):
             _request_payment(verified_case_with_missing_data, self.config)
 
-    @patch('corehq.apps.integration.payments.services._make_payment_request')
+    @patch('corehq.apps.integration.payments.services.make_mtn_payment_request')
     def test_successful_payment_request(self, make_payment_request_mock):
         make_payment_request_mock.return_value = str(uuid.uuid4())
 
@@ -238,6 +240,7 @@ class TestRequestPaymentsForCases(TestCase):
             domain=cls.domain,
             connection_settings=connection_settings,
             environment='sandbox',
+            provider=MoMoProviders.MTN_MONEY,
         )
 
         cls.factory = CaseFactory(cls.domain)
@@ -268,7 +271,7 @@ class TestRequestPaymentsForCases(TestCase):
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
         }
 
-    @patch('corehq.apps.integration.payments.services._make_payment_request')
+    @patch('corehq.apps.integration.payments.services.make_mtn_payment_request')
     @patch('corehq.apps.integration.payments.services.bulk_update_cases')
     def test_request_payments_for_cases(self, bulk_update_cases_mock, make_payment_request_mock):
         transaction_id = str(uuid.uuid4())
@@ -292,7 +295,7 @@ class TestRequestPaymentsForCases(TestCase):
             assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.SUBMITTED
             assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
 
-    @patch('corehq.apps.integration.payments.services._make_payment_request')
+    @patch('corehq.apps.integration.payments.services.make_mtn_payment_request')
     @patch('corehq.apps.integration.payments.services.bulk_update_cases')
     def test_request_payments_for_cases_with_some_missing_data(
         self, bulk_update_cases_mock, make_payment_request_mock
@@ -432,6 +435,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
         self.mock_config = Mock(spec=MoMoConfig)
         self.mock_config.domain = 'test-domain'
         self.mock_config.environment = 'sandbox'
+        self.mock_config.provider = MoMoProviders.MTN_MONEY
 
         self.mock_connection_settings = Mock()
         self.mock_config.connection_settings = self.mock_connection_settings
@@ -440,46 +444,36 @@ class TestRequestPaymentStatus(SimpleTestCase):
         self.mock_payment_case.case_id = str(uuid.uuid4())
         self.transaction_id = str(uuid.uuid4())
 
+    def _assert_result(self, result, expected_status, expected_error):
+        self.assertEqual(result[PaymentProperties.PAYMENT_STATUS], expected_status)
+        self.assertEqual(result[PaymentProperties.PAYMENT_ERROR], expected_error)
+        self.assertIsInstance(
+            datetime.fromisoformat(
+                result[PaymentProperties.PAYMENT_STATUS_CONFIRMED_ON]
+            ),
+            datetime
+        )
+
     def test_successful_payment_status_request(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'status': PaymentStatus.SUCCESSFUL,
-            'reason': None
-        }
+        mock_request = Mock(return_value=(PaymentStatus.SUCCESSFUL, None))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.return_value = mock_response
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
-
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
-                PaymentProperties.PAYMENT_ERROR: '',
-            }
-            self.assertEqual(result, expected)
-            mock_request.assert_called_once_with(self.transaction_id, self.mock_config)
+        self._assert_result(result, PaymentStatus.SUCCESSFUL, '')
+        mock_request.assert_called_once_with(self.transaction_id, self.mock_config)
 
     def test_failed_payment_status_request(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'status': PaymentStatus.FAILED,
-            'reason': 'Insufficient funds'
-        }
+        mock_request = Mock(return_value=(PaymentStatus.FAILED, 'Insufficient funds'))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.return_value = mock_response
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
-
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
-                PaymentProperties.PAYMENT_ERROR: 'Insufficient funds',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.FAILED, 'Insufficient funds')
 
     def test_no_transaction_id(self):
         """Test error when no transaction ID is found"""
@@ -487,11 +481,7 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
         result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-        expected = {
-            PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-            PaymentProperties.PAYMENT_ERROR: 'MissingTransactionId',
-        }
-        self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, 'MissingTransactionId')
 
     def test_http_error_404(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -500,16 +490,12 @@ class TestRequestPaymentStatus(SimpleTestCase):
         mock_response.status_code = 404
         http_error = requests.exceptions.HTTPError(response=mock_response)
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = http_error
+        mock_request = Mock(side_effect=http_error)
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.HTTP_ERROR_404,
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, PaymentStatusErrorCode.HTTP_ERROR_404)
 
     def test_http_error_500_with_json_response(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -522,16 +508,12 @@ class TestRequestPaymentStatus(SimpleTestCase):
         }
         http_error = requests.exceptions.HTTPError(response=mock_response)
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = http_error
+        mock_request = Mock(side_effect=http_error)
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'INTERNAL_PROCESSING_ERROR',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, 'INTERNAL_PROCESSING_ERROR')
 
     def test_http_error_500_with_json_decode_error(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -541,16 +523,12 @@ class TestRequestPaymentStatus(SimpleTestCase):
         mock_response.json.side_effect = JSONDecodeError("Expecting value", "", 0)
         http_error = requests.exceptions.HTTPError(response=mock_response)
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = http_error
+        mock_request = Mock(side_effect=http_error)
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'HttpError500',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, 'HttpError500')
 
     def test_http_error_502_raises_exception(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
@@ -559,11 +537,11 @@ class TestRequestPaymentStatus(SimpleTestCase):
         mock_response.status_code = 502
         http_error = requests.exceptions.HTTPError(response=mock_response)
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = http_error
+        mock_request = Mock(side_effect=http_error)
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            with pytest.raises(PaymentRequestError, match="Failed to fetch payment status with code: 502"):
-                request_payment_status(self.mock_payment_case, self.mock_config)
+        with pytest.raises(PaymentRequestError, match="Failed to fetch payment status with code: 502"):
+            request_payment_status(self.mock_payment_case, self.mock_config)
 
     @patch('corehq.apps.integration.payments.services.notify_error')
     def test_unexpected_http_error(self, mock_notify_error):
@@ -575,148 +553,91 @@ class TestRequestPaymentStatus(SimpleTestCase):
         mock_response.json.return_value = {}
         http_error = requests.exceptions.HTTPError(response=mock_response)
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = http_error
+        mock_request = Mock(side_effect=http_error)
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'HttpError418',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, 'HttpError418')
 
-            # Verify that error notification was called
-            mock_notify_error.assert_called_once()
-            call_args = mock_notify_error.call_args
-            self.assertIn("Unexpected HTTP error 418", call_args[0][0])
-            self.assertEqual(call_args[1]['details']['domain'], 'test-domain')
-            self.assertEqual(call_args[1]['details']['case_id'], self.mock_payment_case.case_id)
+        # Verify that error notification was called
+        mock_notify_error.assert_called_once()
+        call_args = mock_notify_error.call_args
+        self.assertIn("Unexpected HTTP error 418", call_args[0][0])
+        self.assertEqual(call_args[1]['details']['domain'], 'test-domain')
+        self.assertEqual(call_args[1]['details']['case_id'], self.mock_payment_case.case_id)
 
     def test_connection_timeout_error(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = requests.exceptions.Timeout("Connection timed out")
+        mock_request = Mock(side_effect=requests.exceptions.Timeout("Connection timed out"))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            with pytest.raises(
-                PaymentRequestError,
-                match="Failed to fetch payment status. Unable to connect to server. Please try again later."
-            ):
-                request_payment_status(self.mock_payment_case, self.mock_config)
+        with pytest.raises(
+            PaymentRequestError,
+            match="Failed to fetch payment status. Unable to connect to server. Please try again later."
+        ):
+            request_payment_status(self.mock_payment_case, self.mock_config)
 
     def test_connection_error(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = requests.exceptions.ConnectionError("Failed to establish connection")
+        mock_request = Mock(side_effect=requests.exceptions.ConnectionError("Failed to establish connection"))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            with pytest.raises(
-                PaymentRequestError,
-                match="Failed to fetch payment status. Unable to connect to server. Please try again later."
-            ):
-                request_payment_status(self.mock_payment_case, self.mock_config)
+        with pytest.raises(
+            PaymentRequestError,
+            match="Failed to fetch payment status. Unable to connect to server. Please try again later."
+        ):
+            request_payment_status(self.mock_payment_case, self.mock_config)
 
     @patch('corehq.apps.integration.payments.services.notify_exception')
     def test_unexpected_exception(self, mock_notify_exception):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.side_effect = ValueError("Unexpected error")
+        mock_request = Mock(side_effect=ValueError("Unexpected error"))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'UnexpectedError',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, 'UnexpectedError')
 
-            # Verify that exception notification was called
-            mock_notify_exception.assert_called_once()
-            call_args = mock_notify_exception.call_args
-            self.assertIn("Unexpected error occurred while fetching status", call_args[0][1])
-            self.assertEqual(call_args[1]['details']['domain'], 'test-domain')
-            self.assertEqual(call_args[1]['details']['case_id'], self.mock_payment_case.case_id)
+        # Verify that exception notification was called
+        mock_notify_exception.assert_called_once()
+        call_args = mock_notify_exception.call_args
+        self.assertIn("Unexpected error occurred while fetching status", call_args[0][1])
+        self.assertEqual(call_args[1]['details']['domain'], 'test-domain')
+        self.assertEqual(call_args[1]['details']['case_id'], self.mock_payment_case.case_id)
 
     def test_unexpected_status_value(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'status': 'invalid',  # unexpected status
-            'reason': 'Processing',
-        }
+        mock_request = Mock(return_value=('invalid', 'Processing'))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.return_value = mock_response
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
-
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.ERROR,
-                PaymentProperties.PAYMENT_ERROR: 'UnexpectedStatus-invalid',
-            }
-            self.assertEqual(result, expected)
-
-    def test_status_with_uppercase(self):
-        self.mock_payment_case.get_case_property.return_value = self.transaction_id
-
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'status': 'SUCCESSFUL',  # uppercase
-            'reason': None
-        }
-
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.return_value = mock_response
-
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
-
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
-                PaymentProperties.PAYMENT_ERROR: '',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.ERROR, 'UnexpectedStatus-invalid')
 
     def test_successful_status_without_reason(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'status': PaymentStatus.SUCCESSFUL
-        }
+        mock_request = Mock(return_value=(PaymentStatus.SUCCESSFUL, None))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.return_value = mock_response
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
-
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL,
-                PaymentProperties.PAYMENT_ERROR: '',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.SUCCESSFUL, '')
 
     def test_failed_status_with_reason(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'status': PaymentStatus.FAILED,
-            'reason': 'Account blocked'
-        }
+        mock_request = Mock(return_value=(PaymentStatus.FAILED, 'Account blocked'))
+        self.mock_config.get_payment_status_api_method.return_value = mock_request
 
-        with patch('corehq.apps.integration.payments.services._make_payment_status_request') as mock_request:
-            mock_request.return_value = mock_response
+        result = request_payment_status(self.mock_payment_case, self.mock_config)
 
-            result = request_payment_status(self.mock_payment_case, self.mock_config)
-
-            expected = {
-                PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
-                PaymentProperties.PAYMENT_ERROR: 'Account blocked',
-            }
-            self.assertEqual(result, expected)
+        self._assert_result(result, PaymentStatus.FAILED, 'Account blocked')
 
 
 class TestRequestPaymentsStatusForCases(TestCase):
@@ -739,6 +660,7 @@ class TestRequestPaymentsStatusForCases(TestCase):
             domain=cls.domain,
             connection_settings=cls.connection_settings,
             environment='sandbox',
+            provider=MoMoProviders.MTN_MONEY,
         )
 
     @classmethod
@@ -750,6 +672,20 @@ class TestRequestPaymentsStatusForCases(TestCase):
     def _create_payment_case(self, name, properties):
         case = _create_case(self.factory, name, properties)
         return case
+
+    @staticmethod
+    def _mock_side_effect_case_wise(mock_responses):
+        """Return a side-effect callable for mocks that returns/raises based on case_id.
+        mock_responses: dict mapping case_id -> either a response dict or Exception to raise.
+        """
+
+        def _side_effect(case, *args, **kwargs):
+            resp = mock_responses[case.case_id]
+            if isinstance(resp, Exception):
+                raise resp
+            return resp
+
+        return _side_effect
 
     @patch('corehq.apps.integration.payments.services.request_payment_status')
     def test_request_payments_status_for_cases_success(self, mock_request_status):
@@ -766,13 +702,14 @@ class TestRequestPaymentsStatusForCases(TestCase):
         for case in submitted_cases:
             self.addCleanup(case.delete)
 
-        mock_request_status.side_effect = [
-            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
-            {
+        mock_responses = {
+            submitted_cases[0].case_id: {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            submitted_cases[1].case_id: {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
                 PaymentProperties.PAYMENT_ERROR: 'DepositPayerFailed',
-            }
-        ]
+            },
+        }
+        mock_request_status.side_effect = self._mock_side_effect_case_wise(mock_responses)
 
         case_ids = [case.case_id for case in submitted_cases]
         request_payments_status_for_cases(case_ids, self.config)
@@ -841,14 +778,16 @@ class TestRequestPaymentsStatusForCases(TestCase):
         for case in submitted_cases:
             self.addCleanup(case.delete)
 
-        mock_request_status.side_effect = [
-            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
-            PaymentRequestError("Network timeout"),
-            {
+        mock_responses = {
+            submitted_cases[0].case_id: {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            submitted_cases[1].case_id: PaymentRequestError("Network timeout"),
+            submitted_cases[2].case_id: {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
                 PaymentProperties.PAYMENT_ERROR: 'DepositPayerInvalidCurrency',
-            }
-        ]
+            },
+        }
+
+        mock_request_status.side_effect = self._mock_side_effect_case_wise(mock_responses)
 
         case_ids = [case.case_id for case in submitted_cases]
         request_payments_status_for_cases(case_ids, self.config)
@@ -910,14 +849,15 @@ class TestRequestPaymentsStatusForCases(TestCase):
         for case in cases:
             self.addCleanup(case.delete)
 
-        mock_request_status.side_effect = [
-            {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
-            {
+        mock_responses = {
+            cases[0].case_id: {PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUCCESSFUL},
+            cases[1].case_id: {
                 PaymentProperties.PAYMENT_STATUS: PaymentStatus.FAILED,
                 PaymentProperties.PAYMENT_ERROR: 'DepositPayerNotAllowed',
             },
-            PaymentRequestError("Timeout")
-        ]
+            cases[2].case_id: PaymentRequestError("Timeout"),
+        }
+        mock_request_status.side_effect = self._mock_side_effect_case_wise(mock_responses)
 
         case_ids = [case.case_id for case in cases]
         request_payments_status_for_cases(case_ids, self.config)

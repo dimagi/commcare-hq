@@ -6,8 +6,7 @@ from celery import current_app
 from celery.signals import after_task_publish, before_task_publish, task_postrun, task_prerun
 from dimagi.utils.parsing import string_to_utc_datetime
 from django.core.cache import cache
-from django.db import close_old_connections
-from psycopg2._psycopg import InterfaceError
+from django.db import InterfaceError, close_old_connections
 
 from corehq.util.metrics import push_metrics
 from corehq.util.quickcache import quickcache
@@ -49,8 +48,6 @@ def update_celery_state(sender=None, headers=None, **kwargs):
     except InterfaceError:
         close_old_connections()
         backend.store_result(headers['id'], None, CELERY_STATE_SENT)
-    finally:
-        close_old_connections()
 
 
 @task_prerun.connect

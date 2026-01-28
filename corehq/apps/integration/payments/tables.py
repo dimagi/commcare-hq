@@ -20,6 +20,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'payment_verified',
         'payment_verified_by',
         'payment_status',
+        'payment_status_confirmed_on',
         'payment_timestamp',
         'kyc_status',
         'campaign',
@@ -88,6 +89,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     payment_status = columns.Column(
         verbose_name=_("Payment Status"),
         empty_values=(),
+    )
+    payment_status_confirmed_on = DateTimeStringColumn(
+        verbose_name=_("Status Confirmed On"),
     )
     payment_timestamp = DateTimeStringColumn(
         verbose_name=_("Submitted At"),

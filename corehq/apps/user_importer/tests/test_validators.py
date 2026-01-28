@@ -442,7 +442,6 @@ class TestLocationValidator(LocationHierarchyTestCase):
         delete_all_users()
 
 
-@flag_enabled('RESTRICT_USER_PROFILE_ASSIGNMENT')
 class TestProfileValidator(TestCase):
     domain = 'test-domain'
 

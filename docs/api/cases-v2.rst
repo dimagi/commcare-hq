@@ -24,15 +24,18 @@ All endpoints are available under
 ``www.commcarehq.org/a/<domain>/api/case/v2/``
 
 =========================== ======================================
-**Endpoint**                **Description**
+Endpoint                    Description
+=========================== ======================================
 GET /                       Query list of cases
 GET /<case_id>              Get individual case
+GET /ext/<ext_id>/          Get individual case by external ID
 GET /<case_id>,<case_id>... Get multiple cases by ID
 POST /bulk-fetch/           Get cases in bulk by ID or external ID
 POST /                      Create new case
 POST /                      Create or update cases in bulk
 PUT /<case_id>              Update existing case
-PUT /                       Update existing case by external ID
+PUT /ext/<ext_id>/          Upsert case by external ID
+PUT /                       Upsert case by external ID
 =========================== ======================================
 
 Single Case Serialization Format
@@ -72,8 +75,8 @@ the supported endpoints.
 **Included fields**
 
 +-----------------------------+---------------------------------------+
-| **Field Name**              | **Description**                       |
-+-----------------------------+---------------------------------------+
+| Field Name                  | Description                           |
++=============================+=======================================+
 | domain                      |                                       |
 +-----------------------------+---------------------------------------+
 | case_id                     |                                       |
@@ -130,8 +133,8 @@ the supported endpoints.
 | indices.<name>.relationship | Either “child” or “extension”         |
 +-----------------------------+---------------------------------------+
 
-Case Create / Update Format
----------------------------
+Case Create/Update/Upsert Format
+--------------------------------
 
 Below is the format expected by the PUT and POST endpoints when creating
 or updating a case.
@@ -163,13 +166,13 @@ or updating a case.
 property values.
 
 +-----------------------------+---------------------------------------+
-| **Field Name**              | **Description**                       |
-+-----------------------------+---------------------------------------+
+| Field Name                  | Description                           |
++=============================+=======================================+
 | case_id                     | Only allowed in bulk updates.  Will   |
 |                             | be server generated for case          |
-|                             | creations,                            |
-|                             | and passed in as part of the resource |
-|                             | URI for individual updates            |
+|                             | creations, and passed in as part of   |
+|                             | the resource URI for individual       |
+|                             | updates.                              |
 +-----------------------------+---------------------------------------+
 | case_type                   | Required for new cases, optional for  |
 |                             | updates.  Max length 255 characters.  |
@@ -240,8 +243,8 @@ This endpoint returns a list of cases, which can be filtered as
 described below.
 
 +----------------------------------+----------------------------------+
-| **Filter Param**                 | **Description**                  |
-+----------------------------------+----------------------------------+
+| Filter Param                     | Description                      |
++==================================+==================================+
 | limit                            | Defaults to 20, maximum 5000     |
 +----------------------------------+----------------------------------+
 | external_id                      |                                  |
@@ -310,10 +313,20 @@ towards the end of the results set.
 Get individual case
 ~~~~~~~~~~~~~~~~~~~
 
-Interface - ``GET /a/<domain>/api/case/v2/<case_id>``
+Interface -
+
+* ``GET /a/<domain>/api/case/v2/<case_id>``
+* ``GET /a/<domain>/api/case/v2/ext/<ext_id>/``
+
 
 This API takes no additional parameters.  The return value is a single
 case serialized as described in "`Single Case Serialization Format`_".
+
+.. WARNING::
+
+   If the case is identified by its external ID, and that ID is not
+   unique, only one case will be returned.
+
 
 Get Case's index information (parent/child or host/extension)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -422,8 +435,8 @@ Response format (cases truncated for clarity)
     }
 
 +--------------------+------------------------------------------------+
-| **Response field** | **Description**                                |
-+--------------------+------------------------------------------------+
+| Response field     | Description                                    |
++====================+================================================+
 | matching_records   | The number of cases that were found            |
 +--------------------+------------------------------------------------+
 | missing_records    | The number of cases that were not found        |
@@ -447,12 +460,23 @@ Create Case
 Interface - ``POST /a/<domain>/api/case/v2/``
 
 The body of the request should contain the case update format described
-in "`Case Create / Update Format`_"
+in "`Case Create/Update/Upsert Format`_"
+
+.. NOTE::
+
+   Requests to ``POST /a/<domain>/api/case/v2/`` where the payload is a
+   case (not a list) will always create a case. If the data sets the
+   external_id property to an existing value, CommCare HQ will create a
+   duplicate external ID. (In other words, POST for an individual case
+   is not an upsert operation.) If there is a possibility of submitting
+   duplicate external_id values by accident, rather use the upsert
+   functionality offered by the PUT interface detailed below.
 
 Return value includes two fields:
 
 ========= ===========================================
-**Param** **Description**
+Param     Description
+========= ===========================================
 xform_id  ID of the form generated to create the case
 case      Serialized version of the case
 ========= ===========================================
@@ -465,15 +489,25 @@ available.
 Update Existing Case
 ~~~~~~~~~~~~~~~~~~~~
 
-Interface - ``PUT /a/<domain>/api/case/v2/<case_id>``
+Interface -
+
+* ``PUT /a/<domain>/api/case/v2/<case_id>``
+* ``PUT /a/<domain>/api/case/v2/ext/<ext_id>/``
 
 The body of the request should contain the case update format described
-in "`Case Create / Update Format`_"
+in "`Case Create/Update/Upsert Format`_".
+
+.. NOTE::
+
+   If the case is identified by its external ID, then it will be updated
+   if it is found, and created if it is not found. (In other words, PUT
+   by external ID is an upsert operation.)
 
 Return value includes two fields:
 
 ========= ===============================================
-**Param** **Description**
+Param     Description
+========= ===============================================
 xform_id  ID of the form generated to update the case
 case      Serialized version of the new state of the case
 ========= ===============================================
@@ -484,7 +518,7 @@ Bulk Create/Update Cases
 Interface - ``POST /a/<domain>/api/case/v2/``
 
 The body of the request should contain a list of case updates in the
-format described in "`Case Create / Update Format`_".
+format described in "`Case Create/Update/Upsert Format`_".
 
 In addition to those fields, **this endpoint also requires that each
 update include a “create” field set to either true or false.**  This is
@@ -493,10 +527,34 @@ used to determine whether it is a case creation or update.
 The response contains:
 
 ========= =========================================================
-**Param** **Description**
+Param     Description
+========= =========================================================
 xform_id  ID of the (single) form generated to update all cases
 cases     Serialized version of the new state of the cases provided
 ========= =========================================================
+
+Upsert
+^^^^^^
+
+If a case update includes a value for "external_id" and does not include
+a value for "case_id", then the "create" field may be omitted, and the
+API will upsert the case based on the value of "external_id". This
+operation is slower than if the "create" field is included. Ensure that
+the upserted cases in a single request are unique, and that concurrent
+requests cannot include the same cases.
+
+.. DANGER::
+
+   If a single request tries to upsert the same case more than once,
+   **duplicate cases will be created!** This is because CommCare HQ
+   searches for all upserted cases by their external IDs before any
+   changes are made.
+
+.. WARNING::
+
+   This operation is vulnerable to a race condition where, if two
+   simultaneous requests try to upsert the same case, two cases could be
+   created.
 
 .. _limitations-1:
 
@@ -560,8 +618,8 @@ generated on the server.  Here are some notable parameters associated
 with that:
 
 +--------------------+------------------------------------------------+
-| **Param**          | **Description**                                |
-+--------------------+------------------------------------------------+
+| Param              | Description                                    |
++====================+================================================+
 | username / user_id | Corresponding to the user who submitted the    |
 |                    | request.  The API cannot not be used to make   |
 |                    | it appear that another user made case updates. |

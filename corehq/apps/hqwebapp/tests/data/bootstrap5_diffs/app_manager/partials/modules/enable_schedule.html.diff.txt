@@ -1,0 +1,56 @@
+--- 
++++ 
+@@ -9,10 +9,10 @@
+     </legend>
+ 
+     <form>
+-      <div class="form-group">
+-        <div class="checkbox">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <div class="checkbox">  {# todo B5: css-checkbox #}
+           <label>
+-            <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
++            <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />  {# todo B5: css-checkbox #}
+             {% trans "Enable visit scheduler" %}
+             <span class="hq-help-template"
+                   data-title="{% trans 'Visit Schedule' %}"
+@@ -23,7 +23,7 @@
+               <strong>
+                 {% blocktrans %}
+                   Visit schedule will be ignored as not all
+-                  forms in the case list update or close a case.
++                  forms in the case list update or btn-close a case.  {# todo B5: css-close #}
+                 {% endblocktrans %}
+               </strong>
+             </div>
+@@ -44,7 +44,7 @@
+         <tbody data-bind="template: { name: 'phase-template', foreach: phases},
+                                   sortableList: phases"></tbody>
+       </table>
+-      <button class="btn btn-default" data-bind="click: addPhase">
++      <button class="btn btn-outline-primary" data-bind="click: addPhase">
+         <i class="fa fa-plus"></i>
+         {% trans "Add Phase" %}
+       </button>
+@@ -65,11 +65,11 @@
+       </td>
+       <td data-bind="text: form_abbreviations"></td>
+       <td>
+-        <i style="cursor: pointer;" class="fa fa-remove"
++        <i style="cursor: pointer;" class="fa fa-remove"  {# todo B5: inline-style #}
+            data-bind="click: $parent.removePhase,
+                               visible: forms().length == 0
+                               "></i>
+-        <i style="cursor: pointer;"
++        <i style="cursor: pointer;"  {# todo B5: inline-style #}
+            class="fa fa-question-circle icon-blue"
+            title="{% trans 'You can only delete phases that have no forms' %}"
+            data-bind="visible: forms().length != 0"></i>
+@@ -79,6 +79,6 @@
+ {% else %}
+   {% blocktrans %}
+     Visit schedules can only be used when all the forms in the case list<br/>
+-    update or close a case, which means registration forms must go in a separate case list.
++    update or btn-close a case, which means registration forms must go in a separate case list.  {# todo B5: css-close #}
+   {% endblocktrans %}
+ {% endif %}

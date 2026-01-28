@@ -27,7 +27,6 @@ from dimagi.ext.couchdbkit import (
     SafeSaveDocument,
     StringProperty,
 )
-from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
     EXCHANGE_RATE_DECIMAL_PLACES,
@@ -47,7 +46,6 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
     SubscriptionAdjustmentError,
     SubscriptionChangeError,
-    SubscriptionReminderError,
     SubscriptionRenewalError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
@@ -315,7 +313,7 @@ class EntryPoint(object):
     )
 
 
-class LastPayment(object):
+class PaymentType(object):
     CC_ONE_TIME = "CC_ONE_TIME"
     CC_AUTO = "CC_AUTO"
     WIRE = "WIRE"
@@ -350,11 +348,13 @@ class CommunicationType(object):
     INVOICE_REMINDER = "INVOICE_REMINDER"
     OVERDUE_INVOICE = "OVERDUE_INVOICE"
     DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
+    UPCOMING_MONTHLY_PAYMENT = "UPCOMING_MONTHLY_PAYMENT"
     CHOICES = (
         (OTHER, "other"),
         (INVOICE_REMINDER, "Invoice Reminder"),
         (OVERDUE_INVOICE, "Overdue Invoice"),
         (DOWNGRADE_WARNING, "Subscription Pause Warning"),
+        (UPCOMING_MONTHLY_PAYMENT, "Upcoming Monthly Payment"),
     )
 
 
@@ -401,7 +401,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     dimagi_contact = models.EmailField(blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
-    is_auto_invoiceable = models.BooleanField(default=False)
     date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
     account_type = models.CharField(
         max_length=25,
@@ -424,11 +423,12 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=EntryPoint.CHOICES,
     )
     auto_pay_user = models.CharField(max_length=80, null=True, blank=True)
+    require_auto_pay = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
-        default=LastPayment.NONE,
-        choices=LastPayment.CHOICES,
+        default=PaymentType.NONE,
+        choices=PaymentType.CHOICES,
     )
     pre_or_post_pay = models.CharField(
         max_length=25,
@@ -466,7 +466,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
                                   pre_or_post_pay=None):
         account_type = account_type or BillingAccountType.INVOICE_GENERATED
         entry_point = entry_point or EntryPoint.NOT_SET
-        last_payment_method = last_payment_method or LastPayment.NONE
+        last_payment_method = last_payment_method or PaymentType.NONE
         pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
         default_name = DEFAULT_ACCOUNT_FORMAT % domain
         name = get_account_name_from_default_name(default_name)
@@ -1464,7 +1464,7 @@ class Subscription(models.Model):
                     auto_generate_credits=False, is_trial=False,
                     do_not_email_invoice=False, do_not_email_reminder=False,
                     skip_invoicing_if_no_feature_charges=False,
-                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=False):
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None, auto_renew=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1512,8 +1512,8 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
-            auto_renew=auto_renew,
         )
+        new_subscription.auto_renew = auto_renew if auto_renew is not None else new_subscription.can_auto_renew
 
         new_subscription.save()
         new_subscription.raise_conflicting_dates(new_subscription.date_start, new_subscription.date_end)
@@ -1630,6 +1630,7 @@ class Subscription(models.Model):
             renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
+        renewed_subscription.auto_renew = renewed_subscription.can_auto_renew
         renewed_subscription.save()
 
         # record renewal from old subscription
@@ -1683,221 +1684,6 @@ class Subscription(models.Model):
                 credit_line.balance * Decimal('-1'),
                 related_credit=transferred_credit,
             )
-
-    def send_ending_reminder_email(self):
-        """
-        Sends a reminder email to the emails specified in the accounting
-        contacts that the subscription will end on the specified end date.
-        """
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
-        if self.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
-            # never send a subscription ending email for Paused subscriptions...
-            return
-
-        today = datetime.date.today()
-        num_days_left = (self.date_end - today).days
-
-        domain_name = self.subscriber.domain
-        context = self.ending_reminder_context
-        subject = context['subject']
-
-        template = self.ending_reminder_email_html
-        template_plaintext = self.ending_reminder_email_text
-        email_html = render_to_string(template, context)
-        email_plaintext = render_to_string(template_plaintext, context)
-        bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
-        if self.account.dimagi_contact is not None:
-            bcc.append(self.account.dimagi_contact)
-        for email in self._reminder_email_contacts(domain_name):
-            send_html_email_async.delay(
-                subject, email, email_html,
-                text_content=email_plaintext,
-                email_from=get_dimagi_from_email(),
-                bcc=bcc,
-            )
-            log_accounting_info(
-                "Sent %(days_left)s-day subscription reminder "
-                "email for %(domain)s to %(email)s." % {
-                    'days_left': num_days_left,
-                    'domain': domain_name,
-                    'email': email,
-                }
-            )
-
-    @property
-    def ending_reminder_email_html(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder.html'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.html'
-        else:
-            return 'accounting/email/subscription_ending_reminder.html'
-
-    @property
-    def ending_reminder_email_text(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder.txt'
-        elif self.is_trial:
-            return 'accounting/email/trial_ending_reminder.txt'
-        else:
-            return 'accounting/email/subscription_ending_reminder.txt'
-
-    @property
-    def ending_reminder_context(self):
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
-
-        today = datetime.date.today()
-        num_days_left = (self.date_end - today).days
-        if num_days_left == 1:
-            ending_on = _("tomorrow!")
-        else:
-            ending_on = _("on %s." % self.date_end.strftime(USER_DATE_FORMAT))
-
-        user_desc = self.plan_version.user_facing_description
-        plan_name = user_desc['name']
-
-        domain_name = self.subscriber.domain
-
-        context = {
-            'domain': domain_name,
-            'plan_name': plan_name,
-            'account': self.account.name,
-            'ending_on': ending_on,
-            'subscription_url': absolute_reverse(
-                DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
-            'base_url': get_site_domain(),
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-            'sales_email': settings.SALES_EMAIL,
-        }
-
-        if self.account.is_customer_billing_account:
-            subject = _(
-                "CommCare Alert: %(account_name)s's subscription to "
-                "%(plan_name)s ends %(ending_on)s"
-            ) % {
-                'account_name': self.account.name,
-                'plan_name': plan_name,
-                'ending_on': ending_on,
-            }
-        elif self.is_trial:
-            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
-                        "ends %(ending_on)s") % {
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
-        else:
-            subject = _(
-                "CommCare Alert: %(domain)s's subscription to "
-                "%(plan_name)s ends %(ending_on)s"
-            ) % {
-                'plan_name': plan_name,
-                'domain': domain_name,
-                'ending_on': ending_on,
-            }
-        context.update({'subject': subject})
-        return context
-
-    def send_dimagi_ending_reminder_email(self):
-        if self.date_end is None:
-            raise SubscriptionReminderError(
-                "This subscription has no end date."
-            )
-        if self.account.dimagi_contact is None:
-            raise SubscriptionReminderError(
-                "This subscription has no Dimagi contact."
-            )
-
-        subject = self.dimagi_ending_reminder_subject
-        context = self.dimagi_ending_reminder_context
-        email_html = render_to_string(self.dimagi_ending_reminder_email_html, context)
-        email_plaintext = render_to_string(self.dimagi_ending_reminder_email_text, context)
-        send_html_email_async.delay(
-            subject, self.account.dimagi_contact, email_html,
-            text_content=email_plaintext,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-        )
-
-    @property
-    def dimagi_ending_reminder_email_html(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder_dimagi.html'
-        else:
-            return 'accounting/email/subscription_ending_reminder_dimagi.html'
-
-    @property
-    def dimagi_ending_reminder_email_text(self):
-        if self.account.is_customer_billing_account:
-            return 'accounting/email/customer_subscription_ending_reminder_dimagi.txt'
-        else:
-            return 'accounting/email/subscription_ending_reminder_dimagi.txt'
-
-    @property
-    def dimagi_ending_reminder_subject(self):
-        if self.account.is_customer_billing_account:
-            return "Alert: {account}'s subscriptions are ending on {end_date}".format(
-                account=self.account.name,
-                end_date=self.date_end.strftime(USER_DATE_FORMAT))
-        else:
-            return "Alert: {domain}'s subscription is ending on {end_date}".format(
-                domain=self.subscriber.domain,
-                end_date=self.date_end.strftime(USER_DATE_FORMAT))
-
-    @property
-    def dimagi_ending_reminder_context(self):
-        end_date = self.date_end.strftime(USER_DATE_FORMAT)
-        email = self.account.dimagi_contact
-        if self.account.is_customer_billing_account:
-            account = self.account.name
-            plan = self.plan_version.plan.edition
-            context = {
-                'account': account,
-                'plan': plan,
-                'end_date': end_date,
-                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
-                    USER_DATE_FORMAT),
-                'contacts': ', '.join(self._reminder_email_contacts(self.subscriber.domain)),
-                'dimagi_contact': email,
-                'accounts_email': settings.ACCOUNTS_EMAIL
-            }
-        else:
-            domain = self.subscriber.domain
-            context = {
-                'domain': domain,
-                'end_date': end_date,
-                'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(
-                    USER_DATE_FORMAT),
-                'contacts': ', '.join(self._reminder_email_contacts(domain)),
-                'dimagi_contact': email,
-            }
-        return context
-
-    def _reminder_email_contacts(self, domain_name):
-        emails = {a.get_email() for a in WebUser.get_admins_by_domain(domain_name)}
-        emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
-        if not self.is_trial:
-            billing_contact_emails = (
-                self.account.billingcontactinfo.email_list
-                if BillingContactInfo.objects.filter(account=self.account).exists() else []
-            )
-            if not billing_contact_emails:
-                from corehq.apps.accounting.views import (
-                    ManageBillingAccountView,
-                )
-                _soft_assert_contact_emails_missing(
-                    False,
-                    'Billing Account for project %s is missing client contact emails: %s' % (
-                        domain_name,
-                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id])
-                    )
-                )
-            emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
-        if self.account.is_customer_billing_account:
-            enterprise_admin_emails = self.account.enterprise_admin_emails
-            emails |= {enterprise_admin_email for enterprise_admin_email in enterprise_admin_emails}
-        return emails
 
     def set_billing_account_entry_point(self):
         no_current_entry_point = self.account.entry_point == EntryPoint.NOT_SET
@@ -2085,6 +1871,14 @@ class Subscription(models.Model):
         else:
             return False
 
+    @property
+    def can_auto_renew(self):
+        return (
+            self.service_type == SubscriptionType.PRODUCT
+            and self.date_end is not None
+            and not self.account.is_customer_billing_account
+        )
+
     def user_can_change_subscription(self, user):
         if user.is_superuser:
             return True
@@ -2228,6 +2022,17 @@ class WirePrepaymentInvoice(WireInvoice):
         proxy = True
 
     items = []
+
+    def get_contact_emails(self):
+        invoice_contacts = (
+            self.account.billingcontactinfo.email_list
+            if BillingContactInfo.objects.filter(account=self.account).exists() else []
+        )
+        if not invoice_contacts:
+            invoice_contacts = [
+                admin.get_email() for admin in WebUser.get_admins_by_domain(self.domain)
+            ]
+        return invoice_contacts
 
     @property
     def is_prepayment(self):
@@ -2376,6 +2181,7 @@ class Invoice(InvoiceBase):
         """ Invoices that can be auto paid on date_due """
         invoices = cls.objects.select_related('subscription__account').filter(
             is_hidden=False,
+            date_paid__isnull=True,
             subscription__account__auto_pay_user__isnull=False,
         )
         # we use Ellipsis because date due can actually be None
@@ -2383,10 +2189,11 @@ class Invoice(InvoiceBase):
             invoices = invoices.filter(date_due=date_due)
         return invoices
 
-    def pay_invoice(self, payment_record):
+    def pay_invoice(self, payment_record, payment_type):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
 
         self.update_balance()
@@ -2475,10 +2282,11 @@ class CustomerInvoice(InvoiceBase):
         credit_lines = CreditLine.get_credits_for_customer_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
 
-    def pay_invoice(self, payment_record):
+    def pay_invoice(self, payment_record, payment_type):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
 
         self.update_balance()
@@ -2498,6 +2306,7 @@ class CustomerInvoice(InvoiceBase):
         invoices = cls.objects.select_related('account').filter(
             date_due=date_due,
             is_hidden=False,
+            date_paid__isnull=True,
             account__auto_pay_user__isnull=False
         )
         return invoices
@@ -3493,10 +3302,20 @@ class CreditLine(models.Model):
         if self.subscription:
             get_credits_available_for_product_in_subscription.clear(self.subscription)
 
-    def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None, customer_invoice=None,
-                              payment_record=None, related_credit=None,
-                              reason=None, web_user=None):
+    def adjust_credit_balance(
+        self,
+        amount,
+        is_new=False,
+        note=None,
+        line_item=None,
+        invoice=None,
+        customer_invoice=None,
+        payment_record=None,
+        related_credit=None,
+        reason=None,
+        payment_type=None,
+        web_user=None,
+    ):
         note = note or ""
         if line_item is not None and (invoice is not None or customer_invoice is not None):
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
@@ -3519,6 +3338,7 @@ class CreditLine(models.Model):
             note=note,
             amount=amount,
             reason=reason,
+            payment_type=payment_type,
             payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
@@ -3666,10 +3486,24 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
-    def add_credit(cls, amount, account=None, subscription=None,
-                   is_product=False, feature_type=None, payment_record=None,
-                   invoice=None, customer_invoice=None, line_item=None, related_credit=None,
-                   note=None, reason=None, web_user=None, permit_inactive=False):
+    def add_credit(
+        cls,
+        amount,
+        account=None,
+        subscription=None,
+        is_product=False,
+        feature_type=None,
+        payment_record=None,
+        invoice=None,
+        customer_invoice=None,
+        line_item=None,
+        related_credit=None,
+        note=None,
+        reason=None,
+        payment_type=None,
+        web_user=None,
+        permit_inactive=False,
+    ):
         if account is None and subscription is None:
             raise CreditLineError(
                 "You must specify either a subscription "
@@ -3716,11 +3550,19 @@ class CreditLine(models.Model):
                 feature_type=feature_type,
             )
             is_new = True
-        credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
-                                          payment_record=payment_record,
-                                          invoice=invoice, customer_invoice=customer_invoice, line_item=line_item,
-                                          related_credit=related_credit,
-                                          reason=reason, web_user=web_user)
+        credit_line.adjust_credit_balance(
+            amount,
+            is_new=is_new,
+            note=note,
+            payment_record=payment_record,
+            invoice=invoice,
+            customer_invoice=customer_invoice,
+            line_item=line_item,
+            related_credit=related_credit,
+            reason=reason,
+            payment_type=payment_type,
+            web_user=web_user,
+        )
         return credit_line
 
     @classmethod
@@ -3739,7 +3581,7 @@ class CreditLine(models.Model):
                 balance -= adjustment_amount
 
     @classmethod
-    def make_payment_towards_invoice(cls, invoice, payment_record):
+    def make_payment_towards_invoice(cls, invoice, payment_record, payment_type):
         """ Make a payment for a billing account towards an invoice """
         if invoice.is_customer_invoice:
             billing_account = invoice.account
@@ -3749,11 +3591,13 @@ class CreditLine(models.Model):
             payment_record.amount,
             account=billing_account,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
         cls.add_credit(
             -payment_record.amount,
             account=billing_account,
-            invoice=invoice,
+            customer_invoice=invoice if invoice.is_customer_invoice else None,
+            invoice=invoice if not invoice.is_customer_invoice else None,
         )
 
 
@@ -3785,10 +3629,10 @@ class StripePaymentMethod(PaymentMethod):
         proxy = True
         app_label = 'accounting'
 
-    STRIPE_GENERIC_ERROR = (stripe.error.AuthenticationError,
-                            stripe.error.InvalidRequestError,
-                            stripe.error.APIConnectionError,
-                            stripe.error.StripeError,)
+    STRIPE_GENERIC_ERROR = (stripe.AuthenticationError,
+                            stripe.InvalidRequestError,
+                            stripe.APIConnectionError,
+                            stripe.StripeError,)
 
     @property
     def customer(self):
@@ -3799,7 +3643,7 @@ class StripePaymentMethod(PaymentMethod):
         if self.customer_id is not None:
             try:
                 customer = self._get_stripe_customer()
-            except stripe.error.InvalidRequestError:
+            except stripe.InvalidRequestError:
                 pass
         if customer is None:
             customer = self._create_stripe_customer()
@@ -3822,7 +3666,7 @@ class StripePaymentMethod(PaymentMethod):
         try:
             cards = stripe.Customer.list_sources(customer=self.customer.id, object="card")
             return [card for card in cards.data if card is not None]
-        except stripe.error.AuthenticationError:
+        except stripe.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
                 return []
@@ -3837,6 +3681,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_year': card.exp_year,
             'token': card.id,
             'is_autopay': self._is_autopay(card, billing_account),
+            'other_autopay_domains': self._get_other_autopay_primary_domains(card, billing_account),
         } for card in self.all_cards]
 
     def get_card(self, card_token):
@@ -3908,7 +3753,7 @@ class StripePaymentMethod(PaymentMethod):
 
     def _update_autopay_status(self, card, billing_account, autopay):
         stripe.Customer.modify_source(customer=self.customer.id, id=card.id,
-                                      metadata={self._auto_pay_card_metadata_key(billing_account): autopay})
+                                      metadata={self._auto_pay_card_metadata_key(billing_account): str(autopay)})
 
     def _remove_autopay_card(self, billing_account):
         autopay_card = self.get_autopay_card(billing_account)
@@ -3927,6 +3772,25 @@ class StripePaymentMethod(PaymentMethod):
     @staticmethod
     def _is_autopay(card, billing_account):
         return card.metadata.get(StripePaymentMethod._auto_pay_card_metadata_key(billing_account)) == 'True'
+
+    @staticmethod
+    def _get_other_autopay_primary_domains(card, billing_account):
+        autopay_meta = {k: v for k, v in card.metadata.items() if k.startswith('auto_pay_') and v == 'True'}
+        if len(autopay_meta) <= 1:
+            return []
+
+        account_key = StripePaymentMethod._auto_pay_card_metadata_key(billing_account)
+        if autopay_meta.get(account_key):
+            # we only want other domains if the card is not autopay for the given billing account
+            return []
+
+        other_autopay_accounts = [v.replace('auto_pay_', '') for v in autopay_meta.keys()]
+        return list(
+            BillingAccount.objects.filter(id__in=other_autopay_accounts).values_list(
+                'created_by_domain',  # created_by_domain is considered the "primary" domain for a billing account
+                flat=True,
+            )
+        )
 
     @staticmethod
     def _auto_pay_card_metadata_key(billing_account):
@@ -3987,6 +3851,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
     reason = models.CharField(max_length=25, default=CreditAdjustmentReason.MANUAL,
                               choices=CreditAdjustmentReason.CHOICES)
+    payment_type = models.CharField(max_length=25, choices=PaymentType.CHOICES, null=True, blank=True)
     note = models.TextField(blank=True)
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)
@@ -4074,6 +3939,10 @@ class CommunicationHistoryBase(models.Model):
 
     class Meta(object):
         abstract = True
+
+
+class AccountCommunicationHistory(CommunicationHistoryBase):
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
 
 
 class InvoiceCommunicationHistory(CommunicationHistoryBase):

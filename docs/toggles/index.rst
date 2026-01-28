@@ -46,11 +46,9 @@ of a software plan. User-based flags are more like a lightweight
 permission that's independent of user roles (and therefore also
 independent of domain).
 
-Tags document the feature's expected audience, particularly services
-projects versus SaaS projects.
-
-See descriptions below. Tags have no technical effect. When in doubt,
-use TAG_CUSTOM to limit your plugin's support burden.
+Tags document the purpose of the feature flag. See descriptions below.
+Tags have no technical effect. Use TAG_RELEASE for features under
+development that are temporarily hidden until they can be released.
 
 When adding a new plugin, define it near related plugins - this file is
 frequently edited, so appending it to the end of the file invites merge

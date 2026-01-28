@@ -7,6 +7,7 @@ from django.urls import reverse
 from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
+from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
@@ -14,6 +15,8 @@ from corehq.apps.es.tests.utils import (
     es_test,
     populate_case_search_index,
 )
+from corehq.apps.hqcase.api.core import serialize_es_case
+from corehq.apps.hqcase.api.get_bulk import get_bulk
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -22,7 +25,6 @@ from corehq.util.test_utils import (
     flag_enabled,
     privilege_enabled,
 )
-from corehq.apps.data_dictionary.models import CaseType
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -80,21 +82,6 @@ class TestCaseAPIBulkGet(TestCase):
             external_id=external_id,
         )
 
-    def test_get_single_case(self):
-        res = self.client.get(reverse('case_api', args=(self.domain, self.case_ids[0])))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json()['case_id'], self.case_ids[0])
-
-    def test_get_single_case_not_found(self):
-        res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
-
-    def test_get_single_case_on_other_domain(self):
-        res = self.client.get(reverse('case_api', args=(self.domain, self.other_domain_case_id)))
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(res.json()['error'], f"Case '{self.other_domain_case_id}' not found")
-
     def test_bulk_get(self):
         case_ids = self.case_ids[0:2]
         self._call_get_api_check_results(case_ids, matching=2, missing=0)
@@ -102,13 +89,13 @@ class TestCaseAPIBulkGet(TestCase):
     def test_bulk_get_domain_filter(self):
         case_ids = self.case_ids[0:2] + [self.other_domain_case_id]
         result = self._call_get_api_check_results(case_ids, matching=2, missing=1)
-        self.assertEqual(result['cases'][2]['error'], 'not found')
+        assert result['cases'][2]['error'] == 'not found'
 
     def test_bulk_get_not_found(self):
         case_ids = ['missing1', self.case_ids[1], 'missing2']
         result = self._call_get_api_check_results(case_ids, matching=1, missing=2)
-        self.assertEqual(result['cases'][0]['error'], 'not found')
-        self.assertEqual(result['cases'][2]['error'], 'not found')
+        assert result['cases'][0]['error'] == 'not found'
+        assert result['cases'][2]['error'] == 'not found'
 
     def test_bulk_get_duplicate(self):
         """Duplicate case IDs in the request results in duplicates in the response"""
@@ -167,11 +154,11 @@ class TestCaseAPIBulkGet(TestCase):
         )
 
     def _call_get_api_check_results(self, case_ids, matching=None, missing=None):
-        res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
-        self.assertEqual(res.status_code, 200)
+        res = self.client.get(reverse('case_api_detail', args=(self.domain, ','.join(case_ids))))
+        assert res.status_code == 200
         result = res.json()
         result_case_ids = [case['case_id'] for case in result['cases']]
-        self.assertEqual(result_case_ids, case_ids)
+        assert result_case_ids == case_ids
         self._check_matching_missing(result, matching, missing)
         return result
 
@@ -183,13 +170,13 @@ class TestCaseAPIBulkGet(TestCase):
         self._check_matching_missing(result, matching, missing)
 
         total_expected = len(case_ids or []) + len(external_ids or [])
-        self.assertEqual(len(cases), total_expected)
+        assert len(cases) == total_expected
 
         # check for results as well as result order
         if case_ids:
             # case_id results are always at the front
             result_case_ids = [case.get('case_id') for case in cases]
-            self.assertEqual(case_ids, result_case_ids[:len(case_ids)])
+            assert case_ids == result_case_ids[:len(case_ids)]
 
         if external_ids:
             # external_id results are always at the end so reverse the lists and compare
@@ -197,7 +184,7 @@ class TestCaseAPIBulkGet(TestCase):
             result_external_ids = list(reversed([
                 case.get('external_id') for case in cases
             ]))
-            self.assertEqual(external_ids, result_external_ids[:len(external_ids)])
+            assert external_ids == result_external_ids[:len(external_ids)]
 
         return result
 
@@ -209,12 +196,137 @@ class TestCaseAPIBulkGet(TestCase):
             data['external_ids'] = external_ids
         url = reverse('case_api_bulk_fetch', args=(self.domain,))
         res = self.client.post(url, data=data, content_type="application/json")
-        self.assertEqual(res.status_code, expected_status, res.json())
+        assert res.status_code == expected_status, res.json()
         return res
 
     def _check_matching_missing(self, result, matching=None, missing=None):
         if matching is not None:
-            self.assertEqual(result['matching_records'], matching)
+            assert result['matching_records'] == matching
 
         if missing is not None:
-            self.assertEqual(result['missing_records'], missing)
+            assert result['missing_records'] == missing
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+@disable_quickcache
+@privilege_enabled(privileges.API_ACCESS)
+@flag_enabled('API_THROTTLE_WHITELIST')
+class TestGetBulkFunction(TestCase):
+    domain = 'test-get-bulk-function'
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        role = UserRole.create(
+            cls.domain, 'edit-data', permissions=HqPermissions(
+                edit_data=True,
+                access_api=True,
+                access_all_locations=True
+            )
+        )
+        cls.web_user = WebUser.create(cls.domain, 'test-user', 'password', None, None, role_id=role.get_id)
+
+        case_blocks = [
+            cls._make_case_block('Test Case 1', external_id='test1'),
+            cls._make_case_block('Test Case 2', external_id='test2'),
+            cls._make_case_block('Test Case 3', external_id='test2'),  # duplicate external_id
+        ]
+        case_search_es_setup(cls.domain, case_blocks)
+        cls.case_ids = [b.case_id for b in case_blocks]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_user.delete(cls.domain, deleted_by=None)
+        cls.domain_obj.delete()
+        FormProcessorTestUtils.delete_all_cases(cls.domain)
+        FormProcessorTestUtils.delete_all_xforms(cls.domain)
+        super().tearDownClass()
+
+    @classmethod
+    def _make_case_block(cls, name, case_type='player', external_id=None):
+        return CaseBlock(
+            case_id=str(uuid.uuid4()),
+            case_type=case_type,
+            case_name=name,
+            external_id=external_id,
+        )
+
+    def test_get_bulk_one_case_found_by_case_id(self):
+        result = get_bulk(self.domain, self.web_user, case_ids=[self.case_ids[0]])
+
+        expected_case = serialize_es_case(case_search_adapter.get(self.case_ids[0]))
+        assert result == {
+            'cases': [expected_case],
+            'matching_records': 1,
+            'missing_records': 0,
+        }
+
+    def test_get_bulk_one_case_found_by_external_id(self):
+        result = get_bulk(self.domain, self.web_user, external_ids=['test1'])
+
+        expected_case = serialize_es_case(case_search_adapter.get(self.case_ids[0]))
+        assert result == {
+            'cases': [expected_case],
+            'matching_records': 1,
+            'missing_records': 0,
+        }
+
+    def test_get_bulk_no_cases_found_by_case_id(self):
+        fake_id = 'fake-case-id-12345'
+        result = get_bulk(self.domain, self.web_user, case_ids=[fake_id])
+
+        assert result == {
+            'cases': [{'case_id': fake_id, 'error': 'not found'}],
+            'matching_records': 0,
+            'missing_records': 1,
+        }
+
+    def test_get_bulk_no_cases_found_by_external_id(self):
+        fake_external_id = 'fake-external-id'
+        result = get_bulk(self.domain, self.web_user, external_ids=[fake_external_id])
+
+        assert result == {
+            'cases': [{'external_id': fake_external_id, 'error': 'not found'}],
+            'matching_records': 0,
+            'missing_records': 1,
+        }
+
+    def test_get_bulk_duplicate_external_id(self):
+        result = get_bulk(self.domain, self.web_user, external_ids=['test2'])
+
+        # When multiple cases have the same external_id, only one is
+        # returned because in `_prepare_result()`, the `results_by_id`
+        # dictionary uses `external_id` as the key.
+        expected_case_1 = serialize_es_case(case_search_adapter.get(self.case_ids[1]))
+        expected_case_2 = serialize_es_case(case_search_adapter.get(self.case_ids[2]))
+
+        possible_results = [
+            {
+                'cases': [expected_case_1],
+                'matching_records': 1,
+                'missing_records': 0,
+            },
+            {
+                'cases': [expected_case_2],
+                'matching_records': 1,
+                'missing_records': 0,
+            },
+        ]
+        assert result in possible_results
+
+    def test_get_bulk_repeats(self):
+        """
+        If case_ids and external_ids refer to the same cases, they will
+        be repeated in `get_bulk()` results.
+        """
+        result = get_bulk(
+            self.domain,
+            self.web_user,
+            case_ids=[self.case_ids[0]],  # Case 1
+            external_ids=['test1'],  # Also case 1
+        )
+        assert result['matching_records'] == 2
+        case_names = [c['case_name'] for c in result['cases']]
+        assert case_names == ['Test Case 1', 'Test Case 1']

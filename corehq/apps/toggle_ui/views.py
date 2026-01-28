@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.http.response import Http404, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -28,7 +28,6 @@ from corehq.toggles import (
     NAMESPACE_DOMAIN,
     NAMESPACE_EMAIL_DOMAIN,
     NAMESPACE_USER,
-    TAG_CUSTOM,
     TAG_DEPRECATED,
     TAG_INTERNAL,
     DynamicallyPredictablyRandomToggle,
@@ -39,7 +38,7 @@ from corehq.toggles import (
     toggles_enabled_for_email_domain,
     toggles_enabled_for_user,
 )
-from corehq.toggles.models import Toggle
+from corehq.toggles.models import Toggle, ToggleStatus
 from corehq.toggles.shortcuts import (
     can_user_edit_tag,
     get_editable_toggle_tags_for_user,
@@ -162,10 +161,7 @@ class ToggleEditView(BasePageView):
     def get_toggle(self):
         if not self.static_toggle:
             raise Http404()
-        try:
-            return Toggle.get(self.toggle_slug)
-        except ResourceNotFound:
-            return Toggle(slug=self.toggle_slug)
+        return Toggle.get_or_create(self.toggle_slug)
 
     @property
     def page_context(self):
@@ -174,18 +170,20 @@ class ToggleEditView(BasePageView):
         context = {
             'static_toggle': self.static_toggle,
             'toggle': toggle,
-            'can_edit_toggle': self.can_edit_toggle,
+            'can_edit_toggle': self.can_edit_toggle and toggle.status == ToggleStatus.ACTIVE,
             'namespaces': namespaces,
             'usage_info': self.usage_info,
             'server_environment': settings.SERVER_ENVIRONMENT,
             'is_random': self.is_random_editable,
             'is_random_editable': self.is_random_editable,
             'is_feature_release': self.is_feature_release,
-            'allows_items': all(n in ALL_NAMESPACES for n in namespaces)
+            'allows_items': all(n in ALL_NAMESPACES for n in namespaces),
+            'status_options': map(str, ToggleStatus),
         }
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
-            context['service_type'], context['by_service'] = _get_service_type(toggle)
+            context['service_type'], context['service_type_nested'], context['paused'] =\
+                _get_service_type(toggle)
             context['dimagi_users'] = _get_dimagi_users(toggle)
 
         return context
@@ -219,13 +217,12 @@ class ToggleEditView(BasePageView):
         _notify_on_change(self.static_toggle, currently_enabled - previously_enabled, self.request.user.username)
         _call_save_fn_and_clear_cache_and_enable_dependencies(
             self.request.user.username, self.static_toggle, previously_enabled, currently_enabled)
-
         data = {
             'items': item_list
         }
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
-            data['service_type'], data['by_service'] = _get_service_type(toggle)
+            data['service_type'], _, _ = _get_service_type(toggle)
         return JsonResponse(data)
 
     def _save_randomness(self, toggle, randomness):
@@ -239,7 +236,7 @@ class ToggleEditView(BasePageView):
 
 
 def _notify_on_change(static_toggle, added_entries, username):
-    is_deprecated_toggle = (static_toggle.tag in (TAG_DEPRECATED, TAG_CUSTOM, TAG_INTERNAL))
+    is_deprecated_toggle = (static_toggle.tag in (TAG_DEPRECATED, TAG_INTERNAL))
     if added_entries and (static_toggle.notification_emails or is_deprecated_toggle):
         subject = "User {} added {} on {} in environment {}".format(
             username, static_toggle.slug,
@@ -340,19 +337,27 @@ def _get_service_type(toggle):
     """Returns subscription service type for each toggle
     """
     service_type = {}
+    nested = defaultdict(lambda: defaultdict(list))
+    paused = defaultdict(list)
     for enabled in toggle.enabled_users:
         if _namespace_domain(enabled):
             domain = _enabled_item_name(enabled)
             if subscription := Subscription.get_active_subscription_by_domain(domain):
                 service_type[domain] = f"{subscription.service_type} : {subscription.plan_version.plan.name}"
+                if subscription.plan_version.is_paused:
+                    paused[(subscription.service_type, subscription.plan_version.plan.name)].append(domain)
+                else:
+                    nested[subscription.service_type][subscription.plan_version.plan.name].append(domain)
             else:
                 service_type[domain] = "<None>"
+                nested["<None>"]["<None>"].append(domain)
 
-    by_service = defaultdict(list)
-    for domain, _type in sorted(service_type.items()):
-        by_service[_type].append(domain)
+    sorted_nested = {
+        outer_key: dict(sorted(inner_dict.items()))
+        for outer_key, inner_dict in sorted(nested.items())
+    }
 
-    return service_type, dict(by_service)
+    return service_type, sorted_nested, dict(sorted(paused.items()))
 
 
 def _get_dimagi_users(toggle):
@@ -416,6 +421,25 @@ def set_toggle(request, toggle_slug):
     _set_toggle(request.user.username, static_toggle, item, namespace, enabled)
 
     return JsonResponse({'success': True})
+
+
+@require_superuser_or_contractor
+@require_POST
+def toggle_status(request, toggle_slug):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Only Django admin users can do that")
+
+    status = request.POST['toggle_status']
+    if status not in ToggleStatus:
+        raise Exception('Invalid toggle status')
+
+    toggle = Toggle.get_or_create(toggle_slug)
+    toggle.status = status
+    toggle.save()
+    for entry in toggle.enabled_users:
+        namespace, entry = parse_toggle(entry)
+        clear_toggle_cache_by_namespace(namespace, entry)
+    return HttpResponseRedirect(reverse(ToggleEditView.urlname, args=[toggle_slug]))
 
 
 @require_superuser_or_contractor

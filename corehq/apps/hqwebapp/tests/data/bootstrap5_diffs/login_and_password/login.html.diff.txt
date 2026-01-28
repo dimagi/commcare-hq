@@ -1,31 +1,57 @@
 --- 
 +++ 
-@@ -1,15 +1,16 @@
+@@ -1,18 +1,17 @@
 -{% extends "hqwebapp/bootstrap3/base_page.html" %}
 +{% extends "hqwebapp/bootstrap5/base_page.html" %}
  {% load i18n %}
  {% load hq_shared_tags %}
  {% load compress %}
  
--{% js_entry_b3 'registration/js/login' %}
-+{% js_entry 'registration/js/login' %}
+-{% js_entry_b3 'registration/js/bootstrap3/login' %}
++{% js_entry 'registration/js/bootstrap5/login' %}
  
  {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
  
  {% block background_content %}
    <div class="bg-container">
 -    <div class="bg-full-cover-fixed bg-registration"></div>
-+    <div class="bg-full-cover-fixed bg-registration b-lazy"
-+         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
      <div class="bg-overlay"></div>
    </div>
- {% endblock %}
-@@ -38,7 +39,7 @@
-          id="user-login-form"
-          class="ko-template"
-          {% endif %}>
+-{% endblock %}
++{% endblock background_content %}
+ 
+ {% block stylesheets %}
+   <link type="text/css"
+@@ -21,10 +20,10 @@
+         href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+ 
+   {% compress css %}
+-    <link type="text/less"
++    <link type="text/scss"
+           rel="stylesheet"
+           media="all"
+-          href="{% static 'registration/less/registration.less' %}" />
++          href="{% static 'registration/scss/registration.scss' %}" />
+   {% endcompress %}
+ {% endblock stylesheets %}
+ 
+@@ -34,11 +33,13 @@
+   {% registerurl 'check_sso_login_status' %}
+   {% registerurl 'iframe_sso_login_pending' %}
+   {% block login-content %}
+-    <div {% if enforce_sso_login %}
+-         id="user-login-form"
+-         class="ko-template"
+-         {% endif %}>
 -      {% include "login_and_password/partials/bootstrap3/login_full.html" %}
++    <div
++      {% if enforce_sso_login %}
++        id="user-login-form"
++        class="ko-template"
++      {% endif %}
++    >
 +      {% include "login_and_password/partials/bootstrap5/login_full.html" %}
      </div>
-   {% endblock %}
+-  {% endblock %}
++  {% endblock login-content %}
  {% endblock content %}

@@ -1,0 +1,54 @@
+{% load xforms_extras %}
+{% load i18n %}
+
+<div>
+  <div class="form-group">
+    <label class="control-label col-sm-2"
+      >{% trans "Custom Icon" %}
+      <span
+        class="hq-help-template"
+        data-title="{% trans 'Custom Icon' %}"
+        data-content="{% blocktrans %}
+          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.
+          Learn more
+          <a
+            target='_blank'
+            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'
+            >here</a
+          >.
+        {% endblocktrans %}"
+      >
+      </span>
+    </label>
+    <div class="col-sm-2">
+      <select
+        id="custom-icon-type-select"
+        class="form-control"
+        name="custom_icon_type"
+      >
+        <option value="text" {% if custom_icon.is_text %}selected{% endif %}>
+          {% trans "Text Body" %}
+        </option>
+        <option value="xpath" {% if custom_icon.is_xpath %}selected{% endif %}>
+          {% trans "XPath Function" %}
+        </option>
+      </select>
+    </div>
+    <div class="col-sm-4">
+      <input
+        class="form-control {% if not custom_icon.is_text %}hide{% endif %}"
+        name="custom_icon_text_body"
+        id="custom-icon-text-body"
+        value="{{ custom_icon.text|trans:langs }}"
+        placeholder="{% trans 'Text Body' %}"
+      />
+      <input
+        class="form-control {% if not custom_icon.is_xpath %}hide{% endif %}"
+        name="custom_icon_xpath"
+        id="custom-icon-xpath"
+        value="{% if custom_icon.xpath %}{{ custom_icon.xpath }}{% endif %}"
+        placeholder="{% trans 'XPath Function' %}"
+      />
+    </div>
+  </div>
+</div>

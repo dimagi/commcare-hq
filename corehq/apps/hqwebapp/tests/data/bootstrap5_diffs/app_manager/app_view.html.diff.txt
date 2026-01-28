@@ -1,0 +1,46 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "app_manager/bootstrap3/apps_base.html" %}
++{% extends "app_manager/bootstrap5/apps_base.html" %}
+ {% load compress %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+@@ -7,8 +7,8 @@
+ 
+ {% block pre_form_content %}
+   <div class="appmanager-page-actions">
+-    {% include 'app_manager/partials/bootstrap3/app_summary_button.html' %}
+-    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-default' %}
++    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
++    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
+   </div>
+ 
+   <div class="appmanager-edit-title appmanager-edit-app-title">
+@@ -24,7 +24,7 @@
+     "></inline-edit>
+   </div>
+ 
+-  <div class="appmanager-edit-description">
++  <div class="appmanager-edit-description mt-2">
+     <inline-edit params="
+         value: '{{ app.short_comment|escapejs }}',
+         url: '{% url "edit_app_attr" domain app.id 'comment' %}',
+@@ -38,14 +38,14 @@
+ 
+ {% block form-view %}
+   {% registerurl "edit_add_ons" domain app.id %}
+-  <div class="appmanager-tabs-container">
++  <div class="mt-3">
+     {% block app_view_tabs %}{% endblock app_view_tabs %}
+   </div>
+ {% endblock %}
+ 
+ {% block modals %}{{ block.super }}
+   {% for uploader in uploaders %}
+-    {% include 'hqmedia/partials/bootstrap3/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
++    {% include 'hqmedia/partials/bootstrap5/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
+   {% endfor %}
+-  {% include 'app_manager/partials/bootstrap3/toggle_diff_modal.html' %}
++  {% include 'app_manager/partials/bootstrap5/toggle_diff_modal.html' %}
+ {% endblock %}

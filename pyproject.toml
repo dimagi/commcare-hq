@@ -17,7 +17,7 @@ dependencies = [
     "bleach", # USH - used for rich text messaging emails
     "bleach[css]", # USH - used for rich text messaging emails
     "boto3",
-    "celery",
+    "celery[redis]",
     "CommcareTranslationChecker>=0.9.7",
     "cryptography>=43.0.1",
     "csiphash",
@@ -51,7 +51,7 @@ dependencies = [
     "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
     "django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl",
-    "django>=4.2.16,<5.0",
+    "django~=5.2.0",
     "djangorestframework",
     "dropbox",
     "elasticsearch6>=6.0.0,<7.0.0",
@@ -147,6 +147,7 @@ dev = [
     'wheel',
     'flake8>=6.0', # linting/formatting
     'isort',
+    'ruff',
     'yapf',
     {include-group = "test"},
 ]
@@ -157,7 +158,7 @@ docs = [
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
     "pyOpenSSL", # CI builds fail without OpenSSL
-    "urllib3<=1.26.20", # fix doc tests AssertionError: Current app already created
+    "urllib3<=2.6.3", # fix doc tests AssertionError: Current app already created
 ]
 prod = [
     "flower",
@@ -235,3 +236,9 @@ pythonpath = [
 ]
 required_plugins = 'pytest-django'
 DJANGO_SETTINGS_MODULE = 'testsettings'
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "single"

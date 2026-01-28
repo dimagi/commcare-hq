@@ -8,17 +8,17 @@
  import "jquery-ui/ui/widgets/sortable";
  import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
  import "langcodes/js/langcodes";  // $.langcodes
-@@ -337,20 +338,16 @@
- };
+@@ -338,19 +339,17 @@
  
  ko.bindingHandlers.modal = {
--    init: function (element) {
+     init: function (element) {
 -        $(element).addClass('modal fade').modal({
 -            show: false,
 -        });
 -        //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-+    init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-+        viewModel.binding_modal = new Modal(element);
++        // Store the modal instance on the element itself to avoid collisions
++        // when multiple modals share the same viewModel
++        element._knockoutModal = new Modal(element);
      },
      update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
          ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
@@ -27,14 +27,14 @@
 +        let value = ko.utils.unwrapObservable(valueAccessor());
          if (value) {
 -            $(element).modal('show');
-+            viewModel.binding_modal.show();
++            element._knockoutModal.show();
          } else {
 -            $(element).modal('hide');
-+            viewModel.binding_modal.hide();
++            element._knockoutModal.hide();
          }
      },
  };
-@@ -371,25 +368,32 @@
+@@ -371,25 +370,32 @@
       */
      init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
          let value = valueAccessor(),
@@ -76,7 +76,7 @@
                  };
                  return clickAction;
              };
-@@ -399,11 +403,13 @@
+@@ -399,11 +405,13 @@
  
  ko.bindingHandlers.openRemoteModal = {
      init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -93,7 +93,7 @@
                  };
                  return clickAction;
              };
-@@ -638,7 +644,7 @@
+@@ -642,7 +650,7 @@
              options.sanitize = false;
          }
          if (options.title || options.content) { // don't show empty popovers
@@ -102,7 +102,7 @@
          }
      },
  };
-@@ -710,5 +716,3 @@
+@@ -714,5 +722,3 @@
          });
      },
  };

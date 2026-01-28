@@ -353,10 +353,10 @@ def case_forms(request, domain, case_id):
         return HttpResponseBadRequest()
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = XFormInstance.objects.get_forms(slice, domain, ordered=True)
+    forms = XFormInstance.objects.get_forms(slice, ordered=True)
     timezone = get_timezone_for_user(request.couch_user, domain)
     return json_response([
-        form_to_json(domain, form, timezone) for form in forms
+        form_to_json(domain, form, timezone) for form in forms if form.domain == domain
     ])
 
 

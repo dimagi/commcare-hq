@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from celery.schedules import crontab
 
-from corehq.apps.celery import periodic_task
+from corehq.apps.celery import periodic_task, serial_task
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import CardinalityAggregation
 from corehq.form_processor.models import XFormInstance
@@ -11,7 +11,6 @@ from corehq.pillows.utils import (
     UNKNOWN_USER_TYPE,
     get_user_type_deep_cache_for_unknown_users,
 )
-from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.quickcache import quickcache

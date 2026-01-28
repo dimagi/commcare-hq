@@ -1,0 +1,128 @@
+--- 
++++ 
+@@ -8,10 +8,10 @@
+ import uiElementLangcodeButton from "hqwebapp/js/ui_elements/ui-element-langcode-button";
+ import google from "analytix/js/google";
+ import noopMetrics from "analytix/js/noopMetrics";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
+-import main from "hqwebapp/js/bootstrap3/main";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
++import main from "hqwebapp/js/bootstrap5/main";
+ import menu from "app_manager/js/menu";
+-import previewApp from "app_manager/js/bootstrap3/preview_app";
++import previewApp from "app_manager/js/bootstrap5/preview_app";
+ import sectionChanger from "app_manager/js/section_changer";
+ import "hqwebapp/js/components/inline_edit";  // app, menu, and form names and comments all use these
+ import "select2/dist/js/select2.full.min";
+@@ -179,7 +179,7 @@
+  * @private
+  */
+ var _initAddItemPopovers = function () {
+-    $('.js-add-new-item').popover({
++    $('.js-add-new-item').popover({  /* todo B5: js-popover */
+         title: gettext("Add"),
+         container: 'body',
+         sanitize: false,
+@@ -193,11 +193,11 @@
+         template: $('#js-popover-template-add-item').text(),
+     }).on('show.bs.popover', function () {
+         // Close any other open popover
+-        $('.js-add-new-item').not($(this)).popover('hide');
++        $('.js-add-new-item').not($(this)).popover('hide');  /* todo B5: js-popover */
+     }).one('shown.bs.popover', function () {
+         var pop = this;
+         $('.popover-additem').on('click', function (e) {
+-            $(pop).popover('hide');
++            $(pop).popover('hide');  /* todo B5: js-popover */
+             var dataType = $(e.target).closest('button').data('type'),
+                 stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
+                 $form;
+@@ -222,13 +222,13 @@
+         });
+     }).on('click', function (e) {
+         e.preventDefault();
+-        $(this).popover('show');
++        $(this).popover('show');  /* todo B5: js-popover */
+     });
+ 
+     // Close any open popover when user clicks elsewhere on the page
+     $('body').click(function (event) {
+         if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
+-            $('.js-add-new-item').popover('hide');
++            $('.js-add-new-item').popover('hide');  /* todo B5: js-popover */
+         }
+     });
+ };
+@@ -343,7 +343,7 @@
+         });
+     }
+     function promptToSaveOrdering() {
+-        $("#reorder_modules_modal").modal('show');
++        $("#reorder_modules_modal").modal('show');  /* todo B5: js-modal */
+     }
+     function initSortable($sortable) {
+         var options = {
+@@ -480,7 +480,7 @@
+         }
+     });
+ 
+-    $('[data-toggle="tooltip"]').tooltip();
++    $('[data-toggle="tooltip"]').tooltip();  /* todo B5: js-tooltip */
+ 
+     // https://github.com/twitter/bootstrap/issues/6122
+     // this is necessary to get popovers to be able to extend
+@@ -508,7 +508,7 @@
+     });
+ 
+     // Handling for popup displayed when accessing a deleted app
+-    $('#deleted-app-modal').modal({
++    $('#deleted-app-modal').modal({  /* todo B5: js-modal */
+         backdrop: 'static',
+         keyboard: false,
+         show: true,
+@@ -536,15 +536,15 @@
+         var $form = $('#new-module-form');
+ 
+         if (moduleType === "case") {
+-            $('#add-new-module-modal').modal('hide');
+-            $('#define-case-type-modal').modal('show');
++            $('#add-new-module-modal').modal('hide');  /* todo B5: js-modal */
++            $('#define-case-type-modal').modal('show');  /* todo B5: js-modal */
+         } else {
+             if (moduleType === "survey") {
+                 google.track.event("Added Surveys Menu");
+                 noopMetrics.track.event("Added Surveys Menu");
+             }
+             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+-            $('#add-new-module-modal').modal('hide');
++            $('#add-new-module-modal').modal('hide');  /* todo B5: js-modal */
+             $form.submit();
+         }
+     });
+@@ -642,14 +642,14 @@
+         newCaseTypeHiddenInput.val(value);
+ 
+         $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+-        $('#define-case-type-modal').modal('hide');
++        $('#define-case-type-modal').modal('hide');  /* todo B5: js-modal */
+         $form.submit();
+     });
+ 
+     // Handle "Go Back" button click
+     $('#case-type-go-back-btn').on('click', function () {
+-        $('#define-case-type-modal').modal('hide');
+-        $('#add-new-module-modal').modal('show');
++        $('#define-case-type-modal').modal('hide');  /* todo B5: js-modal */
++        $('#add-new-module-modal').modal('show');  /* todo B5: js-modal */
+     });
+ 
+     // Clear selection when modal is hidden
+@@ -671,7 +671,7 @@
+     $('.new-module-option').each(function () {
+         var type = $(this).data('type');
+         if (hoverHelpTexts[type]) {
+-            $(this).popover({
++            $(this).popover({  /* todo B5: js-popover */
+                 title: hoverHelpTexts[type].title,
+                 content: hoverHelpTexts[type].content,
+                 trigger: 'hover',

@@ -10,6 +10,7 @@ from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -59,7 +60,12 @@ from dimagi.utils.web import get_static_url_prefix
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.domain.models import (
+    EULA_CURRENT_VERSION,
+    Domain,
+    LicenseAgreement,
+    LicenseAgreementType,
+)
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import (
     domain_restricts_superusers,
@@ -116,8 +122,6 @@ COMMCARE_USER = 'commcare'
 
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
-
-EULA_CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
 
 
 def _add_to_list(list, obj, default):
@@ -578,6 +582,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             user_data.update({}, profile_id=profile.id)
         if custom_user_data:
             user_data.update(custom_user_data)
+            user_data.remove_unrecognized()
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []
@@ -810,9 +815,7 @@ class DjangoUserMixin(DocumentSchema):
 
     def check_password(self, password):
         """ Currently just for debugging"""
-        dummy = User()
-        dummy.password = self.password
-        return dummy.check_password(password)
+        return check_password(password, self.password)
 
 
 class EulaMixin(DocumentSchema):
@@ -841,10 +844,10 @@ class EulaMixin(DocumentSchema):
             return current_eula.signed
         return False
 
-    def get_eula(self, version):
+    def get_eula(self, version, eula_type):
         current_eula = None
         for eula in self.eulas:
-            if eula.version == version:
+            if eula.version == version and eula.type == eula_type:
                 if not current_eula or eula.date > current_eula.date:
                     current_eula = eula
         return current_eula
@@ -857,12 +860,12 @@ class EulaMixin(DocumentSchema):
         return eulas_json
 
     @property
-    def eula(self, version=CURRENT_VERSION):
-        current_eula = self.get_eula(version)
+    def eula(self, version=CURRENT_VERSION, eula_type=LicenseAgreementType.EULA):
+        current_eula = self.get_eula(version, eula_type)
         if not current_eula:
-            current_eula = LicenseAgreement(type="End User License Agreement", version=version)
+            current_eula = LicenseAgreement(type=eula_type, version=version)
             self.eulas.append(current_eula)
-        assert current_eula.type == "End User License Agreement"
+        assert current_eula.type == eula_type
         return current_eula
 
 
@@ -2816,7 +2819,12 @@ class Invitation(models.Model):
         super().delete()
 
     @classmethod
-    def by_domain(cls, domain, is_accepted=False, **filters):
+    def by_domain(cls, domain, is_accepted=False, expired=..., **filters):
+        one_month_ago = datetime.utcnow().date() - relativedelta(months=1)
+        if expired is True:
+            filters['invited_on__lt'] = one_month_ago
+        if expired is False:
+            filters['invited_on__gte'] = one_month_ago
         return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
 
     @classmethod

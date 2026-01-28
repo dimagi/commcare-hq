@@ -23,7 +23,6 @@ let currentSelections = null,
 var API = {
     queryFormplayer: function (params, route) {
         var user = UsersModels.getCurrentUser(),
-            lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
             timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
             tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
             windowWidth = String(window.innerWidth),
@@ -197,7 +196,6 @@ var API = {
                 "isPersistent": params.isPersistent,
                 "sortIndex": params.sortIndex,
                 "preview": params.preview,
-                "geo_location": lastRecordedLocation,
                 "tz_offset_millis": timezoneOffsetMillis,
                 "tz_from_browser": tzFromBrowser,
                 "selected_values": params.selectedValues,
@@ -272,18 +270,6 @@ FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
     });
     FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
-    var user = UsersModels.getCurrentUser();
-    if (options.forceLoginAs && !user.restoreAs) {
-        // Workflow requires a mobile user, likely because we're trying to access
-        // a session endpoint as a web user. If user isn't logged in as, send them
-        // to Log In As and save the current request options for when that's done.
-        FormplayerFrontend.trigger("setLoginAsNextOptions", options);
-        FormplayerFrontend.trigger("restore_as:list");
-
-        // Caller expects a menu response, return a fake one
-        return {abort: true};
-    }
-
     // If an endpoint is provided, first claim any cases it references, then navigate
     return API.queryFormplayer(options, "get_endpoint");
 });
@@ -301,4 +287,3 @@ FormplayerFrontend.getChannel().reply("entity:get:details", function (options, i
 });
 
 export default API;
-
