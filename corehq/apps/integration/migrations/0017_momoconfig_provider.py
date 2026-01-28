@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('integration', '0015_kycconfig_connection_settings_and_more'),
+        ('integration', '0016_kycconfig_stores_full_name'),
     ]
 
     operations = [

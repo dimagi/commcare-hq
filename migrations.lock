@@ -714,7 +714,8 @@ integration
  0013_kycconfig_phone_number_field
  0014_kycconfig_passing_threshold
  0015_kycconfig_connection_settings_and_more
- 0016_momoconfig_provider
+ 0016_kycconfig_stores_full_name
+ 0017_momoconfig_provider
 ip_access
  0001_initial
 ivr
