@@ -50,6 +50,7 @@ from corehq.apps.app_manager.views.utils import (
     set_lang_cookie,
 )
 from corehq.apps.cloudcare.utils import should_show_preview_app
+from corehq.apps.data_dictionary.util import get_case_properties
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
@@ -253,11 +254,9 @@ def _get_base_vellum_options(request, domain, form, displayLang):
     is_advanced_form = isinstance(form, AdvancedForm)
     case_type = form.get_module().case_type
     if case_type and has_vellum_case_mapping and not is_advanced_form:
-        # TODO get case properties from Data Dictionary
-        from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
         options['caseManagement'] = {
             'mappings': form.actions.get_mappings(),
-            'properties': get_all_case_properties_for_case_type(domain, case_type),
+            'properties': sorted(get_case_properties(domain, case_type).values_list('name', flat=True)),
             'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
             'reserved_words': load_case_reserved_words(),
         }
