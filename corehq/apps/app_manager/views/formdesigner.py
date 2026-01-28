@@ -149,7 +149,7 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     vellum_options = _get_base_vellum_options(request, domain, form, context['lang'])
     vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
-    vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
+    vellum_options['plugins'] = _get_vellum_plugins(domain, form, module, vellum_options)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
 
@@ -306,7 +306,7 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
     return core
 
 
-def _get_vellum_plugins(domain, form, module):
+def _get_vellum_plugins(domain, form, module, options):
     """
     Returns a list of enabled vellum plugins based on the domain's
     privileges.
@@ -315,6 +315,8 @@ def _get_vellum_plugins(domain, form, module):
     if (toggles.COMMTRACK.enabled(domain)
             or toggles.NON_COMMTRACK_LEDGERS.enabled(domain)):
         vellum_plugins.append("commtrack")
+    if "caseManagement" in options:
+        vellum_plugins.append("caseManagement")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
     if toggles.COMMCARE_CONNECT.enabled(domain):
