@@ -42,8 +42,8 @@ var RolesViewModel = function (o) {
 
     self.setRoleBeingDeleted = function (role) {
         if (!role._id || !role.preventRoleDelete) {
-            var title = gettext("Delete Role: ") + role.name();
-            var context = {role: role.name()};
+            var title = gettext("Delete Role: ") + role.name;
+            var context = {role: role.name};
             var modalConfirmation = _.template(gettext(
                 "Are you sure you want to delete the role <%- role %>?",
             ))(context);
@@ -63,7 +63,7 @@ var RolesViewModel = function (o) {
             return {
                 url: o.deleteUrl,
                 type: 'post',
-                data: JSON.stringify(self.roleBeingDeleted),
+                data: JSON.stringify(self.roleBeingDeleted()),
                 dataType: 'json',
                 success: function (data) {
                     self.removeRole(data);
