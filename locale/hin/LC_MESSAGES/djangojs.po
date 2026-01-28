@@ -571,26 +571,22 @@ msgstr "आप केवल 'इमेज' प्रारूप के सा�
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary' format"
 msgstr "'Geo Boundary' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary Color' format"
 msgstr ""
 "'Geo Boundary Color' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points' format"
 msgstr "'Geo Points' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points Colors' format"
 msgstr ""
 "'Geo Points Colors' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"

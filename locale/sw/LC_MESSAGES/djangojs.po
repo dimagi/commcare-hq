@@ -572,25 +572,21 @@ msgstr "Unaweza kuwa na sifa moja tu yenye muundo wa 'Picha'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary' format"
 msgstr "Unaweza kuwa na mali moja tu yenye muundo wa 'Geo Boundary'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary Color' format"
 msgstr "Unaweza kuwa na mali moja tu yenye muundo wa 'Geo Boundary Color'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points' format"
 msgstr "Unaweza kuwa na mali moja tu yenye muundo wa 'Geo Points'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points Colors' format"
 msgstr "Unaweza kuwa na mali moja tu yenye muundo wa 'Geo Points Colors'"
 

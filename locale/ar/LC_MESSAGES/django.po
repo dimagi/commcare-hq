@@ -4697,6 +4697,12 @@ msgid "Reason"
 msgstr "السبب"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+#, fuzzy
+#| msgid "Parent Type"
+msgid "Payment Type"
+msgstr "نوع الأصل"
+
+#: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
@@ -18684,14 +18690,23 @@ msgid "OK"
 msgstr "حسنًا"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "              Please correct the answers below before submitting.\n"
+#| "              <br>\n"
+#| "              You can use the <strong><i class='fa fa-fast-forward'></i> "
+#| "Next Error</strong> button on the left-hand side of the screen to "
+#| "navigate between required fields.\n"
+#| "            "
 msgid ""
 "\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> "
-"Next Error</strong> button on the left-hand side of the screen to navigate "
+"            Please correct the answers below before submitting.\n"
+"            <br>\n"
+"            You can use the <strong><i class='fa fa-fast-forward'></i> Next "
+"Error</strong> button on the left-hand side of the screen to navigate "
 "between required fields.\n"
-"            "
+"          "
 msgstr ""
 "\n"
 "              يرجى تصحيح الإجابات أدناه قبل الإرسال.\n"
