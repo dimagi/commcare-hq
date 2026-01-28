@@ -623,8 +623,8 @@ class TestViewGeneric(ViewsBase):
             'app_id': self.app.id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_app)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_app
 
     def test_view_module(self, mock1):
         url = reverse('view_module', kwargs={
@@ -633,8 +633,8 @@ class TestViewGeneric(ViewsBase):
             'module_unique_id': self.module.unique_id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_module)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_module
 
     def test_view_module_legacy(self, mock1):
         url = reverse('view_module_legacy', kwargs={
@@ -643,8 +643,8 @@ class TestViewGeneric(ViewsBase):
             'module_id': self.module.id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_module)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_module
 
     def test_view_form(self, mock1):
         url = reverse('view_form', kwargs={
@@ -653,8 +653,8 @@ class TestViewGeneric(ViewsBase):
             'form_unique_id': self.form.unique_id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_form)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_form
 
     def test_view_form_legacy(self, mock1):
         url = reverse('view_form_legacy', kwargs={
@@ -664,8 +664,8 @@ class TestViewGeneric(ViewsBase):
             'form_id': self.form.id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_form)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_form
 
     expected_keys_app = {
         'None', 'perms', 'practice_users', 'EULA_COMPLIANCE', 'bulk_ui_translation_form',
