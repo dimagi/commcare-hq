@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
@@ -36,14 +35,6 @@ class Tag:
         return ALL_TAGS.index(self)
 
 
-TAG_CUSTOM = Tag(
-    name='One-Off / Custom',
-    slug='custom',
-    css_class='warning',
-    description="This feature flag was created for one specific project. "
-                "Please don't enable it for any other projects. "
-                "This is NOT SUPPORTED outside of that project and may break other features.",
-)
 TAG_DEPRECATED = Tag(
     name='Deprecated',
     slug='deprecated',
@@ -58,14 +49,7 @@ TAG_FROZEN = Tag(
     description="This feature flag will be removed with an alternative solution in future. "
                 "Do not add new projects to this list."
 )
-TAG_PRODUCT = Tag(
-    name='Product',
-    slug='product',
-    css_class='success',
-    description="This is a core-product feature that you should feel free to "
-                "use.  We've feature-flagged until release.",
-)
-TAG_PREVIEW = Tag(
+TAG_PREVIEW = Tag(  # Used by FeaturePreview
     name='Preview',
     slug='preview',
     css_class='default',
@@ -76,50 +60,6 @@ TAG_RELEASE = Tag(
     slug='release',
     css_class='release',
     description='This is a feature that is in the process of being released.',
-)
-TAG_SAAS_CONDITIONAL = Tag(
-    name='SaaS - Conditional Use',
-    slug='saas_conditional',
-    css_class='primary',
-    description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
-                "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "  # noqa: E501
-                "customer."
-)
-TAG_SOLUTIONS = Tag(
-    name='Solutions',
-    slug='solutions',
-    css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription."
-)
-TAG_SOLUTIONS_OPEN = Tag(
-    name='Solutions - Open Use',
-    slug='solutions_open',
-    css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "  # noqa: E501
-                "enabled by GS."
-)
-TAG_SOLUTIONS_CONDITIONAL = Tag(
-    name='Solutions - Conditional Use',
-    slug='solutions_conditional',
-    css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-                "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "  # noqa: E501
-                "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."  # noqa: E501
-)
-TAG_SOLUTIONS_LIMITED = Tag(
-    name='Solutions - Limited Use',
-    slug='solutions_limited',
-    css_class='info',
-    description=mark_safe(  # nosec: no user input
-        'These features are only available for our services projects. This '
-        'may affect support and pricing when the project is transitioned to a '
-        'subscription. Limited Use Solutions Feature Flags cannot be enabled '
-        'by GS before submitting a <a href="https://docs.google.com/forms/d/e/'
-        '1FAIpQLSfsX0K05nqflGdboeRgaa40HMfFb2DjGUbP4cKJL76ieS_TAA/viewform">'
-        'SolTech Feature Flag Request</a>.'
-    )
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
@@ -133,25 +73,15 @@ TAG_GA_PATH = Tag(
     css_class='release',
     description='This is a feature that we plan to move to General Availability in the future.',
 )
-# Order roughly corresponds to how much we want you to use it
-ALL_TAG_GROUPS = [
-    TAG_GA_PATH,
-    TAG_DEPRECATED,
-    TAG_FROZEN,
-    TAG_INTERNAL,
 
-    # No longer used, but still applies to some FrozenPrivilegeToggles:
-    TAG_SOLUTIONS,
-    TAG_PRODUCT,
-    TAG_CUSTOM,
+ALL_TAG_GROUPS = [
     TAG_RELEASE,
+    TAG_GA_PATH,
+    TAG_FROZEN,
+    TAG_DEPRECATED,
+    TAG_INTERNAL,
 ]
-ALL_TAGS = [
-    TAG_SOLUTIONS_OPEN,
-    TAG_SOLUTIONS_CONDITIONAL,
-    TAG_SOLUTIONS_LIMITED,
-    TAG_SAAS_CONDITIONAL,
-] + ALL_TAG_GROUPS
+ALL_TAGS = ALL_TAG_GROUPS
 
 
 class StaticToggle(object):
@@ -367,7 +297,7 @@ class FrozenPrivilegeToggle(StaticToggle):
         MY_DOMAIN_TOGGLE = StaticToggle(
             'toggle_name',
             'Title',
-            TAG_PRODUCT,
+            TAG_GA_PATH,
             namespaces=[NAMESPACE_DOMAIN],
             description='Description'
         )
@@ -376,7 +306,7 @@ class FrozenPrivilegeToggle(StaticToggle):
             privilege_name
             'toggle_name',
             'Title',
-            TAG_PRODUCT,
+            TAG_GA_PATH,
             namespaces=[NAMESPACE_DOMAIN],
             description='Description'
         )
@@ -1022,9 +952,33 @@ WEB_APPS_ANCHORED_SUBMIT = StaticToggle(
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
-    'Enable synchronous mobile searching and case claiming',
+    'Simple Case Search',
     TAG_GA_PATH,
-    help_link='https://confluence.dimagi.com/display/saas/Case+Search+and+Claim',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_DEPRECATED = StaticToggle(
+    'case_search_deprecated',
+    'Case Search: Deprecated',
+    TAG_DEPRECATED,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_ADVANCED = StaticToggle(
+    'case_search_advanced',
+    'Advanced Case Search',
+    TAG_FROZEN,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
+    'case_search_related_lookups',
+    'Case Search: Related Lookups',
+    TAG_FROZEN,
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -1716,7 +1670,7 @@ CUSTOM_ICON_BADGES = FrozenPrivilegeToggle(
     privilege_slug=privileges.CUSTOM_ICON_BADGES,
     slug='custom_icon_badges',
     label='Custom Icon Badges for modules and forms',
-    tag=TAG_SOLUTIONS_LIMITED,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1880,7 +1834,7 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = FrozenPrivilegeToggle(
     privilege_slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
     slug='location_columns_app_status_report',
     label='Enables location columns to app status report',
-    tag=TAG_SOLUTIONS_LIMITED,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1888,7 +1842,7 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'disable_case_update_rule_task',
     'Disable the `run_case_update_rules` periodic task '
     'while investigating database performance issues.',
-    TAG_GA_PATH,
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -2058,7 +2012,7 @@ TWO_STAGE_USER_PROVISIONING = FrozenPrivilegeToggle(
     privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Two-Stage+Mobile+Worker+Account+Creation',
 )
@@ -2168,7 +2122,7 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
     'USH-BHA: Control which domains will be included in the prime formplayer task runs',
-    TAG_GA_PATH,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2963013633/Prime+Formplayer+DBS+BHA"
 )
@@ -2338,7 +2292,7 @@ CASE_IMPORT_DATA_DICTIONARY_VALIDATION = FrozenPrivilegeToggle(
     privileges.DATA_DICT_TYPES,
     'case_import_data_dictionary_validaton',
     'USH: Validate data per data dictionary definitions during case import',
-    TAG_CUSTOM,
+    TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Validate+data+per+data+dictionary+definitions+during+case+import",  # noqa: E501
 )
@@ -2564,7 +2518,7 @@ CUSTOM_EMAIL_GATEWAY = StaticToggle(
 ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
     'allow_web_apps_restriction',
     'Makes domain eligible to be restricted from using web apps/app preview.',
-    tag=TAG_GA_PATH,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     When enabled, the domain is eligible to be restricted from using web apps/app preview. The intention is
@@ -2612,7 +2566,7 @@ FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
     privileges.FORM_LINK_WORKFLOW,
     'form_link_workflow',
     'Form linking workflow available on forms',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
@@ -2621,7 +2575,7 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     privileges.PHONE_APK_HEARTBEAT,
     'phone_apk_heartbeat',
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -2630,7 +2584,7 @@ MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
     privileges.PRACTICE_MOBILE_WORKERS,
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS_OPEN,
+    TAG_GA_PATH,
     help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -2640,7 +2594,7 @@ VIEW_APP_CHANGES = FrozenPrivilegeToggle(
     privileges.VIEW_APP_DIFF,
     'app-changes-with-improved-diff',
     'Improved app changes view',
-    TAG_SOLUTIONS_OPEN,
+    TAG_GA_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
@@ -2650,7 +2604,7 @@ CASE_LIST_EXPLORER = FrozenPrivilegeToggle(
     privileges.CASE_LIST_EXPLORER,
     'case_list_explorer',
     label='Show the case list explorer report',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_ensure_search_index_is_enabled,
     help_link='https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer',
@@ -2662,7 +2616,7 @@ DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
     'data_file_download',
     label='Offer hosting and sharing data files for downloading from a secure '
           'dropzone',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
               'sharing+data+files+for+downloading+from+a+secure+dropzone',
@@ -2672,7 +2626,7 @@ REGEX_FIELD_VALIDATION = FrozenPrivilegeToggle(
     privileges.REGEX_FIELD_VALIDATION,
     'regex_field_validation',
     label='Regular Expression Validation for Custom Data Fields',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description="This flag adds the option to specify a regular expression "
                 "(regex) to validate custom user data, custom location data, "
@@ -2684,7 +2638,7 @@ LOCATION_SAFE_CASE_IMPORTS = FrozenPrivilegeToggle(
     privileges.LOCATION_SAFE_CASE_IMPORTS,
     'location_safe_case_imports',
     label='Location-restricted users can import cases at their location or below',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow location-restricted users to import cases owned at their location or below',
 )
@@ -2693,7 +2647,7 @@ FORM_CASE_IDS_CASE_IMPORTER = FrozenPrivilegeToggle(
     privileges.FORM_CASE_IDS_CASE_IMPORTER,
     'form_case_ids_case_importer',
     label='Download buttons for Form- and Case IDs on Case Importer',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Display the "Form IDs" and "Case IDs" download buttons on Case Importer',
 )
@@ -2702,7 +2656,7 @@ EXPORT_MULTISORT = FrozenPrivilegeToggle(
     privileges.EXPORT_MULTISORT,
     'export_multisort',
     label='Sort multiple rows in exports simultaneously',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Sort multiple rows in exports simultaneously',
 )
@@ -2711,7 +2665,7 @@ EXPORT_OWNERSHIP = FrozenPrivilegeToggle(
     privileges.EXPORT_OWNERSHIP,
     'export_ownership',
     label='Allow exports to have ownership',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Allow exports to have ownership',
 )
@@ -2727,7 +2681,7 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
     privileges.FILTERED_BULK_USER_DOWNLOAD,
     'filtered_bulk_user_download',
     label='Bulk user management features',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
         For mobile users, enables bulk deletion page and bulk lookup page.
@@ -2750,7 +2704,7 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     privileges.DATA_DICTIONARY,
     'data_dictionary',
     label='Project level data dictionary of cases',
-    tag=TAG_SOLUTIONS_OPEN,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='Project level data dictionary of cases',
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
@@ -2760,7 +2714,7 @@ CASE_DEDUPE = FrozenPrivilegeToggle(
     privileges.CASE_DEDUPE,
     'case_dedupe',
     label='Case deduplication feature',
-    tag=TAG_SOLUTIONS_LIMITED,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
@@ -2785,7 +2739,7 @@ SUPPORT_GEO_JSON_EXPORT = FrozenPrivilegeToggle(
     privileges.GEOJSON_EXPORT,
     'support_geo_json_export',
     label='Support GeoJSON export in Case Exporter',
-    tag=TAG_SOLUTIONS_CONDITIONAL,
+    tag=TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN],
     description='The Case Export page now supports the exporting of GeoJSON data.',
 )
@@ -2884,13 +2838,13 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
-    tag=TAG_GA_PATH,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
 CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
     slug='convert_xml_group_separator',
     label='Convert the group separator to a symbol XML can support',
-    tag=TAG_CUSTOM,
+    tag=TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN]
 )

@@ -11,8 +11,8 @@ from corehq.apps.accounting.models import (
     CreditLine,
     CustomerInvoice,
     Invoice,
-    LastPayment,
     PaymentRecord,
+    PaymentType,
     PreOrPostPay,
     StripePaymentMethod,
 )
@@ -62,7 +62,7 @@ class BaseStripePaymentHandler(object):
         raise NotImplementedError("you must implement update_credits")
 
     def update_payment_information(self, account):
-        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.last_payment_method = PaymentType.CC_ONE_TIME
         account.pre_or_post_pay = PreOrPostPay.POSTPAY
         account.save()
 
@@ -207,12 +207,14 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
             payment_record.amount,
             account=account,
             payment_record=payment_record,
+            payment_type=PaymentType.CC_ONE_TIME,
         )
         CreditLine.add_credit(
             -payment_record.amount,
             account=account,
             invoice=subscription_invoice,
-            customer_invoice=customer_invoice
+            customer_invoice=customer_invoice,
+            payment_type=PaymentType.CC_ONE_TIME,
         )
         self.invoice.update_balance()
         self.invoice.save()
@@ -289,20 +291,24 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
                     deduct_amount,
                     account=account,
                     payment_record=payment_record,
+                    payment_type=PaymentType.CC_ONE_TIME,
                 )
                 CreditLine.add_credit(
                     -deduct_amount,
                     account=account,
                     invoice=subscription_invoice,
-                    customer_invoice=customer_invoice
+                    customer_invoice=customer_invoice,
+                    payment_type=PaymentType.CC_ONE_TIME,
                 )
                 invoice.update_balance()
                 invoice.save()
         if amount:
             account = BillingAccount.get_or_create_account_by_domain(self.domain)[0]
             CreditLine.add_credit(
-                amount, account=account,
+                amount,
+                account=account,
                 payment_record=payment_record,
+                payment_type=PaymentType.CC_ONE_TIME,
             )
 
     def get_email_context(self):
@@ -350,7 +356,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def update_payment_information(self, account):
-        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.last_payment_method = PaymentType.CC_ONE_TIME
         account.pre_or_post_pay = PreOrPostPay.PREPAY
         account.save()
 
@@ -363,6 +369,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     account=self.account,
                     subscription=self.subscription,
                     payment_record=payment_record,
+                    payment_type=PaymentType.CC_ONE_TIME,
                 ))
 
 
@@ -438,8 +445,8 @@ class AutoPayInvoicePaymentHandler(object):
             except IntegrityError:
                 log_accounting_error(f"[Autopay] {invoice_label.title()} was double charged {invoice.id}")
             else:
-                invoice.pay_invoice(payment_record)
-                account.last_payment_method = LastPayment.CC_AUTO
+                invoice.pay_invoice(payment_record, payment_type=PaymentType.CC_AUTO)
+                account.last_payment_method = PaymentType.CC_AUTO
                 account.save()
                 self._send_payment_receipt(invoice, payment_record)
 

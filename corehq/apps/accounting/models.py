@@ -313,7 +313,7 @@ class EntryPoint(object):
     )
 
 
-class LastPayment(object):
+class PaymentType(object):
     CC_ONE_TIME = "CC_ONE_TIME"
     CC_AUTO = "CC_AUTO"
     WIRE = "WIRE"
@@ -427,8 +427,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
-        default=LastPayment.NONE,
-        choices=LastPayment.CHOICES,
+        default=PaymentType.NONE,
+        choices=PaymentType.CHOICES,
     )
     pre_or_post_pay = models.CharField(
         max_length=25,
@@ -466,7 +466,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
                                   pre_or_post_pay=None):
         account_type = account_type or BillingAccountType.INVOICE_GENERATED
         entry_point = entry_point or EntryPoint.NOT_SET
-        last_payment_method = last_payment_method or LastPayment.NONE
+        last_payment_method = last_payment_method or PaymentType.NONE
         pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
         default_name = DEFAULT_ACCOUNT_FORMAT % domain
         name = get_account_name_from_default_name(default_name)
@@ -2189,10 +2189,11 @@ class Invoice(InvoiceBase):
             invoices = invoices.filter(date_due=date_due)
         return invoices
 
-    def pay_invoice(self, payment_record):
+    def pay_invoice(self, payment_record, payment_type):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
 
         self.update_balance()
@@ -2281,10 +2282,11 @@ class CustomerInvoice(InvoiceBase):
         credit_lines = CreditLine.get_credits_for_customer_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
 
-    def pay_invoice(self, payment_record):
+    def pay_invoice(self, payment_record, payment_type):
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
 
         self.update_balance()
@@ -3300,10 +3302,20 @@ class CreditLine(models.Model):
         if self.subscription:
             get_credits_available_for_product_in_subscription.clear(self.subscription)
 
-    def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None, customer_invoice=None,
-                              payment_record=None, related_credit=None,
-                              reason=None, web_user=None):
+    def adjust_credit_balance(
+        self,
+        amount,
+        is_new=False,
+        note=None,
+        line_item=None,
+        invoice=None,
+        customer_invoice=None,
+        payment_record=None,
+        related_credit=None,
+        reason=None,
+        payment_type=None,
+        web_user=None,
+    ):
         note = note or ""
         if line_item is not None and (invoice is not None or customer_invoice is not None):
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
@@ -3326,6 +3338,7 @@ class CreditLine(models.Model):
             note=note,
             amount=amount,
             reason=reason,
+            payment_type=payment_type,
             payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
@@ -3473,10 +3486,24 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
-    def add_credit(cls, amount, account=None, subscription=None,
-                   is_product=False, feature_type=None, payment_record=None,
-                   invoice=None, customer_invoice=None, line_item=None, related_credit=None,
-                   note=None, reason=None, web_user=None, permit_inactive=False):
+    def add_credit(
+        cls,
+        amount,
+        account=None,
+        subscription=None,
+        is_product=False,
+        feature_type=None,
+        payment_record=None,
+        invoice=None,
+        customer_invoice=None,
+        line_item=None,
+        related_credit=None,
+        note=None,
+        reason=None,
+        payment_type=None,
+        web_user=None,
+        permit_inactive=False,
+    ):
         if account is None and subscription is None:
             raise CreditLineError(
                 "You must specify either a subscription "
@@ -3523,11 +3550,19 @@ class CreditLine(models.Model):
                 feature_type=feature_type,
             )
             is_new = True
-        credit_line.adjust_credit_balance(amount, is_new=is_new, note=note,
-                                          payment_record=payment_record,
-                                          invoice=invoice, customer_invoice=customer_invoice, line_item=line_item,
-                                          related_credit=related_credit,
-                                          reason=reason, web_user=web_user)
+        credit_line.adjust_credit_balance(
+            amount,
+            is_new=is_new,
+            note=note,
+            payment_record=payment_record,
+            invoice=invoice,
+            customer_invoice=customer_invoice,
+            line_item=line_item,
+            related_credit=related_credit,
+            reason=reason,
+            payment_type=payment_type,
+            web_user=web_user,
+        )
         return credit_line
 
     @classmethod
@@ -3546,7 +3581,7 @@ class CreditLine(models.Model):
                 balance -= adjustment_amount
 
     @classmethod
-    def make_payment_towards_invoice(cls, invoice, payment_record):
+    def make_payment_towards_invoice(cls, invoice, payment_record, payment_type):
         """ Make a payment for a billing account towards an invoice """
         if invoice.is_customer_invoice:
             billing_account = invoice.account
@@ -3556,6 +3591,7 @@ class CreditLine(models.Model):
             payment_record.amount,
             account=billing_account,
             payment_record=payment_record,
+            payment_type=payment_type,
         )
         cls.add_credit(
             -payment_record.amount,
@@ -3815,6 +3851,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)
     reason = models.CharField(max_length=25, default=CreditAdjustmentReason.MANUAL,
                               choices=CreditAdjustmentReason.CHOICES)
+    payment_type = models.CharField(max_length=25, choices=PaymentType.CHOICES, null=True, blank=True)
     note = models.TextField(blank=True)
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)

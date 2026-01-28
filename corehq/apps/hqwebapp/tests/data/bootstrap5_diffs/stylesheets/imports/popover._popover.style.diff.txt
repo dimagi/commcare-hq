@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,26 +1,25 @@
+@@ -1,26 +1,26 @@
  .popover-additem {
 -  background-color: @cc-light-cool-accent-low;
 +  background-color: $cc-light-cool-accent-low;
@@ -11,16 +11,20 @@
 +  border-radius: 0;
 +  color: $cc-light-cool-accent-hi;
    border: 0;
++  border-color: $cc-light-cool-accent-low;
  
-   .popover-title {
+-  .popover-title {
++  .popover-header {
      background-color: transparent;
      text-transform: uppercase;
-     font-size: 1.2rem;
+-    font-size: 1.2rem;
 -    border-bottom: 1px solid darken(@cc-light-cool-accent-low, 2);
++    font-size: 0.75rem;
 +    border-bottom: 1px solid darken($cc-light-cool-accent-low, 2);
    }
-   &.right > .arrow:after {
+-  &.right > .arrow:after {
 -    border-right-color: @cc-light-cool-accent-low;
++  &.bs-popover-auto > .popover-arrow::after {
 +    border-right-color: $cc-light-cool-accent-low;
    }
  }
@@ -33,13 +37,14 @@
    border: none;
    background-color: transparent;
    margin-bottom: 10px;
-@@ -30,19 +29,19 @@
+@@ -30,21 +30,21 @@
    padding-top: 25px;
    padding-bottom: 25px;
    text-align: center;
 -  .transition(background .5s);
+-  font-size: 1.2rem;
 +  transition: background 0.5s;
-   font-size: 1.2rem;
++  font-size: 0.75rem;
    &:focus {
 -    color: @cc-light-cool-accent-hi;
 +    color: $cc-light-cool-accent-hi;
@@ -56,5 +61,17 @@
 -  > [class*='fa-'],
 +  > [class*="fa-"],
    > .fcc {
-     font-size: 4.5rem;
+-    font-size: 4.5rem;
++    font-size: 2.8125rem;
      display: block;
+     text-align: center;
+     width: 100%;
+@@ -52,7 +52,7 @@
+   }
+ 
+   > .fcc {
+-    font-size: 5.15rem;
++    font-size: 3.2188rem;
+     margin-top: -5px;
+   }
+ 
