@@ -1,18 +1,24 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
-from dateutil.parser import parse
-from dimagi.utils.logging import notify_exception
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
+
+from dateutil.parser import parse
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
-from corehq.apps.auditcare.models import ACCESS_CHOICES, AccessAudit, NavigationEventAudit
+from corehq.apps.auditcare.models import (
+    ACCESS_CHOICES,
+    AccessAudit,
+    NavigationEventAudit,
+)
 from corehq.apps.auditcare.utils.export import (
     all_audit_events_by_user,
     filters_for_audit_event_query,
@@ -113,6 +119,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.simple.SimpleStartTime',
+        'corehq.apps.reports.filters.simple.SimpleEndTime',
         'corehq.apps.reports.filters.simple.SimpleUsername',
         'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
         'corehq.apps.reports.filters.select.UserAuditActionFilter',
@@ -133,6 +141,44 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def selected_action(self):
         return self.request.GET.get('action', None)
+
+    @property
+    def start_time(self):
+        """Get start time from request, defaulting to 00:00."""
+        time_str = self.request.GET.get('start_time', '00:00')
+        return self._parse_time(time_str, default=time(0, 0))
+
+    @property
+    def end_time(self):
+        """Get end time from request, defaulting to 23:59."""
+        time_str = self.request.GET.get('end_time', '23:59')
+        return self._parse_time(time_str, default=time(23, 59))
+
+    def _parse_time(self, time_str, default):
+        """Parse a time string in HH:MM format, returning default if invalid."""
+        if not time_str:
+            return default
+        try:
+            parts = time_str.split(':')
+            if len(parts) != 2:
+                return default
+            return time(int(parts[0]), int(parts[1]))
+        except (ValueError, IndexError):
+            return default
+
+    @property
+    def start_datetime(self):
+        """Combine start date with start time to create datetime."""
+        if self.datespan.startdate:
+            return datetime.combine(self.datespan.startdate, self.start_time)
+        return None
+
+    @property
+    def end_datetime(self):
+        """Combine end date with end time to create datetime."""
+        if self.datespan.enddate:
+            return datetime.combine(self.datespan.enddate, self.end_time)
+        return None
 
     @property
     def headers(self):
@@ -158,7 +204,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
         rows = []
         events = all_audit_events_by_user(
-            self.selected_user, self.selected_domain, self.datespan.startdate, self.datespan.enddate,
+            self.selected_user, self.selected_domain, self.start_datetime, self.end_datetime,
             self.selected_action
         )
         for event in events:
@@ -173,8 +219,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
         where = filters_for_audit_event_query(
             user=self.selected_user,
             domain=self.selected_domain,
-            start_date=self.datespan.startdate,
-            end_date=self.datespan.enddate
+            start_date=self.start_datetime,
+            end_date=self.end_datetime
         )
         if self.selected_action in ACCESS_CHOICES:
             where['access_type'] = self.selected_action
@@ -190,6 +236,15 @@ class UserAuditReport(AdminReport, DatespanMixin):
             )
         return query[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
 
+    def _is_invalid_time_range(self):
+        """Check if start date equals end date and end time is before start time."""
+        if (
+            self.datespan.startdate and self.datespan.enddate
+            and self.datespan.startdate == self.datespan.enddate
+        ):
+            return self.end_time < self.start_time
+        return False
+
     @property
     def report_context(self):
         context = super().report_context
@@ -197,6 +252,9 @@ class UserAuditReport(AdminReport, DatespanMixin):
         if not (self.selected_domain or self.selected_user):
             context['warning_message'] = _("You must specify either a username or a domain. "
                     "Requesting all audit events across all users and domains would exceed system limits.")
+        elif self._is_invalid_time_range():
+            context['warning_message'] = _("The end time cannot be earlier than the start time when "
+                    "both dates are the same. Please adjust your time range.")
         elif self._is_limit_exceeded():
             context['warning_message'] = self._get_limit_exceeded_message()
 
