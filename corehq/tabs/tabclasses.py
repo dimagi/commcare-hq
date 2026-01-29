@@ -100,6 +100,7 @@ from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
+    can_access_kyc_report,
     can_access_payments_report,
     can_download_data_files,
     can_view_sms_exports,
@@ -1065,7 +1066,10 @@ class ProjectDataTab(UITab):
 
     @cached_property
     def _can_view_kyc_integration(self):
-        return toggles.KYC_VERIFICATION.enabled(self.domain)
+        return (
+            toggles.KYC_VERIFICATION.enabled(self.domain)
+            and can_access_kyc_report(self.couch_user, self.domain)
+        )
 
     @cached_property
     def _can_view_payments_integration(self):
