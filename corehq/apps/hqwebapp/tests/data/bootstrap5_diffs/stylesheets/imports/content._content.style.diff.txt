@@ -266,12 +266,15 @@
  }
  
  .appmanager-content-single-page {
-@@ -259,7 +266,7 @@
+@@ -258,11 +265,6 @@
+   padding: 20px 20px;
  }
  
- .auto-release-notes {
+-.auto-release-notes {
 -  line-height:  20px;
-+  line-height: 20px;
-   padding-top: 10px;
+-  padding-top: 10px;
+-}
+-
+ .releases-container {
+   padding-top: 5px;
  }
- 

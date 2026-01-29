@@ -78,7 +78,7 @@ if ($releaseLogsTab.length) {
 var o = {
     currentAppVersion: initialPageData.get('app_version') || -1,
     recipient_contacts: initialPageData.get('sms_contacts'),
-    download_modal_id: '#download-zip-modal',
+    downloadModalId: '#download-zip-modal',
     latestReleasedVersion: initialPageData.get('latestReleasedVersion'),
     upstreamBriefs: initialPageData.get('upstream_briefs'),
     upstreamUrl: initialPageData.get('upstream_url'),

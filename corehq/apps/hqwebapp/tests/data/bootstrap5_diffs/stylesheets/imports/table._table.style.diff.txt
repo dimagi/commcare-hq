@@ -31,12 +31,26 @@
      }
    }
  
-@@ -54,7 +52,7 @@
+@@ -49,22 +47,6 @@
+   table-layout: fixed;
+ }
  
-   tbody > tr {
-     &:nth-child(even) {
+-.table-profiles {
+-  clear: both;
+-
+-  tbody > tr {
+-    &:nth-child(even) {
 -      background-color: @cc-bg;
-+      background-color: $cc-bg;
-     }
-   }
-   .form-control {
+-    }
+-  }
+-  .form-control {
+-    width: 100%;
+-  }
+-  td > a {
+-    line-height: 30px;
+-  }
+-}
+-
+ .full-width-select2 .select2-container {
+   width: 100% !important;
+   min-width: 200px;
