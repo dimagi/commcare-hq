@@ -71,6 +71,7 @@
           </button>
         </div>
 
+        {% if request|toggle_enabled:"CASE_SEARCH_ADVANCED" %}
         <div data-bind="visible: toggleEnabled" class="mb-3">
           <h2>{% trans "Synchronous Web Apps Submissions" %}</h2>
           <p>
@@ -156,6 +157,8 @@
             <i class="fa fa-plus"></i> {% trans "Add case property" %}
           </button>
         </div>
+        {% endif %}
+
       </form>
     </div>
   </div>
