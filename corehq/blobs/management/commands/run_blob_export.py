@@ -29,6 +29,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument(
+            '--dir',
+            dest='dir',
+            help="Optionally specify a directory to write the file to",
+        )
         parser.add_argument('--chunk-size', type=int, default=100,
                             help='Maximum number of records to read from couch at once.')
         parser.add_argument('--limit-to-db', dest='limit_to_db',
@@ -39,8 +44,15 @@ class Command(BaseCommand):
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, domain=None, reset=False,
-               chunk_size=100, limit_to_db=None, **options):
+    def handle(
+        self,
+        domain=None,
+        dir=None,
+        reset=False,
+        chunk_size=100,
+        limit_to_db=None,
+        **options,
+    ):
         already_exported = get_lines_from_file(options['already_exported'])
         print("Found {} existing blobs, these will be skipped".format(len(already_exported)))
 
@@ -48,7 +60,7 @@ class Command(BaseCommand):
             raise CommandError(USAGE)
 
         self.stdout.write("\nRunning blob exporter\n{}".format('-' * 50))
-        export_filename = _get_export_filename(domain, already_exported)
+        export_filename = _get_export_filename(domain, already_exported, path=dir)
         if os.path.exists(export_filename):
             raise CommandError(
                 f"Export file '{export_filename}' exists. Remove the file and re-run the command."
@@ -72,7 +84,10 @@ def get_lines_from_file(filename):
         return {line.strip() for line in f}
 
 
-def _get_export_filename(domain, already_exported):
+def _get_export_filename(domain, already_exported, path=None):
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')
     part = '-part' if already_exported else ''
-    return f'{timestamp}-{domain}-blobs{part}.tar.gz'
+    filename = f'{timestamp}-{domain}-blobs{part}.tar.gz'
+    if path:
+        return os.path.join(path, filename)
+    return filename
