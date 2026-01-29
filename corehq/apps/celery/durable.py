@@ -3,8 +3,6 @@ from celery import Task
 from celery import states as celery_states
 from dimagi.utils.logging import notify_error
 
-from corehq.apps.celery.models import TaskRecord
-
 
 class DurableTask(Task):
     """
@@ -23,6 +21,8 @@ class DurableTask(Task):
             )
 
     def apply_async(self, args=None, kwargs=None, **opts):
+        from corehq.apps.celery.models import TaskRecord
+
         if not self.durable:
             return super().apply_async(args=args, kwargs=kwargs, **opts)
 
@@ -59,8 +59,11 @@ class DurableTask(Task):
 
 
 def delete_task_record(task_id, state):
+    from corehq.apps.celery.models import TaskRecord
+
     if state in [celery_states.SUCCESS, celery_states.FAILURE]:
-        TaskRecord.objects.filter(task_id=task_id).delete()
+        print("Disabled deleting TaskRecord on success")
+        #TaskRecord.objects.filter(task_id=task_id).delete()
     else:
         notify_error(
             "DurableTaskError",
