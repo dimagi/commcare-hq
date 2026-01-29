@@ -63,7 +63,7 @@ def bulk_import_async(config_list_json, domain, excel_id):
             store_failed_task_result.delay(excel_id)
 
 
-@task(queue='case_import_queue')
+@task(queue='case_import_queue', durable=True)
 def store_failed_task_result(upload_id):
     case_upload = CaseUpload.get(upload_id)
     case_upload.store_failed_task_result()
