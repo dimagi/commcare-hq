@@ -59,7 +59,8 @@ def delete_task_record(task_id, state):
     from corehq.apps.celery.models import TaskRecord
 
     if state in [celery_states.SUCCESS, celery_states.FAILURE]:
-        TaskRecord.objects.filter(task_id=task_id).delete()
+        print("Disabled deleting TaskRecord on success")
+        #TaskRecord.objects.filter(task_id=task_id).delete()
     else:
         notify_error(
             "DurableTaskError",
