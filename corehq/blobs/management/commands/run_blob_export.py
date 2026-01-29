@@ -89,5 +89,5 @@ def _get_export_filename(domain, already_exported, path=None):
     part = '-part' if already_exported else ''
     filename = f'{timestamp}-{domain}-blobs{part}.tar.gz'
     if path:
-        return f"{path.rstrip('/')}/{filename}"
+        return os.path.join(path, filename)
     return filename
