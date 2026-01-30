@@ -852,16 +852,21 @@ Alpine.data('initRole', (roleJson) => {
 
             self.saveRole = () => {
                 self.isSaving = true;
+                const isNewRole = !self.role._id;
                 $.ajax({
                     method: 'POST',
                     url: initialPageData.reverse("post_user_role"),
                     data: JSON.stringify(self.role, null, 2),
                     dataType: 'json',
-                    success: () => {
-                        setTimeout(() => {
-                            self.isSaving = false;
-                            self.isDirty = false;
-                        }, 500);
+                    success: (response) => {
+                        if (isNewRole && response._id) {
+                            window.location.href = initialPageData.reverse("edit_role", response._id);
+                        } else {
+                            setTimeout(() => {
+                                self.isSaving = false;
+                                self.isDirty = false;
+                            }, 500);
+                        }
                     },
                     error: (response) => {
                         self.isSaving = false;
