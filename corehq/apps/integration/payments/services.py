@@ -104,6 +104,38 @@ def _request_payment(payee_case: CommCareCase, config: MoMoConfig):
 
 
 def make_mtn_payment_request(request_data, config: MoMoConfig):
+    """
+    Make a payment request using the MTN Mobile Money API.
+
+    Returns the transaction ID that can be used to check payment status.
+    """
+
+    # Documentation: https://momodeveloper.mtn.com/API-collections#api=disbursement&operation=Deposit-V2
+    #
+    # Example request:
+    #
+    #     POST /disbursement/v2_0/deposit
+    #     Headers:
+    #         X-Reference-Id: <transaction_id>
+    #         X-Target-Environment: <environment>
+    #         Authorization: Bearer <access_token>
+    #     Body:
+    #     {
+    #         "payee": {
+    #             "partyIdType": "MSISDN",
+    #             "partyId": "1234567890"
+    #         },
+    #         "amount": "100",
+    #         "currency": "EUR",
+    #         "payeeNote": "Payment for services",
+    #         "payerMessage": "Thank you",
+    #         "externalId": "user123"
+    #     }
+    #
+    # Example 202 response:
+    #
+    #     HTTP 202 Accepted
+
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
 
@@ -122,6 +154,70 @@ def make_mtn_payment_request(request_data, config: MoMoConfig):
 
 
 def make_orange_cameroon_payment_request(request_data, config: MoMoConfig):
+    """
+    Make a payment request using the Orange Cameroon Mobile Money API.
+
+    Returns the payment token that can be used to check payment status.
+    """
+
+    # Documentation: https://apiis.orange.cm/store/apis/info?name=OrangeMoneyCoreAPIS&version=1.0.2
+    # &provider=bmhb8456
+    #
+    # Example request (init):
+    #
+    #     POST /omcoreapis/1.0.2/cashin/init
+    #     Headers:
+    #         X-AUTH-TOKEN: <auth_token>
+    #         Authorization: Bearer <access_token>
+    #
+    # Example 200 response (init):
+    #
+    #     {
+    #         "data": {
+    #             "payToken": "abc123xyz"
+    #         },
+    #         "message": "Pay token generated successfully"
+    #     }
+    #
+    # Example request (pay):
+    #
+    #     POST /omcoreapis/1.0.2/cashin/pay
+    #     Headers:
+    #         X-AUTH-TOKEN: <auth_token>
+    #         Authorization: Bearer <access_token>
+    #     Body:
+    #     {
+    #         "channelUserMsisdn": "1234567890",
+    #         "pin": "1234",
+    #         "amount": "100",
+    #         "subscriberMsisdn": "9876543210",
+    #         "orderId": "order123",
+    #         "description": "Payment for services",
+    #         "payToken": "abc123xyz"
+    #     }
+    #
+    # Example 200 response (pay):
+    #
+    #     {
+    #         "data": {
+    #             "id": 45681987,
+    #             "createtime": "1764767241",
+    #             "amount": 100,
+    #             "channelUserMsisdn": "1234567890",
+    #             "subscriberMsisdn": "9876543210",
+    #             "txnmode": "OMAPI#CI#45681987",
+    #             "txnstatus": 200,
+    #             "txnmessage": "Transaction successful",
+    #             "payToken": "abc123xyz",
+    #             "txnid": "TXN123456789",
+    #             "status": "SUCCESSFULL",
+    #             "orderId": "order123",
+    #             "description": "Payment for services",
+    #             "notifUrl": null
+    #         },
+    #         "message": "Cash In successfully",
+    #     }
+
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
 
@@ -409,6 +505,58 @@ def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
 
 
 def make_mtn_payment_status_request(reference_id, config):
+    """
+    Check the status of a payment using the MTN Mobile Money API.
+
+    Returns a tuple of (status, error_code) where status is the payment status
+    (e.g., 'successful', 'failed', 'pending') and error_code is the reason for
+    failure if applicable.
+    """
+
+    # Documentation: https://momodeveloper.mtn.com/API-collections#api=disbursement&operation=GetDepositStatus
+    #
+    # Example request:
+    #
+    #     GET /disbursement/v1_0/deposit/{reference_id}
+    #     Headers:
+    #         X-Target-Environment: <environment>
+    #         Authorization: Bearer <access_token>
+    #
+    # Example 200 response (successful):
+    #
+    #     {
+    #         "amount": "100",
+    #         "currency": "EUR",
+    #         "financialTransactionId": "23503452",
+    #         "externalId": "user123",
+    #         "payee": {
+    #             "partyIdType": "MSISDN",
+    #             "partyId": "46733123450"
+    #         },
+    #         "payerMessage": "Payment for services",
+    #         "payeeNote": "Thank you for your business",
+    #         "status": "SUCCESSFUL"
+    #     }
+    #
+    # Example 200 response (failed):
+    #
+    #     {
+    #         "amount": "100",
+    #         "currency": "EUR",
+    #         "externalId": "user123",
+    #         "payee": {
+    #             "partyIdType": "MSISDN",
+    #             "partyId": "46733123450"
+    #         },
+    #         "payerMessage": "Payment for services",
+    #         "payeeNote": "Thank you for your business",
+    #         "status": "FAILED",
+    #         "reason": {
+    #             "code": "PAYEE_NOT_FOUND",
+    #             "message": "Payee does not exist"
+    #         }
+    #     }
+
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
     response = requests.get(
@@ -423,6 +571,47 @@ def make_mtn_payment_status_request(reference_id, config):
 
 
 def make_orange_cameroon_payment_status_request(reference_id, config):
+    """
+    Check the status of a payment using the Orange Cameroon Mobile Money API.
+
+    Returns a tuple of (status, error_code) where status is the payment status
+    (e.g., 'successfull', 'failed', 'pending') and error_code is the error message
+    if the payment failed.
+    """
+
+    # Documentation: https://apiis.orange.cm/store/apis/info?name=OrangeMoneyCoreAPIS&version=1.0.2
+    # &provider=bmhb8456
+    #
+    # Example request:
+    #
+    #     GET /omcoreapis/1.0.2/cashin/paymentstatus/{reference_id}
+    #     Headers:
+    #         X-AUTH-TOKEN: <auth_token>
+    #       Authorization: Bearer <access_token>
+    #
+    # Example 200 response (successful):
+    #
+    #     {
+    #         "message": "Transaction retrieved successfully",
+    #         "data": {
+    #             "id": 45681987,
+    #             "subscriberMsisdn": "9876543210",
+    #             "amount": 100,
+    #             "payToken": "abc123xyz",
+    #             "txnmode": "OMAPI#CI#45681987",
+    #             "channelUserMsisdn": "1234567890",
+    #             "status": "SUCCESSFULL",
+    #             "txnid": "CI251203.1312.A20573",
+    #             "txnmessage": "null",
+    #             "txnstatus": "200",
+    #             "orderId": "order123",
+    #             "notifUrl": null,
+    #             "description": "Payment for services",
+    #             "createtime": "1764767241"
+    #         }
+    #     }
+    #
+
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
     response = requests.get(
