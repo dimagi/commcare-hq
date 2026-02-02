@@ -282,6 +282,8 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
             self.account, self.domain, date.today(), None,
             plan_version=DefaultProductPlan.get_default_plan_version(), is_active=True,
         )
+        self.account.auto_pay_user = self.user.name
+        self.account.save()
 
     def create_form(self, new_plan_version, **kwargs):
         args = (self.account, self.domain.name, self.user.username, new_plan_version, self.subscription)
@@ -354,6 +356,36 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         next_subscription = self.subscription.next_subscription
         self.assertEqual(next_subscription.plan_version, new_plan_version)
         self.assertEqual(next_subscription.date_start, old_date_start + timedelta(days=30))
+
+    def test_autopay_required_for_monthly_plan(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=False
+        )
+        self.account.auto_pay_user = None
+        self.account.save()
+        form = self.create_form_for_submission(new_plan_version)
+        form.full_clean()
+        assert not form.is_valid()
+
+        self.account.auto_pay_user = 'someone@example.com'
+        self.account.save()
+        form.full_clean()
+        assert form.is_valid()
+
+    def test_autopay_required_if_set_on_account(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=True
+        )
+        self.account.require_auto_pay = True
+        self.account.auto_pay_user = None
+        self.account.save()
+        form = self.create_form_for_submission(new_plan_version)
+        form.full_clean()
+        assert not form.is_valid()
+
+        self.account.auto_pay_user = 'someone@example.com'
+        form.full_clean()
+        assert form.is_valid()
 
 
 class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
