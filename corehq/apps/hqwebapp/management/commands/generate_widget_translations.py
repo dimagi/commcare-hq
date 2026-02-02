@@ -105,7 +105,8 @@ class Command(BaseCommand):
             "content.welcomeMessages": [
                 _(
                     "Hi there! I'm CommCare Companion, your personal guide to CommCare! "
-                    "What can I help you with today?"
+                    "You can ask a question, or attach files here — like screenshots, exports, "
+                    "or an App Summary — and I’ll use them to help guide you."
                 )
             ],
             "content.starterQuestions": [
