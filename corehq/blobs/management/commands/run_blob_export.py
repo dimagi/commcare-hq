@@ -60,7 +60,9 @@ class Command(BaseCommand):
             raise CommandError(USAGE)
 
         self.stdout.write("\nRunning blob exporter\n{}".format('-' * 50))
-        export_filename = _get_export_filename(domain, already_exported, path=dir)
+        export_filename = _get_export_filename(
+            domain, already_exported, path=dir, limited_to_db=limit_to_db
+        )
         if os.path.exists(export_filename):
             raise CommandError(
                 f"Export file '{export_filename}' exists. Remove the file and re-run the command."
@@ -84,10 +86,11 @@ def get_lines_from_file(filename):
         return {line.strip() for line in f}
 
 
-def _get_export_filename(domain, already_exported, path=None):
+def _get_export_filename(domain, already_exported, path=None, limited_to_db=None):
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M')
     part = '-part' if already_exported else ''
-    filename = f'{timestamp}-{domain}-blobs{part}.tar.gz'
+    db = f'-{limited_to_db}' if limited_to_db else ''
+    filename = f'{timestamp}-{domain}-blobs{part}{db}.tar.gz'
     if path:
         return os.path.join(path, filename)
     return filename
