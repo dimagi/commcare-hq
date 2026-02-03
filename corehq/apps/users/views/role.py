@@ -115,13 +115,12 @@ class RoleContextMixin:
         }
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator([use_bootstrap5, require_can_view_roles], name='dispatch')
 class ListRolesView(RoleContextMixin, BaseRoleAccessView):
     template_name = 'users/roles_and_permissions.html'
     page_title = gettext_lazy("Roles & Permissions")
     urlname = 'roles_and_permissions'
 
-    @method_decorator(require_can_view_roles)
     def dispatch(self, request, *args, **kwargs):
         return super(ListRolesView, self).dispatch(request, *args, **kwargs)
 
@@ -307,7 +306,7 @@ def _delete_user_role(domain, role_data):
     return {"_id": copy_id}
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator([use_bootstrap5, require_can_view_roles], name='dispatch')
 class EditRoleView(RoleContextMixin, BaseRoleAccessView):
     urlname = "edit_role"
     template_name = 'users/edit_role.html'
