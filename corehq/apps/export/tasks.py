@@ -136,8 +136,8 @@ def rebuild_saved_export(export_instance_id, manual=False):
         return
 
     try:
-        export = ExportInstance.get(export_instance_id)
-        domain = export.domain
+        export_dict = ExportInstance.get_db().get(export_instance_id)
+        domain = export_dict.get('domain', None)
     except ResourceNotFound:
         domain = None
     # associate task with the export instance
