@@ -13,6 +13,7 @@ CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
 ODATA_FEED_PERMISSION = 'corehq.apps.reports.standard.export.ODataFeedListView'
 SMS_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.SMSExportReport'
 PAYMENTS_REPORT_PERMISSION = 'corehq.apps.integration.payments.views.PaymentsVerificationReportView'
+KYC_REPORT_PERMISSION = 'corehq.apps.integration.kyc.views.KycVerificationReportView'
 
 EXPORT_PERMISSIONS = {
     FORM_EXPORT_PERMISSION,
@@ -40,6 +41,7 @@ def get_extra_permissions():
     )
     from corehq.apps.export.views.download import DownloadNewSmsExportView
     from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+    from corehq.apps.integration.kyc.views import KycVerificationReportView
 
     yield ReportPermission(
         FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain_obj: True)
@@ -58,6 +60,11 @@ def get_extra_permissions():
         PAYMENTS_REPORT_PERMISSION,
         PaymentsVerificationReportView.page_title,
         lambda domain_obj: toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain_obj.name)
+    )
+    yield ReportPermission(
+        KYC_REPORT_PERMISSION,
+        KycVerificationReportView.page_title,
+        lambda domain_obj: toggles.KYC_VERIFICATION.enabled(domain_obj.name)
     )
 
 
@@ -97,3 +104,7 @@ def has_permission_to_view_report(couch_user, domain, report_to_check):
 
 def can_access_payments_report(couch_user, domain):
     return has_permission_to_view_report(couch_user, domain, PAYMENTS_REPORT_PERMISSION)
+
+
+def can_access_kyc_report(couch_user, domain):
+    return has_permission_to_view_report(couch_user, domain, KYC_REPORT_PERMISSION)
