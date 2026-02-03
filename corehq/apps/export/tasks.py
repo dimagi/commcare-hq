@@ -5,6 +5,7 @@ from django.conf import settings
 
 from celery.schedules import crontab
 
+from couchdbkit import ResourceNotFound
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
@@ -31,7 +32,8 @@ from .export import get_export_file, rebuild_export
 from .models.new import (
     EmailExportWhenDoneRequest,
     CaseExportInstance,
-    CaseExportDataSchema
+    CaseExportDataSchema,
+    ExportInstance,
 )
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 from django.core.cache import cache
@@ -105,7 +107,8 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
-def _start_export_task(export_instance_id):
+def _start_export_task(export_instance_id, domain):
+    # Domain is present here for domain tagging in datadog
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, progress_tracker=_start_export_task)
 
@@ -132,10 +135,15 @@ def rebuild_saved_export(export_instance_id, manual=False):
     if status.not_started() or status.started():
         return
 
+    try:
+        export = ExportInstance.get(export_instance_id)
+        domain = export.domain
+    except ResourceNotFound:
+        domain = None
     # associate task with the export instance
     download_data.set_task(
         _start_export_task.apply_async(
-            args=[export_instance_id],
+            args=[export_instance_id, domain],
             queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )
