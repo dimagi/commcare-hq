@@ -56,7 +56,6 @@ class Command(BaseCommand):
             ])
             usage_found |= any([
                 p.get('input_') is None
-                and not p.get('hidden', False)
                 and p.get('appearance') == 'address'
                 for p in properties
             ])
@@ -113,6 +112,7 @@ class Command(BaseCommand):
                 "ancestor-exists",
                 "subcase-exists",
                 "subcase-count",
+                "parent/"
             ]
 
             usage_found |= any([
@@ -123,6 +123,7 @@ class Command(BaseCommand):
             ])
 
             usage_found |= any([p['name'].startswith('parent/') for p in properties])
+            usage_found |= any([p.get('property', '').startswith('parent/') for p in default_properties])
             usage_found |= search_config.get('include_all_related_cases', False)
 
             if usage_found:
