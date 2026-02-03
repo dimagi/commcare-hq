@@ -351,7 +351,7 @@ def generate_invoices_based_on_date(invoice_date):
                 "domain %s: %s" % (domain_obj.name, e))
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True, durable=True)
 def generate_invoices():
     """
     Generates all invoices for the past month.
@@ -476,7 +476,7 @@ def auto_renew_subscription(subscription):
         )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True, durable=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -516,7 +516,7 @@ def _try_send_subscription_email(subscription, days_left, send_email_func):
         )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True, durable=True)
 def remind_dimagi_contact_subscription_ending():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -772,7 +772,7 @@ def update_exchange_rates():
 
 
 # Email this out on the first day and first hour of each month
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True, durable=True)
 def send_credits_on_hq_report():
     if settings.SAAS_REPORTING_EMAIL and settings.SERVER_ENVIRONMENT in [
         'production',
@@ -834,7 +834,12 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(
+    run_every=crontab(day_of_month='1', hour=5, minute=0),
+    queue='background_queue',
+    acks_late=True,
+    durable=True,
+)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -907,7 +912,11 @@ def send_prepaid_credits_export():
     )
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(
+    run_every=crontab(hour=1, minute=0, day_of_month='1'),
+    acks_late=True,
+    durable=True,
+)
 def calculate_users_in_all_domains(today=None):
     today = today or datetime.date.today()
     for domain in Domain.get_all_names():
@@ -931,7 +940,7 @@ def calculate_users_in_all_domains(today=None):
     auto_deactivate_mobile_workers.delay()
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
 def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
     today = today or datetime.date.today()
     date_start = today - relativedelta(months=1)
@@ -952,7 +961,7 @@ def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
             )
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
 def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
