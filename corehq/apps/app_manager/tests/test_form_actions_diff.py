@@ -674,9 +674,7 @@ class FormActionsTests(SimpleTestCase):
         with pytest.raises(KeyError):
             merge_case_mappings(diff, actions)
 
-
-class FormActions_WithUpdatesTests(SimpleTestCase):
-    def test_empty_diff(self):
+    def test_merge_empty_diff(self):
         actions = FormActions({
             'open_case': {
                 'name_update': {'question_path': 'name'},
@@ -688,23 +686,15 @@ class FormActions_WithUpdatesTests(SimpleTestCase):
                 }
             }
         })
+        snapshot = actions.to_json()
 
-        result = actions.with_updates({}, FormActionsDiff({}))
+        merge_case_mappings({}, actions)
 
-        assert result['open_case']['name_update']['question_path'] == 'name'
-        assert list(result['update_case']['update'].keys()) == ['one', 'two']
+        assert actions['open_case']['name_update']['question_path'] == 'name'
+        assert list(actions['update_case']['update'].keys()) == ['one', 'two']
+        assert actions.to_json() == snapshot
 
-    def test_other_updates(self):
-        # i.e. not open_case or update_case
-        actions = FormActions()
-
-        close_case_update = {'close_case': {'condition': {'type': 'never'}}}
-
-        result = actions.with_updates(close_case_update, FormActionsDiff({}))
-
-        assert result.close_case.condition.type == 'never'
-
-    def test_all_actions_at_once(self):
+    def test_merge_case_mappings_with_all_actions_at_once(self):
         actions = FormActions({
             'open_case': {
                 'name_update': {'question_path': 'form_name'},
@@ -717,7 +707,7 @@ class FormActions_WithUpdatesTests(SimpleTestCase):
             }
         })
 
-        result = actions.with_updates({}, FormActionsDiff({
+        merge_case_mappings({
             'open_case': {
                 'add': [{'question_path': 'new_name'}],
                 'delete': [{'question_path': 'form_name'}],
@@ -729,11 +719,11 @@ class FormActions_WithUpdatesTests(SimpleTestCase):
                     'two': [{'question_path': 'two', 'update_mode': 'edit'}]
                 }
             }
-        }))
+        }, actions)
 
-        assert result.open_case.name_update.question_path == 'new_name'
-        assert set(result.update_case.update.keys()) == {'two', 'three'}
-        assert result.update_case.update['two'].update_mode == 'edit'
+        assert actions.open_case.name_update.question_path == 'new_name'
+        assert set(actions.update_case.update.keys()) == {'two', 'three'}
+        assert actions.update_case.update['two'].update_mode == 'edit'
 
 
 class OpenCaseDiffTests(SimpleTestCase):
