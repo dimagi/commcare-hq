@@ -4144,7 +4144,6 @@ msgid "Reason"
 msgstr "Sababu"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#| msgid "Parent Type"
 msgid "Payment Type"
 msgstr "Aina ya Malipo"
 
@@ -17061,12 +17060,6 @@ msgid "OK"
 msgstr "Sawa"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
-#| msgid ""
-#| "\n"
-#| "              Please correct the answers below before submitting.\n"
-#| "              <br>\n"
-#| "              You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
-#| "            "
 msgid ""
 "\n"
 "            Please correct the answers below before submitting.\n"
@@ -22029,6 +22022,14 @@ msgstr "Sasisha Taarifa za Malipo"
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr "Inaonekana namba hii ya simu si sahihi. Je, umesahau msimbo wa nchi?"
+
+#: corehq/apps/domain/forms.py
+#| msgid ""
+#| "\n"
+#| "                Please provide an autopay card before continuing.\n"
+#| "              "
+msgid "Please provide an autopay card before continuing."
+msgstr "Tafadhali toa kadi ya malipo ya moja kwa moja kabla ya kuendelea."
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -34106,11 +34107,13 @@ msgstr "Unahitaji Msaada?"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
 "Habari! Mimi ni CommCare Companion, mwongozo wako binafsi wa CommCare! "
-"Naweza kukusaidia na nini leo?"
+"Unaweza kuuliza swali, au kuambatisha mafaili hapa 2 kama picha za skrini, "
+"uhamishaji, au Muhtasari wa Programu 2 na nitavitumia kukusaidia."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "I need help with building my CommCare application."
@@ -61144,6 +61147,13 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid ""
+#~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+#~ "I help you with today?"
+#~ msgstr ""
+#~ "Habari! Mimi ni CommCare Companion, mwongozo wako binafsi wa CommCare! "
+#~ "Naweza kukusaidia na nini leo?"
 
 #~ msgid ""
 #~ "\n"
