@@ -1,11 +1,13 @@
 import pytest
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.exceptions import (
+
+from ..exceptions import (
     MissingPropertyMapException,
     DiffConflictException,
     InvalidPropertyException
 )
-from corehq.apps.app_manager.models import (
+from ..form_action_diff import merge_case_mappings
+from ..models import (
     FormActions, UpdateCaseAction, OpenCaseAction, OpenCaseDiff, UpdateCaseDiff, FormActionsDiff
 )
 
@@ -651,6 +653,7 @@ class UpdateCaseAction_ApplyUpdates_Tests(SimpleTestCase):
 
 
 class FormActionsTests(SimpleTestCase):
+
     def test_constructor_creates_empty_values(self):
         actions = FormActions()
         assert actions.update_case.update == {}
@@ -663,6 +666,13 @@ class FormActionsTests(SimpleTestCase):
         update_case = UpdateCaseAction({'update': {'one': {'question_path': 'two'}}})
         actions = FormActions(update_case=update_case)
         assert actions.all_property_names() == {'one'}
+
+    def test_merge_case_mappings_raises_on_unrecognized_key(self):
+        actions = FormActions()
+        diff = {'malicious_key': {'update': {}}}
+
+        with pytest.raises(KeyError):
+            merge_case_mappings(diff, actions)
 
 
 class FormActions_WithUpdatesTests(SimpleTestCase):
