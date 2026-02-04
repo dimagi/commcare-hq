@@ -3,25 +3,28 @@ from dataclasses import dataclass
 from typing import Union
 
 from django.utils.translation import gettext as _
+
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import (
-    BinaryExpression,
-    FunctionCall,
-    serialize,
-)
+from eulxml.xpath.ast import BinaryExpression, FunctionCall, serialize
 
 import corehq
-from corehq.apps.case_search.const import OPERATOR_MAPPING, COMPARISON_OPERATORS, ALL_OPERATORS
+from corehq.apps.case_search.const import (
+    ALL_OPERATORS,
+    COMPARISON_OPERATORS,
+    OPERATOR_MAPPING,
+)
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     XPathFunctionException,
 )
-from corehq.apps.case_search.xpath_functions import (
-    XPATH_QUERY_FUNCTIONS,
+from corehq.apps.case_search.xpath_functions import XPATH_QUERY_FUNCTIONS
+from corehq.apps.case_search.xpath_functions.ancestor_functions import (
+    ancestor_comparison_query,
+    is_ancestor_comparison,
 )
-from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_comparison, \
-    ancestor_comparison_query
-from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
+from corehq.apps.case_search.xpath_functions.comparison import (
+    property_comparison_query,
+)
 
 
 @dataclass
@@ -68,9 +71,6 @@ def build_filter_from_ast(node, context):
 
     If fuzzy is true, all equality operations will be treated as fuzzy.
     """
-    def _simple_ancestor_query(node):
-        return ancestor_comparison_query(context, node)
-
     def _is_subcase_count(node):
         """Returns whether a particular AST node is a subcase lookup.
         This is needed for subcase-count since we need the full expression, not just the function."""
@@ -80,9 +80,7 @@ def build_filter_from_ast(node, context):
         return isinstance(node.left, FunctionCall) and node.left.name == 'subcase-count'
 
     def _comparison(node):
-        """Returns the filter for a comparison operation (=, !=, >, <, >=, <=)
-
-        """
+        """Returns the filter for a comparison operation (=, !=, >, <, >=, <=)"""
         return property_comparison_query(context, node.left, node.op, node.right, node)
 
     def visit(node):
@@ -106,7 +104,7 @@ def build_filter_from_ast(node, context):
 
         if is_ancestor_comparison(node):
             # this node represents a filter on a property for a related case
-            return _simple_ancestor_query(node)
+            return ancestor_comparison_query(context, node)
 
         if _is_subcase_count(node):
             return XPATH_QUERY_FUNCTIONS['subcase-count'](node, context)
