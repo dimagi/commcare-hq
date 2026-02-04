@@ -146,6 +146,7 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
             pass
         else:
             helper = RegistryQueryHelper(domain, couch_user, registry_helper)
+    helper.is_case_search = True
     return helper
 
 
@@ -153,6 +154,7 @@ class QueryHelper:
     def __init__(self, domain):
         self.domain = domain
         self.profiler = CaseSearchProfiler()
+        self.is_case_search = False
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
