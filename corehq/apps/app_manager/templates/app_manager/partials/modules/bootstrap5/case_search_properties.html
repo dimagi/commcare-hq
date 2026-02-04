@@ -466,6 +466,7 @@
               </div>
             </div>
           {% endif %}
+          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
           <div class="form-group">  {# todo B5: css-form-group #}
             <label
               for="claim-relevant-condition"
@@ -494,6 +495,7 @@
               ></textarea>
             </div>
           </div>
+          {% endif %}
           <div class="form-group">  {# todo B5: css-form-group #}
             <label
               for="blacklisted-user-ids"
