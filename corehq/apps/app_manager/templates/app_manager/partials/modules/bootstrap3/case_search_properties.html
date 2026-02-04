@@ -646,7 +646,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
             <div class="form-group">
               <label
                 for="custom-related-case-property"
@@ -678,6 +678,8 @@
                 />
               </div>
             </div>
+          {% endif %}
+          {% if request|toggle_enabled:'CASE_SEARCH_RELATED_LOOKUPS' %}
             <div class="form-group">
               <label class="control-label {% css_label_class %}">
                 {% trans "Include all related cases in search results" %}
