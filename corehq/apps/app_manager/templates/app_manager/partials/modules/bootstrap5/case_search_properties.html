@@ -698,7 +698,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search %}
+          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
             <div class="form-group">  {# todo B5: css-form-group #}
               <label class="form-label {% css_label_class %}">
                 {% trans "Clearing search terms resets search results" %}
