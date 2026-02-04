@@ -1,6 +1,11 @@
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_noop
 
+from corehq.apps.hqwebapp.utils.bootstrap import (
+    BOOTSTRAP_5,
+    get_bootstrap_version,
+)
+
 
 class BaseMultimediaFileUploadController(object):
     """
@@ -26,11 +31,16 @@ class BaseMultimediaFileUploadController(object):
 
     @property
     def js_options(self):
+        queue_template = (
+            "hqmedia/uploader/bootstrap5/queue_single.html"
+            if get_bootstrap_version() == BOOTSTRAP_5
+            else "hqmedia/uploader/bootstrap3/queue_single.html"
+        )
         options = {
             'uploadURL': self.destination,
             'uploadParams': self.upload_params,
             'errorsTemplate': render_to_string("hqmedia/uploader/errors.html"),
-            'queueTemplate': render_to_string("hqmedia/uploader/queue_single.html"),
+            'queueTemplate': render_to_string(queue_template),
         }
         if hasattr(self, 'existing_file_template'):
             options.update({'existingFileTemplate': render_to_string(self.existing_file_template)})
@@ -44,7 +54,14 @@ class BaseMultimediaFileUploadController(object):
 
 class MultimediaImageUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("image")
-    existing_file_template = "hqmedia/uploader/preview_image_single.html"
+
+    @property
+    def existing_file_template(self):
+        return (
+            "hqmedia/uploader/bootstrap5/preview_image_single.html"
+            if get_bootstrap_version() == BOOTSTRAP_5
+            else "hqmedia/uploader/bootstrap3/preview_image_single.html"
+        )
 
 
 class MultimediaLogoUploadController(MultimediaImageUploadController):
@@ -54,10 +71,10 @@ class MultimediaLogoUploadController(MultimediaImageUploadController):
 class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("audio")
 
-    existing_file_template = "hqmedia/uploader/preview_audio_single.html"
+    existing_file_template = "hqmedia/uploader/bootstrap3/preview_audio_single.html"
 
 
 class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
     media_type = gettext_noop("video")
 
-    existing_file_template = "hqmedia/uploader/preview_video_single.html"
+    existing_file_template = "hqmedia/uploader/bootstrap3/preview_video_single.html"

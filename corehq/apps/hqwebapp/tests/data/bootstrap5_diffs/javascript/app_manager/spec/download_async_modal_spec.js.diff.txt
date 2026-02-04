@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ import $ from "jquery";
+ import sinon from "sinon";
+ 
+-import asyncDownloader from "app_manager/js/bootstrap3/download_async_modal";
++import asyncDownloader from "app_manager/js/bootstrap5/download_async_modal";
+ 
+ describe('Async Download Modal', function () {
+     var url = 'test_url';

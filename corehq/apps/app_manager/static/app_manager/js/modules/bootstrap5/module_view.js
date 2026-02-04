@@ -12,7 +12,7 @@ import VisitScheduler from "app_manager/js/bootstrap5/visit_scheduler";  // adva
 import "jquery-textchange/jquery.textchange";
 import "app_manager/js/custom_assertions";
 import "select2/dist/js/select2.full.min";
-import "app_manager/js/nav_menu_media";
+import "app_manager/js/bootstrap5/nav_menu_media";
 import "app_manager/js/modules/case_list_setting";
 import "hqwebapp/js/components/select_toggle";
 import "hqwebapp/js/key-value-mapping";

@@ -1,8 +1,7 @@
-{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
+{% extends 'hqwebapp/bootstrap5/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% js_entry_b3 "hqwebapp/js/bootstrap3/crud_paginated_list_init" %}
+{% js_entry "hqwebapp/js/bootstrap5/crud_paginated_list_init" %}
 
 {% block page_title %}
   {{ current_page.title }}
@@ -10,10 +9,11 @@
 
 {% block pagination_header %}
   <div class="row">
-    <div class="col-sm-8">
+    <div class="col-md-8">
       <p>
         {% blocktrans %}
-          Attendance tracking events can be used to track attendance of all the selected attendees.
+          Attendance tracking events can be used to track attendance of all the
+          selected attendees.
         {% endblocktrans %}
       </p>
     </div>
@@ -48,41 +48,50 @@
     <td data-bind="text: total_attendance_takers"></td>
     <td>
       <!-- ko if: show_attendance -->
-        <!-- ko if: total_attendance -->
-        <a data-toggle="modal" data-target="#attendee-details">
-          {% trans 'View Attendees' %}
-          (<span data-bind="text: total_attendance"> </span>)
-        </a>
-        <!-- /ko -->
-        <!-- ko ifnot: total_attendance -->
-          {% trans 'No Attendees Yet' %}
-        <!-- /ko -->
+      <!-- ko if: total_attendance -->
+      <a data-bs-toggle="modal" data-bs-target="#attendee-details">
+        {% trans 'View Attendees' %} (<span data-bind="text: total_attendance">
+        </span
+        >)
+      </a>
+      <!-- /ko -->
+      <!-- ko ifnot: total_attendance -->
+      {% trans 'No Attendees Yet' %}
+      <!-- /ko -->
       <div class="modal fade" id="attendee-details">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
-                <span class="sr-only">Close</span></button>
               <h4 class="modal-title" data-bind="text: name"></h4>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"
+              ></button>
             </div>
             <div class="modal-body">
               <table class="table table-striped table-hover">
                 <thead>
-                <tr>
-                  <th class="col-sm-4">{% trans "Date Attended" %}</th>
-                  <th class="col-sm-8">{% trans "Attendee Name" %}</th>
-                </tr>
+                  <tr>
+                    <th class="col-md-4">{% trans "Date Attended" %}</th>
+                    <th class="col-md-8">{% trans "Attendee Name" %}</th>
+                  </tr>
                 </thead>
                 <tbody data-bind="foreach: attendees">
                   <tr>
-                    <td data-bind='date'></td>
-                    <td data-bind='name'></td>
+                    <td data-bind="date"></td>
+                    <td data-bind="name"></td>
                   </tr>
                 </tbody>
-                </table>
+              </table>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-bs-dismiss="modal"
+              >
                 Close
               </button>
             </div>

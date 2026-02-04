@@ -43,13 +43,24 @@ from corehq.apps.integration.kyc.tables import (
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.utils import add_case_owners_and_location_access
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+from corehq.apps.users.permissions import KYC_REPORT_PERMISSION
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.timezones.utils import get_timezone
 
 
+require_kyc_report_access = require_permission(
+    HqPermissions.view_report,
+    KYC_REPORT_PERMISSION,
+    login_decorator=None,  # login_and_domain_required is already required by the views
+)
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_kyc_report_access, name='dispatch')
 class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
     section_name = _("Data")
     urlname = 'kyc_configuration'
@@ -104,6 +115,7 @@ class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
 
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_kyc_report_access, name='dispatch')
 class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin):
     urlname = 'kyc_verify_table'
     table_class = KycVerifyTable
@@ -198,11 +210,8 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, 
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
-        if request.POST.get('verify_all') == 'true':
-            kyc_users = list(self.kyc_config.get_all_kyc_users())
-        else:
-            selected_ids = request.POST.getlist('selected_ids')
-            kyc_users = list(self.kyc_config.get_kyc_users_by_ids(selected_ids))
+        selected_ids = request.POST.getlist('selected_ids')
+        kyc_users = list(self.kyc_config.get_kyc_users_by_ids(selected_ids))
         kyc_users = self._filter_valid_users(kyc_users)
 
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
@@ -288,6 +297,7 @@ class KYCFiltersMixin:
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_kyc_report_access, name='dispatch')
 class KycVerificationReportView(BaseDomainView, KYCFiltersMixin):
     urlname = 'kyc_verify'
     template_name = 'kyc/kyc_verify_report.html'
