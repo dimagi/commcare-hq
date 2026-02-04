@@ -19306,6 +19306,10 @@ msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr ""
 
+#: corehq/apps/domain/forms.py
+msgid "Please provide an autopay card before continuing."
+msgstr ""
+
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
 msgstr ""
@@ -29773,8 +29777,9 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py

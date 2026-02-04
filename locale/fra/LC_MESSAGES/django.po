@@ -4225,7 +4225,6 @@ msgid "Reason"
 msgstr "Raison"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#| msgid "Parent Type"
 msgid "Payment Type"
 msgstr "Type de paiement"
 
@@ -17333,12 +17332,6 @@ msgid "OK"
 msgstr "OK"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
-#| msgid ""
-#| "\n"
-#| "              Please correct the answers below before submitting.\n"
-#| "              <br>\n"
-#| "              You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
-#| "            "
 msgid ""
 "\n"
 "            Please correct the answers below before submitting.\n"
@@ -22351,6 +22344,15 @@ msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr ""
 "Ce numéro de téléphone semble invalide. Auriez-vous oublier le code du pays?"
+
+#: corehq/apps/domain/forms.py
+#| msgid ""
+#| "\n"
+#| "                Please provide an autopay card before continuing.\n"
+#| "              "
+msgid "Please provide an autopay card before continuing."
+msgstr ""
+"Veuillez fournir une carte pour le paiement automatique avant de continuer."
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -34583,11 +34585,14 @@ msgstr "Besoin d'aide ?"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
 "Bonjour ! Je suis CommCare Companion, votre guide personnel pour CommCare ! "
-"Comment puis-je vous aider aujourd'hui ?"
+"Vous pouvez poser une question ou joindre des fichiers ici — comme des "
+"captures d'écran, des exports ou un résumé d'application — et je les "
+"utiliserai pour mieux vous aider."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "I need help with building my CommCare application."
@@ -61930,6 +61935,13 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid ""
+#~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+#~ "I help you with today?"
+#~ msgstr ""
+#~ "Bonjour ! Je suis CommCare Companion, votre guide personnel pour CommCare ! "
+#~ "Comment puis-je vous aider aujourd'hui ?"
 
 #~ msgid ""
 #~ "\n"
