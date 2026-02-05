@@ -109,7 +109,7 @@
    position: absolute;
    width: 100%;
    top: 0;
-@@ -105,16 +114,16 @@
+@@ -105,30 +114,26 @@
  }
  
  .appmanager-loading {
@@ -134,11 +134,14 @@
  }
  
  .appmanager-loading-nav {
-@@ -125,10 +134,9 @@
-   margin-top: 2rem;
+   top: 30px;
  }
  
+-.removed-languages {
+-  margin-top: 2rem;
+-}
 -
+ 
  .ko-inline-edit {
    .read-only .prefixed-icon i {
 -    color: @cc-text;
@@ -146,7 +149,7 @@
    }
    .read-only .text.app-title {
      margin-left: 2px;
-@@ -136,7 +144,7 @@
+@@ -136,7 +141,7 @@
    .inline-edit-icon {
      vertical-align: top;
      i {
@@ -155,7 +158,7 @@
      }
    }
    .inline-edit-icon.h3 {
-@@ -144,23 +152,21 @@
+@@ -144,23 +149,21 @@
    }
    &:hover {
      .read-only .inline-edit-icon i {
@@ -187,7 +190,7 @@
  }
  
  .appmanager-edit-title .ko-inline-edit {
-@@ -174,20 +180,20 @@
+@@ -174,20 +177,20 @@
    }
    .read-write {
      padding-top: 10px;
@@ -217,7 +220,7 @@
    }
  }
  .appmanager-edit-description .ko-inline-edit {
-@@ -197,6 +203,7 @@
+@@ -197,6 +200,7 @@
  .appmanager-page-actions {
    float: right;
    margin-top: 20px;
@@ -225,7 +228,7 @@
  }
  
  .form-group .upgrade-message {
-@@ -211,17 +218,18 @@
+@@ -211,17 +215,18 @@
  }
  
  .ko-inline-edit .read-only .btn-langcode-preprocessed {
@@ -249,7 +252,7 @@
      overflow: hidden;
    }
  }
-@@ -245,12 +253,11 @@
+@@ -245,12 +250,11 @@
  }
  
  .btn-preview {
@@ -266,7 +269,7 @@
  }
  
  .appmanager-content-single-page {
-@@ -258,11 +265,6 @@
+@@ -258,11 +262,6 @@
    padding: 20px 20px;
  }
  
