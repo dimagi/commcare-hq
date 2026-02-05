@@ -195,7 +195,8 @@ def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count
                 extension = os.path.splitext(path)[1]
                 file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                 z.writestr(path, data, file_compression)
-                current_progress += file_progress / file_count
+                if file_count > 0:
+                    current_progress += file_progress / file_count
                 DownloadBase.set_progress(task, current_progress, 100)
                 if extension not in MULTIMEDIA_EXTENSIONS:
                     file_cache[path] = data
