@@ -7,7 +7,7 @@
    .pending img {
      width: 20px;
      height: 20px;
-@@ -8,12 +7,14 @@
+@@ -8,12 +7,19 @@
  
    .released {
      color: #ffff00;
@@ -24,6 +24,11 @@
 -.panel-title i {
 -    width: 18px;
 -    text-align: center;
++#deploy-build-modal-template .icon-link > i {
++  width: 1rem;
++  text-align: center;
+ }
++
 +#new-app-start .helpbubble {
 +  max-width: 300px;
- }
++}
