@@ -227,8 +227,8 @@
                 click: $root.toggleRelease,
                 attr: { disabled: !$root.showReleaseOperations() },
                 css: {
-                  'active': is_released(),
-                  'fw-normal': !is_released(),
+                  'btn-dark': is_released(),
+                  'btn-outline-dark fw-normal': !is_released(),
                 }"
             >
               {% trans "Released" %}
@@ -240,8 +240,8 @@
                 click: $root.toggleRelease,
                 attr: { disabled: !$root.showReleaseOperations() },
                 css: {
-                  'active': !is_released(),
-                  'fw-normal': is_released(),
+                  'btn-dark': !is_released(),
+                  'btn-outline-dark fw-normal': is_released(),
                 }"
             >
               {% trans "In Test" %}
