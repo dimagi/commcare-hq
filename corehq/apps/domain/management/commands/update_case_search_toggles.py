@@ -85,11 +85,10 @@ class Command(BaseCommand):
 
         for m in Command._get_case_list_modules(app):
             search_config = m.get('search_config', {})
-            auto_launch = search_config.get('auto_launch', False)
-            default_search = search_config.get('default_search', False)
 
-            # see more
-            usage_found |= not auto_launch and default_search
+            auto_launch = search_config.get('auto_launch', False)
+            # See More" and "Normal Case List"
+            usage_found |= not auto_launch
 
             usage_found |= bool(search_config.get('additional_relevant'))
             usage_found |= bool(search_config.get('search_filter'))
