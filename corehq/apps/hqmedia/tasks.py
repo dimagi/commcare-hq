@@ -74,9 +74,11 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
             app_paths_lower = [p.lower() for p in app_paths]
             form_path = media_class.get_form_path(path, lowercase=True)
 
-            if not form_path in app_paths_lower:
-                status.add_unmatched_path(path,
-                                          _("Did not match any %s paths in application." % media_class.get_nice_name()))
+            if form_path not in app_paths_lower:
+                status.add_unmatched_path(
+                    path,
+                    _("Did not match any %s paths in application." % media_class.get_nice_name())
+                )
                 continue
 
             index_of_path = app_paths_lower.index(form_path)
@@ -126,7 +128,7 @@ def build_application_zip(include_multimedia_files, include_index_files, domain,
                           download_targeted_version=False):
     DownloadBase.set_progress(build_application_zip, 0, 100)
     app = get_app(domain, app_id)
-    fpath = create_files_for_ccz(
+    create_files_for_ccz(
         app,
         build_profile_id,
         include_multimedia_files,
