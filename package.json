@@ -90,6 +90,7 @@
         "zxcvbn": "4.4.2"
     },
     "devDependencies": {
+        "@playwright/test": "^1.58.1",
         "chai": "4.3.6",
         "colors": "1.4.0",
         "eslint": "8.15.0",
@@ -136,7 +137,9 @@
         "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib",
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
-        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
+        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js",
+        "test:playwright": "playwright test",
+        "test:playwright:ui": "playwright test --ui"
     },
     "prettier": {
         "plugins": [
