@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,46 +2,57 @@
+@@ -2,55 +2,66 @@
  <div data-bind="saveButton: saveButton"></div>
  <table class="table table-languages">
    <tbody data-bind="sortable: languages">
@@ -62,7 +62,7 @@
 -    <input type="checkbox" data-bind="checked: smartLangDisplay"/>
 -    {% trans "Smart language display in forms" %}.
 -    <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms" target="_blank">Learn more</a>
-+  <div class="form-check" data-bind="visible: showSmartLangDisplayOption">
++  <div class="form-check mt-2" data-bind="visible: showSmartLangDisplayOption">
 +    <input
 +      type="checkbox"
 +      class="form-check-input"
@@ -78,8 +78,10 @@
 +    </label>
    </div>
  {% endif %}
- <div data-bind="if: removedLanguages().length" class="removed-languages">
-@@ -50,7 +61,7 @@
+-<div data-bind="if: removedLanguages().length" class="removed-languages">
++<div data-bind="visible: removedLanguages().length" class="mt-4">
+   <h5>{% trans 'Deleting Languages:' %}</h5>
+   <table class="table">
      <tbody data-bind="foreach: removedLanguages">
      <tr>
        <td><p data-bind="text: langcode"></p></td>

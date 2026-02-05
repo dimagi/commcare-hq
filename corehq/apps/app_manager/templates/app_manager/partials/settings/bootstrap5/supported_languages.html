@@ -39,7 +39,7 @@
 </button>
 <span class='help-block' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
 {% if show_smart_lang_option %}
-  <div class="form-check" data-bind="visible: showSmartLangDisplayOption">
+  <div class="form-check mt-2" data-bind="visible: showSmartLangDisplayOption">
     <input
       type="checkbox"
       class="form-check-input"
@@ -55,7 +55,7 @@
     </label>
   </div>
 {% endif %}
-<div data-bind="if: removedLanguages().length" class="removed-languages">
+<div data-bind="visible: removedLanguages().length" class="mt-4">
   <h5>{% trans 'Deleting Languages:' %}</h5>
   <table class="table">
     <tbody data-bind="foreach: removedLanguages">
