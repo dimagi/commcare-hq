@@ -234,21 +234,25 @@
                     data-bind="value: workflow"
                     id="search-workflow"
                   >
-                    <option
-                      value="classic"
-                      data-bind="hidden: restrictWorkflowForDataRegistry"
-                    >
-                      {% trans "Normal Case List" %}
-                    </option>
+                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+                      <option
+                        value="classic"
+                        data-bind="hidden: restrictWorkflowForDataRegistry"
+                      >
+                        {% trans "Normal Case List" %}
+                      </option>
+                    {% endif %}
                     <option value="auto_launch">
                       {% trans "Search First" %}
                     </option>
-                    <option
-                      value="see_more"
-                      data-bind="hidden: restrictWorkflowForDataRegistry"
-                    >
-                      {% trans "See More" %}
-                    </option>
+                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+                      <option
+                        value="see_more"
+                        data-bind="hidden: restrictWorkflowForDataRegistry"
+                      >
+                        {% trans "See More" %}
+                      </option>
+                    {% endif %}
                     <option value="es_only">
                       {% trans "Skip to Default Case Search Results" %}
                     </option>
