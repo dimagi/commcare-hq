@@ -25,7 +25,12 @@ def _create_indicator_with_brackets(lang):
 
 
 def _create_indicator_with_markup(lang):
-    style = 'btn btn-xs btn-info btn-langcode-preprocessed'
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    # todo B5: remove this check once all uses of html_trans are in Bootstrap 5 templates
+    if get_bootstrap_version() == BOOTSTRAP_5:
+        style = 'badge btn-langcode-preprocessed'
+    else:
+        style = 'btn btn-xs btn-info btn-langcode-preprocessed'
     return format_html(' <span class="{}">{}</span> ', style, lang)
 
 
