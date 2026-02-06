@@ -55,7 +55,7 @@ function setup {
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         yarn install --progress=false --frozen-lockfile
-        npx playwright install --with-deps chromium
+        npx playwright install-deps chromium
     fi
 }
 
@@ -216,6 +216,7 @@ function _run_tests {
 
     function _test_javascript {
         SKIP_GEVENT_PATCHING=1 ./manage.py migrate --noinput
+        npx playwright install chromium
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         _wait_for_runserver
         logmsg INFO "npx playwright test"
