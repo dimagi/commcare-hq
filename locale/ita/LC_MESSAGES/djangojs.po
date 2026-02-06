@@ -569,25 +569,21 @@ msgstr "Puoi avere solo una proprietà con il formato 'Immagine'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary' format"
 msgstr "Puoi avere solo una proprietà con il formato 'Geo Boundary'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Boundary Color' format"
 msgstr "Puoi avere solo una proprietà con il formato 'Geo Boundary Color'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points' format"
 msgstr "Puoi avere solo una proprietà con il formato 'Geo Points'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
-#| msgid "You can only have one property with the 'Image' format"
 msgid "You can only have one property with the 'Geo Points Colors' format"
 msgstr "Puoi avere solo una proprietà con il formato 'Geo Points Colors'"
 

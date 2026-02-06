@@ -5,6 +5,7 @@
     "description": "CommCare HQ Javascript Libraries",
     "private": true,
     "dependencies": {
+        "@alpinejs/collapse": "^3.15.3",
         "@babel/core": "7.25.2",
         "@eonasdan/tempus-dominus": "npm:@eonasdan/tempus-dominus#6.10.3",
         "@fortawesome/fontawesome-free": "npm:@fortawesome/fontawesome-free#6.5.1",
@@ -97,7 +98,7 @@
         "grunt-cli": "1.4.3",
         "grunt-contrib-watch": "1.1.0",
         "grunt-mocha": "1.2.0",
-        "lodash": "4.17.21",
+        "lodash": "4.17.23",
         "mocha": "11.0.1",
         "mocha-headless-chrome": "4.0.0",
         "prettier": "^3.3.3",

@@ -4063,6 +4063,10 @@ msgid "Reason"
 msgstr "السبب"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+msgid "Payment Type"
+msgstr "نوع الدفع"
+
+#: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
@@ -7776,19 +7780,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/app_exchange.html
-#| msgid ""
-#| "\n"
-#| "    <div class=\"row\">\n"
-#| "      <div class=\"col-sm-10\">\n"
-#| "        <p>\n"
-#| "          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-#| "          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-#| "          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-#| "        </p>\n"
-#| "        <p class=\"help-block\">\n"
-#| "          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-#| "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-#| "        "
 msgid ""
 "\n"
 "    <p>\n"
@@ -14081,11 +14072,6 @@ msgid "Learn more."
 msgstr "اعرف المزيد."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                        You have previously enabled this feature in your app, but have since lost access\n"
-#| "                        to it.\n"
-#| "                      "
 msgid ""
 "\n"
 "                    You have previously enabled this feature in your app, but have since lost access\n"
@@ -14097,11 +14083,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
-#| msgid ""
-#| "\n"
-#| "                        Your application will continue to function in places that utilized this feature, but\n"
-#| "                        you will not be able to edit any related functionality until you upgrade.\n"
-#| "                      "
 msgid ""
 "\n"
 "                    Your application will continue to function in places that utilized this feature, but\n"
@@ -16793,16 +16774,16 @@ msgstr "حسنًا"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
-"            "
+"            Please correct the answers below before submitting.\n"
+"            <br>\n"
+"            You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
+"          "
 msgstr ""
 "\n"
-"              يرجى تصحيح الإجابات أدناه قبل الإرسال.\n"
-"              <br>\n"
-"              يمكنك استخدام زر <strong><i class='fa fa-fast-forward'></i> الخطأ التالي</strong> على الجانب الأيسر من الشاشة للتنقل بين الحقول المطلوبة.\n"
-"            "
+"            يرجى تصحيح الإجابات أدناه قبل الإرسال.\n"
+"            <br>\n"
+"            يمكنك استخدام زر <strong><i class='fa fa-fast-forward'></i> الخطأ التالي</strong> في الجانب الأيسر من الشاشة للتنقل بين الحقول المطلوبة.\n"
+"          "
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid "An answer is required."
@@ -21690,6 +21671,14 @@ msgstr "تحديث معلومات الفوترة"
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr "يبدو أن رقم الهاتف هذا غير صالح. هل نسيت رمز الدولة؟"
+
+#: corehq/apps/domain/forms.py
+#| msgid ""
+#| "\n"
+#| "                Please provide an autopay card before continuing.\n"
+#| "              "
+msgid "Please provide an autopay card before continuing."
+msgstr "يرجى تقديم بطاقة دفع تلقائي قبل المتابعة."
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -27494,11 +27483,6 @@ msgstr "حاضر"
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            This attendee cannot be deleted as <strong>%(attendee_name)s</strong> has been tracked as\n"
-#| "            having attended one or more events.\n"
-#| "          "
 msgid ""
 "\n"
 "          This attendee cannot be deleted as\n"
@@ -27521,11 +27505,6 @@ msgstr "حذف الحاضر"
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Are you sure you want to permanently delete\n"
-#| "                  <strong>%(friendly_name)s</strong>?\n"
-#| "                "
 msgid ""
 "\n"
 "                Are you sure you want to permanently delete\n"
@@ -27539,11 +27518,6 @@ msgstr ""
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                This action will delete %(attendee_name)s as a potential attendee and will remove them from all\n"
-#| "                future events that they are currently enlisted in.\n"
-#| "              "
 msgid ""
 "\n"
 "                This action will delete %(attendee_name)s as a potential\n"
@@ -27557,10 +27531,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
-#| msgid ""
-#| "\n"
-#| "                  This action cannot be undone.\n"
-#| "                "
 msgid ""
 "\n"
 "                This action cannot be undone.\n"
@@ -27571,11 +27541,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/events/templates/events/event_attendees.html
-#| msgid ""
-#| "\n"
-#| "    Known potential attendees who can be invited to participate in Attendance\n"
-#| "    Tracking Events.\n"
-#| "    "
 msgid ""
 "\n"
 "      Known potential attendees who can be invited to participate in Attendance\n"
@@ -27625,13 +27590,6 @@ msgid "Loading potential attendees ..."
 msgstr "جارٍ تحميل الحضور المحتملين ..."
 
 #: corehq/apps/events/templates/events/event_attendees.html
-#| msgid ""
-#| "\n"
-#| "            <strong>There was an issue contacting the server.</strong>\n"
-#| "            Please check your internet connection. If this issue continues,\n"
-#| "            please\n"
-#| "            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">report an issue</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
@@ -27671,10 +27629,6 @@ msgstr ""
 "          "
 
 #: corehq/apps/events/templates/events/events_list.html
-#| msgid ""
-#| "\n"
-#| "          Attendance tracking events can be used to track attendance of all the selected attendees.\n"
-#| "        "
 msgid ""
 "\n"
 "          Attendance tracking events can be used to track attendance of all the\n"
@@ -27710,10 +27664,6 @@ msgid "Event has not yet started"
 msgstr "لم تبدأ الفعالية بعد"
 
 #: corehq/apps/events/templates/events/new_event.html
-#| msgid ""
-#| "\n"
-#| "      There was a problem fetching the list of attendees and attendance takers. Please try again.\n"
-#| "      "
 msgid ""
 "\n"
 "      There was a problem fetching the list of attendees and attendance takers.\n"
@@ -33591,11 +33541,13 @@ msgstr "هل تحتاج إلى مساعدة؟"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
-"مرحباً! أنا CommCare Companion، دليلك الشخصي إلى CommCare! كيف يمكنني "
-"مساعدتك اليوم؟"
+"مرحبًا! أنا رفيق CommCare، دليلك الشخصي إلى CommCare! يمكنك طرح سؤال أو "
+"إرفاق ملفات هنا — مثل لقطات الشاشة أو الصادرات أو ملخص التطبيق — وسأستخدمها "
+"لمساعدتك."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "I need help with building my CommCare application."
@@ -35129,10 +35081,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Read more on the <a target='_blank' href='%(link)s'>Help Site</a>.\n"
-#| "      "
 msgid ""
 "\n"
 "      Read more on the <a target='_blank' href='%(link)s'>Help Site</a>.\n"
@@ -35144,10 +35092,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "          Download your current %(adjective)s file.\n"
-#| "        "
 msgid ""
 "\n"
 "        Download your current %(adjective)s file.\n"
@@ -35159,10 +35103,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Download %(plural_noun)s\n"
-#| "              "
 msgid ""
 "\n"
 "              Download %(plural_noun)s\n"
@@ -35174,10 +35114,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              Check the <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> for instructions.\n"
-#| "            "
 msgid ""
 "\n"
 "            Check the <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> for instructions.\n"
@@ -60161,6 +60097,13 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid ""
+#~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+#~ "I help you with today?"
+#~ msgstr ""
+#~ "مرحباً! أنا CommCare Companion، دليلك الشخصي إلى CommCare! كيف يمكنني "
+#~ "مساعدتك اليوم؟"
 
 #~ msgid ""
 #~ "\n"

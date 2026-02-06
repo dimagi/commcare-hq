@@ -3406,6 +3406,10 @@ msgid "Reason"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+msgid "Payment Type"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
@@ -14864,12 +14868,12 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> "
-"Next Error</strong> button on the left-hand side of the screen to navigate "
+"            Please correct the answers below before submitting.\n"
+"            <br>\n"
+"            You can use the <strong><i class='fa fa-fast-forward'></i> Next "
+"Error</strong> button on the left-hand side of the screen to navigate "
 "between required fields.\n"
-"            "
+"          "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
@@ -19300,6 +19304,10 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Please provide an autopay card before continuing."
 msgstr ""
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
@@ -29769,8 +29777,9 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py

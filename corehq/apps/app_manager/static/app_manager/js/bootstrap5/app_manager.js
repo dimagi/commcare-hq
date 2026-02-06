@@ -2,6 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Modal, Popover, Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqLayout from "hqwebapp/js/layout";
 import toggles from "hqwebapp/js/toggles";
@@ -179,25 +180,30 @@ var _initCommcareVersion = function (args) {
  * @private
  */
 var _initAddItemPopovers = function () {
-    $('.js-add-new-item').popover({  /* todo B5: js-popover */
-        title: gettext("Add"),
-        container: 'body',
-        sanitize: false,
-        content: function () {
-            var template = $('.js-popover-template-add-item-content[data-slug="form"]').text();
-            return _.template(template)($(this).data());
-        },
-        html: true,
-        trigger: 'manual',
-        placement: 'right',
-        template: $('#js-popover-template-add-item').text(),
-    }).on('show.bs.popover', function () {
+    const $popoverEls = $('.js-add-new-item');
+    _.each($popoverEls, (el) => {
+        new Popover(el ,{
+            title: gettext("Add"),
+            container: 'body',
+            sanitize: false,
+            content: function () {
+                var template = $('.js-popover-template-add-item-content[data-slug="form"]').text();
+                return _.template(template)($(el).data());
+            },
+            html: true,
+            trigger: 'manual',
+            placement: 'right',
+            template: $('#js-popover-template-add-item').text(),
+        });
+    });
+    $popoverEls.on('show.bs.popover', function () {
         // Close any other open popover
-        $('.js-add-new-item').not($(this)).popover('hide');  /* todo B5: js-popover */
+        const $otherEls = $('.js-add-new-item').not($(this));
+        _.each($otherEls, (el) => Popover.getInstance(el).hide());
     }).one('shown.bs.popover', function () {
         var pop = this;
         $('.popover-additem').on('click', function (e) {
-            $(pop).popover('hide');  /* todo B5: js-popover */
+            Popover.getInstance(pop).hide();
             var dataType = $(e.target).closest('button').data('type'),
                 stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                 $form;
@@ -207,7 +213,7 @@ var _initAddItemPopovers = function () {
             }
 
             var caseAction =  $(e.target).closest('button').data('case-action'),
-                $popoverContent = $(e.target).closest(".popover-content > *"),
+                $popoverContent = $(e.target).closest(".popover-body > *"),
                 moduleId = $popoverContent.data("module-unique-id"),
                 $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
 
@@ -222,13 +228,13 @@ var _initAddItemPopovers = function () {
         });
     }).on('click', function (e) {
         e.preventDefault();
-        $(this).popover('show');  /* todo B5: js-popover */
+        Popover.getInstance(this).show();
     });
 
     // Close any open popover when user clicks elsewhere on the page
     $('body').click(function (event) {
         if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
-            $('.js-add-new-item').popover('hide');  /* todo B5: js-popover */
+            _.each($popoverEls, (el) => Popover.getInstance(el).hide());
         }
     });
 };
@@ -343,7 +349,7 @@ var _initMenuItemSorting = function () {
         });
     }
     function promptToSaveOrdering() {
-        $("#reorder_modules_modal").modal('show');  /* todo B5: js-modal */
+        Modal.getOrCreateInstance("#reorder_modules_modal").show();
     }
     function initSortable($sortable) {
         var options = {
@@ -480,7 +486,9 @@ $(function () {
         }
     });
 
-    $('[data-toggle="tooltip"]').tooltip();  /* todo B5: js-tooltip */
+    _.each($('[data-bs-toggle="tooltip"]'), (el) => {
+        Tooltip.getOrCreateInstance(el);
+    });
 
     // https://github.com/twitter/bootstrap/issues/6122
     // this is necessary to get popovers to be able to extend
@@ -508,13 +516,17 @@ $(function () {
     });
 
     // Handling for popup displayed when accessing a deleted app
-    $('#deleted-app-modal').modal({  /* todo B5: js-modal */
-        backdrop: 'static',
-        keyboard: false,
-        show: true,
-    }).on('hide.bs.modal', function () {
-        window.location = initialPageData.reverse('dashboard_default');
-    });
+    const $deletedAppModalEl = $('#deleted-app-modal');
+    if ($deletedAppModalEl.length) {
+        new Modal($deletedAppModalEl, {
+            backdrop: 'static',
+            keyboard: false,
+            show: true,
+        });
+        $deletedAppModalEl.on('hide.bs.modal', function () {
+            window.location = initialPageData.reverse('dashboard_default');
+        });
+    }
 
     // Set up app preview
     previewApp.initPreviewWindow();
@@ -536,15 +548,15 @@ var _initNewModuleOptionClicks = function () {
         var $form = $('#new-module-form');
 
         if (moduleType === "case") {
-            $('#add-new-module-modal').modal('hide');  /* todo B5: js-modal */
-            $('#define-case-type-modal').modal('show');  /* todo B5: js-modal */
+            Modal.getInstance('#add-new-module-modal').hide();
+            Modal.getOrCreateInstance('#define-case-type-modal').show();
         } else {
             if (moduleType === "survey") {
                 google.track.event("Added Surveys Menu");
                 noopMetrics.track.event("Added Surveys Menu");
             }
             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-            $('#add-new-module-modal').modal('hide');  /* todo B5: js-modal */
+            Modal.getInstance('#add-new-module-modal').hide();
             $form.submit();
         }
     });
@@ -586,15 +598,13 @@ var _initNewModuleOptionClicks = function () {
 
             $caseType.on('change', function () {
                 var valueNoSpaces = $(this).val();
-                var $formGroup = $(this).closest('.form-group');
                 var $help = $('#new-case-type-help');
                 var $error = $('#new-case-type-error');
                 var $createBtn = $('#case-type-create-btn');
 
                 // Reset error states
-                $formGroup.removeClass('has-error');
                 $help.show();
-                $error.hide();
+                $error.addClass('d-none');
                 $createBtn.prop('disabled', false);
 
                 if (!valueNoSpaces) {
@@ -603,9 +613,8 @@ var _initNewModuleOptionClicks = function () {
                 }
 
                 function displayError(errorMsg) {
-                    $formGroup.addClass('has-error');
                     $error.html(errorMsg);
-                    $error.show();
+                    $error.removeClass('d-none');
                     $help.hide();
                     $createBtn.prop('disabled', true);
                 }
@@ -642,14 +651,14 @@ var _initNewModuleOptionClicks = function () {
         newCaseTypeHiddenInput.val(value);
 
         $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-        $('#define-case-type-modal').modal('hide');  /* todo B5: js-modal */
+        Modal.getInstance('#define-case-type-modal').hide();
         $form.submit();
     });
 
     // Handle "Go Back" button click
     $('#case-type-go-back-btn').on('click', function () {
-        $('#define-case-type-modal').modal('hide');  /* todo B5: js-modal */
-        $('#add-new-module-modal').modal('show');  /* todo B5: js-modal */
+        Modal.getInstance('#define-case-type-modal').hide();
+        Modal.getOrCreateInstance('#add-new-module-modal').show();
     });
 
     // Clear selection when modal is hidden
@@ -671,7 +680,7 @@ var _initNewModuleOptionClicks = function () {
     $('.new-module-option').each(function () {
         var type = $(this).data('type');
         if (hoverHelpTexts[type]) {
-            $(this).popover({  /* todo B5: js-popover */
+            new Popover(this, {
                 title: hoverHelpTexts[type].title,
                 content: hoverHelpTexts[type].content,
                 trigger: 'hover',
