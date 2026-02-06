@@ -1,7 +1,10 @@
 /* globals process, require */
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8000';
+const COVERAGE = process.env.COVERAGE === '1';
 
 /**
  * Runs Mocha tests at a given URL and returns the results.
@@ -61,6 +64,24 @@ async function runMochaTests(page, testPath) {
 }
 
 /**
+ * Saves coverage data from the browser's window.__coverage__ to a JSON file.
+ */
+async function saveCoverage(page, testPath) {
+    const coverage = await page.evaluate(() => window.__coverage__);
+    console.log(`Coverage From Page: ${coverage}`);
+    if (!coverage) {
+        return;
+    }
+    const coverageDir = path.resolve('coverage-js');
+    if (!fs.existsSync(coverageDir)) {
+        fs.mkdirSync(coverageDir, { recursive: true });
+    }
+    const fileName = testPath.replace(/\//g, '-') + '.json';
+    console.log(`Saving coverage data to: ${path.join(coverageDir, fileName)}`);
+    fs.writeFileSync(path.join(coverageDir, fileName), JSON.stringify(coverage));
+}
+
+/**
  * Prints test results in a readable format.
  */
 function printResults(testName, results) {
@@ -106,6 +127,11 @@ test.describe('Mocha Test Runner', () => {
         test(`${app}`, async ({ page }) => {
             const results = await runMochaTests(page, app);
             printResults(app, results);
+            console.log(`Coverage: ${COVERAGE}`);
+
+            if (COVERAGE) {
+                await saveCoverage(page, app);
+            }
 
             // Assert no failures
             expect(results.failures, `Expected 0 failures but got ${results.failures}`).toBe(0);

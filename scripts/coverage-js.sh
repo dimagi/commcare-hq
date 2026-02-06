@@ -24,8 +24,11 @@ git commit --allow-empty --no-verify -a -m "temp commit"
 npx nyc instrument -x "**/lib" -x "**/sentry" -x "**/spec" -x "mocha" \
     "corehq/apps" "corehq/apps" --in-place
 
-# TODO : This has to be sorted out.
-# grunt test --coverage
+# Rebuild webpack so bundles contain the instrumented code
+yarn test
+
+# Run tests with coverage collection enabled
+COVERAGE=1 npx playwright test
 
 # Merge coverage data from multiple apps
 npx nyc merge "./coverage-js" "./coverage-js/merged/coverage.json"
