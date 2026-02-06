@@ -72,8 +72,8 @@
                     <div class="col-sm-12 col-md-9">
                       <select class="form-select" data-bind="value: appearance">
                         <option value="">{% trans "Text" %}</option>
-                        {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-                          {# limit to USH since datepicker and checkbox are only available on web apps #}  {# todo B5: css-checkbox #}
+                        {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+                          {# limit to advanced since datepicker and checkbox are only available on web apps #}  {# todo B5: css-checkbox #}
                           {% if js_options.has_lookup_tables %}
                           <option value="checkbox">{% trans "Checkbox" %}</option>  {# todo B5: css-checkbox #}
                           {% endif %}
