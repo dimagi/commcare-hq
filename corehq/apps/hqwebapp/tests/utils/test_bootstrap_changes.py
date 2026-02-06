@@ -20,7 +20,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_inline_styles,
     make_template_dependency_renames,
     add_todo_comments_for_flags,
-    update_gruntfile,
+    update_mocha_test_list,
 )
 
 
@@ -448,36 +448,36 @@ def test_add_todo_comments_for_flags_javascript_noop():
     eq(line, line)
 
 
-def test_update_gruntfile():
+def test_update_mocha_test_list():
     filedata = """
-    var apps = [
-        'app_manager',
-        'export',
-        'notifications',
-        'reports_core/choiceListUtils',
-        'locations',
-        'userreports',
-        'cloudcare',
-        'cloudcare/form_entry',
-        'hqwebapp',
-        'case_importer',
-    ];
+const TEST_APPS = [
+    'app_manager',
+    'export',
+    'notifications',
+    'reports_core/choiceListUtils',
+    'locations',
+    'userreports',
+    'cloudcare',
+    'cloudcare/form_entry',
+    'hqwebapp',
+    'case_importer',
+];
     """
     mocha_paths = ["notifications/spec/mocha.html"]
-    result = update_gruntfile(filedata, mocha_paths)
+    result = update_mocha_test_list(filedata, mocha_paths)
     expected_result = """
-    var apps = [
-        'app_manager',
-        'export',
-        'notifications/bootstrap3',
-        'notifications/bootstrap5',
-        'reports_core/choiceListUtils',
-        'locations',
-        'userreports',
-        'cloudcare',
-        'cloudcare/form_entry',
-        'hqwebapp',
-        'case_importer',
-    ];
+const TEST_APPS = [
+    'app_manager',
+    'export',
+    'notifications/bootstrap3',
+    'notifications/bootstrap5',
+    'reports_core/choiceListUtils',
+    'locations',
+    'userreports',
+    'cloudcare',
+    'cloudcare/form_entry',
+    'hqwebapp',
+    'case_importer',
+];
     """
     eq(result, expected_result)
