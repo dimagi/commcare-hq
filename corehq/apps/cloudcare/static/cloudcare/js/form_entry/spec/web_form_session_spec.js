@@ -122,13 +122,7 @@ describe('WebForm', function () {
 
         afterEach(function () {
             $('#submit').remove();
-            try {
-                server.restore();
-            } catch (e) {
-                // temporarily catch these errors while we work on issues with
-                // running mocha tests with grunt-mocha. this passes fine in
-                // the browser.
-            }
+            server.restore();
             Utils.initialRender.restore();
             formUI.getIx.restore();
             $.unsubscribe();
@@ -318,13 +312,7 @@ describe('WebForm', function () {
 
         afterEach(function () {
             $('#submit').remove();
-            try {
-                server.restore();
-            } catch (e) {
-                // temporarily catch these errors while we work on issues with
-                // running mocha tests with grunt-mocha. this passes fine in
-                // the browser.
-            }
+            server.restore();
             Utils.initialRender.restore();
             $.unsubscribe();
             this.clock.restore();
