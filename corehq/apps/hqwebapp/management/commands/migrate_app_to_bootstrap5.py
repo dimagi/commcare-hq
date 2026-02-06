@@ -20,7 +20,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_inline_styles,
     flag_selects_without_form_control,
     add_todo_comments_for_flags,
-    update_gruntfile,
+    update_mocha_test_list,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     get_working_directory,
@@ -39,7 +39,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     is_split_path,
     is_bootstrap5_path,
     is_ignored_path,
-    GRUNTFILE_PATH,
+    MOCHA_RUNNER_PATH,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.references import (
     update_and_get_references,
@@ -173,27 +173,27 @@ class Command(BaseCommand):
             if mocha_paths:
                 mocha_paths = [get_short_path(app_name, path, True)
                             for path in mocha_paths]
-                self.make_updates_to_gruntfile(app_name, mocha_paths)
+                self.make_updates_to_mocha_test_list(app_name, mocha_paths)
 
         self.show_next_steps(app_name)
 
-    def make_updates_to_gruntfile(self, app_name, mocha_paths):
+    def make_updates_to_mocha_test_list(self, app_name, mocha_paths):
         has_changes = has_pending_git_changes()
         self.clear_screen()
         self.stdout.write(self.style.WARNING(
             self.format_header("Mocha (javascript test) files were split!")
         ))
         self.stdout.write(self.style.MIGRATE_LABEL(
-            "Updating Gruntfile.js...\n\n"
+            "Updating mocha-runner.spec.js...\n\n"
         ))
-        with open(GRUNTFILE_PATH, 'r+') as file:
+        with open(MOCHA_RUNNER_PATH, 'r+') as file:
             filedata = file.read()
             file.seek(0)
-            file.write(update_gruntfile(
+            file.write(update_mocha_test_list(
                 filedata, mocha_paths
             ))
         self.suggest_commit_message(
-            f"Updated 'Gruntfile.js' after splitting '{app_name}'.",
+            f"Updated 'mocha-runner.spec.js' after splitting '{app_name}'.",
             show_apply_commit=not has_changes
         )
 
