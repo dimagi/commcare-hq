@@ -1,4 +1,4 @@
-// @ts-check
+/* globals module, process, require */
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({

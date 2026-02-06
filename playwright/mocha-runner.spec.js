@@ -1,4 +1,4 @@
-// @ts-check
+/* globals process, require */
 const { test, expect } = require('@playwright/test');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8000';
@@ -82,7 +82,7 @@ function printResults(testName, results) {
     console.log('='.repeat(60) + '\n');
 }
 
-// All test apps (same as Gruntfile.js)
+// All mocha test apps
 const TEST_APPS = [
     'app_manager/bootstrap3',
     'app_manager/bootstrap5',
