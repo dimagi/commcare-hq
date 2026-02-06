@@ -165,22 +165,22 @@
                     <fieldset>
                       <legend>{% trans "Advanced Options" %}</legend>
                       {% if js_options.has_geocoder_privs %}
-                        <div data-bind="visible: ['', 'fixture', 'checkbox'].indexOf(appearanceFinal()) !== -1 ">
-                          <div class="form-group" data-bind="visible: appearanceFinal() !== 'checkbox'">
-                            <label class="control-label col-xs-12 col-sm-3">
-                              {% trans "Geocoder Receiver Expression" %}
-                            </label>
-                            <div class="col-xs-12 col-sm-9">
-                              <input class="form-control" type="text" data-bind="value: receiverExpression"/>
-                            </div>
+                        <div class="form-group" data-bind="visible: ['', 'fixture'].indexOf(appearanceFinal()) !== -1 ">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Geocoder Receiver Expression" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <input class="form-control" type="text" data-bind="value: receiverExpression"/>
                           </div>
-                          <div class="form-group">
-                            <label class="control-label col-xs-12 col-sm-3">
-                              {% trans "Hide in Search Screen" %}
-                            </label>
-                            <div class="col-xs-12 col-sm-9">
-                              <input type="checkbox" data-bind="checked: hidden" />
-                            </div>
+                        </div>
+                      {% endif %}
+                      {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+                        <div class="form-group" data-bind="visible: ['', 'fixture', 'checkbox'].indexOf(appearanceFinal()) !== -1">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Hide in Search Screen" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <input type="checkbox" data-bind="checked: hidden" />
                           </div>
                         </div>
                       {% endif %}
