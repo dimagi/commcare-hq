@@ -531,7 +531,7 @@ def odk_install(request, domain, app_id, with_media=False):
                            }),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/bootstrap3/odk_install.html", context)
+    return render(request, "app_manager/bootstrap5/odk_install.html", context)
 
 
 def odk_qr_code(request, domain, app_id):
