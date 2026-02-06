@@ -20,6 +20,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'payment_verified',
         'payment_verified_by',
         'payment_status',
+        'payment_status_confirmed_on',
         'payment_timestamp',
         'kyc_status',
         'campaign',
