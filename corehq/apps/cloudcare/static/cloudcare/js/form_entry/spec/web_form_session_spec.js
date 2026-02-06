@@ -1,3 +1,4 @@
+/* globals before, after */
 import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import constants from "cloudcare/js/form_entry/const";
