@@ -103,16 +103,14 @@
                       </div>
                   </div>
                 {% endif %}
-                {% if js_options.default_value_expression_enabled %}
-                  <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3">
-                      {% trans "Allow searching for blank values" %}
-                    </label>
-                    <div class="col-xs-12 col-sm-9">
-                      <input type="checkbox" data-bind="checked: allowBlankValue"/>
-                    </div>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3">
+                    {% trans "Allow searching for blank values" %}
+                  </label>
+                  <div class="col-xs-12 col-sm-9">
+                    <input type="checkbox" data-bind="checked: allowBlankValue"/>
                   </div>
-                {% endif %}
+                </div>
               </fieldset>
               {% if js_options.search_prompt_appearance_enabled %}
               <fieldset data-bind="visible: appearanceFinal() == 'fixture' || appearanceFinal() == 'checkbox'">
