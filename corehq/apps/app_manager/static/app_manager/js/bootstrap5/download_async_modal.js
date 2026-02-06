@@ -18,7 +18,7 @@ var asyncDownloader = function ($el) {
         self.download_poll_id = null;
         self.$download_progress.addClass("d-none");
         self.$downloading.removeClass("d-none");
-        self.$el.removeClass("full-screen-modal");
+        self.$el.children(".modal-dialog").removeClass("modal-dialog-scrollable");
     };
 
     self.pollDownloadStatus = function () {
@@ -87,7 +87,8 @@ var asyncDownloader = function ($el) {
         self.$download_progress.html(text);
         self.$download_progress.removeClass("d-none");
         self.$downloading.addClass("d-none");
-        self.$el.addClass("full-screen-modal");     // allow scrolling in case of many errors
+        // allow scrolling in case of many errors
+        self.$el.children(".modal-dialog").addClass("modal-dialog-scrollable");
     };
 
     self.$el.on("hidden hidden.bs.modal", function () {
