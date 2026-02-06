@@ -93,13 +93,8 @@ var _show = function (message, $el, autoHideTime, classes, isHTML) {
     }
     // HTML errors may already have an alert dialog
     $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
-    try {
-        $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
-    } catch (e) {
-        // escaping a DOM-related error from running mocha tests using grunt
-        // in the command line. This passes just fine in the browser but
-        // breaks only when travis runs it.
-    }
+    $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
+
     $el.append($container);
     if (autoHideTime) {
         $container.delay(autoHideTime).fadeOut(500);

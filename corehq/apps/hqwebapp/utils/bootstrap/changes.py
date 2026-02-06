@@ -305,7 +305,7 @@ def replace_path_references(filedata, old_reference, new_reference):
     )
 
 
-def update_gruntfile(filedata, mocha_paths):
+def update_mocha_test_list(filedata, mocha_paths):
     mocha_apps = [path.replace('/spec/', '/').removesuffix('/mocha.html')
                   for path in mocha_paths]
     for app in mocha_apps:

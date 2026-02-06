@@ -1,7 +1,7 @@
 # Generates local Javascript test coverage report
 
 echo "Before running, please confirm:
-   grunt is installed via npm or yarn
+   playwright is installed (npx playwright install chromium)
    local development server is active\n"
 read -p "Do you want to proceed? (y/n) " proceed
 case $proceed in
@@ -24,8 +24,11 @@ git commit --allow-empty --no-verify -a -m "temp commit"
 npx nyc instrument -x "**/lib" -x "**/sentry" -x "**/spec" -x "mocha" \
     "corehq/apps" "corehq/apps" --in-place
 
-# Run tests through grunt test task with coverage flag
-grunt test --coverage
+# Rebuild webpack so bundles contain the instrumented code
+yarn test
+
+# Run tests with coverage collection enabled
+COVERAGE=1 npx playwright test
 
 # Merge coverage data from multiple apps
 npx nyc merge "./coverage-js" "./coverage-js/merged/coverage.json"

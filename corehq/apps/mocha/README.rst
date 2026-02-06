@@ -6,7 +6,7 @@ Adding a new app to test
 
 There are three steps to adding a new app to test:
 
-#. Add the app name to the ``Gruntfile.js`` file. Note: the app has to correspond to an actual Django app.
+#. Add the app name to the ``TEST_APPS`` list in ``playwright/mocha-runner.spec.js``. Note: the app has to correspond to an actual Django app.
 
 #. Create a mocha template in ``corehq/apps/<app>/templates/<app>/spec/mocha.html`` to run tests. See an example on `here <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/templates/app_manager/spec/mocha.html>`_.
 
@@ -16,7 +16,7 @@ There are three steps to adding a new app to test:
 Creating an alternative configuration for an app
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Occasionally there's a need to use a different mocha template to run tests for the same app. In order to create multiple configurations, specify the app in the `Gruntfile.js` like this: ``<app>#<config>``
+Occasionally there's a need to use a different mocha template to run tests for the same app. In order to create multiple configurations, add the app to the ``TEST_APPS`` list as ``<app>/<config>``, e.g., ``cloudcare/form_entry``.
 
 Now mocha will look for that template in ``corehq/apps/<app>/templates/<app>/spec/<config>/mocha.html``
 

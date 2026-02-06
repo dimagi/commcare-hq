@@ -55,6 +55,7 @@ function setup {
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         yarn install --progress=false --frozen-lockfile
+        npx playwright install-deps chromium
     fi
 }
 
@@ -172,7 +173,6 @@ function _run_tests {
     TEST="$1"
     shift
     py_test_args=("$@")
-    js_test_args=("$@")
     case "$TEST" in
         python-sharded*)
             export USE_PARTITIONED_DATABASE=yes
@@ -216,10 +216,11 @@ function _run_tests {
 
     function _test_javascript {
         SKIP_GEVENT_PATCHING=1 ./manage.py migrate --noinput
+        npx playwright install chromium
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         _wait_for_runserver
-        logmsg INFO "grunt test ${js_test_args[*]}"
-        grunt test "${js_test_args[@]}"
+        logmsg INFO "npx playwright test"
+        npx playwright test
     }
 
     case "$TEST" in

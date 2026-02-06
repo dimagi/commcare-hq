@@ -91,16 +91,11 @@
         "zxcvbn": "4.4.2"
     },
     "devDependencies": {
+        "@playwright/test": "^1.58.1",
         "chai": "4.3.6",
-        "colors": "1.4.0",
         "eslint": "8.15.0",
-        "grunt": "1.5.3",
-        "grunt-cli": "1.4.3",
-        "grunt-contrib-watch": "1.1.0",
-        "grunt-mocha": "1.2.0",
         "lodash": "4.17.23",
         "mocha": "11.0.1",
-        "mocha-headless-chrome": "4.0.0",
         "prettier": "^3.3.3",
         "prettier-plugin-jinja-template": "^2.0.0",
         "sinon": "19.0.2"
@@ -113,13 +108,11 @@
         "dot-prop": "^5.1.1",
         "getobject": "^1.0.0",
         "growl": "^1.10.0",
-        "grunt": "^1.2.0",
         "js-yaml": "^3.14.2",
         "lodash": "^4.17.19",
         "mem": "^4.0.0",
         "minimist": "^1.2.6",
         "minimatch": "^3.0.5",
-        "mocha-headless-chrome/puppeteer/tar-fs": "^2.1.4",
         "moment-timezone": "^0.5.35",
         "qs": "^6.9.7",
         "set-value": "^4.0.1",
@@ -137,7 +130,9 @@
         "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib",
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",
         "test": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js",
-        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js"
+        "build": "node webpack/generateDetails.js --prod && webpack --config webpack/webpack.prod.js",
+        "test:playwright": "playwright test",
+        "test:playwright:ui": "playwright test --ui"
     },
     "prettier": {
         "plugins": [

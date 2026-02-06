@@ -18,7 +18,7 @@ PARENT_PATHS = {
 SUBMODULE_APPS = [
     "vellum",
 ]
-GRUNTFILE_PATH = COREHQ_BASE_DIR.parent / "Gruntfile.js"
+MOCHA_RUNNER_PATH = COREHQ_BASE_DIR.parent / "playwright" / "mocha-runner.spec.js"
 IGNORED_PATHS_BY_APP = {
     "hqwebapp": [
         "hqwebapp/base.html",
