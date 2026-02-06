@@ -1,16 +1,18 @@
 --- 
 +++ 
-@@ -16,8 +16,8 @@
+@@ -16,9 +16,9 @@
          self.download_in_progress = false;
          self.download_poll_url = null;
          self.download_poll_id = null;
 -        self.$download_progress.addClass("hide");
 -        self.$downloading.removeClass("hide");
+-        self.$el.removeClass("full-screen-modal");
 +        self.$download_progress.addClass("d-none");
 +        self.$downloading.removeClass("d-none");
-         self.$el.removeClass("full-screen-modal");
++        self.$el.children(".modal-dialog").removeClass("modal-dialog-scrollable");
      };
  
+     self.pollDownloadStatus = function () {
 @@ -43,8 +43,8 @@
  
      self.updateProgress = function (progressResponse) {
@@ -22,14 +24,17 @@
          }
      };
  
-@@ -85,8 +85,8 @@
+@@ -85,9 +85,10 @@
      self.downloadError = function (text) {
          self.init();
          self.$download_progress.html(text);
 -        self.$download_progress.removeClass("hide");
 -        self.$downloading.addClass("hide");
+-        self.$el.addClass("full-screen-modal");     // allow scrolling in case of many errors
 +        self.$download_progress.removeClass("d-none");
 +        self.$downloading.addClass("d-none");
-         self.$el.addClass("full-screen-modal");     // allow scrolling in case of many errors
++        // allow scrolling in case of many errors
++        self.$el.children(".modal-dialog").addClass("modal-dialog-scrollable");
      };
  
+     self.$el.on("hidden hidden.bs.modal", function () {
