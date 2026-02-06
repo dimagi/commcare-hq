@@ -16,20 +16,18 @@ When mocks are needed, use the ``sinon.js`` framework.
 Setup
 -----
 
-In order to run the javascript tests you’ll need to install the required
+In order to run the javascript tests you'll need to install the required
 npm packages:
 
 ::
 
    $ yarn install --frozen-lockfile
 
-It’s recommended to install grunt globally in order to use grunt from
-the command line:
+Then install the Playwright browser:
 
 ::
 
-   $ npm install -g grunt
-   $ npm install -g grunt-cli
+   $ npx playwright install chromium
 
 In order for the tests to run the **development server needs to be
 running on port 8000**.
@@ -54,24 +52,30 @@ different templates. Each config template will be in
 ``corehq/apps/<app>/templates/<app>/spec/<config>/mocha.html`` and its
 tests will be in
 ``corehq/apps/<app_name>/static/<app_name>/<config>/spec/``. These are
-defined in ``Gruntfile.js`` as ``<app_name>/<config_name>``, e.g.,
-``cloudcare/form_entry``.
+defined in ``playwright/mocha-runner.spec.js`` as
+``<app_name>/<config_name>``, e.g., ``cloudcare/form_entry``.
 
 
 Running tests from the command line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To run the javascript tests for a particular app run:
+To run all javascript tests:
 
 ::
 
-   $ grunt test:<app_name> // (e.g. grunt test:app_manager)
+   $ yarn test:playwright
 
-To list all the apps available to run:
+To run the javascript tests for a particular app:
 
 ::
 
-   $ grunt list
+   $ yarn test:playwright -- --grep "<app_name>"  // (e.g. yarn test:playwright -- --grep "app_manager")
+
+To list all available test suites:
+
+::
+
+   $ npx playwright test --list
 
 Running tests from the browser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,7 +97,8 @@ Adding a new app or config
 
 There are three steps to adding a new app:
 
-1. Add the django app name to the ``Gruntfile.js`` file.
+1. Add the app name to the ``TEST_APPS`` list in
+   ``playwright/mocha-runner.spec.js``.
 2. Create a mocha template in
    ``corehq/apps/<app>/templates/<app>/spec/mocha.html`` to run tests.
    See an example on
@@ -101,12 +106,9 @@ There are three steps to adding a new app:
 3. Create tests that are included in the template in
    ``corehq/apps/<app>/static/<app>/spec/``
 
-To add an additional config to an existing app, specify the app in the
-``Gruntfile.js`` like this:
-
-::
-
-   <app_name>/<config>  // (e.g. cloudcare/form_entry)
+To add an additional config to an existing app, add it to the
+``TEST_APPS`` list as ``<app_name>/<config>``, e.g.,
+``cloudcare/form_entry``.
 
 The template and tests then also being in config-specific directories,
 as described above.

@@ -1037,21 +1037,11 @@ See https://docs.pytest.org/en/stable/how-to/cache.html
 Make sure javascript packages are installed with the following. Please see the
 section on installing `yarn` above for more details.
 
-It's recommended to install grunt globally (with `yarn`) in order to use grunt
-from the command line:
+Install the Playwright browser:
 
 ```sh
-yarn global add grunt
-yarn global add grunt-cli
+npx playwright install chromium
 ```
-
-You'll then need to add the yarn bin folder to your path:
-
-```sh
-export PATH="$(yarn global bin):$PATH"
-```
-
-More information can be found [here](https://classic.yarnpkg.com/en/docs/cli/global/)
 
 In order for the tests to run the **development server needs to be running on port 8000**.
 
@@ -1061,19 +1051,19 @@ In order for the tests to run the **development server needs to be running on po
 To run all JavaScript tests in all the apps:
 
 ```sh
-grunt test
+yarn test:playwright
 ```
 
 To run the JavaScript tests for a particular app run:
 
 ```sh
-grunt test:<app_name>  # (e.g. grunt test:app_manager)
+yarn test:playwright -- --grep "<app_name>"  # (e.g. yarn test:playwright -- --grep "app_manager")
 ```
 
-To list all the apps available to run:
+To list all available test suites:
 
 ```sh
-grunt list
+npx playwright test --list
 ```
 
 
