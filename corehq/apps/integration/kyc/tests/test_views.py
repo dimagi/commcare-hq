@@ -20,7 +20,9 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationTableView,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
+from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.permissions import KYC_REPORT_PERMISSION
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.util.test_utils import flag_enabled
 
@@ -44,9 +46,33 @@ class BaseTestKycView(TestCase):
         )
         cls.webuser.save()
 
+        cls.user_without_access = cls.make_user_with_custom_role('test-user2', 'kyc-no-access')
+        cls.user_with_access = cls.make_user_with_custom_role('test-user3', 'kyc-access', True)
+
+    @classmethod
+    def make_user_with_custom_role(cls, username, role_name, has_kyc_access=False):
+        user = WebUser.create(
+            domain=cls.domain,
+            username=username,
+            password=cls.password,
+            created_by=None,
+            created_via=None
+        )
+        view_report_list = [KYC_REPORT_PERMISSION] if has_kyc_access else []
+        role = UserRole.create(
+            domain=cls.domain,
+            name=role_name,
+            permissions=HqPermissions(view_report_list=view_report_list),
+        )
+        user.set_role(cls.domain, role.get_qualified_id())
+        user.save()
+        return user
+
     @classmethod
     def tearDownClass(cls):
         cls.webuser.delete(None, None)
+        cls.user_without_access.delete(None, None)
+        cls.user_with_access.delete(None, None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -76,6 +102,19 @@ class TestKycConfigurationView(BaseTestKycView):
         assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
+    def test_user_without_access(self):
+        self.client.login(username=self.user_without_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 403
+
+    @flag_enabled('KYC_VERIFICATION')
+    @patch('corehq.apps.integration.kyc.forms.get_case_types_for_domain', return_value=['case-1'])
+    def test_user_with_access(self, *args):
+        self.client.login(username=self.user_with_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 200
+
+    @flag_enabled('KYC_VERIFICATION')
     @patch('corehq.apps.integration.kyc.forms.get_case_types_for_domain', return_value=['case-1'])
     def test_success(self, *args):
         response = self._make_request()
@@ -93,6 +132,18 @@ class TestKycVerificationReportView(BaseTestKycView):
     def test_ff_not_enabled(self):
         response = self._make_request()
         assert response.status_code == 404
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_user_without_access(self):
+        self.client.login(username=self.user_without_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 403
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_user_with_access(self):
+        self.client.login(username=self.user_with_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 200
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):
@@ -253,6 +304,18 @@ class TestKycVerificationTableView(BaseTestKycView):
     def test_ff_not_enabled(self):
         response = self._make_request()
         assert response.status_code == 404
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_user_without_access(self):
+        self.client.login(username=self.user_without_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 403
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_user_with_access(self):
+        self.client.login(username=self.user_with_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 200
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):

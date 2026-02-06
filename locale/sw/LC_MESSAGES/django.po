@@ -52,8 +52,7 @@ msgid "Account Type"
 msgstr "Aina ya Akaunti"
 
 #: corehq/apps/accounting/filters.py
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/filters.py
@@ -178,7 +177,8 @@ msgstr "Onyesha Usajili wa Majaribio Pekee"
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
@@ -324,10 +324,8 @@ msgid "Billing Account"
 msgstr "Akaunti ya Malipo"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
@@ -340,7 +338,8 @@ msgstr "Akaunti ya Malipo"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Version"
 msgstr "Toleo"
 
@@ -508,8 +507,7 @@ msgid "Auto Renew"
 msgstr "Upyaaji Kiotomatiki"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/models.py
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
 #: corehq/apps/domain/forms.py
@@ -4146,6 +4144,10 @@ msgid "Reason"
 msgstr "Sababu"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+msgid "Payment Type"
+msgstr "Aina ya Malipo"
+
+#: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
@@ -4886,7 +4888,8 @@ msgstr "Watumiaji Walioungizwa:"
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqadmin/reports.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
@@ -5429,8 +5432,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -5840,8 +5842,7 @@ msgid "Improve the user experience of your mobile workers"
 msgstr "Boresha uzoefu wa watumiaji wa simu zako za kazi"
 
 #: corehq/apps/app_manager/add_ons.py
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 msgid "Calculations"
 msgstr "Hesabu"
 
@@ -5907,8 +5908,7 @@ msgid "Case"
 msgstr "Kesi"
 
 #: corehq/apps/app_manager/fields.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/data_interfaces/interfaces.py
@@ -6012,10 +6012,9 @@ msgid "Select Case Type"
 msgstr "Chagua Aina ya Kesi"
 
 #: corehq/apps/app_manager/fields.py
+#: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
@@ -7114,8 +7113,7 @@ msgstr "Siku Moja Tu"
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Languages"
@@ -7921,6 +7919,106 @@ msgstr ""
 "linalofuata ikiwa haitatambuliwa kama imetolewa. Imetengenezwa na mtumiaji "
 "{}."
 
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "COVID-19 CommCare Applications"
+msgstr "Programu za CommCare za COVID-19"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid ""
+"\n"
+"        COVID-19 CommCare Applications\n"
+"      "
+msgstr ""
+"\n"
+"        Programu za CommCare za COVID-19\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid ""
+"\n"
+"    <p>\n"
+"      To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
+"      COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
+"      clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
+"    </p>\n"
+"    <p class=\"help-block\">\n"
+"      These application templates can be imported into your project space as licensed by Dimagi under the\n"
+"      <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+"    </p>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      Ili kusaidia mashirika na serikali katika kukabiliana na COVID-19, Dimagi imeunda maktaba ya programu za bure za mfano za COVID-19 kwa jukwaa letu la chanzo huria, CommCare. Hizi zimeundwa kulingana na\n"
+"      itifaki za kliniki kutoka Shirika la Afya Duniani, Vituo vya Kudhibiti Magonjwa, na wengineo.\n"
+"    </p>\n"
+"    <p class=\"help-block\">\n"
+"      Hizi templeti za programu zinaweza kuingizwa kwenye nafasi ya mradi wako kama zilivyopewa leseni na Dimagi chini ya\n"
+"      <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Leseni ya Creative Commons NonCommercial ShareAlike (CC BY-NC-SA 4.0)</a>.\n"
+"    </p>\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Application Info"
+msgstr "Taarifa za Programu"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+#, python-format
+msgid ""
+"\n"
+"                    Last Updated: %(last_released)s\n"
+"                  "
+msgstr ""
+"\n"
+"                    Iliyosasishwa Mwisho: %(last_released)s\n"
+"                  "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Version History"
+msgstr "Historia ya Toleo"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Import"
+msgstr "Ingiza"
+
+#: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
+msgid "Settings"
+msgstr "Mipangilio"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+msgid "High Level Summary"
+msgstr "Muhtasari wa Juu"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Form Summary"
+msgstr "Muhtasari wa Fomu"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Summary"
+msgstr "Muhtasari wa Kesi"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
+msgid "Labels"
+msgstr "Lebo"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
+msgid "Question IDs"
+msgstr "Vitambulisho vya Maswali"
+
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_diff.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_diff.html
@@ -7939,77 +8037,6 @@ msgstr ""
 "\n"
 "        Upakuaji wa multimedia unahitajika ili kusasisha kutoka %(from_version)s hadi %(to_version)s\n"
 "      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "COVID-19 CommCare Applications"
-msgstr "Programu za CommCare za COVID-19"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid ""
-"\n"
-"        COVID-19 CommCare Applications\n"
-"      "
-msgstr ""
-"\n"
-"        Programu za CommCare za COVID-19\n"
-"      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-msgid ""
-"\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-sm-10\">\n"
-"        <p>\n"
-"          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-"          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-"          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-"        "
-msgstr ""
-"\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-sm-10\">\n"
-"        <p>\n"
-"          Ili kusaidia mashirika na serikali katika kukabiliana na COVID-19, Dimagi imetengeneza maktaba ya programu za bure\n"
-"          za mfano wa COVID-19 kwa jukwaa letu huria, CommCare. Hizi zimetengenezwa kwa kuzingatia\n"
-"          taratibu za kitabibu kutoka Shirika la Afya Duniani, Vituo vya Kudhibiti Magonjwa, na wengineo.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          Hizi templeti za programu zinaweza kuingizwa kwenye nafasi yako ya mradi kama ilivyoruhusiwa na Dimagi chini ya\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Leseni ya Creative Commons NonCommercial ShareAlike (CC BY-NC-SA 4.0)</a>.\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Application Info"
-msgstr "Taarifa za Programu"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-#, python-format
-msgid ""
-"\n"
-"                    Last Updated: %(last_released)s\n"
-"                  "
-msgstr ""
-"\n"
-"                    Iliyosasishwa Mwisho: %(last_released)s\n"
-"                  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Version History"
-msgstr "Historia ya Toleo"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Import"
-msgstr "Ingiza"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view.html
@@ -8031,141 +8058,6 @@ msgstr "Matoleo"
 #: corehq/apps/domain/forms.py
 msgid "Release Mode"
 msgstr "Hali ya Toleo"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
-msgid "Settings"
-msgstr "Mipangilio"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-msgid "High Level Summary"
-msgstr "Muhtasari wa Juu"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Form Summary"
-msgstr "Muhtasari wa Fomu"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Summary"
-msgstr "Muhtasari wa Kesi"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-msgid "Labels"
-msgstr "Lebo"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-msgid "Question IDs"
-msgstr "Vitambulisho vya Maswali"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
-msgid "Go"
-msgstr "Nenda"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Show Conditions"
-msgstr "Onyesha Masharti"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Show Calculations"
-msgstr "Onyesha Mahesabu"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#, python-format
-msgid ""
-"\n"
-"          Your app's forms contain errors.\n"
-"          Please visit the <a href='%(form_summary_url)s'>form summary</a> for more details.\n"
-"        "
-msgstr ""
-"\n"
-"          Fomu za programu yako zina makosa.\n"
-"          Tafadhali tembelea <a href='%(form_summary_url)s'>muhtasari wa fomu</a> kwa maelezo zaidi.\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Relationships:"
-msgstr "Mahusiano:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Opened by:"
-msgstr "Imefunguliwa na:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Closed by:"
-msgstr "Imefungwa na:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Problems:"
-msgstr "Matatizo:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
-#: corehq/apps/data_cleaning/forms/columns.py
-#: corehq/apps/data_cleaning/forms/filters.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
-msgid "Case Property"
-msgstr "Sifa ya Kesi"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Load questions"
-msgstr "Pakia maswali"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Save questions"
-msgstr "Hifadhi maswali"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Lists"
-msgstr "Orodha za Kesi"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
@@ -8270,98 +8162,6 @@ msgstr "Jina la Fomu"
 #: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
 msgid "Comment"
 msgstr "Maoni"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary.html
-#, python-format
-msgid ""
-"\n"
-"    Form Summary - Version %(app_version)s\n"
-"  "
-msgstr ""
-"\n"
-"    Muhtasari wa Fomu - Toleo %(app_version)s\n"
-"  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid ""
-"\n"
-"    Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.\n"
-"  "
-msgstr ""
-"\n"
-"    Fomu za programu yako zina makosa. Taarifa za kesi na fomu hapa chini zinaweza kuwa si sahihi hadi utakaporekebisha matatizo hayo.\n"
-"  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Error in form:"
-msgstr "Hitilafu kwenye fomu:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "required"
-msgstr "inahitajika"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Instance"
-msgstr "Mfano"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Nodeset"
-msgstr "Nodeset"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-#: corehq/apps/data_cleaning/forms/filters.py
-#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "Value"
-msgstr "Thamani"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#: corehq/apps/data_cleaning/forms/columns.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
-msgid "Label"
-msgstr "Lebo"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Load property"
-msgstr "Pakia sifa"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Save property"
-msgstr "Hifadhi sifa"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "save only on edit"
-msgstr "hifadhi wakati wa kuhariri pekee"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_diff.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_diff.html
-#, python-format
-msgid ""
-"\n"
-"    Changes - Version %(first_version)s vs. Version %(second_version)s\n"
-"  "
-msgstr ""
-"\n"
-"    Mabadiliko - Toleo %(first_version)s dhidi ya Toleo %(second_version)s\n"
-"  "
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
@@ -8512,27 +8312,6 @@ msgid ""
 "User Properties."
 msgstr "Bado hujaunda fomu. Unda fomu ili kuona na kuhariri Sifa za Mtumiaji."
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-#: corehq/apps/sms/templates/sms/languages.html
-msgid "Language List"
-msgstr "Orodha ya Lugha"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "CommCare Translations"
-msgstr "Tafsiri za CommCare"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "Bulk CommCare Translations"
-msgstr "Tafsiri za CommCare kwa Wingi"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "Bulk Application Translations"
-msgstr "Tafsiri za Programu kwa Wingi"
-
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "Menu Settings"
@@ -8600,7 +8379,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
 #: corehq/apps/sso/forms.py corehq/apps/users/forms.py
@@ -8668,7 +8448,9 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/events/templates/events/edit_attendee.html
 #: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/events/templates/events/events_list.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -8676,7 +8458,8 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
@@ -8717,45 +8500,177 @@ msgstr "Sakinisha CommCare"
 msgid "Close"
 msgstr "Funga"
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-#| msgid ""
-#| "\n"
-#| "    <div class=\"row\">\n"
-#| "      <div class=\"col-sm-10\">\n"
-#| "        <p>\n"
-#| "          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-#| "          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-#| "          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-#| "        </p>\n"
-#| "        <p class=\"help-block\">\n"
-#| "          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-#| "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-#| "        "
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+msgid "Go"
+msgstr "Nenda"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Show Conditions"
+msgstr "Onyesha Masharti"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Show Calculations"
+msgstr "Onyesha Mahesabu"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#, python-format
 msgid ""
 "\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-md-10\">\n"
-"        <p>\n"
-"          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-"          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-"          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+"          Your app's forms contain errors.\n"
+"          Please visit the <a href='%(form_summary_url)s'>form summary</a> for more details.\n"
 "        "
 msgstr ""
 "\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-md-10\">\n"
-"        <p>\n"
-"          Ili kusaidia mashirika na serikali katika kukabiliana na COVID-19, Dimagi imeunda maktaba ya programu za bure za mfano wa COVID-19 kwa jukwaa letu huria, CommCare. Hizi zimeandaliwa kulingana na\n"
-"          itifaki za kitabibu kutoka Shirika la Afya Duniani, Vituo vya Kudhibiti Magonjwa, na wengine.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          Templeti hizi za programu zinaweza kuingizwa kwenye nafasi ya mradi wako kama ilivyoidhinishwa na Dimagi chini ya\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Leseni ya Creative Commons NonCommercial ShareAlike (CC BY-NC-SA 4.0)</a>.\n"
+"          Fomu za programu yako zina makosa.\n"
+"          Tafadhali tembelea <a href='%(form_summary_url)s'>muhtasari wa fomu</a> kwa maelezo zaidi.\n"
 "        "
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Relationships:"
+msgstr "Mahusiano:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Opened by:"
+msgstr "Imefunguliwa na:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Closed by:"
+msgstr "Imefungwa na:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Problems:"
+msgstr "Matatizo:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_cleaning/forms/filters.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
+msgid "Case Property"
+msgstr "Sifa ya Kesi"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Load questions"
+msgstr "Pakia maswali"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Save questions"
+msgstr "Hifadhi maswali"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Lists"
+msgstr "Orodha za Kesi"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Details"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html
+#, python-format
+msgid ""
+"\n"
+"    Form Summary - Version %(app_version)s\n"
+"  "
+msgstr ""
+"\n"
+"    Muhtasari wa Fomu - Toleo %(app_version)s\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid ""
+"\n"
+"    Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.\n"
+"  "
+msgstr ""
+"\n"
+"    Fomu za programu yako zina makosa. Taarifa za kesi na fomu hapa chini zinaweza kuwa si sahihi hadi utakaporekebisha matatizo hayo.\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Error in form:"
+msgstr "Hitilafu kwenye fomu:"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "required"
+msgstr "inahitajika"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Instance"
+msgstr "Mfano"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Nodeset"
+msgstr "Nodeset"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/data_cleaning/forms/filters.py
+#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "Value"
+msgstr "Thamani"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid "Label"
+msgstr "Lebo"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Load property"
+msgstr "Pakia sifa"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Save property"
+msgstr "Hifadhi sifa"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "save only on edit"
+msgstr "hifadhi wakati wa kuhariri pekee"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_diff.html
+#, python-format
+msgid ""
+"\n"
+"    Changes - Version %(first_version)s vs. Version %(second_version)s\n"
+"  "
+msgstr ""
+"\n"
+"    Mabadiliko - Toleo %(first_version)s dhidi ya Toleo %(second_version)s\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+#: corehq/apps/sms/templates/sms/languages.html
+msgid "Language List"
+msgstr "Orodha ya Lugha"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "CommCare Translations"
+msgstr "Tafsiri za CommCare"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "Bulk CommCare Translations"
+msgstr "Tafsiri za CommCare kwa Wingi"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "Bulk Application Translations"
+msgstr "Tafsiri za Programu kwa Wingi"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
@@ -8822,7 +8737,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -9923,47 +9839,6 @@ msgstr ""
 msgid "Build Profile"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Select a language."
-msgstr "Chagua lugha."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Select a format."
-msgstr "Chagua muundo."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Download only translations eligible for Transifex?"
-msgstr "Pakua tafsiri zinazostahili Transifex pekee?"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-#: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
-#, python-format
-msgid ""
-"\n"
-"          Download %(plural_noun)s\n"
-"        "
-msgstr ""
-"\n"
-"          Pakua %(plural_noun)s\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid ""
-"\n"
-"        The single-sheet format is only available when downloading a single language.\n"
-"        <br>Please either select a language or choose the multi-sheet format.\n"
-"      "
-msgstr ""
-"\n"
-"        Muundo wa karatasi moja unapatikana tu unapopakua lugha moja.\n"
-"        <br>Tafadhali chagua lugha au chagua muundo wa karatasi nyingi.\n"
-"      "
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/case_list_session_endpoint.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/case_list_session_endpoint.html
 msgid "Case List Session Endpoint ID"
@@ -10182,46 +10057,6 @@ msgstr ""
 "Washa mpangilio huu ili kuruhusu mwisho huu wa kikao kufikia\n"
 "                                        fomu zilizofichwa."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Form Changes"
-msgstr "Mabadiliko ya Fomu"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Display"
-msgstr "Onyesha"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation"
-msgstr "Uhakiki"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Comments"
-msgstr "Maoni"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Default Values"
-msgstr "Thamani Chaguo-msingi"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/campaign/models.py
-#: corehq/apps/campaign/templates/campaign/dashboard.html
-#: corehq/apps/export/models/new.py
-#: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-#: corehq/apps/userreports/models.py
-msgid "Cases"
-msgstr "Kesi"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/function_datum_endpoints.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/function_datum_endpoints.html
 msgid "Enable these function datums in session endpoints"
@@ -10247,17 +10082,18 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/domain/views/internal.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 msgid "Preview"
 msgstr "Onyesho la Awali"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
 msgid "Replace"
@@ -10269,7 +10105,8 @@ msgstr "Badilisha"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
 msgid "Upload"
@@ -10364,16 +10201,6 @@ msgstr "Hapana asante, niondoke hapa"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Your form display condition for form\n"
-#| "                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-#| "                but cases are not available for this form. Please either remove\n"
-#| "                the case reference or (1) make sure that the case list is set to\n"
-#| "                display the case list first and then form, and (2) make sure\n"
-#| "                that all forms in this case list update or close a case (which\n"
-#| "                means registration forms must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -10396,15 +10223,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                You have a display condition which refers to a case, but cases\n"
-#| "                are not available. Please either remove the case reference or\n"
-#| "                (1) make sure that the case list is set to display the case list\n"
-#| "                first and then form, and (2) make sure that all forms in this\n"
-#| "                case list update or close a case (which means registration forms\n"
-#| "                must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                You have a display condition which refers to a case, but cases\n"
@@ -10423,16 +10241,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
-#| msgid ""
-#| "\n"
-#| "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
-#| "          Learn more\n"
-#| "          <a\n"
-#| "            target='_blank'\n"
-#| "            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
-#| "            >here</a\n"
-#| "          >.\n"
-#| "        "
 msgid ""
 "\n"
 "          Please add display Text or an XPath function. This will appear as a badge rounded-pill next to the corresponding icon.\n"
@@ -10456,10 +10264,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              Use this %(label)s for all languages\n"
-#| "            "
 msgid ""
 "\n"
 "              Use this %(badge)s for all languages\n"
@@ -10471,11 +10275,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            This %(label)s is linked to the default language, and can only be\n"
-#| "            modified there.\n"
-#| "          "
 msgid ""
 "\n"
 "            This %(badge)s is linked to the default language, and can only be\n"
@@ -10486,6 +10285,76 @@ msgstr ""
 "            %(badge)s hii imeunganishwa na lugha chaguo-msingi, na inaweza\n"
 "            kubadilishwa tu huko.\n"
 "          "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Select a language."
+msgstr "Chagua lugha."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Select a format."
+msgstr "Chagua muundo."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Download only translations eligible for Transifex?"
+msgstr "Pakua tafsiri zinazostahili Transifex pekee?"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+#: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"          Download %(plural_noun)s\n"
+"        "
+msgstr ""
+"\n"
+"          Pakua %(plural_noun)s\n"
+"        "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid ""
+"\n"
+"        The single-sheet format is only available when downloading a single language.\n"
+"        <br>Please either select a language or choose the multi-sheet format.\n"
+"      "
+msgstr ""
+"\n"
+"        Muundo wa karatasi moja unapatikana tu unapopakua lugha moja.\n"
+"        <br>Tafadhali chagua lugha au chagua muundo wa karatasi nyingi.\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Form Changes"
+msgstr "Mabadiliko ya Fomu"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Display"
+msgstr "Onyesha"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation"
+msgstr "Uhakiki"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Comments"
+msgstr "Maoni"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Default Values"
+msgstr "Thamani Chaguo-msingi"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/campaign/models.py
+#: corehq/apps/campaign/templates/campaign/dashboard.html
+#: corehq/apps/export/models/new.py
+#: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+#: corehq/apps/userreports/models.py
+msgid "Cases"
+msgstr "Kesi"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
@@ -11122,8 +10991,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Custom Assertions"
 msgstr "Madai Maalum"
 
@@ -11289,8 +11157,7 @@ msgstr "XForm"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
@@ -11301,8 +11168,7 @@ msgstr "Onyesha"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/hqmedia/views.py
 msgid "Multimedia"
 msgstr "Multimedia"
@@ -11672,23 +11538,11 @@ msgstr ""
 "    "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#| msgid ""
-#| "Followup: This form loads a case and may then update or close it"
 msgid "Followup: This form loads a case and may then update or btn-close it"
 msgstr ""
 "Ufuatiliaji: Fomu hii inachukua kesi na inaweza kuisasisha au kuifunga"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
-#| msgid ""
-#| "\n"
-#| "              To use display conditions which reference a case, <br />\n"
-#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-#| "              <em>Display menu and then forms</em> <br />\n"
-#| "              (2) all the forms in the case list must update or close a case,\n"
-#| "              which means registration forms must go in a separate case list, or\n"
-#| "              if your project uses user properties, your display condition may\n"
-#| "              use user properties.\n"
-#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
@@ -13814,15 +13668,6 @@ msgid "Shade"
 msgstr "Kivuli"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_missing_warning.html
-#| msgid ""
-#| "\n"
-#| "        None of the forms in this menu require a case list.\n"
-#| "        Changes made here will have no effect until you either:\n"
-#| "        <ol>\n"
-#| "          <li>use forms that require a case list, such as forms that update or close a case, or</li>\n"
-#| "          <li>select the <strong>Case List Menu Item</strong> setting.</li>\n"
-#| "        </ol>\n"
-#| "      "
 msgid ""
 "\n"
 "        None of the forms in this menu require a case list.\n"
@@ -13843,16 +13688,10 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_setting.html
-#| msgid "Case list menu item requires a label"
 msgid "Case list menu item requires a badge"
 msgstr "Kipengee cha menyu ya orodha ya kesi kinahitaji beji"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-#| msgid ""
-#| "\n"
-#| "                  Visit schedule will be ignored as not all\n"
-#| "                  forms in the case list update or close a case.\n"
-#| "                "
 msgid ""
 "\n"
 "                  Visit schedule will be ignored as not all\n"
@@ -13865,11 +13704,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-#| msgid ""
-#| "\n"
-#| "    Visit schedules can only be used when all the forms in the case list<br/>\n"
-#| "    update or close a case, which means registration forms must go in a separate case list.\n"
-#| "  "
 msgid ""
 "\n"
 "    Visit schedules can only be used when all the forms in the case list<br/>\n"
@@ -14078,7 +13912,8 @@ msgstr "kwenye kifaa chako cha Android."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "Application Profile"
 msgstr "Wasifu wa Programu"
 
@@ -14341,7 +14176,8 @@ msgstr "Haikuweza kusasishwa"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Latest"
 msgstr "Ya Hivi Punde"
 
@@ -14437,8 +14273,7 @@ msgstr ""
 msgid "Revert"
 msgstr "Rudisha"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
 "        All add-ons have been enabled for this app using the\n"
@@ -14450,13 +14285,11 @@ msgstr ""
 "        mpangilio wa mradi \"Wezesha Viongezi Vyote vya Programu\".\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid "Enable All Add-Ons"
 msgstr "Wezesha Viongezi Vyote"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
 "        <strong>Add-ons</strong> enable you to build more complex applications.\n"
@@ -14466,39 +14299,34 @@ msgstr ""
 "        <strong>Viongezeo</strong> vinakuwezesha kujenga programu tata zaidi.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid "Learn more."
 msgstr "Jifunze zaidi."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                        You have previously enabled this feature in your app, but have since lost access\n"
-"                        to it.\n"
-"                      "
+"                    You have previously enabled this feature in your app, but have since lost access\n"
+"                    to it.\n"
+"                  "
 msgstr ""
 "\n"
-"                        Uliwahi kuwezesha kipengele hiki kwenye programu yako, lakini sasa umepoteza ufikiaji\n"
-"                        wake.\n"
-"                      "
+"                    Uliwahi kuwezesha kipengele hiki kwenye programu yako, lakini sasa umepoteza ufikiaji wake.\n"
+"                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                        Your application will continue to function in places that utilized this feature, but\n"
-"                        you will not be able to edit any related functionality until you upgrade.\n"
-"                      "
+"                    Your application will continue to function in places that utilized this feature, but\n"
+"                    you will not be able to edit any related functionality until you upgrade.\n"
+"                  "
 msgstr ""
 "\n"
-"                        Programu yako itaendelea kufanya kazi katika sehemu zilizotumia kipengele hiki, lakini\n"
-"                        hutaweza kuhariri utendakazi wowote unaohusiana hadi uboreshe.\n"
-"                      "
+"                    Programu yako itaendelea kufanya kazi katika maeneo yaliyotumia kipengele hiki, lakini\n"
+"                    hutaweza kuhariri utendakazi wowote unaohusiana hadi uboreshe.\n"
+"                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid ""
 "\n"
 "      You cannot re-enable this feature once it is disabled\n"
@@ -14510,40 +14338,34 @@ msgstr ""
 "      hadi uboreshe usajili wako.\n"
 "    "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Replace Logo"
 msgstr "Badilisha Nembo"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 msgid "Upload Logo"
 msgstr "Pakia Nembo"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Linked Application"
 msgstr "Programu Iliyounganishwa"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Add-ons"
 msgstr "Viongezeo"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/commtrack/views.py corehq/apps/geospatial/forms.py
 msgid "Advanced Settings"
 msgstr "Mipangilio ya Juu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Update from upstream application"
 msgstr "Sasisha kutoka kwenye programu ya juu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid ""
 "\n"
@@ -14558,8 +14380,7 @@ msgstr ""
 "                    toleo %(upstream_version)s.\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid ""
 "\n"
@@ -14570,148 +14391,36 @@ msgstr ""
 "                    Programu yako ilivutwa mwisho kutoka %(upstream_name)s, toleo %(upstream_version)s.\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Select an upstream app to pull"
 msgstr "Chagua programu ya juu kuvuta"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid "version %(v)s"
 msgstr "toleo %(v)s"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Email when finished (recommended for large applications)"
 msgstr "Tuma barua pepe ikikamilika (inapendekezwa kwa programu kubwa)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/templates/reports/async/print_report.html
 msgid "Loading ..."
 msgstr "Inapakia ..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Try again"
 msgstr "Jaribu tena"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Delete Application"
 msgstr "Futa Programu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Delete this application"
 msgstr "Futa programu hii"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid "Custom Properties"
-msgstr "Sifa Maalum"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid ""
-"\n"
-"                  Oops!\n"
-"                  This setting shouldn't be here.\n"
-"                  Could you change it to the default\n"
-"                  to make it go away?\n"
-"                  Sorry about that.\n"
-"                "
-msgstr ""
-"\n"
-"                  Samahani!\n"
-"                  Mpangilio huu haupaswi kuwa hapa.\n"
-"                  Tafadhali ubadilishe kuwa chaguo-msingi\n"
-"                  ili iondoke?\n"
-"                  Pole kwa usumbufu.\n"
-"                "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid ""
-"\n"
-"                This feature is not available on your subscription. Please upgrade to\n"
-"                the <!-- ko text: upgrade_plan --><!-- /ko --> plan or higher.\n"
-"              "
-msgstr ""
-"\n"
-"                Kipengele hiki hakipatikani kwenye usajili wako. Tafadhali boresha hadi mpango wa\n"
-"                <!-- ko text: upgrade_plan --><!-- /ko --> au juu zaidi.\n"
-"              "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid "Add Custom Property"
-msgstr "Ongeza Sifa Maalum"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/hqmedia/views.py
-msgid "Multimedia Reference Checker"
-msgstr "Kikaguzi cha Marejeleo ya Multimedia"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "View, upload, and download your application's multimedia"
-msgstr "Tazama, pakia, na pakua multimedia ya programu yako"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "Download Multimedia Zip"
-msgstr "Pakua Zip ya Multimedia"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"This .zip file is structured to match the multimedia paths referenced in "
-"your CommCare Application."
-msgstr ""
-"Faili hii ya .zip imepangwa kufanana na njia za multimedia zilizorejelewa "
-"kwenye Programu yako ya CommCare."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "Sync all multimedia with master"
-msgstr "Linganisha multimedia yote na ile kuu"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"Email when finished (recommended for applications with large number of "
-"multimedia files or heavy files)"
-msgstr ""
-"Tuma barua pepe ikikamilika (inapendekezwa kwa programu zenye faili nyingi "
-"au nzito za multimedia)"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"Force pull all multimedia (this can take a long time and will re-write all "
-"the multimedia in your app)"
-msgstr ""
-"Lazimisha kuvuta multimedia yote (hii inaweza kuchukua muda mrefu na "
-"itaandika upya multimedia yote kwenye programu yako)"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-msgid "Sync"
-msgstr "Linganisha"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "This application currently does not contain any multimedia references."
-msgstr "Programu hii kwa sasa haina marejeleo yoyote ya multimedia."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/supported_languages.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/supported_languages.html
@@ -14742,6 +14451,99 @@ msgstr "Inafuta Lugha:"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/supported_languages.html
 msgid "Don't Delete"
 msgstr "Usifute"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid "Custom Properties"
+msgstr "Sifa Maalum"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid ""
+"\n"
+"                  Oops!\n"
+"                  This setting shouldn't be here.\n"
+"                  Could you change it to the default\n"
+"                  to make it go away?\n"
+"                  Sorry about that.\n"
+"                "
+msgstr ""
+"\n"
+"                  Samahani!\n"
+"                  Mpangilio huu haupaswi kuwa hapa.\n"
+"                  Tafadhali ubadilishe kuwa chaguo-msingi\n"
+"                  ili iondoke?\n"
+"                  Pole kwa usumbufu.\n"
+"                "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid ""
+"\n"
+"                This feature is not available on your subscription. Please upgrade to\n"
+"                the <!-- ko text: upgrade_plan --><!-- /ko --> plan or higher.\n"
+"              "
+msgstr ""
+"\n"
+"                Kipengele hiki hakipatikani kwenye usajili wako. Tafadhali boresha hadi mpango wa\n"
+"                <!-- ko text: upgrade_plan --><!-- /ko --> au juu zaidi.\n"
+"              "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid "Add Custom Property"
+msgstr "Ongeza Sifa Maalum"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/hqmedia/views.py
+msgid "Multimedia Reference Checker"
+msgstr "Kikaguzi cha Marejeleo ya Multimedia"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "View, upload, and download your application's multimedia"
+msgstr "Tazama, pakia, na pakua multimedia ya programu yako"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "Download Multimedia Zip"
+msgstr "Pakua Zip ya Multimedia"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"This .zip file is structured to match the multimedia paths referenced in "
+"your CommCare Application."
+msgstr ""
+"Faili hii ya .zip imepangwa kufanana na njia za multimedia zilizorejelewa "
+"kwenye Programu yako ya CommCare."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "Sync all multimedia with master"
+msgstr "Linganisha multimedia yote na ile kuu"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"Email when finished (recommended for applications with large number of "
+"multimedia files or heavy files)"
+msgstr ""
+"Tuma barua pepe ikikamilika (inapendekezwa kwa programu zenye faili nyingi "
+"au nzito za multimedia)"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"Force pull all multimedia (this can take a long time and will re-write all "
+"the multimedia in your app)"
+msgstr ""
+"Lazimisha kuvuta multimedia yote (hii inaweza kuchukua muda mrefu na "
+"itaandika upya multimedia yote kwenye programu yako)"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+msgid "Sync"
+msgstr "Linganisha"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "This application currently does not contain any multimedia references."
+msgstr "Programu hii kwa sasa haina marejeleo yoyote ya multimedia."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/vellum_case_management_warning.html
 msgid ""
@@ -17132,7 +16934,8 @@ msgstr "Onyesha Menyu Kamili"
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 msgid "Select"
 msgstr "Chagua"
 
@@ -17259,16 +17062,16 @@ msgstr "Sawa"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
-"            "
+"            Please correct the answers below before submitting.\n"
+"            <br>\n"
+"            You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
+"          "
 msgstr ""
 "\n"
-"              Tafadhali sahihisha majibu hapa chini kabla ya kutuma.\n"
-"              <br>\n"
-"              Unaweza kutumia kitufe cha <strong><i class='fa fa-fast-forward'></i> Hitilafu Inayofuata</strong> upande wa kushoto wa skrini ili kuzunguka kati ya sehemu zinazohitajika.\n"
-"            "
+"            Tafadhali sahihisha majibu hapa chini kabla ya kutuma.\n"
+"            <br>\n"
+"            Unaweza kutumia kitufe cha <strong><i class='fa fa-fast-forward'></i> Hitilafu Inayofuata</strong> upande wa kushoto wa skrini ili kuhamia kati ya sehemu zinazohitajika.\n"
+"          "
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid "An answer is required."
@@ -22219,6 +22022,14 @@ msgstr "Sasisha Taarifa za Malipo"
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr "Inaonekana namba hii ya simu si sahihi. Je, umesahau msimbo wa nchi?"
+
+#: corehq/apps/domain/forms.py
+#| msgid ""
+#| "\n"
+#| "                Please provide an autopay card before continuing.\n"
+#| "              "
+msgid "Please provide an autopay card before continuing."
+msgstr "Tafadhali toa kadi ya malipo ya moja kwa moja kabla ya kuendelea."
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -28125,14 +27936,16 @@ msgstr "Mhudhuriaji"
 #, python-format
 msgid ""
 "\n"
-"            This attendee cannot be deleted as <strong>%(attendee_name)s</strong> has been tracked as\n"
-"            having attended one or more events.\n"
-"          "
+"          This attendee cannot be deleted as\n"
+"          <strong>%(attendee_name)s</strong> has been tracked as having\n"
+"          attended one or more events.\n"
+"        "
 msgstr ""
 "\n"
-"            Mhudhuriaji huyu hawezi kufutwa kwa kuwa <strong>%(attendee_name)s</strong> ameandikishwa kama\n"
-"            aliyeshiriki tukio moja au zaidi.\n"
-"          "
+"          Huwezi kufuta mshiriki huyu kwa kuwa\n"
+"          <strong>%(attendee_name)s</strong> ameorodheshwa kama\n"
+"          alihudhuria tukio moja au zaidi.\n"
+"        "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 msgid "Update Attendee"
@@ -28146,46 +27959,49 @@ msgstr "Futa Mhudhuriaji"
 #, python-format
 msgid ""
 "\n"
-"                Are you sure you want to permanently delete <strong>%(attendee_name)s</strong>?\n"
+"                Are you sure you want to permanently delete\n"
+"                <strong>%(attendee_name)s</strong>?\n"
 "              "
 msgstr ""
 "\n"
-"                Una uhakika unataka kufuta kabisa <strong>%(attendee_name)s</strong>?\n"
+"                Una uhakika unataka kufuta kabisa\n"
+"                <strong>%(attendee_name)s</strong>?\n"
 "              "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 #, python-format
 msgid ""
 "\n"
-"                This action will delete %(attendee_name)s as a potential attendee and will remove them from all\n"
-"                future events that they are currently enlisted in.\n"
+"                This action will delete %(attendee_name)s as a potential\n"
+"                attendee and will remove them from all future events that they\n"
+"                are currently enlisted in.\n"
 "              "
 msgstr ""
 "\n"
-"                Hatua hii itamfuta %(attendee_name)s kama mhudhuriaji mtarajiwa na itamwondoa kwenye\n"
-"                matukio yote yajayo ambayo ameorodheshwa kwa sasa.\n"
+"                Hatua hii itafuta %(attendee_name)s kama mshiriki mtarajiwa\n"
+"                na itawaondoa kwenye matukio yote yajayo ambayo\n"
+"                wamejiandikisha kwa sasa.\n"
 "              "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 msgid ""
 "\n"
-"                  This action cannot be undone.\n"
-"                "
+"                This action cannot be undone.\n"
+"              "
 msgstr ""
 "\n"
-"                  Hatua hii haiwezi kutenduliwa.\n"
-"                "
+"                Hatua hii haiwezi kutenduliwa.\n"
+"              "
 
 #: corehq/apps/events/templates/events/event_attendees.html
 msgid ""
 "\n"
-"    Known potential attendees who can be invited to participate in Attendance\n"
-"    Tracking Events.\n"
+"      Known potential attendees who can be invited to participate in Attendance\n"
+"      Tracking Events.\n"
 "    "
 msgstr ""
 "\n"
-"    Wahudhuriaji watarajiwa wanaojulikana ambao wanaweza kualikwa kushiriki kwenye Matukio ya\n"
-"    Ufuatiliaji wa Mahudhurio.\n"
+"      Washiriki watarajiwa wanaojulikana ambao wanaweza kualikwa kushiriki kwenye Matukio ya Ufuatiliaji wa Mahudhurio.\n"
 "    "
 
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -28230,16 +28046,20 @@ msgstr "Inapakia wahudhuriaji watarajiwa ..."
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
-"            Please check your internet connection.\n"
-"            If this issue continues, please\n"
-"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+"            Please check your internet connection. If this issue continues,\n"
+"            please\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >report an issue</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
 "            <strong>Kulikuwa na tatizo kuwasiliana na seva.</strong>\n"
-"            Tafadhali hakikisha una muunganisho wa intaneti.\n"
-"            Ikiwa tatizo hili litaendelea, tafadhali\n"
-"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">ripoti tatizo</a>.\n"
+"            Tafadhali angalia muunganisho wako wa intaneti. Ikiwa tatizo hili litaendelea,\n"
+"            tafadhali\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >ripoti tatizo</a\n"
+"            >.\n"
 "          "
 
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -28265,11 +28085,12 @@ msgstr ""
 #: corehq/apps/events/templates/events/events_list.html
 msgid ""
 "\n"
-"          Attendance tracking events can be used to track attendance of all the selected attendees.\n"
+"          Attendance tracking events can be used to track attendance of all the\n"
+"          selected attendees.\n"
 "        "
 msgstr ""
 "\n"
-"          Matukio ya ufuatiliaji wa mahudhurio yanaweza kutumika kufuatilia mahudhurio ya wahudhuriaji wote waliochaguliwa.\n"
+"          Matukio ya ufuatiliaji wa mahudhurio yanaweza kutumika kufuatilia mahudhurio ya washiriki wote waliochaguliwa.\n"
 "        "
 
 #: corehq/apps/events/templates/events/events_list.html
@@ -28299,12 +28120,14 @@ msgstr "Tukio bado halijaanza"
 #: corehq/apps/events/templates/events/new_event.html
 msgid ""
 "\n"
-"      There was a problem fetching the list of attendees and attendance takers. Please try again.\n"
-"      "
+"      There was a problem fetching the list of attendees and attendance takers.\n"
+"      Please try again.\n"
+"    "
 msgstr ""
 "\n"
-"      Kulikuwa na tatizo kupata orodha ya wahudhuriaji na wachukua mahudhurio. Tafadhali jaribu tena.\n"
-"      "
+"      Kulikuwa na tatizo kupata orodha ya washiriki na wachukua mahudhurio.\n"
+"      Tafadhali jaribu tena.\n"
+"    "
 
 #: corehq/apps/events/views.py
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
@@ -31444,7 +31267,8 @@ msgid "GPS Data"
 msgstr "Data ya GPS"
 
 #: corehq/apps/geospatial/filters.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 msgid "Missing"
 msgstr "Inakosekana"
 
@@ -33537,7 +33361,8 @@ msgstr "Imeshindikana kupata media_suite.xml kwenye CCZ"
 msgid "Media file missing from CCZ: {}"
 msgstr "Faili ya media haipo kwenye CCZ: {}"
 
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #, python-format
 msgid ""
 "\n"
@@ -33584,220 +33409,13 @@ msgstr ""
 "    </p>\n"
 "  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 msgid "Transifex"
 msgstr "Transifex"
 
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload.html
-msgid ""
-"\n"
-"    <p>\n"
-"      Use this tool to upload ZIP files of your multimedia.\n"
-"      The bulk uploader will compare the file paths in your form with the file paths\n"
-"      in your zip to find a matching file.\n"
-"    </p>\n"
-"    <p>\n"
-"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's\n"
-"      <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match\n"
-"      <code>commcare/images/image.jpg</code>.\n"
-"    </p>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      Tumia zana hii kupakia faili za ZIP za multimedia yako.\n"
-"      Kipakiaji kwa wingi kitalinganisha njia za faili kwenye fomu yako na njia za faili\n"
-"      kwenye zip yako ili kupata faili inayolingana.\n"
-"    </p>\n"
-"    <p>\n"
-"      Kwa mfano, <code>jr://file/commcare/images/hin/image.jpg</code> na faili ya zip yako\n"
-"      <code>commcare/images/hin/image.jpg</code> zitafanana, lakini <strong>haitafanana</strong>\n"
-"      na <code>commcare/images/image.jpg</code>.\n"
-"    </p>\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#, python-format
-msgid ""
-"\n"
-"        One match found.\n"
-"      "
-msgid_plural ""
-"\n"
-"        %(matched_count)s matches found.\n"
-"      "
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "No Matches Found"
-msgstr "Hakuna Mechi Zilizopatikana"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "No Matches"
-msgstr "Hakuna Mechi"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Images"
-msgstr "Picha Zilizolingana"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/reports/standard/users/reports.py
-msgid "Updated"
-msgstr "Imesasishwa"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "View Full Image"
-msgstr "Tazama Picha Kamili"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Audio"
-msgstr "Sauti Zilizolingana"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Playing audio directly on this page is currently not supported."
-msgstr "Kucheza sauti moja kwa moja kwenye ukurasa huu hakusaidiwi kwa sasa."
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
-msgid "Listen to Audio"
-msgstr "Sikiliza Sauti"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Video"
-msgstr "Video Zilizolingana"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid ""
-"Watching video directly on this page is not supported. Opens a new tab."
-msgstr ""
-"Kuangalia video moja kwa moja kwenye ukurasa huu hakusaidiwi. Fungua tab "
-"mpya."
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
-msgid "Watch Video"
-msgstr "Tazama Video"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/manage_paths.html
-msgid "Include only paths where the multimedia file is missing?"
-msgstr "Jumuisha tu njia ambazo faili ya multimedia haipo?"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Icon Image"
-msgstr "Pakia Picha ya Ikoni"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Audio"
-msgstr "Pakia Sauti"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Video"
-msgstr "Pakia Video"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload File"
-msgstr "Pakia Faili"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Icon Image"
-msgstr "Chagua Picha ya Ikoni"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Menu Audio"
-msgstr "Chagua Sauti ya Menyu"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Video"
-msgstr "Chagua Video"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Logo"
-msgstr "Chagua Nembo"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select File"
-msgstr "Chagua Faili"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Icon"
-msgstr "Ikoni ya Sasa"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Audio"
-msgstr "Sauti ya Sasa"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Video"
-msgstr "Video ya Sasa"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Logo"
-msgstr "Nembo ya Sasa"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current File"
-msgstr "Faili ya Sasa"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Begin Upload"
-msgstr "Anza Kupakia"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid ""
-"<strong>Warning:</strong>\n"
-"    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
-"  "
-msgstr ""
-"<strong>Onyo:</strong>\n"
-"    Programu hii ina fomu zenye makosa&mdash;hatuwezi kuchukua marejeleo yoyote ya vyombo vya habari kutoka kwenye fomu hizo.\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid ""
-"\n"
-"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-"        This application is missing references, so this zip will be incomplete.\n"
-"      "
-msgstr ""
-"\n"
-"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-"        Programu hii haina marejeleo, hivyo zip hii haitakuwa kamili.\n"
-"      "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "Download Incomplete ZIP"
-msgstr "Pakua ZIP Isiyokamilika"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "Download ZIP"
-msgstr "Pakua ZIP"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Menu or Form"
-msgstr "Menyu au Fomu"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Size"
-msgstr "Ukubwa"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Path in Application"
-msgstr "Njia kwenye Programu"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid ""
-"\n"
-"    No media found matching your filters.\n"
-"  "
-msgstr ""
-"\n"
-"    Hakuna vyombo vya habari vilivyopatikana vinavyolingana na vichujio vyako.\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid ""
 "\n"
 "        <i class=\"fa fa-spin fa-spinner\"></i>\n"
@@ -33809,7 +33427,8 @@ msgstr ""
 "        Inapakia...\n"
 "      "
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid ""
 "\n"
 "              You can manage multimedia by uploading files individually below.\n"
@@ -33819,23 +33438,46 @@ msgstr ""
 "              Unaweza kudhibiti vyombo vya habari kwa kupakia faili moja moja hapa chini.\n"
 "            "
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "This application references no multimedia."
 msgstr "Programu hii haina marejeleo ya vyombo vya habari."
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "References"
 msgstr "Marejeleo"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "Open image in new tab"
 msgstr "Fungua picha kwenye tab mpya"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "Open file in new tab"
 msgstr "Fungua faili kwenye tab mpya"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
+msgid "Listen to Audio"
+msgstr "Sikiliza Sauti"
+
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_video_single.html
+msgid "Watch Video"
+msgstr "Tazama Video"
+
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 #, python-format
 msgid ""
 "\n"
@@ -33864,50 +33506,292 @@ msgstr ""
 "    </p>\n"
 "  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Language(s)"
 msgstr "Lugha"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Media Type(s)"
 msgstr "Aina ya Vyombo vya Habari"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Check for missing media"
 msgstr "Angalia vyombo vya habari vinavyokosekana"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
-msgid "Errors found"
-msgstr "Makosa yamepatikana"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload.html
+msgid ""
+"\n"
+"    <p>\n"
+"      Use this tool to upload ZIP files of your multimedia.\n"
+"      The bulk uploader will compare the file paths in your form with the file paths\n"
+"      in your zip to find a matching file.\n"
+"    </p>\n"
+"    <p>\n"
+"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's\n"
+"      <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match\n"
+"      <code>commcare/images/image.jpg</code>.\n"
+"    </p>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      Tumia zana hii kupakia faili za ZIP za multimedia yako.\n"
+"      Kipakiaji kwa wingi kitalinganisha njia za faili kwenye fomu yako na njia za faili\n"
+"      kwenye zip yako ili kupata faili inayolingana.\n"
+"    </p>\n"
+"    <p>\n"
+"      Kwa mfano, <code>jr://file/commcare/images/hin/image.jpg</code> na faili ya zip yako\n"
+"      <code>commcare/images/hin/image.jpg</code> zitafanana, lakini <strong>haitafanana</strong>\n"
+"      na <code>commcare/images/image.jpg</code>.\n"
+"    </p>\n"
+"  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#, python-format
+msgid ""
+"\n"
+"        One match found.\n"
+"      "
+msgid_plural ""
+"\n"
+"        %(matched_count)s matches found.\n"
+"      "
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "No Matches Found"
+msgstr "Hakuna Mechi Zilizopatikana"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "No Matches"
+msgstr "Hakuna Mechi"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Images"
+msgstr "Picha Zilizolingana"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/reports/standard/users/reports.py
+msgid "Updated"
+msgstr "Imesasishwa"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "View Full Image"
+msgstr "Tazama Picha Kamili"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Audio"
+msgstr "Sauti Zilizolingana"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Playing audio directly on this page is currently not supported."
+msgstr "Kucheza sauti moja kwa moja kwenye ukurasa huu hakusaidiwi kwa sasa."
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Video"
+msgstr "Video Zilizolingana"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid ""
+"Watching video directly on this page is not supported. Opens a new tab."
+msgstr ""
+"Kuangalia video moja kwa moja kwenye ukurasa huu hakusaidiwi. Fungua tab "
+"mpya."
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/manage_paths.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/manage_paths.html
+msgid "Include only paths where the multimedia file is missing?"
+msgstr "Jumuisha tu njia ambazo faili ya multimedia haipo?"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Icon Image"
+msgstr "Pakia Picha ya Ikoni"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Audio"
+msgstr "Pakia Sauti"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Video"
+msgstr "Pakia Video"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload File"
+msgstr "Pakia Faili"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Icon Image"
+msgstr "Chagua Picha ya Ikoni"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Menu Audio"
+msgstr "Chagua Sauti ya Menyu"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Video"
+msgstr "Chagua Video"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Logo"
+msgstr "Chagua Nembo"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select File"
+msgstr "Chagua Faili"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Icon"
+msgstr "Ikoni ya Sasa"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Audio"
+msgstr "Sauti ya Sasa"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Video"
+msgstr "Video ya Sasa"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Logo"
+msgstr "Nembo ya Sasa"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current File"
+msgstr "Faili ya Sasa"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Begin Upload"
+msgstr "Anza Kupakia"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid ""
+"<strong>Warning:</strong>\n"
+"    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
+"  "
+msgstr ""
+"<strong>Onyo:</strong>\n"
+"    Programu hii ina fomu zenye makosa&mdash;hatuwezi kuchukua marejeleo yoyote ya vyombo vya habari kutoka kwenye fomu hizo.\n"
+"  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid ""
+"\n"
+"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"        This application is missing references, so this zip will be incomplete.\n"
+"      "
+msgstr ""
+"\n"
+"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"        Programu hii haina marejeleo, hivyo zip hii haitakuwa kamili.\n"
+"      "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "Download Incomplete ZIP"
+msgstr "Pakua ZIP Isiyokamilika"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "Download ZIP"
+msgstr "Pakua ZIP"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Menu or Form"
+msgstr "Menyu au Fomu"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Size"
+msgstr "Ukubwa"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Path in Application"
+msgstr "Njia kwenye Programu"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid ""
+"\n"
+"    No media found matching your filters.\n"
+"  "
+msgstr ""
+"\n"
+"    Hakuna vyombo vya habari vilivyopatikana vinavyolingana na vichujio vyako.\n"
+"  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
 msgid "New Audio Uploaded Successfully"
 msgstr "Sauti Mpya Imefanikiwa Kupakiwa"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_image_single.html
 msgid "View Full Size"
 msgstr "Tazama Ukubwa Kamili"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_image_single.html
 msgid "New Image Uploaded Successfully"
 msgstr "Picha Mpya Imefanikiwa Kupakiwa"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_video_single.html
 msgid "New Video Uploaded Successfully"
 msgstr "Video Mpya Imefanikiwa Kupakiwa"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "Ready to upload. Click <strong>Begin Upload</strong> below to start."
 msgstr ""
 "Tayari kupakia. Bonyeza <strong>Anza Kupakia</strong> hapa chini kuanza."
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "There were errors"
 msgstr "Kumekuwa na makosa"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "Cancel Upload"
 msgstr "Ghairi Upakiaji"
+
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
+msgid "Errors found"
+msgstr "Makosa yamepatikana"
 
 #: corehq/apps/hqmedia/view_helpers.py
 #, python-brace-format
@@ -34223,11 +34107,13 @@ msgstr "Unahitaji Msaada?"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
 "Habari! Mimi ni CommCare Companion, mwongozo wako binafsi wa CommCare! "
-"Naweza kukusaidia na nini leo?"
+"Unaweza kuuliza swali, au kuambatisha mafaili hapa 2 kama picha za skrini, "
+"uhamishaji, au Muhtasari wa Programu 2 na nitavitumia kukusaidia."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "I need help with building my CommCare application."
@@ -35509,7 +35395,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35521,7 +35406,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35533,7 +35417,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35550,7 +35433,6 @@ msgid "Update the downloaded file."
 msgstr "Sasisha faili uliyoipakua."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35779,6 +35661,50 @@ msgstr ""
 "        , <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
 "        au <a href=\"https://www.apple.com/safari/\">Safari</a>.\n"
 "    "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"      Read more on the <a target='_blank' href='%(link)s'>Help Site</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      Soma zaidi kwenye <a target='_blank' href='%(link)s'>Tovuti ya Msaada</a>.\n"
+"    "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"        Download your current %(adjective)s file.\n"
+"      "
+msgstr ""
+"\n"
+"        Pakua faili yako ya sasa ya %(adjective)s.\n"
+"      "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"              Download %(plural_noun)s\n"
+"            "
+msgstr ""
+"\n"
+"              Pakua %(plural_noun)s\n"
+"            "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"            Check the <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> for instructions.\n"
+"          "
+msgstr ""
+"\n"
+"            Angalia <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> kwa maelekezo.\n"
+"          "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
 msgid ""
@@ -36259,15 +36185,10 @@ msgstr ""
 "wazi ikiwa haitumiki kwa uthibitishaji wa KYC."
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Global Usage Thresholds"
 msgid "Passing Threshold"
 msgstr "Kiwango cha Kupita"
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid ""
-#| "Maps API field for the KYC provider to the field used for storing the "
-#| "relevant data. To learn more about this, please have a look at our <a "
-#| "href=\"{}\" target=\"_blank\">support documentation</a>."
 msgid ""
 "Maps API field for the KYC provider to the minimum score required to pass "
 "KYC verification. To learn more about this, please have a look at our <a "
@@ -36663,7 +36584,6 @@ msgid "Verified"
 msgstr "Imethibitishwa"
 
 #: corehq/apps/integration/payments/tables.py
-#| msgid "Status Code"
 msgid "Status Confirmed On"
 msgstr "Hali Imethibitishwa Tarehe"
 
@@ -61227,6 +61147,64 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid ""
+#~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+#~ "I help you with today?"
+#~ msgstr ""
+#~ "Habari! Mimi ni CommCare Companion, mwongozo wako binafsi wa CommCare! "
+#~ "Naweza kukusaidia na nini leo?"
+
+#~ msgid ""
+#~ "\n"
+#~ "    <div class=\"row\">\n"
+#~ "      <div class=\"col-md-10\">\n"
+#~ "        <p>\n"
+#~ "          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
+#~ "          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
+#~ "          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
+#~ "        </p>\n"
+#~ "        <p class=\"help-block\">\n"
+#~ "          These application templates can be imported into your project space as licensed by Dimagi under the\n"
+#~ "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "    <div class=\"row\">\n"
+#~ "      <div class=\"col-md-10\">\n"
+#~ "        <p>\n"
+#~ "          Ili kusaidia mashirika na serikali katika kukabiliana na COVID-19, Dimagi imeunda maktaba ya programu za bure za mfano wa COVID-19 kwa jukwaa letu huria, CommCare. Hizi zimeandaliwa kulingana na\n"
+#~ "          itifaki za kitabibu kutoka Shirika la Afya Duniani, Vituo vya Kudhibiti Magonjwa, na wengine.\n"
+#~ "        </p>\n"
+#~ "        <p class=\"help-block\">\n"
+#~ "          Templeti hizi za programu zinaweza kuingizwa kwenye nafasi ya mradi wako kama ilivyoidhinishwa na Dimagi chini ya\n"
+#~ "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Leseni ya Creative Commons NonCommercial ShareAlike (CC BY-NC-SA 4.0)</a>.\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                Are you sure you want to permanently delete <strong>%(attendee_name)s</strong>?\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Una uhakika unataka kufuta kabisa <strong>%(attendee_name)s</strong>?\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "            <strong>There was an issue contacting the server.</strong>\n"
+#~ "            Please check your internet connection.\n"
+#~ "            If this issue continues, please\n"
+#~ "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            <strong>Kulikuwa na tatizo kuwasiliana na seva.</strong>\n"
+#~ "            Tafadhali hakikisha una muunganisho wa intaneti.\n"
+#~ "            Ikiwa tatizo hili litaendelea, tafadhali\n"
+#~ "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">ripoti tatizo</a>.\n"
+#~ "          "
 
 #~ msgid "Title row, subtitle row, third row with two cells, and map"
 #~ msgstr ""

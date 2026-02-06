@@ -210,6 +210,33 @@ msgstr "Grafico"
 msgid "Show All Dates"
 msgstr "Mostra tutte le date"
 
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+msgid "Hide Past Versions"
+msgstr "Nascondi versioni precedenti"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
+msgid "See Past Versions"
+msgstr "Vedi versioni precedenti"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Application name is required"
+msgstr "Il nome dell'applicazione è obbligatorio"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Project name is required"
+msgstr "Il nome del progetto è obbligatorio"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+msgid "Invalid Project Selected"
+msgstr "Progetto selezionato non valido"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
+msgid "Oops, there was a problem loading this section. Please try again."
+msgstr ""
+"Ops, si è verificato un problema nel caricamento di questa sezione. Riprova."
+
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
@@ -221,16 +248,6 @@ msgstr "Hai modifiche non salvate."
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
 msgid "There was an error saving."
 msgstr "Si è verificato un errore durante il salvataggio."
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
-msgid "Hide Past Versions"
-msgstr "Nascondi versioni precedenti"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_exchange.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_exchange.js
-msgid "See Past Versions"
-msgstr "Vedi versioni precedenti"
 
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
@@ -313,28 +330,15 @@ msgstr ""
 " altri casi. Esempi comuni includono salute materna, presenza degli studenti"
 " o monitoraggio delle colture."
 
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-msgid "Application name is required"
-msgstr "Il nome dell'applicazione è obbligatorio"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-msgid "Project name is required"
-msgstr "Il nome del progetto è obbligatorio"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-msgid "Invalid Project Selected"
-msgstr "Progetto selezionato non valido"
-
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
-msgid "Oops, there was a problem loading this section. Please try again."
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/download_async_modal.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/download_async_modal.js
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
+msgid ""
+"Sorry, something went wrong with the download. If you see this repeatedly "
+"please report an issue."
 msgstr ""
-"Ops, si è verificato un problema nel caricamento di questa sezione. Riprova."
+"Spiacenti, si è verificato un errore durante il download. Se vedi questo "
+"messaggio ripetutamente, segnala un problema."
 
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
@@ -565,6 +569,26 @@ msgstr "Puoi avere solo una proprietà con il formato 'Immagine'"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Boundary' format"
+msgstr "Puoi avere solo una proprietà con il formato 'Geo Boundary'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Boundary Color' format"
+msgstr "Puoi avere solo una proprietà con il formato 'Geo Boundary Color'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Points' format"
+msgstr "Puoi avere solo una proprietà con il formato 'Geo Points'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Points Colors' format"
+msgstr "Puoi avere solo una proprietà con il formato 'Geo Points Colors'"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
 msgid "All properties must be below a tab."
 msgstr "Tutte le proprietà devono essere sotto una scheda."
 
@@ -727,6 +751,22 @@ msgid "Markdown"
 msgstr "Markdown"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Boundary (Mobile only)"
+msgstr "Geo Boundary (solo mobile)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Boundary Color (Mobile only)"
+msgstr "Geo Boundary Color (solo mobile)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Points (Mobile only)"
+msgstr "Geo Points (solo mobile)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Points Colors (Mobile only)"
+msgstr "Geo Points Colors (solo mobile)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Address Popup (Web Apps only)"
 msgstr "Popup indirizzo (solo per Web App)"
 
@@ -758,14 +798,11 @@ msgstr "Testo traducibile"
 msgid "Image"
 msgstr "Immagine"
 
-#: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js
-#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
-msgid ""
-"Sorry, something went wrong with the download. If you see this repeatedly "
-"please report an issue."
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s."
 msgstr ""
-"Spiacenti, si è verificato un errore durante il download. Se vedi questo "
-"messaggio ripetutamente, segnala un problema."
+"Il formato \"%(format)s\" richiede colonne con i seguenti formati: "
+"%(dependencies)s."
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
@@ -1128,25 +1165,20 @@ msgstr "Hai impostazioni non salvate."
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
 msgid "Filter properties"
 msgstr "Filtra proprietà"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/case_summary.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/case_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
 msgid "View All Cases"
 msgstr "Visualizza tutti i casi"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_summary.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_summary.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js
 msgid "View All Forms"
 msgstr "Visualizza tutti i moduli"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap3/form_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/bootstrap5/form_diff.js
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js
 msgid "View Changed Items"
 msgstr "Visualizza elementi modificati"
 
@@ -1277,7 +1309,6 @@ msgid "getCurrentMugInput"
 msgstr "getCurrentMugInput"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Streets"
 msgid "jstree"
 msgstr "jstree"
 
@@ -1290,7 +1321,6 @@ msgid "getData"
 msgstr "ottieniDati"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "load"
 msgid "loadXML"
 msgstr "loadXML"
 
@@ -1303,7 +1333,6 @@ msgid "loadXFormOrError"
 msgstr "loadXFormOrError"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Add Question"
 msgid "addQuestion"
 msgstr "aggiungiDomanda"
 
@@ -1312,12 +1341,10 @@ msgid "nodeIDFromLabel"
 msgstr "nodeIDDaEtichetta"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Questions"
 msgid "getSections"
 msgstr "ottieniSezioni"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
-#| msgid "Clear selection"
 msgid "collapseSection"
 msgstr "collassaSezione"
 
@@ -1365,23 +1392,23 @@ msgstr "Vero quando QUALSIASI delle espressioni è vera."
 msgid "{path} is not a valid data parent"
 msgstr "{path} non è un genitore dati valido"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Command Bar"
 msgstr "Barra dei comandi"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Basic"
 msgstr "Base"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid "Logic"
 msgstr "Logica"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/tests.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
 "You can add logic to display a question based on a previous answer, to make "
@@ -2492,7 +2519,8 @@ msgstr "Salvataggio non riuscito "
 msgid "Please wait and do not navigate away..."
 msgstr "Attendere, non abbandonare la pagina..."
 
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js
+#: corehq/apps/hqmedia/static/hqmedia/js/bootstrap3/references_main.js
+#: corehq/apps/hqmedia/static/hqmedia/js/bootstrap5/references_main.js
 msgid ""
 "Error fetching multimedia, please try again or report an issue if the "
 "problem persists."

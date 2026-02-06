@@ -31,6 +31,7 @@ from .views import (
     WebUserUploadJobPollView,
 )
 from .views.role import (
+    EditRoleView,
     delete_user_role,
     ListRolesView,
     post_user_role,
@@ -75,7 +76,8 @@ from .views.mobile.users import (
     restore_commcare_user,
     toggle_demo_mode,
     update_user_groups,
-    user_download_job_poll,
+    commcare_user_download_job_poll,
+    web_user_download_job_poll,
     CommCareUserConfirmAccountViewByEmailView,
     send_confirmation_email,
     send_confirmation_sms,
@@ -128,6 +130,11 @@ urlpatterns = [
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
     url(r'^web/download/$', download_web_users, name='download_web_users'),
     url(
+        r'^web/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        web_user_download_job_poll,
+        name='web_user_download_job_poll'
+    ),
+    url(
         r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         DownloadWebUsersStatusView.as_view(),
         name='download_web_users_status'
@@ -149,6 +156,8 @@ urlpatterns = [
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
+    url(r'^roles/new/$', EditRoleView.as_view(), name='create_role'),
+    url(r'^roles/edit/(?P<role_id>[ \w-]+)', EditRoleView.as_view(), name=EditRoleView.urlname),
     url(r'^roles/delete/$', delete_user_role, name='delete_user_role'),
     url(
         r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
@@ -239,8 +248,8 @@ urlpatterns = [
     ),
     url(
         r'^commcare/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        user_download_job_poll,
-        name='user_download_job_poll'
+        commcare_user_download_job_poll,
+        name='commcare_user_download_job_poll'
     ),
     url(
         r'^commcare/confirm_charges/$',

@@ -63,8 +63,8 @@ def _make_all_notification_view_keys(period, target):
 
 
 @transaction.atomic
-def create_records_for_scheduled_reports(fake_now_for_tests=None):
-    end_datetime = fake_now_for_tests or datetime.utcnow()
+def create_records_for_scheduled_reports():
+    end_datetime = datetime.utcnow()
     last_checkpoint = ScheduledReportsCheckpoint.get_latest()
     if last_checkpoint:
         start_datetime = last_checkpoint.end_datetime

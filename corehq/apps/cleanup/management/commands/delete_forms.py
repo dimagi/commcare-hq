@@ -51,8 +51,8 @@ class Command(BaseCommand):
             except Exception:
                 print('Failed whilte attempting to delete:', form_ids)
                 raise
-
-        print(f'Complete -- hard deleted {num_deleted} forms')
+        deletion_type = 'hard' if permanent else 'soft'
+        print(f'Completed {deletion_type} deletion of {num_deleted} forms')
 
     def hard_delete_forms(self, domain, form_ids):
         deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(domain, form_ids, return_ids=True))

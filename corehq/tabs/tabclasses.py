@@ -100,6 +100,7 @@ from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
+    can_access_kyc_report,
     can_access_payments_report,
     can_download_data_files,
     can_view_sms_exports,
@@ -1065,7 +1066,10 @@ class ProjectDataTab(UITab):
 
     @cached_property
     def _can_view_kyc_integration(self):
-        return toggles.KYC_VERIFICATION.enabled(self.domain)
+        return (
+            toggles.KYC_VERIFICATION.enabled(self.domain)
+            and can_access_kyc_report(self.couch_user, self.domain)
+        )
 
     @cached_property
     def _can_view_payments_integration(self):
@@ -1748,12 +1752,21 @@ class ProjectUsersTab(UITab):
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
-            from corehq.apps.users.views.role import ListRolesView
+            from corehq.apps.users.views.role import EditRoleView, ListRolesView
             return {
                 'title': _(ListRolesView.page_title),
                 'url': reverse(ListRolesView.urlname, args=[self.domain]),
                 'description': _("View and manage user roles."),
-                'subpages': [],
+                'subpages': [
+                    {
+                        'title': _("Create Role"),
+                        'urlname': 'create_role'
+                    },
+                    {
+                        'title': _("Edit Role"),
+                        'urlname': EditRoleView.urlname
+                    },
+                ],
                 'show_in_dropdown': True,
             }
 

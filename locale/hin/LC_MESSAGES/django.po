@@ -62,8 +62,7 @@ msgid "Account Type"
 msgstr "खाता प्रकार"
 
 #: corehq/apps/accounting/filters.py
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/filters.py
@@ -188,7 +187,8 @@ msgstr "केवल ट्रायल सब्सक्रिप्शन द
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
@@ -337,10 +337,8 @@ msgid "Billing Account"
 msgstr "बिलिंग खाता"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
@@ -353,7 +351,8 @@ msgstr "बिलिंग खाता"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Version"
 msgstr "संस्करण"
 
@@ -520,8 +519,7 @@ msgid "Auto Renew"
 msgstr "ऑटो नवीनीकरण"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/models.py
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
 #: corehq/apps/domain/forms.py
@@ -4093,6 +4091,10 @@ msgid "Reason"
 msgstr "कारण"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+msgid "Payment Type"
+msgstr "भुगतान प्रकार"
+
+#: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
@@ -4818,7 +4820,8 @@ msgstr "जोड़े गए उपयोगकर्ता:"
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqadmin/reports.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
@@ -5360,8 +5363,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -5769,8 +5771,7 @@ msgid "Improve the user experience of your mobile workers"
 msgstr "अपने मोबाइल कार्यकर्ताओं के उपयोगकर्ता अनुभव को बेहतर बनाएं"
 
 #: corehq/apps/app_manager/add_ons.py
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 msgid "Calculations"
 msgstr "गणनाएँ"
 
@@ -5836,8 +5837,7 @@ msgid "Case"
 msgstr "केस"
 
 #: corehq/apps/app_manager/fields.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/data_interfaces/interfaces.py
@@ -5943,10 +5943,9 @@ msgid "Select Case Type"
 msgstr "केस प्रकार चुनें"
 
 #: corehq/apps/app_manager/fields.py
+#: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
@@ -7032,8 +7031,7 @@ msgstr "सिर्फ एक दिन"
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Languages"
@@ -7831,6 +7829,104 @@ msgstr ""
 "चिह्नित नहीं किया गया तो अगली बिल्ड के बाद समाप्त हो जाएगा। उपयोगकर्ता {} "
 "द्वारा जनरेट किया गया।"
 
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "COVID-19 CommCare Applications"
+msgstr "COVID-19 CommCare एप्लिकेशन"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid ""
+"\n"
+"        COVID-19 CommCare Applications\n"
+"      "
+msgstr ""
+"\n"
+"        COVID-19 CommCare एप्लिकेशन\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid ""
+"\n"
+"    <p>\n"
+"      To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
+"      COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
+"      clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
+"    </p>\n"
+"    <p class=\"help-block\">\n"
+"      These application templates can be imported into your project space as licensed by Dimagi under the\n"
+"      <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+"    </p>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      संगठनों और सरकारों को COVID-19 प्रतिक्रिया में सहायता के लिए, डिमैगी ने हमारे ओपन सोर्स प्लेटफ़ॉर्म, CommCare के लिए मुफ्त COVID-19 टेम्पलेट एप्लिकेशन की एक लाइब्रेरी विकसित की है। इन्हें विश्व स्वास्थ्य संगठन, सेंटर फॉर डिजीज कंट्रोल और अन्य के क्लिनिकल प्रोटोकॉल के आधार पर विकसित किया गया है।\n"
+"    </p>\n"
+"    <p class=\"help-block\">\n"
+"      इन एप्लिकेशन टेम्पलेट्स को डिमैगी द्वारा <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">क्रिएटिव कॉमन्स नॉन-कमर्शियल शेयरअलाइक लाइसेंस (CC BY-NC-SA 4.0)</a> के तहत लाइसेंस प्राप्त रूप में आपके प्रोजेक्ट स्पेस में इम्पोर्ट किया जा सकता है।\n"
+"    </p>\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Application Info"
+msgstr "एप्लिकेशन जानकारी"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+#, python-format
+msgid ""
+"\n"
+"                    Last Updated: %(last_released)s\n"
+"                  "
+msgstr ""
+"\n"
+"                    अंतिम अपडेट: %(last_released)s\n"
+"                  "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Version History"
+msgstr "संस्करण इतिहास"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Import"
+msgstr "आयात करें"
+
+#: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
+msgid "Settings"
+msgstr "सेटिंग्स"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+msgid "High Level Summary"
+msgstr "उच्च स्तरीय सारांश"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Form Summary"
+msgstr "फॉर्म सारांश"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Summary"
+msgstr "केस सारांश"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
+msgid "Labels"
+msgstr "लेबल्स"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
+msgid "Question IDs"
+msgstr "प्रश्न आईडी"
+
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_diff.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_diff.html
@@ -7849,74 +7945,6 @@ msgstr ""
 "\n"
 "        %(from_version)s से %(to_version)s में अपडेट करने के लिए मल्टीमीडिया डाउनलोड आवश्यक है\n"
 "      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "COVID-19 CommCare Applications"
-msgstr "COVID-19 CommCare एप्लिकेशन"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid ""
-"\n"
-"        COVID-19 CommCare Applications\n"
-"      "
-msgstr ""
-"\n"
-"        COVID-19 CommCare एप्लिकेशन\n"
-"      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-msgid ""
-"\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-sm-10\">\n"
-"        <p>\n"
-"          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-"          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-"          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-"        "
-msgstr ""
-"\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-sm-10\">\n"
-"        <p>\n"
-"          संगठनों और सरकारों को COVID-19 प्रतिक्रिया में सहायता करने के लिए, Dimagi ने हमारे ओपन सोर्स प्लेटफॉर्म CommCare के लिए मुफ्त COVID-19 टेम्पलेट एप्लिकेशन की एक लाइब्रेरी विकसित की है। इन्हें विश्व स्वास्थ्य संगठन, सेंटर फॉर डिजीज कंट्रोल और अन्य के क्लिनिकल प्रोटोकॉल के आधार पर विकसित किया गया है।\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          ये एप्लिकेशन टेम्पलेट्स Dimagi द्वारा <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">क्रिएटिव कॉमन्स नॉन-कमर्शियल शेयर-अलाइक लाइसेंस (CC BY-NC-SA 4.0)</a> के तहत लाइसेंस प्राप्त हैं और इन्हें आपके प्रोजेक्ट स्पेस में इम्पोर्ट किया जा सकता है।\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Application Info"
-msgstr "एप्लिकेशन जानकारी"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-#, python-format
-msgid ""
-"\n"
-"                    Last Updated: %(last_released)s\n"
-"                  "
-msgstr ""
-"\n"
-"                    अंतिम अपडेट: %(last_released)s\n"
-"                  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Version History"
-msgstr "संस्करण इतिहास"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Import"
-msgstr "आयात करें"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view.html
@@ -7938,141 +7966,6 @@ msgstr "रिलीज़"
 #: corehq/apps/domain/forms.py
 msgid "Release Mode"
 msgstr "रिलीज़ मोड"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
-msgid "Settings"
-msgstr "सेटिंग्स"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-msgid "High Level Summary"
-msgstr "उच्च स्तरीय सारांश"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Form Summary"
-msgstr "फॉर्म सारांश"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Summary"
-msgstr "केस सारांश"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-msgid "Labels"
-msgstr "लेबल्स"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-msgid "Question IDs"
-msgstr "प्रश्न आईडी"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
-msgid "Go"
-msgstr "जाएँ"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Show Conditions"
-msgstr "शर्तें दिखाएँ"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Show Calculations"
-msgstr "गणनाएँ दिखाएँ"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#, python-format
-msgid ""
-"\n"
-"          Your app's forms contain errors.\n"
-"          Please visit the <a href='%(form_summary_url)s'>form summary</a> for more details.\n"
-"        "
-msgstr ""
-"\n"
-"          आपके ऐप के फॉर्म्स में त्रुटियाँ हैं।\n"
-"          अधिक जानकारी के लिए कृपया <a href='%(form_summary_url)s'>फॉर्म सारांश</a> देखें।\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Relationships:"
-msgstr "संबंध:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Opened by:"
-msgstr "द्वारा खोला गया:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Closed by:"
-msgstr "द्वारा बंद किया गया:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Problems:"
-msgstr "समस्याएँ:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
-#: corehq/apps/data_cleaning/forms/columns.py
-#: corehq/apps/data_cleaning/forms/filters.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
-msgid "Case Property"
-msgstr "केस प्रॉपर्टी"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Load questions"
-msgstr "प्रश्न लोड करें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Save questions"
-msgstr "प्रश्न सहेजें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Lists"
-msgstr "केस सूचियाँ"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
@@ -8178,98 +8071,6 @@ msgstr "फॉर्म नाम"
 #: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
 msgid "Comment"
 msgstr "टिप्पणी"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary.html
-#, python-format
-msgid ""
-"\n"
-"    Form Summary - Version %(app_version)s\n"
-"  "
-msgstr ""
-"\n"
-"    फॉर्म सारांश - संस्करण %(app_version)s\n"
-"  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid ""
-"\n"
-"    Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.\n"
-"  "
-msgstr ""
-"\n"
-"    आपके ऐप के फॉर्म्स में त्रुटियाँ हैं। नीचे दी गई केस और फॉर्म जानकारी तब तक सटीक नहीं हो सकती जब तक आप समस्याएँ ठीक नहीं करते।\n"
-"  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Error in form:"
-msgstr "फॉर्म में त्रुटि:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "required"
-msgstr "आवश्यक"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Instance"
-msgstr "इंस्टेंस"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Nodeset"
-msgstr "नोडसेट"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-#: corehq/apps/data_cleaning/forms/filters.py
-#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "Value"
-msgstr "मूल्य"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#: corehq/apps/data_cleaning/forms/columns.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
-msgid "Label"
-msgstr "लेबल"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Load property"
-msgstr "प्रॉपर्टी लोड करें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Save property"
-msgstr "प्रॉपर्टी सेव करें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "save only on edit"
-msgstr "सिर्फ संपादन पर सेव करें"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_diff.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_diff.html
-#, python-format
-msgid ""
-"\n"
-"    Changes - Version %(first_version)s vs. Version %(second_version)s\n"
-"  "
-msgstr ""
-"\n"
-"    परिवर्तन - संस्करण %(first_version)s बनाम संस्करण %(second_version)s\n"
-"  "
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
@@ -8421,27 +8222,6 @@ msgstr ""
 "आपने अभी तक कोई फॉर्म नहीं बनाया है। यूज़र प्रॉपर्टीज़ देखने और संपादित करने"
 " के लिए एक फॉर्म बनाएं।"
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-#: corehq/apps/sms/templates/sms/languages.html
-msgid "Language List"
-msgstr "भाषा सूची"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "CommCare Translations"
-msgstr "CommCare अनुवाद"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "Bulk CommCare Translations"
-msgstr "बल्क CommCare अनुवाद"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "Bulk Application Translations"
-msgstr "बल्क ऐप्लिकेशन अनुवाद"
-
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "Menu Settings"
@@ -8507,7 +8287,8 @@ msgstr "अपने फ़ोन पर नीचे दी गई छवि �
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
 #: corehq/apps/sso/forms.py corehq/apps/users/forms.py
@@ -8575,7 +8356,9 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/events/templates/events/edit_attendee.html
 #: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/events/templates/events/events_list.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -8583,7 +8366,8 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
@@ -8624,44 +8408,177 @@ msgstr "CommCare इंस्टॉल करें"
 msgid "Close"
 msgstr "बंद करें"
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-#| msgid ""
-#| "\n"
-#| "    <div class=\"row\">\n"
-#| "      <div class=\"col-sm-10\">\n"
-#| "        <p>\n"
-#| "          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-#| "          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-#| "          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-#| "        </p>\n"
-#| "        <p class=\"help-block\">\n"
-#| "          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-#| "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-#| "        "
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+msgid "Go"
+msgstr "जाएँ"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Show Conditions"
+msgstr "शर्तें दिखाएँ"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Show Calculations"
+msgstr "गणनाएँ दिखाएँ"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#, python-format
 msgid ""
 "\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-md-10\">\n"
-"        <p>\n"
-"          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-"          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-"          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+"          Your app's forms contain errors.\n"
+"          Please visit the <a href='%(form_summary_url)s'>form summary</a> for more details.\n"
 "        "
 msgstr ""
 "\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-md-10\">\n"
-"        <p>\n"
-"          संगठनों और सरकारों को COVID-19 प्रतिक्रिया में सहायता करने के लिए, Dimagi ने हमारे ओपन सोर्स प्लेटफ़ॉर्म, CommCare के लिए मुफ्त COVID-19 टेम्पलेट एप्लिकेशन की एक लाइब्रेरी विकसित की है। इन्हें विश्व स्वास्थ्य संगठन, सेंटर फॉर डिजीज कंट्रोल और अन्य के क्लिनिकल प्रोटोकॉल के आधार पर विकसित किया गया है।\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          इन एप्लिकेशन टेम्पलेट्स को Dimagi द्वारा लाइसेंस प्राप्त\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a> के तहत आपके प्रोजेक्ट स्पेस में इम्पोर्ट किया जा सकता है।\n"
+"          आपके ऐप के फॉर्म्स में त्रुटियाँ हैं।\n"
+"          अधिक जानकारी के लिए कृपया <a href='%(form_summary_url)s'>फॉर्म सारांश</a> देखें।\n"
 "        "
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Relationships:"
+msgstr "संबंध:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Opened by:"
+msgstr "द्वारा खोला गया:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Closed by:"
+msgstr "द्वारा बंद किया गया:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Problems:"
+msgstr "समस्याएँ:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_cleaning/forms/filters.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
+msgid "Case Property"
+msgstr "केस प्रॉपर्टी"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Load questions"
+msgstr "प्रश्न लोड करें"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Save questions"
+msgstr "प्रश्न सहेजें"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Lists"
+msgstr "केस सूचियाँ"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Details"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html
+#, python-format
+msgid ""
+"\n"
+"    Form Summary - Version %(app_version)s\n"
+"  "
+msgstr ""
+"\n"
+"    फॉर्म सारांश - संस्करण %(app_version)s\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid ""
+"\n"
+"    Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.\n"
+"  "
+msgstr ""
+"\n"
+"    आपके ऐप के फॉर्म्स में त्रुटियाँ हैं। नीचे दी गई केस और फॉर्म जानकारी तब तक सटीक नहीं हो सकती जब तक आप समस्याएँ ठीक नहीं करते।\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Error in form:"
+msgstr "फॉर्म में त्रुटि:"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "required"
+msgstr "आवश्यक"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Instance"
+msgstr "इंस्टेंस"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Nodeset"
+msgstr "नोडसेट"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/data_cleaning/forms/filters.py
+#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "Value"
+msgstr "मूल्य"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid "Label"
+msgstr "लेबल"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Load property"
+msgstr "प्रॉपर्टी लोड करें"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Save property"
+msgstr "प्रॉपर्टी सेव करें"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "save only on edit"
+msgstr "सिर्फ संपादन पर सेव करें"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_diff.html
+#, python-format
+msgid ""
+"\n"
+"    Changes - Version %(first_version)s vs. Version %(second_version)s\n"
+"  "
+msgstr ""
+"\n"
+"    परिवर्तन - संस्करण %(first_version)s बनाम संस्करण %(second_version)s\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+#: corehq/apps/sms/templates/sms/languages.html
+msgid "Language List"
+msgstr "भाषा सूची"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "CommCare Translations"
+msgstr "CommCare अनुवाद"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "Bulk CommCare Translations"
+msgstr "बल्क CommCare अनुवाद"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "Bulk Application Translations"
+msgstr "बल्क ऐप्लिकेशन अनुवाद"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
@@ -8728,7 +8645,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -9794,47 +9712,6 @@ msgstr ""
 msgid "Build Profile"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Select a language."
-msgstr "एक भाषा चुनें।"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Select a format."
-msgstr "एक फ़ॉर्मेट चुनें।"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Download only translations eligible for Transifex?"
-msgstr "क्या केवल वे अनुवाद डाउनलोड करें जो Transifex के लिए योग्य हैं?"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-#: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
-#, python-format
-msgid ""
-"\n"
-"          Download %(plural_noun)s\n"
-"        "
-msgstr ""
-"\n"
-"          %(plural_noun)s डाउनलोड करें\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid ""
-"\n"
-"        The single-sheet format is only available when downloading a single language.\n"
-"        <br>Please either select a language or choose the multi-sheet format.\n"
-"      "
-msgstr ""
-"\n"
-"        सिंगल-शीट फ़ॉर्मेट केवल एक भाषा डाउनलोड करने पर उपलब्ध है।\n"
-"        <br>कृपया या तो एक भाषा चुनें या मल्टी-शीट फ़ॉर्मेट चुनें।\n"
-"      "
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/case_list_session_endpoint.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/case_list_session_endpoint.html
 msgid "Case List Session Endpoint ID"
@@ -10049,46 +9926,6 @@ msgstr ""
 "इस सेटिंग को चालू करें ताकि यह एंडपॉइंट\n"
 "                                        छिपे हुए फॉर्म्स तक पहुँच सके।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Form Changes"
-msgstr "फॉर्म परिवर्तन"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Display"
-msgstr "प्रदर्शन"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation"
-msgstr "मान्यता"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Comments"
-msgstr "टिप्पणियाँ"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Default Values"
-msgstr "डिफ़ॉल्ट मान"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/campaign/models.py
-#: corehq/apps/campaign/templates/campaign/dashboard.html
-#: corehq/apps/export/models/new.py
-#: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-#: corehq/apps/userreports/models.py
-msgid "Cases"
-msgstr "केस"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/function_datum_endpoints.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/function_datum_endpoints.html
 msgid "Enable these function datums in session endpoints"
@@ -10112,17 +9949,18 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/domain/views/internal.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 msgid "Preview"
 msgstr "पूर्वावलोकन"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
 msgid "Replace"
@@ -10134,7 +9972,8 @@ msgstr "बदलें"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
 msgid "Upload"
@@ -10227,16 +10066,6 @@ msgstr "नहीं धन्यवाद, मुझे यहाँ से ब
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Your form display condition for form\n"
-#| "                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-#| "                but cases are not available for this form. Please either remove\n"
-#| "                the case reference or (1) make sure that the case list is set to\n"
-#| "                display the case list first and then form, and (2) make sure\n"
-#| "                that all forms in this case list update or close a case (which\n"
-#| "                means registration forms must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -10255,15 +10084,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                You have a display condition which refers to a case, but cases\n"
-#| "                are not available. Please either remove the case reference or\n"
-#| "                (1) make sure that the case list is set to display the case list\n"
-#| "                first and then form, and (2) make sure that all forms in this\n"
-#| "                case list update or close a case (which means registration forms\n"
-#| "                must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                You have a display condition which refers to a case, but cases\n"
@@ -10279,16 +10099,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
-#| msgid ""
-#| "\n"
-#| "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
-#| "          Learn more\n"
-#| "          <a\n"
-#| "            target='_blank'\n"
-#| "            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
-#| "            >here</a\n"
-#| "          >.\n"
-#| "        "
 msgid ""
 "\n"
 "          Please add display Text or an XPath function. This will appear as a badge rounded-pill next to the corresponding icon.\n"
@@ -10312,10 +10122,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              Use this %(label)s for all languages\n"
-#| "            "
 msgid ""
 "\n"
 "              Use this %(badge)s for all languages\n"
@@ -10327,11 +10133,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            This %(label)s is linked to the default language, and can only be\n"
-#| "            modified there.\n"
-#| "          "
 msgid ""
 "\n"
 "            This %(badge)s is linked to the default language, and can only be\n"
@@ -10341,6 +10142,76 @@ msgstr ""
 "\n"
 "            यह %(badge)s डिफ़ॉल्ट भाषा से जुड़ा है, और केवल वहीं संशोधित किया जा सकता है।\n"
 "          "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Select a language."
+msgstr "एक भाषा चुनें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Select a format."
+msgstr "एक फ़ॉर्मेट चुनें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Download only translations eligible for Transifex?"
+msgstr "क्या केवल वे अनुवाद डाउनलोड करें जो Transifex के लिए योग्य हैं?"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+#: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"          Download %(plural_noun)s\n"
+"        "
+msgstr ""
+"\n"
+"          %(plural_noun)s डाउनलोड करें\n"
+"        "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid ""
+"\n"
+"        The single-sheet format is only available when downloading a single language.\n"
+"        <br>Please either select a language or choose the multi-sheet format.\n"
+"      "
+msgstr ""
+"\n"
+"        सिंगल-शीट फ़ॉर्मेट केवल एक भाषा डाउनलोड करने पर उपलब्ध है।\n"
+"        <br>कृपया या तो एक भाषा चुनें या मल्टी-शीट फ़ॉर्मेट चुनें।\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Form Changes"
+msgstr "फॉर्म परिवर्तन"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Display"
+msgstr "प्रदर्शन"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation"
+msgstr "मान्यता"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Comments"
+msgstr "टिप्पणियाँ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Default Values"
+msgstr "डिफ़ॉल्ट मान"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/campaign/models.py
+#: corehq/apps/campaign/templates/campaign/dashboard.html
+#: corehq/apps/export/models/new.py
+#: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+#: corehq/apps/userreports/models.py
+msgid "Cases"
+msgstr "केस"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
@@ -10974,8 +10845,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Custom Assertions"
 msgstr "कस्टम असर्शन"
 
@@ -11140,8 +11010,7 @@ msgstr "XForm"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
@@ -11152,8 +11021,7 @@ msgstr "दिखाएँ"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/hqmedia/views.py
 msgid "Multimedia"
 msgstr "मल्टीमीडिया"
@@ -11524,23 +11392,11 @@ msgstr ""
 "    "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#| msgid ""
-#| "Followup: This form loads a case and may then update or close it"
 msgid "Followup: This form loads a case and may then update or btn-close it"
 msgstr ""
 "फॉलोअप: यह फॉर्म एक केस लोड करता है और फिर उसे अपडेट या btn-close कर सकता है"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
-#| msgid ""
-#| "\n"
-#| "              To use display conditions which reference a case, <br />\n"
-#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-#| "              <em>Display menu and then forms</em> <br />\n"
-#| "              (2) all the forms in the case list must update or close a case,\n"
-#| "              which means registration forms must go in a separate case list, or\n"
-#| "              if your project uses user properties, your display condition may\n"
-#| "              use user properties.\n"
-#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
@@ -13648,15 +13504,6 @@ msgid "Shade"
 msgstr "छाया"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_missing_warning.html
-#| msgid ""
-#| "\n"
-#| "        None of the forms in this menu require a case list.\n"
-#| "        Changes made here will have no effect until you either:\n"
-#| "        <ol>\n"
-#| "          <li>use forms that require a case list, such as forms that update or close a case, or</li>\n"
-#| "          <li>select the <strong>Case List Menu Item</strong> setting.</li>\n"
-#| "        </ol>\n"
-#| "      "
 msgid ""
 "\n"
 "        None of the forms in this menu require a case list.\n"
@@ -13677,16 +13524,10 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_setting.html
-#| msgid "Case list menu item requires a label"
 msgid "Case list menu item requires a badge"
 msgstr "केस लिस्ट मेनू आइटम के लिए बैज आवश्यक है"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-#| msgid ""
-#| "\n"
-#| "                  Visit schedule will be ignored as not all\n"
-#| "                  forms in the case list update or close a case.\n"
-#| "                "
 msgid ""
 "\n"
 "                  Visit schedule will be ignored as not all\n"
@@ -13698,11 +13539,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-#| msgid ""
-#| "\n"
-#| "    Visit schedules can only be used when all the forms in the case list<br/>\n"
-#| "    update or close a case, which means registration forms must go in a separate case list.\n"
-#| "  "
 msgid ""
 "\n"
 "    Visit schedules can only be used when all the forms in the case list<br/>\n"
@@ -13909,7 +13745,8 @@ msgstr "अपने एंड्रॉइड डिवाइस पर।"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "Application Profile"
 msgstr "एप्लिकेशन प्रोफ़ाइल"
 
@@ -14170,7 +14007,8 @@ msgstr "अपडेट नहीं किया जा सका"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Latest"
 msgstr "नवीनतम"
 
@@ -14266,8 +14104,7 @@ msgstr ""
 msgid "Revert"
 msgstr "वापस जाएं"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
 "        All add-ons have been enabled for this app using the\n"
@@ -14278,13 +14115,11 @@ msgstr ""
 "        सभी ऐड-ऑन इस ऐप के लिए \"Enable All Application Add-Ons\" प्रोजेक्ट सेटिंग का उपयोग करके सक्षम किए गए हैं।\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid "Enable All Add-Ons"
 msgstr "सभी ऐड-ऑन सक्षम करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
 "        <strong>Add-ons</strong> enable you to build more complex applications.\n"
@@ -14294,38 +14129,33 @@ msgstr ""
 "        <strong>ऐड-ऑन</strong> आपको अधिक जटिल एप्लिकेशन बनाने में सक्षम बनाते हैं।\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid "Learn more."
 msgstr "और जानें।"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                        You have previously enabled this feature in your app, but have since lost access\n"
-"                        to it.\n"
-"                      "
+"                    You have previously enabled this feature in your app, but have since lost access\n"
+"                    to it.\n"
+"                  "
 msgstr ""
 "\n"
-"                        आपने पहले अपने ऐप में यह सुविधा सक्षम की थी, लेकिन अब इसकी पहुंच खो दी है।\n"
-"                      "
+"                    आपने पहले अपने ऐप में इस फीचर को सक्षम किया था, लेकिन अब इसकी एक्सेस खो दी है।\n"
+"                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                        Your application will continue to function in places that utilized this feature, but\n"
-"                        you will not be able to edit any related functionality until you upgrade.\n"
-"                      "
+"                    Your application will continue to function in places that utilized this feature, but\n"
+"                    you will not be able to edit any related functionality until you upgrade.\n"
+"                  "
 msgstr ""
 "\n"
-"                        आपका एप्लिकेशन उन स्थानों पर कार्य करता रहेगा जहाँ इस सुविधा का उपयोग किया गया था,\n"
-"                        लेकिन आप संबंधित कार्यक्षमता को तब तक संपादित नहीं कर पाएंगे जब तक आप अपग्रेड नहीं करते।\n"
-"                      "
+"                    आपकी एप्लिकेशन उन स्थानों पर काम करती रहेगी जहाँ इस फीचर का उपयोग किया गया था, लेकिन आप संबंधित कार्यक्षमता को तब तक संपादित नहीं कर पाएंगे जब तक आप अपग्रेड नहीं करते।\n"
+"                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid ""
 "\n"
 "      You cannot re-enable this feature once it is disabled\n"
@@ -14336,40 +14166,34 @@ msgstr ""
 "      इस सुविधा को एक बार अक्षम करने के बाद, आप अपनी सदस्यता को अपग्रेड किए बिना इसे फिर से सक्षम नहीं कर सकते।\n"
 "    "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Replace Logo"
 msgstr "लोगो बदलें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 msgid "Upload Logo"
 msgstr "लोगो अपलोड करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Linked Application"
 msgstr "लिंक्ड एप्लिकेशन"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Add-ons"
 msgstr "ऐड-ऑन"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/commtrack/views.py corehq/apps/geospatial/forms.py
 msgid "Advanced Settings"
 msgstr "एडवांस्ड सेटिंग्स"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Update from upstream application"
 msgstr "अपस्ट्रीम एप्लिकेशन से अपडेट करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid ""
 "\n"
@@ -14384,8 +14208,7 @@ msgstr ""
 "                    संस्करण %(upstream_version)s से प्राप्त किया गया था।\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid ""
 "\n"
@@ -14396,147 +14219,36 @@ msgstr ""
 "                    आपका ऐप आखिरी बार %(upstream_name)s, संस्करण %(upstream_version)s से प्राप्त किया गया था।\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Select an upstream app to pull"
 msgstr "अपस्ट्रीम ऐप चुनें जिसे प्राप्त करना है"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid "version %(v)s"
 msgstr "संस्करण %(v)s"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Email when finished (recommended for large applications)"
 msgstr "पूरा होने पर ईमेल करें (बड़ी एप्लिकेशन के लिए अनुशंसित)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/templates/reports/async/print_report.html
 msgid "Loading ..."
 msgstr "लोड हो रहा है ..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Try again"
 msgstr "फिर से प्रयास करें"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Delete Application"
 msgstr "एप्लिकेशन हटाएं"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Delete this application"
 msgstr "इस एप्लिकेशन को हटाएं"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid "Custom Properties"
-msgstr "कस्टम प्रॉपर्टीज़"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid ""
-"\n"
-"                  Oops!\n"
-"                  This setting shouldn't be here.\n"
-"                  Could you change it to the default\n"
-"                  to make it go away?\n"
-"                  Sorry about that.\n"
-"                "
-msgstr ""
-"\n"
-"                  ओह!\n"
-"                  यह सेटिंग यहाँ नहीं होनी चाहिए थी।\n"
-"                  कृपया इसे डिफ़ॉल्ट पर बदलें\n"
-"                  ताकि यह गायब हो जाए।\n"
-"                  इसके लिए क्षमा करें।\n"
-"                "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid ""
-"\n"
-"                This feature is not available on your subscription. Please upgrade to\n"
-"                the <!-- ko text: upgrade_plan --><!-- /ko --> plan or higher.\n"
-"              "
-msgstr ""
-"\n"
-"                यह सुविधा आपकी सदस्यता में उपलब्ध नहीं है। कृपया <!-- ko text: upgrade_plan --><!-- /ko --> प्लान या उससे ऊपर के लिए अपग्रेड करें।\n"
-"              "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid "Add Custom Property"
-msgstr "कस्टम प्रॉपर्टी जोड़ें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/hqmedia/views.py
-msgid "Multimedia Reference Checker"
-msgstr "मल्टीमीडिया रेफरेंस चेकर"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "View, upload, and download your application's multimedia"
-msgstr "अपने एप्लिकेशन की मल्टीमीडिया देखें, अपलोड करें और डाउनलोड करें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "Download Multimedia Zip"
-msgstr "मल्टीमीडिया ज़िप डाउनलोड करें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"This .zip file is structured to match the multimedia paths referenced in "
-"your CommCare Application."
-msgstr ""
-"यह .zip फ़ाइल आपके CommCare एप्लिकेशन में संदर्भित मल्टीमीडिया पथों से मेल "
-"खाने के लिए संरचित है।"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "Sync all multimedia with master"
-msgstr "सभी मल्टीमीडिया को मास्टर के साथ सिंक करें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"Email when finished (recommended for applications with large number of "
-"multimedia files or heavy files)"
-msgstr ""
-"पूरा होने पर ईमेल करें (उन एप्लिकेशन के लिए अनुशंसित जिनमें बड़ी संख्या में "
-"मल्टीमीडिया फाइलें या भारी फाइलें हैं)"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"Force pull all multimedia (this can take a long time and will re-write all "
-"the multimedia in your app)"
-msgstr ""
-"सभी मल्टीमीडिया को जबरदस्ती प्राप्त करें (इसमें समय लग सकता है और यह आपके ऐप"
-" में सभी मल्टीमीडिया को फिर से लिख देगा)"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-msgid "Sync"
-msgstr "सिंक करें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "This application currently does not contain any multimedia references."
-msgstr "इस एप्लिकेशन में वर्तमान में कोई भी मल्टीमीडिया संदर्भ नहीं है।"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/supported_languages.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/supported_languages.html
@@ -14567,6 +14279,98 @@ msgstr "भाषाएँ हटाई जा रही हैं:"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/supported_languages.html
 msgid "Don't Delete"
 msgstr "हटाएँ नहीं"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid "Custom Properties"
+msgstr "कस्टम प्रॉपर्टीज़"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid ""
+"\n"
+"                  Oops!\n"
+"                  This setting shouldn't be here.\n"
+"                  Could you change it to the default\n"
+"                  to make it go away?\n"
+"                  Sorry about that.\n"
+"                "
+msgstr ""
+"\n"
+"                  ओह!\n"
+"                  यह सेटिंग यहाँ नहीं होनी चाहिए थी।\n"
+"                  कृपया इसे डिफ़ॉल्ट पर बदलें\n"
+"                  ताकि यह गायब हो जाए।\n"
+"                  इसके लिए क्षमा करें।\n"
+"                "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid ""
+"\n"
+"                This feature is not available on your subscription. Please upgrade to\n"
+"                the <!-- ko text: upgrade_plan --><!-- /ko --> plan or higher.\n"
+"              "
+msgstr ""
+"\n"
+"                यह सुविधा आपकी सदस्यता में उपलब्ध नहीं है। कृपया <!-- ko text: upgrade_plan --><!-- /ko --> प्लान या उससे ऊपर के लिए अपग्रेड करें।\n"
+"              "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid "Add Custom Property"
+msgstr "कस्टम प्रॉपर्टी जोड़ें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/hqmedia/views.py
+msgid "Multimedia Reference Checker"
+msgstr "मल्टीमीडिया रेफरेंस चेकर"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "View, upload, and download your application's multimedia"
+msgstr "अपने एप्लिकेशन की मल्टीमीडिया देखें, अपलोड करें और डाउनलोड करें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "Download Multimedia Zip"
+msgstr "मल्टीमीडिया ज़िप डाउनलोड करें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"This .zip file is structured to match the multimedia paths referenced in "
+"your CommCare Application."
+msgstr ""
+"यह .zip फ़ाइल आपके CommCare एप्लिकेशन में संदर्भित मल्टीमीडिया पथों से मेल "
+"खाने के लिए संरचित है।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "Sync all multimedia with master"
+msgstr "सभी मल्टीमीडिया को मास्टर के साथ सिंक करें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"Email when finished (recommended for applications with large number of "
+"multimedia files or heavy files)"
+msgstr ""
+"पूरा होने पर ईमेल करें (उन एप्लिकेशन के लिए अनुशंसित जिनमें बड़ी संख्या में "
+"मल्टीमीडिया फाइलें या भारी फाइलें हैं)"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"Force pull all multimedia (this can take a long time and will re-write all "
+"the multimedia in your app)"
+msgstr ""
+"सभी मल्टीमीडिया को जबरदस्ती प्राप्त करें (इसमें समय लग सकता है और यह आपके ऐप"
+" में सभी मल्टीमीडिया को फिर से लिख देगा)"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+msgid "Sync"
+msgstr "सिंक करें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "This application currently does not contain any multimedia references."
+msgstr "इस एप्लिकेशन में वर्तमान में कोई भी मल्टीमीडिया संदर्भ नहीं है।"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/vellum_case_management_warning.html
 msgid ""
@@ -16940,7 +16744,8 @@ msgstr "पूरा मेनू दिखाएँ"
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 msgid "Select"
 msgstr "चुनें"
 
@@ -17067,16 +16872,16 @@ msgstr "ठीक है"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
-"            "
+"            Please correct the answers below before submitting.\n"
+"            <br>\n"
+"            You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
+"          "
 msgstr ""
 "\n"
-"              कृपया सबमिट करने से पहले नीचे दिए गए उत्तरों को सही करें।\n"
-"              <br>\n"
-"              आप स्क्रीन के बाएँ तरफ दिए गए <strong><i class='fa fa-fast-forward'></i> अगली त्रुटि</strong> बटन का उपयोग आवश्यक फ़ील्ड्स के बीच नेविगेट करने के लिए कर सकते हैं।\n"
-"            "
+"            कृपया सबमिट करने से पहले नीचे दिए गए उत्तरों को सही करें।\n"
+"            <br>\n"
+"            आप स्क्रीन के बाएँ तरफ <strong><i class='fa fa-fast-forward'></i> अगली गलती</strong> बटन का उपयोग आवश्यक फ़ील्ड्स के बीच नेविगेट करने के लिए कर सकते हैं।\n"
+"          "
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid "An answer is required."
@@ -21990,6 +21795,14 @@ msgstr "बिलिंग जानकारी अपडेट करें"
 msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr "ऐसा लगता है कि यह फ़ोन नंबर अमान्य है। क्या आपने देश कोड भूल गए हैं?"
+
+#: corehq/apps/domain/forms.py
+#| msgid ""
+#| "\n"
+#| "                Please provide an autopay card before continuing.\n"
+#| "              "
+msgid "Please provide an autopay card before continuing."
+msgstr "कृपया आगे बढ़ने से पहले एक ऑटोपे कार्ड प्रदान करें।"
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -27800,13 +27613,15 @@ msgstr "उपस्थित"
 #, python-format
 msgid ""
 "\n"
-"            This attendee cannot be deleted as <strong>%(attendee_name)s</strong> has been tracked as\n"
-"            having attended one or more events.\n"
-"          "
+"          This attendee cannot be deleted as\n"
+"          <strong>%(attendee_name)s</strong> has been tracked as having\n"
+"          attended one or more events.\n"
+"        "
 msgstr ""
 "\n"
-"            इस उपस्थित को हटाया नहीं जा सकता क्योंकि <strong>%(attendee_name)s</strong> को एक या अधिक इवेंट में उपस्थित के रूप में ट्रैक किया गया है।\n"
-"          "
+"          इस प्रतिभागी को हटाया नहीं जा सकता क्योंकि\n"
+"          <strong>%(attendee_name)s</strong> को एक या अधिक इवेंट्स में भाग लेते हुए ट्रैक किया गया है।\n"
+"        "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 msgid "Update Attendee"
@@ -27820,44 +27635,47 @@ msgstr "उपस्थित हटाएं"
 #, python-format
 msgid ""
 "\n"
-"                Are you sure you want to permanently delete <strong>%(attendee_name)s</strong>?\n"
+"                Are you sure you want to permanently delete\n"
+"                <strong>%(attendee_name)s</strong>?\n"
 "              "
 msgstr ""
 "\n"
-"                क्या आप वाकई <strong>%(attendee_name)s</strong> को स्थायी रूप से हटाना चाहते हैं?\n"
+"                क्या आप वाकई\n"
+"                <strong>%(attendee_name)s</strong> को स्थायी रूप से हटाना चाहते हैं?\n"
 "              "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 #, python-format
 msgid ""
 "\n"
-"                This action will delete %(attendee_name)s as a potential attendee and will remove them from all\n"
-"                future events that they are currently enlisted in.\n"
+"                This action will delete %(attendee_name)s as a potential\n"
+"                attendee and will remove them from all future events that they\n"
+"                are currently enlisted in.\n"
 "              "
 msgstr ""
 "\n"
-"                यह क्रिया %(attendee_name)s को संभावित उपस्थित के रूप में हटा देगी और उन्हें उन सभी भविष्य के इवेंट्स से हटा देगी जिनमें वे वर्तमान में नामांकित हैं।\n"
+"                यह क्रिया %(attendee_name)s को संभावित प्रतिभागी के रूप में हटा देगी और उन्हें उन सभी भविष्य के इवेंट्स से हटा देगी जिनमें वे वर्तमान में नामांकित हैं।\n"
 "              "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 msgid ""
 "\n"
-"                  This action cannot be undone.\n"
-"                "
+"                This action cannot be undone.\n"
+"              "
 msgstr ""
 "\n"
-"                  यह क्रिया पूर्ववत नहीं की जा सकती।\n"
-"                "
+"                इस क्रिया को पूर्ववत नहीं किया जा सकता।\n"
+"              "
 
 #: corehq/apps/events/templates/events/event_attendees.html
 msgid ""
 "\n"
-"    Known potential attendees who can be invited to participate in Attendance\n"
-"    Tracking Events.\n"
+"      Known potential attendees who can be invited to participate in Attendance\n"
+"      Tracking Events.\n"
 "    "
 msgstr ""
 "\n"
-"    ज्ञात संभावित उपस्थित जिन्हें उपस्थिति ट्रैकिंग इवेंट्स में भाग लेने के लिए आमंत्रित किया जा सकता है।\n"
+"      ज्ञात संभावित प्रतिभागी जिन्हें उपस्थिति ट्रैकिंग इवेंट्स में भाग लेने के लिए आमंत्रित किया जा सकता है।\n"
 "    "
 
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -27902,16 +27720,19 @@ msgstr "संभावित प्रतिभागियों को लो
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
-"            Please check your internet connection.\n"
-"            If this issue continues, please\n"
-"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+"            Please check your internet connection. If this issue continues,\n"
+"            please\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >report an issue</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
 "            <strong>सर्वर से संपर्क करने में समस्या आई।</strong>\n"
-"            कृपया अपनी इंटरनेट कनेक्शन जांचें।\n"
-"            यदि यह समस्या बनी रहती है, तो कृपया\n"
-"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">समस्या की रिपोर्ट करें</a>।\n"
+"            कृपया अपना इंटरनेट कनेक्शन जांचें। यदि यह समस्या जारी रहती है, तो कृपया\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >समस्या रिपोर्ट करें</a\n"
+"            >।\n"
 "          "
 
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -27937,7 +27758,8 @@ msgstr ""
 #: corehq/apps/events/templates/events/events_list.html
 msgid ""
 "\n"
-"          Attendance tracking events can be used to track attendance of all the selected attendees.\n"
+"          Attendance tracking events can be used to track attendance of all the\n"
+"          selected attendees.\n"
 "        "
 msgstr ""
 "\n"
@@ -27971,12 +27793,13 @@ msgstr "इवेंट अभी शुरू नहीं हुआ है"
 #: corehq/apps/events/templates/events/new_event.html
 msgid ""
 "\n"
-"      There was a problem fetching the list of attendees and attendance takers. Please try again.\n"
-"      "
+"      There was a problem fetching the list of attendees and attendance takers.\n"
+"      Please try again.\n"
+"    "
 msgstr ""
 "\n"
 "      प्रतिभागियों और उपस्थिति लेने वालों की सूची प्राप्त करने में समस्या आई। कृपया पुनः प्रयास करें।\n"
-"      "
+"    "
 
 #: corehq/apps/events/views.py
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
@@ -31083,7 +30906,8 @@ msgid "GPS Data"
 msgstr "जीपीएस डेटा"
 
 #: corehq/apps/geospatial/filters.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 msgid "Missing"
 msgstr "अनुपस्थित"
 
@@ -33157,7 +32981,8 @@ msgstr "CCZ में media_suite.xml नहीं मिला"
 msgid "Media file missing from CCZ: {}"
 msgstr "CCZ से मीडिया फ़ाइल गायब है: {}"
 
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #, python-format
 msgid ""
 "\n"
@@ -33195,217 +33020,13 @@ msgstr ""
 "    </p>\n"
 "  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 msgid "Transifex"
 msgstr "Transifex"
 
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload.html
-msgid ""
-"\n"
-"    <p>\n"
-"      Use this tool to upload ZIP files of your multimedia.\n"
-"      The bulk uploader will compare the file paths in your form with the file paths\n"
-"      in your zip to find a matching file.\n"
-"    </p>\n"
-"    <p>\n"
-"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's\n"
-"      <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match\n"
-"      <code>commcare/images/image.jpg</code>.\n"
-"    </p>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      इस टूल का उपयोग अपनी मल्टीमीडिया की ZIP फ़ाइलें अपलोड करने के लिए करें।\n"
-"      बल्क अपलोडर आपके फॉर्म के फ़ाइल पथों की तुलना आपके ज़िप के फ़ाइल पथों से करेगा ताकि मेल खाने वाली फ़ाइल मिल सके।\n"
-"    </p>\n"
-"    <p>\n"
-"      उदाहरण के लिए, <code>jr://file/commcare/images/hin/image.jpg</code> और आपके ज़िप की\n"
-"      <code>commcare/images/hin/image.jpg</code> फ़ाइल मेल खाएगी, लेकिन यह <strong>मेल नहीं खाएगी</strong>\n"
-"      <code>commcare/images/image.jpg</code> से।\n"
-"    </p>\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#, python-format
-msgid ""
-"\n"
-"        One match found.\n"
-"      "
-msgid_plural ""
-"\n"
-"        %(matched_count)s matches found.\n"
-"      "
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "No Matches Found"
-msgstr "कोई मेल नहीं मिला"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "No Matches"
-msgstr "कोई मेल नहीं"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Images"
-msgstr "मेल खाई छवियाँ"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/reports/standard/users/reports.py
-msgid "Updated"
-msgstr "अपडेट किया गया"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "View Full Image"
-msgstr "पूर्ण छवि देखें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Audio"
-msgstr "मेल खाया ऑडियो"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Playing audio directly on this page is currently not supported."
-msgstr "इस पृष्ठ पर सीधे ऑडियो चलाना वर्तमान में समर्थित नहीं है।"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
-msgid "Listen to Audio"
-msgstr "ऑडियो सुनें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Video"
-msgstr "मेल खाया वीडियो"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid ""
-"Watching video directly on this page is not supported. Opens a new tab."
-msgstr "इस पृष्ठ पर सीधे वीडियो देखना समर्थित नहीं है। नया टैब खुलेगा।"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
-msgid "Watch Video"
-msgstr "वीडियो देखें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/manage_paths.html
-msgid "Include only paths where the multimedia file is missing?"
-msgstr "क्या केवल उन्हीं पथों को शामिल करें जहाँ मल्टीमीडिया फ़ाइल गायब है?"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Icon Image"
-msgstr "आइकन छवि अपलोड करें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Audio"
-msgstr "ऑडियो अपलोड करें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Video"
-msgstr "वीडियो अपलोड करें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload File"
-msgstr "फ़ाइल अपलोड करें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Icon Image"
-msgstr "आइकन छवि चुनें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Menu Audio"
-msgstr "मेनू ऑडियो चुनें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Video"
-msgstr "वीडियो चुनें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Logo"
-msgstr "लोगो चुनें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select File"
-msgstr "फ़ाइल चुनें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Icon"
-msgstr "वर्तमान आइकन"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Audio"
-msgstr "वर्तमान ऑडियो"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Video"
-msgstr "वर्तमान वीडियो"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Logo"
-msgstr "वर्तमान लोगो"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current File"
-msgstr "वर्तमान फ़ाइल"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Begin Upload"
-msgstr "अपलोड प्रारंभ करें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid ""
-"<strong>Warning:</strong>\n"
-"    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
-"  "
-msgstr ""
-"<strong>चेतावनी:</strong>\n"
-"    इस एप्लिकेशन में त्रुटियों वाले फॉर्म हैं—हम उन फॉर्मों से कोई भी मल्टीमीडिया संदर्भ नहीं निकाल सकते।\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid ""
-"\n"
-"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-"        This application is missing references, so this zip will be incomplete.\n"
-"      "
-msgstr ""
-"\n"
-"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-"        इस एप्लिकेशन में संदर्भ गायब हैं, इसलिए यह ज़िप अधूरी होगी।\n"
-"      "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "Download Incomplete ZIP"
-msgstr "अधूरी ZIP डाउनलोड करें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "Download ZIP"
-msgstr "ZIP डाउनलोड करें"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Menu or Form"
-msgstr "मेनू या फॉर्म"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Size"
-msgstr "आकार"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Path in Application"
-msgstr "एप्लिकेशन में पथ"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid ""
-"\n"
-"    No media found matching your filters.\n"
-"  "
-msgstr ""
-"\n"
-"    आपकी फ़िल्टर से मेल खाती कोई मीडिया नहीं मिली।\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid ""
 "\n"
 "        <i class=\"fa fa-spin fa-spinner\"></i>\n"
@@ -33417,7 +33038,8 @@ msgstr ""
 "        लोड हो रहा है...\n"
 "      "
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid ""
 "\n"
 "              You can manage multimedia by uploading files individually below.\n"
@@ -33427,23 +33049,46 @@ msgstr ""
 "              आप नीचे व्यक्तिगत रूप से फ़ाइलें अपलोड करके मल्टीमीडिया प्रबंधित कर सकते हैं।\n"
 "            "
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "This application references no multimedia."
 msgstr "यह एप्लिकेशन किसी भी मल्टीमीडिया का संदर्भ नहीं देता है।"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "References"
 msgstr "संदर्भ"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "Open image in new tab"
 msgstr "छवि को नए टैब में खोलें"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "Open file in new tab"
 msgstr "फ़ाइल को नए टैब में खोलें"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
+msgid "Listen to Audio"
+msgstr "ऑडियो सुनें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_video_single.html
+msgid "Watch Video"
+msgstr "वीडियो देखें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 #, python-format
 msgid ""
 "\n"
@@ -33472,51 +33117,290 @@ msgstr ""
 "    </p>\n"
 "  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Language(s)"
 msgstr "भाषा(एं)"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Media Type(s)"
 msgstr "मीडिया प्रकार(एं)"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Check for missing media"
 msgstr "गायब मीडिया की जाँच करें"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
-msgid "Errors found"
-msgstr "त्रुटियाँ मिलीं"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload.html
+msgid ""
+"\n"
+"    <p>\n"
+"      Use this tool to upload ZIP files of your multimedia.\n"
+"      The bulk uploader will compare the file paths in your form with the file paths\n"
+"      in your zip to find a matching file.\n"
+"    </p>\n"
+"    <p>\n"
+"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's\n"
+"      <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match\n"
+"      <code>commcare/images/image.jpg</code>.\n"
+"    </p>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      इस टूल का उपयोग अपनी मल्टीमीडिया की ZIP फ़ाइलें अपलोड करने के लिए करें।\n"
+"      बल्क अपलोडर आपके फॉर्म के फ़ाइल पथों की तुलना आपके ज़िप के फ़ाइल पथों से करेगा ताकि मेल खाने वाली फ़ाइल मिल सके।\n"
+"    </p>\n"
+"    <p>\n"
+"      उदाहरण के लिए, <code>jr://file/commcare/images/hin/image.jpg</code> और आपके ज़िप की\n"
+"      <code>commcare/images/hin/image.jpg</code> फ़ाइल मेल खाएगी, लेकिन यह <strong>मेल नहीं खाएगी</strong>\n"
+"      <code>commcare/images/image.jpg</code> से।\n"
+"    </p>\n"
+"  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#, python-format
+msgid ""
+"\n"
+"        One match found.\n"
+"      "
+msgid_plural ""
+"\n"
+"        %(matched_count)s matches found.\n"
+"      "
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "No Matches Found"
+msgstr "कोई मेल नहीं मिला"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "No Matches"
+msgstr "कोई मेल नहीं"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Images"
+msgstr "मेल खाई छवियाँ"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/reports/standard/users/reports.py
+msgid "Updated"
+msgstr "अपडेट किया गया"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "View Full Image"
+msgstr "पूर्ण छवि देखें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Audio"
+msgstr "मेल खाया ऑडियो"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Playing audio directly on this page is currently not supported."
+msgstr "इस पृष्ठ पर सीधे ऑडियो चलाना वर्तमान में समर्थित नहीं है।"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Video"
+msgstr "मेल खाया वीडियो"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid ""
+"Watching video directly on this page is not supported. Opens a new tab."
+msgstr "इस पृष्ठ पर सीधे वीडियो देखना समर्थित नहीं है। नया टैब खुलेगा।"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/manage_paths.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/manage_paths.html
+msgid "Include only paths where the multimedia file is missing?"
+msgstr "क्या केवल उन्हीं पथों को शामिल करें जहाँ मल्टीमीडिया फ़ाइल गायब है?"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Icon Image"
+msgstr "आइकन छवि अपलोड करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Audio"
+msgstr "ऑडियो अपलोड करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Video"
+msgstr "वीडियो अपलोड करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload File"
+msgstr "फ़ाइल अपलोड करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Icon Image"
+msgstr "आइकन छवि चुनें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Menu Audio"
+msgstr "मेनू ऑडियो चुनें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Video"
+msgstr "वीडियो चुनें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Logo"
+msgstr "लोगो चुनें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select File"
+msgstr "फ़ाइल चुनें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Icon"
+msgstr "वर्तमान आइकन"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Audio"
+msgstr "वर्तमान ऑडियो"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Video"
+msgstr "वर्तमान वीडियो"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Logo"
+msgstr "वर्तमान लोगो"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current File"
+msgstr "वर्तमान फ़ाइल"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Begin Upload"
+msgstr "अपलोड प्रारंभ करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid ""
+"<strong>Warning:</strong>\n"
+"    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
+"  "
+msgstr ""
+"<strong>चेतावनी:</strong>\n"
+"    इस एप्लिकेशन में त्रुटियों वाले फॉर्म हैं—हम उन फॉर्मों से कोई भी मल्टीमीडिया संदर्भ नहीं निकाल सकते।\n"
+"  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid ""
+"\n"
+"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"        This application is missing references, so this zip will be incomplete.\n"
+"      "
+msgstr ""
+"\n"
+"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"        इस एप्लिकेशन में संदर्भ गायब हैं, इसलिए यह ज़िप अधूरी होगी।\n"
+"      "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "Download Incomplete ZIP"
+msgstr "अधूरी ZIP डाउनलोड करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "Download ZIP"
+msgstr "ZIP डाउनलोड करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Menu or Form"
+msgstr "मेनू या फॉर्म"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Size"
+msgstr "आकार"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Path in Application"
+msgstr "एप्लिकेशन में पथ"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid ""
+"\n"
+"    No media found matching your filters.\n"
+"  "
+msgstr ""
+"\n"
+"    आपकी फ़िल्टर से मेल खाती कोई मीडिया नहीं मिली।\n"
+"  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
 msgid "New Audio Uploaded Successfully"
 msgstr "नई ऑडियो सफलतापूर्वक अपलोड की गई"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_image_single.html
 msgid "View Full Size"
 msgstr "पूर्ण आकार देखें"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_image_single.html
 msgid "New Image Uploaded Successfully"
 msgstr "नई छवि सफलतापूर्वक अपलोड की गई"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_video_single.html
 msgid "New Video Uploaded Successfully"
 msgstr "नया वीडियो सफलतापूर्वक अपलोड किया गया"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "Ready to upload. Click <strong>Begin Upload</strong> below to start."
 msgstr ""
 "अपलोड के लिए तैयार। शुरू करने के लिए नीचे <strong>अपलोड प्रारंभ "
 "करें</strong> पर क्लिक करें।"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "There were errors"
 msgstr "कुछ त्रुटियाँ हुईं"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "Cancel Upload"
 msgstr "अपलोड रद्द करें"
+
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
+msgid "Errors found"
+msgstr "त्रुटियाँ मिलीं"
 
 #: corehq/apps/hqmedia/view_helpers.py
 #, python-brace-format
@@ -33831,11 +33715,13 @@ msgstr "मदद चाहिए?"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
-"नमस्ते! मैं CommCare साथी हूँ, CommCare के लिए आपका व्यक्तिगत मार्गदर्शक! आज"
-" मैं आपकी किस प्रकार सहायता कर सकता हूँ?"
+"नमस्ते! मैं CommCare Companion हूँ, आपका व्यक्तिगत CommCare गाइड! आप यहाँ "
+"कोई सवाल पूछ सकते हैं या फाइलें अटैच कर सकते हैं — जैसे स्क्रीनशॉट, "
+"एक्सपोर्ट्स, या ऐप समरी — और मैं आपकी मदद के लिए उनका उपयोग करूँगा।"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "I need help with building my CommCare application."
@@ -35105,7 +34991,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35117,7 +35002,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35129,7 +35013,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35146,7 +35029,6 @@ msgid "Update the downloaded file."
 msgstr "डाउनलोड की गई फ़ाइल को अपडेट करें।"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35374,6 +35256,50 @@ msgstr ""
 "        , <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
 "        या <a href=\"https://www.apple.com/safari/\">Safari</a>.\n"
 "    "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"      Read more on the <a target='_blank' href='%(link)s'>Help Site</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      <a target='_blank' href='%(link)s'>हेल्प साइट</a> पर और पढ़ें।\n"
+"    "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"        Download your current %(adjective)s file.\n"
+"      "
+msgstr ""
+"\n"
+"        अपनी वर्तमान %(adjective)s फ़ाइल डाउनलोड करें।\n"
+"      "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"              Download %(plural_noun)s\n"
+"            "
+msgstr ""
+"\n"
+"              %(plural_noun)s डाउनलोड करें\n"
+"            "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"            Check the <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> for instructions.\n"
+"          "
+msgstr ""
+"\n"
+"            निर्देशों के लिए <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> देखें।\n"
+"          "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
 msgid ""
@@ -35853,15 +35779,10 @@ msgstr ""
 " उपयोग KYC सत्यापन के लिए नहीं किया जाता है तो इसे खाली छोड़ दें।"
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Global Usage Thresholds"
 msgid "Passing Threshold"
 msgstr "पासिंग थ्रेशोल्ड"
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid ""
-#| "Maps API field for the KYC provider to the field used for storing the "
-#| "relevant data. To learn more about this, please have a look at our <a "
-#| "href=\"{}\" target=\"_blank\">support documentation</a>."
 msgid ""
 "Maps API field for the KYC provider to the minimum score required to pass "
 "KYC verification. To learn more about this, please have a look at our <a "
@@ -36254,7 +36175,6 @@ msgid "Verified"
 msgstr "सत्यापित"
 
 #: corehq/apps/integration/payments/tables.py
-#| msgid "Status Code"
 msgid "Status Confirmed On"
 msgstr "स्थिति की पुष्टि की गई तिथि"
 
@@ -60638,6 +60558,63 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid ""
+#~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+#~ "I help you with today?"
+#~ msgstr ""
+#~ "नमस्ते! मैं CommCare साथी हूँ, CommCare के लिए आपका व्यक्तिगत मार्गदर्शक! आज"
+#~ " मैं आपकी किस प्रकार सहायता कर सकता हूँ?"
+
+#~ msgid ""
+#~ "\n"
+#~ "    <div class=\"row\">\n"
+#~ "      <div class=\"col-md-10\">\n"
+#~ "        <p>\n"
+#~ "          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
+#~ "          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
+#~ "          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
+#~ "        </p>\n"
+#~ "        <p class=\"help-block\">\n"
+#~ "          These application templates can be imported into your project space as licensed by Dimagi under the\n"
+#~ "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "    <div class=\"row\">\n"
+#~ "      <div class=\"col-md-10\">\n"
+#~ "        <p>\n"
+#~ "          संगठनों और सरकारों को COVID-19 प्रतिक्रिया में सहायता करने के लिए, Dimagi ने हमारे ओपन सोर्स प्लेटफ़ॉर्म, CommCare के लिए मुफ्त COVID-19 टेम्पलेट एप्लिकेशन की एक लाइब्रेरी विकसित की है। इन्हें विश्व स्वास्थ्य संगठन, सेंटर फॉर डिजीज कंट्रोल और अन्य के क्लिनिकल प्रोटोकॉल के आधार पर विकसित किया गया है।\n"
+#~ "        </p>\n"
+#~ "        <p class=\"help-block\">\n"
+#~ "          इन एप्लिकेशन टेम्पलेट्स को Dimagi द्वारा लाइसेंस प्राप्त\n"
+#~ "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a> के तहत आपके प्रोजेक्ट स्पेस में इम्पोर्ट किया जा सकता है।\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                Are you sure you want to permanently delete <strong>%(attendee_name)s</strong>?\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                क्या आप वाकई <strong>%(attendee_name)s</strong> को स्थायी रूप से हटाना चाहते हैं?\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "            <strong>There was an issue contacting the server.</strong>\n"
+#~ "            Please check your internet connection.\n"
+#~ "            If this issue continues, please\n"
+#~ "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            <strong>सर्वर से संपर्क करने में समस्या आई।</strong>\n"
+#~ "            कृपया अपनी इंटरनेट कनेक्शन जांचें।\n"
+#~ "            यदि यह समस्या बनी रहती है, तो कृपया\n"
+#~ "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">समस्या की रिपोर्ट करें</a>।\n"
+#~ "          "
 
 #~ msgid "Title row, subtitle row, third row with two cells, and map"
 #~ msgstr ""

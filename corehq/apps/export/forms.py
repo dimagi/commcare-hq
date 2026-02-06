@@ -82,7 +82,7 @@ class CreateExportTagForm(forms.Form):
     form = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     # Case export fields
-    case_type = forms.CharField(required=False, widget=forms.Select(choices=[]))
+    case_type = forms.CharField(required=False, widget=forms.Select(choices=[]), strip=False)
 
     def __init__(self, has_form_export_permissions, has_case_export_permissions, *args, **kwargs):
         self.has_form_export_permissions = has_form_export_permissions

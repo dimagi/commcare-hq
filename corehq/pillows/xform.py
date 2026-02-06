@@ -1,25 +1,40 @@
+import re
 from collections.abc import MutableMapping
 
-from dateutil import parser
 from django.conf import settings
 
+from dateutil import parser
+
+from couchforms.const import DEVICE_LOG_XMLNS, RESERVED_WORDS
+from pillowtop.checkpoints.manager import (
+    KafkaPillowCheckpoint,
+    get_checkpoint_for_elasticsearch_pillow,
+)
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
+from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
+from pillowtop.reindexer.reindexer import (
+    ReindexerFactory,
+    ResumableBulkElasticPillowReindexer,
+)
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
 from corehq.apps.change_feed.topics import FORM_TOPICS
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.users import user_adapter
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.user import UnknownUsersProcessor
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
-from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
 def is_valid_date(txt):
@@ -29,6 +44,33 @@ def is_valid_date(txt):
     except Exception:
         pass
     return False
+
+
+# Regex pattern to match ISO datetime strings with fractional seconds
+# Captures: datetime prefix, fractional seconds (if any), and timezone suffix (if any)
+_DATE_FRACTIONAL_SECONDS_PATTERN = re.compile(
+    r'^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})'  # datetime prefix
+    r'\.(\d{7,})'  # fractional seconds with 7+ digits
+    r'(.*)$'  # timezone suffix (Z, +00:00, etc.)
+)
+
+
+def normalize_date_for_es(txt):
+    """
+    Normalize a date string to be compatible with Elasticsearch.
+
+    ES date mappings at present only support at most 6 fractional second digits (microseconds).
+    Dates with 7+ digits (like "2026-01-20T07:23:45.1498543Z") will not be parsed correctly.
+    This function truncates fractional seconds to 6 digits.
+    """
+    if not txt:
+        return txt
+
+    match = _DATE_FRACTIONAL_SECONDS_PATTERN.match(txt)
+    if match:
+        prefix, fractional, suffix = match.groups()
+        return f"{prefix}.{fractional[:6]}{suffix}"
+    return txt
 
 
 # modified from: http://stackoverflow.com/questions/6027558/flatten-nested-python-dictionaries-compressing-keys

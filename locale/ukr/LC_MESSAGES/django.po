@@ -49,8 +49,7 @@ msgid "Account Type"
 msgstr "Тип облікового запису"
 
 #: corehq/apps/accounting/filters.py
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/filters.py
@@ -175,7 +174,8 @@ msgstr "Показати лише пробні підписки"
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
@@ -324,10 +324,8 @@ msgid "Billing Account"
 msgstr "Рахунок для виставлення рахунків"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
@@ -340,7 +338,8 @@ msgstr "Рахунок для виставлення рахунків"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Version"
 msgstr "Версія"
 
@@ -507,8 +506,7 @@ msgid "Auto Renew"
 msgstr "Автоматичне поновлення"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/models.py
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
 #: corehq/apps/domain/forms.py
@@ -4125,6 +4123,10 @@ msgid "Reason"
 msgstr "Причина"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+msgid "Payment Type"
+msgstr "Тип оплати"
+
+#: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
@@ -4861,7 +4863,8 @@ msgstr "Додані користувачі:"
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqadmin/reports.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
@@ -5406,8 +5409,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -5818,8 +5820,7 @@ msgid "Improve the user experience of your mobile workers"
 msgstr "Покращуйте досвід користувачів ваших мобільних працівників"
 
 #: corehq/apps/app_manager/add_ons.py
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 msgid "Calculations"
 msgstr "Обчислення"
 
@@ -5885,8 +5886,7 @@ msgid "Case"
 msgstr "Справа"
 
 #: corehq/apps/app_manager/fields.py
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/data_interfaces/interfaces.py
@@ -5991,10 +5991,9 @@ msgid "Select Case Type"
 msgstr "Виберіть тип справи"
 
 #: corehq/apps/app_manager/fields.py
+#: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
@@ -7082,8 +7081,7 @@ msgstr "Лише один день"
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Languages"
@@ -7888,6 +7886,107 @@ msgstr ""
 "наступної збірки, якщо не буде позначено як випущене. Згенеровано "
 "користувачем {}."
 
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "COVID-19 CommCare Applications"
+msgstr "Додатки CommCare для COVID-19"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid ""
+"\n"
+"        COVID-19 CommCare Applications\n"
+"      "
+msgstr ""
+"\n"
+"        Додатки CommCare для COVID-19\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid ""
+"\n"
+"    <p>\n"
+"      To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
+"      COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
+"      clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
+"    </p>\n"
+"    <p class=\"help-block\">\n"
+"      These application templates can be imported into your project space as licensed by Dimagi under the\n"
+"      <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+"    </p>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      Щоб підтримати організації та уряди у реагуванні на COVID-19, Dimagi розробила бібліотеку безкоштовних\n"
+"      шаблонів застосунків COVID-19 для нашої відкритої платформи CommCare. Вони були створені на основі\n"
+"      клінічних протоколів Всесвітньої організації охорони здоров'я, Центрів з контролю та профілактики захворювань та інших.\n"
+"    </p>\n"
+"    <p class=\"help-block\">\n"
+"      Ці шаблони застосунків можна імпортувати у ваш простір проєкту за ліцензією Dimagi відповідно до\n"
+"      <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">ліцензії Creative Commons NonCommercial ShareAlike (CC BY-NC-SA 4.0)</a>.\n"
+"    </p>\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Application Info"
+msgstr "Інформація про додаток"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+#, python-format
+msgid ""
+"\n"
+"                    Last Updated: %(last_released)s\n"
+"                  "
+msgstr ""
+"\n"
+"                    Останнє оновлення: %(last_released)s\n"
+"                  "
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Version History"
+msgstr "Історія версій"
+
+#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
+msgid "Import"
+msgstr "Імпортувати"
+
+#: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
+msgid "Settings"
+msgstr "Налаштування"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+msgid "High Level Summary"
+msgstr "Загальний підсумок"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Form Summary"
+msgstr "Підсумок форм"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Summary"
+msgstr "Підсумок справ"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
+msgid "Labels"
+msgstr "Мітки"
+
+#: corehq/apps/app_manager/templates/app_manager/base_summary.html
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
+msgid "Question IDs"
+msgstr "Ідентифікатори питань"
+
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_diff.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_diff.html
@@ -7906,77 +8005,6 @@ msgstr ""
 "\n"
 "        Для оновлення з %(from_version)s до %(to_version)s потрібно завантажити мультимедіа\n"
 "      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "COVID-19 CommCare Applications"
-msgstr "Додатки CommCare для COVID-19"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid ""
-"\n"
-"        COVID-19 CommCare Applications\n"
-"      "
-msgstr ""
-"\n"
-"        Додатки CommCare для COVID-19\n"
-"      "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-msgid ""
-"\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-sm-10\">\n"
-"        <p>\n"
-"          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-"          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-"          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-"        "
-msgstr ""
-"\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-sm-10\">\n"
-"        <p>\n"
-"          Щоб підтримати організації та уряди у реагуванні на COVID-19, Dimagi розробила бібліотеку безкоштовних\n"
-"          шаблонних додатків для COVID-19 для нашої відкритої платформи CommCare. Вони були створені на основі\n"
-"          клінічних протоколів Всесвітньої організації охорони здоров'я, Центрів з контролю та профілактики захворювань та інших.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          Ці шаблони додатків можна імпортувати у ваш простір проєкту відповідно до ліцензії Dimagi\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Application Info"
-msgstr "Інформація про додаток"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-#, python-format
-msgid ""
-"\n"
-"                    Last Updated: %(last_released)s\n"
-"                  "
-msgstr ""
-"\n"
-"                    Останнє оновлення: %(last_released)s\n"
-"                  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Version History"
-msgstr "Історія версій"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_exchange.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-msgid "Import"
-msgstr "Імпортувати"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view.html
@@ -7998,141 +8026,6 @@ msgstr "Випуски"
 #: corehq/apps/domain/forms.py
 msgid "Release Mode"
 msgstr "Режим випуску"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
-msgid "Settings"
-msgstr "Налаштування"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-msgid "High Level Summary"
-msgstr "Загальний підсумок"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Form Summary"
-msgstr "Підсумок форм"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Summary"
-msgstr "Підсумок справ"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-msgid "Labels"
-msgstr "Мітки"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/base_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/base_summary.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-msgid "Question IDs"
-msgstr "Ідентифікатори питань"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
-msgid "Go"
-msgstr "Перейти"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Show Conditions"
-msgstr "Показати умови"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Show Calculations"
-msgstr "Показати обчислення"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#, python-format
-msgid ""
-"\n"
-"          Your app's forms contain errors.\n"
-"          Please visit the <a href='%(form_summary_url)s'>form summary</a> for more details.\n"
-"        "
-msgstr ""
-"\n"
-"          Форми вашого додатка містять помилки.\n"
-"          Будь ласка, відвідайте <a href='%(form_summary_url)s'>підсумок форм</a> для отримання додаткової інформації.\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Relationships:"
-msgstr "Зв'язки:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Opened by:"
-msgstr "Відкрито:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Closed by:"
-msgstr "Закрито:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Problems:"
-msgstr "Проблеми:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
-#: corehq/apps/data_cleaning/forms/columns.py
-#: corehq/apps/data_cleaning/forms/filters.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
-msgid "Case Property"
-msgstr "Властивість справи"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Load questions"
-msgstr "Завантажити питання"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Save questions"
-msgstr "Зберегти питання"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Lists"
-msgstr "Списки справ"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/case_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/case_summary.html
-msgid "Case Details"
-msgstr "Деталі справи"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
@@ -8237,98 +8130,6 @@ msgstr "Назва форми"
 #: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
 msgid "Comment"
 msgstr "Коментар"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary.html
-#, python-format
-msgid ""
-"\n"
-"    Form Summary - Version %(app_version)s\n"
-"  "
-msgstr ""
-"\n"
-"    Підсумок форми - Версія %(app_version)s\n"
-"  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid ""
-"\n"
-"    Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.\n"
-"  "
-msgstr ""
-"\n"
-"    У формах вашого додатку є помилки. Інформація про кейси та форми нижче може бути неточною, доки ви не виправите ці помилки.\n"
-"  "
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Error in form:"
-msgstr "Помилка у формі:"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "required"
-msgstr "обов'язково"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Instance"
-msgstr "Екземпляр"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Nodeset"
-msgstr "Набір вузлів"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-#: corehq/apps/data_cleaning/forms/filters.py
-#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "Value"
-msgstr "Значення"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#: corehq/apps/data_cleaning/forms/columns.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
-#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
-msgid "Label"
-msgstr "Мітка"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Load property"
-msgstr "Завантажити властивість"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "Save property"
-msgstr "Зберегти властивість"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_base.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_base.html
-msgid "save only on edit"
-msgstr "зберігати лише при редагуванні"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_summary_diff.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_summary_diff.html
-#, python-format
-msgid ""
-"\n"
-"    Changes - Version %(first_version)s vs. Version %(second_version)s\n"
-"  "
-msgstr ""
-"\n"
-"    Зміни - Версія %(first_version)s проти Версії %(second_version)s\n"
-"  "
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/form_view.html
@@ -8479,27 +8280,6 @@ msgstr ""
 "Ви ще не створили форму. Створіть форму, щоб переглядати та редагувати "
 "Властивості користувача."
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-#: corehq/apps/sms/templates/sms/languages.html
-msgid "Language List"
-msgstr "Список мов"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "CommCare Translations"
-msgstr "Переклади CommCare"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "Bulk CommCare Translations"
-msgstr "Масові переклади CommCare"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/languages.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/languages.html
-msgid "Bulk Application Translations"
-msgstr "Масові переклади додатку"
-
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 msgid "Menu Settings"
@@ -8566,7 +8346,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
 #: corehq/apps/sso/forms.py corehq/apps/users/forms.py
@@ -8634,7 +8415,9 @@ msgstr "Встановити CommCare"
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/auto_renew_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/events/templates/events/edit_attendee.html
 #: corehq/apps/events/templates/events/event_attendees.html
+#: corehq/apps/events/templates/events/events_list.html
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -8642,7 +8425,8 @@ msgstr "Встановити CommCare"
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_30_day_trial.html
@@ -8683,46 +8467,177 @@ msgstr "Встановити CommCare"
 msgid "Close"
 msgstr "Закрити"
 
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_exchange.html
-#| msgid ""
-#| "\n"
-#| "    <div class=\"row\">\n"
-#| "      <div class=\"col-sm-10\">\n"
-#| "        <p>\n"
-#| "          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-#| "          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-#| "          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-#| "        </p>\n"
-#| "        <p class=\"help-block\">\n"
-#| "          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-#| "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
-#| "        "
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+msgid "Go"
+msgstr "Перейти"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Show Conditions"
+msgstr "Показати умови"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Show Calculations"
+msgstr "Показати обчислення"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#, python-format
 msgid ""
 "\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-md-10\">\n"
-"        <p>\n"
-"          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
-"          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
-"          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          These application templates can be imported into your project space as licensed by Dimagi under the\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+"          Your app's forms contain errors.\n"
+"          Please visit the <a href='%(form_summary_url)s'>form summary</a> for more details.\n"
 "        "
 msgstr ""
 "\n"
-"    <div class=\"row\">\n"
-"      <div class=\"col-md-10\">\n"
-"        <p>\n"
-"          Для підтримки організацій та урядів у реагуванні на COVID-19 компанія Dimagi розробила бібліотеку безкоштовних\n"
-"          шаблонів застосунків COVID-19 для нашої відкритої платформи CommCare. Вони були створені на основі\n"
-"          клінічних протоколів Всесвітньої організації охорони здоров'я, Центрів контролю захворювань та інших.\n"
-"        </p>\n"
-"        <p class=\"help-block\">\n"
-"          Ці шаблони застосунків можна імпортувати у ваш простір проєкту за ліцензією Dimagi відповідно до\n"
-"          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">ліцензії Creative Commons NonCommercial ShareAlike (CC BY-NC-SA 4.0)</a>.\n"
+"          Форми вашого додатка містять помилки.\n"
+"          Будь ласка, відвідайте <a href='%(form_summary_url)s'>підсумок форм</a> для отримання додаткової інформації.\n"
 "        "
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Relationships:"
+msgstr "Зв'язки:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Opened by:"
+msgstr "Відкрито:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Closed by:"
+msgstr "Закрито:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Problems:"
+msgstr "Проблеми:"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config_ko_templates.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_cleaning/forms/filters.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
+msgid "Case Property"
+msgstr "Властивість справи"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Load questions"
+msgstr "Завантажити питання"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Save questions"
+msgstr "Зберегти питання"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Lists"
+msgstr "Списки справ"
+
+#: corehq/apps/app_manager/templates/app_manager/case_summary.html
+msgid "Case Details"
+msgstr "Деталі справи"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary.html
+#, python-format
+msgid ""
+"\n"
+"    Form Summary - Version %(app_version)s\n"
+"  "
+msgstr ""
+"\n"
+"    Підсумок форми - Версія %(app_version)s\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid ""
+"\n"
+"    Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.\n"
+"  "
+msgstr ""
+"\n"
+"    У формах вашого додатку є помилки. Інформація про кейси та форми нижче може бути неточною, доки ви не виправите ці помилки.\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Error in form:"
+msgstr "Помилка у формі:"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "required"
+msgstr "обов'язково"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Instance"
+msgstr "Екземпляр"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Nodeset"
+msgstr "Набір вузлів"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/data_cleaning/forms/filters.py
+#: corehq/apps/reminders/templates/reminders/partials/record_list_widget.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "Value"
+msgstr "Значення"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
+#: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid "Label"
+msgstr "Мітка"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Load property"
+msgstr "Завантажити властивість"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "Save property"
+msgstr "Зберегти властивість"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
+msgid "save only on edit"
+msgstr "зберігати лише при редагуванні"
+
+#: corehq/apps/app_manager/templates/app_manager/form_summary_diff.html
+#, python-format
+msgid ""
+"\n"
+"    Changes - Version %(first_version)s vs. Version %(second_version)s\n"
+"  "
+msgstr ""
+"\n"
+"    Зміни - Версія %(first_version)s проти Версії %(second_version)s\n"
+"  "
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+#: corehq/apps/sms/templates/sms/languages.html
+msgid "Language List"
+msgstr "Список мов"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "CommCare Translations"
+msgstr "Переклади CommCare"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "Bulk CommCare Translations"
+msgstr "Масові переклади CommCare"
+
+#: corehq/apps/app_manager/templates/app_manager/languages.html
+msgid "Bulk Application Translations"
+msgstr "Масові переклади додатку"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
@@ -8789,7 +8704,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -9896,47 +9812,6 @@ msgstr ""
 msgid "Build Profile"
 msgstr "Профіль збірки"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Select a language."
-msgstr "Оберіть мову."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Select a format."
-msgstr "Оберіть формат."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid "Download only translations eligible for Transifex?"
-msgstr "Завантажити лише переклади, які підходять для Transifex?"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-#: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
-#, python-format
-msgid ""
-"\n"
-"          Download %(plural_noun)s\n"
-"        "
-msgstr ""
-"\n"
-"          Завантажити %(plural_noun)s\n"
-"        "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/bulk_upload_app_translations.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/bulk_upload_app_translations.html
-msgid ""
-"\n"
-"        The single-sheet format is only available when downloading a single language.\n"
-"        <br>Please either select a language or choose the multi-sheet format.\n"
-"      "
-msgstr ""
-"\n"
-"        Формат з одним аркушем доступний лише при завантаженні однієї мови.\n"
-"        <br>Будь ласка, або оберіть мову, або виберіть багатолистовий формат.\n"
-"      "
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/case_list_session_endpoint.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/case_list_session_endpoint.html
 msgid "Case List Session Endpoint ID"
@@ -10153,46 +10028,6 @@ msgstr ""
 "Увімкніть цей параметр, щоб дозволити цій кінцевій точці доступ\n"
 "                                        до прихованих форм."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Form Changes"
-msgstr "Зміни у формі"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
-msgid "Display"
-msgstr "Відображення"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation"
-msgstr "Валідація"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Comments"
-msgstr "Коментарі"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-msgid "Default Values"
-msgstr "Типові значення"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/form_summary_header.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#: corehq/apps/campaign/models.py
-#: corehq/apps/campaign/templates/campaign/dashboard.html
-#: corehq/apps/export/models/new.py
-#: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-#: corehq/apps/userreports/models.py
-msgid "Cases"
-msgstr "Справи"
-
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/function_datum_endpoints.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/function_datum_endpoints.html
 msgid "Enable these function datums in session endpoints"
@@ -10217,17 +10052,18 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/domain/views/internal.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 msgid "Preview"
 msgstr "Попередній перегляд"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
 msgid "Replace"
@@ -10239,7 +10075,8 @@ msgstr "Замінити"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_view_modals.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
 msgid "Upload"
@@ -10334,16 +10171,6 @@ msgstr "Ні, дякую, вийти звідси"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Your form display condition for form\n"
-#| "                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-#| "                but cases are not available for this form. Please either remove\n"
-#| "                the case reference or (1) make sure that the case list is set to\n"
-#| "                display the case list first and then form, and (2) make sure\n"
-#| "                that all forms in this case list update or close a case (which\n"
-#| "                means registration forms must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -10366,15 +10193,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                You have a display condition which refers to a case, but cases\n"
-#| "                are not available. Please either remove the case reference or\n"
-#| "                (1) make sure that the case list is set to display the case list\n"
-#| "                first and then form, and (2) make sure that all forms in this\n"
-#| "                case list update or close a case (which means registration forms\n"
-#| "                must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                You have a display condition which refers to a case, but cases\n"
@@ -10394,16 +10212,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
-#| msgid ""
-#| "\n"
-#| "          Please add display Text or an XPath function. This will appear as a badge next to the corresponding icon.\n"
-#| "          Learn more\n"
-#| "          <a\n"
-#| "            target='_blank'\n"
-#| "            href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/Application+Icons#Custom-Icon-Badges'\n"
-#| "            >here</a\n"
-#| "          >.\n"
-#| "        "
 msgid ""
 "\n"
 "          Please add display Text or an XPath function. This will appear as a badge rounded-pill next to the corresponding icon.\n"
@@ -10427,10 +10235,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              Use this %(label)s for all languages\n"
-#| "            "
 msgid ""
 "\n"
 "              Use this %(badge)s for all languages\n"
@@ -10442,11 +10246,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            This %(label)s is linked to the default language, and can only be\n"
-#| "            modified there.\n"
-#| "          "
 msgid ""
 "\n"
 "            This %(badge)s is linked to the default language, and can only be\n"
@@ -10457,6 +10256,76 @@ msgstr ""
 "            Цей %(badge)s пов'язаний із мовою за замовчуванням і може бути\n"
 "            змінений лише там.\n"
 "          "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Select a language."
+msgstr "Оберіть мову."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Select a format."
+msgstr "Оберіть формат."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid "Download only translations eligible for Transifex?"
+msgstr "Завантажити лише переклади, які підходять для Transifex?"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+#: corehq/apps/locations/templates/locations/manage/partials/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"          Download %(plural_noun)s\n"
+"        "
+msgstr ""
+"\n"
+"          Завантажити %(plural_noun)s\n"
+"        "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
+msgid ""
+"\n"
+"        The single-sheet format is only available when downloading a single language.\n"
+"        <br>Please either select a language or choose the multi-sheet format.\n"
+"      "
+msgstr ""
+"\n"
+"        Формат з одним аркушем доступний лише при завантаженні однієї мови.\n"
+"        <br>Будь ласка, або оберіть мову, або виберіть багатолистовий формат.\n"
+"      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Form Changes"
+msgstr "Зміни у формі"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Display"
+msgstr "Відображення"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation"
+msgstr "Валідація"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Comments"
+msgstr "Коментарі"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+msgid "Default Values"
+msgstr "Типові значення"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
+#: corehq/apps/campaign/models.py
+#: corehq/apps/campaign/templates/campaign/dashboard.html
+#: corehq/apps/export/models/new.py
+#: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+#: corehq/apps/userreports/models.py
+msgid "Cases"
+msgstr "Справи"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/case_config.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
@@ -11090,8 +10959,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/custom_assertions.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/custom_assertions.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Custom Assertions"
 msgstr "Користувацькі твердження"
 
@@ -11260,8 +11128,7 @@ msgstr "XForm"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
@@ -11272,8 +11139,7 @@ msgstr "Показати"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/hqmedia/views.py
 msgid "Multimedia"
 msgstr "Мультимедіа"
@@ -11640,23 +11506,11 @@ msgstr ""
 "    "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/case_config.html
-#| msgid ""
-#| "Followup: This form loads a case and may then update or close it"
 msgid "Followup: This form loads a case and may then update or btn-close it"
 msgstr ""
 "Подальші дії: ця форма завантажує справу і може потім оновити або закрити її"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_filter.html
-#| msgid ""
-#| "\n"
-#| "              To use display conditions which reference a case, <br />\n"
-#| "              (1) the <strong>Menu Mode</strong> setting must be set to\n"
-#| "              <em>Display menu and then forms</em> <br />\n"
-#| "              (2) all the forms in the case list must update or close a case,\n"
-#| "              which means registration forms must go in a separate case list, or\n"
-#| "              if your project uses user properties, your display condition may\n"
-#| "              use user properties.\n"
-#| "            "
 msgid ""
 "\n"
 "              To use display conditions which reference a case, <br />\n"
@@ -13779,15 +13633,6 @@ msgid "Shade"
 msgstr "Затінення"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_missing_warning.html
-#| msgid ""
-#| "\n"
-#| "        None of the forms in this menu require a case list.\n"
-#| "        Changes made here will have no effect until you either:\n"
-#| "        <ol>\n"
-#| "          <li>use forms that require a case list, such as forms that update or close a case, or</li>\n"
-#| "          <li>select the <strong>Case List Menu Item</strong> setting.</li>\n"
-#| "        </ol>\n"
-#| "      "
 msgid ""
 "\n"
 "        None of the forms in this menu require a case list.\n"
@@ -13808,16 +13653,10 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_setting.html
-#| msgid "Case list menu item requires a label"
 msgid "Case list menu item requires a badge"
 msgstr "Пункт меню списку справ потребує бейджика"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-#| msgid ""
-#| "\n"
-#| "                  Visit schedule will be ignored as not all\n"
-#| "                  forms in the case list update or close a case.\n"
-#| "                "
 msgid ""
 "\n"
 "                  Visit schedule will be ignored as not all\n"
@@ -13830,11 +13669,6 @@ msgstr ""
 "                "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/enable_schedule.html
-#| msgid ""
-#| "\n"
-#| "    Visit schedules can only be used when all the forms in the case list<br/>\n"
-#| "    update or close a case, which means registration forms must go in a separate case list.\n"
-#| "  "
 msgid ""
 "\n"
 "    Visit schedules can only be used when all the forms in the case list<br/>\n"
@@ -14040,7 +13874,8 @@ msgstr "на ваш пристрій Android."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "Application Profile"
 msgstr "Профіль додатка"
 
@@ -14304,7 +14139,8 @@ msgstr "Не вдалося оновити"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Latest"
 msgstr "Остання"
 
@@ -14400,8 +14236,7 @@ msgstr ""
 msgid "Revert"
 msgstr "Повернутися"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
 "        All add-ons have been enabled for this app using the\n"
@@ -14413,13 +14248,11 @@ msgstr ""
 "        налаштування проєкту \"Увімкнути всі додатки застосунку\".\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid "Enable All Add-Ons"
 msgstr "Увімкнути всі додатки"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
 "        <strong>Add-ons</strong> enable you to build more complex applications.\n"
@@ -14429,38 +14262,34 @@ msgstr ""
 "        <strong>Додатки</strong> дозволяють створювати складніші застосунки.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid "Learn more."
 msgstr "Дізнатися більше."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                        You have previously enabled this feature in your app, but have since lost access\n"
-"                        to it.\n"
-"                      "
+"                    You have previously enabled this feature in your app, but have since lost access\n"
+"                    to it.\n"
+"                  "
 msgstr ""
 "\n"
-"                        Ви раніше вже вмикали цю функцію у своєму застосунку, але згодом втратили до неї доступ.\n"
-"                      "
+"                    Ви раніше активували цю функцію у своєму застосунку, але згодом втратили до неї доступ.\n"
+"                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/add_ons.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/add_ons.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 msgid ""
 "\n"
-"                        Your application will continue to function in places that utilized this feature, but\n"
-"                        you will not be able to edit any related functionality until you upgrade.\n"
-"                      "
+"                    Your application will continue to function in places that utilized this feature, but\n"
+"                    you will not be able to edit any related functionality until you upgrade.\n"
+"                  "
 msgstr ""
 "\n"
-"                        Ваш застосунок і надалі працюватиме у місцях, де використовувалася ця функція, але\n"
-"                        ви не зможете редагувати пов'язану функціональність, доки не оновите підписку.\n"
-"                      "
+"                    Ваш застосунок продовжить працювати у місцях, де використовувалася ця функція, але\n"
+"                    ви не зможете редагувати пов'язаний функціонал, доки не оновите план.\n"
+"                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid ""
 "\n"
 "      You cannot re-enable this feature once it is disabled\n"
@@ -14472,40 +14301,34 @@ msgstr ""
 "      доки не оновите підписку.\n"
 "    "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Replace Logo"
 msgstr "Замінити логотип"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 msgid "Upload Logo"
 msgstr "Завантажити логотип"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Linked Application"
 msgstr "Пов'язаний застосунок"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Add-ons"
 msgstr "Додатки"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/commtrack/views.py corehq/apps/geospatial/forms.py
 msgid "Advanced Settings"
 msgstr "Розширені налаштування"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Update from upstream application"
 msgstr "Оновити з основного застосунку"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid ""
 "\n"
@@ -14520,8 +14343,7 @@ msgstr ""
 "                    версія %(upstream_version)s.\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid ""
 "\n"
@@ -14532,150 +14354,37 @@ msgstr ""
 "                    Ваш застосунок востаннє було отримано з %(upstream_name)s, версія %(upstream_version)s.\n"
 "                  "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Select an upstream app to pull"
 msgstr "Оберіть основний застосунок для отримання"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #, python-format
 msgid "version %(v)s"
 msgstr "версія %(v)s"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Email when finished (recommended for large applications)"
 msgstr ""
 "Надіслати email після завершення (рекомендується для великих застосунків)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/templates/reports/async/print_report.html
 msgid "Loading ..."
 msgstr "Завантаження ..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Try again"
 msgstr "Спробувати ще раз"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Delete Application"
 msgstr "Видалити застосунок"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/app_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/app_settings.html
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Delete this application"
 msgstr "Видалити цей застосунок"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid "Custom Properties"
-msgstr "Користувацькі властивості"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid ""
-"\n"
-"                  Oops!\n"
-"                  This setting shouldn't be here.\n"
-"                  Could you change it to the default\n"
-"                  to make it go away?\n"
-"                  Sorry about that.\n"
-"                "
-msgstr ""
-"\n"
-"                  Ой!\n"
-"                  Цього налаштування тут не повинно бути.\n"
-"                  Чи можете ви змінити його на стандартне,\n"
-"                  щоб воно зникло?\n"
-"                  Вибачте за це.\n"
-"                "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid ""
-"\n"
-"                This feature is not available on your subscription. Please upgrade to\n"
-"                the <!-- ko text: upgrade_plan --><!-- /ko --> plan or higher.\n"
-"              "
-msgstr ""
-"\n"
-"                Ця функція недоступна у вашій підписці. Будь ласка, оновіть підписку до\n"
-"                <!-- ko text: upgrade_plan --><!-- /ko --> або вище.\n"
-"              "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/commcare_settings.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/commcare_settings.html
-msgid "Add Custom Property"
-msgstr "Додати користувацьку властивість"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/hqmedia/views.py
-msgid "Multimedia Reference Checker"
-msgstr "Перевірка мультимедійних посилань"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "View, upload, and download your application's multimedia"
-msgstr ""
-"Переглядайте, завантажуйте та експортуйте мультимедіа вашого застосунку"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "Download Multimedia Zip"
-msgstr "Завантажити мультимедіа у Zip"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"This .zip file is structured to match the multimedia paths referenced in "
-"your CommCare Application."
-msgstr ""
-"Цей .zip-файл структуровано відповідно до шляхів мультимедіа, на які є "
-"посилання у вашому застосунку CommCare."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid "Sync all multimedia with master"
-msgstr "Синхронізувати всі мультимедіа з основним"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"Email when finished (recommended for applications with large number of "
-"multimedia files or heavy files)"
-msgstr ""
-"Надіслати email після завершення (рекомендується для застосунків з великою "
-"кількістю або великими мультимедійними файлами)"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-msgid ""
-"Force pull all multimedia (this can take a long time and will re-write all "
-"the multimedia in your app)"
-msgstr ""
-"Примусово отримати всі мультимедіа (це може зайняти багато часу та перепише "
-"всі мультимедіа у вашому застосунку)"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-msgid "Sync"
-msgstr "Синхронізувати"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/multimedia_ajax.html
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/multimedia_ajax.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "This application currently does not contain any multimedia references."
-msgstr "У цьому застосунку наразі немає мультимедійних посилань."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap3/supported_languages.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/supported_languages.html
@@ -14706,6 +14415,100 @@ msgstr "Видалення мов:"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/bootstrap5/supported_languages.html
 msgid "Don't Delete"
 msgstr "Не видаляти"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid "Custom Properties"
+msgstr "Користувацькі властивості"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid ""
+"\n"
+"                  Oops!\n"
+"                  This setting shouldn't be here.\n"
+"                  Could you change it to the default\n"
+"                  to make it go away?\n"
+"                  Sorry about that.\n"
+"                "
+msgstr ""
+"\n"
+"                  Ой!\n"
+"                  Цього налаштування тут не повинно бути.\n"
+"                  Чи можете ви змінити його на стандартне,\n"
+"                  щоб воно зникло?\n"
+"                  Вибачте за це.\n"
+"                "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid ""
+"\n"
+"                This feature is not available on your subscription. Please upgrade to\n"
+"                the <!-- ko text: upgrade_plan --><!-- /ko --> plan or higher.\n"
+"              "
+msgstr ""
+"\n"
+"                Ця функція недоступна у вашій підписці. Будь ласка, оновіть підписку до\n"
+"                <!-- ko text: upgrade_plan --><!-- /ko --> або вище.\n"
+"              "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+msgid "Add Custom Property"
+msgstr "Додати користувацьку властивість"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/hqmedia/views.py
+msgid "Multimedia Reference Checker"
+msgstr "Перевірка мультимедійних посилань"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "View, upload, and download your application's multimedia"
+msgstr ""
+"Переглядайте, завантажуйте та експортуйте мультимедіа вашого застосунку"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "Download Multimedia Zip"
+msgstr "Завантажити мультимедіа у Zip"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"This .zip file is structured to match the multimedia paths referenced in "
+"your CommCare Application."
+msgstr ""
+"Цей .zip-файл структуровано відповідно до шляхів мультимедіа, на які є "
+"посилання у вашому застосунку CommCare."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid "Sync all multimedia with master"
+msgstr "Синхронізувати всі мультимедіа з основним"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"Email when finished (recommended for applications with large number of "
+"multimedia files or heavy files)"
+msgstr ""
+"Надіслати email після завершення (рекомендується для застосунків з великою "
+"кількістю або великими мультимедійними файлами)"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+msgid ""
+"Force pull all multimedia (this can take a long time and will re-write all "
+"the multimedia in your app)"
+msgstr ""
+"Примусово отримати всі мультимедіа (це може зайняти багато часу та перепише "
+"всі мультимедіа у вашому застосунку)"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/single_app.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+msgid "Sync"
+msgstr "Синхронізувати"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "This application currently does not contain any multimedia references."
+msgstr "У цьому застосунку наразі немає мультимедійних посилань."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/vellum_case_management_warning.html
 msgid ""
@@ -17084,7 +16887,8 @@ msgstr "Показати повне меню"
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
 msgid "Select"
 msgstr "Вибрати"
 
@@ -17211,16 +17015,16 @@ msgstr "ОК"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid ""
 "\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
-"            "
+"            Please correct the answers below before submitting.\n"
+"            <br>\n"
+"            You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.\n"
+"          "
 msgstr ""
 "\n"
-"              Будь ласка, виправте відповіді нижче перед надсиланням.\n"
-"              <br>\n"
-"              Ви можете скористатися кнопкою <strong><i class='fa fa-fast-forward'></i> Наступна помилка</strong> зліва на екрані для переходу між обов'язковими полями.\n"
-"            "
+"            Будь ласка, виправте відповіді нижче перед відправкою.\n"
+"            <br>\n"
+"            Ви можете скористатися кнопкою <strong><i class='fa fa-fast-forward'></i> Наступна помилка</strong> зліва на екрані для переходу між обов'язковими полями.\n"
+"          "
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/form.html
 msgid "An answer is required."
@@ -22170,6 +21974,14 @@ msgid ""
 "It looks like this phone number is invalid. Did you forget the country code?"
 msgstr ""
 "Схоже, цей номер телефону недійсний. Можливо, ви забули вказати код країни?"
+
+#: corehq/apps/domain/forms.py
+#| msgid ""
+#| "\n"
+#| "                Please provide an autopay card before continuing.\n"
+#| "              "
+msgid "Please provide an autopay card before continuing."
+msgstr "Будь ласка, додайте картку для автосплати перед продовженням."
 
 #: corehq/apps/domain/forms.py corehq/apps/domain/views/accounting.py
 msgid "Renew Plan"
@@ -28110,14 +27922,16 @@ msgstr "Учасник"
 #, python-format
 msgid ""
 "\n"
-"            This attendee cannot be deleted as <strong>%(attendee_name)s</strong> has been tracked as\n"
-"            having attended one or more events.\n"
-"          "
+"          This attendee cannot be deleted as\n"
+"          <strong>%(attendee_name)s</strong> has been tracked as having\n"
+"          attended one or more events.\n"
+"        "
 msgstr ""
 "\n"
-"            Цього учасника не можна видалити, оскільки <strong>%(attendee_name)s</strong> вже був(ла) відмічений(а)\n"
-"            як присутній(я) на одній або декількох подіях.\n"
-"          "
+"          Цього учасника не можна видалити, оскільки\n"
+"          <strong>%(attendee_name)s</strong> був(-ла) відмічений(-а) як такий(-а), що відвідав(-ла)\n"
+"          один або більше заходів.\n"
+"        "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 msgid "Update Attendee"
@@ -28131,45 +27945,49 @@ msgstr "Видалити учасника"
 #, python-format
 msgid ""
 "\n"
-"                Are you sure you want to permanently delete <strong>%(attendee_name)s</strong>?\n"
+"                Are you sure you want to permanently delete\n"
+"                <strong>%(attendee_name)s</strong>?\n"
 "              "
 msgstr ""
 "\n"
-"                Ви впевнені, що хочете остаточно видалити <strong>%(attendee_name)s</strong>?\n"
+"                Ви впевнені, що хочете остаточно видалити\n"
+"                <strong>%(attendee_name)s</strong>?\n"
 "              "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 #, python-format
 msgid ""
 "\n"
-"                This action will delete %(attendee_name)s as a potential attendee and will remove them from all\n"
-"                future events that they are currently enlisted in.\n"
+"                This action will delete %(attendee_name)s as a potential\n"
+"                attendee and will remove them from all future events that they\n"
+"                are currently enlisted in.\n"
 "              "
 msgstr ""
 "\n"
-"                Ця дія видалить %(attendee_name)s як потенційного учасника та прибере його/її з усіх\n"
-"                майбутніх подій, у яких він/вона зараз зареєстрований(а).\n"
+"                Ця дія видалить %(attendee_name)s як потенційного(-у)\n"
+"                учасника(-цю) та прибере його/її з усіх майбутніх заходів, у яких\n"
+"                він/вона наразі зареєстрований(-а).\n"
 "              "
 
 #: corehq/apps/events/templates/events/edit_attendee.html
 msgid ""
 "\n"
-"                  This action cannot be undone.\n"
-"                "
+"                This action cannot be undone.\n"
+"              "
 msgstr ""
 "\n"
-"                  Цю дію не можна скасувати.\n"
-"                "
+"                Цю дію неможливо скасувати.\n"
+"              "
 
 #: corehq/apps/events/templates/events/event_attendees.html
 msgid ""
 "\n"
-"    Known potential attendees who can be invited to participate in Attendance\n"
-"    Tracking Events.\n"
+"      Known potential attendees who can be invited to participate in Attendance\n"
+"      Tracking Events.\n"
 "    "
 msgstr ""
 "\n"
-"    Відомі потенційні учасники, яких можна запросити до участі в подіях з фіксації присутності.\n"
+"      Відомі потенційні учасники, яких можна запросити до участі у заходах з відстеження відвідуваності.\n"
 "    "
 
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -28214,16 +28032,20 @@ msgstr "Завантаження потенційних учасників ..."
 msgid ""
 "\n"
 "            <strong>There was an issue contacting the server.</strong>\n"
-"            Please check your internet connection.\n"
-"            If this issue continues, please\n"
-"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+"            Please check your internet connection. If this issue continues,\n"
+"            please\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >report an issue</a\n"
+"            >.\n"
 "          "
 msgstr ""
 "\n"
 "            <strong>Виникла проблема з підключенням до сервера.</strong>\n"
-"            Будь ласка, перевірте ваше інтернет-з'єднання.\n"
-"            Якщо проблема не зникне, будь ласка\n"
-"            <a href=\"#modalReportIssue\" data-toggle=\"modal\">повідомте про проблему</a>.\n"
+"            Будь ласка, перевірте своє інтернет-з'єднання. Якщо проблема не зникає,\n"
+"            будь ласка,\n"
+"            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\"\n"
+"              >повідомте про проблему</a\n"
+"            >.\n"
 "          "
 
 #: corehq/apps/events/templates/events/event_attendees.html
@@ -28249,11 +28071,13 @@ msgstr ""
 #: corehq/apps/events/templates/events/events_list.html
 msgid ""
 "\n"
-"          Attendance tracking events can be used to track attendance of all the selected attendees.\n"
+"          Attendance tracking events can be used to track attendance of all the\n"
+"          selected attendees.\n"
 "        "
 msgstr ""
 "\n"
-"          Події з фіксації присутності можна використовувати для відстеження присутності всіх обраних учасників.\n"
+"          Заходи з відстеження відвідуваності можна використовувати для фіксації присутності всіх\n"
+"          вибраних учасників.\n"
 "        "
 
 #: corehq/apps/events/templates/events/events_list.html
@@ -28283,12 +28107,14 @@ msgstr "Подія ще не розпочалася"
 #: corehq/apps/events/templates/events/new_event.html
 msgid ""
 "\n"
-"      There was a problem fetching the list of attendees and attendance takers. Please try again.\n"
-"      "
+"      There was a problem fetching the list of attendees and attendance takers.\n"
+"      Please try again.\n"
+"    "
 msgstr ""
 "\n"
-"      Виникла проблема з отриманням списку учасників та відповідальних за фіксацію присутності. Будь ласка, спробуйте ще раз.\n"
-"      "
+"      Виникла проблема з отриманням списку учасників та відповідальних за відмітку відвідуваності.\n"
+"      Будь ласка, спробуйте ще раз.\n"
+"    "
 
 #: corehq/apps/events/views.py
 #: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
@@ -31414,7 +31240,8 @@ msgid "GPS Data"
 msgstr "Дані GPS"
 
 #: corehq/apps/geospatial/filters.py
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 msgid "Missing"
 msgstr "Відсутні"
 
@@ -33509,7 +33336,8 @@ msgstr "Не вдалося знайти media_suite.xml у CCZ"
 msgid "Media file missing from CCZ: {}"
 msgstr "Медіафайл відсутній у CCZ: {}"
 
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 #, python-format
 msgid ""
 "\n"
@@ -33555,221 +33383,13 @@ msgstr ""
 "    </p>\n"
 "  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
 msgid "Transifex"
 msgstr "Transifex"
 
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload.html
-msgid ""
-"\n"
-"    <p>\n"
-"      Use this tool to upload ZIP files of your multimedia.\n"
-"      The bulk uploader will compare the file paths in your form with the file paths\n"
-"      in your zip to find a matching file.\n"
-"    </p>\n"
-"    <p>\n"
-"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's\n"
-"      <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match\n"
-"      <code>commcare/images/image.jpg</code>.\n"
-"    </p>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      Використовуйте цей інструмент для завантаження ZIP-файлів вашої мультимедіа.\n"
-"      Масове завантаження порівняє шляхи файлів у вашій формі зі шляхами файлів\n"
-"      у вашому zip, щоб знайти відповідний файл.\n"
-"    </p>\n"
-"    <p>\n"
-"      Наприклад, <code>jr://file/commcare/images/hin/image.jpg</code> і ваш zip-файл\n"
-"      <code>commcare/images/hin/image.jpg</code> співпадуть, але <strong>не</strong> співпадуть із\n"
-"      <code>commcare/images/image.jpg</code>.\n"
-"    </p>\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#, python-format
-msgid ""
-"\n"
-"        One match found.\n"
-"      "
-msgid_plural ""
-"\n"
-"        %(matched_count)s matches found.\n"
-"      "
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "No Matches Found"
-msgstr "Відповідностей не знайдено"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "No Matches"
-msgstr "Відповідностей немає"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Images"
-msgstr "Відповідні зображення"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/reports/standard/users/reports.py
-msgid "Updated"
-msgstr "Оновлено"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "View Full Image"
-msgstr "Переглянути повне зображення"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Audio"
-msgstr "Знайдено відповідний аудіофайл"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Playing audio directly on this page is currently not supported."
-msgstr ""
-"Відтворення аудіо безпосередньо на цій сторінці наразі не підтримується."
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
-msgid "Listen to Audio"
-msgstr "Прослухати аудіо"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid "Matched Video"
-msgstr "Знайдено відповідне відео"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-msgid ""
-"Watching video directly on this page is not supported. Opens a new tab."
-msgstr ""
-"Перегляд відео безпосередньо на цій сторінці не підтримується. Відкриється "
-"нова вкладка."
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bulk_upload_status.html
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
-msgid "Watch Video"
-msgstr "Переглянути відео"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/manage_paths.html
-msgid "Include only paths where the multimedia file is missing?"
-msgstr "Включати лише шляхи, де відсутній мультимедійний файл?"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Icon Image"
-msgstr "Завантажити зображення іконки"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Audio"
-msgstr "Завантажити аудіо"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload Video"
-msgstr "Завантажити відео"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Upload File"
-msgstr "Завантажити файл"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Icon Image"
-msgstr "Вибрати зображення іконки"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Menu Audio"
-msgstr "Вибрати аудіо для меню"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Video"
-msgstr "Вибрати відео"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select Logo"
-msgstr "Вибрати логотип"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Select File"
-msgstr "Вибрати файл"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Icon"
-msgstr "Поточна іконка"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Audio"
-msgstr "Поточне аудіо"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Video"
-msgstr "Поточне відео"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current Logo"
-msgstr "Поточний логотип"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Current File"
-msgstr "Поточний файл"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
-msgid "Begin Upload"
-msgstr "Почати завантаження"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid ""
-"<strong>Warning:</strong>\n"
-"    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
-"  "
-msgstr ""
-"<strong>Увага:</strong>\n"
-"    У цій програмі є форми з помилками&mdash;ми не можемо отримати жодних мультимедійних посилань з цих форм.\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid ""
-"\n"
-"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-"        This application is missing references, so this zip will be incomplete.\n"
-"      "
-msgstr ""
-"\n"
-"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-"        У цій програмі відсутні посилання, тому цей zip буде неповним.\n"
-"      "
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "Download Incomplete ZIP"
-msgstr "Завантажити неповний ZIP"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
-msgid "Download ZIP"
-msgstr "Завантажити ZIP"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Menu or Form"
-msgstr "Меню або форма"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Size"
-msgstr "Розмір"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid "Path in Application"
-msgstr "Шлях у програмі"
-
-#: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
-msgid ""
-"\n"
-"    No media found matching your filters.\n"
-"  "
-msgstr ""
-"\n"
-"    Мультимедіа, що відповідає вашим фільтрам, не знайдено.\n"
-"  "
-
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid ""
 "\n"
 "        <i class=\"fa fa-spin fa-spinner\"></i>\n"
@@ -33781,7 +33401,8 @@ msgstr ""
 "        Завантаження...\n"
 "      "
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid ""
 "\n"
 "              You can manage multimedia by uploading files individually below.\n"
@@ -33791,23 +33412,46 @@ msgstr ""
 "              Ви можете керувати мультимедіа, завантажуючи файли окремо нижче.\n"
 "            "
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "This application references no multimedia."
 msgstr "У цій програмі немає посилань на мультимедіа."
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "References"
 msgstr "Посилання"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "Open image in new tab"
 msgstr "Відкрити зображення у новій вкладці"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
 msgid "Open file in new tab"
 msgstr "Відкрити файл у новій вкладці"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
+msgid "Listen to Audio"
+msgstr "Прослухати аудіо"
+
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/references.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_video_single.html
+msgid "Watch Video"
+msgstr "Переглянути відео"
+
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 #, python-format
 msgid ""
 "\n"
@@ -33836,51 +33480,294 @@ msgstr ""
 "    </p>\n"
 "  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Language(s)"
 msgstr "Мова(и)"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Media Type(s)"
 msgstr "Тип(и) медіа"
 
-#: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Check for missing media"
 msgstr "Перевірити наявність відсутнього медіа"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
-msgid "Errors found"
-msgstr "Знайдено помилки"
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload.html
+msgid ""
+"\n"
+"    <p>\n"
+"      Use this tool to upload ZIP files of your multimedia.\n"
+"      The bulk uploader will compare the file paths in your form with the file paths\n"
+"      in your zip to find a matching file.\n"
+"    </p>\n"
+"    <p>\n"
+"      For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's\n"
+"      <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match\n"
+"      <code>commcare/images/image.jpg</code>.\n"
+"    </p>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      Використовуйте цей інструмент для завантаження ZIP-файлів вашої мультимедіа.\n"
+"      Масове завантаження порівняє шляхи файлів у вашій формі зі шляхами файлів\n"
+"      у вашому zip, щоб знайти відповідний файл.\n"
+"    </p>\n"
+"    <p>\n"
+"      Наприклад, <code>jr://file/commcare/images/hin/image.jpg</code> і ваш zip-файл\n"
+"      <code>commcare/images/hin/image.jpg</code> співпадуть, але <strong>не</strong> співпадуть із\n"
+"      <code>commcare/images/image.jpg</code>.\n"
+"    </p>\n"
+"  "
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#, python-format
+msgid ""
+"\n"
+"        One match found.\n"
+"      "
+msgid_plural ""
+"\n"
+"        %(matched_count)s matches found.\n"
+"      "
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "No Matches Found"
+msgstr "Відповідностей не знайдено"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "No Matches"
+msgstr "Відповідностей немає"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Images"
+msgstr "Відповідні зображення"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+#: corehq/apps/reports/standard/users/reports.py
+msgid "Updated"
+msgstr "Оновлено"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "View Full Image"
+msgstr "Переглянути повне зображення"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Audio"
+msgstr "Знайдено відповідний аудіофайл"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Playing audio directly on this page is currently not supported."
+msgstr ""
+"Відтворення аудіо безпосередньо на цій сторінці наразі не підтримується."
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid "Matched Video"
+msgstr "Знайдено відповідне відео"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
+msgid ""
+"Watching video directly on this page is not supported. Opens a new tab."
+msgstr ""
+"Перегляд відео безпосередньо на цій сторінці не підтримується. Відкриється "
+"нова вкладка."
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/manage_paths.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/manage_paths.html
+msgid "Include only paths where the multimedia file is missing?"
+msgstr "Включати лише шляхи, де відсутній мультимедійний файл?"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Icon Image"
+msgstr "Завантажити зображення іконки"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Audio"
+msgstr "Завантажити аудіо"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload Video"
+msgstr "Завантажити відео"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Upload File"
+msgstr "Завантажити файл"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Icon Image"
+msgstr "Вибрати зображення іконки"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Menu Audio"
+msgstr "Вибрати аудіо для меню"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Video"
+msgstr "Вибрати відео"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select Logo"
+msgstr "Вибрати логотип"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Select File"
+msgstr "Вибрати файл"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Icon"
+msgstr "Поточна іконка"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Audio"
+msgstr "Поточне аудіо"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Video"
+msgstr "Поточне відео"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current Logo"
+msgstr "Поточний логотип"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Current File"
+msgstr "Поточний файл"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
+msgid "Begin Upload"
+msgstr "Почати завантаження"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid ""
+"<strong>Warning:</strong>\n"
+"    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
+"  "
+msgstr ""
+"<strong>Увага:</strong>\n"
+"    У цій програмі є форми з помилками&mdash;ми не можемо отримати жодних мультимедійних посилань з цих форм.\n"
+"  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid ""
+"\n"
+"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"        This application is missing references, so this zip will be incomplete.\n"
+"      "
+msgstr ""
+"\n"
+"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"        У цій програмі відсутні посилання, тому цей zip буде неповним.\n"
+"      "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "Download Incomplete ZIP"
+msgstr "Завантажити неповний ZIP"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+msgid "Download ZIP"
+msgstr "Завантажити ZIP"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Menu or Form"
+msgstr "Меню або форма"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Size"
+msgstr "Розмір"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid "Path in Application"
+msgstr "Шлях у програмі"
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
+msgid ""
+"\n"
+"    No media found matching your filters.\n"
+"  "
+msgstr ""
+"\n"
+"    Мультимедіа, що відповідає вашим фільтрам, не знайдено.\n"
+"  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
 msgid "New Audio Uploaded Successfully"
 msgstr "Нове аудіо успішно завантажено"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_image_single.html
 msgid "View Full Size"
 msgstr "Переглянути у повному розмірі"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_image_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_image_single.html
 msgid "New Image Uploaded Successfully"
 msgstr "Нове зображення успішно завантажено"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_video_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_video_single.html
 msgid "New Video Uploaded Successfully"
 msgstr "Нове відео успішно завантажено"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "Ready to upload. Click <strong>Begin Upload</strong> below to start."
 msgstr ""
 "Готово до завантаження. Натисніть <strong>Почати завантаження</strong> "
 "нижче, щоб розпочати."
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "There were errors"
 msgstr "Виникли помилки"
 
-#: corehq/apps/hqmedia/templates/hqmedia/uploader/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/queue_single.html
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/queue_single.html
 msgid "Cancel Upload"
 msgstr "Скасувати завантаження"
+
+#: corehq/apps/hqmedia/templates/hqmedia/uploader/errors.html
+msgid "Errors found"
+msgstr "Знайдено помилки"
 
 #: corehq/apps/hqmedia/view_helpers.py
 #, python-brace-format
@@ -34192,11 +34079,13 @@ msgstr "Потрібна допомога?"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid ""
-"Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
-"I help you with today?"
+"Hi there! I'm CommCare Companion, your personal guide to CommCare! You can "
+"ask a question, or attach files here — like screenshots, exports, or an App "
+"Summary — and I’ll use them to help guide you."
 msgstr ""
-"Вітаю! Я CommCare Companion, ваш особистий гід по CommCare! Чим я можу "
-"допомогти вам сьогодні?"
+"Вітаю! Я CommCare Companion, ваш персональний гід по CommCare! Ви можете "
+"поставити запитання або прикріпити файли тут — наприклад, скріншоти, "
+"експорти чи підсумок застосунку — і я використаю їх, щоб допомогти вам."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "I need help with building my CommCare application."
@@ -35486,7 +35375,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35498,7 +35386,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35510,7 +35397,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35527,7 +35413,6 @@ msgid "Update the downloaded file."
 msgstr "Оновіть завантажений файл."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/bulk_upload.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
 #, python-format
 msgid ""
 "\n"
@@ -35756,6 +35641,50 @@ msgstr ""
 "        , <a href=\"http://www.mozilla.org/\">Firefox</a>.\n"
 "        або <a href=\"https://www.apple.com/safari/\">Safari</a>.\n"
 "    "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"      Read more on the <a target='_blank' href='%(link)s'>Help Site</a>.\n"
+"    "
+msgstr ""
+"\n"
+"      Докладніше на <a target='_blank' href='%(link)s'>Довідковому сайті</a>.\n"
+"    "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"        Download your current %(adjective)s file.\n"
+"      "
+msgstr ""
+"\n"
+"        Завантажте свій поточний %(adjective)s файл.\n"
+"      "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"              Download %(plural_noun)s\n"
+"            "
+msgstr ""
+"\n"
+"              Завантажити %(plural_noun)s\n"
+"            "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/bulk_upload.html
+#, python-format
+msgid ""
+"\n"
+"            Check the <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> for instructions.\n"
+"          "
+msgstr ""
+"\n"
+"            Перевірте <a target=\"_blank\" href=\"%(address)s\">%(name)s</a> для отримання інструкцій.\n"
+"          "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/footer.html
 msgid ""
@@ -36236,15 +36165,10 @@ msgstr ""
 "Залиште порожнім, якщо це не використовується для KYC-перевірки."
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Global Usage Thresholds"
 msgid "Passing Threshold"
 msgstr "Прохідний поріг"
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid ""
-#| "Maps API field for the KYC provider to the field used for storing the "
-#| "relevant data. To learn more about this, please have a look at our <a "
-#| "href=\"{}\" target=\"_blank\">support documentation</a>."
 msgid ""
 "Maps API field for the KYC provider to the minimum score required to pass "
 "KYC verification. To learn more about this, please have a look at our <a "
@@ -36638,7 +36562,6 @@ msgid "Verified"
 msgstr "Перевірено"
 
 #: corehq/apps/integration/payments/tables.py
-#| msgid "Status Code"
 msgid "Status Confirmed On"
 msgstr "Статус підтверджено"
 
@@ -61182,6 +61105,65 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid ""
+#~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
+#~ "I help you with today?"
+#~ msgstr ""
+#~ "Вітаю! Я CommCare Companion, ваш особистий гід по CommCare! Чим я можу "
+#~ "допомогти вам сьогодні?"
+
+#~ msgid ""
+#~ "\n"
+#~ "    <div class=\"row\">\n"
+#~ "      <div class=\"col-md-10\">\n"
+#~ "        <p>\n"
+#~ "          To support organizations and governments with COVID-19 response, Dimagi has developed a library of free\n"
+#~ "          COVID-19 template applications for our open source platform, CommCare. These have been developed based on\n"
+#~ "          clinical protocols from the World Health Organization, the Centers for Disease Control, and others.\n"
+#~ "        </p>\n"
+#~ "        <p class=\"help-block\">\n"
+#~ "          These application templates can be imported into your project space as licensed by Dimagi under the\n"
+#~ "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)</a>.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "    <div class=\"row\">\n"
+#~ "      <div class=\"col-md-10\">\n"
+#~ "        <p>\n"
+#~ "          Для підтримки організацій та урядів у реагуванні на COVID-19 компанія Dimagi розробила бібліотеку безкоштовних\n"
+#~ "          шаблонів застосунків COVID-19 для нашої відкритої платформи CommCare. Вони були створені на основі\n"
+#~ "          клінічних протоколів Всесвітньої організації охорони здоров'я, Центрів контролю захворювань та інших.\n"
+#~ "        </p>\n"
+#~ "        <p class=\"help-block\">\n"
+#~ "          Ці шаблони застосунків можна імпортувати у ваш простір проєкту за ліцензією Dimagi відповідно до\n"
+#~ "          <a target=\"_blank\" href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\">ліцензії Creative Commons NonCommercial ShareAlike (CC BY-NC-SA 4.0)</a>.\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                Are you sure you want to permanently delete <strong>%(attendee_name)s</strong>?\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Ви впевнені, що хочете остаточно видалити <strong>%(attendee_name)s</strong>?\n"
+#~ "              "
+
+#~ msgid ""
+#~ "\n"
+#~ "            <strong>There was an issue contacting the server.</strong>\n"
+#~ "            Please check your internet connection.\n"
+#~ "            If this issue continues, please\n"
+#~ "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">report an issue</a>.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            <strong>Виникла проблема з підключенням до сервера.</strong>\n"
+#~ "            Будь ласка, перевірте ваше інтернет-з'єднання.\n"
+#~ "            Якщо проблема не зникне, будь ласка\n"
+#~ "            <a href=\"#modalReportIssue\" data-toggle=\"modal\">повідомте про проблему</a>.\n"
+#~ "          "
 
 #~ msgid "Title row, subtitle row, third row with two cells, and map"
 #~ msgstr ""

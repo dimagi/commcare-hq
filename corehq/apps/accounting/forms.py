@@ -59,7 +59,7 @@ from corehq.apps.accounting.models import (
     FundingSource,
     Invoice,
     InvoicingPlan,
-    LastPayment,
+    PaymentType,
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlan,
@@ -152,7 +152,7 @@ class BillingAccountBasicForm(forms.Form):
     )
     last_payment_method = forms.ChoiceField(
         label=gettext_lazy("Last Payment Method"),
-        choices=LastPayment.CHOICES
+        choices=PaymentType.CHOICES
     )
     pre_or_post_pay = forms.ChoiceField(
         label=gettext_lazy("Prepay or Postpay"),
@@ -206,7 +206,7 @@ class BillingAccountBasicForm(forms.Form):
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
                 'entry_point': EntryPoint.CONTRACTED,
-                'last_payment_method': LastPayment.NONE,
+                'last_payment_method': PaymentType.NONE,
                 'pre_or_post_pay': PreOrPostPay.POSTPAY,
                 'invoicing_plan': InvoicingPlan.MONTHLY
             }
@@ -2398,7 +2398,7 @@ class AdjustBalanceForm(forms.Form):
         required=False,
     )
 
-    method = forms.ChoiceField(
+    adjustment_reason = forms.ChoiceField(
         choices=(
             (CreditAdjustmentReason.MANUAL, "Register back office payment"),
             (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
@@ -2407,6 +2407,10 @@ class AdjustBalanceForm(forms.Form):
                 "Forgive amount with a friendly write-off"
             ),
         )
+    )
+
+    payment_type = forms.ChoiceField(
+        choices=[(value, label) for value, label in PaymentType.CHOICES if value != PaymentType.NONE],
     )
 
     note = forms.CharField(
@@ -2456,7 +2460,8 @@ class AdjustBalanceForm(forms.Form):
                         </div>
                     </div>
                 '''),
-                crispy.Field('method'),
+                crispy.Field('adjustment_reason'),
+                crispy.Field('payment_type'),
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
                 'adjust',
@@ -2493,16 +2498,17 @@ class AdjustBalanceForm(forms.Form):
 
     @transaction.atomic
     def adjust_balance(self, web_user=None):
-        method = self.cleaned_data['method']
+        reason = self.cleaned_data['adjustment_reason']
+        payment_type = self.cleaned_data['payment_type']
         kwargs = {
-            'account': (self.invoice.account if self.invoice.is_customer_invoice
-                        else self.invoice.subscription.account),
+            'account': self.invoice.account,
             'note': self.cleaned_data['note'],
-            'reason': method,
+            'reason': reason,
+            'payment_type': payment_type,
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
-        if method in [
+        if reason in [
             CreditAdjustmentReason.MANUAL,
             CreditAdjustmentReason.FRIENDLY_WRITE_OFF,
         ]:
@@ -2523,7 +2529,7 @@ class AdjustBalanceForm(forms.Form):
                 permit_inactive=True,
                 **kwargs
             )
-        elif method == CreditAdjustmentReason.TRANSFER:
+        elif reason == CreditAdjustmentReason.TRANSFER:
             if self.invoice.is_customer_invoice:
                 subscription_invoice = None
                 customer_invoice = self.invoice
@@ -2551,6 +2557,9 @@ class AdjustBalanceForm(forms.Form):
 
         self.invoice.update_balance()
         self.invoice.save()
+
+        self.invoice.account.last_payment_method = payment_type
+        self.invoice.account.save()
 
 
 class InvoiceInfoForm(forms.Form):
