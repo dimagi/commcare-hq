@@ -15,9 +15,9 @@ Case search and claim is typically an optional part of a workflow.
 In this use case, the remote request is accessed via an action, and the
 `rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct
 is used to go back to the main flow.
-However, the flag ``USH_INLINE_SEARCH`` supports remote requests being made in the main flow of a session. When
-using this flag, a ``<post>`` and query datums are added to a normal form ``<entry>``. This makes search inputs
-available after the search, rather than having them destroyed by rewinding.
+However, the flag ``CASE_SEARCH_ADVANCED`` supports remote requests being made in the main flow of a session. When
+using this flag and the setting is checked, a ``<post>`` and query datums are added to a normal form ``<entry>``.
+This makes search inputs available after the search, rather than having them destroyed by rewinding.
 
 This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
 endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link,
