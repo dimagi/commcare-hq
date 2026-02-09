@@ -83,7 +83,7 @@
         "style-loader": "^4.0.0",
         "underscore": "1.13.1",
         "url-polyfill": "1.1.10",
-        "webpack": "5.94.0",
+        "webpack": "5.104.1",
         "webpack-cli": "5.1.4",
         "webpack-merge": "6.0.1",
         "webpack-modernizr-loader": "5.0.0",
