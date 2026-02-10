@@ -36,34 +36,32 @@ function getUpdateMultiDiff(original, incoming) {
     }));
 
     allKeys.forEach(key => {
-        // If the question is part of the incoming updates, then it is either an addition or an update
         if (Object.hasOwn(baseline, key) && Object.hasOwn(incoming, key)) {
-            incoming[key].forEach(update => {
-                const originalMatch = baseline[key].find(
-                    original => update.question_path === original.question_path);
-                if (!originalMatch) {
+            incoming[key].forEach(item => {
+                const match = baseline[key].find(q => q.question_path === item.question_path);
+                if (!match) {
                     additions[key] = additions[key] || [];
-                    additions[key].push(update);
-                } else if (originalMatch.update_mode !== update.update_mode) {
+                    additions[key].push(item);
+                } else if (match.update_mode !== item.update_mode) {
                     updates[key] = updates[key] || [];
-                    updates[key].push(update);
+                    updates[key].push(item);
                 }
             });
-            baseline[key].forEach(original => {
-                if (!incoming[key].find(update => update.question_path === original.question_path)) {
+            baseline[key].forEach(item => {
+                if (!incoming[key].find(q => q.question_path === item.question_path)) {
                     deletions[key] = deletions[key] || [];
-                    deletions[key].push(original);
+                    deletions[key].push(item);
                 }
             });
         } else if (Object.hasOwn(incoming, key)) {  // not in baseline
-            incoming[key].forEach(update => {
+            incoming[key].forEach(item => {
                 additions[key] = additions[key] || [];
-                additions[key].push(update);
+                additions[key].push(item);
             });
         } else {  // key in baseline, not in incoming
-            baseline[key].forEach(update => {
+            baseline[key].forEach(item => {
                 deletions[key] = deletions[key] || [];
-                deletions[key].push(update);
+                deletions[key].push(item);
             });
         }
     });
