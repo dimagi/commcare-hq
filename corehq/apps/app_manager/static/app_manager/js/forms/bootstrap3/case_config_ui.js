@@ -690,7 +690,7 @@ $(function () {
 
             var requiredProperties = (caseConfig.requires() === 'none' &&
                 caseConfig.actions.open_case.condition.type !== "never" &&
-                !o.update_case.update.name) ? nameProperties : [];
+                !o.update_case.update_multi.name) ? nameProperties : [];
             var caseProperties = caseConfigUtils.propertyMultiDictToArray(
                 requiredProperties,
                 self.update_case.update_multi,
