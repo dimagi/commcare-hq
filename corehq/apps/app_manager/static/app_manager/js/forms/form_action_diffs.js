@@ -66,15 +66,15 @@ function getUpdateMultiDiff(original, incoming) {
         }
     });
 
-    let diff = {};
+    const diff = {};
     if (Object.keys(additions).length) {
-        diff['add'] = additions;
+        diff.add = additions;
     }
     if (Object.keys(deletions).length) {
-        diff['delete'] = deletions;
+        diff.delete = deletions;
     }
     if (Object.keys(updates).length) {
-        diff['update'] = updates;
+        diff.update = updates;
     }
     return diff;
 }
