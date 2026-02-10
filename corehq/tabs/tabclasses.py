@@ -1070,7 +1070,7 @@ class ProjectDataTab(UITab):
     @cached_property
     def _can_view_payments_integration(self):
         return (
-            toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+            toggles.MOBILE_MONEY_INTEGRATION.enabled(self.domain)
             and can_access_payments_report(self.couch_user, self.domain)
         )
 

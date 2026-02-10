@@ -2804,9 +2804,9 @@ KYC_VERIFICATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
-    slug='mtn_mobile_worker_verification',
-    label='Enable user verification using MTN Mobile Money',
+MOBILE_MONEY_INTEGRATION = StaticToggle(
+    slug='mobile_money_integration',
+    label='Enable mobile money integration',
     tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
 )

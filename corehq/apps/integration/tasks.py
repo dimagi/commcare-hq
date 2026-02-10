@@ -10,7 +10,7 @@ from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import request_payments_for_cases, request_payments_status_for_cases
-from corehq.toggles import KYC_VERIFICATION, MTN_MOBILE_WORKER_VERIFICATION
+from corehq.toggles import KYC_VERIFICATION, MOBILE_MONEY_INTEGRATION
 from corehq.util.metrics import metrics_gauge
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
@@ -53,7 +53,7 @@ def report_verification_status_count():
 )
 def request_momo_payments():
     deferred_domains = []
-    for domain in MTN_MOBILE_WORKER_VERIFICATION.get_enabled_domains():
+    for domain in MOBILE_MONEY_INTEGRATION.get_enabled_domains():
         try:
             config = MoMoConfig.objects.get(domain=domain)
         except MoMoConfig.DoesNotExist:
@@ -128,7 +128,7 @@ def _get_payment_case_ids_on_domain(domain):
     ignore_result=True,
 )
 def fetch_momo_payments_status():
-    for domain in MTN_MOBILE_WORKER_VERIFICATION.get_enabled_domains():
+    for domain in MOBILE_MONEY_INTEGRATION.get_enabled_domains():
         try:
             config = MoMoConfig.objects.get(domain=domain)
             case_ids = _get_submitted_payment_case_ids_on_domain(domain)

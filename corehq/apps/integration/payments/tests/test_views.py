@@ -119,13 +119,13 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         response = self._make_request()
         assert response.status_code == 404
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_user_without_access(self):
         self.client.login(username=self.user_without_access.username, password=self.password)
         response = self.client.get(self.endpoint)
         assert response.status_code == 403
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
     @patch.object(PaymentVerifiedByFilter, 'options', [('test-user', 'test-user')])
     def test_user_with_access(self):
@@ -133,7 +133,7 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         response = self.client.get(self.endpoint)
         assert response.status_code == 200
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
     @patch.object(PaymentVerifiedByFilter, 'options', [('test-user', 'test-user')])
     def test_success(self):
@@ -208,24 +208,24 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         response = self._make_request()
         assert response.status_code == 404
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_user_without_access(self):
         self.client.login(username=self.user_without_access.username, password=self.password)
         response = self.client.get(self.endpoint)
         assert response.status_code == 403
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_user_with_access(self):
         self.client.login(username=self.user_with_access.username, password=self.password)
         response = self.client.get(self.endpoint)
         assert response.status_code == 200
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_success(self):
         response = self._make_request()
         assert response.status_code == 200
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_response_data_rows(self):
         response = self._make_request()
         queryset = response.context['table'].data
@@ -253,7 +253,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     PaymentProperties.FINAL_MOBILE_VALIDATION: 'true',
                 }
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verify_rows(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.post(
@@ -267,7 +267,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.context['success_count'] == 2
         assert response.context['failure_count'] == 0
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verification_invalid_status(self):
         submitted_case = _create_case(
             self.factory,
@@ -292,7 +292,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             in response.content
         )
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verification_invalid_final_mobile_validation(self):
         submitted_case = _create_case(
             self.factory,
@@ -317,7 +317,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             in response.content
         )
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verification_no_cases(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.post(
@@ -329,7 +329,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.status_code == 400
         assert b"One or more case IDs are required for verification." in response.content
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verification_limit_crossed(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.post(
@@ -342,7 +342,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         limit = PaymentsVerificationTableView.VERIFICATION_ROWS_LIMIT
         assert "You can only verify for up to {} cases at a time.".format(limit) in str(response.content)
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verification_status(self):
         response = self._make_request()
 
@@ -361,7 +361,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             self.case_linked_to_payment_case.case_id: KycVerificationStatus.PASSED
         }
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_revert_verification_success(self):
         verified_case = _create_case(
             self.factory,
@@ -392,7 +392,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == ''
         assert case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] == ''
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_revert_verification_invalid_status(self):
         submitted_case = _create_case(
             self.factory,
@@ -419,7 +419,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             in str(response.content)
         )
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_revert_verification_no_cases(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.post(
@@ -431,7 +431,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.status_code == 400
         assert b"One or more case IDs are required to revert verification." in response.content
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_revert_verification_limit_crossed(self):
 
         self.client.login(username=self.username, password=self.password)
@@ -448,7 +448,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
             in str(response.content)
         )
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     @patch(
         'corehq.apps.integration.payments.views.PaymentsVerificationTableView.'
         '_check_for_active_revert_verification_request'
@@ -562,61 +562,61 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         response = self._make_request()
         assert response.status_code == 404
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_batch_number_filter_has_none(self):
         response = self._make_request(querystring='batch_number=9999')
         queryset = response.context['table'].data
         assert len(queryset) == 0
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_batch_number_filter(self):
         response = self._make_request(querystring='batch_number=B001')
         queryset = response.context['table'].data
         assert len(queryset) == 4
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_batch_number_filter_no_value(self):
         response = self._make_request(querystring='batch_number=')
         queryset = response.context['table'].data
         assert len(queryset) == 5
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_payment_status_filter_pending_payments_has_one(self):
         response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING_SUBMISSION}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_payment_status_filter_request_failed_payments_has_one(self):
         response = self._make_request(querystring=f'payment_status={PaymentStatus.REQUEST_FAILED}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_case_owner_filter(self):
         response = self._make_request(querystring=f'{EMWF.slug}=u__{self.user_with_access.user_id}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_campaign_filter(self):
         response = self._make_request(querystring=f'{CampaignFilter.slug}=Campaign A')
         queryset = response.context['table'].data
         assert len(queryset) == 2
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_activity_filter(self):
         response = self._make_request(querystring='activity=Activity A')
         queryset = response.context['table'].data
         assert len(queryset) == 2
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_funder_filter(self):
         response = self._make_request(querystring='funder=Funder A')
         queryset = response.context['table'].data
         assert len(queryset) == 2
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_phone_number_filter(self):
         response = self._make_request(querystring='phone_number=987654321')
         queryset = response.context['table'].data
@@ -645,19 +645,19 @@ class TestPaymentsConfigurationView(BaseTestPaymentsView):
         response = self._make_request()
         assert response.status_code == 404
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_user_without_access(self):
         self.client.login(username=self.user_without_access.username, password=self.password)
         response = self.client.get(self.endpoint)
         assert response.status_code == 403
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_user_with_access(self):
         self.client.login(username=self.user_with_access.username, password=self.password)
         response = self.client.get(self.endpoint)
         assert response.status_code == 200
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_success_get(self, *args):
         response = self._make_request()
         assert response.status_code == 200
@@ -666,7 +666,7 @@ class TestPaymentsConfigurationView(BaseTestPaymentsView):
         assert form_fields['connection_settings'].choices == [(self.connection_settings.id, 'test-conn-settings')]
         assert form_fields['environment'].choices == [('sandbox', 'Sandbox'), ('live', 'Live')]
 
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_success_create(self, *args):
         assert not MoMoConfig.objects.filter(domain=self.domain)
 
