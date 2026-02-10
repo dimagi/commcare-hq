@@ -55,15 +55,15 @@
       </h4>
     </div>
     <div class="card-body">
-      <ul class="nav nav-pills nav-stacked">  {# todo B5: css-nav #}
-        <li>
-          <a href="#upload-xform" data-bs-toggle="modal">
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="#upload-xform" data-bs-toggle="modal">
             <i class="fa fa-arrow-up"></i>
             {% trans "Upload" %}
           </a>
         </li>
-        <li>
-          <a {% if not form.source %}class="disabled"{% endif %}
+        <li class="nav-item">
+          <a class="nav-link {% if not form.source %}disabled{% endif %}"
              href="{% url "get_xform_source" domain app.id form.unique_id %}">
             <i class="fa fa-arrow-down"></i>
             {% trans "Download" %}

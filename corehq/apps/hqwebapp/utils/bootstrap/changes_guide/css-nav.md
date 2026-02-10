@@ -1,6 +1,8 @@
 The `nav` element has been restructured a bit so that you need to explicitly label
 child elements with `nav-item` and `nav-link`.
 
+`nav-stacked` class need to be updated to `flex-column`
+
 An EXAMPLE for how to apply this change is provided below.
 Please see docs for further details.
 
