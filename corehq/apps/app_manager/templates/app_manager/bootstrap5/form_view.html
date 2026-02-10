@@ -114,11 +114,12 @@
   {% registerurl "get_form_datums" domain app.id %}
 
   <div class="tabbable mt-3">
-    <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
+    <ul class="nav nav-tabs sticky-tabs">
       {% if form.uses_cases %}
-        <li>
+        <li class="nav-item">
           <a
             id="case-configuration-tab"
+            class="nav-link"
             href="#case-configuration"
             data-bs-toggle="tab"
           >
@@ -127,14 +128,15 @@
         </li>
       {% endif %}
 
-      <li>
-        <a href="#form-settings" data-bs-toggle="tab">{% trans "Settings" %}</a>
+      <li class="nav-item">
+        <a class="nav-link" href="#form-settings" data-bs-toggle="tab">{% trans "Settings" %}</a>
       </li>
 
       {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
-        <li>
+        <li class="nav-item">
           <a
             id="usercase-configuration-tab"
+            class="nav-link"
             href="#usercase-configuration"
             data-bs-toggle="tab"
           >
@@ -145,8 +147,8 @@
 
       {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
         {% if module.has_schedule %}
-          <li>
-            <a href="#visit-scheduler" data-bs-toggle="tab">
+          <li class="nav-item">
+            <a class="nav-link" href="#visit-scheduler" data-bs-toggle="tab">
               {% trans "Visit Scheduler" %}
             </a>
           </li>
@@ -154,8 +156,8 @@
       {% endif %}
 
       {% if form.form_type != "shadow_form" %}
-        <li>
-          <a href="#advanced" data-bs-toggle="tab">{% trans "Actions" %}</a>
+        <li class="nav-item">
+          <a class="nav-link" href="#advanced" data-bs-toggle="tab">{% trans "Actions" %}</a>
         </li>
       {% endif %}
     </ul>
