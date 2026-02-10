@@ -234,21 +234,25 @@
                     data-bind="value: workflow"
                     id="search-workflow"
                   >
-                    <option
-                      value="classic"
-                      data-bind="hidden: restrictWorkflowForDataRegistry"
-                    >
-                      {% trans "Normal Case List" %}
-                    </option>
+                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+                      <option
+                        value="classic"
+                        data-bind="hidden: restrictWorkflowForDataRegistry"
+                      >
+                        {% trans "Normal Case List" %}
+                      </option>
+                    {% endif %}
                     <option value="auto_launch">
                       {% trans "Search First" %}
                     </option>
-                    <option
-                      value="see_more"
-                      data-bind="hidden: restrictWorkflowForDataRegistry"
-                    >
-                      {% trans "See More" %}
-                    </option>
+                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+                      <option
+                        value="see_more"
+                        data-bind="hidden: restrictWorkflowForDataRegistry"
+                      >
+                        {% trans "See More" %}
+                      </option>
+                    {% endif %}
                     <option value="es_only">
                       {% trans "Skip to Default Case Search Results" %}
                     </option>
@@ -466,6 +470,7 @@
               </div>
             </div>
           {% endif %}
+          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
           <div class="form-group">  {# todo B5: css-form-group #}
             <label
               for="claim-relevant-condition"
@@ -494,6 +499,7 @@
               ></textarea>
             </div>
           </div>
+          {% endif %}
           <div class="form-group">  {# todo B5: css-form-group #}
             <label
               for="blacklisted-user-ids"
@@ -646,7 +652,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
             <div class="form-group">  {# todo B5: css-form-group #}
               <label
                 for="custom-related-case-property"
@@ -678,6 +684,8 @@
                 />
               </div>
             </div>
+          {% endif %}
+          {% if request|toggle_enabled:'CASE_SEARCH_RELATED_LOOKUPS' %}
             <div class="form-group">  {# todo B5: css-form-group #}
               <label class="form-label {% css_label_class %}">
                 {% trans "Include all related cases in search results" %}
@@ -694,7 +702,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search %}
+          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
             <div class="form-group">  {# todo B5: css-form-group #}
               <label class="form-label {% css_label_class %}">
                 {% trans "Clearing search terms resets search results" %}
