@@ -15,7 +15,9 @@
 
     {% block before_table %}{% endblock %}
 
-    {% block table %}{{ block.super }}{% endblock table %}
+    <div class="table-responsive">
+      {% block table %}{{ block.super }}{% endblock table %}
+    </div>
 
     {% if table.page.paginator.count == 0 %}
       {% block no_results_table %}
