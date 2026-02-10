@@ -12,8 +12,7 @@ const getOptionNames = function (slugs, options, slugProperty = 'slug') {
 };
 
 var RolesViewModel = function (o) {
-    var self;
-    self = {};
+    const self = {};
 
     self.allowEdit = o.allowEdit;
 
