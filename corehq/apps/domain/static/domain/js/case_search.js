@@ -1,9 +1,9 @@
 import ko from "knockout";
 import _ from "underscore";
+import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hqMain from "hqwebapp/js/bootstrap5/main";
-
-var module = {};
+import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // save button
 
 var propertyModel = function (name) {
     var self = {};
@@ -42,7 +42,7 @@ var ignorePatterns = function (caseType, caseProperty, regex) {
 /**
  * Returns a viewModel for domain/admin/case_search.html
  */
-module.caseSearchConfig = function (options) {
+var caseSearchConfig = function (options) {
     var self = {};
     var initialValues = options.values;
 
@@ -132,4 +132,11 @@ module.caseSearchConfig = function (options) {
     return self;
 };
 
-export default module;
+$(function () {
+    var viewModel = caseSearchConfig({
+        values: initialPageData.get('values'),
+        caseTypes: initialPageData.get('case_types'),
+    });
+    $('#case-search-config').koApplyBindings(viewModel);
+    $('#case-search-config').on('change', viewModel.change).on('click', ':button', viewModel.change);
+});
