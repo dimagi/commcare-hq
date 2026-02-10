@@ -1752,12 +1752,21 @@ class ProjectUsersTab(UITab):
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
-            from corehq.apps.users.views.role import ListRolesView
+            from corehq.apps.users.views.role import EditRoleView, ListRolesView
             return {
                 'title': _(ListRolesView.page_title),
                 'url': reverse(ListRolesView.urlname, args=[self.domain]),
                 'description': _("View and manage user roles."),
-                'subpages': [],
+                'subpages': [
+                    {
+                        'title': _("Create Role"),
+                        'urlname': 'create_role'
+                    },
+                    {
+                        'title': _("Edit Role"),
+                        'urlname': EditRoleView.urlname
+                    },
+                ],
                 'show_in_dropdown': True,
             }
 
