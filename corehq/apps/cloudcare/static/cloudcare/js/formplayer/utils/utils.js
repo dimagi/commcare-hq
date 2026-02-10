@@ -180,7 +180,7 @@ Utils.setCurrentQueryInputs = function (inputs, queryKey) {
 };
 
 Utils.getStickyQueryInputs = function () {
-    if (toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') && this.stickyQueryInputs) {
+    if (toggles.toggleEnabled('CASE_SEARCH_DEPRECATED') && this.stickyQueryInputs) {
         return this.stickyQueryInputs[sessionStorage.queryKey] || {};
     }
     return {};
