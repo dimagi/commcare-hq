@@ -1,8 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div id="{{ qualifier|default_if_none:"" }}media_{{ type }}">
-  <div class="form-group">  {# todo B5: css-form-group #}
-    <label class="form-label col-md-2" for="menu_{{ type }}_path"
+  <div class="row mb-3">
+    <label class="col-form-label col-md-2" for="menu_{{ type }}_path"
       >{% trans badge %}</label
     >
     <div class="col-md-10 commcare-feature" data-since-version="1.3">
@@ -86,8 +86,8 @@
       {% endif %}
     </div>
   </div>
-  <div class="form-group" data-bind="visible: showCustomPath">  {# todo B5: css-form-group #}
-    <label class="form-label col-md-2">{% trans "Path" %}</label>
+  <div class="row mb-3" data-bind="visible: showCustomPath">
+    <label class="col-form-label col-md-2">{% trans "Path" %}</label>
     <div class="col-md-4">
       <input
         type="text"
