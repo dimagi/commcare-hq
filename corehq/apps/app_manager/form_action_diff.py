@@ -4,6 +4,30 @@ from .exceptions import MissingPropertyMapException
 from .models import ConditionalCaseUpdate
 
 
+def get_case_mappings(actions):
+    """Get FormActions case mappings for Vellum
+
+    :returns: {'<case property>': [{'question_path': ...}, ...], ...}
+    """
+    def to_json(obj):
+        json = obj.to_json()
+        if 'doc_type' in json:
+            del json['doc_type']
+        return json
+
+    data = {}
+    if actions.open_case:
+        items = [actions.open_case.name_update] + actions.open_case.conflicts
+        data.update({'name': [to_json(u) for u in items]})
+    if actions.update_case:
+        conflicts = actions.update_case.conflicts
+        data.update({
+            prop: [to_json(u) for u in [update] + conflicts.get(prop, [])]
+            for prop, update in actions.update_case.update.items()
+        })
+    return data
+
+
 def merge_case_mappings(diff, form_actions):
     """Apply open/update case diffs to form actions
 
