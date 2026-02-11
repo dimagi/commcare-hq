@@ -161,28 +161,19 @@
   }
 }
 
-.appmanager-edit-title,
-.appmanager-edit-app-title {
-  margin-right: calc($app-page-actions-width + 2rem);
-}
-
 .appmanager-edit-title .ko-inline-edit {
-  width: 100%;
+  display: flex;
+  flex: 1 1 0;
   .read-only {
     margin-left: 15px;
-    margin-top: 8px;
   }
   .read-only .prefixed-icon {
     margin-left: -30px;
   }
-  .read-write {
-    padding-top: 10px;
-  }
   .read-write.h3 {
     min-width: unset;
-
+    flex: 1 1 0;
     .input-group {
-      margin-top: 3px;
       width: 100%;
     }
   }
@@ -190,17 +181,10 @@
 .appmanager-edit-app-title .ko-inline-edit {
   .read-only {
     margin-left: -12px;
-    margin-top: 13px;
   }
 }
 .appmanager-edit-description .ko-inline-edit {
   margin-left: -8px;
-}
-
-.appmanager-page-actions {
-  float: right;
-  margin-top: 20px;
-  max-width: $app-page-actions-width;
 }
 
 .form-group .upgrade-message {
