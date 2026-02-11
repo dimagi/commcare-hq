@@ -4,14 +4,14 @@
 <div class="tab-pane" id="advanced">
   {% if allow_form_copy%}
     <div class="card mb-3">
-      <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>  {# todo B5: css-form-inline #}
+      <form method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>
         {% csrf_token %}
         <div class="card-header h5">
             {% trans "Copy Form" %}
         </div>
         <div class="card-body d-flex justify-content-start gap-2">
           {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
-            <span id="app-module-selection">
+            <span id="app-module-selection" class="d-flex justify-content-start gap-2">
                         <select name="to_app_id"
                                 class='form-select w-auto'
                                 data-bind="options: apps,
