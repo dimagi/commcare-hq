@@ -55,6 +55,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
     XFormValidationFailed,
 )
+from corehq.apps.app_manager.form_action_diff import from_combined_diff
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
@@ -570,7 +571,7 @@ def _get_case_mapping_diff(request, form):
     case_mapping_diff = None
     has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     if has_vellum_case_mapping and 'mapping_diff' in request.POST:
-        case_mapping_diff = FormActionsDiff.from_json(
+        case_mapping_diff = from_combined_diff(
             json.loads(request.POST['mapping_diff']),
             is_registration=form.is_registration_form(),
         )
