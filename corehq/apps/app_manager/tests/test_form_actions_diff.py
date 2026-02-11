@@ -9,6 +9,7 @@ from ..exceptions import (
 )
 from ..form_action_diff import (
     _convert_update_to_delete_plus_add,
+    from_combined_diff,
     get_case_mappings,
     merge_case_mappings,
 )
@@ -962,3 +963,60 @@ class ConvertUpdateToAddPlusDeleteTests(SimpleTestCase):
             ]},
         }
         assert diff == snapshot, 'original diff should not change'
+
+
+class CombinedDiffTests(SimpleTestCase):
+
+    def test_from_combined_diff_non_registration_name_stays_in_update(self):
+        combined_diff = {
+            'add': {
+                'name': [{'question_path': 'one'}],
+                'other': [{'question_path': 'two'}],
+            },
+            'update': {
+                'name': [{'question_path': 'three'}],
+                'other': [{'question_path': 'four'}],
+            },
+            'delete': {
+                'name': [{'question_path': 'five'}],
+                'other': [{'question_path': 'six'}],
+            },
+        }
+        snapshot = deepcopy(combined_diff)
+
+        diff = from_combined_diff(combined_diff, is_registration=False)
+
+        assert not diff.get('open_case')
+        assert diff['update_case'] == combined_diff
+        assert combined_diff == snapshot, 'combined_diff should not be mutated'
+
+    def test_from_combined_diff_registration_name_is_in_open_case(self):
+        combined_diff = {
+            'add': {
+                'name': [{'question_path': 'one'}],
+                'other': [{'question_path': 'two'}],
+            },
+            'update': {
+                'name': [{'question_path': 'three'}],
+                'other': [{'question_path': 'four'}],
+            },
+            'delete': {
+                'name': [{'question_path': 'five'}],
+                'other': [{'question_path': 'six'}],
+            },
+        }
+        snapshot = deepcopy(combined_diff)
+
+        diff = from_combined_diff(combined_diff, is_registration=True)
+
+        assert diff['open_case'] == {
+            'add': [{'question_path': 'one'}],
+            'update': [{'question_path': 'three'}],
+            'delete': [{'question_path': 'five'}],
+        }
+        assert diff['update_case'] == {
+            'add': {'other': [{'question_path': 'two'}]},
+            'update': {'other': [{'question_path': 'four'}]},
+            'delete': {'other': [{'question_path': 'six'}]},
+        }
+        assert combined_diff == snapshot, 'combined_diff should not be mutated'
