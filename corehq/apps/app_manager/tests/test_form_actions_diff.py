@@ -9,9 +9,9 @@ from ..exceptions import (
 )
 from ..form_action_diff import (
     _convert_update_to_delete_plus_add,
+    get_case_mappings,
     merge_case_mappings,
 )
-
 from ..models import (
     FormActions, UpdateCaseAction, OpenCaseAction, OpenCaseDiff, UpdateCaseDiff, FormActionsDiff
 )
@@ -167,19 +167,6 @@ class OpenCaseActionTests(SimpleTestCase):
         })
 
         assert not action.has_name_update()
-
-    def test_get_mappings_serializes_name_updates(self):
-        action = OpenCaseAction({
-            'name_update_multi': [{'question_path': 'one'}, {'question_path': 'two'}]
-        })
-
-        json = action.get_mappings()
-        assert json == {
-            'name': [
-                {'question_path': 'one', 'update_mode': 'always'},
-                {'question_path': 'two', 'update_mode': 'always'}
-            ]
-        }
 
 
 class OpenCaseActionApplyDiffTests(SimpleTestCase):
@@ -439,37 +426,6 @@ class UpdateCaseActionTests(SimpleTestCase):
 
         assert action.get_property_names() == {'one'}
 
-    def test_get_mappings_serializes_updates(self):
-        action = UpdateCaseAction({
-            'update_multi': {
-                'one': [{'question_path': '/A/'}, {'question_path': '/B/'}],
-                'two': [{'question_path': '/C/'}],
-            }
-        })
-
-        json = action.get_mappings()
-
-        assert json == {
-            'one': [
-                {'question_path': '/A/', 'update_mode': 'always'},
-                {'question_path': '/B/', 'update_mode': 'always'}
-            ],
-            'two': [{'question_path': '/C/', 'update_mode': 'always'}]
-        }
-
-    def test_get_mappings_removes_doc_type(self):
-        action = UpdateCaseAction({
-            'update': {
-                'one': {'question_path': '/A/', 'update_mode': 'edit', 'doc_type': 'TestDoc'},
-            }
-        })
-
-        json = action.get_mappings()
-
-        assert json == {
-            'one': [{'question_path': '/A/', 'update_mode': 'edit'}]
-        }
-
 
 class UpdateCaseActionApplyDiffTests(SimpleTestCase):
 
@@ -713,6 +669,38 @@ class FormActionsTests(SimpleTestCase):
         update_case = UpdateCaseAction({'update': {'one': {'question_path': 'two'}}})
         actions = FormActions(update_case=update_case)
         assert actions.all_property_names() == {'one'}
+
+    def test_get_case_mappings_serializes_all_updates(self):
+        actions = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'name1'},
+                'conflicts': [{'question_path': 'name2'}],
+            },
+            'update_case': {
+                'update': {
+                    'one': {'question_path': '/A/'},
+                    'two': {'question_path': '/C/'},
+                },
+                'conflicts': {
+                    'one': [{'question_path': '/B/'}, {'question_path': '/D/'}],
+                }
+            },
+        })
+
+        json = get_case_mappings(actions)
+
+        assert json == {
+            'name': [
+                {'question_path': 'name1', 'update_mode': 'always'},
+                {'question_path': 'name2', 'update_mode': 'always'},
+            ],
+            'one': [
+                {'question_path': '/A/', 'update_mode': 'always'},
+                {'question_path': '/B/', 'update_mode': 'always'},
+                {'question_path': '/D/', 'update_mode': 'always'},
+            ],
+            'two': [{'question_path': '/C/', 'update_mode': 'always'}]
+        }
 
     def test_merge_case_mappings_raises_on_unrecognized_key(self):
         actions = FormActions()
