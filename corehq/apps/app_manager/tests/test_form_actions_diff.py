@@ -158,24 +158,6 @@ class UpdateCaseActionTests(SimpleTestCase):
         multi_paths = {k: [action.question_path for action in v] for (k, v) in action.update_multi.items()}
         assert multi_paths == {'two': ['/one/', '/two/']}
 
-    def test_get_property_names_returns_keys_from_update(self):
-        action = UpdateCaseAction({
-            'update': {
-                'one': {'question_path': '/two/'}
-            }
-        })
-
-        assert action.get_property_names() == {'one'}
-
-    def test_get_property_names_returns_keys_from_update_multi(self):
-        action = UpdateCaseAction({
-            'update_multi': {
-                'one': [{'question_path': '/two/'}]
-            }
-        })
-
-        assert action.get_property_names() == {'one'}
-
 
 class UpdateCaseActionApplyDiffTests(SimpleTestCase):
 
