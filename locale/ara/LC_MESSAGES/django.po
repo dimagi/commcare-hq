@@ -322,10 +322,8 @@ msgstr "حساب الفوترة"
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/domain/forms.py
@@ -1189,8 +1187,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
@@ -1294,18 +1291,16 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
@@ -4068,8 +4063,7 @@ msgstr "نوع الدفع"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/hqadmin/reports.py corehq/apps/linked_domain/views.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -4683,9 +4677,8 @@ msgstr "رسائل SMS"
 #: corehq/apps/campaign/templates/campaign/dashboard.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/mobile/custom_data_fields.py
 #: corehq/apps/users/views/mobile/users.py
 msgid "Mobile Workers"
@@ -4693,8 +4686,7 @@ msgstr "العاملون عبر الجوال"
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/forms.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
 msgid "Web Users"
@@ -5246,8 +5238,8 @@ msgstr "تعبئة سير العمل من ملف HAR"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/ui/forms.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
 #: corehq/motech/dhis2/forms.py corehq/motech/forms.py
@@ -5351,12 +5343,11 @@ msgstr ""
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/generic_inbound/views.py
 msgid "Actions"
 msgstr "الإجراءات"
@@ -5455,9 +5446,7 @@ msgstr "آخر 10 عمليات تشغيل"
 #: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
 #: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
 #: corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
@@ -5465,6 +5454,7 @@ msgstr "آخر 10 عمليات تشغيل"
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
@@ -5916,9 +5906,8 @@ msgid "Select Case Type"
 msgstr "اختر نوع الحالة"
 
 #: corehq/apps/app_manager/fields.py
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
@@ -6075,8 +6064,7 @@ msgid "Application Version"
 msgstr "إصدار التطبيق"
 
 #: corehq/apps/app_manager/forms.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Manage Update Settings"
 msgstr "إدارة إعدادات التحديث"
 
@@ -6368,10 +6356,9 @@ msgstr "معرّف المستخدم"
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/userreports/reports/view.py corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Reports"
 msgstr "التقارير"
@@ -6447,14 +6434,12 @@ msgstr ""
 " أي إصدارات أعلى أولاً."
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Released"
 msgstr "تم الإصدار"
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "In Test"
 msgstr "قيد الاختبار"
 
@@ -6984,8 +6969,7 @@ msgid "Just One Day"
 msgstr "يوم واحد فقط"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
@@ -7199,8 +7183,7 @@ msgstr ""
 "بذلك، لن يظهر هذا الإعداد بعد الآن في هذه الصفحة."
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Practice Mobile Worker"
 msgstr "عامل ميداني للتدريب"
 
@@ -7826,6 +7809,15 @@ msgstr "سجل الإصدارات"
 msgid "Import"
 msgstr "استيراد"
 
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+msgid "Releases"
+msgstr "الإصدارات"
+
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+#: corehq/apps/domain/forms.py
+msgid "Release Mode"
+msgstr "وضع الإصدار"
+
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
@@ -7892,17 +7884,6 @@ msgstr "تطبيق بدون عنوان"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view.html
 msgid "Enter app description here"
 msgstr "أدخل وصف التطبيق هنا"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-msgid "Releases"
-msgstr "الإصدارات"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-#: corehq/apps/domain/forms.py
-msgid "Release Mode"
-msgstr "وضع الإصدار"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
@@ -8215,8 +8196,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
@@ -8231,7 +8211,6 @@ msgid "Download"
 msgstr "تنزيل"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/odk_install.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #, python-format
 msgid ""
 "\n"
@@ -8272,8 +8251,8 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/style_configuration_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
@@ -8327,20 +8306,61 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Close"
 msgstr "إغلاق"
+
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "          You can also click\n"
+#| "          <strong>\n"
+#| "            <a class=\"track-usage-link\" href=\"%(profile_url)s\"\n"
+#| "               data-category=\"App Manager\" data-action=\"Initiate Install\"\n"
+#| "               data-label=\"Mobile Browser Link\">here</a>\n"
+#| "          </strong> in your mobile browser.\n"
+#| "        "
+msgid ""
+"\n"
+"          You can also click\n"
+"          <strong>\n"
+"            <a\n"
+"              class=\"track-usage-link\"\n"
+"              href=\"%(profile_url)s\"\n"
+"              data-category=\"App Manager\"\n"
+"              data-action=\"Initiate Install\"\n"
+"              data-label=\"Mobile Browser Link\"\n"
+"              >here</a\n"
+"            >\n"
+"          </strong>\n"
+"          in your mobile browser.\n"
+"        "
+msgstr ""
+"\n"
+"          يمكنك أيضًا النقر\n"
+"          <strong>\n"
+"            <a\n"
+"              class=\"track-usage-link\"\n"
+"              href=\"%(profile_url)s\"\n"
+"              data-category=\"App Manager\"\n"
+"              data-action=\"Initiate Install\"\n"
+"              data-label=\"Mobile Browser Link\"\n"
+"              >هنا</a\n"
+"            >\n"
+"          </strong>\n"
+"          في متصفح هاتفك المحمول.\n"
+"        "
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
@@ -9912,8 +9932,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
@@ -13498,263 +13517,300 @@ msgstr "جارٍ تحميل أحجام الوسائط المتعددة..."
 msgid "No Multimedia"
 msgstr "لا توجد وسائط متعددة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Release Logs"
 msgstr "سجلات إصدارات التطبيق"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Version Number"
 msgstr "رقم الإصدار"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Update Type"
 msgstr "نوع التحديث"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/models/types.py corehq/apps/reports/forms.py
 msgid "Time"
 msgstr "الوقت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid "Info"
 msgstr "معلومات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Current Profiles"
 msgstr "الملفات الشخصية الحالية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
+#| "        "
 msgid ""
 "\n"
-"          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
+"          Remote applications only support one build profile. Please remove all\n"
+"          but one profile before saving.\n"
 "        "
 msgstr ""
 "\n"
-"          التطبيقات البعيدة تدعم ملف تعريف واحد فقط. يرجى إزالة جميع الملفات الشخصية باستثناء واحد قبل الحفظ.\n"
+"          التطبيقات البعيدة تدعم ملف تعريف بناء واحد فقط. يرجى إزالة جميع\n"
+"          الملفات الشخصية باستثناء واحد قبل الحفظ.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "        Application profiles let you install the same application with different languages\n"
+#| "        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
+#| "        of the application.\n"
+#| "      "
 msgid ""
 "\n"
-"        Application profiles let you install the same application with different languages\n"
-"        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
-"        of the application.\n"
+"        Application profiles let you install the same application with different\n"
+"        languages and options on different phones. Application profiles will\n"
+"        appear in <em>new</em> versions of the application.\n"
 "      "
 msgstr ""
 "\n"
-"        تتيح لك ملفات تعريف التطبيق تثبيت نفس التطبيق بلغات وخيارات مختلفة على هواتف مختلفة. ستظهر ملفات تعريف التطبيق في إصدارات <em>جديدة</em> من التطبيق.\n"
+"        تتيح لك ملفات تعريف التطبيق تثبيت نفس التطبيق بلغات وخيارات مختلفة على هواتف مختلفة. ستظهر ملفات تعريف التطبيق في <em>الإصدارات الجديدة</em> من التطبيق.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Manage application profiles here."
 msgstr "قم بإدارة ملفات تعريف التطبيق هنا."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
+#| "      "
 msgid ""
 "\n"
-"        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
+"        Learn more about Application Profiles on our\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/Application+Profiles\"\n"
+"          >Help Site</a\n"
+"        >\n"
 "      "
 msgstr ""
 "\n"
-"        تعرف أكثر على ملفات تعريف التطبيق في <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>موقع المساعدة</a>\n"
+"        تعرف على المزيد حول ملفات تعريف التطبيق على\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/Application+Profiles\"\n"
+"          >موقع المساعدة</a\n"
+"        >\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Profile Name"
 msgstr "اسم الملف الشخصي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Default Language"
 msgstr "اللغة الافتراضية"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Upgrade to CommCare 2.30!"
 msgstr "قم بالترقية إلى CommCare 2.30!"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Latest Enabled Version:"
 msgstr "أحدث إصدار مفعل:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Add Profile"
 msgstr "إضافة ملف شخصي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+#| msgid ""
+#| "\n"
+#| "      <p class=\"lead\">\n"
+#| "        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
+#| "      </p>\n"
+#| "    "
 msgid ""
 "\n"
-"      <p class=\"lead\">\n"
-"        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to\n"
+"          start building your App!\n"
+"        </p>\n"
+"      "
 msgstr ""
 "\n"
-"      <p class=\"lead\">\n"
-"        يرجى النقر على <i class=\"fa fa-plus\"></i> <strong>إضافة...</strong> للبدء في بناء تطبيقك!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          يرجى النقر على <i class=\"fa fa-plus\"></i> <strong>إضافة...</strong> للبدء في بناء تطبيقك!\n"
+"        </p>\n"
+"      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+#| msgid ""
+#| "\n"
+#| "      <p class=\"lead\">\n"
+#| "        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
+#| "      </p>\n"
+#| "    "
 msgid ""
 "\n"
-"      <p class=\"lead\">\n"
-"        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          As you build your App, check out the <strong>App Preview</strong> to\n"
+"          demo it in real time!\n"
+"        </p>\n"
+"      "
 msgstr ""
 "\n"
-"      <p class=\\\"lead\\\">\n"
-"        أثناء بناء تطبيقك، تحقق من <strong>معاينة التطبيق</strong> لتجربته مباشرة في الوقت الفعلي!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          أثناء بناء تطبيقك، تحقق من <strong>معاينة التطبيق</strong> لتجربته في الوقت الفعلي!\n"
+"        </p>\n"
+"      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Versions"
 msgstr "الإصدارات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Profiles"
 msgstr "ملفات تعريف التطبيق"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
+#| "            Before you can publish your application,\n"
+#| "          "
 msgid ""
 "\n"
-"            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
-"            Before you can publish your application,\n"
+"            Your project does not have any mobile workers! Only mobile workers\n"
+"            can log into a CommCare application. Before you can publish your\n"
+"            application,\n"
 "          "
 msgstr ""
 "\n"
-"            مشروعك لا يحتوي على أي عاملين عبر الجوال! فقط العاملون عبر الجوال يمكنهم تسجيل الدخول إلى تطبيق CommCare.\n"
-"            قبل أن تتمكن من نشر تطبيقك،\n"
+"            مشروعك لا يحتوي على أي عاملين ميدانيين عبر الهاتف المحمول! فقط العاملون الميدانيون عبر الهاتف المحمول يمكنهم تسجيل الدخول إلى تطبيق CommCare. قبل أن تتمكن من نشر تطبيقك،\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "create your first mobile worker"
 msgstr "أنشئ أول عامل عبر الجوال"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Download to Android"
 msgstr "تنزيل على أندرويد"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Online Install"
 msgstr "تثبيت عبر الإنترنت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Offline Install"
 msgstr "تثبيت دون اتصال"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-msgid "CommCare from Google Play"
-msgstr "CommCare من Google Play"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                        <p>\n"
+#| "                          You haven't saved any questions as case properties.\n"
+#| "                          Only case properties become part of a case.\n"
+#| "                        </p>\n"
+#| "                        <p>\n"
+#| "                          Watch this video to learn how to save questions as case properties.\n"
+#| "                        </p>\n"
+#| "                      "
+msgid ""
+"\n"
+"                            Download\n"
+"                            <a\n"
+"                              href=\"https://play.google.com/store/apps/details?id=org.commcare.dalvik\"\n"
+"                              >CommCare from Google Play</a\n"
+"                            >\n"
+"                            to your Android device.\n"
+"                          "
+msgstr ""
+"\n"
+"                            قم بتنزيل\n"
+"                            <a\n"
+"                              href=\"https://play.google.com/store/apps/details?id=org.commcare.dalvik\"\n"
+"                              >تطبيق CommCare من Google Play</a\n"
+"                            >\n"
+"                            على جهاز Android الخاص بك.\n"
+"                          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-msgid "to your Android device."
-msgstr "على جهاز أندرويد الخاص بك."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "Application Profile"
 msgstr "ملف تعريف التطبيق"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Include Multimedia"
 msgstr "تضمين الوسائط المتعددة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Only supported for versions made after 2013-10-15"
 msgstr "مدعوم فقط للإصدارات التي تم إنشاؤها بعد 2013-10-15"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Download Targeted Version"
 msgstr "تنزيل إصدار مستهدف"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                            Open the app on your Android and use one of the following installation methods:\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Open the app on your Android and use one of the following installation methods:\n"
+"                            Open the app on your Android and use one of the\n"
+"                            following installation methods:\n"
 "                          "
 msgstr ""
 "\n"
-"                            افتح التطبيق على جهاز أندرويد الخاص بك واستخدم إحدى طرق التثبيت التالية:\n"
+"                            افتح التطبيق على جهاز Android الخاص بك واستخدم إحدى\n"
+"                            طرق التثبيت التالية:\n"
 "                          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Scan Application Barcode"
 msgstr "مسح رمز التطبيق الشريطي"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Enter App Code"
 msgstr "إدخال رمز التطبيق"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Enter app code on installation screen: "
 msgstr "أدخل رمز التطبيق في شاشة التثبيت: "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                                                            (No app code available. If you would like to use an app code instead\n"
+#| "                                                            of scanning the application barcode, try making another version.)\n"
+#| "                                                          "
 msgid ""
 "\n"
-"                                                            (No app code available. If you would like to use an app code instead\n"
-"                                                            of scanning the application barcode, try making another version.)\n"
-"                                                          "
+"                                (No app code available. If you would like to use\n"
+"                                an app code instead of scanning the application\n"
+"                                barcode, try making another version.)\n"
+"                              "
 msgstr ""
 "\n"
-"                                                            (لا يوجد رمز تطبيق متاح. إذا كنت ترغب في استخدام رمز تطبيق بدلاً\n"
-"                                                            من مسح رمز التطبيق الشريطي، حاول إنشاء إصدار آخر.)\n"
-"                                                          "
+"                                (لا يوجد رمز تطبيق متاح. إذا كنت ترغب في استخدام\n"
+"                                رمز تطبيق بدلاً من مسح رمز الاستجابة السريعة للتطبيق، جرب إنشاء إصدار آخر.)\n"
+"                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Transfer this file to your Android phone's file system"
 msgstr "انقل هذا الملف إلى نظام ملفات هاتف أندرويد الخاص بك"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "\n"
 "                                Login to the CommCare App, tap the three dots in\n"
@@ -13767,136 +13823,150 @@ msgstr ""
 "                                سجّل الدخول إلى تطبيق CommCare، واضغط على النقاط الثلاث في الزاوية العلوية اليمنى، واختر \"تحديث التطبيق\"، ثم اضغط على قائمة النقاط الثلاث مرة أخرى واختر \"تحديث دون اتصال\".\n"
 "                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "You'll be prompted to select this file from your phone's file system and "
 "install will begin"
 msgstr "سيُطلب منك اختيار هذا الملف من نظام ملفات هاتفك وسيبدأ التثبيت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
 msgid ""
 "\n"
-"                                Note: Offline install automatically installs all multimedia\n"
-"                                included in your form. All subsequent remote updates will also\n"
-"                                include multimedia which could require a lot of data. See the\n"
-"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                Note: Offline install automatically installs all\n"
+"                                multimedia included in your form. All subsequent\n"
+"                                remote updates will also include multimedia\n"
+"                                which could require a lot of data. See the\n"
+"                                <a\n"
+"                                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\"\n"
+"                                >\n"
 "                                  Help Site\n"
-"                                </a> for more info.\n"
+"                                </a>\n"
+"                                for more info.\n"
 "                              "
 msgstr ""
 "\n"
-"                                ملاحظة: التثبيت دون اتصال يقوم تلقائيًا بتثبيت جميع الوسائط المتعددة\n"
-"                                المضمنة في النموذج الخاص بك. جميع التحديثات البعيدة اللاحقة ستتضمن أيضًا\n"
-"                                الوسائط المتعددة، مما قد يتطلب الكثير من البيانات. راجع\n"
-"                                <a href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\\\">\n"
+"                                ملاحظة: التثبيت دون اتصال يقوم تلقائيًا بتثبيت جميع\n"
+"                                الوسائط المتعددة المضمنة في النموذج الخاص بك. جميع التحديثات البعيدة اللاحقة ستتضمن أيضًا الوسائط المتعددة\n"
+"                                والتي قد تتطلب الكثير من البيانات. راجع\n"
+"                                <a\n"
+"                                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\"\n"
+"                                >\n"
 "                                  موقع المساعدة\n"
-"                                </a> لمزيد من المعلومات.\n"
+"                                </a>\n"
+"                                لمزيد من المعلومات.\n"
 "                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Open in Web Apps"
 msgstr "فتح في تطبيقات الويب"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Send to phone via SMS"
 msgstr "إرسال إلى الهاتف عبر الرسائل القصيرة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
 msgid "Download Multimedia"
 msgstr "تنزيل الوسائط المتعددة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "View Source Files"
 msgstr "عرض ملفات المصدر"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
-msgid "Send to"
-msgstr "إرسال إلى"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "Send to"
+msgid "Send to:"
+msgstr "إرسال إلى:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
-msgid "SMS charges will incur."
-msgstr "سيتم احتساب رسوم الرسائل القصيرة."
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "Prompt Updates to CommCare"
+msgid "Update to CommCare:"
+msgstr "تحديث إلى CommCare:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "SMS charges will incur."
+msgid "SMS charges will be incurred."
+msgstr "سيتم احتساب رسوم على رسائل SMS."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Send"
 msgstr "إرسال"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "No URL was found for this app, try rebuilding."
 msgstr "لم يتم العثور على عنوان URL لهذا التطبيق، حاول إعادة البناء."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "        One or more of your versions is broken, please make sure it is\n"
+#| "        not marked as released. Make a new version if needed, and update\n"
+#| "        any live deployments as soon as possible.\n"
+#| "      "
 msgid ""
 "\n"
-"        One or more of your versions is broken, please make sure it is\n"
-"        not marked as released. Make a new version if needed, and update\n"
-"        any live deployments as soon as possible.\n"
+"        One or more of your versions is broken, please make sure it is not\n"
+"        marked as released. Make a new version if needed, and update any live\n"
+"        deployments as soon as possible.\n"
 "      "
 msgstr ""
 "\n"
-"        إصدار واحد أو أكثر من إصداراتك معطل، يرجى التأكد من أنه\n"
-"        غير محدد كمُطلق. أنشئ إصدارًا جديدًا إذا لزم الأمر، وقم بتحديث\n"
-"        أي عمليات نشر نشطة في أقرب وقت ممكن.\n"
+"        أحد إصداراتك أو أكثر معطل، يرجى التأكد من عدم وضع علامة عليه كمُطلق. أنشئ إصدارًا جديدًا إذا لزم الأمر، وقم بتحديث أي عمليات نشر مباشرة في أقرب وقت ممكن.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "          All new versions should work, so if problems persist, please report the issue.\n"
+#| "        "
 msgid ""
 "\n"
-"          All new versions should work, so if problems persist, please report the issue.\n"
+"          All new versions should work, so if problems persist, please report\n"
+"          the issue.\n"
 "        "
 msgstr ""
 "\n"
 "          يجب أن تعمل جميع الإصدارات الجديدة، فإذا استمرت المشاكل، يرجى الإبلاغ عن المشكلة.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Show only released versions"
 msgstr "عرض الإصدارات المُطلقة فقط"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Released versions only"
 msgstr "الإصدارات المُطلقة فقط"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-msgid "show all"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/choice_providers.py
+#: corehq/apps/userreports/tests/test_choice_provider.py
+#: corehq/apps/users/forms.py
+msgid "Show All"
 msgstr "عرض الكل"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Timing"
 msgstr "التوقيت"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Make New Version"
 msgstr "إنشاء إصدار جديد"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid ""
 "\n"
 "        The new application build contains the following deprecated case types:\n"
@@ -13906,137 +13976,140 @@ msgstr ""
 "        يحتوي بناء التطبيق الجديد على أنواع حالات مهملة كما يلي:\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "        For more information on deprecated case types, see the following\n"
+#| "        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
+#| "      "
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
-"        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"          >documentation</a\n"
+"        >.\n"
 "      "
 msgstr ""
 "\n"
 "        لمزيد من المعلومات حول أنواع الحالات المهملة، راجع الوثائق التالية\n"
-"        <a target=\\\"_blank\\\" href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\\\">الوثائق</a>.\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"          >الوثائق</a\n"
+"        >.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/users/decorators.py
 msgid "Sorry, you don't have permission to do this action!"
 msgstr "عذرًا، ليس لديك إذن للقيام بهذا الإجراء!"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Loading versions..."
 msgstr "جارٍ تحميل الإصدارات..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid ""
 "An error occurred while fetching versions. Reload the page to try again."
 msgstr "حدث خطأ أثناء جلب الإصدارات. أعد تحميل الصفحة للمحاولة مرة أخرى."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-msgid "Could not update"
-msgstr "تعذر التحديث"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Latest"
 msgstr "الأحدث"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid "Could not update"
+msgstr "تعذر التحديث"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "by"
 msgstr "بواسطة"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "with CommCare v."
 msgstr "مع CommCare الإصدار."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Unsigned Jar"
 msgstr "Jar غير موقع"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "(Click here to add a comment)"
 msgstr "(انقر هنا لإضافة تعليق)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Error updating comment.  Please try again."
 msgstr "حدث خطأ أثناء تحديث التعليق. يرجى المحاولة مرة أخرى."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "View Changes"
 msgstr "عرض التغييرات"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Revert to this Version"
 msgstr "الرجوع إلى هذا الإصدار"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Publish"
 msgstr "نشر"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Delete Version?"
 msgstr "حذف الإصدار؟"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Are you sure you want to delete this version"
 msgstr "هل أنت متأكد أنك تريد حذف هذا الإصدار"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Delete Version"
 msgstr "حذف الإصدار"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Revert to Version?"
 msgstr "الرجوع إلى الإصدار؟"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "              This version uses an outdated form of case management.\n"
+#| "              We advise against reverting back to this version.\n"
+#| "            "
 msgid ""
 "\n"
-"              This version uses an outdated form of case management.\n"
-"              We advise against reverting back to this version.\n"
+"              This version uses an outdated form of case\n"
+"              management. We advise against reverting back to this version.\n"
 "            "
 msgstr ""
 "\n"
-"              يستخدم هذا الإصدار شكلاً قديماً من إدارة الحالات.\n"
+"              هذا الإصدار يستخدم شكلًا قديمًا من إدارة الحالات.\n"
 "              ننصح بعدم الرجوع إلى هذا الإصدار.\n"
 "            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
+#| "          "
 msgid ""
-"\n"
-"            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
+" Are you sure you want to revert to version\n"
+"            <span data-bind=\"text: version\"></span>?\n"
+"          </p>\n"
 "          "
 msgstr ""
-"\n"
-"            هل أنت متأكد أنك تريد الرجوع إلى الإصدار <span data-bind=\"text: version\"></span>؟</p>\n"
+" هل أنت متأكد أنك تريد الرجوع إلى الإصدار\n"
+"            <span data-bind=\"text: version\"></span>؟\n"
+"          </p>\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Revert"
 msgstr "الرجوع"
@@ -14307,7 +14380,6 @@ msgstr "مزامنة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "This application currently does not contain any multimedia references."
 msgstr "هذا التطبيق لا يحتوي حاليًا على أي مراجع وسائط متعددة."
 
@@ -16289,8 +16361,7 @@ msgstr "البحث التقريبي غير مدعوم مع القيم المتع
 #: corehq/apps/integration/kyc/views.py
 #: corehq/apps/integration/payments/views.py corehq/apps/settings/views.py
 #: corehq/apps/userreports/reports/builder/forms.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Data"
 msgstr "البيانات"
@@ -16632,8 +16703,8 @@ msgstr "لا توجد تطبيقات ويب متاحة"
 
 #: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html
 #: corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/tabs/tabclasses.py
 msgid "Web Apps"
 msgstr "تطبيقات الويب"
@@ -17307,8 +17378,7 @@ msgstr "قفل الحقول المرتبطة لي"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/edit_role.html
 msgid "Linked Configurations"
 msgstr "الإعدادات المرتبطة"
 
@@ -17516,8 +17586,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/modal_edit.html
 #: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/linked_roles_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/linked_roles_modal.html
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 msgid "Unlock"
 msgstr "إلغاء القفل"
 
@@ -17661,8 +17730,7 @@ msgstr "إدارة هيكلية المؤسسة"
 
 #: corehq/apps/dashboard/views.py corehq/apps/email/views.py
 #: corehq/apps/sms/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Messaging"
 msgstr "الرسائل"
@@ -18973,8 +19041,7 @@ msgstr "القيم الصالحة: %s"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Data Dictionary"
 msgstr "قاموس البيانات"
 
@@ -19503,8 +19570,7 @@ msgid "FHIR Resource Property"
 msgstr "خاصية مورد FHIR"
 
 #: corehq/apps/data_dictionary/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "No Name"
 msgstr "بدون اسم"
 
@@ -21673,10 +21739,6 @@ msgid ""
 msgstr "يبدو أن رقم الهاتف هذا غير صالح. هل نسيت رمز الدولة؟"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "\n"
-#| "                Please provide an autopay card before continuing.\n"
-#| "              "
 msgid "Please provide an autopay card before continuing."
 msgstr "يرجى تقديم بطاقة دفع تلقائي قبل المتابعة."
 
@@ -26485,8 +26547,8 @@ msgstr ""
 "إعدادات مدير التطبيقات."
 
 #: corehq/apps/domain/views/settings.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr "إدارة تنبيهات المشروع"
 
@@ -26669,7 +26731,7 @@ msgid ""
 "enabled."
 msgstr "ينطبق فقط عند استخدام بوابة أمازون SES وتم تفعيل رؤوس التتبع."
 
-#: corehq/apps/email/forms.py
+#: corehq/apps/email/forms.py corehq/apps/users/templates/users/edit_role.html
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -27676,8 +27738,7 @@ msgstr ""
 "    "
 
 #: corehq/apps/events/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/privileges.py corehq/tabs/tabclasses.py
 msgid "Attendance Tracking"
 msgstr "تتبع الحضور"
@@ -28242,8 +28303,8 @@ msgstr "رابط إلى هذه الحالة"
 
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "CommCare Analytics"
 msgstr "تحليلات CommCare"
 
@@ -31540,16 +31601,6 @@ msgstr "حالة التعيين"
 
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
-#: corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/choice_providers.py
-#: corehq/apps/userreports/tests/test_choice_provider.py
-#: corehq/apps/users/forms.py
-msgid "Show All"
-msgstr "عرض الكل"
-
-#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
-#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 msgid "Assigned Only"
 msgstr "المعين فقط"
 
@@ -31770,9 +31821,8 @@ msgstr "تم قبول طلب إعادة تعيين الحالات وسيتم إ�
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/mobile/groups.py corehq/tabs/tabclasses.py
 msgid "Groups"
 msgstr "المجموعات"
@@ -31878,6 +31928,7 @@ msgstr ""
 "                                    إعدادات هذه المجموعة."
 
 #: corehq/apps/groups/templates/groups/all_groups.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
 msgid "Limited Access"
 msgstr "وصول محدود"
 
@@ -31975,6 +32026,16 @@ msgstr ""
 "                        إذا كان رقم الهاتف مستخدماً بالفعل من قبل جهة اتصال أخرى في النظام، فلن يحدث شيء.\n"
 "                        إذا كان رقم الهاتف قيد التحقق، سيتم إعادة إرسال رسالة التحقق.\n"
 "                        "
+
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+msgid "SMS charges will incur."
+msgstr "سيتم احتساب رسوم الرسائل القصيرة."
 
 #: corehq/apps/groups/templates/groups/group_members.html
 #, python-format
@@ -33135,7 +33196,6 @@ msgid "Begin Upload"
 msgstr "بدء الرفع"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid ""
 "<strong>Warning:</strong>\n"
 "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
@@ -33146,7 +33206,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid ""
 "\n"
 "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
@@ -33193,6 +33252,53 @@ msgstr ""
 "\n"
 "    لم يتم العثور على وسائط مطابقة لمرشحاتك.\n"
 "  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "<strong>Warning:</strong>\n"
+#| "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
+#| "  "
+msgid ""
+"\n"
+"      <strong>Warning:</strong>\n"
+"      This application contains forms with errors&mdash;we cannot pull any\n"
+"      multimedia references from those forms.\n"
+"    "
+msgstr ""
+"\n"
+"      <strong>تحذير:</strong>\n"
+"      يحتوي هذا التطبيق على نماذج بها أخطاء—لا يمكننا سحب أي\n"
+"      مراجع وسائط متعددة من هذه النماذج.\n"
+"    "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "\n"
+#| "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+#| "        This application is missing references, so this zip will be incomplete.\n"
+#| "      "
+msgid ""
+"\n"
+"      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"      This application is missing references, so this zip will be incomplete.\n"
+"    "
+msgstr ""
+"\n"
+"      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"      هذا التطبيق يفتقد إلى مراجع، لذا سيكون هذا الملف المضغوط غير مكتمل.\n"
+"    "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "This application currently does not contain any multimedia references."
+msgid ""
+"\n"
+"      This application currently does not contain any multimedia references.\n"
+"    "
+msgstr ""
+"\n"
+"      هذا التطبيق لا يحتوي حاليًا على أي مراجع وسائط متعددة.\n"
+"    "
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
@@ -35564,6 +35670,19 @@ msgid "Other Case Type"
 msgstr "نوع حالة أخرى"
 
 #: corehq/apps/integration/kyc/forms.py
+#| msgid "Full Name"
+msgid "Stores Full Name"
+msgstr "الاسم الكامل للمخزن"
+
+#: corehq/apps/integration/kyc/forms.py
+msgid ""
+"Check this box if the project stores the beneficiary's full name in a single"
+" field instead of separate first and last name fields."
+msgstr ""
+"حدد هذا المربع إذا كان المشروع يخزن الاسم الكامل للمستفيد في حقل واحد بدلاً "
+"من حقلي الاسم الأول واسم العائلة بشكل منفصل."
+
+#: corehq/apps/integration/kyc/forms.py
 msgid "Provider"
 msgstr "المزود"
 
@@ -36178,10 +36297,6 @@ msgstr ""
 "\n"
 "            انتقل هناك.\n"
 "          "
-
-#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
-msgid "Verify All"
-msgstr "تحقق من الكل"
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_config_form_partial.html
 #: corehq/apps/integration/templates/payments/partials/payments_config_form_partial.html
@@ -37918,9 +38033,8 @@ msgstr ""
 
 #: corehq/apps/locations/views.py corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/privileges.py
 msgid "Locations"
 msgstr "المواقع"
@@ -40111,10 +40225,9 @@ msgstr "حذف السجل"
 
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/registry/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/tabs/tabclasses.py
 msgid "Data Registries"
 msgstr "سجلات البيانات"
@@ -52848,195 +52961,6 @@ msgstr "إرسال بريد إلكتروني لتأكيد الحساب"
 msgid "Loading Pending Account Confirmations..."
 msgstr "جاري تحميل تأكيدات الحساب المعلقة..."
 
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"        Manage roles and permissions or add new custom roles.\n"
-"      "
-msgstr ""
-"\n"
-"        إدارة الأدوار والأذونات أو إضافة أدوار مخصصة جديدة.\n"
-"      "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"        View roles and permissions.\n"
-"      "
-msgstr ""
-"\n"
-"        عرض الأدوار والأذونات.\n"
-"      "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"          <a\n"
-"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\"\n"
-"            >Learn more</a\n"
-"          >\n"
-"          about how roles &amp; permissions are used.\n"
-"        "
-msgstr ""
-"\n"
-"          <a\n"
-"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\"\n"
-"            >تعرف على المزيد</a\n"
-"          >\n"
-"          حول كيفية استخدام الأدوار والصلاحيات.\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Unlock Linked Roles For Me"
-msgstr "إلغاء قفل الأدوار المرتبطة لي"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Lock Linked Roles For Me"
-msgstr "قفل الأدوار المرتبطة لي"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"            Linked configurations are controlled from a separate, linked project\n"
-"            space.\n"
-"            <a\n"
-"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-"              target=\"_blank\"\n"
-"              >Learn more</a\n"
-"            >.\n"
-"          "
-msgstr ""
-"\n"
-"            يتم التحكم في التكوينات المرتبطة من مساحة مشروع منفصلة ومرتبطة.\n"
-"            <a\n"
-"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-"              target=\"_blank\"\n"
-"              >تعرف على المزيد</a\n"
-"            >.\n"
-"          "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"          Would you like to edit roles and add new, custom roles?\n"
-"        "
-msgstr ""
-"\n"
-"          هل ترغب في تعديل الأدوار وإضافة أدوار مخصصة جديدة؟\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#, python-format
-msgid ""
-"\n"
-"          <strong\n"
-"            ><a href=\"%(subscription_url)s\"\n"
-"              >Upgrade to CommCare Standard</a\n"
-"            ></strong\n"
-"          >\n"
-"          to activate\n"
-"          <strong>Advanced Role-Based Access</strong>.\n"
-"        "
-msgstr ""
-"\n"
-"          <strong\n"
-"            ><a href=\"%(subscription_url)s\"\n"
-"              >قم بالترقية إلى CommCare Standard</a\n"
-"            ></strong\n"
-"          >\n"
-"          لتفعيل\n"
-"          <strong>إمكانية الوصول المتقدمة بناءً على الأدوار</strong>.\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Roles"
-msgstr "الأدوار"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage Shared Exports"
-msgstr "إدارة الصادرات المشتركة"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Apps"
-msgstr "التطبيقات"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/tabs/tabclasses.py
-msgid "Integration"
-msgstr "التكامل"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Subscription Info"
-msgstr "معلومات الاشتراك"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Mobile Worker Default Role"
-msgstr "الدور الافتراضي للعاملين على الجوال"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"This is the default role for all Mobile Workers that do not have a role "
-"assigned."
-msgstr ""
-"هذا هو الدور الافتراضي لجميع العاملين على الجوال الذين لم يتم تعيين دور لهم."
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Only"
-msgstr "فقط"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage All"
-msgstr "إدارة الكل"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage Only"
-msgstr "إدارة فقط"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View All Data"
-msgstr "عرض جميع البيانات"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View Data From"
-msgstr "عرض البيانات من"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Edit Role"
-msgstr "تعديل الدور"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View Role"
-msgstr "عرض الدور"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Add Role"
-msgstr "إضافة دور"
-
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #, python-format
@@ -53283,6 +53207,324 @@ msgstr ""
 "            <strong>حدثت مشكلة في الاتصال بالخادم.</strong>\n"
 "            يرجى التحقق من اتصالك بالإنترنت. إذا استمرت هذه المشكلة، يرجى <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">الإبلاغ عن المشكلة</a>.\n"
 "          "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Unlock Linked Roles For Me"
+msgid "Unlock Linked Role For Me"
+msgstr "فتح الدور المرتبط لي"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Lock Linked Roles For Me"
+msgid "Lock Linked Role For Me"
+msgstr "قفل الدور المرتبط لي"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "            Linked configurations are controlled from a separate, linked project\n"
+#| "            space.\n"
+#| "            <a\n"
+#| "              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+#| "              target=\"_blank\"\n"
+#| "              >Learn more</a\n"
+#| "            >.\n"
+#| "          "
+msgid ""
+"\n"
+"                Linked configurations are controlled from a separate, linked\n"
+"                project space.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"                  target=\"_blank\"\n"
+"                  >Learn more</a\n"
+"                >.\n"
+"              "
+msgstr ""
+"\n"
+"                يتم التحكم في الإعدادات المرتبطة من مساحة مشروع منفصلة ومتصلة.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"                  target=\"_blank\"\n"
+"                  >اعرف المزيد</a\n"
+"                >.\n"
+"              "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Area Access"
+msgstr "الوصول إلى المنطقة"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Can Edit"
+msgstr "يمكن التعديل"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Can View"
+msgstr "يمكن العرض"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Access Specific Reports"
+msgstr "الوصول إلى تقارير محددة"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which reports the role can access:"
+msgstr "حدد التقارير التي يمكن للدور الوصول إليها:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Access Specific Tableau Reports"
+msgstr "الوصول إلى تقارير Tableau محددة"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which Tableau reports the role can access:"
+msgstr "حدد تقارير Tableau التي يمكن للدور الوصول إليها:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "All CommCare Analytics Roles"
+msgstr "جميع أدوار تحليلات CommCare"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign all commcare analytics roles to users with this role"
+msgstr "تعيين جميع أدوار تحليلات CommCare للمستخدمين بهذا الدور"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "CommCare Analytics Roles"
+msgstr "أدوار تحليلات CommCare"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Commcare Analytics Roles:"
+msgstr "أدوار تحليلات CommCare:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Other Settings"
+msgstr "إعدادات أخرى"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Integration Access"
+msgstr "الوصول إلى التكامل"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to manage integration with other systems."
+msgstr "السماح للدور بإدارة التكامل مع الأنظمة الأخرى."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Manage Subscription Info"
+msgstr "إدارة معلومات الاشتراك"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to manage subscription information."
+msgstr "السماح للدور بإدارة معلومات الاشتراك."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Full Organization Access"
+msgstr "الوصول الكامل للمؤسسة"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to access data from all locations."
+msgstr "السماح للدور بالوصول إلى بيانات جميع المواقع."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      Make sure any users assigned this role also have a\n"
+#| "                      location assigned to them. Users without assigned\n"
+#| "                      locations will not be permitted to log in.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        Make sure any users assigned this role also have a\n"
+"                        location assigned to them. Users without assigned\n"
+"                        locations will not be permitted to log in.\n"
+"                      "
+msgstr ""
+"\n"
+"                        تأكد من أن أي مستخدمين تم تعيين هذا الدور لهم لديهم أيضًا موقع مخصص لهم. لن يُسمح للمستخدمين الذين ليس لديهم مواقع مخصصة بتسجيل الدخول.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      Organization-based data access restrictions are only\n"
+#| "                      available on the Pro plan and above. Saving this role will\n"
+#| "                      enable full organization access for the assigned users.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        Organization-based data access restrictions are only\n"
+"                        available on the Pro plan and above. Saving this role\n"
+"                        will enable full organization access for the assigned\n"
+"                        users.\n"
+"                      "
+msgstr ""
+"\n"
+"                        قيود الوصول إلى البيانات على أساس المؤسسة متاحة فقط في خطة Pro وما فوقها. حفظ هذا الدور سيمكن الوصول الكامل للمؤسسة للمستخدمين المعينين.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      With the current configuration, this role will have full\n"
+#| "                      organization access and roles that can assign it will not.\n"
+#| "                      This is not recommended.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        With the current configuration, this role will have full\n"
+"                        organization access and roles that can assign it will\n"
+"                        not. This is not recommended.\n"
+"                      "
+msgstr ""
+"\n"
+"                        مع الإعداد الحالي، سيكون لهذا الدور وصول كامل للمؤسسة بينما الأدوار التي يمكنها تعيينه لن يكون لديها ذلك. هذا غير موصى به.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Login-As All Users"
+msgstr "تسجيل الدخول كمستخدمين جميعًا"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as any mobile worker in Web Apps."
+msgstr "السماح للمستخدم بتسجيل الدخول كأي عامل ميداني في تطبيقات الويب."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Limit Login-As"
+msgstr "تقييد تسجيل الدخول كـ"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as only specified users in Web Apps."
+msgstr "السماح للمستخدم بتسجيل الدخول فقط كمستخدمين محددين في تطبيقات الويب."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Login-As Default User"
+msgstr "المستخدم الافتراضي لتسجيل الدخول كـ"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as the default user in Web Apps."
+msgstr "السماح للمستخدم بتسجيل الدخول كمستخدم افتراضي في تطبيقات الويب."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Mobile App Access"
+msgstr "الوصول إلى تطبيق الجوال"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow mobile users access to offline mobile application"
+msgstr "السماح لمستخدمي الجوال بالوصول إلى التطبيق الجوال دون اتصال"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Default Landing Page"
+msgstr "صفحة الهبوط الافتراضية"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow Reporting Issues"
+msgstr "السماح بالإبلاغ عن المشاكل"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow this role to report issues."
+msgstr "السماح لهذا الدور بالإبلاغ عن المشاكل."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Non-admin Editable"
+msgstr "قابل للتعديل من غير المسؤولين"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow all non-admins to assign this role to other users."
+msgstr "السماح لجميع غير المسؤولين بتعيين هذا الدور لمستخدمين آخرين."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Manage Role Assignment"
+msgstr "إدارة تعيين الدور"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which other roles can assign this role:"
+msgstr "حدد الأدوار الأخرى التي يمكنها تعيين هذا الدور:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      If the highlighted roles are selected, this role will have\n"
+#| "                      full organization access and be assignable by a role that\n"
+#| "                      does not. This is not recommended configuration.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        If the highlighted roles are selected, this role will\n"
+"                        have full organization access and be assignable by a\n"
+"                        role that does not. This is not recommended\n"
+"                        configuration.\n"
+"                      "
+msgstr ""
+"\n"
+"                        إذا تم اختيار الأدوار المظللة، سيكون لهذا الدور وصول كامل للمؤسسة ويمكن تعيينه بواسطة دور لا يملك ذلك. هذا إعداد غير موصى به.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign All User Profiles"
+msgstr "تعيين جميع ملفات تعريف المستخدمين"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"Allow role to access all user profiles while setting up mobile workers and "
+"web users."
+msgstr ""
+"السماح للدور بالوصول إلى جميع ملفات تعريف المستخدمين أثناء إعداد العاملين "
+"على الجوال ومستخدمي الويب."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign Specific User Profiles"
+msgstr "تعيين ملفات تعريف مستخدمين محددة"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"Select which user profiles the role can assign to mobile workers and web "
+"users:"
+msgstr ""
+"حدد ملفات تعريف المستخدمين التي يمكن للدور تعيينها للعاملين على الجوال "
+"ومستخدمي الويب:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow this role to manage project alerts."
+msgstr "السماح لهذا الدور بإدارة تنبيهات المشروع."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Saving..."
+msgid "Saving ..."
+msgstr "جارٍ الحفظ ..."
 
 #: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
 #, python-format
@@ -53566,277 +53808,6 @@ msgstr ""
 "            لتلك المواقع.\n"
 "          "
 
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Role Name"
-msgstr "اسم الدور"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Area Access"
-msgstr "الوصول إلى المنطقة"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Can Edit"
-msgstr "يمكن التعديل"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Can View"
-msgstr "يمكن العرض"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Access Specific Reports"
-msgstr "الوصول إلى تقارير محددة"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which reports the role can access:"
-msgstr "حدد التقارير التي يمكن للدور الوصول إليها:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Access Specific Tableau Reports"
-msgstr "الوصول إلى تقارير Tableau محددة"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which Tableau reports the role can access:"
-msgstr "حدد تقارير Tableau التي يمكن للدور الوصول إليها:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "All CommCare Analytics Roles"
-msgstr "جميع أدوار تحليلات CommCare"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign all commcare analytics roles to users with this role"
-msgstr "تعيين جميع أدوار تحليلات CommCare للمستخدمين بهذا الدور"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "CommCare Analytics Roles"
-msgstr "أدوار تحليلات CommCare"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Commcare Analytics Roles:"
-msgstr "أدوار تحليلات CommCare:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Other Settings"
-msgstr "إعدادات أخرى"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Integration Access"
-msgstr "الوصول إلى التكامل"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to manage integration with other systems."
-msgstr "السماح للدور بإدارة التكامل مع الأنظمة الأخرى."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Manage Subscription Info"
-msgstr "إدارة معلومات الاشتراك"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to manage subscription information."
-msgstr "السماح للدور بإدارة معلومات الاشتراك."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Full Organization Access"
-msgstr "الوصول الكامل للمؤسسة"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to access data from all locations."
-msgstr "السماح للدور بالوصول إلى بيانات جميع المواقع."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    Make sure any users assigned this role also have a location assigned to them.\n"
-"                    Users without assigned locations will not be permitted to log in.\n"
-"                  "
-msgstr ""
-"\n"
-"                    تأكد من أن أي مستخدمين تم تعيين هذا الدور لهم لديهم أيضًا موقع معين.\n"
-"                    المستخدمون بدون مواقع معينة لن يُسمح لهم بتسجيل الدخول.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    Organization-based data access restrictions are only available\n"
-"                    on the Pro plan and above. Saving this role will enable\n"
-"                    full organization access for the assigned users.\n"
-"                  "
-msgstr ""
-"\n"
-"                    قيود الوصول إلى البيانات بناءً على المؤسسة متاحة فقط\n"
-"                    في خطة Pro وما فوقها. حفظ هذا الدور سيمكن\n"
-"                    الوصول الكامل للمؤسسة للمستخدمين المعينين.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
-"                    This is not recommended.\n"
-"                  "
-msgstr ""
-"\n"
-"                    مع الإعداد الحالي، سيكون لهذا الدور وصول كامل للمؤسسة ولن يكون للأدوار التي يمكنها تعيينه ذلك.\n"
-"                    هذا غير موصى به.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Login-As All Users"
-msgstr "تسجيل الدخول كمستخدمين جميعًا"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as any mobile worker in Web Apps."
-msgstr "السماح للمستخدم بتسجيل الدخول كأي عامل ميداني في تطبيقات الويب."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Limit Login-As"
-msgstr "تقييد تسجيل الدخول كـ"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as only specified users in Web Apps."
-msgstr "السماح للمستخدم بتسجيل الدخول فقط كمستخدمين محددين في تطبيقات الويب."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Login-As Default User"
-msgstr "المستخدم الافتراضي لتسجيل الدخول كـ"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as the default user in Web Apps."
-msgstr "السماح للمستخدم بتسجيل الدخول كمستخدم افتراضي في تطبيقات الويب."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Mobile App Access"
-msgstr "الوصول إلى تطبيق الجوال"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow mobile users access to offline mobile application"
-msgstr "السماح لمستخدمي الجوال بالوصول إلى التطبيق الجوال دون اتصال"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Default Landing Page"
-msgstr "صفحة الهبوط الافتراضية"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow Reporting Issues"
-msgstr "السماح بالإبلاغ عن المشاكل"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow this role to report issues."
-msgstr "السماح لهذا الدور بالإبلاغ عن المشاكل."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Non-admin Editable"
-msgstr "قابل للتعديل من غير المسؤولين"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow all non-admins to assign this role to other users."
-msgstr "السماح لجميع غير المسؤولين بتعيين هذا الدور لمستخدمين آخرين."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Manage Role Assignment"
-msgstr "إدارة تعيين الدور"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which other roles can assign this role:"
-msgstr "حدد الأدوار الأخرى التي يمكنها تعيين هذا الدور:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
-"                    by a role that does not. This is not recommended configuration.\n"
-"                  "
-msgstr ""
-"\n"
-"                    إذا تم اختيار الأدوار المظللة، سيكون لهذا الدور وصول كامل للمؤسسة ويمكن تعيينه\n"
-"                    من قبل دور لا يملك ذلك. هذا الإعداد غير موصى به.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign All User Profiles"
-msgstr "تعيين جميع ملفات تعريف المستخدمين"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"Allow role to access all user profiles while setting up mobile workers and "
-"web users."
-msgstr ""
-"السماح للدور بالوصول إلى جميع ملفات تعريف المستخدمين أثناء إعداد العاملين "
-"على الجوال ومستخدمي الويب."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign Specific User Profiles"
-msgstr "تعيين ملفات تعريف مستخدمين محددة"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"Select which user profiles the role can assign to mobile workers and web "
-"users:"
-msgstr ""
-"حدد ملفات تعريف المستخدمين التي يمكن للدور تعيينها للعاملين على الجوال "
-"ومستخدمي الويب:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow this role to manage project alerts."
-msgstr "السماح لهذا الدور بإدارة تنبيهات المشروع."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#, python-format
-msgid ""
-"\n"
-"            This permission is already configured via <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</a>.\n"
-"            Please remove this configuration before updating access here.\n"
-"          "
-msgstr ""
-"\n"
-"            تم تكوين هذا الإذن بالفعل عبر <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">إدارة أذونات تطبيقات الويب</a>.\n"
-"            يرجى إزالة هذا الإعداد قبل تحديث الوصول هنا.\n"
-"          "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Please select at least one item."
-msgstr "يرجى اختيار عنصر واحد على الأقل."
-
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
@@ -53997,74 +53968,6 @@ msgstr "جارٍ التحقق من عنوان البريد الإلكتروني"
 msgid "Delete +%(number)s ?"
 msgstr "حذف +%(number)s ؟"
 
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      Make sure any users assigned this role also have a\n"
-"                      location assigned to them. Users without assigned\n"
-"                      locations will not be permitted to log in.\n"
-"                    "
-msgstr ""
-"\n"
-"                      تأكد من أن جميع المستخدمين المخصص لهم هذا الدور لديهم أيضًا موقع مخصص لهم. لن يُسمح للمستخدمين بدون مواقع مخصصة بتسجيل الدخول.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      Organization-based data access restrictions are only\n"
-"                      available on the Pro plan and above. Saving this role will\n"
-"                      enable full organization access for the assigned users.\n"
-"                    "
-msgstr ""
-"\n"
-"                      قيود الوصول إلى البيانات بناءً على المؤسسة متاحة فقط في خطة Pro وما فوقها. حفظ هذا الدور سيمكن الوصول الكامل للمؤسسة للمستخدمين المخصصين.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      With the current configuration, this role will have full\n"
-"                      organization access and roles that can assign it will not.\n"
-"                      This is not recommended.\n"
-"                    "
-msgstr ""
-"\n"
-"                      مع التكوين الحالي، سيكون لهذا الدور وصول كامل للمؤسسة ولن يكون للأدوار التي يمكنها تعيينه ذلك.\n"
-"                      هذا غير موصى به.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      If the highlighted roles are selected, this role will have\n"
-"                      full organization access and be assignable by a role that\n"
-"                      does not. This is not recommended configuration.\n"
-"                    "
-msgstr ""
-"\n"
-"                      إذا تم اختيار الأدوار المميزة، فسيكون لهذا الدور وصول كامل للمؤسسة ويمكن تعيينه بواسطة دور لا يملك ذلك. هذا التكوين غير موصى به.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-#, python-format
-msgid ""
-"\n"
-"          This permission is already configured via\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Manage Web Apps Permissions\n"
-"          </a>\n"
-"          . Please remove this configuration before updating access here.\n"
-"        "
-msgstr ""
-"\n"
-"          تم تكوين هذا الإذن بالفعل عبر\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            إدارة أذونات تطبيقات الويب\n"
-"          </a>\n"
-"          . يرجى إزالة هذا التكوين قبل تحديث الوصول هنا.\n"
-"        "
-
 #: corehq/apps/users/templates/users/partials/confirm_trust_identity_provider_message.html
 msgid ""
 "\n"
@@ -54120,6 +54023,89 @@ msgstr ""
 "        <a href=\"#\">تعرف على المزيد</a> حول SSO على CommCare HQ.\n"
 "      "
 
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Role Name"
+msgstr "اسم الدور"
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      Make sure any users assigned this role also have a\n"
+"                      location assigned to them. Users without assigned\n"
+"                      locations will not be permitted to log in.\n"
+"                    "
+msgstr ""
+"\n"
+"                      تأكد من أن جميع المستخدمين المخصص لهم هذا الدور لديهم أيضًا موقع مخصص لهم. لن يُسمح للمستخدمين بدون مواقع مخصصة بتسجيل الدخول.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      Organization-based data access restrictions are only\n"
+"                      available on the Pro plan and above. Saving this role will\n"
+"                      enable full organization access for the assigned users.\n"
+"                    "
+msgstr ""
+"\n"
+"                      قيود الوصول إلى البيانات بناءً على المؤسسة متاحة فقط في خطة Pro وما فوقها. حفظ هذا الدور سيمكن الوصول الكامل للمؤسسة للمستخدمين المخصصين.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      With the current configuration, this role will have full\n"
+"                      organization access and roles that can assign it will not.\n"
+"                      This is not recommended.\n"
+"                    "
+msgstr ""
+"\n"
+"                      مع التكوين الحالي، سيكون لهذا الدور وصول كامل للمؤسسة ولن يكون للأدوار التي يمكنها تعيينه ذلك.\n"
+"                      هذا غير موصى به.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      If the highlighted roles are selected, this role will have\n"
+"                      full organization access and be assignable by a role that\n"
+"                      does not. This is not recommended configuration.\n"
+"                    "
+msgstr ""
+"\n"
+"                      إذا تم اختيار الأدوار المميزة، فسيكون لهذا الدور وصول كامل للمؤسسة ويمكن تعيينه بواسطة دور لا يملك ذلك. هذا التكوين غير موصى به.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#, python-format
+msgid ""
+"\n"
+"          This permission is already configured via\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Manage Web Apps Permissions\n"
+"          </a>\n"
+"          . Please remove this configuration before updating access here.\n"
+"        "
+msgstr ""
+"\n"
+"          تم تكوين هذا الإذن بالفعل عبر\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            إدارة أذونات تطبيقات الويب\n"
+"          </a>\n"
+"          . يرجى إزالة هذا التكوين قبل تحديث الوصول هنا.\n"
+"        "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
+msgid "Please select at least one item."
+msgstr "يرجى اختيار عنصر واحد على الأقل."
+
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
+#| msgid "Unlock Linked Fields?"
+msgid "Unlock Linked Roles?"
+msgstr "فتح الأدوار المرتبطة؟"
+
 #: corehq/apps/users/templates/users/partials/location_edit_warnings.html
 #, python-format
 msgid ""
@@ -54145,6 +54131,154 @@ msgstr ""
 "                تحذير: %(user_type)s \"%(couch_username)s\" يجب أن يكون لديه موقع واحد على الأقل معين.\n"
 "                لن يتمكن من تسجيل الدخول خلاف ذلك.\n"
 "            "
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#| msgid "IP Access"
+msgid "No Access"
+msgstr "لا يوجد وصول"
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#| msgid "Access Key"
+msgid "Access All"
+msgstr "الوصول إلى الكل"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"        Manage roles and permissions or add new custom roles.\n"
+"      "
+msgstr ""
+"\n"
+"        إدارة الأدوار والأذونات أو إضافة أدوار مخصصة جديدة.\n"
+"      "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"        View roles and permissions.\n"
+"      "
+msgstr ""
+"\n"
+"        عرض الأدوار والأذونات.\n"
+"      "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >Learn more</a\n"
+"          >\n"
+"          about how roles &amp; permissions are used.\n"
+"        "
+msgstr ""
+"\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >تعرف على المزيد</a\n"
+"          >\n"
+"          حول كيفية استخدام الأدوار والصلاحيات.\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"          Would you like to edit roles and add new, custom roles?\n"
+"        "
+msgstr ""
+"\n"
+"          هل ترغب في تعديل الأدوار وإضافة أدوار مخصصة جديدة؟\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#, python-format
+msgid ""
+"\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Upgrade to CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
+"          to activate\n"
+"          <strong>Advanced Role-Based Access</strong>.\n"
+"        "
+msgstr ""
+"\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >قم بالترقية إلى CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
+"          لتفعيل\n"
+"          <strong>إمكانية الوصول المتقدمة بناءً على الأدوار</strong>.\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Roles"
+msgstr "الأدوار"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage Shared Exports"
+msgstr "إدارة الصادرات المشتركة"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Apps"
+msgstr "التطبيقات"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/tabs/tabclasses.py
+msgid "Integration"
+msgstr "التكامل"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Subscription Info"
+msgstr "معلومات الاشتراك"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Mobile Worker Default Role"
+msgstr "الدور الافتراضي للعاملين على الجوال"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"This is the default role for all Mobile Workers that do not have a role "
+"assigned."
+msgstr ""
+"هذا هو الدور الافتراضي لجميع العاملين على الجوال الذين لم يتم تعيين دور لهم."
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Only"
+msgstr "فقط"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage All"
+msgstr "إدارة الكل"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage Only"
+msgstr "إدارة فقط"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View All Data"
+msgstr "عرض جميع البيانات"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View Data From"
+msgstr "عرض البيانات من"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
+msgid "Edit Role"
+msgstr "تعديل الدور"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View Role"
+msgstr "عرض الدور"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Add Role"
+msgstr "إضافة دور"
 
 #: corehq/apps/users/user_data.py
 msgid "Profile conflicts with existing data"
@@ -54606,12 +54740,12 @@ msgid "Password reset email sent to {}"
 msgstr "تم إرسال بريد إعادة تعيين كلمة المرور إلى {}"
 
 #: corehq/apps/users/views/role.py
-msgid "Roles & Permissions"
-msgstr "الأدوار والصلاحيات"
-
-#: corehq/apps/users/views/role.py
 msgid "Use Default"
 msgstr "استخدام الافتراضي"
+
+#: corehq/apps/users/views/role.py
+msgid "Roles & Permissions"
+msgstr "الأدوار والصلاحيات"
 
 #: corehq/apps/users/views/role.py
 msgid ""
@@ -54659,6 +54793,11 @@ msgid_plural ""
 " it."
 msgstr[0] ""
 msgstr[1] ""
+
+#: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
+#| msgid "Create Alert"
+msgid "Create Role"
+msgstr "إنشاء دور"
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -60097,6 +60236,76 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "CommCare from Google Play"
+#~ msgstr "CommCare من Google Play"
+
+#~ msgid "to your Android device."
+#~ msgstr "على جهاز أندرويد الخاص بك."
+
+#~ msgid "show all"
+#~ msgstr "عرض الكل"
+
+#~ msgid "Verify All"
+#~ msgstr "تحقق من الكل"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Make sure any users assigned this role also have a location assigned to them.\n"
+#~ "                    Users without assigned locations will not be permitted to log in.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    تأكد من أن أي مستخدمين تم تعيين هذا الدور لهم لديهم أيضًا موقع معين.\n"
+#~ "                    المستخدمون بدون مواقع معينة لن يُسمح لهم بتسجيل الدخول.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Organization-based data access restrictions are only available\n"
+#~ "                    on the Pro plan and above. Saving this role will enable\n"
+#~ "                    full organization access for the assigned users.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    قيود الوصول إلى البيانات بناءً على المؤسسة متاحة فقط\n"
+#~ "                    في خطة Pro وما فوقها. حفظ هذا الدور سيمكن\n"
+#~ "                    الوصول الكامل للمؤسسة للمستخدمين المعينين.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
+#~ "                    This is not recommended.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    مع الإعداد الحالي، سيكون لهذا الدور وصول كامل للمؤسسة ولن يكون للأدوار التي يمكنها تعيينه ذلك.\n"
+#~ "                    هذا غير موصى به.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
+#~ "                    by a role that does not. This is not recommended configuration.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    إذا تم اختيار الأدوار المظللة، سيكون لهذا الدور وصول كامل للمؤسسة ويمكن تعيينه\n"
+#~ "                    من قبل دور لا يملك ذلك. هذا الإعداد غير موصى به.\n"
+#~ "                  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            This permission is already configured via <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</a>.\n"
+#~ "            Please remove this configuration before updating access here.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            تم تكوين هذا الإذن بالفعل عبر <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">إدارة أذونات تطبيقات الويب</a>.\n"
+#~ "            يرجى إزالة هذا الإعداد قبل تحديث الوصول هنا.\n"
+#~ "          "
 
 #~ msgid ""
 #~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "

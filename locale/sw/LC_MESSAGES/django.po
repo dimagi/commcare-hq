@@ -327,10 +327,8 @@ msgstr "Akaunti ya Malipo"
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/domain/forms.py
@@ -1207,8 +1205,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
@@ -1312,18 +1309,16 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
@@ -4149,8 +4144,7 @@ msgstr "Aina ya Malipo"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/hqadmin/reports.py corehq/apps/linked_domain/views.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -4773,9 +4767,8 @@ msgstr "Ujumbe wa SMS"
 #: corehq/apps/campaign/templates/campaign/dashboard.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/mobile/custom_data_fields.py
 #: corehq/apps/users/views/mobile/users.py
 msgid "Mobile Workers"
@@ -4783,8 +4776,7 @@ msgstr "Wafanyakazi wa Simu"
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/forms.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
 msgid "Web Users"
@@ -5343,8 +5335,8 @@ msgstr "Jaza mtiririko wa kazi kutoka faili ya HAR"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/ui/forms.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
 #: corehq/motech/dhis2/forms.py corehq/motech/forms.py
@@ -5448,12 +5440,11 @@ msgstr ""
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/generic_inbound/views.py
 msgid "Actions"
 msgstr "Vitendo"
@@ -5552,9 +5543,7 @@ msgstr "Uendeshaji 10 wa Mwisho"
 #: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
 #: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
 #: corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
@@ -5562,6 +5551,7 @@ msgstr "Uendeshaji 10 wa Mwisho"
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
@@ -6012,9 +6002,8 @@ msgid "Select Case Type"
 msgstr "Chagua Aina ya Kesi"
 
 #: corehq/apps/app_manager/fields.py
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
@@ -6174,8 +6163,7 @@ msgid "Application Version"
 msgstr "Toleo la Programu"
 
 #: corehq/apps/app_manager/forms.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Manage Update Settings"
 msgstr "Dhibiti Mipangilio ya Masasisho"
 
@@ -6471,10 +6459,9 @@ msgstr "Kitambulisho cha mtumiaji"
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/userreports/reports/view.py corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Reports"
 msgstr "Ripoti"
@@ -6560,14 +6547,12 @@ msgstr ""
 "kuliko toleo hili. Lemaza matoleo ya juu kwanza."
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Released"
 msgstr "Imetolewa"
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "In Test"
 msgstr "Katika Majaribio"
 
@@ -7111,8 +7096,7 @@ msgid "Just One Day"
 msgstr "Siku Moja Tu"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
@@ -7331,8 +7315,7 @@ msgstr ""
 " la 2. Ukifanya hivyo, mpangilio huu hautaonekana tena kwenye ukurasa huu."
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Practice Mobile Worker"
 msgstr "Mfanyakazi wa Simu wa Mazoezi"
 
@@ -7981,6 +7964,15 @@ msgstr "Historia ya Toleo"
 msgid "Import"
 msgstr "Ingiza"
 
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+msgid "Releases"
+msgstr "Matoleo"
+
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+#: corehq/apps/domain/forms.py
+msgid "Release Mode"
+msgstr "Hali ya Toleo"
+
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
@@ -8047,17 +8039,6 @@ msgstr "Programu Isiyo na Jina"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view.html
 msgid "Enter app description here"
 msgstr "Weka maelezo ya programu hapa"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-msgid "Releases"
-msgstr "Matoleo"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-#: corehq/apps/domain/forms.py
-msgid "Release Mode"
-msgstr "Hali ya Toleo"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
@@ -8373,8 +8354,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
@@ -8389,7 +8369,6 @@ msgid "Download"
 msgstr "Pakua"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/odk_install.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #, python-format
 msgid ""
 "\n"
@@ -8430,8 +8409,8 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/style_configuration_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
@@ -8485,20 +8464,61 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Close"
 msgstr "Funga"
+
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "          You can also click\n"
+#| "          <strong>\n"
+#| "            <a class=\"track-usage-link\" href=\"%(profile_url)s\"\n"
+#| "               data-category=\"App Manager\" data-action=\"Initiate Install\"\n"
+#| "               data-label=\"Mobile Browser Link\">here</a>\n"
+#| "          </strong> in your mobile browser.\n"
+#| "        "
+msgid ""
+"\n"
+"          You can also click\n"
+"          <strong>\n"
+"            <a\n"
+"              class=\"track-usage-link\"\n"
+"              href=\"%(profile_url)s\"\n"
+"              data-category=\"App Manager\"\n"
+"              data-action=\"Initiate Install\"\n"
+"              data-label=\"Mobile Browser Link\"\n"
+"              >here</a\n"
+"            >\n"
+"          </strong>\n"
+"          in your mobile browser.\n"
+"        "
+msgstr ""
+"\n"
+"          Unaweza pia kubofya\n"
+"          <strong>\n"
+"            <a\n"
+"              class=\"track-usage-link\"\n"
+"              href=\"%(profile_url)s\"\n"
+"              data-category=\"App Manager\"\n"
+"              data-action=\"Initiate Install\"\n"
+"              data-label=\"Mobile Browser Link\"\n"
+"              >hapa</a\n"
+"            >\n"
+"          </strong>\n"
+"          kwenye kivinjari chako cha simu.\n"
+"        "
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
@@ -10080,8 +10100,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
@@ -13723,265 +13742,304 @@ msgstr "Inapakia Ukubwa wa Multimedia..."
 msgid "No Multimedia"
 msgstr "Hakuna Multimedia"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Release Logs"
 msgstr "Logi za Toleo la Programu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Version Number"
 msgstr "Nambari ya Toleo"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Update Type"
 msgstr "Aina ya Sasisho"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/models/types.py corehq/apps/reports/forms.py
 msgid "Time"
 msgstr "Muda"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid "Info"
 msgstr "Taarifa"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Current Profiles"
 msgstr "Profaili za Sasa"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
+#| "        "
 msgid ""
 "\n"
-"          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
+"          Remote applications only support one build profile. Please remove all\n"
+"          but one profile before saving.\n"
 "        "
 msgstr ""
 "\n"
-"          Programu za mbali zinasaidia profaili moja tu ya ujenzi. Tafadhali ondoa profaili zote isipokuwa moja kabla ya kuhifadhi.\n"
+"          Programu za mbali zinasaidia wasifu mmoja tu wa kujenga. Tafadhali ondoa wasifu zote isipokuwa moja kabla ya kuhifadhi.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "        Application profiles let you install the same application with different languages\n"
+#| "        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
+#| "        of the application.\n"
+#| "      "
 msgid ""
 "\n"
-"        Application profiles let you install the same application with different languages\n"
-"        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
-"        of the application.\n"
+"        Application profiles let you install the same application with different\n"
+"        languages and options on different phones. Application profiles will\n"
+"        appear in <em>new</em> versions of the application.\n"
 "      "
 msgstr ""
 "\n"
-"        Profaili za programu hukuruhusu kusakinisha programu ile ile na lugha tofauti\n"
-"        na chaguo kwenye simu tofauti. Profaili za programu zitaonekana kwenye matoleo <em>mapya</em>\n"
-"        ya programu.\n"
+"        Wasifu wa programu hukuruhusu kusakinisha programu ile ile na lugha na chaguzi tofauti kwenye simu tofauti. Wasifu wa programu wataonekana kwenye matoleo <em>mapya</em> ya programu.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Manage application profiles here."
 msgstr "Simamia profaili za programu hapa."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
+#| "      "
 msgid ""
 "\n"
-"        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
+"        Learn more about Application Profiles on our\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/Application+Profiles\"\n"
+"          >Help Site</a\n"
+"        >\n"
 "      "
 msgstr ""
 "\n"
-"        Jifunze zaidi kuhusu Profaili za Programu kwenye <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Tovuti yetu ya Msaada</a>\n"
+"        Jifunze zaidi kuhusu Wasifu wa Programu kwenye\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/Application+Profiles\"\n"
+"          >Tovuti ya Msaada</a\n"
+"        >\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Profile Name"
 msgstr "Jina la Profaili"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Default Language"
 msgstr "Lugha Chaguo-msingi"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Upgrade to CommCare 2.30!"
 msgstr "Boresha hadi CommCare 2.30!"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Latest Enabled Version:"
 msgstr "Toleo la Mwisho Lililowezeshwa:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Add Profile"
 msgstr "Ongeza Profaili"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+#| msgid ""
+#| "\n"
+#| "      <p class=\"lead\">\n"
+#| "        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
+#| "      </p>\n"
+#| "    "
 msgid ""
 "\n"
-"      <p class=\"lead\">\n"
-"        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to\n"
+"          start building your App!\n"
+"        </p>\n"
+"      "
 msgstr ""
 "\n"
-"      <p class=\"lead\">\n"
-"        Tafadhali bonyeza <i class=\"fa fa-plus\"></i> <strong>Ongeza...</strong> kuanza kujenga Programu yako!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          Tafadhali bofya <i class=\"fa fa-plus\"></i> <strong>Ongeza...</strong> ili\n"
+"          kuanza kujenga Programu yako!\n"
+"        </p>\n"
+"      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+#| msgid ""
+#| "\n"
+#| "      <p class=\"lead\">\n"
+#| "        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
+#| "      </p>\n"
+#| "    "
 msgid ""
 "\n"
-"      <p class=\"lead\">\n"
-"        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          As you build your App, check out the <strong>App Preview</strong> to\n"
+"          demo it in real time!\n"
+"        </p>\n"
+"      "
 msgstr ""
 "\n"
-"      <p class=\"lead\">\n"
-"        Unapojenga Programu yako, angalia <strong>Onyesho la Awali la Programu</strong> ili kuijaribu papo hapo!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          Unapojenga Programu yako, angalia <strong>Muonekano wa Programu</strong> ili\n"
+"          kuijaribu papo hapo!\n"
+"        </p>\n"
+"      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Versions"
 msgstr "Matoleo"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Profiles"
 msgstr "Profaili za Programu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
+#| "            Before you can publish your application,\n"
+#| "          "
 msgid ""
 "\n"
-"            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
-"            Before you can publish your application,\n"
+"            Your project does not have any mobile workers! Only mobile workers\n"
+"            can log into a CommCare application. Before you can publish your\n"
+"            application,\n"
 "          "
 msgstr ""
 "\n"
-"            Mradi wako hauna wafanyakazi wa simu!  Ni wafanyakazi wa simu pekee wanaoweza kuingia kwenye programu ya CommCare.\n"
-"            Kabla hujachapisha programu yako,\n"
+"            Mradi wako hauna wafanyakazi wa simu! Ni wafanyakazi wa simu pekee\n"
+"            wanaoweza kuingia kwenye programu ya CommCare. Kabla ya kuchapisha\n"
+"            programu yako,\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "create your first mobile worker"
 msgstr "unda mfanyakazi wako wa kwanza wa simu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Download to Android"
 msgstr "Pakua kwenye Android"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Online Install"
 msgstr "Usakinishaji Mtandaoni"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Offline Install"
 msgstr "Usakinishaji Nje ya Mtandao"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-msgid "CommCare from Google Play"
-msgstr "CommCare kutoka Google Play"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                        <p>\n"
+#| "                          You haven't saved any questions as case properties.\n"
+#| "                          Only case properties become part of a case.\n"
+#| "                        </p>\n"
+#| "                        <p>\n"
+#| "                          Watch this video to learn how to save questions as case properties.\n"
+#| "                        </p>\n"
+#| "                      "
+msgid ""
+"\n"
+"                            Download\n"
+"                            <a\n"
+"                              href=\"https://play.google.com/store/apps/details?id=org.commcare.dalvik\"\n"
+"                              >CommCare from Google Play</a\n"
+"                            >\n"
+"                            to your Android device.\n"
+"                          "
+msgstr ""
+"\n"
+"                            Pakua\n"
+"                            <a\n"
+"                              href=\"https://play.google.com/store/apps/details?id=org.commcare.dalvik\"\n"
+"                              >CommCare kutoka Google Play</a\n"
+"                            >\n"
+"                            kwenye kifaa chako cha Android.\n"
+"                          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-msgid "to your Android device."
-msgstr "kwenye kifaa chako cha Android."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "Application Profile"
 msgstr "Wasifu wa Programu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Include Multimedia"
 msgstr "Jumuisha Multimedia"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Only supported for versions made after 2013-10-15"
 msgstr "Inasaidiwa tu kwa matoleo yaliyotengenezwa baada ya 2013-10-15"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Download Targeted Version"
 msgstr "Pakua Toleo Lililolengwa"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                            Open the app on your Android and use one of the following installation methods:\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Open the app on your Android and use one of the following installation methods:\n"
+"                            Open the app on your Android and use one of the\n"
+"                            following installation methods:\n"
 "                          "
 msgstr ""
 "\n"
-"                            Fungua programu kwenye Android yako na tumia mojawapo ya njia zifuatazo za usakinishaji:\n"
+"                            Fungua programu kwenye Android yako na tumia mojawapo ya\n"
+"                            mbinu zifuatazo za usakinishaji:\n"
 "                          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Scan Application Barcode"
 msgstr "Changanua Msimbo wa Msimbo wa Programu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Enter App Code"
 msgstr "Weka Msimbo wa Programu"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Enter app code on installation screen: "
 msgstr "Weka msimbo wa programu kwenye skrini ya usakinishaji: "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                                                            (No app code available. If you would like to use an app code instead\n"
+#| "                                                            of scanning the application barcode, try making another version.)\n"
+#| "                                                          "
 msgid ""
 "\n"
-"                                                            (No app code available. If you would like to use an app code instead\n"
-"                                                            of scanning the application barcode, try making another version.)\n"
-"                                                          "
+"                                (No app code available. If you would like to use\n"
+"                                an app code instead of scanning the application\n"
+"                                barcode, try making another version.)\n"
+"                              "
 msgstr ""
 "\n"
-"                                                            (Hakuna msimbo wa programu uliopo. Ikiwa ungependa kutumia msimbo wa programu badala\n"
-"                                                            ya kuchanganua msimbo wa programu, jaribu kutengeneza toleo jingine.)\n"
-"                                                          "
+"                                (Hakuna msimbo wa programu uliopo. Ikiwa ungependa kutumia\n"
+"                                msimbo wa programu badala ya kuchanganua msimbo wa programu,\n"
+"                                jaribu kutengeneza toleo jingine.)\n"
+"                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Transfer this file to your Android phone's file system"
 msgstr "Hamisha faili hii kwenye mfumo wa faili wa simu yako ya Android"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "\n"
 "                                Login to the CommCare App, tap the three dots in\n"
@@ -13996,8 +14054,7 @@ msgstr ""
 "                                gusa tena menyu ya nukta tatu na uchague \"Sasisho la Nje ya Mtandao.\"\n"
 "                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "You'll be prompted to select this file from your phone's file system and "
 "install will begin"
@@ -14005,128 +14062,148 @@ msgstr ""
 "Utaombwa kuchagua faili hii kutoka kwenye mfumo wa faili wa simu yako na "
 "usakinishaji utaanza"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
 msgid ""
 "\n"
-"                                Note: Offline install automatically installs all multimedia\n"
-"                                included in your form. All subsequent remote updates will also\n"
-"                                include multimedia which could require a lot of data. See the\n"
-"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                Note: Offline install automatically installs all\n"
+"                                multimedia included in your form. All subsequent\n"
+"                                remote updates will also include multimedia\n"
+"                                which could require a lot of data. See the\n"
+"                                <a\n"
+"                                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\"\n"
+"                                >\n"
 "                                  Help Site\n"
-"                                </a> for more info.\n"
+"                                </a>\n"
+"                                for more info.\n"
 "                              "
 msgstr ""
 "\n"
-"                                Kumbuka: Usakinishaji nje ya mtandao unasakinisha moja kwa moja multimedia\n"
-"                                yote iliyojumuishwa kwenye fomu yako. Sasisho zote za mbali zitakazofuata pia\n"
-"                                zitajumuisha multimedia ambayo inaweza kuhitaji data nyingi. Tazama\n"
-"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                Kumbuka: Usakinishaji wa nje ya mtandao unasakinisha moja kwa moja\n"
+"                                vyombo vyote vya multimedia vilivyojumuishwa kwenye fomu yako. Sasisho zote\n"
+"                                za mbali zitajumuisha pia multimedia\n"
+"                                ambayo inaweza kuhitaji data nyingi. Tazama\n"
+"                                <a\n"
+"                                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\"\n"
+"                                >\n"
 "                                  Tovuti ya Msaada\n"
-"                                </a> kwa maelezo zaidi.\n"
+"                                </a>\n"
+"                                kwa maelezo zaidi.\n"
 "                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Open in Web Apps"
 msgstr "Fungua kwenye Programu za Wavuti"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Send to phone via SMS"
 msgstr "Tuma kwenye simu kupitia SMS"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
 msgid "Download Multimedia"
 msgstr "Pakua Multimedia"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "View Source Files"
 msgstr "Tazama Faili Asili"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
-msgid "Send to"
-msgstr "Tuma kwa"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "Send to"
+msgid "Send to:"
+msgstr "Tuma kwa:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
-msgid "SMS charges will incur."
-msgstr "Gharama za SMS zitatumika."
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "Prompt Updates to CommCare"
+msgid "Update to CommCare:"
+msgstr "Sasisha hadi CommCare:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "SMS charges will incur."
+msgid "SMS charges will be incurred."
+msgstr "Gharama za SMS zitatozwa."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Send"
 msgstr "Tuma"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "No URL was found for this app, try rebuilding."
 msgstr "Hakuna URL iliyopatikana kwa programu hii, jaribu kujenga upya."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "        One or more of your versions is broken, please make sure it is\n"
+#| "        not marked as released. Make a new version if needed, and update\n"
+#| "        any live deployments as soon as possible.\n"
+#| "      "
 msgid ""
 "\n"
-"        One or more of your versions is broken, please make sure it is\n"
-"        not marked as released. Make a new version if needed, and update\n"
-"        any live deployments as soon as possible.\n"
+"        One or more of your versions is broken, please make sure it is not\n"
+"        marked as released. Make a new version if needed, and update any live\n"
+"        deployments as soon as possible.\n"
 "      "
 msgstr ""
 "\n"
-"        Moja au zaidi ya matoleo yako yameharibika, tafadhali hakikisha hayajawekwa kama yameachiliwa. Tengeneza toleo jipya ikiwa inahitajika, na sasisha\n"
-"        usambazaji wowote unaoendelea haraka iwezekanavyo.\n"
+"        Toleo moja au zaidi limeharibika, tafadhali hakikisha halijawekwa kama\n"
+"        limetolewa. Tengeneza toleo jipya ikiwa inahitajika, na sasisha\n"
+"        usambazaji wowote unaotumika haraka iwezekanavyo.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "          All new versions should work, so if problems persist, please report the issue.\n"
+#| "        "
 msgid ""
 "\n"
-"          All new versions should work, so if problems persist, please report the issue.\n"
+"          All new versions should work, so if problems persist, please report\n"
+"          the issue.\n"
 "        "
 msgstr ""
 "\n"
-"          Matoleo yote mapya yanapaswa kufanya kazi, hivyo ikiwa matatizo yataendelea, tafadhali ripoti tatizo hilo.\n"
+"          Matoleo yote mapya yanapaswa kufanya kazi, hivyo kama matatizo yataendelea, tafadhali ripoti\n"
+"          tatizo.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Show only released versions"
 msgstr "Onyesha matoleo yaliyotolewa pekee"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Released versions only"
 msgstr "Matoleo yaliyotolewa pekee"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-msgid "show all"
-msgstr "onyesha yote"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/choice_providers.py
+#: corehq/apps/userreports/tests/test_choice_provider.py
+#: corehq/apps/users/forms.py
+msgid "Show All"
+msgstr "Onyesha Zote"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Timing"
 msgstr "Muda"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Make New Version"
 msgstr "Tengeneza Toleo Jipya"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid ""
 "\n"
 "        The new application build contains the following deprecated case types:\n"
@@ -14136,139 +14213,142 @@ msgstr ""
 "        Ujenzi mpya wa programu unajumuisha aina zifuatazo za kesi zilizopitwa na wakati:\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "        For more information on deprecated case types, see the following\n"
+#| "        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
+#| "      "
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
-"        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"          >documentation</a\n"
+"        >.\n"
 "      "
 msgstr ""
 "\n"
-"        Kwa maelezo zaidi kuhusu aina za kesi zilizopitwa na wakati, tazama\n"
-"        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">nyaraka</a> zifuatazo.\n"
+"        Kwa maelezo zaidi kuhusu aina za kesi zilizopitwa na wakati, angalia\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"          >nyaraka</a\n"
+"        >.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/users/decorators.py
 msgid "Sorry, you don't have permission to do this action!"
 msgstr "Samahani, huna ruhusa ya kufanya kitendo hiki!"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Loading versions..."
 msgstr "Inapakia matoleo..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid ""
 "An error occurred while fetching versions. Reload the page to try again."
 msgstr ""
 "Hitilafu imetokea wakati wa kuchukua matoleo. Pakia upya ukurasa kujaribu "
 "tena."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-msgid "Could not update"
-msgstr "Haikuweza kusasishwa"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Latest"
 msgstr "Ya Hivi Punde"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid "Could not update"
+msgstr "Haikuweza kusasishwa"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "by"
 msgstr "na"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "with CommCare v."
 msgstr "kwa CommCare toleo la."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Unsigned Jar"
 msgstr "Jar isiyosainiwa"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "(Click here to add a comment)"
 msgstr "(Bofya hapa kuongeza maoni)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Error updating comment.  Please try again."
 msgstr "Hitilafu imetokea wakati wa kusasisha maoni. Tafadhali jaribu tena."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "View Changes"
 msgstr "Tazama Mabadiliko"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Revert to this Version"
 msgstr "Rudisha kwenye Toleo Hili"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Publish"
 msgstr "Chapisha"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Delete Version?"
 msgstr "Futa Toleo?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Are you sure you want to delete this version"
 msgstr "Una uhakika unataka kufuta toleo hili"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Delete Version"
 msgstr "Futa Toleo"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Revert to Version?"
 msgstr "Rudisha kwenye Toleo?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "              This version uses an outdated form of case management.\n"
+#| "              We advise against reverting back to this version.\n"
+#| "            "
 msgid ""
 "\n"
-"              This version uses an outdated form of case management.\n"
-"              We advise against reverting back to this version.\n"
+"              This version uses an outdated form of case\n"
+"              management. We advise against reverting back to this version.\n"
 "            "
 msgstr ""
 "\n"
 "              Toleo hili linatumia mfumo wa zamani wa usimamizi wa kesi.\n"
-"              Tunashauri usirudishe kwenye toleo hili.\n"
+"              Tunashauri dhidi ya kurudi kwenye toleo hili.\n"
 "            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
+#| "          "
 msgid ""
-"\n"
-"            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
+" Are you sure you want to revert to version\n"
+"            <span data-bind=\"text: version\"></span>?\n"
+"          </p>\n"
 "          "
 msgstr ""
-"\n"
-"            Una uhakika unataka kurudisha kwenye toleo <span data-bind=\"text: version\"></span>?</p>\n"
+" Je, una uhakika unataka kurudi kwenye toleo\n"
+"            <span data-bind=\"text: version\"></span>?\n"
+"          </p>\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Revert"
 msgstr "Rudisha"
@@ -14541,7 +14621,6 @@ msgstr "Linganisha"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "This application currently does not contain any multimedia references."
 msgstr "Programu hii kwa sasa haina marejeleo yoyote ya multimedia."
 
@@ -16573,8 +16652,7 @@ msgstr "Utafutaji wa fuzzy haukubaliwi na thamani nyingi"
 #: corehq/apps/integration/kyc/views.py
 #: corehq/apps/integration/payments/views.py corehq/apps/settings/views.py
 #: corehq/apps/userreports/reports/builder/forms.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Data"
 msgstr "Data"
@@ -16920,8 +16998,8 @@ msgstr "Hakuna programu za Programu za Wavuti zilizopo"
 
 #: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html
 #: corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/tabs/tabclasses.py
 msgid "Web Apps"
 msgstr "Programu za Wavuti"
@@ -17606,8 +17684,7 @@ msgstr "Funga Sehemu Zilizounganishwa Kwa Ajili Yangu"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/edit_role.html
 msgid "Linked Configurations"
 msgstr "Mipangilio Iliyounganishwa"
 
@@ -17816,8 +17893,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/modal_edit.html
 #: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/linked_roles_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/linked_roles_modal.html
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 msgid "Unlock"
 msgstr "Fungua"
 
@@ -17962,8 +18038,7 @@ msgstr "Simamia Muundo wa Shirika"
 
 #: corehq/apps/dashboard/views.py corehq/apps/email/views.py
 #: corehq/apps/sms/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Messaging"
 msgstr "Ujumbe"
@@ -19288,8 +19363,7 @@ msgstr "Thamani halali: %s"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Data Dictionary"
 msgstr "Kamusi ya Data"
 
@@ -19832,8 +19906,7 @@ msgid "FHIR Resource Property"
 msgstr "Sifa ya Rasilimali ya FHIR"
 
 #: corehq/apps/data_dictionary/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "No Name"
 msgstr "Hakuna Jina"
 
@@ -22024,10 +22097,6 @@ msgid ""
 msgstr "Inaonekana namba hii ya simu si sahihi. Je, umesahau msimbo wa nchi?"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "\n"
-#| "                Please provide an autopay card before continuing.\n"
-#| "              "
 msgid "Please provide an autopay card before continuing."
 msgstr "Tafadhali toa kadi ya malipo ya moja kwa moja kabla ya kuendelea."
 
@@ -26925,8 +26994,8 @@ msgstr ""
 "programu inayotoa katika mipangilio ya msimamizi wa programu."
 
 #: corehq/apps/domain/views/settings.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr "Simamia Arifa za Mradi"
 
@@ -27116,7 +27185,7 @@ msgstr ""
 "Inatumika tu pale lango ni SES ya Amazon na vichwa vya ufuatiliaji "
 "vimewezeshwa."
 
-#: corehq/apps/email/forms.py
+#: corehq/apps/email/forms.py corehq/apps/users/templates/users/edit_role.html
 msgid "Saved"
 msgstr "Imehifadhiwa"
 
@@ -28130,8 +28199,7 @@ msgstr ""
 "    "
 
 #: corehq/apps/events/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/privileges.py corehq/tabs/tabclasses.py
 msgid "Attendance Tracking"
 msgstr "Ufuatiliaji wa Mahudhurio"
@@ -28711,8 +28779,8 @@ msgstr "Kiungo cha kesi hii"
 
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "CommCare Analytics"
 msgstr "Takwimu za CommCare"
 
@@ -32050,16 +32118,6 @@ msgstr "Hali ya Upeanaji"
 
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
-#: corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/choice_providers.py
-#: corehq/apps/userreports/tests/test_choice_provider.py
-#: corehq/apps/users/forms.py
-msgid "Show All"
-msgstr "Onyesha Zote"
-
-#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
-#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 msgid "Assigned Only"
 msgstr "Zilizogawiwa Pekee"
 
@@ -32282,9 +32340,8 @@ msgstr "Ombi la kugawa upya kesi limekubaliwa na litakamilika baada ya muda"
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/mobile/groups.py corehq/tabs/tabclasses.py
 msgid "Groups"
 msgstr "Makundi"
@@ -32390,6 +32447,7 @@ msgstr ""
 "                                    mipangilio ya kundi hili."
 
 #: corehq/apps/groups/templates/groups/all_groups.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
 msgid "Limited Access"
 msgstr "Ufikiaji Uliopunguzwa"
 
@@ -32491,6 +32549,16 @@ msgstr ""
 "                        kitakachotokea. Ikiwa nambari ya simu inasubiri uthibitishaji, SMS ya uthibitishaji\n"
 "                        itatumwa tena.\n"
 "                        "
+
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+msgid "SMS charges will incur."
+msgstr "Gharama za SMS zitatumika."
 
 #: corehq/apps/groups/templates/groups/group_members.html
 #, python-format
@@ -33694,7 +33762,6 @@ msgid "Begin Upload"
 msgstr "Anza Kupakia"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid ""
 "<strong>Warning:</strong>\n"
 "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
@@ -33705,7 +33772,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid ""
 "\n"
 "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
@@ -33752,6 +33818,53 @@ msgstr ""
 "\n"
 "    Hakuna vyombo vya habari vilivyopatikana vinavyolingana na vichujio vyako.\n"
 "  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "<strong>Warning:</strong>\n"
+#| "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
+#| "  "
+msgid ""
+"\n"
+"      <strong>Warning:</strong>\n"
+"      This application contains forms with errors&mdash;we cannot pull any\n"
+"      multimedia references from those forms.\n"
+"    "
+msgstr ""
+"\n"
+"      <strong>Onyo:</strong>\n"
+"      Programu hii ina fomu zenye makosa—hatuwezi kuchukua marejeleo yoyote ya\n"
+"      multimedia kutoka kwenye fomu hizo.\n"
+"    "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "\n"
+#| "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+#| "        This application is missing references, so this zip will be incomplete.\n"
+#| "      "
+msgid ""
+"\n"
+"      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"      This application is missing references, so this zip will be incomplete.\n"
+"    "
+msgstr ""
+"\n"
+"      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"      Programu hii haina marejeleo, hivyo faili hii ya zip haitakuwa kamili.\n"
+"    "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "This application currently does not contain any multimedia references."
+msgid ""
+"\n"
+"      This application currently does not contain any multimedia references.\n"
+"    "
+msgstr ""
+"\n"
+"      Programu hii kwa sasa haina marejeleo yoyote ya multimedia.\n"
+"    "
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
@@ -36147,6 +36260,19 @@ msgid "Other Case Type"
 msgstr "Aina Nyingine ya Kesi"
 
 #: corehq/apps/integration/kyc/forms.py
+#| msgid "Full Name"
+msgid "Stores Full Name"
+msgstr "Jina Kamili la Duka"
+
+#: corehq/apps/integration/kyc/forms.py
+msgid ""
+"Check this box if the project stores the beneficiary's full name in a single"
+" field instead of separate first and last name fields."
+msgstr ""
+"Angalia kisanduku hiki ikiwa mradi unahifadhi jina kamili la mnufaika kwenye"
+" sehemu moja badala ya sehemu tofauti za jina la kwanza na la mwisho."
+
+#: corehq/apps/integration/kyc/forms.py
 msgid "Provider"
 msgstr "Mtoa Huduma"
 
@@ -36774,10 +36900,6 @@ msgstr ""
 "\n"
 "            Nenda huko.\n"
 "          "
-
-#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
-msgid "Verify All"
-msgstr "Thibitisha Zote"
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_config_form_partial.html
 #: corehq/apps/integration/templates/payments/partials/payments_config_form_partial.html
@@ -38566,9 +38688,8 @@ msgstr ""
 
 #: corehq/apps/locations/views.py corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/privileges.py
 msgid "Locations"
 msgstr "Maeneo"
@@ -40799,10 +40920,9 @@ msgstr "Futa Sajili"
 
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/registry/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/tabs/tabclasses.py
 msgid "Data Registries"
 msgstr "Sajili za Data"
@@ -53776,197 +53896,6 @@ msgstr "Tuma Barua Pepe ya Uthibitisho wa Akaunti"
 msgid "Loading Pending Account Confirmations..."
 msgstr "Inapakia Uthibitisho wa Akaunti Unasubiri..."
 
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"        Manage roles and permissions or add new custom roles.\n"
-"      "
-msgstr ""
-"\n"
-"        Dhibiti majukumu na ruhusa au ongeza majukumu mapya maalum.\n"
-"      "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"        View roles and permissions.\n"
-"      "
-msgstr ""
-"\n"
-"        Tazama majukumu na ruhusa.\n"
-"      "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"          <a\n"
-"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\"\n"
-"            >Learn more</a\n"
-"          >\n"
-"          about how roles &amp; permissions are used.\n"
-"        "
-msgstr ""
-"\n"
-"          <a\n"
-"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\"\n"
-"            >Jifunze zaidi</a\n"
-"          >\n"
-"          kuhusu jinsi majukumu na ruhusa vinavyotumika.\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Unlock Linked Roles For Me"
-msgstr "Fungua Majukumu Yaliyounganishwa Kwangu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Lock Linked Roles For Me"
-msgstr "Funga Majukumu Yaliyounganishwa Kwangu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"            Linked configurations are controlled from a separate, linked project\n"
-"            space.\n"
-"            <a\n"
-"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-"              target=\"_blank\"\n"
-"              >Learn more</a\n"
-"            >.\n"
-"          "
-msgstr ""
-"\n"
-"            Usanidi uliounganishwa unadhibitiwa kutoka kwenye nafasi tofauti ya mradi\n"
-"            iliyounganishwa.\n"
-"            <a\n"
-"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-"              target=\"_blank\"\n"
-"              >Jifunze zaidi</a\n"
-"            >.\n"
-"          "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"          Would you like to edit roles and add new, custom roles?\n"
-"        "
-msgstr ""
-"\n"
-"          Je, ungependa kuhariri majukumu na kuongeza majukumu mapya, maalum?\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#, python-format
-msgid ""
-"\n"
-"          <strong\n"
-"            ><a href=\"%(subscription_url)s\"\n"
-"              >Upgrade to CommCare Standard</a\n"
-"            ></strong\n"
-"          >\n"
-"          to activate\n"
-"          <strong>Advanced Role-Based Access</strong>.\n"
-"        "
-msgstr ""
-"\n"
-"          <strong\n"
-"            ><a href=\"%(subscription_url)s\"\n"
-"              >Boresha hadi CommCare Standard</a\n"
-"            ></strong\n"
-"          >\n"
-"          ili kuwezesha\n"
-"          <strong>Ufikiaji wa Jukumu la Juu</strong>.\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Roles"
-msgstr "Majukumu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage Shared Exports"
-msgstr "Dhibiti Uhamishaji wa Pamoja"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Apps"
-msgstr "Programu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/tabs/tabclasses.py
-msgid "Integration"
-msgstr "Ujumuishaji"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Subscription Info"
-msgstr "Taarifa za Usajili"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Mobile Worker Default Role"
-msgstr "Jukumu Chaguo-msingi la Mfanyakazi wa Simu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"This is the default role for all Mobile Workers that do not have a role "
-"assigned."
-msgstr ""
-"Hili ndilo jukumu chaguo-msingi kwa Wafanyakazi wote wa Simu ambao "
-"hawajapewa jukumu."
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Only"
-msgstr "Ni"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage All"
-msgstr "Dhibiti Yote"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage Only"
-msgstr "Dhibiti Tu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View All Data"
-msgstr "Tazama Data Yote"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View Data From"
-msgstr "Tazama Data Kutoka"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Edit Role"
-msgstr "Hariri Jukumu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View Role"
-msgstr "Tazama Jukumu"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Add Role"
-msgstr "Ongeza Jukumu"
-
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #, python-format
@@ -54215,6 +54144,334 @@ msgstr ""
 "            tafadhali\n"
 "            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">ripoti tatizo</a>.\n"
 "          "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Unlock Linked Roles For Me"
+msgid "Unlock Linked Role For Me"
+msgstr "Fungua Jukumu Lililounganishwa Kwangu"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Lock Linked Roles For Me"
+msgid "Lock Linked Role For Me"
+msgstr "Funga Jukumu Lililounganishwa Kwa Ajili Yangu"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "            Linked configurations are controlled from a separate, linked project\n"
+#| "            space.\n"
+#| "            <a\n"
+#| "              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+#| "              target=\"_blank\"\n"
+#| "              >Learn more</a\n"
+#| "            >.\n"
+#| "          "
+msgid ""
+"\n"
+"                Linked configurations are controlled from a separate, linked\n"
+"                project space.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"                  target=\"_blank\"\n"
+"                  >Learn more</a\n"
+"                >.\n"
+"              "
+msgstr ""
+"\n"
+"                Mipangilio iliyounganishwa inadhibitiwa kutoka kwenye eneo tofauti la mradi\n"
+"                lililounganishwa.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"                  target=\"_blank\"\n"
+"                  >Jifunze zaidi</a\n"
+"                >.\n"
+"              "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Area Access"
+msgstr "Upatikanaji wa Eneo"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Can Edit"
+msgstr "Inaweza Kuhariri"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Can View"
+msgstr "Inaweza Kuangalia"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Access Specific Reports"
+msgstr "Fikia Ripoti Maalum"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which reports the role can access:"
+msgstr "Chagua ripoti ambazo jukumu linaweza kufikia:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Access Specific Tableau Reports"
+msgstr "Fikia Ripoti Maalum za Tableau"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which Tableau reports the role can access:"
+msgstr "Chagua ripoti za Tableau ambazo jukumu linaweza kufikia:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "All CommCare Analytics Roles"
+msgstr "Majukumu Yote ya Uchambuzi wa CommCare"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign all commcare analytics roles to users with this role"
+msgstr ""
+"Weka majukumu yote ya uchambuzi wa commcare kwa watumiaji wenye jukumu hili"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "CommCare Analytics Roles"
+msgstr "Majukumu ya Uchambuzi wa CommCare"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Commcare Analytics Roles:"
+msgstr "Majukumu ya Uchambuzi wa Commcare:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Other Settings"
+msgstr "Mipangilio Mengine"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Integration Access"
+msgstr "Ufikiaji wa Ujumuishaji"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to manage integration with other systems."
+msgstr "Ruhusu jukumu kusimamia ujumuishaji na mifumo mingine."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Manage Subscription Info"
+msgstr "Simamia Taarifa za Usajili"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to manage subscription information."
+msgstr "Ruhusu jukumu kusimamia taarifa za usajili."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Full Organization Access"
+msgstr "Ufikiaji Kamili wa Shirika"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to access data from all locations."
+msgstr "Ruhusu jukumu kufikia data kutoka maeneo yote."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      Make sure any users assigned this role also have a\n"
+#| "                      location assigned to them. Users without assigned\n"
+#| "                      locations will not be permitted to log in.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        Make sure any users assigned this role also have a\n"
+"                        location assigned to them. Users without assigned\n"
+"                        locations will not be permitted to log in.\n"
+"                      "
+msgstr ""
+"\n"
+"                        Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa\n"
+"                        eneo. Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa\n"
+"                        kuingia.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      Organization-based data access restrictions are only\n"
+#| "                      available on the Pro plan and above. Saving this role will\n"
+#| "                      enable full organization access for the assigned users.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        Organization-based data access restrictions are only\n"
+"                        available on the Pro plan and above. Saving this role\n"
+"                        will enable full organization access for the assigned\n"
+"                        users.\n"
+"                      "
+msgstr ""
+"\n"
+"                        Vikwazo vya upatikanaji wa data kulingana na shirika vinapatikana tu\n"
+"                        kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili\n"
+"                        kutawezesha upatikanaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      With the current configuration, this role will have full\n"
+#| "                      organization access and roles that can assign it will not.\n"
+#| "                      This is not recommended.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        With the current configuration, this role will have full\n"
+"                        organization access and roles that can assign it will\n"
+"                        not. This is not recommended.\n"
+"                      "
+msgstr ""
+"\n"
+"                        Kwa mipangilio ya sasa, jukumu hili litakuwa na upatikanaji kamili wa\n"
+"                        shirika na majukumu yanayoweza kulipangia hayatakuwa nayo. Hii haipendekezwi.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Login-As All Users"
+msgstr "Ingia-Kama Watumiaji Wote"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as any mobile worker in Web Apps."
+msgstr ""
+"Ruhusu mtumiaji kuingia kama mfanyakazi yeyote wa simu kwenye Web Apps."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Limit Login-As"
+msgstr "Punguza Ingia-Kama"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as only specified users in Web Apps."
+msgstr "Ruhusu mtumiaji kuingia kama watumiaji maalum tu kwenye Web Apps."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Login-As Default User"
+msgstr "Ingia-Kama Mtumiaji Chaguo-msingi"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as the default user in Web Apps."
+msgstr "Ruhusu mtumiaji kuingia kama mtumiaji chaguo-msingi kwenye Web Apps."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Mobile App Access"
+msgstr "Ufikiaji wa Programu ya Simu"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow mobile users access to offline mobile application"
+msgstr "Ruhusu watumiaji wa simu kufikia programu ya simu isiyohitaji mtandao"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Default Landing Page"
+msgstr "Ukurasa Chaguo-msingi wa Kutua"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow Reporting Issues"
+msgstr "Ruhusu Kuripoti Matatizo"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow this role to report issues."
+msgstr "Ruhusu jukumu hili kuripoti matatizo."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Non-admin Editable"
+msgstr "Inaweza Kuhaririwa na Wasio Wasimamizi"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow all non-admins to assign this role to other users."
+msgstr "Ruhusu wasio wasimamizi wote kupangia watumiaji wengine jukumu hili."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Manage Role Assignment"
+msgstr "Simamia Uteuzi wa Majukumu"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which other roles can assign this role:"
+msgstr "Chagua majukumu mengine yanayoweza kupangia jukumu hili:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      If the highlighted roles are selected, this role will have\n"
+#| "                      full organization access and be assignable by a role that\n"
+#| "                      does not. This is not recommended configuration.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        If the highlighted roles are selected, this role will\n"
+"                        have full organization access and be assignable by a\n"
+"                        role that does not. This is not recommended\n"
+"                        configuration.\n"
+"                      "
+msgstr ""
+"\n"
+"                        Ikiwa majukumu yaliyopigwa mwangaza yamechaguliwa, jukumu hili litakuwa na\n"
+"                        upatikanaji kamili wa shirika na linaweza kupangiwa na jukumu ambalo halina.\n"
+"                        Hii si mipangilio inayopendekezwa.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign All User Profiles"
+msgstr "Weka Wasifu Wote wa Watumiaji"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"Allow role to access all user profiles while setting up mobile workers and "
+"web users."
+msgstr ""
+"Ruhusu jukumu kufikia wasifu wote wa watumiaji wakati wa kuweka wafanyakazi "
+"wa simu na watumiaji wa wavuti."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign Specific User Profiles"
+msgstr "Weka Wasifu Maalum wa Watumiaji"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"Select which user profiles the role can assign to mobile workers and web "
+"users:"
+msgstr ""
+"Chagua wasifu wa watumiaji ambao jukumu linaweza kupangia wafanyakazi wa "
+"simu na watumiaji wa wavuti:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow this role to manage project alerts."
+msgstr "Ruhusu jukumu hili kusimamia arifa za mradi."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Saving..."
+msgid "Saving ..."
+msgstr "Inaokoa ..."
 
 #: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
 #, python-format
@@ -54498,279 +54755,6 @@ msgstr ""
 "            Kulingana na mpangilio wa ushirikiano wa kesi wa programu yako, kubadilisha moja au zaidi ya maeneo haya kunaweza kusababisha baadhi ya kesi kutoonekana kwa mtumiaji yeyote hadi mtumiaji mpya apangiwe maeneo hayo.\n"
 "          "
 
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Role Name"
-msgstr "Jina la Jukumu"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Area Access"
-msgstr "Upatikanaji wa Eneo"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Can Edit"
-msgstr "Inaweza Kuhariri"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Can View"
-msgstr "Inaweza Kuangalia"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Access Specific Reports"
-msgstr "Fikia Ripoti Maalum"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which reports the role can access:"
-msgstr "Chagua ripoti ambazo jukumu linaweza kufikia:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Access Specific Tableau Reports"
-msgstr "Fikia Ripoti Maalum za Tableau"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which Tableau reports the role can access:"
-msgstr "Chagua ripoti za Tableau ambazo jukumu linaweza kufikia:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "All CommCare Analytics Roles"
-msgstr "Majukumu Yote ya Uchambuzi wa CommCare"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign all commcare analytics roles to users with this role"
-msgstr ""
-"Weka majukumu yote ya uchambuzi wa commcare kwa watumiaji wenye jukumu hili"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "CommCare Analytics Roles"
-msgstr "Majukumu ya Uchambuzi wa CommCare"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Commcare Analytics Roles:"
-msgstr "Majukumu ya Uchambuzi wa Commcare:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Other Settings"
-msgstr "Mipangilio Mengine"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Integration Access"
-msgstr "Ufikiaji wa Ujumuishaji"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to manage integration with other systems."
-msgstr "Ruhusu jukumu kusimamia ujumuishaji na mifumo mingine."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Manage Subscription Info"
-msgstr "Simamia Taarifa za Usajili"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to manage subscription information."
-msgstr "Ruhusu jukumu kusimamia taarifa za usajili."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Full Organization Access"
-msgstr "Ufikiaji Kamili wa Shirika"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to access data from all locations."
-msgstr "Ruhusu jukumu kufikia data kutoka maeneo yote."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    Make sure any users assigned this role also have a location assigned to them.\n"
-"                    Users without assigned locations will not be permitted to log in.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa eneo.\n"
-"                    Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa kuingia.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    Organization-based data access restrictions are only available\n"
-"                    on the Pro plan and above. Saving this role will enable\n"
-"                    full organization access for the assigned users.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Vizuizi vya ufikiaji wa data kulingana na shirika vinapatikana tu\n"
-"                    kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili kutawezesha\n"
-"                    ufikiaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
-"                    This is not recommended.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Kwa usanidi wa sasa, jukumu hili litakuwa na ufikiaji kamili wa shirika na majukumu yanayoweza kulipangia hayatakuwa nayo.\n"
-"                    Hii haipendekezwi.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Login-As All Users"
-msgstr "Ingia-Kama Watumiaji Wote"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as any mobile worker in Web Apps."
-msgstr ""
-"Ruhusu mtumiaji kuingia kama mfanyakazi yeyote wa simu kwenye Web Apps."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Limit Login-As"
-msgstr "Punguza Ingia-Kama"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as only specified users in Web Apps."
-msgstr "Ruhusu mtumiaji kuingia kama watumiaji maalum tu kwenye Web Apps."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Login-As Default User"
-msgstr "Ingia-Kama Mtumiaji Chaguo-msingi"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as the default user in Web Apps."
-msgstr "Ruhusu mtumiaji kuingia kama mtumiaji chaguo-msingi kwenye Web Apps."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Mobile App Access"
-msgstr "Ufikiaji wa Programu ya Simu"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow mobile users access to offline mobile application"
-msgstr "Ruhusu watumiaji wa simu kufikia programu ya simu isiyohitaji mtandao"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Default Landing Page"
-msgstr "Ukurasa Chaguo-msingi wa Kutua"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow Reporting Issues"
-msgstr "Ruhusu Kuripoti Matatizo"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow this role to report issues."
-msgstr "Ruhusu jukumu hili kuripoti matatizo."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Non-admin Editable"
-msgstr "Inaweza Kuhaririwa na Wasio Wasimamizi"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow all non-admins to assign this role to other users."
-msgstr "Ruhusu wasio wasimamizi wote kupangia watumiaji wengine jukumu hili."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Manage Role Assignment"
-msgstr "Simamia Uteuzi wa Majukumu"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which other roles can assign this role:"
-msgstr "Chagua majukumu mengine yanayoweza kupangia jukumu hili:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
-"                    by a role that does not. This is not recommended configuration.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Ikiwa majukumu yaliyoangaziwa yamechaguliwa, jukumu hili litakuwa na ufikiaji kamili wa shirika na linaweza kupangiwa\n"
-"                    na jukumu ambalo halina. Hii si usanidi unaopendekezwa.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign All User Profiles"
-msgstr "Weka Wasifu Wote wa Watumiaji"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"Allow role to access all user profiles while setting up mobile workers and "
-"web users."
-msgstr ""
-"Ruhusu jukumu kufikia wasifu wote wa watumiaji wakati wa kuweka wafanyakazi "
-"wa simu na watumiaji wa wavuti."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign Specific User Profiles"
-msgstr "Weka Wasifu Maalum wa Watumiaji"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"Select which user profiles the role can assign to mobile workers and web "
-"users:"
-msgstr ""
-"Chagua wasifu wa watumiaji ambao jukumu linaweza kupangia wafanyakazi wa "
-"simu na watumiaji wa wavuti:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow this role to manage project alerts."
-msgstr "Ruhusu jukumu hili kusimamia arifa za mradi."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#, python-format
-msgid ""
-"\n"
-"            This permission is already configured via <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</a>.\n"
-"            Please remove this configuration before updating access here.\n"
-"          "
-msgstr ""
-"\n"
-"            Ruhusa hii tayari imesanidiwa kupitia <a target=\\\"_blank\\\" href=\\\"%(manage_web_apps_permissions_url)s\\\">Dhibiti Ruhusa za Programu za Wavuti</a>.\n"
-"            Tafadhali ondoa usanidi huu kabla ya kusasisha ufikiaji hapa.\n"
-"          "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Please select at least one item."
-msgstr "Tafadhali chagua angalau kipengee kimoja."
-
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
@@ -54935,79 +54919,6 @@ msgstr "Inakagua Anwani ya Barua Pepe"
 msgid "Delete +%(number)s ?"
 msgstr "Futa +%(number)s ?"
 
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      Make sure any users assigned this role also have a\n"
-"                      location assigned to them. Users without assigned\n"
-"                      locations will not be permitted to log in.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa\n"
-"                      eneo. Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa kuingia.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      Organization-based data access restrictions are only\n"
-"                      available on the Pro plan and above. Saving this role will\n"
-"                      enable full organization access for the assigned users.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Vizuizi vya ufikiaji wa data kwa msingi wa shirika vinapatikana tu\n"
-"                      kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili kutawezesha\n"
-"                      ufikiaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      With the current configuration, this role will have full\n"
-"                      organization access and roles that can assign it will not.\n"
-"                      This is not recommended.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Kwa usanidi wa sasa, jukumu hili litakuwa na ufikiaji kamili wa shirika\n"
-"                      na majukumu yanayoweza kulipangia hayatakuwa nayo. Hii haipendekezwi.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      If the highlighted roles are selected, this role will have\n"
-"                      full organization access and be assignable by a role that\n"
-"                      does not. This is not recommended configuration.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Ikiwa majukumu yaliyopigwa rangi yatateuliwa, jukumu hili litakuwa na\n"
-"                      ufikiaji kamili wa shirika na linaweza kupangiwa na jukumu lisilo na ufikiaji huo.\n"
-"                      Hii si usanidi unaopendekezwa.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-#, python-format
-msgid ""
-"\n"
-"          This permission is already configured via\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Manage Web Apps Permissions\n"
-"          </a>\n"
-"          . Please remove this configuration before updating access here.\n"
-"        "
-msgstr ""
-"\n"
-"          Ruhusa hii tayari imesanidiwa kupitia\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Dhibiti Ruhusa za Programu za Wavuti\n"
-"          </a>\n"
-"          . Tafadhali ondoa usanidi huu kabla ya kusasisha ufikiaji hapa.\n"
-"        "
-
 #: corehq/apps/users/templates/users/partials/confirm_trust_identity_provider_message.html
 msgid ""
 "\n"
@@ -55064,6 +54975,94 @@ msgstr ""
 "        <a href=\"#\">Jifunze zaidi</a> kuhusu SSO kwenye CommCare HQ.\n"
 "      "
 
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Role Name"
+msgstr "Jina la Jukumu"
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      Make sure any users assigned this role also have a\n"
+"                      location assigned to them. Users without assigned\n"
+"                      locations will not be permitted to log in.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa\n"
+"                      eneo. Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa kuingia.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      Organization-based data access restrictions are only\n"
+"                      available on the Pro plan and above. Saving this role will\n"
+"                      enable full organization access for the assigned users.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Vizuizi vya ufikiaji wa data kwa msingi wa shirika vinapatikana tu\n"
+"                      kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili kutawezesha\n"
+"                      ufikiaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      With the current configuration, this role will have full\n"
+"                      organization access and roles that can assign it will not.\n"
+"                      This is not recommended.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Kwa usanidi wa sasa, jukumu hili litakuwa na ufikiaji kamili wa shirika\n"
+"                      na majukumu yanayoweza kulipangia hayatakuwa nayo. Hii haipendekezwi.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      If the highlighted roles are selected, this role will have\n"
+"                      full organization access and be assignable by a role that\n"
+"                      does not. This is not recommended configuration.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Ikiwa majukumu yaliyopigwa rangi yatateuliwa, jukumu hili litakuwa na\n"
+"                      ufikiaji kamili wa shirika na linaweza kupangiwa na jukumu lisilo na ufikiaji huo.\n"
+"                      Hii si usanidi unaopendekezwa.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#, python-format
+msgid ""
+"\n"
+"          This permission is already configured via\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Manage Web Apps Permissions\n"
+"          </a>\n"
+"          . Please remove this configuration before updating access here.\n"
+"        "
+msgstr ""
+"\n"
+"          Ruhusa hii tayari imesanidiwa kupitia\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Dhibiti Ruhusa za Programu za Wavuti\n"
+"          </a>\n"
+"          . Tafadhali ondoa usanidi huu kabla ya kusasisha ufikiaji hapa.\n"
+"        "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
+msgid "Please select at least one item."
+msgstr "Tafadhali chagua angalau kipengee kimoja."
+
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
+#| msgid "Unlock Linked Fields?"
+msgid "Unlock Linked Roles?"
+msgstr "Fungua Majukumu Yaliyounganishwa?"
+
 #: corehq/apps/users/templates/users/partials/location_edit_warnings.html
 #, python-format
 msgid ""
@@ -55089,6 +55088,155 @@ msgstr ""
 "                ONYO: %(user_type)s \"%(couch_username)s\" lazima awe na angalau eneo moja limepangiwa.\n"
 "                Hataweza kuingia vinginevyo.\n"
 "            "
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#| msgid "IP Access"
+msgid "No Access"
+msgstr "Hakuna Upatikanaji"
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#| msgid "Access Key"
+msgid "Access All"
+msgstr "Fikia Yote"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"        Manage roles and permissions or add new custom roles.\n"
+"      "
+msgstr ""
+"\n"
+"        Dhibiti majukumu na ruhusa au ongeza majukumu mapya maalum.\n"
+"      "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"        View roles and permissions.\n"
+"      "
+msgstr ""
+"\n"
+"        Tazama majukumu na ruhusa.\n"
+"      "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >Learn more</a\n"
+"          >\n"
+"          about how roles &amp; permissions are used.\n"
+"        "
+msgstr ""
+"\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >Jifunze zaidi</a\n"
+"          >\n"
+"          kuhusu jinsi majukumu na ruhusa vinavyotumika.\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"          Would you like to edit roles and add new, custom roles?\n"
+"        "
+msgstr ""
+"\n"
+"          Je, ungependa kuhariri majukumu na kuongeza majukumu mapya, maalum?\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#, python-format
+msgid ""
+"\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Upgrade to CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
+"          to activate\n"
+"          <strong>Advanced Role-Based Access</strong>.\n"
+"        "
+msgstr ""
+"\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Boresha hadi CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
+"          ili kuwezesha\n"
+"          <strong>Ufikiaji wa Jukumu la Juu</strong>.\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Roles"
+msgstr "Majukumu"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage Shared Exports"
+msgstr "Dhibiti Uhamishaji wa Pamoja"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Apps"
+msgstr "Programu"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/tabs/tabclasses.py
+msgid "Integration"
+msgstr "Ujumuishaji"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Subscription Info"
+msgstr "Taarifa za Usajili"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Mobile Worker Default Role"
+msgstr "Jukumu Chaguo-msingi la Mfanyakazi wa Simu"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"This is the default role for all Mobile Workers that do not have a role "
+"assigned."
+msgstr ""
+"Hili ndilo jukumu chaguo-msingi kwa Wafanyakazi wote wa Simu ambao "
+"hawajapewa jukumu."
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Only"
+msgstr "Ni"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage All"
+msgstr "Dhibiti Yote"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage Only"
+msgstr "Dhibiti Tu"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View All Data"
+msgstr "Tazama Data Yote"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View Data From"
+msgstr "Tazama Data Kutoka"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
+msgid "Edit Role"
+msgstr "Hariri Jukumu"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View Role"
+msgstr "Tazama Jukumu"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Add Role"
+msgstr "Ongeza Jukumu"
 
 #: corehq/apps/users/user_data.py
 msgid "Profile conflicts with existing data"
@@ -55560,12 +55708,12 @@ msgid "Password reset email sent to {}"
 msgstr "Barua pepe ya kuweka upya nenosiri imetumwa kwa {}"
 
 #: corehq/apps/users/views/role.py
-msgid "Roles & Permissions"
-msgstr "Majukumu na Ruhusa"
-
-#: corehq/apps/users/views/role.py
 msgid "Use Default"
 msgstr "Tumia Chaguo-msingi"
+
+#: corehq/apps/users/views/role.py
+msgid "Roles & Permissions"
+msgstr "Majukumu na Ruhusa"
 
 #: corehq/apps/users/views/role.py
 msgid ""
@@ -55615,6 +55763,11 @@ msgid_plural ""
 " it."
 msgstr[0] ""
 msgstr[1] ""
+
+#: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
+#| msgid "Create Alert"
+msgid "Create Role"
+msgstr "Unda Jukumu"
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -61147,6 +61300,76 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid "CommCare from Google Play"
+#~ msgstr "CommCare kutoka Google Play"
+
+#~ msgid "to your Android device."
+#~ msgstr "kwenye kifaa chako cha Android."
+
+#~ msgid "show all"
+#~ msgstr "onyesha yote"
+
+#~ msgid "Verify All"
+#~ msgstr "Thibitisha Zote"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Make sure any users assigned this role also have a location assigned to them.\n"
+#~ "                    Users without assigned locations will not be permitted to log in.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa eneo.\n"
+#~ "                    Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa kuingia.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Organization-based data access restrictions are only available\n"
+#~ "                    on the Pro plan and above. Saving this role will enable\n"
+#~ "                    full organization access for the assigned users.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Vizuizi vya ufikiaji wa data kulingana na shirika vinapatikana tu\n"
+#~ "                    kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili kutawezesha\n"
+#~ "                    ufikiaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
+#~ "                    This is not recommended.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Kwa usanidi wa sasa, jukumu hili litakuwa na ufikiaji kamili wa shirika na majukumu yanayoweza kulipangia hayatakuwa nayo.\n"
+#~ "                    Hii haipendekezwi.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
+#~ "                    by a role that does not. This is not recommended configuration.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Ikiwa majukumu yaliyoangaziwa yamechaguliwa, jukumu hili litakuwa na ufikiaji kamili wa shirika na linaweza kupangiwa\n"
+#~ "                    na jukumu ambalo halina. Hii si usanidi unaopendekezwa.\n"
+#~ "                  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            This permission is already configured via <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</a>.\n"
+#~ "            Please remove this configuration before updating access here.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Ruhusa hii tayari imesanidiwa kupitia <a target=\\\"_blank\\\" href=\\\"%(manage_web_apps_permissions_url)s\\\">Dhibiti Ruhusa za Programu za Wavuti</a>.\n"
+#~ "            Tafadhali ondoa usanidi huu kabla ya kusasisha ufikiaji hapa.\n"
+#~ "          "
 
 #~ msgid ""
 #~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
