@@ -66,15 +66,15 @@
         {% trans 'Set Path' %}
       </button>
       {% if app.langs|length > 1 %}
-        <div data-bind="visible: isDefaultLanguage">
-          <label>
+        <div class="form-check" data-bind="visible: isDefaultLanguage">
+          <input class="form-check-input"
+                 type="checkbox" 
+                 data-bind="enable: enabled, checked: languagesLinked"
+          />
+          <label class="form-check-label">
             {% blocktrans %}
               Use this {{ badge }} for all languages
             {% endblocktrans %}:
-            <input
-              type="checkbox"  {# todo B5: css-checkbox #}
-              data-bind="enable: enabled, checked: languagesLinked"
-            />
           </label>
         </div>
         <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
