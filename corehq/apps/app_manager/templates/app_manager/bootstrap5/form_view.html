@@ -26,18 +26,8 @@
 {% endblock %}
 
 {% block pre_form_content %}
-  <div class="appmanager-page-actions">
-    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
-    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
-    <a
-      class="btn btn-outline-primary"
-      href="{% url "form_source" domain app.id form.unique_id %}"
-    >
-      <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
-    </a>
-  </div>
-
-  <div class="appmanager-edit-title">
+<div class="d-flex gap-3 align-items-center mt-3">
+  <div class="appmanager-edit-title flex-grow-1">
     {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
       {% if form.get_action_type == 'open' %}
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' disallow_edit=disallow_edit %}
@@ -50,8 +40,19 @@
       {% endif %}
     {% endwith %}
   </div>
+  <div class="ms-auto">
+    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
+    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
+    <a
+      class="btn btn-outline-primary"
+      href="{% url "form_source" domain app.id form.unique_id %}"
+    >
+      <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
+    </a>
+  </div>
+</div>
 
-  <div class="appmanager-edit-description">
+  <div class="appmanager-edit-description mt-2">
     <inline-edit
       params="
           name: 'comment',

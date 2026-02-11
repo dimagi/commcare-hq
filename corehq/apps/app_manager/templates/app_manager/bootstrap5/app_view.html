@@ -6,12 +6,8 @@
 {% load xforms_extras %}
 
 {% block pre_form_content %}
-  <div class="appmanager-page-actions">
-    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
-    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
-  </div>
-
-  <div class="appmanager-edit-title appmanager-edit-app-title">
+<div class="d-flex gap-3 align-items-center mt-3">
+  <div class="appmanager-edit-title appmanager-edit-app-title flex-grow-1">
     <inline-edit params="
         value: '{{ app.name|escapejs }}',
         containerClass: 'h3 app-title',
@@ -23,6 +19,12 @@
         disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
     "></inline-edit>
   </div>
+  <div class="ms-auto">
+    {% include 'app_manager/partials/bootstrap5/app_summary_button.html' %}
+    {% include 'app_manager/partials/view_submissions_button.html' with btn_style='btn-outline-primary' %}
+  </div>
+
+</div>
 
   <div class="appmanager-edit-description mt-2">
     <inline-edit params="
