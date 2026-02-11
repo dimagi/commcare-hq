@@ -1276,6 +1276,8 @@ msgid "save"
 msgstr "hifadhi"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Case Property"
 msgstr "Sifa ya Kesi"
 
@@ -1292,55 +1294,69 @@ msgstr "Iliyohifadhiwa hivi karibuni"
 msgid "[unknown]"
 msgstr "[haijulikani]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/129.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/333.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/414.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/437.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/879.js
-msgid "\n"
-msgstr "\n"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "getCurrentMugInput"
 msgstr "pataMugInputWaSasa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "jstree"
 msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "getMugByPath"
 msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "getData"
 msgstr "pataData"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "loadXML"
 msgstr "pakiaXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "createXML"
 msgstr "undaXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "loadXFormOrError"
 msgstr "pakiaXFormAuHitilafu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "addQuestion"
 msgstr "ongezaSwali"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "nodeIDFromLabel"
 msgstr "kitambulishoChaNodeKutokaKwaLebo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "getSections"
 msgstr "pataSehemu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/2.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
 msgid "collapseSection"
 msgstr "kunjaSehemu"
 
@@ -1387,6 +1403,49 @@ msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid ""
+"\"{caseProperty}\" is assigned by another question. You can still save the "
+"form, but will need to have only one question for any case property in order"
+" to build the application"
+msgstr ""
+"\"{caseProperty}\" imetolewa na swali lingine. Unaweza bado kuhifadhi fomu, "
+"lakini utahitaji kuwa na swali moja tu kwa kila sifa ya kesi ili kujenga "
+"programu"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+#| msgid "Case Name"
+msgid "Case Management"
+msgstr "Usimamizi wa Kesi"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid ""
+"Saving a question as a case property makes it accessible and reusable across"
+" your application. To manage all your case properties from this form, click "
+"on the Manage Case button. "
+msgstr ""
+"Kuhifadhi swali kama sifa ya kesi kunafanya lipatikane na kutumika tena "
+"katika programu yako. Ili kudhibiti sifa zako zote za kesi kutoka kwenye "
+"fomu hii, bonyeza kitufe cha Dhibiti Kesi."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "**{word}** is a reserved word"
+msgstr "**{word}** ni neno lililohifadhiwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid ""
+"This question is used to update multiple case properties. If you wish to "
+"update these case properties, please visit the [Manage Case Page]({url})"
+msgstr ""
+"Swali hili linatumika kusasisha sifa nyingi za kesi. Ikiwa ungependa "
+"kusasisha sifa hizi za kesi, tafadhali tembelea [Ukurasa wa Dhibiti "
+"Kesi]({url})"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
@@ -3897,11 +3956,6 @@ msgstr "Inaangalia upatikanaji..."
 msgid "Issue connecting to server. Check Internet connection."
 msgstr "Tatizo la kuunganisha na seva. Hakikisha una muunganisho wa intaneti."
 
-#: corehq/apps/users/static/users/js/bootstrap3/roles_and_permissions.js
-#: corehq/apps/users/static/users/js/bootstrap5/roles_and_permissions.js
-msgid "View Only"
-msgstr "Angalia Pekee"
-
 #: corehq/apps/users/static/users/js/bootstrap3/web_users.js
 #: corehq/apps/users/static/users/js/bootstrap5/web_users.js
 msgid "<%- days %> days remaining"
@@ -3939,6 +3993,400 @@ msgstr ""
 " si sahihi au shirika lako linazuia barua pepe kutoka kwa anwani yetu (<%- "
 "fromAddress %>)."
 
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Web Users</strong> &mdash; invite new web users, manage account "
+"settings, remove membership"
+msgstr ""
+"<strong>Watumiaji wa Wavuti</strong> &mdash; alika watumiaji wapya wa "
+"wavuti, simamia mipangilio ya akaunti, ondoa uanachama"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Mobile Workers"
+msgstr "Hariri & Tazama Wafanyakazi wa Simu"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Mobile Workers"
+msgstr "Tazama Tu Wafanyakazi wa Simu"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
+"configuration for web users"
+msgstr ""
+"<strong>Simamia Usanidi wa Tableau</strong> &mdash; simamia usanidi wa "
+"tableau kwa watumiaji wa wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View tableau configuration for web users"
+msgstr "Hariri & Tazama usanidi wa tableau kwa watumiaji wa wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only tableau configuration for web users"
+msgstr "Tazama Tu usanidi wa tableau kwa watumiaji wa wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
+"settings, deactivate or delete mobile workers."
+msgstr ""
+"<strong>Wafanyakazi wa Simu</strong> &mdash; tengeneza akaunti mpya, simamia"
+" mipangilio ya akaunti, simamisha au futa wafanyakazi wa simu."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Web Users"
+msgstr "Hariri & Tazama Watumiaji wa Wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Web Users"
+msgstr "Tazama Tu Watumiaji wa Wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
+msgstr ""
+"<strong>Makundi</strong> &mdash; simamia makundi ya wafanyakazi wa simu"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Groups"
+msgstr "Hariri & Tazama Makundi"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Web Groups"
+msgstr "Tazama Tu Makundi ya Wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow changing group membership (requires edit groups)."
+msgstr "Ruhusu kubadilisha uanachama wa kundi (inahitaji kuhariri makundi)."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Locations</strong> &mdash; manage locations in the Organization's "
+"Hierarchy"
+msgstr ""
+"<strong>Maeneo</strong> &mdash; simamia maeneo katika Muundo wa Shirika"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Locations"
+msgstr "Hariri & Tazama Maeneo"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Web Locations"
+msgstr "Tazama Tu Maeneo ya Wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow changing workers at a location."
+msgstr "Ruhusu kubadilisha wafanyakazi katika eneo."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Data Dictionary</strong> &mdash; manage case properties within "
+"CommCare HQ"
+msgstr ""
+"<strong>Kamusi ya Data</strong> &mdash; simamia sifa za kesi ndani ya "
+"CommCare HQ"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data Dictionary"
+msgstr "Hariri & Tazama Kamusi ya Data"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Data Dictionary"
+msgstr "Tazama Tu Kamusi ya Data"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Data</strong> &mdash; view, export, and edit form and case data, "
+"reassign cases"
+msgstr ""
+"<strong>Data</strong> &mdash; tazama, hamisha, na hariri data ya fomu na "
+"kesi, gawanya upya kesi"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data"
+msgstr "Hariri & Tazama Data"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Messaging</strong> &mdash; configure and send conditional alerts"
+msgstr "<strong>Ujumbe</strong> &mdash; sanidi na tuma arifa za masharti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access Messaging"
+msgstr "Fikia Ujumbe"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
+" data. Specific APIs may require additional permissions."
+msgstr ""
+"<strong>Fikia API</strong> &mdash; tumia API za CommCare HQ kusoma na "
+"kusasisha data. API maalum zinaweza kuhitaji ruhusa za ziada."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access APIs"
+msgstr "Fikia API"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Applications</strong> &mdash; modify or view the structure and "
+"configuration of all applications."
+msgstr ""
+"<strong>Programu</strong> &mdash; hariri au tazama muundo na usanidi wa "
+"programu zote."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Apps"
+msgstr "Hariri & Tazama Programu"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Applications"
+msgstr "Maombi ya Kuangalia Pekee"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
+"worker roles &amp; permissions (only Admins can edit roles)"
+msgstr ""
+"<strong>Majukumu na Ruhusa</strong> &mdash; angalia majukumu na ruhusa za "
+"watumiaji wa tovuti na wafanyakazi wa simu (ni Wasimamizi pekee wanaoweza "
+"kuhariri majukumu)"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View Roles and Permissions"
+msgstr "Angalia Majukumu na Ruhusa"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Dropzone</strong> &mdash; Upload and download files from the file "
+"Dropzone"
+msgstr ""
+"<strong>Dropzone</strong> &mdash; Pakia na pakua faili kutoka kwenye "
+"Dropzone ya faili"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & Download files from the Dropzone "
+msgstr "Hariri & Pakua faili kutoka kwenye Dropzone"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Dropzone"
+msgstr "Dropzone ya Kuangalia Pekee"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
+"and structure of shared exports"
+msgstr ""
+"<strong>Simamia Uhamishaji wa Pamoja</strong> &mdash; pata na hariri maudhui"
+" na muundo wa uhamishaji wa pamoja"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
+"events and users"
+msgstr ""
+"<strong>Ufuatiliaji wa Mahudhurio</strong> &mdash; Ratibu matukio ya "
+"ufuatiliaji wa mahudhurio na watumiaji"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit Attendance Tracking Events"
+msgstr "Hariri Matukio ya Ufuatiliaji wa Mahudhurio"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
+"associated with this project"
+msgstr ""
+"<strong>CommCare Analytics</strong> &mdash; simamia CommCare Analytics "
+"zinazohusiana na mradi huu"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View CommCare Analytics"
+msgstr "Hariri & Angalia CommCare Analytics"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only CommCare Analytics"
+msgstr "CommCare Analytics ya Kuangalia Pekee"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Enterprise Release Management"
+msgstr "Usimamizi wa Toleo la Biashara"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Multi-Environment Release Management"
+msgstr "Usimamizi wa Toleo kwa Mazingira Mengi"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Project Spaces"
+msgstr "Nafasi za Miradi Zilizounganishwa"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to configure linked project spaces"
+msgstr "Ruhusu jukumu kusanidi nafasi za miradi zilizounganishwa"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Linked Configurations"
+msgstr "Mipangilio Iliyounganishwa"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to edit linked configurations on this project space"
+msgstr ""
+"Ruhusu jukumu kuhariri mipangilio iliyounganishwa kwenye nafasi hii ya mradi"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Reports"
+msgstr "Unda na Hariri Ripoti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit reports in report builder."
+msgstr ""
+"Ruhusu jukumu kuunda na kuhariri ripoti kwenye mtengenezaji wa ripoti."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Custom Web Reports"
+msgstr "Unda na Hariri Ripoti Maalum za Wavuti"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit custom web reports."
+msgstr "Ruhusu jukumu kuunda na kuhariri ripoti maalum za wavuti."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Create and Edit Configurable Reports"
+msgstr "Unda na Hariri Ripoti Zinazoweza Kusanidiwa"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to create and edit configurable reports."
+msgstr "Ruhusu jukumu kuunda na kuhariri ripoti zinazoweza kusanidiwa."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All CommCare Reports"
+msgstr "Fikia Ripoti Zote za CommCare"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All Reports"
+msgstr "Fikia Ripoti Zote"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"Allow role to view all CommCare reports. Excludes embedded Tableau reports"
+msgstr ""
+"Ruhusu jukumu kuona ripoti zote za CommCare. Haijumuishi ripoti za Tableau "
+"zilizopachikwa"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to access all reports."
+msgstr "Ruhusu jukumu kufikia ripoti zote."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Download and Email Reports"
+msgstr "Pakua na Tuma Ripoti kwa Barua Pepe"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to download and email report data."
+msgstr "Ruhusu jukumu kupakua na kutuma data ya ripoti kwa barua pepe."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Access All Tableau Reports"
+msgstr "Fikia Ripoti Zote za Tableau"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Allow role to access all embedded Tableau reports."
+msgstr "Ruhusu jukumu kufikia ripoti zote za Tableau zilizopachikwa."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Use Web Apps for online data entry"
+msgstr "Tumia Programu za Wavuti kwa uingizaji data mtandaoni"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#| msgid "Select a Report..."
+msgid "Select which web apps..."
+msgstr "Chagua ni programu zipi za wavuti..."
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Manage Registries"
+msgstr "Simamia Rejesta"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Select which registries the role can manage:"
+msgstr "Chagua ni rejesta zipi jukumu linaweza kusimamia:"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View Registry Data"
+msgstr "Angalia Data ya Rejesta"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Select which registry data the role can view:"
+msgstr "Chagua ni data gani ya rejesta jukumu linaweza kuona:"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+#: corehq/apps/users/static/users/js/roles.js
+msgid "An error occurred, please try again."
+msgstr "Hitilafu imetokea, tafadhali jaribu tena."
+
 #: corehq/apps/users/static/users/js/roles.js
 msgid "No Access"
 msgstr "Hakuna Ufikiaji"
@@ -3954,325 +4402,6 @@ msgstr "Ufikiaji Uliopunguzwa"
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Select which items the role can access:"
 msgstr "Chagua vitu ambavyo jukumu linaweza kufikia:"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Web Users</strong> &mdash; invite new web users, manage account "
-"settings, remove membership"
-msgstr ""
-"<strong>Watumiaji wa Wavuti</strong> &mdash; alika watumiaji wapya wa "
-"wavuti, simamia mipangilio ya akaunti, ondoa uanachama"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View Mobile Workers"
-msgstr "Hariri & Tazama Wafanyakazi wa Simu"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only Mobile Workers"
-msgstr "Tazama Tu Wafanyakazi wa Simu"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
-"configuration for web users"
-msgstr ""
-"<strong>Simamia Usanidi wa Tableau</strong> &mdash; simamia usanidi wa "
-"tableau kwa watumiaji wa wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View tableau configuration for web users"
-msgstr "Hariri & Tazama usanidi wa tableau kwa watumiaji wa wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only tableau configuration for web users"
-msgstr "Tazama Tu usanidi wa tableau kwa watumiaji wa wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
-"settings, deactivate or delete mobile workers."
-msgstr ""
-"<strong>Wafanyakazi wa Simu</strong> &mdash; tengeneza akaunti mpya, simamia"
-" mipangilio ya akaunti, simamisha au futa wafanyakazi wa simu."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View Web Users"
-msgstr "Hariri & Tazama Watumiaji wa Wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only Web Users"
-msgstr "Tazama Tu Watumiaji wa Wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
-msgstr ""
-"<strong>Makundi</strong> &mdash; simamia makundi ya wafanyakazi wa simu"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View Groups"
-msgstr "Hariri & Tazama Makundi"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only Web Groups"
-msgstr "Tazama Tu Makundi ya Wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow changing group membership (requires edit groups)."
-msgstr "Ruhusu kubadilisha uanachama wa kundi (inahitaji kuhariri makundi)."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Locations</strong> &mdash; manage locations in the Organization's "
-"Hierarchy"
-msgstr ""
-"<strong>Maeneo</strong> &mdash; simamia maeneo katika Muundo wa Shirika"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View Locations"
-msgstr "Hariri & Tazama Maeneo"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only Web Locations"
-msgstr "Tazama Tu Maeneo ya Wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow changing workers at a location."
-msgstr "Ruhusu kubadilisha wafanyakazi katika eneo."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Data Dictionary</strong> &mdash; manage case properties within "
-"CommCare HQ"
-msgstr ""
-"<strong>Kamusi ya Data</strong> &mdash; simamia sifa za kesi ndani ya "
-"CommCare HQ"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View Data Dictionary"
-msgstr "Hariri & Tazama Kamusi ya Data"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only Data Dictionary"
-msgstr "Tazama Tu Kamusi ya Data"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Data</strong> &mdash; view, export, and edit form and case data, "
-"reassign cases"
-msgstr ""
-"<strong>Data</strong> &mdash; tazama, hamisha, na hariri data ya fomu na "
-"kesi, gawanya upya kesi"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View Data"
-msgstr "Hariri & Tazama Data"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Messaging</strong> &mdash; configure and send conditional alerts"
-msgstr "<strong>Ujumbe</strong> &mdash; sanidi na tuma arifa za masharti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access Messaging"
-msgstr "Fikia Ujumbe"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
-" data. Specific APIs may require additional permissions."
-msgstr ""
-"<strong>Fikia API</strong> &mdash; tumia API za CommCare HQ kusoma na "
-"kusasisha data. API maalum zinaweza kuhitaji ruhusa za ziada."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access APIs"
-msgstr "Fikia API"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Applications</strong> &mdash; modify or view the structure and "
-"configuration of all applications."
-msgstr ""
-"<strong>Programu</strong> &mdash; hariri au tazama muundo na usanidi wa "
-"programu zote."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View Apps"
-msgstr "Hariri & Tazama Programu"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only Applications"
-msgstr "Maombi ya Kuangalia Pekee"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
-"worker roles &amp; permissions (only Admins can edit roles)"
-msgstr ""
-"<strong>Majukumu na Ruhusa</strong> &mdash; angalia majukumu na ruhusa za "
-"watumiaji wa tovuti na wafanyakazi wa simu (ni Wasimamizi pekee wanaoweza "
-"kuhariri majukumu)"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View Roles and Permissions"
-msgstr "Angalia Majukumu na Ruhusa"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Dropzone</strong> &mdash; Upload and download files from the file "
-"Dropzone"
-msgstr ""
-"<strong>Dropzone</strong> &mdash; Pakia na pakua faili kutoka kwenye "
-"Dropzone ya faili"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & Download files from the Dropzone "
-msgstr "Hariri & Pakua faili kutoka kwenye Dropzone"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only Dropzone"
-msgstr "Dropzone ya Kuangalia Pekee"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
-"and structure of shared exports"
-msgstr ""
-"<strong>Simamia Uhamishaji wa Pamoja</strong> &mdash; pata na hariri maudhui"
-" na muundo wa uhamishaji wa pamoja"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
-"events and users"
-msgstr ""
-"<strong>Ufuatiliaji wa Mahudhurio</strong> &mdash; Ratibu matukio ya "
-"ufuatiliaji wa mahudhurio na watumiaji"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit Attendance Tracking Events"
-msgstr "Hariri Matukio ya Ufuatiliaji wa Mahudhurio"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
-"associated with this project"
-msgstr ""
-"<strong>CommCare Analytics</strong> &mdash; simamia CommCare Analytics "
-"zinazohusiana na mradi huu"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit & View CommCare Analytics"
-msgstr "Hariri & Angalia CommCare Analytics"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View-Only CommCare Analytics"
-msgstr "CommCare Analytics ya Kuangalia Pekee"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Enterprise Release Management"
-msgstr "Usimamizi wa Toleo la Biashara"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Multi-Environment Release Management"
-msgstr "Usimamizi wa Toleo kwa Mazingira Mengi"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Linked Project Spaces"
-msgstr "Nafasi za Miradi Zilizounganishwa"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to configure linked project spaces"
-msgstr "Ruhusu jukumu kusanidi nafasi za miradi zilizounganishwa"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Linked Configurations"
-msgstr "Mipangilio Iliyounganishwa"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to edit linked configurations on this project space"
-msgstr ""
-"Ruhusu jukumu kuhariri mipangilio iliyounganishwa kwenye nafasi hii ya mradi"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Reports"
-msgstr "Unda na Hariri Ripoti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit reports in report builder."
-msgstr ""
-"Ruhusu jukumu kuunda na kuhariri ripoti kwenye mtengenezaji wa ripoti."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Custom Web Reports"
-msgstr "Unda na Hariri Ripoti Maalum za Wavuti"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit custom web reports."
-msgstr "Ruhusu jukumu kuunda na kuhariri ripoti maalum za wavuti."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Create and Edit Configurable Reports"
-msgstr "Unda na Hariri Ripoti Zinazoweza Kusanidiwa"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to create and edit configurable reports."
-msgstr "Ruhusu jukumu kuunda na kuhariri ripoti zinazoweza kusanidiwa."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access All CommCare Reports"
-msgstr "Fikia Ripoti Zote za CommCare"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access All Reports"
-msgstr "Fikia Ripoti Zote"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid ""
-"Allow role to view all CommCare reports. Excludes embedded Tableau reports"
-msgstr ""
-"Ruhusu jukumu kuona ripoti zote za CommCare. Haijumuishi ripoti za Tableau "
-"zilizopachikwa"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to access all reports."
-msgstr "Ruhusu jukumu kufikia ripoti zote."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Download and Email Reports"
-msgstr "Pakua na Tuma Ripoti kwa Barua Pepe"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to download and email report data."
-msgstr "Ruhusu jukumu kupakua na kutuma data ya ripoti kwa barua pepe."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access All Tableau Reports"
-msgstr "Fikia Ripoti Zote za Tableau"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Allow role to access all embedded Tableau reports."
-msgstr "Ruhusu jukumu kufikia ripoti zote za Tableau zilizopachikwa."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Manage Registries"
-msgstr "Simamia Rejesta"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which registries the role can manage:"
-msgstr "Chagua ni rejesta zipi jukumu linaweza kusimamia:"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View Registry Data"
-msgstr "Angalia Data ya Rejesta"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which registry data the role can view:"
-msgstr "Chagua ni data gani ya rejesta jukumu linaweza kuona:"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Use Web Apps for online data entry"
-msgstr "Tumia Programu za Wavuti kwa uingizaji data mtandaoni"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Select which web apps the role has access to:"
@@ -4303,9 +4432,9 @@ msgstr "Futa Jukumu: "
 msgid "Are you sure you want to delete the role <%- role %>?"
 msgstr "Una uhakika unataka kufuta jukumu <%- role %>?"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "An error occurred, please try again."
-msgstr "Hitilafu imetokea, tafadhali jaribu tena."
+#: corehq/apps/users/static/users/js/roles_and_permissions.js
+msgid "View Only"
+msgstr "Angalia Pekee"
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
@@ -4515,6 +4644,9 @@ msgstr "Imeshindikana! Majibu ni: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
+
+#~ msgid "\n"
+#~ msgstr "\n"
 
 #~ msgid "New Form"
 #~ msgstr "Fomu Mpya"

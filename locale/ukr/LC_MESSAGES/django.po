@@ -327,10 +327,8 @@ msgstr "Рахунок для виставлення рахунків"
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_sizes.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/domain/forms.py
@@ -1209,8 +1207,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/bootstrap5/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
@@ -1314,18 +1311,16 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
@@ -4128,8 +4123,7 @@ msgstr "Тип оплати"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/hqadmin/reports.py corehq/apps/linked_domain/views.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -4747,9 +4741,8 @@ msgstr "SMS-повідомлення"
 #: corehq/apps/campaign/templates/campaign/dashboard.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/mobile/custom_data_fields.py
 #: corehq/apps/users/views/mobile/users.py
 msgid "Mobile Workers"
@@ -4757,8 +4750,7 @@ msgstr "Мобільні працівники"
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/forms.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/__init__.py
 #: corehq/apps/users/views/mobile/custom_data_fields.py
 msgid "Web Users"
@@ -5320,8 +5312,8 @@ msgstr "Заповнити робочий процес з HAR-файлу"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/ui/forms.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
 #: corehq/motech/dhis2/forms.py corehq/motech/forms.py
@@ -5425,12 +5417,11 @@ msgstr ""
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/generic_inbound/views.py
 msgid "Actions"
 msgstr "Дії"
@@ -5529,9 +5520,7 @@ msgstr "Останні 10 запусків"
 #: corehq/apps/translations/templates/translations/bootstrap3/blacklist_translations.html
 #: corehq/apps/translations/templates/translations/bootstrap5/blacklist_translations.html
 #: corehq/apps/users/models.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
@@ -5539,6 +5528,7 @@ msgstr "Останні 10 запусків"
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
@@ -5991,9 +5981,8 @@ msgid "Select Case Type"
 msgstr "Виберіть тип справи"
 
 #: corehq/apps/app_manager/fields.py
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/grid.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
@@ -6152,8 +6141,7 @@ msgid "Application Version"
 msgstr "Версія додатка"
 
 #: corehq/apps/app_manager/forms.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Manage Update Settings"
 msgstr "Керування налаштуваннями оновлення"
 
@@ -6448,10 +6436,9 @@ msgstr "ID користувача"
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/userreports/reports/view.py corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Reports"
 msgstr "Звіти"
@@ -6533,14 +6520,12 @@ msgstr ""
 "Спочатку вимкніть усі вищі версії."
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Released"
 msgstr "Випущено"
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "In Test"
 msgstr "У тесті"
 
@@ -7079,8 +7064,7 @@ msgid "Just One Day"
 msgstr "Лише один день"
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/menu/dropdown.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
@@ -7298,8 +7282,7 @@ msgstr ""
 "цього цей параметр більше не відображатиметься на цій сторінці."
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Practice Mobile Worker"
 msgstr "Практичний мобільний працівник"
 
@@ -7949,6 +7932,15 @@ msgstr "Історія версій"
 msgid "Import"
 msgstr "Імпортувати"
 
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+msgid "Releases"
+msgstr "Випуски"
+
+#: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
+#: corehq/apps/domain/forms.py
+msgid "Release Mode"
+msgstr "Режим випуску"
+
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
@@ -8015,17 +8007,6 @@ msgstr "Додаток без назви"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view.html
 msgid "Enter app description here"
 msgstr "Введіть опис додатка тут"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-msgid "Releases"
-msgstr "Випуски"
-
-#: corehq/apps/app_manager/templates/app_manager/bootstrap3/app_view_release_manager.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/app_view_release_manager.html
-#: corehq/apps/domain/forms.py
-msgid "Release Mode"
-msgstr "Режим випуску"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/download_index.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/download_index.html
@@ -8340,8 +8321,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap3/form_tab_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/bootstrap5/form_tab_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
@@ -8356,7 +8336,6 @@ msgid "Download"
 msgstr "Завантажити"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/odk_install.html
-#: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #, python-format
 msgid ""
 "\n"
@@ -8397,8 +8376,8 @@ msgstr "Встановити CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/style_configuration_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_search/templates/case_search/csql_modal_form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/edit_selected_records_form.html
@@ -8452,20 +8431,61 @@ msgstr "Встановити CommCare"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Close"
 msgstr "Закрити"
+
+#: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "          You can also click\n"
+#| "          <strong>\n"
+#| "            <a class=\"track-usage-link\" href=\"%(profile_url)s\"\n"
+#| "               data-category=\"App Manager\" data-action=\"Initiate Install\"\n"
+#| "               data-label=\"Mobile Browser Link\">here</a>\n"
+#| "          </strong> in your mobile browser.\n"
+#| "        "
+msgid ""
+"\n"
+"          You can also click\n"
+"          <strong>\n"
+"            <a\n"
+"              class=\"track-usage-link\"\n"
+"              href=\"%(profile_url)s\"\n"
+"              data-category=\"App Manager\"\n"
+"              data-action=\"Initiate Install\"\n"
+"              data-label=\"Mobile Browser Link\"\n"
+"              >here</a\n"
+"            >\n"
+"          </strong>\n"
+"          in your mobile browser.\n"
+"        "
+msgstr ""
+"\n"
+"          Ви також можете натиснути\n"
+"          <strong>\n"
+"            <a\n"
+"              class=\"track-usage-link\"\n"
+"              href=\"%(profile_url)s\"\n"
+"              data-category=\"App Manager\"\n"
+"              data-action=\"Initiate Install\"\n"
+"              data-label=\"Mobile Browser Link\"\n"
+"              >тут</a\n"
+"            >\n"
+"          </strong>\n"
+"          у вашому мобільному браузері.\n"
+"        "
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
@@ -10050,8 +10070,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
@@ -13688,262 +13707,305 @@ msgstr "Завантаження розмірів мультимедіа..."
 msgid "No Multimedia"
 msgstr "Немає мультимедіа"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Release Logs"
 msgstr "Журнали випусків додатків"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Version Number"
 msgstr "Номер версії"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Update Type"
 msgstr "Тип оновлення"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/models/types.py corehq/apps/reports/forms.py
 msgid "Time"
 msgstr "Час"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/app_release_logs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid "Info"
 msgstr "Інформація"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Current Profiles"
 msgstr "Поточні профілі"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
+#| "        "
 msgid ""
 "\n"
-"          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
+"          Remote applications only support one build profile. Please remove all\n"
+"          but one profile before saving.\n"
 "        "
 msgstr ""
 "\n"
-"          Віддалені додатки підтримують лише один профіль збірки. Будь ласка, залиште лише один профіль перед збереженням.\n"
+"          Віддалені застосунки підтримують лише один профіль збірки. Будь ласка, видаліть усі,\n"
+"          крім одного профілю, перед збереженням.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "        Application profiles let you install the same application with different languages\n"
+#| "        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
+#| "        of the application.\n"
+#| "      "
 msgid ""
 "\n"
-"        Application profiles let you install the same application with different languages\n"
-"        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
-"        of the application.\n"
+"        Application profiles let you install the same application with different\n"
+"        languages and options on different phones. Application profiles will\n"
+"        appear in <em>new</em> versions of the application.\n"
 "      "
 msgstr ""
 "\n"
-"        Профілі додатків дозволяють встановлювати один і той самий додаток з різними мовами\n"
-"        та опціями на різних телефонах. Профілі додатків з'являться у <em>нових</em> версіях\n"
-"        додатка.\n"
+"        Профілі застосунків дозволяють встановлювати той самий застосунок з різними\n"
+"        мовами та опціями на різних телефонах. Профілі застосунків з'являться у <em>нових</em> версіях застосунку.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Manage application profiles here."
 msgstr "Керуйте профілями додатків тут."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
+#| msgid ""
+#| "\n"
+#| "        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
+#| "      "
 msgid ""
 "\n"
-"        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
+"        Learn more about Application Profiles on our\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/Application+Profiles\"\n"
+"          >Help Site</a\n"
+"        >\n"
 "      "
 msgstr ""
 "\n"
-"        Дізнайтеся більше про профілі додатків на нашому <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>довідковому сайті</a>\n"
+"        Дізнайтеся більше про профілі застосунків на нашому\n"
+"        <a\n"
+"          href=\"https://confluence.dimagi.com/display/commcarepublic/Application+Profiles\"\n"
+"          >Довідковому сайті</a\n"
+"        >\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Profile Name"
 msgstr "Назва профілю"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Default Language"
 msgstr "Мова за замовчуванням"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Upgrade to CommCare 2.30!"
 msgstr "Оновіть до CommCare 2.30!"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Latest Enabled Version:"
 msgstr "Остання увімкнена версія:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/build_profiles.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/build_profiles.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Add Profile"
 msgstr "Додати профіль"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+#| msgid ""
+#| "\n"
+#| "      <p class=\"lead\">\n"
+#| "        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
+#| "      </p>\n"
+#| "    "
 msgid ""
 "\n"
-"      <p class=\"lead\">\n"
-"        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to\n"
+"          start building your App!\n"
+"        </p>\n"
+"      "
 msgstr ""
 "\n"
-"      <p class=\"lead\">\n"
-"        Натисніть <i class=\"fa fa-plus\"></i> <strong>Додати...</strong>, щоб почати створювати свій додаток!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          Натисніть <i class=\"fa fa-plus\"></i> <strong>Додати...</strong>, щоб\n"
+"          почати створювати свій застосунок!\n"
+"        </p>\n"
+"      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+#| msgid ""
+#| "\n"
+#| "      <p class=\"lead\">\n"
+#| "        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
+#| "      </p>\n"
+#| "    "
 msgid ""
 "\n"
-"      <p class=\"lead\">\n"
-"        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
-"      </p>\n"
-"    "
+"        <p class=\"lead\">\n"
+"          As you build your App, check out the <strong>App Preview</strong> to\n"
+"          demo it in real time!\n"
+"        </p>\n"
+"      "
 msgstr ""
 "\n"
-"      <p class=\\\"lead\\\">\\n        Під час створення вашого додатка переглядайте <strong>Попередній перегляд додатка</strong>, щоб протестувати його в реальному часі!\\n      </p>\\n    "
+"        <p class=\"lead\">\n"
+"          Під час створення застосунку переглядайте <strong>Попередній перегляд застосунку</strong>, щоб\n"
+"          протестувати його в реальному часі!\n"
+"        </p>\n"
+"      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Versions"
 msgstr "Версії"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Profiles"
 msgstr "Профілі додатка"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
+#| "            Before you can publish your application,\n"
+#| "          "
 msgid ""
 "\n"
-"            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
-"            Before you can publish your application,\n"
+"            Your project does not have any mobile workers! Only mobile workers\n"
+"            can log into a CommCare application. Before you can publish your\n"
+"            application,\n"
 "          "
 msgstr ""
 "\n"
-"            У вашому проєкті немає мобільних працівників! Лише мобільні працівники можуть увійти до додатка CommCare.\n"
-"            Перш ніж ви зможете опублікувати свій додаток,\n"
+"            У вашому проєкті немає мобільних працівників! Тільки мобільні працівники\n"
+"            можуть увійти до застосунку CommCare. Перш ніж ви зможете опублікувати\n"
+"            свій застосунок,\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "create your first mobile worker"
 msgstr "створіть першого мобільного працівника"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Download to Android"
 msgstr "Завантажити на Android"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Online Install"
 msgstr "Онлайн-установка"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Offline Install"
 msgstr "Офлайн-установка"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-msgid "CommCare from Google Play"
-msgstr "CommCare з Google Play"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                        <p>\n"
+#| "                          You haven't saved any questions as case properties.\n"
+#| "                          Only case properties become part of a case.\n"
+#| "                        </p>\n"
+#| "                        <p>\n"
+#| "                          Watch this video to learn how to save questions as case properties.\n"
+#| "                        </p>\n"
+#| "                      "
+msgid ""
+"\n"
+"                            Download\n"
+"                            <a\n"
+"                              href=\"https://play.google.com/store/apps/details?id=org.commcare.dalvik\"\n"
+"                              >CommCare from Google Play</a\n"
+"                            >\n"
+"                            to your Android device.\n"
+"                          "
+msgstr ""
+"\n"
+"                            Завантажте\n"
+"                            <a\n"
+"                              href=\"https://play.google.com/store/apps/details?id=org.commcare.dalvik\"\n"
+"                              >CommCare з Google Play</a\n"
+"                            >\n"
+"                            на свій пристрій Android.\n"
+"                          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-msgid "to your Android device."
-msgstr "на ваш пристрій Android."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "Application Profile"
 msgstr "Профіль додатка"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Include Multimedia"
 msgstr "Включити мультимедіа"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "Only supported for versions made after 2013-10-15"
 msgstr "Підтримується лише для версій, створених після 2013-10-15"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Download Targeted Version"
 msgstr "Завантажити цільову версію"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                            Open the app on your Android and use one of the following installation methods:\n"
+#| "                          "
 msgid ""
 "\n"
-"                            Open the app on your Android and use one of the following installation methods:\n"
+"                            Open the app on your Android and use one of the\n"
+"                            following installation methods:\n"
 "                          "
 msgstr ""
 "\n"
-"                            Відкрийте додаток на вашому Android і скористайтеся одним із наступних способів установки:\n"
+"                            Відкрийте застосунок на своєму Android і скористайтеся одним із\n"
+"                            наступних способів встановлення:\n"
 "                          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Scan Application Barcode"
 msgstr "Сканувати штрихкод додатка"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Enter App Code"
 msgstr "Ввести код додатка"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Enter app code on installation screen: "
 msgstr "Введіть код додатка на екрані установки: "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                                                            (No app code available. If you would like to use an app code instead\n"
+#| "                                                            of scanning the application barcode, try making another version.)\n"
+#| "                                                          "
 msgid ""
 "\n"
-"                                                            (No app code available. If you would like to use an app code instead\n"
-"                                                            of scanning the application barcode, try making another version.)\n"
-"                                                          "
+"                                (No app code available. If you would like to use\n"
+"                                an app code instead of scanning the application\n"
+"                                barcode, try making another version.)\n"
+"                              "
 msgstr ""
 "\n"
-"                                                            (Код додатка недоступний. Якщо ви хочете використати код додатка замість\n"
-"                                                            сканування штрихкоду додатка, спробуйте створити іншу версію.)\n"
-"                                                          "
+"                                (Код застосунку недоступний. Якщо ви хочете використати\n"
+"                                код застосунку замість сканування штрихкоду застосунку, спробуйте створити іншу версію.)\n"
+"                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Transfer this file to your Android phone's file system"
 msgstr "Передайте цей файл у файлову систему вашого телефону Android"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "\n"
 "                                Login to the CommCare App, tap the three dots in\n"
@@ -13958,8 +14020,7 @@ msgstr ""
 "                                знову відкрийте меню з трьома крапками і виберіть \"Офлайн-оновлення\".\n"
 "                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
 "You'll be prompted to select this file from your phone's file system and "
 "install will begin"
@@ -13967,129 +14028,148 @@ msgstr ""
 "Вам буде запропоновано вибрати цей файл із файлової системи телефону, і "
 "установка розпочнеться"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
+#| msgid ""
+#| "\n"
+#| "                                Note: Offline install automatically installs all multimedia\n"
+#| "                                included in your form. All subsequent remote updates will also\n"
+#| "                                include multimedia which could require a lot of data. See the\n"
+#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+#| "                                  Help Site\n"
+#| "                                </a> for more info.\n"
+#| "                              "
 msgid ""
 "\n"
-"                                Note: Offline install automatically installs all multimedia\n"
-"                                included in your form. All subsequent remote updates will also\n"
-"                                include multimedia which could require a lot of data. See the\n"
-"                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
+"                                Note: Offline install automatically installs all\n"
+"                                multimedia included in your form. All subsequent\n"
+"                                remote updates will also include multimedia\n"
+"                                which could require a lot of data. See the\n"
+"                                <a\n"
+"                                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\"\n"
+"                                >\n"
 "                                  Help Site\n"
-"                                </a> for more info.\n"
+"                                </a>\n"
+"                                for more info.\n"
 "                              "
 msgstr ""
 "\n"
-"                                Примітка: Офлайн-установка автоматично встановлює всі мультимедіа,\n"
-"                                включені у вашу форму. Усі наступні віддалені оновлення також\n"
-"                                включатимуть мультимедіа, що може вимагати багато даних. Дивіться\n"
-"                                <a href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\\\">\n"
+"                                Примітка: Офлайн-встановлення автоматично встановлює всі\n"
+"                                мультимедійні файли, включені у вашу форму. Усі наступні\n"
+"                                віддалені оновлення також включатимуть мультимедіа,\n"
+"                                що може вимагати багато даних. Дивіться\n"
+"                                <a\n"
+"                                  href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\"\n"
+"                                >\n"
 "                                  Довідковий сайт\n"
-"                                </a> для отримання додаткової інформації.\n"
+"                                </a>\n"
+"                                для отримання додаткової інформації.\n"
 "                              "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Open in Web Apps"
 msgstr "Відкрити у Веб-додатках"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "Send to phone via SMS"
 msgstr "Надіслати на телефон через SMS"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
 msgid "Download Multimedia"
 msgstr "Завантажити мультимедіа"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid "View Source Files"
 msgstr "Переглянути вихідні файли"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
-msgid "Send to"
-msgstr "Надіслати до"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "Send to"
+msgid "Send to:"
+msgstr "Надіслати до:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
-msgid "SMS charges will incur."
-msgstr "Стягуватиметься плата за SMS."
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "Prompt Updates to CommCare"
+msgid "Update to CommCare:"
+msgstr "Оновити до CommCare:"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
+#| msgid "SMS charges will incur."
+msgid "SMS charges will be incurred."
+msgstr "Буде стягнута плата за SMS."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Send"
 msgstr "Надіслати"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_deploy_modal_sms.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_deploy_modal_sms.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 msgid "No URL was found for this app, try rebuilding."
 msgstr "URL для цього додатка не знайдено, спробуйте перебудувати."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "        One or more of your versions is broken, please make sure it is\n"
+#| "        not marked as released. Make a new version if needed, and update\n"
+#| "        any live deployments as soon as possible.\n"
+#| "      "
 msgid ""
 "\n"
-"        One or more of your versions is broken, please make sure it is\n"
-"        not marked as released. Make a new version if needed, and update\n"
-"        any live deployments as soon as possible.\n"
+"        One or more of your versions is broken, please make sure it is not\n"
+"        marked as released. Make a new version if needed, and update any live\n"
+"        deployments as soon as possible.\n"
 "      "
 msgstr ""
 "\n"
-"        Одна або кілька ваших версій пошкоджені, переконайтеся, що вони\n"
-"        не позначені як випущені. Створіть нову версію за потреби та оновіть\n"
-"        усі активні розгортання якнайшвидше.\n"
+"        Одна або декілька ваших версій пошкоджені, переконайтеся, що вони не\n"
+"        позначені як випущені. Створіть нову версію за потреби та оновіть усі активні\n"
+"        розгортання якнайшвидше.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "          All new versions should work, so if problems persist, please report the issue.\n"
+#| "        "
 msgid ""
 "\n"
-"          All new versions should work, so if problems persist, please report the issue.\n"
+"          All new versions should work, so if problems persist, please report\n"
+"          the issue.\n"
 "        "
 msgstr ""
 "\n"
-"          Усі нові версії повинні працювати, тому якщо проблеми залишаються, повідомте про це.\n"
+"          Усі нові версії повинні працювати, тому якщо проблеми залишаються, будь ласка, повідомте\n"
+"          про проблему.\n"
 "        "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Show only released versions"
 msgstr "Показувати лише випущені версії"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Released versions only"
 msgstr "Лише випущені версії"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-msgid "show all"
-msgstr "показати всі"
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/choice_providers.py
+#: corehq/apps/userreports/tests/test_choice_provider.py
+#: corehq/apps/users/forms.py
+msgid "Show All"
+msgstr "Показати всі"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Timing"
 msgstr "Таймінг"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Make New Version"
 msgstr "Створити нову версію"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid ""
 "\n"
 "        The new application build contains the following deprecated case types:\n"
@@ -14099,139 +14179,142 @@ msgstr ""
 "        Нова збірка додатка містить такі застарілі типи кейсів:\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "        For more information on deprecated case types, see the following\n"
+#| "        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
+#| "      "
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
-"        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"          >documentation</a\n"
+"        >.\n"
 "      "
 msgstr ""
 "\n"
-"        Для отримання додаткової інформації про застарілі типи кейсів дивіться\n"
-"        <a target=\\\"_blank\\\" href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\\\">документацію</a>.\n"
+"        Для отримання додаткової інформації про застарілі типи кейсів дивіться наступну\n"
+"        <a\n"
+"          target=\"_blank\"\n"
+"          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\"\n"
+"          >документацію</a\n"
+"        >.\n"
 "      "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/users/decorators.py
 msgid "Sorry, you don't have permission to do this action!"
 msgstr "Вибачте, у вас немає дозволу на цю дію!"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Loading versions..."
 msgstr "Завантаження версій..."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid ""
 "An error occurred while fetching versions. Reload the page to try again."
 msgstr ""
 "Під час отримання версій сталася помилка. Перезавантажте сторінку, щоб "
 "спробувати ще раз."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
-msgid "Could not update"
-msgstr "Не вдалося оновити"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/translations_coverage.html
 #: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/translations_coverage.html
 msgid "Latest"
 msgstr "Остання"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid "Could not update"
+msgstr "Не вдалося оновити"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "by"
 msgstr "від"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "with CommCare v."
 msgstr "з CommCare v."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Unsigned Jar"
 msgstr "Непідписаний Jar"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "(Click here to add a comment)"
 msgstr "(Натисніть тут, щоб додати коментар)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 msgid "Error updating comment.  Please try again."
 msgstr "Помилка під час оновлення коментаря. Будь ласка, спробуйте ще раз."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "View Changes"
 msgstr "Переглянути зміни"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Revert to this Version"
 msgstr "Повернутися до цієї версії"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Publish"
 msgstr "Опублікувати"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Delete Version?"
 msgstr "Видалити версію?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Are you sure you want to delete this version"
 msgstr "Ви впевнені, що хочете видалити цю версію"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Delete Version"
 msgstr "Видалити версію"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 msgid "Revert to Version?"
 msgstr "Повернутися до версії?"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "              This version uses an outdated form of case management.\n"
+#| "              We advise against reverting back to this version.\n"
+#| "            "
 msgid ""
 "\n"
-"              This version uses an outdated form of case management.\n"
-"              We advise against reverting back to this version.\n"
+"              This version uses an outdated form of case\n"
+"              management. We advise against reverting back to this version.\n"
 "            "
 msgstr ""
 "\n"
 "              Ця версія використовує застарілу форму керування кейсами.\n"
-"              Ми не радимо повертатися до цієї версії.\n"
+"              Ми не рекомендуємо повертатися до цієї версії.\n"
 "            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+#| msgid ""
+#| "\n"
+#| "            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
+#| "          "
 msgid ""
-"\n"
-"            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
+" Are you sure you want to revert to version\n"
+"            <span data-bind=\"text: version\"></span>?\n"
+"          </p>\n"
 "          "
 msgstr ""
-"\n"
-"            Ви впевнені, що хочете повернутися до версії <span data-bind=\"text: version\"></span>?</p>\n"
+" Ви впевнені, що хочете повернутися до версії\n"
+"            <span data-bind=\"text: version\"></span>?\n"
+"          </p>\n"
 "          "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap3/releases_table.html
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/bootstrap5/releases_table.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Revert"
 msgstr "Повернутися"
@@ -14506,7 +14589,6 @@ msgstr "Синхронізувати"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid "This application currently does not contain any multimedia references."
 msgstr "У цьому застосунку наразі немає мультимедійних посилань."
 
@@ -16527,8 +16609,7 @@ msgstr "Нечіткий пошук не підтримується з кіль�
 #: corehq/apps/integration/kyc/views.py
 #: corehq/apps/integration/payments/views.py corehq/apps/settings/views.py
 #: corehq/apps/userreports/reports/builder/forms.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Data"
 msgstr "Дані"
@@ -16873,8 +16954,8 @@ msgstr "Немає доступних Веб-додатків"
 
 #: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html
 #: corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/tabs/tabclasses.py
 msgid "Web Apps"
 msgstr "Веб-додатки"
@@ -17560,8 +17641,7 @@ msgstr "Заблокувати пов'язані поля для мене"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/edit_role.html
 msgid "Linked Configurations"
 msgstr "Пов'язані конфігурації"
 
@@ -17770,8 +17850,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/modal_edit.html
 #: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
 #: corehq/apps/reminders/templates/reminders/partials/modal_edit.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/linked_roles_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/linked_roles_modal.html
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 msgid "Unlock"
 msgstr "Розблокувати"
 
@@ -17920,8 +17999,7 @@ msgstr "Керування ієрархією організації"
 
 #: corehq/apps/dashboard/views.py corehq/apps/email/views.py
 #: corehq/apps/sms/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Messaging"
 msgstr "Обмін повідомленнями"
@@ -19248,8 +19326,7 @@ msgstr "Допустимі значення: %s"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Data Dictionary"
 msgstr "Словник даних"
 
@@ -19779,8 +19856,7 @@ msgid "FHIR Resource Property"
 msgstr "Властивість ресурсу FHIR"
 
 #: corehq/apps/data_dictionary/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "No Name"
 msgstr "Без назви"
 
@@ -21976,10 +22052,6 @@ msgstr ""
 "Схоже, цей номер телефону недійсний. Можливо, ви забули вказати код країни?"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "\n"
-#| "                Please provide an autopay card before continuing.\n"
-#| "              "
 msgid "Please provide an autopay card before continuing."
 msgstr "Будь ласка, додайте картку для автосплати перед продовженням."
 
@@ -26909,8 +26981,8 @@ msgstr ""
 "застосунків."
 
 #: corehq/apps/domain/views/settings.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr "Керування сповіщеннями проєкту"
 
@@ -27097,7 +27169,7 @@ msgid ""
 msgstr ""
 "Актуально лише якщо шлюз — Amazon SES і увімкнено заголовки для відстеження."
 
-#: corehq/apps/email/forms.py
+#: corehq/apps/email/forms.py corehq/apps/users/templates/users/edit_role.html
 msgid "Saved"
 msgstr "Збережено"
 
@@ -28117,8 +28189,7 @@ msgstr ""
 "    "
 
 #: corehq/apps/events/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/privileges.py corehq/tabs/tabclasses.py
 msgid "Attendance Tracking"
 msgstr "Відстеження присутності"
@@ -28693,8 +28764,8 @@ msgstr "Посилання на цю справу"
 
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "CommCare Analytics"
 msgstr "CommCare Аналітика"
 
@@ -32032,16 +32103,6 @@ msgstr "Статус призначення"
 
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
-#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
-#: corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/choice_providers.py
-#: corehq/apps/userreports/tests/test_choice_provider.py
-#: corehq/apps/users/forms.py
-msgid "Show All"
-msgstr "Показати всі"
-
-#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
-#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 msgid "Assigned Only"
 msgstr "Тільки призначені"
 
@@ -32265,9 +32326,8 @@ msgstr "Запит на перепризначення випадків прий
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/mobile/groups.py corehq/tabs/tabclasses.py
 msgid "Groups"
 msgstr "Групи"
@@ -32373,6 +32433,7 @@ msgstr ""
 "                                    налаштування цієї групи."
 
 #: corehq/apps/groups/templates/groups/all_groups.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
 msgid "Limited Access"
 msgstr "Обмежений доступ"
 
@@ -32472,6 +32533,16 @@ msgstr ""
 "                        ініційовано процес підтвердження через SMS. Коли користувач відповість на SMS, його номер телефону буде підтверджено.<br><br>Якщо номер телефону вже підтверджено або\n"
 "                        якщо номер телефону вже використовується іншим контактом у системі, нічого не станеться. Якщо номер телефону очікує підтвердження, SMS із підтвердженням буде надіслано повторно.\n"
 "                        "
+
+#: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_phone_numbers.html
+msgid "SMS charges will incur."
+msgstr "Стягуватиметься плата за SMS."
 
 #: corehq/apps/groups/templates/groups/group_members.html
 #, python-format
@@ -33669,7 +33740,6 @@ msgid "Begin Upload"
 msgstr "Почати завантаження"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid ""
 "<strong>Warning:</strong>\n"
 "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
@@ -33680,7 +33750,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_zip_notice.html
-#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
 msgid ""
 "\n"
 "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
@@ -33727,6 +33796,53 @@ msgstr ""
 "\n"
 "    Мультимедіа, що відповідає вашим фільтрам, не знайдено.\n"
 "  "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "<strong>Warning:</strong>\n"
+#| "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
+#| "  "
+msgid ""
+"\n"
+"      <strong>Warning:</strong>\n"
+"      This application contains forms with errors&mdash;we cannot pull any\n"
+"      multimedia references from those forms.\n"
+"    "
+msgstr ""
+"\n"
+"      <strong>Увага:</strong>\n"
+"      Цей застосунок містить форми з помилками — ми не можемо отримати жодних\n"
+"      мультимедійних посилань з цих форм.\n"
+"    "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "\n"
+#| "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+#| "        This application is missing references, so this zip will be incomplete.\n"
+#| "      "
+msgid ""
+"\n"
+"      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"      This application is missing references, so this zip will be incomplete.\n"
+"    "
+msgstr ""
+"\n"
+"      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
+"      У цьому застосунку відсутні посилання, тому цей zip буде неповним.\n"
+"    "
+
+#: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
+#| msgid ""
+#| "This application currently does not contain any multimedia references."
+msgid ""
+"\n"
+"      This application currently does not contain any multimedia references.\n"
+"    "
+msgstr ""
+"\n"
+"      Наразі цей застосунок не містить жодних мультимедійних посилань.\n"
+"    "
 
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap3/preview_audio_single.html
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/bootstrap5/preview_audio_single.html
@@ -36127,6 +36243,19 @@ msgid "Other Case Type"
 msgstr "Інший тип справи"
 
 #: corehq/apps/integration/kyc/forms.py
+#| msgid "Full Name"
+msgid "Stores Full Name"
+msgstr "Повне ім'я магазину"
+
+#: corehq/apps/integration/kyc/forms.py
+msgid ""
+"Check this box if the project stores the beneficiary's full name in a single"
+" field instead of separate first and last name fields."
+msgstr ""
+"Позначте цей пункт, якщо проєкт зберігає повне ім'я отримувача в одному полі"
+" замість окремих полів для імені та прізвища."
+
+#: corehq/apps/integration/kyc/forms.py
 msgid "Provider"
 msgstr "Постачальник"
 
@@ -36754,10 +36883,6 @@ msgstr ""
 "\n"
 "            Перейти туди.\n"
 "          "
-
-#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
-msgid "Verify All"
-msgstr "Перевірити все"
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_config_form_partial.html
 #: corehq/apps/integration/templates/payments/partials/payments_config_form_partial.html
@@ -38549,9 +38674,8 @@ msgstr ""
 
 #: corehq/apps/locations/views.py corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
 #: corehq/apps/users/templates/users/bootstrap5/edit_commcare_user.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/privileges.py
 msgid "Locations"
 msgstr "Місця"
@@ -40775,10 +40899,9 @@ msgstr "Видалити реєстр"
 
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/registry/views.py
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/tabs/tabclasses.py
 msgid "Data Registries"
 msgstr "Реєстри даних"
@@ -53731,197 +53854,6 @@ msgstr "Надіслати лист-підтвердження обліково�
 msgid "Loading Pending Account Confirmations..."
 msgstr "Завантаження очікуваних підтверджень облікових записів..."
 
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"        Manage roles and permissions or add new custom roles.\n"
-"      "
-msgstr ""
-"\n"
-"        Керуйте ролями та правами або додавайте нові власні ролі.\n"
-"      "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"        View roles and permissions.\n"
-"      "
-msgstr ""
-"\n"
-"        Переглядайте ролі та права доступу.\n"
-"      "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"          <a\n"
-"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\"\n"
-"            >Learn more</a\n"
-"          >\n"
-"          about how roles &amp; permissions are used.\n"
-"        "
-msgstr ""
-"\n"
-"          <a\n"
-"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
-"            target=\"_blank\"\n"
-"            >Дізнатися більше</a\n"
-"          >\n"
-"          про використання ролей і дозволів.\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Unlock Linked Roles For Me"
-msgstr "Розблокувати пов’язані ролі для мене"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Lock Linked Roles For Me"
-msgstr "Заблокувати пов’язані ролі для мене"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"            Linked configurations are controlled from a separate, linked project\n"
-"            space.\n"
-"            <a\n"
-"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-"              target=\"_blank\"\n"
-"              >Learn more</a\n"
-"            >.\n"
-"          "
-msgstr ""
-"\n"
-"            Пов'язані налаштування керуються з окремого, пов'язаного простору\n"
-"            проєкту.\n"
-"            <a\n"
-"              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-"              target=\"_blank\"\n"
-"              >Дізнатися більше</a\n"
-"            >.\n"
-"          "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"\n"
-"          Would you like to edit roles and add new, custom roles?\n"
-"        "
-msgstr ""
-"\n"
-"          Бажаєте редагувати ролі та додавати нові, власні ролі?\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#, python-format
-msgid ""
-"\n"
-"          <strong\n"
-"            ><a href=\"%(subscription_url)s\"\n"
-"              >Upgrade to CommCare Standard</a\n"
-"            ></strong\n"
-"          >\n"
-"          to activate\n"
-"          <strong>Advanced Role-Based Access</strong>.\n"
-"        "
-msgstr ""
-"\n"
-"          <strong\n"
-"            ><a href=\"%(subscription_url)s\"\n"
-"              >Оновіть до CommCare Standard</a\n"
-"            ></strong\n"
-"          >\n"
-"          щоб активувати\n"
-"          <strong>Розширений доступ на основі ролей</strong>.\n"
-"        "
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Roles"
-msgstr "Ролі"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage Shared Exports"
-msgstr "Керування спільними експортами"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Apps"
-msgstr "Додатки"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-#: corehq/tabs/tabclasses.py
-msgid "Integration"
-msgstr "Інтеграція"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Subscription Info"
-msgstr "Інформація про підписку"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Mobile Worker Default Role"
-msgstr "Роль мобільного працівника за замовчуванням"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid ""
-"This is the default role for all Mobile Workers that do not have a role "
-"assigned."
-msgstr ""
-"Це роль за замовчуванням для всіх мобільних працівників, яким не призначено "
-"роль."
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Only"
-msgstr "Лише"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage All"
-msgstr "Керувати всіма"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Manage Only"
-msgstr "Керувати лише"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View All Data"
-msgstr "Переглядати всі дані"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View Data From"
-msgstr "Переглядати дані з"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Edit Role"
-msgstr "Редагувати роль"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "View Role"
-msgstr "Переглянути роль"
-
-#: corehq/apps/users/templates/users/bootstrap3/roles_and_permissions.html
-#: corehq/apps/users/templates/users/bootstrap5/roles_and_permissions.html
-msgid "Add Role"
-msgstr "Додати роль"
-
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #, python-format
@@ -54170,6 +54102,337 @@ msgstr ""
 "            будь ласка,\n"
 "            <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">повідомте про проблему</a>.\n"
 "          "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Unlock Linked Roles For Me"
+msgid "Unlock Linked Role For Me"
+msgstr "Розблокувати пов’язану роль для мене"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Lock Linked Roles For Me"
+msgid "Lock Linked Role For Me"
+msgstr "Заблокувати пов’язану роль для мене"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "            Linked configurations are controlled from a separate, linked project\n"
+#| "            space.\n"
+#| "            <a\n"
+#| "              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+#| "              target=\"_blank\"\n"
+#| "              >Learn more</a\n"
+#| "            >.\n"
+#| "          "
+msgid ""
+"\n"
+"                Linked configurations are controlled from a separate, linked\n"
+"                project space.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"                  target=\"_blank\"\n"
+"                  >Learn more</a\n"
+"                >.\n"
+"              "
+msgstr ""
+"\n"
+"                Пов’язані налаштування керуються з окремого, пов’язаного\n"
+"                простору проєкту.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
+"                  target=\"_blank\"\n"
+"                  >Дізнатися більше</a\n"
+"                >.\n"
+"              "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Area Access"
+msgstr "Доступ до територій"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Can Edit"
+msgstr "Може редагувати"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Can View"
+msgstr "Може переглядати"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Access Specific Reports"
+msgstr "Доступ до окремих звітів"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which reports the role can access:"
+msgstr "Оберіть, до яких звітів матиме доступ ця роль:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Access Specific Tableau Reports"
+msgstr "Доступ до окремих звітів Tableau"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which Tableau reports the role can access:"
+msgstr "Оберіть, до яких звітів Tableau матиме доступ ця роль:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "All CommCare Analytics Roles"
+msgstr "Усі ролі аналітики CommCare"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign all commcare analytics roles to users with this role"
+msgstr "Призначити всі ролі аналітики CommCare користувачам із цією роллю"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "CommCare Analytics Roles"
+msgstr "Ролі аналітики CommCare"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Commcare Analytics Roles:"
+msgstr "Ролі аналітики CommCare:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Other Settings"
+msgstr "Інші налаштування"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Integration Access"
+msgstr "Доступ до інтеграцій"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to manage integration with other systems."
+msgstr "Дозволити ролі керувати інтеграцією з іншими системами."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Manage Subscription Info"
+msgstr "Керування підпискою"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to manage subscription information."
+msgstr "Дозволити ролі керувати інформацією про підписку."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Full Organization Access"
+msgstr "Повний доступ до організації"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow role to access data from all locations."
+msgstr "Дозволити ролі доступ до даних з усіх локацій."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      Make sure any users assigned this role also have a\n"
+#| "                      location assigned to them. Users without assigned\n"
+#| "                      locations will not be permitted to log in.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        Make sure any users assigned this role also have a\n"
+"                        location assigned to them. Users without assigned\n"
+"                        locations will not be permitted to log in.\n"
+"                      "
+msgstr ""
+"\n"
+"                        Переконайтеся, що всім користувачам, яким призначено цю роль,\n"
+"                        також призначено локацію. Користувачі без призначених\n"
+"                        локацій не зможуть увійти в систему.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      Organization-based data access restrictions are only\n"
+#| "                      available on the Pro plan and above. Saving this role will\n"
+#| "                      enable full organization access for the assigned users.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        Organization-based data access restrictions are only\n"
+"                        available on the Pro plan and above. Saving this role\n"
+"                        will enable full organization access for the assigned\n"
+"                        users.\n"
+"                      "
+msgstr ""
+"\n"
+"                        Обмеження доступу до даних на основі організації доступні\n"
+"                        лише у тарифному плані Pro та вище. Збереження цієї ролі\n"
+"                        надасть призначеним користувачам повний доступ до організації.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      With the current configuration, this role will have full\n"
+#| "                      organization access and roles that can assign it will not.\n"
+#| "                      This is not recommended.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        With the current configuration, this role will have full\n"
+"                        organization access and roles that can assign it will\n"
+"                        not. This is not recommended.\n"
+"                      "
+msgstr ""
+"\n"
+"                        За поточної конфігурації ця роль матиме повний доступ до\n"
+"                        організації, а ролі, які можуть її призначати, — ні. Це не рекомендується.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Login-As All Users"
+msgstr "Вхід як усі користувачі"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as any mobile worker in Web Apps."
+msgstr ""
+"Дозволити користувачу входити як будь-який мобільний працівник у Веб-"
+"додатках."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Limit Login-As"
+msgstr "Обмежити вхід як"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as only specified users in Web Apps."
+msgstr ""
+"Дозволити користувачу входити лише як зазначені користувачі у Веб-додатках."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Login-As Default User"
+msgstr "Вхід як користувач за замовчуванням"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow the user to log in as the default user in Web Apps."
+msgstr ""
+"Дозволити користувачу входити як користувач за замовчуванням у Веб-додатках."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Mobile App Access"
+msgstr "Доступ до мобільного додатку"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow mobile users access to offline mobile application"
+msgstr "Дозволити мобільним користувачам доступ до офлайн мобільного додатку"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Default Landing Page"
+msgstr "Сторінка за замовчуванням після входу"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow Reporting Issues"
+msgstr "Дозволити повідомлення про проблеми"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow this role to report issues."
+msgstr "Дозволити цій ролі повідомляти про проблеми."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Non-admin Editable"
+msgstr "Редагується неадміністратором"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow all non-admins to assign this role to other users."
+msgstr ""
+"Дозволити всім неадміністраторам призначати цю роль іншим користувачам."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Manage Role Assignment"
+msgstr "Керування призначенням ролей"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Select which other roles can assign this role:"
+msgstr "Виберіть, які інші ролі можуть призначати цю роль:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid ""
+#| "\n"
+#| "                      If the highlighted roles are selected, this role will have\n"
+#| "                      full organization access and be assignable by a role that\n"
+#| "                      does not. This is not recommended configuration.\n"
+#| "                    "
+msgid ""
+"\n"
+"                        If the highlighted roles are selected, this role will\n"
+"                        have full organization access and be assignable by a\n"
+"                        role that does not. This is not recommended\n"
+"                        configuration.\n"
+"                      "
+msgstr ""
+"\n"
+"                        Якщо вибрано підсвічені ролі, ця роль матиме повний доступ до\n"
+"                        організації та буде призначатися роллю, яка такого доступу не має.\n"
+"                        Це не рекомендована конфігурація.\n"
+"                      "
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign All User Profiles"
+msgstr "Призначити всі профілі користувачів"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"Allow role to access all user profiles while setting up mobile workers and "
+"web users."
+msgstr ""
+"Дозволити ролі доступ до всіх профілів користувачів під час налаштування "
+"мобільних працівників і веб-користувачів."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Assign Specific User Profiles"
+msgstr "Призначити конкретні профілі користувачів"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"Select which user profiles the role can assign to mobile workers and web "
+"users:"
+msgstr ""
+"Виберіть, які профілі користувачів роль може призначати мобільним "
+"працівникам і веб-користувачам:"
+
+#: corehq/apps/users/templates/users/edit_role.html
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Allow this role to manage project alerts."
+msgstr "Дозволити цій ролі керувати сповіщеннями про проєкт."
+
+#: corehq/apps/users/templates/users/edit_role.html
+#| msgid "Saving..."
+msgid "Saving ..."
+msgstr "Збереження ..."
 
 #: corehq/apps/users/templates/users/email/mobile_worker_account_confirmation.html
 #, python-format
@@ -54455,282 +54718,6 @@ msgstr ""
 "            до цих локацій.\n"
 "          "
 
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Role Name"
-msgstr "Назва ролі"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Area Access"
-msgstr "Доступ до територій"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Can Edit"
-msgstr "Може редагувати"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Can View"
-msgstr "Може переглядати"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Access Specific Reports"
-msgstr "Доступ до окремих звітів"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which reports the role can access:"
-msgstr "Оберіть, до яких звітів матиме доступ ця роль:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Access Specific Tableau Reports"
-msgstr "Доступ до окремих звітів Tableau"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which Tableau reports the role can access:"
-msgstr "Оберіть, до яких звітів Tableau матиме доступ ця роль:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "All CommCare Analytics Roles"
-msgstr "Усі ролі аналітики CommCare"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign all commcare analytics roles to users with this role"
-msgstr "Призначити всі ролі аналітики CommCare користувачам із цією роллю"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "CommCare Analytics Roles"
-msgstr "Ролі аналітики CommCare"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Commcare Analytics Roles:"
-msgstr "Ролі аналітики CommCare:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Other Settings"
-msgstr "Інші налаштування"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Integration Access"
-msgstr "Доступ до інтеграцій"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to manage integration with other systems."
-msgstr "Дозволити ролі керувати інтеграцією з іншими системами."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Manage Subscription Info"
-msgstr "Керування підпискою"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to manage subscription information."
-msgstr "Дозволити ролі керувати інформацією про підписку."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Full Organization Access"
-msgstr "Повний доступ до організації"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow role to access data from all locations."
-msgstr "Дозволити ролі доступ до даних з усіх локацій."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    Make sure any users assigned this role also have a location assigned to them.\n"
-"                    Users without assigned locations will not be permitted to log in.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Переконайтеся, що всім користувачам із цією роллю також призначено локацію.\n"
-"                    Користувачі без призначених локацій не зможуть увійти в систему.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    Organization-based data access restrictions are only available\n"
-"                    on the Pro plan and above. Saving this role will enable\n"
-"                    full organization access for the assigned users.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Обмеження доступу до даних на основі організації доступні\n"
-"                    лише у тарифному плані Pro та вище. Збереження цієї ролі надасть\n"
-"                    повний доступ до організації призначеним користувачам.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
-"                    This is not recommended.\n"
-"                  "
-msgstr ""
-"\n"
-"                    За поточної конфігурації ця роль матиме повний доступ до організації, а ролі, які можуть її призначати, — ні.\n"
-"                    Це не рекомендується.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Login-As All Users"
-msgstr "Вхід як усі користувачі"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as any mobile worker in Web Apps."
-msgstr ""
-"Дозволити користувачу входити як будь-який мобільний працівник у Веб-"
-"додатках."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Limit Login-As"
-msgstr "Обмежити вхід як"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as only specified users in Web Apps."
-msgstr ""
-"Дозволити користувачу входити лише як зазначені користувачі у Веб-додатках."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Login-As Default User"
-msgstr "Вхід як користувач за замовчуванням"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow the user to log in as the default user in Web Apps."
-msgstr ""
-"Дозволити користувачу входити як користувач за замовчуванням у Веб-додатках."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Mobile App Access"
-msgstr "Доступ до мобільного додатку"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow mobile users access to offline mobile application"
-msgstr "Дозволити мобільним користувачам доступ до офлайн мобільного додатку"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Default Landing Page"
-msgstr "Сторінка за замовчуванням після входу"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow Reporting Issues"
-msgstr "Дозволити повідомлення про проблеми"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow this role to report issues."
-msgstr "Дозволити цій ролі повідомляти про проблеми."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Non-admin Editable"
-msgstr "Редагується неадміністратором"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow all non-admins to assign this role to other users."
-msgstr ""
-"Дозволити всім неадміністраторам призначати цю роль іншим користувачам."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Manage Role Assignment"
-msgstr "Керування призначенням ролей"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Select which other roles can assign this role:"
-msgstr "Виберіть, які інші ролі можуть призначати цю роль:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-msgid ""
-"\n"
-"                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
-"                    by a role that does not. This is not recommended configuration.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Якщо вибрано виділені ролі, ця роль матиме повний доступ до організації та може бути призначена\n"
-"                    роллю, яка такого доступу не має. Це не рекомендована конфігурація.\n"
-"                  "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign All User Profiles"
-msgstr "Призначити всі профілі користувачів"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"Allow role to access all user profiles while setting up mobile workers and "
-"web users."
-msgstr ""
-"Дозволити ролі доступ до всіх профілів користувачів під час налаштування "
-"мобільних працівників і веб-користувачів."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Assign Specific User Profiles"
-msgstr "Призначити конкретні профілі користувачів"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"Select which user profiles the role can assign to mobile workers and web "
-"users:"
-msgstr ""
-"Виберіть, які профілі користувачів роль може призначати мобільним "
-"працівникам і веб-користувачам:"
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Allow this role to manage project alerts."
-msgstr "Дозволити цій ролі керувати сповіщеннями про проєкт."
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#, python-format
-msgid ""
-"\n"
-"            This permission is already configured via <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</a>.\n"
-"            Please remove this configuration before updating access here.\n"
-"          "
-msgstr ""
-"\n"
-"            Це право вже налаштовано через <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Керування правами доступу до Веб-додатків</a>.\n"
-"            Будь ласка, видаліть цю конфігурацію перед оновленням доступу тут.\n"
-"          "
-
-#: corehq/apps/users/templates/users/partials/bootstrap3/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid "Please select at least one item."
-msgstr "Будь ласка, виберіть щонайменше один елемент."
-
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/manage_phone_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
@@ -54893,78 +54880,6 @@ msgstr "Перевірка електронної адреси"
 msgid "Delete +%(number)s ?"
 msgstr "Видалити +%(number)s ?"
 
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      Make sure any users assigned this role also have a\n"
-"                      location assigned to them. Users without assigned\n"
-"                      locations will not be permitted to log in.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Переконайтеся, що всім користувачам, яким призначено цю роль,\n"
-"                      також призначено локацію. Користувачі без призначених\n"
-"                      локацій не зможуть увійти в систему.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      Organization-based data access restrictions are only\n"
-"                      available on the Pro plan and above. Saving this role will\n"
-"                      enable full organization access for the assigned users.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Обмеження доступу до даних на основі організації доступні лише\n"
-"                      у плані Pro та вище. Збереження цієї ролі надасть повний доступ до організації призначеним користувачам.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      With the current configuration, this role will have full\n"
-"                      organization access and roles that can assign it will not.\n"
-"                      This is not recommended.\n"
-"                    "
-msgstr ""
-"\n"
-"                      За поточної конфігурації ця роль матиме повний доступ до організації, а ролі, які можуть її призначати, — ні.\n"
-"                      Це не рекомендується.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-msgid ""
-"\n"
-"                      If the highlighted roles are selected, this role will have\n"
-"                      full organization access and be assignable by a role that\n"
-"                      does not. This is not recommended configuration.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Якщо вибрано виділені ролі, ця роль матиме\n"
-"                      повний доступ до організації та буде призначатися роллю, яка цього доступу не має. Це не рекомендована конфігурація.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/bootstrap5/edit_role_modal.html
-#, python-format
-msgid ""
-"\n"
-"          This permission is already configured via\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Manage Web Apps Permissions\n"
-"          </a>\n"
-"          . Please remove this configuration before updating access here.\n"
-"        "
-msgstr ""
-"\n"
-"          Цей дозвіл вже налаштовано через\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Керування дозволами для Веб-застосунків\n"
-"          </a>\n"
-"          . Будь ласка, видаліть цю конфігурацію перед оновленням доступу тут.\n"
-"        "
-
 #: corehq/apps/users/templates/users/partials/confirm_trust_identity_provider_message.html
 msgid ""
 "\n"
@@ -55021,6 +54936,93 @@ msgstr ""
 "        <a href=\"#\">Дізнайтеся більше</a> про SSO у CommCare HQ.\n"
 "      "
 
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid "Role Name"
+msgstr "Назва ролі"
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      Make sure any users assigned this role also have a\n"
+"                      location assigned to them. Users without assigned\n"
+"                      locations will not be permitted to log in.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Переконайтеся, що всім користувачам, яким призначено цю роль,\n"
+"                      також призначено локацію. Користувачі без призначених\n"
+"                      локацій не зможуть увійти в систему.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      Organization-based data access restrictions are only\n"
+"                      available on the Pro plan and above. Saving this role will\n"
+"                      enable full organization access for the assigned users.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Обмеження доступу до даних на основі організації доступні лише\n"
+"                      у плані Pro та вище. Збереження цієї ролі надасть повний доступ до організації призначеним користувачам.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      With the current configuration, this role will have full\n"
+"                      organization access and roles that can assign it will not.\n"
+"                      This is not recommended.\n"
+"                    "
+msgstr ""
+"\n"
+"                      За поточної конфігурації ця роль матиме повний доступ до організації, а ролі, які можуть її призначати, — ні.\n"
+"                      Це не рекомендується.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                      If the highlighted roles are selected, this role will have\n"
+"                      full organization access and be assignable by a role that\n"
+"                      does not. This is not recommended configuration.\n"
+"                    "
+msgstr ""
+"\n"
+"                      Якщо вибрано виділені ролі, ця роль матиме\n"
+"                      повний доступ до організації та буде призначатися роллю, яка цього доступу не має. Це не рекомендована конфігурація.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#, python-format
+msgid ""
+"\n"
+"          This permission is already configured via\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Manage Web Apps Permissions\n"
+"          </a>\n"
+"          . Please remove this configuration before updating access here.\n"
+"        "
+msgstr ""
+"\n"
+"          Цей дозвіл вже налаштовано через\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Керування дозволами для Веб-застосунків\n"
+"          </a>\n"
+"          . Будь ласка, видаліть цю конфігурацію перед оновленням доступу тут.\n"
+"        "
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
+#: corehq/apps/users/templates/users/partials/select_permission.html
+msgid "Please select at least one item."
+msgstr "Будь ласка, виберіть щонайменше один елемент."
+
+#: corehq/apps/users/templates/users/partials/linked_roles_modal.html
+#| msgid "Unlock Linked Fields?"
+msgid "Unlock Linked Roles?"
+msgstr "Розблокувати пов’язані ролі?"
+
 #: corehq/apps/users/templates/users/partials/location_edit_warnings.html
 #, python-format
 msgid ""
@@ -55046,6 +55048,155 @@ msgstr ""
 "                УВАГА: %(user_type)s \"%(couch_username)s\" повинен мати призначену щонайменше одну локацію.\n"
 "                Інакше вхід буде неможливий.\n"
 "            "
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#| msgid "IP Access"
+msgid "No Access"
+msgstr "Немає доступу"
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+#| msgid "Access Key"
+msgid "Access All"
+msgstr "Доступ до всього"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"        Manage roles and permissions or add new custom roles.\n"
+"      "
+msgstr ""
+"\n"
+"        Керуйте ролями та правами або додавайте нові власні ролі.\n"
+"      "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"        View roles and permissions.\n"
+"      "
+msgstr ""
+"\n"
+"        Переглядайте ролі та права доступу.\n"
+"      "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >Learn more</a\n"
+"          >\n"
+"          about how roles &amp; permissions are used.\n"
+"        "
+msgstr ""
+"\n"
+"          <a\n"
+"            href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview\"\n"
+"            target=\"_blank\"\n"
+"            >Дізнатися більше</a\n"
+"          >\n"
+"          про використання ролей і дозволів.\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"\n"
+"          Would you like to edit roles and add new, custom roles?\n"
+"        "
+msgstr ""
+"\n"
+"          Бажаєте редагувати ролі та додавати нові, власні ролі?\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#, python-format
+msgid ""
+"\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Upgrade to CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
+"          to activate\n"
+"          <strong>Advanced Role-Based Access</strong>.\n"
+"        "
+msgstr ""
+"\n"
+"          <strong\n"
+"            ><a href=\"%(subscription_url)s\"\n"
+"              >Оновіть до CommCare Standard</a\n"
+"            ></strong\n"
+"          >\n"
+"          щоб активувати\n"
+"          <strong>Розширений доступ на основі ролей</strong>.\n"
+"        "
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Roles"
+msgstr "Ролі"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage Shared Exports"
+msgstr "Керування спільними експортами"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Apps"
+msgstr "Додатки"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/tabs/tabclasses.py
+msgid "Integration"
+msgstr "Інтеграція"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Subscription Info"
+msgstr "Інформація про підписку"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Mobile Worker Default Role"
+msgstr "Роль мобільного працівника за замовчуванням"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"This is the default role for all Mobile Workers that do not have a role "
+"assigned."
+msgstr ""
+"Це роль за замовчуванням для всіх мобільних працівників, яким не призначено "
+"роль."
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Only"
+msgstr "Лише"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage All"
+msgstr "Керувати всіма"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Manage Only"
+msgstr "Керувати лише"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View All Data"
+msgstr "Переглядати всі дані"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View Data From"
+msgstr "Переглядати дані з"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
+msgid "Edit Role"
+msgstr "Редагувати роль"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "View Role"
+msgstr "Переглянути роль"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Add Role"
+msgstr "Додати роль"
 
 #: corehq/apps/users/user_data.py
 msgid "Profile conflicts with existing data"
@@ -55515,12 +55666,12 @@ msgid "Password reset email sent to {}"
 msgstr "Лист для скидання пароля надіслано на адресу {}"
 
 #: corehq/apps/users/views/role.py
-msgid "Roles & Permissions"
-msgstr "Ролі та дозволи"
-
-#: corehq/apps/users/views/role.py
 msgid "Use Default"
 msgstr "Використовувати за замовчуванням"
+
+#: corehq/apps/users/views/role.py
+msgid "Roles & Permissions"
+msgstr "Ролі та дозволи"
 
 #: corehq/apps/users/views/role.py
 msgid ""
@@ -55570,6 +55721,11 @@ msgid_plural ""
 " it."
 msgstr[0] ""
 msgstr[1] ""
+
+#: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
+#| msgid "Create Alert"
+msgid "Create Role"
+msgstr "Створити роль"
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -61105,6 +61261,76 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "CommCare from Google Play"
+#~ msgstr "CommCare з Google Play"
+
+#~ msgid "to your Android device."
+#~ msgstr "на ваш пристрій Android."
+
+#~ msgid "show all"
+#~ msgstr "показати всі"
+
+#~ msgid "Verify All"
+#~ msgstr "Перевірити все"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Make sure any users assigned this role also have a location assigned to them.\n"
+#~ "                    Users without assigned locations will not be permitted to log in.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Переконайтеся, що всім користувачам із цією роллю також призначено локацію.\n"
+#~ "                    Користувачі без призначених локацій не зможуть увійти в систему.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    Organization-based data access restrictions are only available\n"
+#~ "                    on the Pro plan and above. Saving this role will enable\n"
+#~ "                    full organization access for the assigned users.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Обмеження доступу до даних на основі організації доступні\n"
+#~ "                    лише у тарифному плані Pro та вище. Збереження цієї ролі надасть\n"
+#~ "                    повний доступ до організації призначеним користувачам.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    With the current configuration, this role will have full organization access and roles that can assign it will not.\n"
+#~ "                    This is not recommended.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    За поточної конфігурації ця роль матиме повний доступ до організації, а ролі, які можуть її призначати, — ні.\n"
+#~ "                    Це не рекомендується.\n"
+#~ "                  "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    If the highlighted roles are selected, this role will have full organization access and be assignable\n"
+#~ "                    by a role that does not. This is not recommended configuration.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Якщо вибрано виділені ролі, ця роль матиме повний доступ до організації та може бути призначена\n"
+#~ "                    роллю, яка такого доступу не має. Це не рекомендована конфігурація.\n"
+#~ "                  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            This permission is already configured via <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Manage Web Apps Permissions</a>.\n"
+#~ "            Please remove this configuration before updating access here.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Це право вже налаштовано через <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">Керування правами доступу до Веб-додатків</a>.\n"
+#~ "            Будь ласка, видаліть цю конфігурацію перед оновленням доступу тут.\n"
+#~ "          "
 
 #~ msgid ""
 #~ "Hi there! I'm CommCare Companion, your personal guide to CommCare! What can "
