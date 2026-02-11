@@ -219,7 +219,7 @@ class RemoteRequestFactory(object):
             "default_search": self.module.search_config.default_search,
             "dynamic_search": self.app.split_screen_dynamic_search and not self.module.is_auto_select()
         }
-        if self.module.search_config.search_on_clear and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain):
+        if self.module.search_config.search_on_clear and toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
             kwargs["search_on_clear"] = (self.module.search_config.search_on_clear
                 and not self.module.is_auto_select())
         return [
