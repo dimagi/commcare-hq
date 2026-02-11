@@ -390,15 +390,6 @@ class UpdateCaseAction(FormAction):
                 data['conflicts'] = {key: items[1:] for key, items in multi.items() if len(items) > 1}
         return super().wrap(data)
 
-    def get_property_names(self):
-        all_names = set()
-        if self.update:
-            all_names.update(list(self.update.keys()))
-        elif self.update_multi:
-            all_names.update(list(self.update_multi.keys()))
-
-        return all_names
-
 
 class PreloadAction(FormAction):
 
@@ -490,7 +481,7 @@ class FormActions(DocumentSchema):
 
     def all_property_names(self):
         names = set()
-        names.update(self.update_case.get_property_names())
+        names.update(list(self.update_case.update.keys()))
         names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
             names.update(list(subcase.case_properties.keys()))
