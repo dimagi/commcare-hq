@@ -450,15 +450,6 @@ class OpenCaseAction(FormAction):
                 data['conflicts'] = multi[1:]
         return super().wrap(data)
 
-    def has_name_update(self):
-        if self.name_update_multi:
-            return any([self._update_has_name(update) for update in self.name_update_multi])
-
-        return self.name_update and self._update_has_name(self.name_update)
-
-    def _update_has_name(self, update):
-        return bool(update.question_path)
-
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
