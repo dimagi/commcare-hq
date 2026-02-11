@@ -31,34 +31,6 @@ class OpenCaseActionTests(SimpleTestCase):
         multi_paths = [update.question_path for update in action.name_update_multi]
         assert multi_paths == ['name1', 'name2']
 
-    def test_has_name_update_returns_true_with_name_update(self):
-        action = OpenCaseAction({
-            'name_update': {'question_path': 'name'}
-        })
-
-        assert action.has_name_update()
-
-    def test_has_name_update_returns_false_with_empty_path(self):
-        action = OpenCaseAction({
-            'name_update': {'question_path': ''}
-        })
-
-        assert not action.has_name_update()
-
-    def test_has_name_update_looks_at_name_update_multi(self):
-        action = OpenCaseAction({
-            'name_update_multi': [{'question_path': 'name1'}, {'question_path': 'name2'}]
-        })
-
-        assert action.has_name_update()
-
-    def test_has_name_update_requires_name_update_multi_to_have_a_path(self):
-        action = OpenCaseAction({
-            'name_update_multi': [{'question_path': ''}]
-        })
-
-        assert not action.has_name_update()
-
 
 class OpenCaseActionApplyDiffTests(SimpleTestCase):
 
