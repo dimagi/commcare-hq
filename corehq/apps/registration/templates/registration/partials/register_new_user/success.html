@@ -6,21 +6,15 @@
     {% trans "An email was just sent to" %}
     <span data-bind="text: email"></span>.
   </p>
-  {% if request.user_agent.is_mobile %}
-    <p>
-      {% blocktrans %}
-        Please visit the link provided <strong>from your desktop computer</strong> to activate your account,
-        so you can start using your new CommCare project!
-      {% endblocktrans %}
-    </p>
-  {% else %}
-    <p>
-      {% blocktrans %}
-        <strong>Please visit the link provided in the email to activate your account,</strong>
-        so you can start using your new CommCare project!
-      {% endblocktrans %}
-    </p>
-  {% endif %}
+  <p>
+    {% blocktrans %}
+      <strong
+        >Please visit the link provided in the email to activate your
+        account,</strong
+      >
+      so you can start using your new CommCare project!
+    {% endblocktrans %}
+  </p>
   <hr />
   <p>
     {% url "registration_resend_domain_confirmation" as resend_url %}
@@ -37,7 +31,8 @@
   </h2>
   <p class="lead">
     {% blocktrans %}
-      We are now redirecting you to sign in with <span data-bind="text: ssoIdpName"></span>.
+      We are now redirecting you to sign in with
+      <span data-bind="text: ssoIdpName"></span>.
     {% endblocktrans %}
   </p>
   <p>

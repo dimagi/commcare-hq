@@ -156,7 +156,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
-    'django_user_agents.middleware.UserAgentMiddleware',
     'corehq.middleware.HqHtmxActionMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
@@ -239,7 +238,6 @@ DEFAULT_APPS = (
     'two_factor',
     'two_factor.plugins.phonenumber',
     'statici18n',
-    'django_user_agents',
     'oauth2_provider',
 )
 
@@ -942,7 +940,6 @@ LESS_B3_PATHS = {
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
-USER_AGENTS_CACHE = 'default'
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0

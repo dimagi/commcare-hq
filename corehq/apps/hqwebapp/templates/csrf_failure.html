@@ -1,11 +1,11 @@
 {% extends "error_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block title %}{% trans "Cookies are disabled!" %}{% endblock title %}
-{% block tabs %}{% endblock tabs %}
+{% block tabs %}
+{% endblock tabs %}
 {% block content %}
   <div class="container fs-5 pb-5">
     <div class="text-center py-5">
@@ -39,17 +39,21 @@
               x-data=""
               @click.prevent="window.location.reload()"
               class="fw-bold"
-            >refreshing</a> the page.
+              >refreshing</a
+            >
+            the page.
           {% endblocktrans %}
         </li>
         <li>
           {% blocktrans %}
-            Click on the CommCare icon <i class="fcc fcc-flower"></i> in the top left corner.
+            Click on the CommCare icon <i class="fcc fcc-flower"></i> in the top
+            left corner.
           {% endblocktrans %}
         </li>
         <li>
           {% blocktrans %}
-            If that doesn't work, clear your browser's cache, then close and reopen your browser.
+            If that doesn't work, clear your browser's cache, then close and
+            reopen your browser.
           {% endblocktrans %}
         </li>
       </ol>
@@ -70,7 +74,9 @@
               href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950826/Troubleshooting+Support"
               class="fw-bold"
               target="_blank"
-            >troubleshooting guide</a> with screenshots and quick tips.
+              >troubleshooting guide</a
+            >
+            with screenshots and quick tips.
           {% endblocktrans %}
         </p>
       </div>
@@ -87,11 +93,9 @@
           {% endblocktrans %}<br />
           {% blocktrans %}
             Email us at
-            <a
-              href="mailto:{{ support_email }}"
-              class="fw-bold"
-              target="_blank"
-            >{{ support_email }}</a>.
+            <a href="mailto:{{ support_email }}" class="fw-bold" target="_blank"
+              >{{ support_email }}</a
+            >.
           {% endblocktrans %}
         </p>
       </div>
@@ -100,19 +104,5 @@
 {% endblock content %}
 
 {% block footer %}
-  {% if request.user_agent %}
-    <div class="position-relative w-100 fst-italic">
-      <div
-        class="
-          alert alert-primary border-0 mb-0 mt-0 rounded-0 text-center fs-5
-          position-absolute bottom-0 start-50 translate-middle-x w-100
-        "
-      >
-        <div class="container">
-          You're using: {{ request.user_agent.browser.family }} {{ request.user_agent.browser.version_string }}
-        </div>
-      </div>
-    </div>
-  {% endif %}
   {{ block.super }}
 {% endblock footer %}
