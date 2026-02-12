@@ -9,6 +9,10 @@
 
 {% block page_content %}
   <form method="post"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="search"
+        hx-target="#results"
+        hx-swap="innerHTML"
         x-data="{
           params: [{ id: 0}],
           nextId: 1,
@@ -83,4 +87,11 @@
       {% trans "Submit" %}
     </button>
   </form>
+
+  <div id="results" class="mt-3"></div>
 {% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

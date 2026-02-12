@@ -218,3 +218,18 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
     urlname = 'case_search_endpoint'
     page_title = gettext_lazy('Configurable Case Search Endpoint')
     template_name = 'case_search/case_search_endpoint.html'
+
+    @hq_hx_action('post')
+    def search(self, request, *args, **kwargs):
+        header = ['case_id', 'name']
+        rows = [
+            ['abc123', 'Jane Doe'],
+            ['def456', 'John Smith'],
+            ['ghi789', 'Alice Johnson'],
+            ['jkl012', 'Bob Williams'],
+            ['mno345', 'Carol Brown'],
+        ]
+        return render(request, 'case_search/case_search_endpoint_results.html', {
+            'header': header,
+            'rows': rows,
+        })
