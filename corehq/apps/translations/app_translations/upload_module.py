@@ -28,7 +28,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
         self.search_label = None
-        self.search_again_label = None
         self.title_label = None
         self.description = None
         self.select_text = None
@@ -91,9 +90,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         if self.search_label:
             self._update_translation(self.search_label, self.module.search_config.search_label.label)
-
-        if self.search_again_label:
-            self._update_translation(self.search_again_label, self.module.search_config.search_again_label.label)
 
         if self.title_label:
             self._update_translation(self.title_label, self.module.search_config.title_label)
@@ -231,7 +227,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.case_list_form_label = None
         self.case_list_menu_item_label = None
         self.search_label = None
-        self.search_again_label = None
         self.title_label = None
         self.description = None
         self.select_text = None
@@ -289,8 +284,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             # It's a case search label. Don't add it to condensed rows
             elif row['case_property'] == 'search_label':
                 self.search_label = row
-            elif row['case_property'] == 'search_again_label':
-                self.search_again_label = row
             elif row['case_property'] == 'title_label':
                 self.title_label = row
             elif row['case_property'] == 'description':

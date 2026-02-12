@@ -228,9 +228,6 @@ class AppFactory(object):
         case_module.search_config.search_label.label = {
             'en': 'Find a Mother',
         }
-        case_module.search_config.search_again_label.label = {
-            'en': 'Find Another Mother',
-        }
         case_module.search_config.title_label = {
             'en': 'Find a Mom',
         }

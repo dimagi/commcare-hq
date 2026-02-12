@@ -6,7 +6,6 @@ from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
-    CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
@@ -47,10 +46,6 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 media_image={'en': "jr://file/commcare/image/1.png"},
                 media_audio={'en': "jr://file/commcare/image/2.mp3"}
             ),
-            search_again_label=CaseSearchAgainLabel(
-                label={'en': 'Get them'},
-                media_audio={'en': "jr://file/commcare/image/2.mp3"}
-            ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
         )
         # wrap to have assign_references called
@@ -62,11 +57,6 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             "./detail[@id='m0_case_short']/action"
         )
-        self.assertXmlPartialEqual(
-            self.get_xml('case-search-again-with-action'),
-            app.create_suite(),
-            "./detail[@id='m0_search_short']/action"
-        )
 
         # test for localized action node for apps with CC version > 2.21
         app.build_spec.version = '2.21.0'
@@ -74,11 +64,6 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             self.get_xml('case-search-with-localized-action'),
             app.create_suite(),
             "./detail[@id='m0_case_short']/action"
-        )
-        self.assertXmlPartialEqual(
-            self.get_xml('case-search-again-with-localized-action'),
-            app.create_suite(),
-            "./detail[@id='m0_search_short']/action"
         )
 
     def test_callcenter_suite(self, *args):
