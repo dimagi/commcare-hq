@@ -3,7 +3,7 @@
 <div id="{{ qualifier|default_if_none:"" }}media_{{ type }}">
   <div class="row mb-3">
     <label class="col-form-label col-md-2" for="menu_{{ type }}_path"
-      >{% trans badge %}</label
+      >{% trans label %}</label
     >
     <div class="col-md-10 commcare-feature" data-since-version="1.3">
       {% if type == "image" %}
@@ -73,13 +73,13 @@
           />
           <label class="form-check-label">
             {% blocktrans %}
-              Use this {{ badge }} for all languages
+              Use this {{ label }} for all languages
             {% endblocktrans %}:
           </label>
         </div>
         <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
           {% blocktrans %}
-            This {{ badge }} is linked to the default language, and can only be
+            This {{ label }} is linked to the default language, and can only be
             modified there.
           {% endblocktrans %}
         </div>
