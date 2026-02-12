@@ -1,12 +1,16 @@
 from django.urls import re_path as url
 
 from corehq.apps.case_search.views import (
-    CaseSearchView, CSQLFixtureExpressionView, ProfileCaseSearchView
+    CaseSearchView,
+    CaseSearchEndpoint,
+    CSQLFixtureExpressionView,
+    ProfileCaseSearchView,
 )
 
 urlpatterns = [
     url(r'^search/$', CaseSearchView.as_view(), name=CaseSearchView.urlname),
     url(r'^profile/$', ProfileCaseSearchView.as_view(), name=ProfileCaseSearchView.urlname),
     url(r'^csql_fixture_configuration/$', CSQLFixtureExpressionView.as_view(),
-    name=CSQLFixtureExpressionView.urlname),
+        name=CSQLFixtureExpressionView.urlname),
+    url(r'^case_search_endpoint/$', CaseSearchEndpoint.as_view(), name=CaseSearchEndpoint.urlname),
 ]

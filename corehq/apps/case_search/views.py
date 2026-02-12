@@ -208,3 +208,13 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
             form.save()
             return HttpResponse(form.render())
         raise AssertionError("The user shouldn't be able to submit an invalid form")
+
+
+@method_decorator([
+    use_bootstrap5,
+    require_can_edit_data,
+], name='dispatch')
+class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
+    urlname = 'case_search_endpoint'
+    page_title = gettext_lazy('Configurable Case Search Endpoint')
+    template_name = 'case_search/case_search_endpoint.html'
