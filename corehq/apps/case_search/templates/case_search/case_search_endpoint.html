@@ -8,5 +8,79 @@
 {% endblock %}
 
 {% block page_content %}
-<!-- TODO -->
+  <form method="post"
+        x-data="{
+          params: [{ id: 0}],
+          nextId: 1,
+        }">
+    {% csrf_token %}
+
+    <div class="card mb-3">
+      <div class="card-header">
+        <strong>{% trans "Endpoint Configuration" %}</strong>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label" for="endpoint_name">
+            {% trans "Endpoint Name" %}
+          </label>
+          <input type="text"
+                 class="form-control"
+                 id="endpoint_name"
+                 name="endpoint_name"
+                 required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="case_type">
+            {% trans "Case Type" %}
+          </label>
+          <input type="text"
+                 class="form-control"
+                 id="case_type"
+                 name="case_type"
+                 required>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">
+        <strong>{% trans "Query Parameters" %}</strong>
+      </div>
+      <div class="card-body">
+        <template x-for="(param, index) in params" :key="param.id">
+          <div class="row mb-2 align-items-center">
+            <div class="col">
+              <input type="text"
+                     class="form-control"
+                     name="param_key"
+                     placeholder="{% trans_html_attr 'Key' %}">
+            </div>
+            <div class="col">
+              <input type="text"
+                     class="form-control"
+                     name="param_value"
+                     placeholder="{% trans_html_attr 'Value' %}">
+            </div>
+            <div class="col-auto">
+              <button type="button"
+                      class="btn btn-outline-danger"
+                      @click="params.splice(index, 1)">
+                <i class="fa fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        </template>
+        <button type="button"
+                class="btn btn-outline-primary"
+                @click="params.push({ id: nextId++ })">
+          <i class="fa fa-plus"></i> {% trans "Add Parameter" %}
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+      {% trans "Submit" %}
+    </button>
+  </form>
 {% endblock %}
