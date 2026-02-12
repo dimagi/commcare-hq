@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '4'",
@@ -494,7 +494,6 @@ dependencies = [
     { name = "django-prbac" },
     { name = "django-recaptcha" },
     { name = "django-redis" },
-    { name = "django-redis-sessions" },
     { name = "django-statici18n" },
     { name = "django-tables2" },
     { name = "django-tastypie" },
@@ -668,7 +667,6 @@ requires-dist = [
     { name = "django-prbac" },
     { name = "django-recaptcha" },
     { name = "django-redis" },
-    { name = "django-redis-sessions" },
     { name = "django-statici18n" },
     { name = "django-tables2" },
     { name = "django-tastypie" },
@@ -1246,18 +1244,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/08/53/dbcfa1e528e0d6c39947092625b2c89274b5d88f14d357cee53c4d6dbbd4/django_redis-6.0.0.tar.gz", hash = "sha256:2d9cb12a20424a4c4dde082c6122f486628bae2d9c2bee4c0126a4de7fda00dd", size = 56904, upload-time = "2025-06-17T18:15:46.376Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/79/055dfcc508cfe9f439d9f453741188d633efa9eab90fc78a67b0ab50b137/django_redis-6.0.0-py3-none-any.whl", hash = "sha256:20bf0063a8abee567eb5f77f375143c32810c8700c0674ced34737f8de4e36c0", size = 33687, upload-time = "2025-06-17T18:15:34.165Z" },
-]
-
-[[package]]
-name = "django-redis-sessions"
-version = "0.6.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "redis" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d4/36/1dc0d238e03415c879e3d5dc2362c5ec94e3a1b03c36e67eef52bab1a917/django-redis-sessions-0.6.2.tar.gz", hash = "sha256:ba33ecca198f28ddc32d9f03742dc8dfc34c1857b789c75ea8425d6d7d7376be", size = 7215, upload-time = "2021-01-13T18:03:49.364Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/c4/79c227a757f3fa6c463f2e18a928a5264d08592c7cd8d112748ca4dca326/django_redis_sessions-0.6.2-py3-none-any.whl", hash = "sha256:13b645a4fad4352c111057e44d0987a3163116b0a2f8b141c7d8abe0cab446c9", size = 6146, upload-time = "2021-01-13T18:03:48.193Z" },
 ]
 
 [[package]]
