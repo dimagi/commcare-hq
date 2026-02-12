@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 RATE_LIMITED_EXCEPTIONS = {
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
-    'socketpool.pool.MaxTriesError': 'couchdb',
 
     'corehq.elastic.ESError': 'elastic',
     'elasticsearch.exceptions.ConnectionTimeout': 'elastic',
