@@ -50,17 +50,23 @@ def _merge(diff, action):
             if not _drop(prop, question['question_path'], update, conflicts):
                 delete_missing[prop].add(question['question_path'])
 
+    missing = []
     for prop, questions in diff.get('add', {}).items():
         for question in questions:
             ccu = ConditionalCaseUpdate(question)
             if ccu.question_path in delete_missing[prop]:
-                raise MissingPropertyMapException
+                missing.append({'case_property': prop, 'question_path': question['question_path']})
             elif prop not in update or not update[prop].question_path:
                 update[prop] = ccu
             elif update[prop].question_path == ccu.question_path:
                 update[prop] = ccu
             else:
+                # HACK JsonDict.setdefault has a bug, does not return newly set value
+                conflicts.setdefault(prop, [])
                 conflicts[prop].append(ccu)
+
+    if missing:
+        raise MissingPropertyMapException(*missing)
 
 
 def _drop(prop, path, update, conflicts):
@@ -155,6 +161,10 @@ class _NameConflictsAdapter:
         _check_name(key)
         result, self.action.conflicts = self.action.conflicts, []
         return result
+
+    def setdefault(self, key, default):
+        _check_name(key)
+        return self.action.conflicts
 
 
 def _check_name(key):
