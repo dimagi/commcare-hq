@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '4'",
@@ -540,7 +540,6 @@ dependencies = [
     { name = "pyjwt" },
     { name = "pyphonetics" },
     { name = "python-dateutil" },
-    { name = "python-imap" },
     { name = "python-magic" },
     { name = "pytz" },
     { name = "pyyaml" },
@@ -714,7 +713,6 @@ requires-dist = [
     { name = "pyjwt" },
     { name = "pyphonetics" },
     { name = "python-dateutil" },
-    { name = "python-imap" },
     { name = "python-magic" },
     { name = "pytz" },
     { name = "pyyaml", specifier = ">=6.0.2" },
@@ -2753,12 +2751,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/bc/57/e84d88dfe0aec03b7
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/3e/b68c118422ec867fa7ab88444e1274aa40681c606d59ac27de5a5588f082/python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a", size = 19863, upload-time = "2024-01-23T06:32:58.246Z" },
 ]
-
-[[package]]
-name = "python-imap"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ea/57/4bda0520bf5cad16eba0078f55e4a8a09c8dd354e641de96b3ccd9c097ea/python-imap-1.0.0.tar.gz", hash = "sha256:c85dee177300c42e74004f2fbba1cff66edf9e97b49c3efbfed7b51427348de1", size = 763, upload-time = "2017-06-25T14:53:34.323Z" }
 
 [[package]]
 name = "python-magic"

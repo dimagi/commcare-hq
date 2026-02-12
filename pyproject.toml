@@ -89,7 +89,6 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pycryptodome>=3.6.6", # security update
     "python-dateutil",
-    "python-imap",
     "pyphonetics",
     "python-magic",
     "pytz",
