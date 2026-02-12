@@ -1,0 +1,20 @@
+{% load i18n %}
+<h2>{% trans "Results" %}</h2>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      {% for col in header %}
+        <th>{{ col }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+      <tr>
+        {% for cell in row %}
+          <td>{{ cell }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
