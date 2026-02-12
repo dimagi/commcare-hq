@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '4'",
@@ -501,7 +501,6 @@ dependencies = [
     { name = "django-transfer" },
     { name = "django-two-factor-auth" },
     { name = "django-user-agents" },
-    { name = "django-websocket-redis" },
     { name = "djangorestframework" },
     { name = "dropbox" },
     { name = "elasticsearch6" },
@@ -675,7 +674,6 @@ requires-dist = [
     { name = "django-transfer" },
     { name = "django-two-factor-auth", git = "https://github.com/jazzband/django-two-factor-auth.git?rev=16f688bf329526d897a33594ab598bcd3fc8eaae" },
     { name = "django-user-agents" },
-    { name = "django-websocket-redis", url = "https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl" },
     { name = "djangorestframework" },
     { name = "dropbox" },
     { name = "elasticsearch6", specifier = ">=6.0.0,<7.0.0" },
@@ -1328,34 +1326,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/37/f2/dd96cc880d7549cc9
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6c/a3/31b2728702f13328cc65d6c8ed652ad8125a9a71489e445c11f188b39f79/django_user_agents-0.4.0-py3-none-any.whl", hash = "sha256:cd9d9f7158b23c5237b2dacb0bc4fffdf77fefe1d2633b5814d3874288ebdb5d", size = 8616, upload-time = "2019-06-22T13:33:48.259Z" },
 ]
-
-[[package]]
-name = "django-websocket-redis"
-version = "0.6.0.1"
-source = { url = "https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl" }
-dependencies = [
-    { name = "gevent" },
-    { name = "greenlet" },
-    { name = "redis" },
-    { name = "setuptools" },
-    { name = "six" },
-]
-wheels = [
-    { url = "https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl", hash = "sha256:19bffd9136ed3a3059c37aa76fcba753e54e1288dc2b890a6bc83d54a4aae77e" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "django-redis-sessions", marker = "extra == 'django-redis-sessions'", specifier = ">=0.4.0" },
-    { name = "gevent" },
-    { name = "greenlet" },
-    { name = "redis" },
-    { name = "setuptools" },
-    { name = "six" },
-    { name = "uwsgi", marker = "extra == 'uwsgi'", specifier = ">=1.9.20" },
-    { name = "wsaccel", marker = "extra == 'wsaccel'", specifier = ">=0.6.2" },
-]
-provides-extras = ["django-redis-sessions", "uwsgi", "wsaccel"]
 
 [[package]]
 name = "djangorestframework"
