@@ -362,7 +362,6 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 class UpdateCaseAction(FormAction):
     update = SchemaDictProperty(ConditionalCaseUpdate)
-    update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
     conflicts = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
 
     @classmethod
@@ -419,7 +418,6 @@ class OpenReferralAction(UpdateReferralAction):
 class OpenCaseAction(FormAction):
 
     name_update = SchemaProperty(ConditionalCaseUpdate)
-    name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     conflicts = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
 
