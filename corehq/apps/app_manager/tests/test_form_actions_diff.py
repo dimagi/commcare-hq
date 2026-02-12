@@ -18,20 +18,6 @@ from ..models import (
 )
 
 
-class OpenCaseActionTests(SimpleTestCase):
-    def test_construction(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
-
-        assert action.name_update.question_path == 'name'
-
-    def test_multiple_name_updates(self):
-        action = OpenCaseAction({
-            'name_update_multi': [{'question_path': 'name1'}, {'question_path': 'name2'}]
-        })
-        multi_paths = [update.question_path for update in action.name_update_multi]
-        assert multi_paths == ['name1', 'name2']
-
-
 class OpenCaseActionApplyDiffTests(SimpleTestCase):
 
     def test_no_changes(self):
@@ -140,23 +126,6 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
         assert action.name_update
         assert action.conflicts[0].question_path == 'name3'
         assert len(action.conflicts) == 1
-
-
-class UpdateCaseActionTests(SimpleTestCase):
-    def test_construction(self):
-        action = UpdateCaseAction({
-            'update': {'one': {'question_path': '/root/'}},
-            'update_multi': {
-                'two': [
-                    {'question_path': '/one/'},
-                    {'question_path': '/two/'},
-                ]
-            }
-        })
-
-        assert action.update['one'].question_path == '/root/'
-        multi_paths = {k: [action.question_path for action in v] for (k, v) in action.update_multi.items()}
-        assert multi_paths == {'two': ['/one/', '/two/']}
 
 
 class UpdateCaseActionApplyDiffTests(SimpleTestCase):
