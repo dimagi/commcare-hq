@@ -42,7 +42,6 @@ from .util import patch_validate_xform
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite', 'multi_select_case_list')
 
@@ -224,7 +223,6 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.factory = AppFactory(domain="multiple-referrals")
@@ -348,7 +346,6 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     MAIN_CASE_TYPE = 'beneficiary'
     OTHER_CASE_TYPE = 'household'
@@ -541,7 +538,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
 @patch.object(Application, 'enable_practice_users', return_value=False)
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
     CASE_TYPE = 'noun'
 

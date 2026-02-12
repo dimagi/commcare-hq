@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% if request|toggle_enabled:"USH_CASE_LIST_MULTI_SELECT" %}
+{% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
 
   <div class="panel panel-appmanager" data-bind="with: shortScreen">
     <div class="panel-heading">
