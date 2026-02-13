@@ -1143,7 +1143,6 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                           ('description', 'list', 'More information')])
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
     def test_module_split_screen_case_search_rows(self):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),

@@ -38,7 +38,6 @@ describe('Utils', function () {
 
         before(function () {
             initialPageData.register("toggles_dict", {
-                SPLIT_SCREEN_CASE_SEARCH: false,
                 DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
             });
         });
