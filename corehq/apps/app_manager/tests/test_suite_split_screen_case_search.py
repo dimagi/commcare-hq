@@ -16,7 +16,6 @@ from corehq.util.test_utils import flag_enabled
 @patch_get_xform_resource_overrides()
 class SplitScreenCaseSearchTest(SimpleTestCase, SuiteMixin):
 
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
     def test_split_screen_case_search_removes_search_again(self):
         factory = AppFactory.case_claim_app_factory()
         suite = factory.app.create_suite()
@@ -65,7 +64,6 @@ class DynamicSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.app = Application.wrap(self.app.to_json())
         self.module = self.app.modules[0]
 
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
     @flag_enabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS')
     def test_dynamic_search_suite(self):
         suite = self.app.create_suite()
@@ -73,7 +71,6 @@ class DynamicSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertEqual("true", suite.xpath("./remote-request[1]/session/query/@dynamic_search")[0])
 
     @patch('corehq.apps.app_manager.models.ModuleBase.is_auto_select', return_value=True)
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
     @flag_enabled('DYNAMICALLY_UPDATE_SEARCH_RESULTS')
     def test_dynamic_search_suite_disable_with_auto_select(self, mock):
         suite = self.app.create_suite()
@@ -81,14 +78,14 @@ class DynamicSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertEqual(True, self.module.is_auto_select())
         self.assertEqual("false", suite.xpath("./remote-request[1]/session/query/@dynamic_search")[0])
 
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_search_on_clear(self):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual("true", suite.xpath("./remote-request[1]/session/query/@search_on_clear")[0])
 
     @patch('corehq.apps.app_manager.models.ModuleBase.is_auto_select', return_value=True)
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_search_on_clear_disable_with_auto_select(self, mock):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
