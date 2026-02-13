@@ -124,73 +124,75 @@
         </p>
       </div>
     </div>
-    <div class="panel panel-appmanager">
-      <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-          {% trans "Custom Sort Properties" %}
-        </h4>
-      </div>
-      <div class="panel-body">
-        <p>
-          {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
-        </p>
-        <table class="table table-condensed">
-          <thead data-bind="visible: custom_sort_properties().length > 0">
-            <tr>
-              <th></th>
-              <th>{% trans "Case Property" %}</th>
-              <th>{% trans "Format" %}</th>
-              <th>{% trans "Direction" %}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody
-            data-bind="foreach: custom_sort_properties, sortableList: custom_sort_properties"
-            class="ui-sortable"
-          >
-            <tr>
-              <td>
-                <i class="grip fa-solid fa-up-down icon-blue"></i>
-              </td>
-              <td class="form-group">
-                <input
-                  class="form-control"
-                  type="text"
-                  data-bind="value: property_name"
-                />
-              </td>
-              <td>
-                <select class="form-control" data-bind="value: sort_type">
-                  <option value="exact">{% trans "Exact" %}</option>
-                  <option value="date">{% trans "Date" %}</option>
-                  <option value="numeric">{% trans "Numeric" %}</option>
-                </select>
-              </td>
-              <td>
-                <select class="form-control" data-bind="value: direction">
-                  <option value="ascending">{% trans "Ascending" %}</option>
-                  <option value="descending">{% trans "Descending" %}</option>
-                </select>
-              </td>
-              <td>
-                <a data-bind="click: $parent.removeCustomSortProperty">
-                  <i class="fa fa-remove icon-blue"></i>
-                </a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="form-group">
-          <button
-            class="btn btn-default"
-            data-bind="click: addCustomSortProperty"
-          >
-            <i class="fa fa-plus"></i>
-            {% trans "Add custom sort property" %}
-          </button>
+    {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+      <div class="panel panel-appmanager">
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">
+            {% trans "Custom Sort Properties" %}
+          </h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
+          </p>
+          <table class="table table-condensed">
+            <thead data-bind="visible: custom_sort_properties().length > 0">
+              <tr>
+                <th></th>
+                <th>{% trans "Case Property" %}</th>
+                <th>{% trans "Format" %}</th>
+                <th>{% trans "Direction" %}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody
+              data-bind="foreach: custom_sort_properties, sortableList: custom_sort_properties"
+              class="ui-sortable"
+            >
+              <tr>
+                <td>
+                  <i class="grip fa-solid fa-up-down icon-blue"></i>
+                </td>
+                <td class="form-group">
+                  <input
+                    class="form-control"
+                    type="text"
+                    data-bind="value: property_name"
+                  />
+                </td>
+                <td>
+                  <select class="form-control" data-bind="value: sort_type">
+                    <option value="exact">{% trans "Exact" %}</option>
+                    <option value="date">{% trans "Date" %}</option>
+                    <option value="numeric">{% trans "Numeric" %}</option>
+                  </select>
+                </td>
+                <td>
+                  <select class="form-control" data-bind="value: direction">
+                    <option value="ascending">{% trans "Ascending" %}</option>
+                    <option value="descending">{% trans "Descending" %}</option>
+                  </select>
+                </td>
+                <td>
+                  <a data-bind="click: $parent.removeCustomSortProperty">
+                    <i class="fa fa-remove icon-blue"></i>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="form-group">
+            <button
+              class="btn btn-default"
+              data-bind="click: addCustomSortProperty"
+            >
+              <i class="fa fa-plus"></i>
+              {% trans "Add custom sort property" %}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    {% endif %}
     <div class="panel panel-appmanager" data-bind="visible: isEnabled">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">
@@ -257,7 +259,7 @@
               </div>
             {% endif %}
           </div>
-          {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
+          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
             <div
               class="form-group"
               data-bind="slideVisible: inlineSearchVisible"
@@ -426,7 +428,7 @@
               ></textarea>
             </div>
           </div>
-          {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
+          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
             <div class="form-group">
               <label
                 for="search-filter"
