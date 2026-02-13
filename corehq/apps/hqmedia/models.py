@@ -637,7 +637,6 @@ class ModuleMediaMixin(MediaMixin):
         # Case search and claim menu items
         if hasattr(self, 'search_config'):
             media.extend(self.menu_media(self.search_config.search_label, lang=lang))
-            media.extend(self.menu_media(self.search_config.search_again_label, lang=lang))
 
         for name, details, display in self.get_details():
             # Case list lookup - not language-specific
@@ -672,7 +671,6 @@ class ModuleMediaMixin(MediaMixin):
         # Case search and claim menu items
         if hasattr(self, 'search_config'):
             count += self.rename_menu_media(self.search_config.search_label, old_path, new_path)
-            count += self.rename_menu_media(self.search_config.search_again_label, old_path, new_path)
 
         for name, details, display in self.get_details():
             # Case list lookup

@@ -103,11 +103,10 @@ var getCaseListView = function (menuResponse) {
 };
 
 var isSidebarEnabled = function (menuResponse) {
-    const splitScreenCaseSearchEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
     if (menuResponse.type === constants.QUERY) {
-        return splitScreenCaseSearchEnabled && menuResponse.models && menuResponse.models.length > 0;
+        return menuResponse.models && menuResponse.models.length > 0;
     } else if (menuResponse.type === constants.ENTITIES) {
-        return splitScreenCaseSearchEnabled && menuResponse.queryResponse && menuResponse.queryResponse.displays.length > 0;
+        return menuResponse.queryResponse && menuResponse.queryResponse.displays.length > 0;
     }
 };
 
@@ -153,7 +152,7 @@ var getMenuView = function (menuResponse) {
 
         if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
             noopMetrics.track.event('Started Case Search', {
-                'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                'Split Screen Case Search': true,  // Always enabled: split screen is always on for case search.
             });
         }
         var caseListView = getCaseListView(menuResponse);
