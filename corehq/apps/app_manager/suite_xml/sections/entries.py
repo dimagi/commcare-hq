@@ -61,7 +61,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     case_search_sync_cases_on_form_entry_enabled_for_domain,
 )
-from corehq.toggles import USH_SEARCH_FILTER
+from corehq.toggles import CASE_SEARCH_DEPRECATED
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
@@ -639,7 +639,7 @@ class EntriesHelper(object):
                     root_element = "results"
                 elif loads_registry_case:
                     instance_name, root_element = "results", "results"
-                if detail_module.search_config.search_filter and USH_SEARCH_FILTER.enabled(self.app.domain):
+                if detail_module.search_config.search_filter and CASE_SEARCH_DEPRECATED.enabled(self.app.domain):
                     filter_xpath += f"[{interpolate_xpath(detail_module.search_config.search_filter)}]"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
