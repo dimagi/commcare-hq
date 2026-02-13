@@ -116,6 +116,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         except ValueError:
             label = _("Invalid Status")
 
+        if self.context.get('exporting'):
+            return label
+
         if value in (PaymentStatus.ERROR, PaymentStatus.FAILED, PaymentStatus.REQUEST_FAILED):
             badge_class = 'bg-danger'
         elif value == 'successful':
