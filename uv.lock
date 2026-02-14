@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '4'",
@@ -558,7 +558,6 @@ dependencies = [
     { name = "simpleeval" },
     { name = "simplejson" },
     { name = "six" },
-    { name = "socketpool" },
     { name = "sqlagg" },
     { name = "sqlalchemy" },
     { name = "stripe" },
@@ -732,7 +731,6 @@ requires-dist = [
     { name = "simpleeval" },
     { name = "simplejson" },
     { name = "six" },
-    { name = "socketpool" },
     { name = "sqlagg" },
     { name = "sqlalchemy" },
     { name = "stripe" },
@@ -3119,12 +3117,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/75/a7/9810d872919697c9d
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/78/3565d011c61f5a43488987ee32b6f3f656e7f107ac2782dd57bdd7d91d9a/snowballstemmer-3.0.1-py3-none-any.whl", hash = "sha256:6cd7b3897da8d6c9ffb968a6781fa6532dce9c3618a4b127d920dab764a19064", size = 103274, upload-time = "2025-05-09T16:34:50.371Z" },
 ]
-
-[[package]]
-name = "socketpool"
-version = "0.5.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d1/39/fae99a735227234ffec389b252c6de2bc7816bf627f56b4c558dc46c85aa/socketpool-0.5.3.tar.gz", hash = "sha256:a06733434a56c4b60b8fcaa168102d2386253d36425804d55532a6bbbda6e2ec", size = 9793, upload-time = "2013-08-30T15:23:12.035Z" }
 
 [[package]]
 name = "soupsieve"
