@@ -114,7 +114,6 @@ dependencies = [
     "sqlagg",
     "SQLAlchemy",
     "stripe",
-    "suds-py3",
     "text-unidecode",
     "toposort",
     "transifex-python",
