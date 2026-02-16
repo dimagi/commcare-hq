@@ -229,19 +229,9 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                 download_id, compress_zip, filename, download_targeted_version
             )
         with build.timing_context("_zip_files_for_ccz"):
-            file_cache = _zip_files_for_ccz(fpath, files, current_progress, file_progress,
-                                            file_count, compression, task)
+            _zip_files_for_ccz(fpath, files, current_progress, file_progress,
+                               file_count, compression, task)
 
-        if include_index_files and toggles.LOCALE_ID_INTEGRITY.enabled(build.domain):
-            with build.timing_context("find_missing_locale_ids_in_ccz"):
-                locale_errors = find_missing_locale_ids_in_ccz(file_cache)
-            if locale_errors:
-                errors.extend(locale_errors)
-                notify_exception(
-                    None,
-                    message="CCZ missing locale ids from default/app_strings.txt",
-                    details={'domain': build.domain, 'app_id': build.id, 'errors': locale_errors}
-                )
         if include_index_files and include_multimedia_files:
             with build.timing_context("check_ccz_multimedia_integrity"):
                 multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
