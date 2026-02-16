@@ -1,13 +1,12 @@
-from django.test import TestCase
-from django.urls import reverse
-
 from unittest import mock
 
+from django.test import TestCase, override_settings
+from django.urls import reverse
+
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.models import CaseExportInstance, TableConfiguration
-from corehq.util.test_utils import flag_enabled
 
 from ..views import ODataCaseMetadataView
 from .utils import (
@@ -87,6 +86,10 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
         response = self._execute_query(credentials)
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=True)
     def test_success_with_two_factor_api_key(self):
-        with flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT'):
+        self.web_user.is_superuser = True
+        try:
             self.test_success_with_api_key()
+        finally:
+            self.web_user.is_superuser = False
