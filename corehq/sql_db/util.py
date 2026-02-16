@@ -289,7 +289,7 @@ def get_db_version(db_alias):
 def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
-        See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
+    See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
     If standby process (wal_receiver) is not running on standby -1 is returned
     """
@@ -411,7 +411,7 @@ def select_db_for_read(weighted_dbs):
 
 def create_unique_index_name(app, table, fields):
     assert all([app, table, fields]), "app, table, and fields must be specified"
-    assert type(fields) == list, "fields must be a list"
+    assert isinstance(fields, list), "fields must be a list"
 
     max_length = 30  # enforced by Django
     index_name = f"{app}_{table}_{'_'.join(fields)}_idx"
