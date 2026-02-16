@@ -366,9 +366,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     @use_bootstrap5
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if not toggles.TRANSFER_DOMAIN.enabled(request.domain):
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
+        raise Http404()
 
 
 class ActivateTransferDomainView(BasePageView):

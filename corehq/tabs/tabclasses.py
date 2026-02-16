@@ -2191,7 +2191,6 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views.internal import TransferDomainView
     from corehq.apps.domain.views.settings import (
         CredentialsApplicationSettingsView,
         FeaturePreviewsView,
@@ -2214,12 +2213,6 @@ def _get_administration_section(domain):
     })
 
     administration.extend(_get_manage_domain_alerts_section(domain))
-
-    if toggles.TRANSFER_DOMAIN.enabled(domain):
-        administration.append({
-            'title': _(TransferDomainView.page_title),
-            'url': reverse(TransferDomainView.urlname, args=[domain])
-        })
 
     if toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
         administration.append({
