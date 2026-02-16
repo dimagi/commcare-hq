@@ -1196,12 +1196,12 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-TRANSFER_DOMAIN = StaticToggle(
-    'transfer_domain',
-    'Transfer domains to different users',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# TRANSFER_DOMAIN = StaticToggle(
+#     'transfer_domain',
+#     'Transfer domains to different users',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
     'secure_session_timeout',
