@@ -1570,13 +1570,13 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-LOCALE_ID_INTEGRITY = StaticToggle(
-    'locale_id_integrity',
-    'Verify all locale ids in suite are present in app strings before allowing CCZ download',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    notification_emails=['jschweers']
-)
+# LOCALE_ID_INTEGRITY = StaticToggle(
+#     'locale_id_integrity',
+#     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+#     notification_emails=['jschweers']
+# )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
