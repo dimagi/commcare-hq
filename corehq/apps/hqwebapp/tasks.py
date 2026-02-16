@@ -54,6 +54,25 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
         )
 
 
+@periodic_task(run_every=crontab(minute="*/5"), durable=True)
+def grahams_simple_periodic_task():
+    print("success")
+
+
+@task(durable=True)
+def grahams_simple_test_task():
+    print("success")
+
+
+@task(durable=True, bind=True, default_retry_delay=10, max_retries=5)
+def grahams_test_task(self):
+    if self.request.retries >= 3:
+        print("success")
+    else:
+        print(f"Attempt number {self.request.retries}")
+        self.retry()
+
+
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
