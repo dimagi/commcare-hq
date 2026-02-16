@@ -51,10 +51,10 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
+    FormActionsDiffException,
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
-    FormActionsDiffException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -68,12 +68,12 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
+    FormActionsDiff,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
-    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -105,9 +105,9 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
-    get_case_property_count,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -119,7 +119,10 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.const import (
+    CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
+    DEFAULT_CASE_PROPS_PER_CASE_TYPE,
+)
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
 
@@ -885,9 +888,6 @@ def get_form_view_context(
     else:
         # TODO: figure out a cleaner method
         form.actions.make_multi()
-        context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
-        })
         case_config_options.update({
             'actions': form.actions,
             'allowUsercase': allow_usercase,
@@ -1000,7 +1000,9 @@ def get_form_datums(request, domain, app_id):
 
 
 def _get_form_datums(domain, app_id, form_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    from corehq.apps.app_manager.suite_xml.sections.entries import (
+        EntriesHelper,
+    )
     try:
         app = get_app(domain, app_id)
     except AppInDifferentDomainException as e:
