@@ -1474,6 +1474,14 @@ CASE_DEDUPE_UPDATES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
 
+# TODO remove this toggle definition once the other feature flag removal PRs have landed
+# LEGACY_SYNC_SUPPORT = StaticToggle(
+#     'legacy_sync_support',
+#     "Support mobile sync bugs in older projects (2.9 and below).",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
+
 CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'call_center_location_owners',
     'ICDS: Enable the use of locations as owners of call center cases',
