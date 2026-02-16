@@ -455,6 +455,7 @@ domain
  0017_appmanagerdomainsettings
  0018_enable_all_add_ons
  0019_remove_usercase_enabled_field
+ 0020_delete_transferdomainrequest
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration

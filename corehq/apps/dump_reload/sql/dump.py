@@ -251,7 +251,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('domain.OperatorCallLimitSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.SMSAccountConfirmationSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.SuperuserProjectEntryRecord', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('domain.TransferDomainRequest', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('export.LedgerSectionEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTable', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTableRow', SimpleFilter('domain')),
