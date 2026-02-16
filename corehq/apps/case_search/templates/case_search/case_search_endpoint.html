@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block page_content %}
+  <div class="row"><div class="col-lg-8">
   <form method="post"
         hx-post="{{ request.path_info }}"
         hq-hx-action="search"
@@ -86,6 +87,7 @@
       {% trans "Submit" %}
     </button>
   </form>
+  </div></div>
 
   <div id="results" class="mt-3"></div>
 {% endblock %}
