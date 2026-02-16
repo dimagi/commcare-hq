@@ -1983,17 +1983,6 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
-    'livequery_read_from_standbys',
-    'Allow livequery restore to read data from plproxy standbys if they are available',
-    TAG_DEPRECATED,
-    [NAMESPACE_USER],
-    description="""
-    To allow a gradual rollout and testing of using the standby
-    databases to generate restore payloads.
-    """
-)
-
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
     'Enable Accounting Testing Tools',

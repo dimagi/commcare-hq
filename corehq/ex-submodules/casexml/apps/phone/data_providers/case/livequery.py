@@ -23,15 +23,13 @@ Example case graphs with outcomes:
 """
 import logging
 from collections import defaultdict
-from functools import partial, wraps
+from functools import partial
 from itertools import chain, islice
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from corehq.celery_monitoring.signals import CELERY_STATE_SENT
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
-from corehq.sql_db.routers import read_from_plproxy_standbys
-from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.timer import TimingContext
@@ -41,19 +39,6 @@ from .stock import get_stock_payload
 from .utils import get_case_sync_updates
 
 
-def livequery_read_from_standbys(func):
-    @wraps(func)
-    def _inner(timing_context, restore_state, response, async_task=None):
-        if LIVEQUERY_READ_FROM_STANDBYS.enabled(restore_state.restore_user.user_id, NAMESPACE_USER):
-            with read_from_plproxy_standbys():
-                return func(timing_context, restore_state, response, async_task)
-        else:
-            return func(timing_context, restore_state, response, async_task)
-
-    return _inner
-
-
-@livequery_read_from_standbys
 def do_livequery(timing_context, restore_state, response, async_task=None):
     """Get case sync restore response
 
