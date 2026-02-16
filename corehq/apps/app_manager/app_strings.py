@@ -401,26 +401,6 @@ def _create_case_search_app_strings(
                 id_strings.case_search_description_locale(module),
                 clean_trans(module.search_config.description, langs)
             )
-
-            # search again label
-            yield (
-                id_strings.case_search_again_locale(module),
-                clean_trans(module.search_config.search_again_label.label, langs)
-            )
-            icon = module.search_config.search_again_label.icon_app_string(
-                lang,
-                for_default,
-                build_profile_id,
-            )
-            if icon:
-                yield id_strings.case_search_again_icon_locale(module), icon
-            audio = module.search_config.search_again_label.audio_app_string(
-                lang,
-                for_default,
-                build_profile_id,
-            )
-            if audio:
-                yield id_strings.case_search_again_audio_locale(module), audio
         else:
             yield (
                 id_strings.case_search_title_translation(module),
@@ -433,10 +413,6 @@ def _create_case_search_app_strings(
             yield (
                 id_strings.case_search_locale(module),
                 clean_trans(CaseSearch.search_label.default().label, langs)
-            )
-            yield (
-                id_strings.case_search_again_locale(module),
-                clean_trans(CaseSearch.search_again_label.default().label, langs)
             )
 
         for prop in module.search_config.properties:

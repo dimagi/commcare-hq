@@ -23,7 +23,7 @@ def flag_domains_using_search_filter():
     for chunk in chunked(with_progress_bar(domains), 100):
         for domain in chunk:
             enabled = domain_has_apps(domain) and _any_app_uses_search_filter(domain)
-            toggles.USH_SEARCH_FILTER.set(domain, enabled, namespace=toggles.NAMESPACE_DOMAIN)
+            toggles.CASE_SEARCH_DEPRECATED.set(domain, enabled, namespace=toggles.NAMESPACE_DOMAIN)
 
 
 def _any_app_uses_search_filter(domain):
