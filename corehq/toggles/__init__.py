@@ -1659,12 +1659,12 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
 
-TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
-    'two_factor_superuser_rollout',
-    'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_DEPRECATED,
-    [NAMESPACE_USER]
-)
+# TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
+#     'two_factor_superuser_rollout',
+#     'Users in this list will be forced to have Two-Factor Auth enabled',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_USER]
+# )
 
 CUSTOM_ICON_BADGES = FrozenPrivilegeToggle(
     privilege_slug=privileges.CUSTOM_ICON_BADGES,
