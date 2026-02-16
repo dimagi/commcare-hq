@@ -236,11 +236,15 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
         })
 
     def _get_results(self, query_dict):
-        criteria = [SearchCriteria(k, v) for k, v in zip(
+        criteria = [
+            SearchCriteria('_xpath_query', expr)
+            for expr in query_dict.getlist('filter_expr') if expr
+        ]
+        criteria.extend(SearchCriteria(k, v) for k, v in zip(
             query_dict.getlist('param_key'),
             query_dict.getlist('param_value'),
             strict=True,
-        ) if k]
+        ) if k)
         for search_criteria in criteria:
             search_criteria.validate()
         return get_case_search_results(
