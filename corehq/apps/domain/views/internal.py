@@ -15,14 +15,10 @@ from django.views.generic import View
 
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.domain.utils import log_domain_changes
-from corehq.apps.ota.rate_limiter import restore_rate_limiter
-from corehq.motech.rate_limiter import repeater_rate_limiter
-from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.calculations import (
     CALC_FNS,
@@ -37,7 +33,12 @@ from corehq.apps.domain.decorators import (
     require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
-from corehq.apps.domain.models import Domain, TransferDomainRequest, AllowedUCRExpressionSettings
+from corehq.apps.domain.models import (
+    AllowedUCRExpressionSettings,
+    Domain,
+    TransferDomainRequest,
+)
+from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
@@ -45,10 +46,16 @@ from corehq.apps.domain.views.settings import (
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
+from corehq.apps.ota.rate_limiter import restore_rate_limiter
+from corehq.apps.receiverwrapper.rate_limiter import (
+    domain_case_rate_limiter,
+    submission_rate_limiter,
+)
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.motech.rate_limiter import repeater_rate_limiter
+from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
@@ -366,9 +373,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     @use_bootstrap5
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if not toggles.TRANSFER_DOMAIN.enabled(request.domain):
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
+        raise Http404()
 
 
 class ActivateTransferDomainView(BasePageView):
