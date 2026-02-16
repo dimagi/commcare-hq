@@ -238,7 +238,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'has_geocoder_privs': (
                 domain_has_privilege(app.domain, privileges.GEOCODER)
-                and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
+                and toggles.CASE_SEARCH_ADVANCED.enabled(app.domain)
             ),
             'ush_case_claim_2_53': app.ush_case_claim_2_53,
             'item_lists': item_lists,
