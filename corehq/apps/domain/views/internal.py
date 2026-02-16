@@ -2,7 +2,6 @@ import copy
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -11,7 +10,6 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET
-from django.views.generic import View
 
 from memoized import memoized
 
@@ -20,7 +18,7 @@ from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from corehq.motech.rate_limiter import repeater_rate_limiter
 from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
-from dimagi.utils.web import get_ip, json_request, json_response
+from dimagi.utils.web import json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -31,24 +29,20 @@ from corehq.apps.domain.calculations import (
     dom_calc,
 )
 from corehq.apps.domain.decorators import (
-    domain_admin_required,
     login_and_domain_required,
-    login_required,
     require_superuser,
 )
-from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
-from corehq.apps.domain.models import Domain, TransferDomainRequest, AllowedUCRExpressionSettings
+from corehq.apps.domain.forms import DomainInternalForm
+from corehq.apps.domain.models import Domain, AllowedUCRExpressionSettings
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
-from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
-from corehq.const import USER_CHANGE_VIA_WEB
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
@@ -313,145 +307,6 @@ def _get_rate_limits(scope, rate_limiter):
         for scope, limits in rate_limiter.iter_rates(scope)
         for rate_counter, current_usage, limit in limits
     ]
-
-
-class TransferDomainView(BaseAdminProjectSettingsView):
-    urlname = 'transfer_domain_view'
-    page_title = gettext_lazy("Transfer Project")
-    template_name = 'domain/admin/transfer_domain.html'
-
-    @property
-    @memoized
-    def active_transfer(self):
-        return TransferDomainRequest.get_active_transfer(self.domain,
-                                                         self.request.user.username)
-
-    @property
-    @memoized
-    def transfer_domain_form(self):
-        return TransferDomainForm(self.domain,
-                                  self.request.user.username,
-                                  self.request.POST or None)
-
-    def get(self, request, *args, **kwargs):
-
-        if self.active_transfer:
-            self.template_name = 'domain/admin/transfer_domain_pending.html'
-
-            if request.GET.get('resend', None):
-                self.active_transfer.send_transfer_request()
-                messages.info(request,
-                              _("Resent transfer request for project '{domain}'").format(domain=self.domain))
-
-        return super().get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        form = self.transfer_domain_form
-        if form.is_valid():
-            # Initiate domain transfer
-            transfer = form.save()
-            transfer.send_transfer_request()
-            return HttpResponseRedirect(self.page_url)
-
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
-
-    @property
-    def page_context(self):
-        if self.active_transfer:
-            return {'transfer': self.active_transfer.as_dict()}
-        else:
-            return {'form': self.transfer_domain_form}
-
-    @use_bootstrap5
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        raise Http404()
-
-
-class ActivateTransferDomainView(BasePageView):
-    urlname = 'activate_transfer_domain'
-    page_title = 'Activate Domain Transfer'
-    template_name = 'domain/activate_transfer_domain.html'
-
-    @property
-    @memoized
-    def active_transfer(self):
-        return TransferDomainRequest.get_by_guid(self.guid)
-
-    @property
-    def page_context(self):
-        if self.active_transfer:
-            return {'transfer': self.active_transfer.as_dict()}
-        else:
-            return {}
-
-    @property
-    def page_url(self):
-        return self.request.get_full_path()
-
-    def get(self, request, guid, *args, **kwargs):
-        self.guid = guid
-
-        if (self.active_transfer
-                and self.active_transfer.to_username != request.user.username
-                and not request.user.is_superuser):
-            return HttpResponseRedirect(reverse("no_permissions"))
-
-        return super().get(request, *args, **kwargs)
-
-    def post(self, request, guid, *args, **kwargs):
-        self.guid = guid
-
-        if not self.active_transfer:
-            raise Http404()
-
-        if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
-            return HttpResponseRedirect(reverse("no_permissions"))
-
-        self.active_transfer.transfer_domain(by_user=request.couch_user, transfer_via=USER_CHANGE_VIA_WEB,
-                                             ip=get_ip(request))
-        messages.success(request, _("Successfully transferred ownership of project '{domain}'")
-                         .format(domain=self.active_transfer.domain))
-
-        return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
-
-    @use_bootstrap5
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
-
-class DeactivateTransferDomainView(View):
-
-    def post(self, request, guid, *args, **kwargs):
-
-        transfer = TransferDomainRequest.get_by_guid(guid)
-
-        if not transfer:
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-        if (transfer.to_username != request.user.username
-                and transfer.from_username != request.user.username
-                and not request.user.is_superuser):
-            return HttpResponseRedirect(reverse("no_permissions"))
-
-        transfer.active = False
-        transfer.save()
-
-        referer = request.META.get('HTTP_REFERER', '/')
-
-        # Do not want to send them back to the activate page
-        if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
-            messages.info(request,
-                          _("Declined ownership of project '{domain}'").format(domain=transfer.domain))
-            return HttpResponseRedirect('/')
-        else:
-            return HttpResponseRedirect(referer)
-
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
 
 
 @login_and_domain_required
