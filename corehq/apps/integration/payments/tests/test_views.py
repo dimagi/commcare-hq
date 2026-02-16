@@ -671,6 +671,7 @@ class TestPaymentsConfigurationView(BaseTestPaymentsView):
         assert not MoMoConfig.objects.filter(domain=self.domain)
 
         post_data = {
+            'provider': 'mtn_money',
             'connection_settings': self.connection_settings.id,
             'environment': 'live',
         }
