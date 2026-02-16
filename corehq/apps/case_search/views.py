@@ -14,14 +14,18 @@ from corehq import toggles
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.case_search.forms import (
     CSQLFixtureExpressionForm,
-    UserDataCriteriaForm,
     CSQLFixtureFilterForm,
+    UserDataCriteriaForm,
 )
 from corehq.apps.case_search.models import (
     CSQLFixtureExpression,
+    SearchCriteria,
     case_search_enabled_for_domain,
 )
-from corehq.apps.case_search.utils import get_case_search_results_from_request
+from corehq.apps.case_search.utils import (
+    get_case_search_results,
+    get_case_search_results_from_request,
+)
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqadmin.utils import get_download_url
@@ -223,13 +227,24 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
     def search(self, request, *args, **kwargs):
         header = ['case_id', 'name']
         rows = [
-            ['abc123', 'Jane Doe'],
-            ['def456', 'John Smith'],
-            ['ghi789', 'Alice Johnson'],
-            ['jkl012', 'Bob Williams'],
-            ['mno345', 'Carol Brown'],
+            [case_.case_id, case_.name]
+            for case_ in self._get_results(self.request.POST)
         ]
         return render(request, 'case_search/case_search_endpoint_results.html', {
             'header': header,
             'rows': rows,
         })
+
+    def _get_results(self, query_dict):
+        criteria = [SearchCriteria(k, v) for k, v in zip(
+            query_dict.getlist('param_key'),
+            query_dict.getlist('param_value'),
+            strict=True,
+        ) if k]
+        for search_criteria in criteria:
+            search_criteria.validate()
+        return get_case_search_results(
+            self.domain,
+            query_dict['case_type'],
+            criteria,
+        )
