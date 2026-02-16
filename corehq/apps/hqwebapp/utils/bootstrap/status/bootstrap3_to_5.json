@@ -93,7 +93,6 @@
   "domain": {
     "in_progress": true,
     "templates": [
-      "activate_transfer_domain.html",
       "admin/case_search.html",
       "admin/commtrack_settings.html",
       "admin/edit_alert.html",
@@ -111,8 +110,6 @@
       "admin/recovery_measures_history.html",
       "admin/sms_rates.html",
       "admin/sms_settings.html",
-      "admin/transfer_domain.html",
-      "admin/transfer_domain_pending.html",
       "confirm_billing_info.html",
       "internal_calculations.html",
       "internal_settings.html",
