@@ -1437,12 +1437,12 @@ EXPORT_DATA_SOURCE_DATA = StaticToggle(
 )
 
 
-ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
-    'enable_include_sms_gateway_charging',
-    'Enable include SMS gateway charging',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
+#     'enable_include_sms_gateway_charging',
+#     'Enable include SMS gateway charging',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 MESSAGE_LOG_METADATA = StaticToggle(
     'message_log_metadata',
