@@ -15,8 +15,10 @@
         hx-target="#results"
         hx-swap="innerHTML"
         x-data="{
-          params: [{ id: 0}],
-          nextId: 1,
+          params: [{ id: 0 }],
+          nextParamId: 1,
+          filters: [{ id: 0 }],
+          nextFilterId: 1,
         }">
     {% csrf_token %}
 
@@ -43,6 +45,33 @@
                  id="case_type"
                  name="case_type"
                  required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">
+            {% trans "Server-Side Filters" %}
+          </label>
+          <template x-for="(filter, index) in filters" :key="filter.id">
+            <div class="row mb-2 align-items-center">
+              <div class="col">
+                <input type="text"
+                       class="form-control"
+                       name="filter_expr"
+                       placeholder="{% trans_html_attr 'CSQL Expression' %}">
+              </div>
+              <div class="col-auto">
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        @click="filters.splice(index, 1)">
+                  <i class="fa fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="filters.push({ id: nextFilterId++ })">
+            <i class="fa fa-plus"></i> {% trans "Add Filter" %}
+          </button>
         </div>
       </div>
     </div>
@@ -77,7 +106,7 @@
         </template>
         <button type="button"
                 class="btn btn-outline-primary"
-                @click="params.push({ id: nextId++ })">
+                @click="params.push({ id: nextParamId++ })">
           <i class="fa fa-plus"></i> {% trans "Add Parameter" %}
         </button>
       </div>
