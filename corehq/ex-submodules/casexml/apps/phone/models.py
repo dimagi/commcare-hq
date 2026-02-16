@@ -40,7 +40,6 @@ from dimagi.utils.logging import notify_exception
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
-from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 from toposort import toposort_flatten
 
@@ -737,10 +736,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         try:
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
-            should_fail_softly = not xform_id or _domain_has_legacy_toggle_set()
-            if should_fail_softly:
-                pass
-            else:
+            if xform_id:
                 # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
                 # we should convert back to a real Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
@@ -979,13 +975,6 @@ ShortIndex = namedtuple(
     'ShortIndex',
     ['case_id', 'identifier', 'referenced_id', 'relationship'],
 )
-
-
-def _domain_has_legacy_toggle_set():
-    # old versions of commcare (< 2.10ish) didn't purge on form completion
-    # so can still modify cases that should no longer be on the phone.
-    domain = get_request_domain()
-    return toggles.LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
 def get_properly_wrapped_sync_log(doc_id):
