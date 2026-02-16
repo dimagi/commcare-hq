@@ -55,14 +55,15 @@ class TestTwoFactorRequired(TestCase):
         )
         self.assertFalse(two_factor_required_bool)
 
-    @override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=False)
-    def test_two_factor_not_required_without_setting(self):
+    def test_two_factor_required_for_domain(self):
+        self.domain.two_factor_auth = True
+        self.domain.save()
         view_func = 'dummy_view_func'
         request = self.request
         two_factor_required_bool = _two_factor_required(
             view_func, self.domain, request
         )
-        self.assertFalse(two_factor_required_bool)
+        self.assertTrue(two_factor_required_bool)
 
 
 class TestTwoFactorCheck(TestCase):
