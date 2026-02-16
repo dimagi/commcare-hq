@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '4'",
@@ -562,7 +562,6 @@ dependencies = [
     { name = "sqlagg" },
     { name = "sqlalchemy" },
     { name = "stripe" },
-    { name = "suds-py3" },
     { name = "text-unidecode" },
     { name = "toposort" },
     { name = "transifex-python" },
@@ -736,7 +735,6 @@ requires-dist = [
     { name = "sqlagg" },
     { name = "sqlalchemy" },
     { name = "stripe" },
-    { name = "suds-py3" },
     { name = "text-unidecode" },
     { name = "toposort" },
     { name = "transifex-python" },
@@ -3322,15 +3320,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4f/c1/e687ba904a78eeb9ac8e0845630c625a03d380b7569647530c4bafd12677/stripe-13.2.0.tar.gz", hash = "sha256:ed6ad1c27725e1e32a336fa9d835cfa8f0bd6dafcc98b3ab7bc7e8791390453b", size = 1357785, upload-time = "2025-11-05T23:04:23.043Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a0/39/5a7a7ac27372e8bd1ec45f52b884d039f504900a1a41885745c5a7976519/stripe-13.2.0-py3-none-any.whl", hash = "sha256:e7d18bd44bab1812bc4e9e75da4ceacedd587f71737bb9193955edf420605f88", size = 1962001, upload-time = "2025-11-05T23:04:21.056Z" },
-]
-
-[[package]]
-name = "suds-py3"
-version = "1.4.5.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/39/d1/da8977d242d2505c575eb2cc7e282209e4d12bd570c04e7942cd19f4facd/suds-py3-1.4.5.0.tar.gz", hash = "sha256:2b0d433e569c0190ff5e7ed2dfb3287b51bbfb3e51e82361c8bd652c78807167", size = 87187, upload-time = "2021-11-15T17:29:11.548Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/39/aa44074c42b3ee2d2ce36c2cd891787f9ae4158416600390dd09d09233da/suds_py3-1.4.5.0-py3-none-any.whl", hash = "sha256:0915a7f825c80fa2f0593e040e046bcbc156dd24ba988bb9da6c6604d70155b9", size = 298760, upload-time = "2021-11-15T17:29:09.503Z" },
 ]
 
 [[package]]
