@@ -86,7 +86,7 @@ class ConnectionSettings(models.Model):
     """
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=255)
-    url = models.CharField(max_length=255)
+    url = models.CharField(max_length=500)
     auth_type = models.CharField(
         max_length=16, null=True, blank=True,
         choices=(
@@ -104,8 +104,8 @@ class ConnectionSettings(models.Model):
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
-    token_url = models.CharField(max_length=255, blank=True, null=True)
-    refresh_url = models.CharField(max_length=255, blank=True, null=True)
+    token_url = models.CharField(max_length=500, blank=True, null=True)
+    refresh_url = models.CharField(max_length=500, blank=True, null=True)
     pass_credentials_in_header = models.BooleanField(default=None, null=True)
     include_client_id = models.BooleanField(default=None, null=True)
     scope = models.TextField(null=True, blank=True)
@@ -354,7 +354,7 @@ class RequestLog(models.Model):
     # requests to send its payload.
     payload_id = models.CharField(max_length=126, blank=True, null=True, db_index=True)
     request_method = models.CharField(max_length=12)
-    request_url = models.CharField(max_length=255, db_index=True)
+    request_url = models.CharField(max_length=500, db_index=True)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
     request_body = models.TextField(blank=True, null=True)
