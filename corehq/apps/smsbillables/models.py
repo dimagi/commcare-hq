@@ -352,13 +352,9 @@ class SmsBillable(models.Model):
                 include_deleted=True,
             )
 
-        is_gateway_billable = (
-            backend_id is None
-            or backend_instance.is_global
-        )
-
         direct_gateway_fee = gateway_fee = multipart_count = conversion_rate = None
 
+        is_gateway_billable = backend_id is None or backend_instance.is_global
         if is_gateway_billable:
             if backend_instance and backend_instance.using_api_to_get_fees:
                 if backend_message_id:
