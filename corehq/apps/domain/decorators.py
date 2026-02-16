@@ -52,7 +52,6 @@ from corehq.toggles import (
     DATA_MIGRATION,
     DISABLE_MOBILE_ENDPOINTS,
     IS_CONTRACTOR,
-    TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
 from corehq.util.soft_assert import soft_assert
 
@@ -548,7 +547,7 @@ def _two_factor_required(view_func, domain_obj, request):
         # For other policies requiring two factor auth,
         # allow the two_factor_disabled loophole for people who have lost their phones
         # and need time to set up two factor auth again.
-        (domain_obj.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.couch_user.username))
+        domain_obj.two_factor_auth
         and not request.couch_user.two_factor_disabled
     )
 
