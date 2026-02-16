@@ -1809,12 +1809,12 @@ DASHBOARD_REACH_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-PARTIAL_UI_TRANSLATIONS = StaticToggle(
-    'partial_ui_translations',
-    'Enable uploading a subset of translations in the UI Translations Excel upload',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# PARTIAL_UI_TRANSLATIONS = StaticToggle(
+#     'partial_ui_translations',
+#     'Enable uploading a subset of translations in the UI Translations Excel upload',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
