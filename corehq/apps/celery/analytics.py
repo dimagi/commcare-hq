@@ -10,6 +10,7 @@ def analytics_task(
     max_retries=3,
     queue='analytics_queue',
     serializer='json',
+    durable=False,
 ):
     """
     Defines a task that posts data to one of our analytics endpoints. It
@@ -26,6 +27,7 @@ def analytics_task(
             default_retry_delay=default_retry_delay,
             max_retries=max_retries,
             serializer=serializer,
+            durable=durable,
         )
         @wraps(func)
         def _inner(self, *args, **kwargs):
