@@ -1976,12 +1976,12 @@ IP_ACCESS_CONTROLS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
-    'show_build_profile_in_app_status',
-    'Show build profile installed on phone tracked via heartbeat request in App Status Report',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
+#     'show_build_profile_in_app_status',
+#     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     'livequery_read_from_standbys',
