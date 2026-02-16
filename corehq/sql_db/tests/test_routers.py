@@ -1,27 +1,16 @@
-import os
-
 from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-import pytest
 from unittest.mock import patch
-from nose.tools import assert_equal, assert_false, assert_true
+from nose.tools import assert_equal
 
-from corehq.sql_db.config import PlProxyConfig, _get_standby_plproxy_config
 from corehq.sql_db.routers import (
-    READ_FROM_PLPROXY_STANDBYS,
     SYNCLOGS_APP,
     allow_migrate,
-    allow_read_from_plproxy_standby,
     get_load_balanced_app_db,
-    read_from_plproxy_standbys,
 )
 from corehq.sql_db.tests.test_connections import _get_db_config
-from corehq.sql_db.tests.test_partition_config import (
-    PARTITION_CONFIG_WITH_STANDBYS,
-)
-from corehq.sql_db.util import select_plproxy_db_for_read
 
 from .utils import ignore_databases_override_warning
 
@@ -88,67 +77,3 @@ def test_load_balanced_read_apps(_, __):
 
     # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
     assert_equal(get_load_balanced_app_db('users', default='default_option'), 'default_option')
-
-
-def _make_cases():
-    with (
-        ignore_databases_override_warning,
-        override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS),
-    ):
-        primary_config = PlProxyConfig.from_dict(PARTITION_CONFIG_WITH_STANDBYS)
-        standby_config = _get_standby_plproxy_config(primary_config)
-
-    master_standby_mapping = {
-        'db1': {'db1_standby'},
-        'db2': {'db2_standby'},
-    }
-
-    def _test_load_balanced_plproxy(primary_db, ok_standbys, expected_db):
-        with patch('corehq.sql_db.util.plproxy_config', primary_config), \
-             patch('corehq.sql_db.util.plproxy_standby_config', standby_config), \
-             patch('corehq.sql_db.util.get_standbys_with_acceptible_delay', return_value=set(ok_standbys)), \
-             patch('corehq.sql_db.util.primary_to_standbys_mapping', return_value=master_standby_mapping):
-
-            db_for_read = select_plproxy_db_for_read(primary_db)
-            assert_equal(db_for_read, expected_db)
-
-    plproxy_shard_0 = primary_config.form_processing_dbs[0]
-    plproxy_shard_0_standby = standby_config.form_processing_dbs[0]
-
-    test_cases = [
-        # (primary_db, standbys_with_acceptible_delay, expected_return_db)
-        (primary_config.proxy_db, standby_config.form_processing_dbs, standby_config.proxy_db),
-        (primary_config.proxy_db, standby_config.form_processing_dbs[0:1], primary_config.proxy_db),
-        (primary_config.proxy_db, [], primary_config.proxy_db),
-        (plproxy_shard_0, standby_config.form_processing_dbs, plproxy_shard_0_standby),
-        (plproxy_shard_0, standby_config.form_processing_dbs[1:], plproxy_shard_0),
-        (plproxy_shard_0, [], plproxy_shard_0),
-    ]
-    for case in test_cases:
-        yield _test_load_balanced_plproxy, case
-
-
-@pytest.mark.parametrize("test, args", list(_make_cases()))
-def test_load_balanced_plproxy(test, args):
-    test(*args)
-
-
-def test_get_read_write_db_for_partitioned_model_decorator():
-    @read_from_plproxy_standbys()
-    def read():
-        assert_true(allow_read_from_plproxy_standby())
-
-    assert_false(allow_read_from_plproxy_standby())
-    read()
-    assert_false(allow_read_from_plproxy_standby())
-
-
-@pytest.mark.parametrize("context", [
-    patch.dict(os.environ, {READ_FROM_PLPROXY_STANDBYS: '1'}),
-    read_from_plproxy_standbys(),
-])
-def test_get_read_write_db_for_partitioned_model(context):
-    assert_false(allow_read_from_plproxy_standby())
-    with context:
-        assert_true(allow_read_from_plproxy_standby())
-    assert_false(allow_read_from_plproxy_standby())
