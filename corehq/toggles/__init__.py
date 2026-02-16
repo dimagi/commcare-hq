@@ -2111,13 +2111,13 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
-    'clean_old_formplayer_syncs',
-    'Delete old formplayer syncs during submission processing',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0.001
-)
+# CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
+#     'clean_old_formplayer_syncs',
+#     'Delete old formplayer syncs during submission processing',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_OTHER],
+#     default_randomness=0.001
+# )
 
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
