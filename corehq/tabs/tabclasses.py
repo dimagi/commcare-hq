@@ -1014,7 +1014,10 @@ class ProjectDataTab(UITab):
                 case_search_enabled_for_domain,
             )
             if case_search_enabled_for_domain(self.domain):
-                from corehq.apps.case_search.views import CaseSearchView, ProfileCaseSearchView
+                from corehq.apps.case_search.views import (
+                    CaseSearchView,
+                    ProfileCaseSearchView,
+                )
                 explore_data_views.extend([{
                     'title': _(CaseSearchView.page_title),
                     'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
@@ -1079,7 +1082,9 @@ class ProjectDataTab(UITab):
         )
 
     def _get_payments_verification_views(self):
-        from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+        from corehq.apps.integration.payments.views import (
+            PaymentsVerificationReportView,
+        )
         items = [[
             _("Payments Verification"),
             [
@@ -1713,7 +1718,10 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views import EditWebUserView, ListWebUsersView
+            from corehq.apps.users.views import (
+                EditWebUserView,
+                ListWebUsersView,
+            )
             from corehq.apps.users.views.mobile.users import (
                 FilteredWebUserDownload,
             )
@@ -1752,7 +1760,10 @@ class ProjectUsersTab(UITab):
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
-            from corehq.apps.users.views.role import EditRoleView, ListRolesView
+            from corehq.apps.users.views.role import (
+                EditRoleView,
+                ListRolesView,
+            )
             return {
                 'title': _(ListRolesView.page_title),
                 'url': reverse(ListRolesView.urlname, args=[self.domain]),
@@ -2191,7 +2202,6 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views.internal import TransferDomainView
     from corehq.apps.domain.views.settings import (
         CredentialsApplicationSettingsView,
         FeaturePreviewsView,
@@ -2214,12 +2224,6 @@ def _get_administration_section(domain):
     })
 
     administration.extend(_get_manage_domain_alerts_section(domain))
-
-    if toggles.TRANSFER_DOMAIN.enabled(domain):
-        administration.append({
-            'title': _(TransferDomainView.page_title),
-            'url': reverse(TransferDomainView.urlname, args=[domain])
-        })
 
     if toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
         administration.append({

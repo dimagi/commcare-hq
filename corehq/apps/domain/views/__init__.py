@@ -32,12 +32,9 @@ from corehq.apps.domain.views.base import (
 )
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
-    ActivateTransferDomainView,
-    DeactivateTransferDomainView,
     EditInternalCalculationsView,
     EditInternalDomainInfoView,
     FlagsAndPrivilegesView,
-    TransferDomainView,
     calculated_properties,
     toggle_diff,
 )
@@ -46,15 +43,15 @@ from corehq.apps.domain.views.settings import (
     BaseEditProjectInfoView,
     BaseProjectSettingsView,
     CaseSearchConfigView,
+    CustomPasswordResetView,
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
+    EditIPAccessConfigView,
     EditMyProjectSettingsView,
     EditPrivacySecurityView,
-    EditIPAccessConfigView,
     FeaturePreviewsView,
-    CustomPasswordResetView,
-    RecoveryMeasuresHistory,
     ImportAppFromAnotherServerView,
+    RecoveryMeasuresHistory,
     logo,
 )
 from corehq.apps.domain.views.sms import PublicSMSRatesView, SMSRatesView
