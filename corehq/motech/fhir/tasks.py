@@ -72,7 +72,7 @@ def run_monthly_importers():
         run_importer.delay(importer_id)
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True, durable=True)
 def run_importer(importer_id):
     """
     Poll remote API and import resources as CommCare cases.
