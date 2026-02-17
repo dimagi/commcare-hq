@@ -90,7 +90,6 @@ domain_specific = [
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
-    url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
     url(r'^registries/', include('corehq.apps.registry.urls')),
