@@ -11,7 +11,6 @@ from corehq.apps.app_manager.tests.util import patch_validate_xform, get_simple_
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import process_reporting_metadata_staging
-from corehq.util.test_utils import flag_enabled
 from ..models import DeviceLogRequest
 
 
@@ -64,9 +63,7 @@ class HeartbeatTests(TestCase):
         process_reporting_metadata_staging()
         return resp
 
-    @flag_enabled('FCM_NOTIFICATION')
     def test_heartbeat(self):
-        fcm_token = 'token-101'
         self._do_request(
             self.user,
             device_id='123123',
@@ -74,15 +71,12 @@ class HeartbeatTests(TestCase):
             last_sync=datetime.utcnow().isoformat(),
             unsent_forms=2,
             quarantined_forms=3,
-            fcm_token=fcm_token
         )
         device = CommCareUser.get(self.user.get_id).get_device('123123')
         self.assertEqual(device.device_id, '123123')
         self.assertIsNotNone(device.last_used)
         self.assertEqual(device.commcare_version, '2.39')
         self.assertEqual(1, len(device.app_meta))
-        self.assertEqual(device.fcm_token, fcm_token)
-        self.assertIsNotNone(device.fcm_token_timestamp)
 
         app_meta = device.app_meta[0]
         self.assertEqual(app_meta.app_id, self.app.get_id)
@@ -127,29 +121,7 @@ class HeartbeatTests(TestCase):
         device_log_request.delete()
         self.assertFalse(heartbeat_contains_force_logs())
 
-    @flag_enabled('FCM_NOTIFICATION')
-    def test_heartbeat_update_fcm_token(self):
-        self._do_request(
-            self.user,
-            device_id='3',
-            fcm_token='token-101'
-        )
-
-        device = CommCareUser.get(self.user.get_id).get_device('3')
-        self.assertEqual(device.fcm_token, 'token-101')
-
-        updated_fcm_token = 'token-102'
-        self._do_request(
-            self.user,
-            device_id='3',
-            fcm_token=updated_fcm_token
-        )
-        updated_device = CommCareUser.get(self.user.get_id).get_device('3')
-        self.assertEqual(updated_device.fcm_token, updated_fcm_token)
-        self.assertIsNotNone(updated_device.fcm_token_timestamp)
-        self.assertGreater(updated_device.fcm_token_timestamp, device.fcm_token_timestamp)
-
-    def test_heartbeat_update_fcm_token_disabled_domain(self):
+    def test_heartbeat_fcm_token_not_stored(self):
         self._do_request(
             self.user,
             device_id='4',
