@@ -1,0 +1,7 @@
+{% load i18n %}
+<div class="alert alert-{{ message_type|default:'info' }} alert-dismissible fade show" role="alert">
+  <i class="fa fa-{% if message_type == 'success' %}check-circle{% elif message_type == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+  {{ message }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+

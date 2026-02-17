@@ -115,9 +115,7 @@ def _get_payment_case_ids_on_domain(domain):
                     case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, 'true'),
                 ),
                 case_property_query(PaymentProperties.PAYMENT_VERIFIED, 'True'),
-                filters.NOT(
-                    case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.SUBMITTED),
-                ),
+                case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.PENDING_SUBMISSION),
             )
         )
     ).values_list('_id', flat=True)
