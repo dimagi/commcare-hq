@@ -14,7 +14,6 @@ from corehq.apps.app_manager.models import (
     Application,
     BuildProfile,
     CaseSearch,
-    CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
     MappingItem,
@@ -175,9 +174,6 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 },
                 media_audio={'en': "jr://file/commcare/image/2.mp3"}
             ),
-            search_again_label=CaseSearchAgainLabel(
-                label={'en': 'Get them all'}
-            ),
             properties=[
                 CaseSearchProperty(is_group=True, name='group_header_0',
                                    group_key='group_header_0', label={'en': 'Personal Information'}),
@@ -192,14 +188,12 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(app.default_language, 'en')
             en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
             self.assertEqual(en_app_strings['case_search.m0'], 'Search All Cases')
-            self.assertEqual(en_app_strings['case_search.m0.again'], 'Search Again')
             self.assertFalse('case_search.m0.icon' in en_app_strings)
             self.assertFalse('case_search.m0.audio' in en_app_strings)
 
             # non-default language
             es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
             self.assertEqual(es_app_strings['case_search.m0'], 'Search All Cases')
-            self.assertEqual(es_app_strings['case_search.m0.again'], 'Search Again')
 
         with flag_enabled('USH_CASE_CLAIM_UPDATES'):
             # default language
@@ -207,7 +201,6 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(en_app_strings['case_search.m0'], 'Get them')
             self.assertEqual(en_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1.png')
             self.assertEqual(en_app_strings['case_search.m0.audio'], 'jr://file/commcare/image/2.mp3')
-            self.assertEqual(en_app_strings['case_search.m0.again'], 'Get them all')
             self.assertEqual(en_app_strings['search_property.m0.name'], 'Name')
             self.assertEqual(en_app_strings['search_property.m0.group_header_0'], 'Personal Information')
 
@@ -215,7 +208,6 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
             self.assertEqual(es_app_strings['case_search.m0'], 'Conseguirlos')
             self.assertEqual(es_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1_es.png')
-            self.assertEqual(es_app_strings['case_search.m0.again'], 'Get them all')
 
     def test_dependencies_app_strings(self):
         app_id = 'callout.commcare.org.sendussd'
