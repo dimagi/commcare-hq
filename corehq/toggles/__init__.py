@@ -2762,13 +2762,14 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
 )
 
 
-SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
-    slug='support_road_network_disbursement_algorithm',
-    label='Add Road Network disbursement algorithm on geospatial settings page',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
-)
+# DEPRECATED: Road Network Algorithm feature removed (Feb 2026)
+# SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+#     slug='support_road_network_disbursement_algorithm',
+#     label='Add Road Network disbursement algorithm on geospatial settings page',
+#     tag=TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+# )
 
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'ush_restore_file_location_case_sync_restriction',
