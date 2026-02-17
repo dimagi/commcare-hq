@@ -559,22 +559,6 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
-    @flag_enabled('HMAC_CALLOUT')
-    def test_build_feature_flag_view_models_returns_hmac_callout(self):
-        expected_view_models = [
-            {
-                'type': 'hmac_callout_settings',
-                'name': 'Signed Callout',
-                'detail': None,
-                'last_update': 'Never',
-                'can_update': True,
-                'is_linkable': True,
-            }
-        ]
-        view_models = build_feature_flag_view_models(self.domain)
-
-        self.assertEqual(expected_view_models, view_models)
-
     @flag_enabled('COMMTRACK')
     def test_build_feature_flag_view_models_returns_product_data_fields(self):
         expected_view_models = [
@@ -722,7 +706,6 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
-    @flag_enabled('HMAC_CALLOUT')
     @flag_enabled('EMBEDDED_TABLEAU')
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_built(self):
@@ -734,7 +717,6 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
-    @flag_enabled('HMAC_CALLOUT')
     @flag_enabled('EMBEDDED_TABLEAU')
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_ignored(self):

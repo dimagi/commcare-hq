@@ -63,7 +63,6 @@ from corehq.apps.linked_domain.local_accessors import (
     get_dialer_settings,
     get_enabled_toggles_and_previews,
     get_fixture,
-    get_hmac_callout_settings,
     get_otp_settings,
     get_tableau_server_and_visualizations,
     get_user_roles,
@@ -241,12 +240,6 @@ def dialer_settings(request, domain):
 @require_access_to_linked_domains
 def otp_settings(request, domain):
     return JsonResponse(get_otp_settings(domain))
-
-
-@login_or_api_key
-@require_access_to_linked_domains
-def hmac_callout_settings(request, domain):
-    return JsonResponse(get_hmac_callout_settings(domain))
 
 
 @require_can_edit_apps
