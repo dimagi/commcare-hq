@@ -1652,13 +1652,13 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
                  "large-scale failures would otherwise be next to impossible."),
 )
 
-PREVENT_MOBILE_UCR_SYNC = StaticToggle(
-    'prevent_mobile_ucr_sync',
-    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description='Prevents mobile UCRs from being generated or included in the sync payload',
-)
+#PREVENT_MOBILE_UCR_SYNC = StaticToggle(
+#    'prevent_mobile_ucr_sync',
+#    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
+#    TAG_DEPRECATED,
+#    [NAMESPACE_DOMAIN],
+#    description='Prevents mobile UCRs from being generated or included in the sync payload',
+#)
 
 # TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
 #     'two_factor_superuser_rollout',

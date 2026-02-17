@@ -125,9 +125,6 @@ class ReportFixturesProvider(FixtureProvider):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return False
 
-        if toggles.PREVENT_MOBILE_UCR_SYNC.enabled(restore_user.domain):
-            return False
-
         return True
 
 
