@@ -83,10 +83,6 @@ def get_data_dictionary(domain_link):
     return _do_simple_request('linked_domain:data_dictionary', domain_link)
 
 
-def get_dialer_settings(domain_link):
-    return _do_simple_request('linked_domain:dialer_settings', domain_link)
-
-
 def get_otp_settings(domain_link):
     return _do_simple_request('linked_domain:otp_settings', domain_link)
 
