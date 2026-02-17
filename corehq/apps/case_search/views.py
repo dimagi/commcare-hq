@@ -246,42 +246,50 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
         })
 
     def _get_results(self, query_dict):
-        endpoint_params = [
-            {'name': name, 'required': required == 'true'}
-            for name, required in zip(
-                query_dict.getlist('endpoint_param_name'),
-                query_dict.getlist('endpoint_param_required'),
-                strict=True,
-            ) if name
-        ]
-        print("Endpoint parameters:", endpoint_params)
-
+        endpoint_params, search_criteria = self._get_params(query_dict)
         user = CouchUser.get_by_username(query_dict['username'])
         if not user or not user.is_active_in_domain(self.domain):
             raise HtmxResponseException("Must provide real username")
 
-        renderer = self._get_renderer(user)
-        criteria = [
+        renderer = self._get_renderer(user, endpoint_params)
+        endpoint_filters = [
             SearchCriteria('_xpath_query', renderer.render(expr))
             for expr in query_dict.getlist('filter_expr') if expr
         ]
-        criteria.extend(SearchCriteria(k, v) for k, v in zip(
-            query_dict.getlist('param_key'),
-            query_dict.getlist('param_value'),
-            strict=True,
-        ) if k)
-        for search_criteria in criteria:
-            search_criteria.validate()
         try:
             return get_case_search_results(
                 self.domain,
                 query_dict['case_type'],
-                criteria,
+                search_criteria + endpoint_filters,
             )
         except CaseSearchUserError as e:
             raise HtmxResponseException(str(e))
 
-    def _get_renderer(self, user):
+    @staticmethod
+    def _get_params(query_dict):
+        raw_params = dict(zip(
+            query_dict.getlist('param_key'),
+            query_dict.getlist('param_value'),
+            strict=True,
+        ))
+
+        endpoint_params = {}
+        for name, required in zip(
+            query_dict.getlist('endpoint_param_name'),
+            query_dict.getlist('endpoint_param_required'),
+            strict=True,
+        ):
+            if name:
+                endpoint_params[name] = raw_params.pop(name, None)
+                if required == 'true' and not endpoint_params[name]:
+                    raise HtmxResponseException(f"Required parameter '{name}' is missing")
+
+        search_criteria = [SearchCriteria(k, v) for k, v in raw_params.items() if k]
+        for criterium in search_criteria:
+            criterium.validate()
+        return endpoint_params, search_criteria
+
+    def _get_renderer(self, user, endpoint_params):
         renderer = MessagingTemplateRenderer()
         renderer.set_context_param('user', NestedDictTemplateParam({
             "username": user.username,
@@ -289,4 +297,5 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
             "user_data": user.get_user_session_data(self.domain),
             "location_ids": " ".join(user.get_location_ids(self.domain)),
         }))
+        renderer.set_context_param('params', NestedDictTemplateParam(endpoint_params))
         return renderer
