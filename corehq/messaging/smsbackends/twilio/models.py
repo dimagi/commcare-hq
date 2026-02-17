@@ -7,15 +7,12 @@ from twilio.rest.api import Api
 
 from django.utils.functional import classproperty
 
-from dimagi.utils.logging import notify_exception
-
 from corehq.apps.sms.models import SMS, PhoneLoadBalancingMixin, SQLSMSBackend
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 
 # https://www.twilio.com/docs/api/errors/reference
 INVALID_TO_PHONE_NUMBER_ERROR_CODE = 21211
-WHATSAPP_LIMITATION_ERROR_CODE = 63032
 TO_FROM_BLACKLIST_ERROR_CODE = 21610
 REGION_PERMISSION_ERROR_CODE = 21408
 MESSAGE_BODY_REQUIRED_ERROR_CODE = 21602
@@ -101,10 +98,6 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
             if e.code == INVALID_TO_PHONE_NUMBER_ERROR_CODE:
                 msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
                 return
-            elif e.code == WHATSAPP_LIMITATION_ERROR_CODE:
-                notify_exception(None, f"Error with Twilio Whatsapp: {e}")
-                kwargs['skip_whatsapp'] = True
-                self.send(msg, orig_phone_number, *args, **kwargs)
             elif e.code == TO_FROM_BLACKLIST_ERROR_CODE:
                 msg.set_gateway_error("Message From/To pair violates a gateway blacklist rule")
                 return
