@@ -527,22 +527,6 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
-    @flag_enabled('WIDGET_DIALER')
-    def test_build_feature_flag_view_models_returns_dialer_settings(self):
-        expected_view_models = [
-            {
-                'type': 'dialer_settings',
-                'name': 'Dialer Settings',
-                'detail': None,
-                'last_update': 'Never',
-                'can_update': True,
-                'is_linkable': True,
-            }
-        ]
-        view_models = build_feature_flag_view_models(self.domain)
-
-        self.assertEqual(expected_view_models, view_models)
-
     @flag_enabled('GAEN_OTP_SERVER')
     def test_build_feature_flag_view_models_returns_otp_settings(self):
         expected_view_models = [
@@ -720,7 +704,6 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
 
     @privilege_enabled(privileges.DATA_DICTIONARY)
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
-    @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
     @flag_enabled('EMBEDDED_TABLEAU')
@@ -732,7 +715,6 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
 
     @privilege_enabled(privileges.DATA_DICTIONARY)
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
-    @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
     @flag_enabled('HMAC_CALLOUT')
     @flag_enabled('EMBEDDED_TABLEAU')

@@ -45,20 +45,6 @@ function addDelegatedClickDispatch(linkTarget, linkDestination) {
 function getChainedRenderers() {
     let renderers = [];
 
-    if (initialPageData.get('dialer_enabled')) {
-        renderers.push(chainedRenderer(
-            function (href) {
-                return href.startsWith("tel://");
-            },
-            function (href, hIndex, anchor) {
-                let callout = href.substring("tel://".length);
-                let url = initialPageData.reverse("dialer_view");
-                anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
-            },
-            "dialer",
-        ));
-    }
-
     if (initialPageData.get('gaen_otp_enabled')) {
         renderers.push(chainedRenderer(
             function (href) {

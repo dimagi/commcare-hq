@@ -13,7 +13,6 @@ MODEL_CASE_SEARCH = 'case_search_data'
 MODEL_APP = 'app'
 MODEL_REPORT = 'report'
 MODEL_DATA_DICTIONARY = 'data_dictionary'
-MODEL_DIALER_SETTINGS = 'dialer_settings'
 MODEL_OTP_SETTINGS = 'otp_settings'
 MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
 MODEL_KEYWORD = 'keyword'
@@ -46,7 +45,6 @@ SUPERUSER_DATA_MODELS = [
 
 FEATURE_FLAG_DATA_MODELS = [
     (MODEL_CASE_SEARCH, gettext_lazy('Case Search Settings')),
-    (MODEL_DIALER_SETTINGS, gettext_lazy('Dialer Settings')),
     (MODEL_OTP_SETTINGS, gettext_lazy('OTP Pass-through Settings')),
     (MODEL_HMAC_CALLOUT_SETTINGS, gettext_lazy('Signed Callout')),
     (MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS, gettext_lazy('Tableau Server and Visualizations')),
@@ -60,7 +58,6 @@ LINKED_MODELS_MAP = dict(ALL_LINKED_MODELS)
 
 FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_CASE_SEARCH: toggles.SYNC_SEARCH_CASE_CLAIM,
-    MODEL_DIALER_SETTINGS: toggles.WIDGET_DIALER,
     MODEL_OTP_SETTINGS: toggles.GAEN_OTP_SERVER,
     MODEL_HMAC_CALLOUT_SETTINGS: toggles.HMAC_CALLOUT,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: toggles.EMBEDDED_TABLEAU,
