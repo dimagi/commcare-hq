@@ -12,6 +12,7 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.forms import (
     CSQLFixtureExpressionForm,
     CSQLFixtureFilterForm,
@@ -31,8 +32,17 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.users.models import CouchUser
+from corehq.messaging.templating import (
+    MessagingTemplateRenderer,
+    NestedDictTemplateParam,
+)
 from corehq.util.dates import get_timestamp_for_filename
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.htmx_action import (
+    HqHtmxActionMixin,
+    HtmxResponseException,
+    hq_hx_action,
+)
 from corehq.util.view_utils import BadRequest, json_error
 
 
@@ -225,9 +235,9 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
 
     @hq_hx_action('post')
     def search(self, request, *args, **kwargs):
-        header = ['case_id', 'name']
+        header = ['case_id', 'name', 'owner_id']
         rows = [
-            [case_.case_id, case_.name]
+            [case_.case_id, case_.name, case_.owner_id]
             for case_ in self._get_results(self.request.POST)
         ]
         return render(request, 'case_search/case_search_endpoint_results.html', {
@@ -236,8 +246,13 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
         })
 
     def _get_results(self, query_dict):
+        user = CouchUser.get_by_username(query_dict['username'])
+        if not user or not user.is_active_in_domain(self.domain):
+            raise HtmxResponseException("Must provide real username")
+
+        renderer = self._get_renderer(user)
         criteria = [
-            SearchCriteria('_xpath_query', expr)
+            SearchCriteria('_xpath_query', renderer.render(expr))
             for expr in query_dict.getlist('filter_expr') if expr
         ]
         criteria.extend(SearchCriteria(k, v) for k, v in zip(
@@ -247,8 +262,21 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
         ) if k)
         for search_criteria in criteria:
             search_criteria.validate()
-        return get_case_search_results(
-            self.domain,
-            query_dict['case_type'],
-            criteria,
-        )
+        try:
+            return get_case_search_results(
+                self.domain,
+                query_dict['case_type'],
+                criteria,
+            )
+        except CaseSearchUserError as e:
+            raise HtmxResponseException(str(e))
+
+    def _get_renderer(self, user):
+        renderer = MessagingTemplateRenderer()
+        renderer.set_context_param('user', NestedDictTemplateParam({
+            "username": user.username,
+            "uuid": user.user_id,
+            "user_data": user.get_user_session_data(self.domain),
+            "location_ids": " ".join(user.get_location_ids(self.domain)),
+        }))
+        return renderer
