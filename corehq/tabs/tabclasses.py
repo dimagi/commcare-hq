@@ -1971,12 +1971,6 @@ class TranslationsTab(UITab):
              'title': 'Convert Translations'
              }
         ]))
-        if self._request.user.is_staff:
-            items.append((_('Translations'), [
-                {'url': reverse('delete_translations', args=[self.domain]),
-                 'title': 'Delete Translations'
-                 }
-            ]))
         return items
 
 
