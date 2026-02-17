@@ -2151,16 +2151,16 @@ SSO_OIDC_DEVELOPMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
-ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
-    'fixtures_in_case_restore',
-    'Allow limited fixtures to be available in case restore for SMS workflows.',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    WARNING: To be used only for small templates since the performance implication has not been evaluated.
-    Do not enable on your own.
-    """
-)
+# ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
+#     'fixtures_in_case_restore',
+#     'Allow limited fixtures to be available in case restore for SMS workflows.',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description="""
+#     WARNING: To be used only for small templates since the performance implication has not been evaluated.
+#     Do not enable on your own.
+#     """
+# )
 
 EMBEDDED_TABLEAU = StaticToggle(
     'embedded_tableau',
