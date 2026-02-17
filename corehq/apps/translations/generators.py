@@ -3,7 +3,6 @@ import os
 import re
 import tempfile
 from collections import OrderedDict, defaultdict, namedtuple
-from itertools import chain
 
 from django.utils.functional import cached_property
 
@@ -15,7 +14,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_version_build_id,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.apps.translations.models import TransifexBlacklist
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
@@ -39,15 +37,6 @@ class EligibleForTransifexChecker(object):
 
     def is_label_to_skip(self, form_id, label):
         return label in self.get_labels_to_skip()[form_id]
-
-    def is_blacklisted(self, module_id, field_type, field_name, translations):
-        blacklist = self._get_blacklist()
-        for display_text in chain([''], translations):
-            try:
-                return blacklist[self.app.domain][self.app.id][module_id][field_type][field_name][display_text]
-            except KeyError:
-                pass
-        return False
 
     @memoized
     def get_labels_to_skip(self):
@@ -87,24 +76,6 @@ class EligibleForTransifexChecker(object):
             labels_to_skip[form_id] = labels_to_skip[form_id] - necessary_labels[form_id]
 
         return labels_to_skip
-
-    @memoized
-    def _get_blacklist(self):
-        """
-        Returns a nested dictionary of blacklisted translations for a given app.
-
-        A nested dictionary is used so that search for a translation fails at the
-        first missing key.
-        """
-        blacklist = {}
-        for b in TransifexBlacklist.objects.filter(domain=self.app.domain, app_id=self.app.id).all():
-            blacklist.setdefault(b.domain, {})
-            blacklist[b.domain].setdefault(b.app_id, {})
-            blacklist[b.domain][b.app_id].setdefault(b.module_id, {})
-            blacklist[b.domain][b.app_id][b.module_id].setdefault(b.field_type, {})
-            blacklist[b.domain][b.app_id][b.module_id][b.field_type].setdefault(b.field_name, {})
-            blacklist[b.domain][b.app_id][b.module_id][b.field_type][b.field_name][b.display_text] = True
-        return blacklist
 
 
 class AppTranslationsGenerator(object):
@@ -259,21 +230,6 @@ class AppTranslationsGenerator(object):
         for i, row in enumerate(rows):
             question_label = row[label_index]
             if question_label not in labels_to_skip:
-                valid_rows.append(row)
-        return valid_rows
-
-    @cached_property
-    def _blacklisted_translations(self):
-        return TransifexBlacklist.objects.filter(domain=self.domain, app_id=self.app_id).all()
-
-    def filter_invalid_rows_for_module(self, rows, module_id, case_property_index,
-                                       list_or_detail_index, default_lang_index):
-        valid_rows = []
-        for i, row in enumerate(rows):
-            list_or_detail = row[list_or_detail_index]
-            case_property = row[case_property_index]
-            default_lang = row[default_lang_index]
-            if not self.checker.is_blacklisted(module_id, list_or_detail, case_property, [default_lang]):
                 valid_rows.append(row)
         return valid_rows
 

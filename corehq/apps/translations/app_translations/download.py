@@ -31,10 +31,6 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
         sheet_name = get_module_sheet_name(module)
         rows.append(get_name_menu_media_row(module, sheet_name, lang))
         for module_row in get_module_rows([lang], module, app.domain):
-            if eligible_for_transifex_only:
-                field_name, field_type, translation = module_row
-                if checker.is_blacklisted(module.unique_id, field_type, field_name, [translation]):
-                    continue
             rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
         for form in module.get_forms():
@@ -82,10 +78,6 @@ def get_bulk_app_sheets_by_name(app, lang=None, eligible_for_transifex_only=Fals
 
         rows[module_sheet_name] = []
         for module_row in get_module_rows(langs, module, app.domain):
-            if eligible_for_transifex_only:
-                field_name, field_type, *translations = module_row
-                if checker.is_blacklisted(module.unique_id, field_type, field_name, translations):
-                    continue
             rows[module_sheet_name].append(module_row)
 
         for form in module.get_forms():
