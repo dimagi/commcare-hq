@@ -1,7 +1,6 @@
 import DOMPurify from "dompurify";
 import markdowner from "markdown-it/dist/markdown-it";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import HMACCallout from "integration/js/hmac_callout";
 import toggles from "hqwebapp/js/toggles";
 
 
@@ -98,21 +97,6 @@ function getChainedRenderers() {
         addDelegatedClickDispatch('gaen_otp',
             function (element) {
                 postFormFromLink(element, 'otp_view', true);
-            });
-    }
-
-    if (initialPageData.get('hmac_root_url')) {
-        renderers.push(chainedRenderer(
-            function (href) {
-                return href.startsWith(initialPageData.get('hmac_root_url'));
-            },
-            function () {
-            },
-            "hmac_callout",
-        ));
-        addDelegatedClickDispatch('hmac_callout',
-            function (element) {
-                HMACCallout.signedCallout(element);
             });
     }
 

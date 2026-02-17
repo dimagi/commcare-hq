@@ -1,6 +1,5 @@
 import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import hmacCallout from "integration/js/hmac_callout";
 import markdown from "cloudcare/js/markdown";
 
 describe('Markdown', function () {
@@ -90,28 +89,5 @@ describe('Markdown', function () {
             assert(submitStub.called, "GAEN listener was not registered");
         });
 
-        it('should render HMAC callouts', function () {
-            initialPageData.register('hmac_root_url', '/hmac/');
-            assert.equal(
-                render("[link](/hmac/to/somewhere/?with=params)"),
-                "<p><a href=\"/hmac/to/somewhere/?with=params\" target=\"hmac_callout\"><u>link</u></a></p>\n",
-            );
-        });
-
-        it('should register listeners for HMAC link clicks', function () {
-            initialPageData.register('hmac_root_url', '/hmac/');
-            let renderedLink = render("[link](/hmac/to/somewhere/?with=params)");
-
-            sinon.stub(hmacCallout, "signedCallout");
-
-            let div = document.createElement("div");
-            div.setAttribute("id", "test-div");
-            div.innerHTML = renderedLink;
-            document.body.appendChild(div);
-
-            let link = div.querySelector("a");
-            link.click();
-            assert(hmacCallout.signedCallout, "HMAC listener was not registered");
-        });
     });
 });
