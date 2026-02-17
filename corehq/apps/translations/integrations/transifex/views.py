@@ -3,7 +3,6 @@ from zipfile import ZipFile
 
 from django.contrib import messages
 from django.http import HttpResponse
-from django.shortcuts import redirect
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
@@ -13,14 +12,12 @@ from memoized import memoized
 
 from couchexport.models import Format
 
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.translations.forms import ConvertTranslationsForm
 from corehq.apps.translations.generators import PoFileGenerator, Translation
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
 )
-from corehq.apps.translations.models import TransifexBlacklist
 from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.files import safe_filename_header
 
@@ -184,9 +181,3 @@ class ConvertTranslations(BaseTranslationsView):
         context = super(ConvertTranslations, self).page_context
         context['convert_translations_form'] = self.convert_translation_form
         return context
-
-
-@login_and_domain_required
-def delete_translation_blacklist(request, domain, pk):
-    TransifexBlacklist.objects.filter(domain=domain, pk=pk).delete()
-    return redirect(ConvertTranslations.urlname, domain=domain)
