@@ -4,9 +4,8 @@ from zipfile import ZipFile
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy, gettext_noop
+from django.utils.translation import gettext_noop
 
 import openpyxl
 import polib
@@ -14,22 +13,14 @@ from memoized import memoized
 
 from couchexport.models import Format
 
-from corehq.apps.app_manager.dbaccessors import get_current_app, get_version_build_id
-from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.translations.forms import (
-    ConvertTranslationsForm,
-    DownloadAppTranslationsForm,
-)
+from corehq.apps.translations.forms import ConvertTranslationsForm
 from corehq.apps.translations.generators import PoFileGenerator, Translation
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
 )
 from corehq.apps.translations.models import TransifexBlacklist
-from corehq.apps.translations.tasks import (
-    email_project_from_hq,
-)
 from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.files import safe_filename_header
 
@@ -193,49 +184,6 @@ class ConvertTranslations(BaseTranslationsView):
         context = super(ConvertTranslations, self).page_context
         context['convert_translations_form'] = self.convert_translation_form
         return context
-
-
-class DownloadTranslations(BaseTranslationsView):
-    page_title = gettext_lazy('Download Translations')
-    urlname = 'download_translations'
-    template_name = 'translations/bootstrap3/download_translations.html'
-
-    @property
-    def page_context(self):
-        context = super(DownloadTranslations, self).page_context
-        if context['transifex_details_available']:
-            context['download_form'] = DownloadAppTranslationsForm(self.domain)
-        return context
-
-    def section_url(self):
-        return reverse(DownloadTranslations.urlname, args=self.args, kwargs=self.kwargs)
-
-    def post(self, request, *args, **kwargs):
-        if self.transifex_integration_enabled(request):
-            form = DownloadAppTranslationsForm(self.domain, self.request.POST)
-            if form.is_valid():
-                form_data = form.cleaned_data
-                try:
-                    if not form_data['version']:
-                        app = get_current_app(request.domain, form_data['app_id'])
-                        version = app.version
-                    else:
-                        version = form_data['version']
-                    get_version_build_id(request.domain, form_data['app_id'], version)
-                except BuildNotFoundException:
-                    if not form_data['version']:
-                        messages.error(request, _('Missing current Application Version. This can happen if the '
-                                                  'latest version was deleted without creating a new one. '
-                                                  'Please create a new Application Version before trying again.'))
-                    else:
-                        messages.error(request, _('Missing selected Application Version. Please create a new '
-                                                  'version before trying again.'))
-                else:
-                    email_project_from_hq.delay(request.domain, form_data, request.user.email)
-                    messages.success(request, _('Submitted request to download translations. '
-                                                'You should receive an email shortly.'))
-                return redirect(self.urlname, domain=self.domain)
-        return self.get(request, *args, **kwargs)
 
 
 @login_and_domain_required
