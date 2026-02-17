@@ -93,9 +93,6 @@ from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.styleguide.views import MainStyleGuideView
-from corehq.apps.translations.integrations.transifex.utils import (
-    transifex_details_available_for_domain,
-)
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
@@ -1200,11 +1197,6 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
-        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _('Translations'),
-                url=(reverse('convert_translations', args=[self.domain])),
-            ))
         if toggles.APP_TESTING.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Application Testing'),
@@ -1979,44 +1971,6 @@ class TranslationsTab(UITab):
              'title': 'Convert Translations'
              }
         ]))
-        if transifex_details_available_for_domain(self.domain):
-            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
-                items.append((_('Translations'), [
-                    {
-                        'url': reverse('create_update_translations', args=[self.domain]),
-                        'title': _('Create or Update Translations')
-                    },
-                    {
-                        'url': reverse('push_translations', args=[self.domain]),
-                        'title': _('Push Translations')
-                    },
-                    {
-                        'url': reverse('pull_translations', args=[self.domain]),
-                        'title': _('Pull Translations')
-                    },
-                    {
-                        'url': reverse('backup_translations', args=[self.domain]),
-                        'title': _('Backup Translations')
-                    },
-                    {
-                        'url': reverse('pull_resource', args=[self.domain]),
-                        'title': _('Pull Resource')
-                    },
-                    {
-                        'url': reverse('blacklist_translations', args=[self.domain]),
-                        'title': _('Blacklist Translations')
-                    },
-                    {
-                        'url': reverse('download_translations', args=[self.domain]),
-                        'title': _('Download Translations')
-                    },
-                ]))
-        if self._request.user.is_staff:
-            items.append((_('Translations'), [
-                {'url': reverse('delete_translations', args=[self.domain]),
-                 'title': 'Delete Translations'
-                 }
-            ]))
         return items
 
 

@@ -134,6 +134,7 @@ if (require.main === module) {
         "notifications",
         "registration",
         "reports_core",
+        "translations",
     ];
     const aliases = {};
     const appsWithEntries = [];

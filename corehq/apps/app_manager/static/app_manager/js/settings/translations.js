@@ -3,15 +3,14 @@ import ko from "knockout";
 import assertProperties from "hqwebapp/js/assert_properties";
 
 var appTranslationsModel = function (options) {
-    assertProperties.assertRequired(options, ['baseUrl', 'format', 'lang', 'skipBlacklisted']);
+    assertProperties.assertRequired(options, ['baseUrl', 'format', 'lang']);
     var self = {};
 
     self.file = ko.observable();
     self.format = ko.observable(options.format);
     self.lang = ko.observable(options.lang);
-    self.skipBlacklisted = ko.observable(options.skipBlacklisted);
     self.url = ko.computed(function () {
-        return options.baseUrl + "?lang=" + self.lang() + "&skipbl=" + self.skipBlacklisted() + "&format=" + self.format();
+        return options.baseUrl + "?lang=" + self.lang() + "&format=" + self.format();
     });
 
     self.disableDownload = ko.computed(function () {
@@ -37,7 +36,6 @@ $(function () {
             baseUrl: $translationsPanel.find("#download_link").attr("href"),
             format: $translationsPanel.find("#sheet_format").val(),
             lang: $translationsPanel.find("select").val() || '',
-            skipBlacklisted: $translationsPanel.find("#skip_blacklisted").val(),
         }));
     }
 });
