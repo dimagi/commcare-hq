@@ -121,11 +121,8 @@ class ReportFixturesProvider(FixtureProvider):
         )
 
     def should_sync(self, restore_state):
-        restore_user = restore_state.restore_user
-        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
-            return False
-
-        return True
+        domain = restore_state.restore_user.domain
+        return toggles.MOBILE_UCR.enabled(domain) and _should_sync(restore_state)
 
 
 def _parse_apps(restore_state, restore_user):
