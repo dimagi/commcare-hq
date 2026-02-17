@@ -6,7 +6,6 @@ from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_CASE_SEARCH,
-    MODEL_DIALER_SETTINGS,
     MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_KEYWORD,
@@ -95,17 +94,6 @@ class TestReleaseManager(BaseReleaseManagerTest):
         self._assert_release([
             self._linked_data_view_model(MODEL_CASE_SEARCH),
         ], error="Feature flag for Case Search Settings is not enabled")
-
-    @flag_enabled('WIDGET_DIALER')
-    def test_widget_dialer_on(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DIALER_SETTINGS),
-        ])
-
-    def test_widget_dialer_off(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DIALER_SETTINGS),
-        ], error="Feature flag for Dialer Settings is not enabled")
 
     @flag_enabled('GAEN_OTP_SERVER')
     def test_otp_server_on(self):
