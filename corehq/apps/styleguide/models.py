@@ -34,7 +34,7 @@ class CacheStore(ABC):
 
     @property
     def cache_key(self):
-        return f"{self.username}:prototype:{self.slug}"
+        return f"{self.username}:cache-store:{self.slug}"
 
     def set(self, data):
         cache.set(self.cache_key, data, self.timeout)
