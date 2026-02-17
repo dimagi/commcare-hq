@@ -2413,31 +2413,31 @@ TABLEAU_USER_SYNCING = StaticToggle(
 )
 
 
-def _handle_attendance_tracking_role(domain, is_enabled):
-    from corehq.apps.accounting.utils import domain_has_privilege
-    from corehq.apps.users.role_utils import (
-        archive_attendance_coordinator_role_for_domain,
-        enable_attendance_coordinator_role_for_domain,
-    )
-
-    if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
-        return
-
-    if is_enabled:
-        enable_attendance_coordinator_role_for_domain(domain)
-    else:
-        archive_attendance_coordinator_role_for_domain(domain)
-
-
-ATTENDANCE_TRACKING = StaticToggle(
-    'attendance_tracking',
-    'Allows access to the attendance tracking page',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Additional views will be added to simplify the process of '
-                'using CommCare HQ for attendance tracking.',
-    save_fn=_handle_attendance_tracking_role,
-)
+# def _handle_attendance_tracking_role(domain, is_enabled):
+#     from corehq.apps.accounting.utils import domain_has_privilege
+#     from corehq.apps.users.role_utils import (
+#         archive_attendance_coordinator_role_for_domain,
+#         enable_attendance_coordinator_role_for_domain,
+#     )
+#
+#     if not domain_has_privilege(domain, privileges.ATTENDANCE_TRACKING):
+#         return
+#
+#     if is_enabled:
+#         enable_attendance_coordinator_role_for_domain(domain)
+#     else:
+#         archive_attendance_coordinator_role_for_domain(domain)
+#
+#
+# ATTENDANCE_TRACKING = StaticToggle(
+#     'attendance_tracking',
+#     'Allows access to the attendance tracking page',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Additional views will be added to simplify the process of '
+#                 'using CommCare HQ for attendance tracking.',
+#     save_fn=_handle_attendance_tracking_role,
+# )
 
 
 def _handle_geospatial_es_index(domain, is_enabled):
