@@ -934,6 +934,7 @@ repeaters
  0019_connectformrepeater
  0020_repeater_extra_backoff_codes
  0021_alter_repeatrecord_state_and_more
+ 0022_delete_cowin_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803
