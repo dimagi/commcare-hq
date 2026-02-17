@@ -1726,12 +1726,12 @@ TRAINING_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
-    'app_trans_with_transifex',
-    'Translate Application Content With Transifex',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_USER]
-)
+# APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+#     'app_trans_with_transifex',
+#     'Translate Application Content With Transifex',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_USER]
+# )
 
 VALIDATE_APP_TRANSLATIONS = StaticToggle(
     'validate_app_translations',
