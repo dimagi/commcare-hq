@@ -45,12 +45,6 @@ from corehq.apps.domain.views.settings import (
 from corehq.apps.email.views import EmailSMTPSettingsView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
-from corehq.apps.events.models import AttendeeModel
-from corehq.apps.events.views import (
-    AttendeeEditView,
-    AttendeesListView,
-    EventsView,
-)
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
 from corehq.apps.hqadmin.reports import (
@@ -1014,7 +1008,10 @@ class ProjectDataTab(UITab):
                 case_search_enabled_for_domain,
             )
             if case_search_enabled_for_domain(self.domain):
-                from corehq.apps.case_search.views import CaseSearchView, ProfileCaseSearchView
+                from corehq.apps.case_search.views import (
+                    CaseSearchView,
+                    ProfileCaseSearchView,
+                )
                 explore_data_views.extend([{
                     'title': _(CaseSearchView.page_title),
                     'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
@@ -1079,7 +1076,9 @@ class ProjectDataTab(UITab):
         )
 
     def _get_payments_verification_views(self):
-        from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+        from corehq.apps.integration.payments.views import (
+            PaymentsVerificationReportView,
+        )
         items = [[
             _("Payments Verification"),
             [
@@ -1713,7 +1712,10 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views import EditWebUserView, ListWebUsersView
+            from corehq.apps.users.views import (
+                EditWebUserView,
+                ListWebUsersView,
+            )
             from corehq.apps.users.views.mobile.users import (
                 FilteredWebUserDownload,
             )
@@ -1752,7 +1754,10 @@ class ProjectUsersTab(UITab):
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
-            from corehq.apps.users.views.role import EditRoleView, ListRolesView
+            from corehq.apps.users.views.role import (
+                EditRoleView,
+                ListRolesView,
+            )
             return {
                 'title': _(ListRolesView.page_title),
                 'url': reverse(ListRolesView.urlname, args=[self.domain]),
@@ -2735,61 +2740,3 @@ class AdminTab(UITab):
                 and (self.couch_user.is_superuser
                      or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
                 and not is_request_using_sso(self._request))
-
-
-class AttendanceTrackingTab(UITab):
-    title = gettext_noop("Attendance Tracking")
-    view = EventsView.urlname
-
-    url_prefix_formats = (
-        '/a/{domain}/settings/events',
-    )
-
-    @property
-    def dropdown_items(self):
-        items = [
-            dropdown_dict(_("Attendees"), url=reverse(AttendeesListView.urlname, args=(self.domain,))),
-            dropdown_dict(_("Events"), url=reverse(EventsView.urlname, args=(self.domain,))),
-            self.divider,
-            dropdown_dict(_("View All"), url=reverse(EventsView.urlname, args=(self.domain,))),
-        ]
-        return items
-
-    @property
-    def sidebar_items(self):
-
-        def _get_attendee_name(domain, attendee_id=None, **kwargs):
-            if attendee_id:
-                model = AttendeeModel.objects.get(
-                    case_id=attendee_id,
-                    domain=domain,
-                )
-                return model.name
-            return None
-
-        items = [
-            (_("Attendees"), [
-                {
-                    'title': _("View All Attendees"),
-                    'url': reverse(AttendeesListView.urlname, args=(self.domain,)),
-                    'description': _('Manage attendees for Attendance Tracking Events'),
-                    'subpages': [{
-                        'title': _get_attendee_name,
-                        'urlname': AttendeeEditView.urlname,
-                    }],
-                },
-            ]),
-            (_("Events"), [
-                {
-                    'title': _("View All Events"),
-                    'url': reverse(EventsView.urlname, args=(self.domain,)),
-                    'description': _('Manage Attendance Tracking Events'),
-                },
-            ]),
-        ]
-        return items
-
-    @property
-    def _is_viewable(self):
-        # The FF check is temporary until the full feature is released
-        return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
