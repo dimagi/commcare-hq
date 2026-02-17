@@ -1817,12 +1817,13 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
-    'skip_orm_fixture_upload',
-    'Exposes an option in fixture api upload to skip saving through couchdbkit',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# TODO remove commented-out toggle definition
+# SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
+#     'skip_orm_fixture_upload',
+#     'Exposes an option in fixture api upload to skip saving through couchdbkit',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 ENABLE_UCR_MIRRORS = StaticToggle(
     'enable_ucr_mirrors',
