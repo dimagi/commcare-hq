@@ -95,24 +95,21 @@ def download_bulk_ui_translations(request, domain, app_id):
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
     lang = request.GET.get('lang')
-    skip_blacklisted = request.GET.get('skipbl', 'false') == 'true'
     app = get_app(domain, app_id)
     single_sheet = request.GET.get('format') == "single"
-    headers = get_bulk_app_sheet_headers(app, single_sheet=single_sheet,
-                                         lang=lang, eligible_for_transifex_only=skip_blacklisted)
+    headers = get_bulk_app_sheet_headers(app, single_sheet=single_sheet, lang=lang)
     if single_sheet:
-        sheets = get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted)
+        sheets = get_bulk_app_single_sheet_by_name(app, lang)
     else:
-        sheets = get_bulk_app_sheets_by_name(app, lang=lang, eligible_for_transifex_only=skip_blacklisted)
+        sheets = get_bulk_app_sheets_by_name(app, lang=lang)
 
     temp = io.BytesIO()
     data = [(k, v) for k, v in sheets.items()]
     export_raw(headers, data, temp)
-    filename = '{app_name} v.{app_version} - App Translations{lang}{transifex_only}'.format(
+    filename = '{app_name} v.{app_version} - App Translations{lang}'.format(
         app_name=app.name,
         app_version=app.version,
         lang=' ' + lang if lang else '',
-        transifex_only=' (Transifex only)' if skip_blacklisted else '',
     )
     return export_response(temp, Format.XLS_2007, filename)
 
