@@ -218,7 +218,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                          "($case_id != '') and (double(now()) mod 2 = 0)")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
-    @flag_enabled('USH_SEARCH_FILTER')
+    @flag_enabled('CASE_SEARCH_DEPRECATED')
     def test_remote_request(self):
         """
         Suite should include remote-request if searching is configured
@@ -231,7 +231,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
-    @flag_enabled('USH_SEARCH_FILTER')
+    @flag_enabled('CASE_SEARCH_DEPRECATED')
     def test_remote_request_custom_detail(self):
         """Remote requests for modules with custom details point to the custom detail
         """
@@ -240,7 +240,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('USH_SEARCH_FILTER')
+    @flag_enabled('CASE_SEARCH_DEPRECATED')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite',
            lambda _: None)
     def test_duplicate_remote_request(self):
@@ -297,7 +297,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('USH_SEARCH_FILTER')
+    @flag_enabled('CASE_SEARCH_DEPRECATED')
     def test_case_search_filter(self):
         search_filter = "rating > 3"
         self.module.search_config.search_filter = search_filter
@@ -316,7 +316,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('USH_SEARCH_FILTER')
+    @flag_enabled('CASE_SEARCH_DEPRECATED')
     def test_additional_types(self):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
