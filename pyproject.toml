@@ -41,7 +41,6 @@ dependencies = [
     "django-otp",
     "django-phonenumber-field",
     "django-prbac",
-    "django-redis-sessions",
     "django-redis",
     "django-recaptcha",
     "django-statici18n",
