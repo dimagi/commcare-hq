@@ -9,10 +9,7 @@ from django.utils.functional import classproperty
 
 from dimagi.utils.logging import notify_exception
 
-from corehq import toggles
-from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, PhoneLoadBalancingMixin, SQLSMSBackend
-from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 
@@ -91,15 +88,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         client = Client(config.account_sid, config.auth_token)
         to = msg.phone_number
         msg.system_phone_number = orig_phone_number
-        if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
-            domain_obj = Domain.get_by_name(msg.domain)
-            from_ = getattr(domain_obj, 'twilio_whatsapp_phone_number') or WHATSAPP_SANDBOX_PHONE_NUMBER
-            from_ = clean_phone_number(from_)
-            from_ = self.convert_to_whatsapp(from_)
-            to = self.convert_to_whatsapp(to)
-            messaging_service_sid = None
-        else:
-            from_, messaging_service_sid = self.from_or_messaging_service_sid(orig_phone_number)
+        from_, messaging_service_sid = self.from_or_messaging_service_sid(orig_phone_number)
         body = msg.text
         try:
             message = client.messages.create(
