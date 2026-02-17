@@ -69,7 +69,6 @@ from corehq.apps.integration.payments.views import PaymentConfigurationView
 from corehq.apps.integration.views import (
     DialerSettingsView,
     GaenOtpServerSettingsView,
-    HmacCalloutSettingsView,
 )
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
@@ -2313,12 +2312,6 @@ def _get_integration_section(domain, couch_user):
         integration.append({
             'title': _(DialerSettingsView.page_title),
             'url': reverse(DialerSettingsView.urlname, args=[domain])
-        })
-
-    if toggles.HMAC_CALLOUT.enabled(domain):
-        integration.append({
-            'title': _(HmacCalloutSettingsView.page_title),
-            'url': reverse(HmacCalloutSettingsView.urlname, args=[domain])
         })
 
     if toggles.GAEN_OTP_SERVER.enabled(domain):
