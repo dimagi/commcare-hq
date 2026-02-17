@@ -6,11 +6,6 @@ from casexml.apps.phone.xml import (
     get_case_element,
     get_registration_element_for_case,
 )
-from corehq.apps.fixtures.fixturegenerators import get_global_items_by_domain
-from corehq.apps.locations.fixtures import (
-    FlatLocationSerializer
-)
-from corehq.apps.locations.models import get_domain_locations
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 
@@ -37,13 +32,3 @@ def get_case_restore_response(domain, case_id):
         payload = content.get_fileobj()
 
     return RestoreResponse(payload).get_http_response()
-
-
-def _add_limited_fixtures(domain, case_id, content):
-    serializer = FlatLocationSerializer()
-    locations = get_domain_locations(domain)
-    nodes = serializer.get_xml_nodes(domain, 'locations', case_id, locations)
-    content.extend(nodes)
-    lookuptable = get_global_items_by_domain(domain, case_id)
-    if lookuptable:
-        content.extend(lookuptable)
