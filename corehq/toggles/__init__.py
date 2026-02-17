@@ -2480,14 +2480,14 @@ COMMCARE_CONNECT = StaticToggle(
     description='More details to come',
 )
 
-FCM_NOTIFICATION = StaticToggle(
-    'fcm_notification',
-    'FCM Push Notifications - no longer functional',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Push Notification option will be available in content for '
-                'Conditional Alerts in Messaging.'
-)
+# FCM_NOTIFICATION = StaticToggle(
+#     'fcm_notification',
+#     'FCM Push Notifications - no longer functional',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Push Notification option will be available in content for '
+#                 'Conditional Alerts in Messaging.'
+# )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
     'show_owner_location_property_in_report_builder',
