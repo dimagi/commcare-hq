@@ -133,20 +133,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     def headers(self):
         columns = self._columns
-        if self.show_build_profile:
-            columns.append(
-                DataTablesColumn(_("Build Profile"),
-                                 help_text=_("The build profile from the user's last hearbeat request."),
-                                 sortable=False,
-                                 use_bootstrap5=self.use_bootstrap5)
-            )
         headers = DataTablesHeader(*columns)
         headers.custom_sort = [[2, 'desc']]
         return headers
-
-    @cached_property
-    def show_build_profile(self):
-        return toggles.SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS.enabled(self.domain)
 
     @property
     def default_sort(self):
@@ -287,7 +276,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         loc_names_dict = self._locations_names_dict(users)
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
-            last_build_profile_name = device = device_app_meta = num_unsent_forms = None
+            device = device_app_meta = num_unsent_forms = None
             is_commcare_user = user.get('doc_type') == 'CommCareUser'
             build_version = _("Unknown")
             devices = user.get('devices', None)
@@ -334,13 +323,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                         app_name = self.get_app_name(last_build['app_id'])
                     except AppInDifferentDomainException:
                         continue
-                if self.show_build_profile:
-                    last_build_profile_id = last_build.get('build_profile_id')
-                    if last_build_profile_id:
-                        last_build_profile_name = _("Unknown")
-                        build_profiles = self._get_app_details(last_build['app_id']).get('build_profiles', {})
-                        if last_build_profile_id in build_profiles:
-                            last_build_profile_name = build_profiles[last_build_profile_id]
 
             row_data = [
                 user_display_string(user.get('username', ''),
@@ -351,8 +333,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 app_name or "---", build_version, commcare_version or '---',
                 num_unsent_forms if num_unsent_forms is not None else "---",
             ]
-            if self.show_build_profile:
-                row_data.append(last_build_profile_name)
 
             if self._include_primary_locations_hierarchy():
                 location_data = self._ordered_hierarchy(locations_hierarchy.get(user['location_id'], []))
