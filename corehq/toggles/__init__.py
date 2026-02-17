@@ -1803,12 +1803,12 @@ COPY_CASES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-DASHBOARD_REACH_REPORT = StaticToggle(
-    'dashboard_reach_reports',
-    'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# DASHBOARD_REACH_REPORT = StaticToggle(
+#     'dashboard_reach_reports',
+#     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 # PARTIAL_UI_TRANSLATIONS = StaticToggle(
 #     'partial_ui_translations',
