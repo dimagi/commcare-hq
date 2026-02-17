@@ -42,6 +42,30 @@ function addDelegatedClickDispatch(linkTarget, linkDestination) {
     }, true);
 }
 
+function postFormFromLink(anchor, target, isInternal) {
+    let url = new URL(anchor.href);
+    let dest = url.origin + url.pathname;
+    let data = {};
+    if (isInternal) {
+        data['csrfmiddlewaretoken'] = $("#csrfTokenContainer").val();
+    }
+    url.searchParams.forEach(function (value, key) { data[key] = value; });
+
+    let form = document.createElement("form");
+    form.method = "POST";
+    form.action = dest;
+    form.target = target;
+    for (let key in data) {
+        let element = document.createElement("input");
+        element.name = key;
+        element.value = data[key];
+        form.appendChild(element);
+    }
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
 function getChainedRenderers() {
     let renderers = [];
 
@@ -73,7 +97,7 @@ function getChainedRenderers() {
         ));
         addDelegatedClickDispatch('gaen_otp',
             function (element) {
-                HMACCallout.unsignedCallout(element, 'otp_view', true);
+                postFormFromLink(element, 'otp_view', true);
             });
     }
 

@@ -78,7 +78,7 @@ describe('Markdown', function () {
             initialPageData.registerUrl('gaen_otp_view', '/gaen/');
             let renderedLink = render("[link](cchq://passthrough/gaen_otp/?otp=otp)");
 
-            sinon.stub(hmacCallout, "unsignedCallout");
+            let submitStub = sinon.stub(HTMLFormElement.prototype, "submit");
 
             let div = document.createElement("div");
             div.setAttribute("id", "test-div");
@@ -87,7 +87,7 @@ describe('Markdown', function () {
 
             let link = div.querySelector("a");
             link.click();
-            assert(hmacCallout.unsignedCallout, "GAEN listener was not registered");
+            assert(submitStub.called, "GAEN listener was not registered");
         });
 
         it('should render HMAC callouts', function () {
