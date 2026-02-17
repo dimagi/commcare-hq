@@ -27,6 +27,13 @@
         <strong>{% trans "Endpoint Configuration" %}</strong>
       </div>
       <div class="card-body">
+        <div class="alert alert-info" role="alert">
+          <i class="fa fa-info-circle"></i>
+          {% blocktrans %}
+          This box contains the config that will be stored as part of the
+          endpoint and managed entirely server-side
+          {% endblocktrans %}
+        </div>
         <div class="mb-3">
           <label class="form-label" for="endpoint_name">
             {% trans "Endpoint Name" %}
@@ -81,6 +88,10 @@
         <strong>{% trans "Query Parameters" %}</strong>
       </div>
       <div class="card-body">
+        <div class="alert alert-info" role="alert">
+          <i class="fa fa-info-circle"></i>
+          {% trans "Use this section to mimic a request from an application" %}
+        </div>
         <template x-for="(param, index) in params" :key="param.id">
           <div class="row mb-2 align-items-center">
             <div class="col">
@@ -113,7 +124,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">
-      {% trans "Submit" %}
+      {% trans "Try it out!" %}
     </button>
   </form>
   </div></div>
