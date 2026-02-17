@@ -1,9 +1,15 @@
 import json
 import logging
+from functools import wraps
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import Http404, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
@@ -14,7 +20,6 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 
-from functools import wraps
 from memoized import memoized
 
 from dimagi.utils.couch import get_redis_lock, release_lock
@@ -28,13 +33,14 @@ from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.domain.decorators import domain_admin_required, api_auth
+from corehq.apps.domain.decorators import api_auth, domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
+from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.tasks import (
     download_locations_async,
@@ -51,12 +57,8 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
-from .exceptions import LocationConsistencyError, LocationBulkImportError
-from .forms import (
-    LocationFilterForm,
-    LocationFormSet,
-    UsersAtLocationForm,
-)
+from .exceptions import LocationBulkImportError, LocationConsistencyError
+from .forms import LocationFilterForm, LocationFormSet, UsersAtLocationForm
 from .models import LocationType, SQLLocation, filter_for_archived
 from .permissions import (
     can_edit_location,
@@ -68,9 +70,11 @@ from .permissions import (
     user_can_edit_location_types,
 )
 from .tree_utils import assert_no_cycles
-from .util import does_location_type_have_users, load_locs_json, location_hierarchy_config
-from django.http import JsonResponse, HttpResponseBadRequest
-from corehq.apps.locations.dbaccessors import get_filtered_locations_count
+from .util import (
+    does_location_type_have_users,
+    load_locs_json,
+    location_hierarchy_config,
+)
 
 logger = logging.getLogger(__name__)
 
