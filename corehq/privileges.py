@@ -27,7 +27,6 @@ REPORT_BUILDER_ADD_ON_PRIVS = {
     REPORT_BUILDER_30,
 }
 
-ATTENDANCE_TRACKING = 'attendance_tracking'
 ROLE_BASED_ACCESS = 'role_based_access'
 RESTRICT_ACCESS_BY_LOCATION = 'restrict_access_by_location'
 
@@ -187,7 +186,6 @@ MAX_PRIVILEGES = [
     PHONE_APK_HEARTBEAT,
     VIEW_APP_DIFF,
     DATA_FILE_DOWNLOAD,
-    ATTENDANCE_TRACKING,
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
     FORM_CASE_IDS_CASE_IMPORTER,
@@ -274,7 +272,6 @@ class Titles(object):
             PHONE_APK_HEARTBEAT: _("Phone heartbeat"),
             VIEW_APP_DIFF: _("Improved app changes view"),
             DATA_FILE_DOWNLOAD: _('File Dropzone'),
-            ATTENDANCE_TRACKING: _("Attendance Tracking"),
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
