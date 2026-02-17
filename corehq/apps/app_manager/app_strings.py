@@ -372,7 +372,7 @@ def _create_case_search_app_strings(
     if module_offers_search(module):
         from corehq.apps.app_manager.models import CaseSearch
 
-        if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
+        if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(app.domain):
             # search label
             yield (
                 id_strings.case_search_locale(module),
