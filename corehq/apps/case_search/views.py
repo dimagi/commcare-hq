@@ -246,6 +246,16 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
         })
 
     def _get_results(self, query_dict):
+        endpoint_params = [
+            {'name': name, 'required': required == 'true'}
+            for name, required in zip(
+                query_dict.getlist('endpoint_param_name'),
+                query_dict.getlist('endpoint_param_required'),
+                strict=True,
+            ) if name
+        ]
+        print("Endpoint parameters:", endpoint_params)
+
         user = CouchUser.get_by_username(query_dict['username'])
         if not user or not user.is_active_in_domain(self.domain):
             raise HtmxResponseException("Must provide real username")
