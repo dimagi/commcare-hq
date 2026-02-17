@@ -1,16 +1,20 @@
 import base64
 from datetime import datetime
-from uuid import uuid4
 from unittest.mock import patch
+from uuid import uuid4
 
 from django.test import TestCase
 from django.urls.base import reverse
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import patch_validate_xform, get_simple_form
+from corehq.apps.app_manager.tests.util import (
+    get_simple_form,
+    patch_validate_xform,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import process_reporting_metadata_staging
+
 from ..models import DeviceLogRequest
 
 
