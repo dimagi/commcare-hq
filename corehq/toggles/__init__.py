@@ -1181,13 +1181,13 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     [NAMESPACE_USER]
 )
 
-PRODUCTS_PER_LOCATION = StaticToggle(
-    'products_per_location',
-    "Products Per Location: Specify products stocked at individual locations.",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description="This doesn't actually do anything yet."
-)
+# PRODUCTS_PER_LOCATION = StaticToggle(
+#     'products_per_location',
+#     "Products Per Location: Specify products stocked at individual locations.",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+#     description="This doesn't actually do anything yet."
+# )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
