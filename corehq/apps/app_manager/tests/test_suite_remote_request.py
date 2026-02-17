@@ -10,7 +10,6 @@ from corehq.apps.app_manager.models import (
     Application,
     Assertion,
     CaseSearch,
-    CaseSearchAgainLabel,
     CaseSearchCustomSortProperty,
     CaseSearchLabel,
     CaseSearchProperty,
@@ -270,11 +269,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             search_label=CaseSearchLabel(
                 label={
                     'en': 'Advanced Search'
-                }
-            ),
-            search_again_label=CaseSearchAgainLabel(
-                label={
-                    'en': 'Search One More Time'
                 }
             ),
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
