@@ -2034,13 +2034,13 @@ WIDGET_DIALER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
 )
 
-# HMAC_CALLOUT = StaticToggle(
-#     'hmac_callout',
-#     'USH: Enable signed messaging url callouts in cloudcare',
-#     TAG_DEPRECATED,
-#     namespaces=[NAMESPACE_DOMAIN],
-#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
-# )
+HMAC_CALLOUT = StaticToggle(
+    'hmac_callout',
+    'USH: Enable signed messaging url callouts in cloudcare',
+    TAG_DEPRECATED,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
+)
 
 GAEN_OTP_SERVER = StaticToggle(
     'gaen_otp_server',
