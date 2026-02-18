@@ -27,7 +27,6 @@ from corehq.apps.data_dictionary.models import (
 )
 from corehq.apps.integration.models import (
     GaenOtpServerSettings,
-    HmacCalloutSettings,
 )
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.utils import clear_fixture_cache
@@ -47,7 +46,6 @@ from corehq.apps.linked_domain.const import (
     MODEL_ROLES,
     MODEL_DATA_DICTIONARY,
     MODEL_OTP_SETTINGS,
-    MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS,
 )
 from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
@@ -68,8 +66,6 @@ from corehq.apps.linked_domain.local_accessors import \
 from corehq.apps.linked_domain.local_accessors import \
     get_otp_settings as local_get_otp_settings
 from corehq.apps.linked_domain.local_accessors import \
-    get_hmac_callout_settings as local_get_hmac_callout_settings
-from corehq.apps.linked_domain.local_accessors import \
     get_auto_update_rules as local_get_auto_update_rules
 from corehq.apps.linked_domain.local_accessors import \
     get_auto_update_rule as local_get_auto_update_rule
@@ -89,8 +85,6 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_tableau_server_and_visualizations as remote_get_tableau_server_and_visualizations
 from corehq.apps.linked_domain.remote_accessors import \
     get_otp_settings as remote_get_otp_settings
-from corehq.apps.linked_domain.remote_accessors import \
-    get_hmac_callout_settings as remote_get_hmac_callout_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.ucr import update_linked_ucr
@@ -126,7 +120,6 @@ def update_model_type(domain_link, model_type, model_detail=None, is_pull=False,
         MODEL_REPORT: update_linked_ucr,
         MODEL_DATA_DICTIONARY: update_data_dictionary,
         MODEL_OTP_SETTINGS: update_otp_settings,
-        MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
         MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: update_tableau_server_and_visualizations,
         MODEL_UCR_EXPRESSION: update_linked_ucr_expression,
@@ -651,22 +644,6 @@ def update_otp_settings(domain_link, is_pull=False, overwrite=False):
     model.is_enabled = master_results['is_enabled']
     model.server_url = master_results['server_url']
     model.auth_token = master_results['auth_token']
-    model.save()
-
-
-def update_hmac_callout_settings(domain_link, is_pull=False, overwrite=False):
-    if domain_link.is_remote:
-        master_results = remote_get_hmac_callout_settings(domain_link)
-    else:
-        master_results = local_get_hmac_callout_settings(domain_link.master_domain)
-
-    model, created = HmacCalloutSettings.objects.get_or_create(domain=domain_link.linked_domain)
-
-    model.domain = domain_link.linked_domain
-    model.destination_url = master_results['destination_url']
-    model.is_enabled = master_results['is_enabled']
-    model.api_key = master_results['api_key']
-    model.api_secret = master_results['api_secret']
     model.save()
 
 

@@ -9,7 +9,7 @@ from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.integration.models import GaenOtpServerSettings, HmacCalloutSettings
+from corehq.apps.integration.models import GaenOtpServerSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
@@ -139,17 +139,6 @@ def get_otp_settings(domain):
         'is_enabled': settings.is_enabled,
         'server_url': settings.server_url,
         'auth_token': settings.auth_token,
-    }
-
-
-def get_hmac_callout_settings(domain):
-    settings, created = HmacCalloutSettings.objects.get_or_create(domain=domain)
-    return {
-        'domain': domain,
-        'destination_url': settings.destination_url,
-        'is_enabled': settings.is_enabled,
-        'api_key': settings.api_key,
-        'api_secret': settings.api_secret,
     }
 
 
