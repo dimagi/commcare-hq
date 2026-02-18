@@ -2316,7 +2316,7 @@ HOURLY_SCHEDULED_REPORT = StaticToggle(
 SUPPORT_EXPANDED_COLUMN_IN_REPORTS = StaticToggle(
     'support_expanded_column_in_reports',
     'Support count per choice column to show up in multibar graph in reports',
-    TAG_DEPRECATED,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
