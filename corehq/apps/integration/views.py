@@ -6,7 +6,6 @@ from django.http.response import Http404
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_GET
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -20,12 +19,9 @@ from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.integration.forms import (
-    DialerSettingsForm,
     GaenOtpServerSettingsForm,
     SimprintsIntegrationForm,
 )
-from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings
-from corehq.apps.integration.util import get_dialer_settings, get_gaen_otp_server_settings
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
@@ -68,18 +64,6 @@ class BiometricIntegrationView(BaseAdminProjectSettingsView):
                 request, _("Could not update Biometric Integration settings.")
             )
         return self.get(request, *args, **kwargs)
-
-
-@toggles.WIDGET_DIALER.required_decorator()
-@use_bootstrap5
-@login_and_domain_required
-@require_GET
-def dialer_view(request, domain):
-    callout_number = request.GET.get("callout_number")
-    dialer_settings = get_dialer_settings(domain)
-    return render(request, "integration/web_app_dialer.html", {"callout_number": callout_number,
-                                                               "dialer_settings": dialer_settings,
-                                                               })
 
 
 @toggles.GAEN_OTP_SERVER.required_decorator()
@@ -159,49 +143,6 @@ def get_post_data_for_otp(request, domain):
         if request_param in request.POST:
             post_params[post_param] = request.POST[request_param]
     return post_params
-
-
-@method_decorator(use_bootstrap5, name='dispatch')
-class DialerSettingsView(BaseProjectSettingsView):
-    urlname = 'dialer_settings_view'
-    page_title = gettext_lazy('Dialer Settings')
-    template_name = 'integration/dialer_settings.html'
-
-    @method_decorator(toggles.WIDGET_DIALER.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(DialerSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def dialer_settings_form(self):
-        data = self.request.POST if self.request.method == 'POST' else None
-        return DialerSettingsForm(
-            data, domain=self.domain
-        )
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['domain'] = self.domain
-        kwargs['initial'] = DialerSettings.objects.get_or_create(domain=self.domain)
-        return kwargs
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.dialer_settings_form
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.dialer_settings_form.is_valid():
-            self.dialer_settings_form.save()
-            messages.success(
-                request, gettext_lazy("Dialer Settings Updated")
-            )
-        else:
-            messages.error(
-                request, gettext_lazy("Could not update Dialer Settings")
-            )
-        return self.get(request, *args, **kwargs)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')

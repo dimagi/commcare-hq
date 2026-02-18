@@ -54,15 +54,6 @@ describe('Markdown', function () {
             }
         });
 
-        it('should render dialer views', function () {
-            initialPageData.register('dialer_enabled', true);
-            initialPageData.registerUrl('dialer_view', '/dialer');
-            assert.equal(
-                render("[link](tel://1234567890)"),
-                "<p><a href=\"/dialer?callout_number=1234567890\" target=\"dialer\"><u>link</u></a></p>\n",
-            );
-        });
-
         it('should render GAEN otp urls', function () {
             initialPageData.register('gaen_otp_enabled', true);
             initialPageData.registerUrl('gaen_otp_view', '/gaen/');

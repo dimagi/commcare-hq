@@ -405,7 +405,7 @@ def write_export_instance(writer, export_instance, documents,
                 progress_manager.set_progress(row_number + 1, documents.count)
 
     end = _time_in_milliseconds()
-    tags = {'format': writer.format}
+    tags = {'domain': export_instance.domain, 'format': writer.format}
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
     _record_export_duration(end - start, export_instance)
 

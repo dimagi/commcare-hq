@@ -1,9 +1,15 @@
 import json
 import logging
+from functools import wraps
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import Http404, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
@@ -14,7 +20,6 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 
-from functools import wraps
 from memoized import memoized
 
 from dimagi.utils.couch import get_redis_lock, release_lock
@@ -28,23 +33,23 @@ from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.domain.decorators import domain_admin_required, api_auth
+from corehq.apps.domain.decorators import api_auth, domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
+from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.tasks import (
     download_locations_async,
     import_locations_async,
 )
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import Product
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
@@ -52,12 +57,8 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
-from .exceptions import LocationConsistencyError, LocationBulkImportError
-from .forms import (
-    LocationFilterForm,
-    LocationFormSet,
-    UsersAtLocationForm,
-)
+from .exceptions import LocationBulkImportError, LocationConsistencyError
+from .forms import LocationFilterForm, LocationFormSet, UsersAtLocationForm
 from .models import LocationType, SQLLocation, filter_for_archived
 from .permissions import (
     can_edit_location,
@@ -69,9 +70,11 @@ from .permissions import (
     user_can_edit_location_types,
 )
 from .tree_utils import assert_no_cycles
-from .util import does_location_type_have_users, load_locs_json, location_hierarchy_config
-from django.http import JsonResponse, HttpResponseBadRequest
-from corehq.apps.locations.dbaccessors import get_filtered_locations_count
+from .util import (
+    does_location_type_have_users,
+    load_locs_json,
+    location_hierarchy_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -799,25 +802,6 @@ class EditLocationView(BaseEditLocationView):
 
     @property
     @memoized
-    def products_form(self):
-        if (
-            self.location.location_type.administrative
-            or not toggles.PRODUCTS_PER_LOCATION.enabled(self.request.domain)
-        ):
-            return None
-
-        form = MultipleSelectionForm(
-            initial={'selected_ids': self.products_at_location},
-            submit_label=_("Update Product List"),
-            fieldset_title=_("Specify Products Per Location"),
-            prefix="products",
-        )
-        form.fields['selected_ids'].choices = self.active_products
-        form.fields['selected_ids'].label = _("Products at Location")
-        return form
-
-    @property
-    @memoized
     def users_form(self):
         if not (self.can_edit_commcare_users or self.can_access_all_locations):
             return None
@@ -830,15 +814,6 @@ class EditLocationView(BaseEditLocationView):
             data=self.request.POST if self.request.method == "POST" else None,
         )
         return form
-
-    @property
-    def active_products(self):
-        return [(p.product_id, p.name)
-                for p in SQLProduct.objects.filter(domain=self.domain, is_archived=False).all()]
-
-    @property
-    def products_at_location(self):
-        return [p.product_id for p in self.location.products.all()]
 
     @property
     def page_name(self):
@@ -864,13 +839,11 @@ class EditLocationView(BaseEditLocationView):
         if self.request.is_view_only:
             make_form_readonly(self.location_form.location_form)
             make_form_readonly(self.location_form.custom_location_data.form)
-            make_form_readonly(self.products_form)
             make_form_readonly(self.users_form)
         elif not self.can_edit_users_in_location:
             make_form_readonly(self.users_form)
 
         context.update({
-            'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
             'can_edit_commcare_users': self.can_edit_commcare_users,
             'can_edit_users_in_location': self.can_edit_users_in_location,
@@ -885,14 +858,6 @@ class EditLocationView(BaseEditLocationView):
             self.request.method = "GET"
             self.form_tab = 'users'
             return self.get(request, *args, **kwargs)
-
-    def products_form_post(self, request, *args, **kwargs):
-        products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('products-selected_ids', [])
-        )
-        self.location.products = products
-        self.location.save()
-        return self.form_valid()
 
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
@@ -912,9 +877,6 @@ class EditLocationView(BaseEditLocationView):
 
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)
-        elif (self.request.POST['form_type'] == "location-products"
-              and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
-            return self.products_form_post(request, *args, **kwargs)
         else:
             raise Http404()
 

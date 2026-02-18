@@ -1022,18 +1022,18 @@ GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
-GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
-    "geocoder_autoload_user_location",
-    "USH: Auto-load the geocoder widget with the user's current location",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
-    geocoding query using the user's reported location The result will be used to populate the search field
-    of the geocoder widget.
-    """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
-)
+# GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
+#     "geocoder_autoload_user_location",
+#     "USH: Auto-load the geocoder widget with the user's current location",
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description="""
+#     When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
+#     geocoding query using the user's reported location The result will be used to populate the search field
+#     of the geocoder widget.
+#     """,
+#     parent_toggles=[USH_CASE_CLAIM_UPDATES],
+# )
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
     "geocoder_user_proximity",
@@ -1181,13 +1181,13 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     [NAMESPACE_USER]
 )
 
-PRODUCTS_PER_LOCATION = StaticToggle(
-    'products_per_location',
-    "Products Per Location: Specify products stocked at individual locations.",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description="This doesn't actually do anything yet."
-)
+# PRODUCTS_PER_LOCATION = StaticToggle(
+#     'products_per_location',
+#     "Products Per Location: Specify products stocked at individual locations.",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+#     description="This doesn't actually do anything yet."
+# )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
@@ -1803,12 +1803,12 @@ COPY_CASES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-DASHBOARD_REACH_REPORT = StaticToggle(
-    'dashboard_reach_reports',
-    'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# DASHBOARD_REACH_REPORT = StaticToggle(
+#     'dashboard_reach_reports',
+#     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 # PARTIAL_UI_TRANSLATIONS = StaticToggle(
 #     'partial_ui_translations',
@@ -1817,12 +1817,13 @@ DASHBOARD_REACH_REPORT = StaticToggle(
 #     [NAMESPACE_DOMAIN]
 # )
 
-SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
-    'skip_orm_fixture_upload',
-    'Exposes an option in fixture api upload to skip saving through couchdbkit',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# TODO remove commented-out toggle definition
+# SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
+#     'skip_orm_fixture_upload',
+#     'Exposes an option in fixture api upload to skip saving through couchdbkit',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 ENABLE_UCR_MIRRORS = StaticToggle(
     'enable_ucr_mirrors',

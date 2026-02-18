@@ -67,7 +67,6 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.integration.kyc.views import KycConfigurationView
 from corehq.apps.integration.payments.views import PaymentConfigurationView
 from corehq.apps.integration.views import (
-    DialerSettingsView,
     GaenOtpServerSettingsView,
 )
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
@@ -2306,12 +2305,6 @@ def _get_integration_section(domain, couch_user):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
-        })
-
-    if toggles.WIDGET_DIALER.enabled(domain):
-        integration.append({
-            'title': _(DialerSettingsView.page_title),
-            'url': reverse(DialerSettingsView.urlname, args=[domain])
         })
 
     if toggles.GAEN_OTP_SERVER.enabled(domain):

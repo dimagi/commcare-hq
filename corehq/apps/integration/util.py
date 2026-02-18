@@ -1,15 +1,6 @@
 from corehq.apps.integration.models import (
-    DialerSettings,
     GaenOtpServerSettings,
 )
-
-
-def domain_uses_dialer(domain):
-    try:
-        settings = DialerSettings.objects.get(domain=domain)
-        return settings.is_enabled
-    except DialerSettings.DoesNotExist:
-        return False
 
 
 def get_gaen_otp_server_settings(domain):
@@ -20,13 +11,8 @@ def get_gaen_otp_server_settings(domain):
         pass
 
 
-def get_dialer_settings(domain):
-    return DialerSettings.objects.get(domain=domain)
-
-
 def integration_contexts(domain):
-    context = {'dialer_enabled': domain_uses_dialer(domain)}
-
+    context = {}
     gaen_otp_server_settings = get_gaen_otp_server_settings(domain)
     if gaen_otp_server_settings:
         context.update({
