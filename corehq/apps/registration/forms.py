@@ -554,17 +554,6 @@ class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
         self.fields['email'].widget.attrs['readonly'] = 'readonly'
 
 
-class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
-    """
-    For Mobile Workers to confirm their accounts using SMS.
-    """
-    email = forms.CharField(widget=forms.HiddenInput(), required=False)
-
-    # Email address is enforced blank for mobile workers who confirm by SMS.
-    def clean_email(self):
-        return ""
-
-
 class AdminInvitesUserForm(SelectUserLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)

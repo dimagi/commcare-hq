@@ -6,7 +6,6 @@ from corehq.apps.domain.models import SMSAccountConfirmationSettings
 
 from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language_for_sms
 from corehq.apps.registration.utils import project_logo_emails_context
-from corehq.apps.sms.api import send_sms
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_static_url_prefix
 
@@ -25,20 +24,6 @@ def send_account_confirmation_if_necessary(couch_user):
         return True
     else:
         return False
-
-
-def send_account_confirmation_sms_if_necessary(couch_user):
-    """
-    Sends an account confirmation sms if necessary (user has just signed up
-    and is in an unconfirmed state).
-
-    Returns whether sms was sent or not.
-    :param couch_user: CouchUser instance
-    :return: boolean
-    """
-    if not should_send_account_confirmation(couch_user):
-        return False
-    return send_account_confirmation_sms(couch_user)
 
 
 def should_send_account_confirmation(couch_user):
@@ -71,25 +56,6 @@ def send_account_confirmation(commcare_user):
                                 text_content=text_content,
                                 domain=commcare_user.domain,
                                 use_domain_gateway=True)
-
-
-def send_account_confirmation_sms(commcare_user):
-    from corehq.apps.users.views.mobile import CommCareUserConfirmAccountBySMSView
-    encrypted_user_info = encrypt_account_confirmation_info(commcare_user)
-    template_params = _get_account_confirmation_template_params(
-        commcare_user, encrypted_user_info, CommCareUserConfirmAccountBySMSView.urlname
-    )
-    lang = guess_domain_language_for_sms(commcare_user.domain)
-    with override(lang):
-        text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",
-                                        template_params)
-    commcare_user.confirmation_sent_at = datetime.utcnow()
-    commcare_user.save()
-    return send_sms(
-        domain=commcare_user.domain,
-        contact=None,
-        phone_number=commcare_user.default_phone_number,
-        text=text_content)
 
 
 def _get_account_confirmation_template_params(commcare_user, message_token, url_name):

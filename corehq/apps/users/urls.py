@@ -49,7 +49,6 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
-    CommCareUserConfirmAccountBySMSView,
     CommCareUsersLookup,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
@@ -80,7 +79,6 @@ from .views.mobile.users import (
     web_user_download_job_poll,
     CommCareUserConfirmAccountViewByEmailView,
     send_confirmation_email,
-    send_confirmation_sms,
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
     link_connectid_user,
@@ -265,16 +263,6 @@ urlpatterns = [
         r'^commcare/account_confirmed/$',
         CommCareUserAccountConfirmedView.as_view(),
         name=CommCareUserAccountConfirmedView.urlname
-    ),
-    url(
-        r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$',
-        send_confirmation_sms,
-        name='send_confirmation_sms'
-    ),
-    url(
-        r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
-        CommCareUserConfirmAccountBySMSView.as_view(),
-        name=CommCareUserConfirmAccountBySMSView.urlname
     ),
     url(
         r'^commcare/link_connectid_user/$',
