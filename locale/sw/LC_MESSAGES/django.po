@@ -1317,7 +1317,6 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
@@ -1421,8 +1420,6 @@ msgstr ""
 "\n"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
 msgid ""
 "\n"
 "    Hello,\n"
@@ -5336,7 +5333,6 @@ msgstr "Jaza mtiririko wa kazi kutoka faili ya HAR"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/ui/forms.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
 #: corehq/motech/dhis2/forms.py corehq/motech/forms.py
@@ -6460,7 +6456,6 @@ msgstr "Kitambulisho cha mtumiaji"
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/userreports/reports/view.py corehq/apps/users/landing_pages.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Reports"
@@ -8469,7 +8464,6 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
@@ -8480,15 +8474,6 @@ msgstr "Funga"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "          You can also click\n"
-#| "          <strong>\n"
-#| "            <a class=\"track-usage-link\" href=\"%(profile_url)s\"\n"
-#| "               data-category=\"App Manager\" data-action=\"Initiate Install\"\n"
-#| "               data-label=\"Mobile Browser Link\">here</a>\n"
-#| "          </strong> in your mobile browser.\n"
-#| "        "
 msgid ""
 "\n"
 "          You can also click\n"
@@ -9855,7 +9840,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_profiles_select.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_profiles_select.html
-#: corehq/apps/domain/forms.py corehq/apps/reports/standard/deployments.py
+#: corehq/apps/domain/forms.py
 msgid "Build Profile"
 msgstr "Manejo de Casos"
 
@@ -13772,10 +13757,6 @@ msgid "Current Profiles"
 msgstr "Profaili za Sasa"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-#| msgid ""
-#| "\n"
-#| "          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
-#| "        "
 msgid ""
 "\n"
 "          Remote applications only support one build profile. Please remove all\n"
@@ -13787,12 +13768,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-#| msgid ""
-#| "\n"
-#| "        Application profiles let you install the same application with different languages\n"
-#| "        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
-#| "        of the application.\n"
-#| "      "
 msgid ""
 "\n"
 "        Application profiles let you install the same application with different\n"
@@ -13809,10 +13784,6 @@ msgid "Manage application profiles here."
 msgstr "Simamia profaili za programu hapa."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-#| msgid ""
-#| "\n"
-#| "        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
-#| "      "
 msgid ""
 "\n"
 "        Learn more about Application Profiles on our\n"
@@ -13852,12 +13823,6 @@ msgid "Add Profile"
 msgstr "Ongeza Profaili"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-#| msgid ""
-#| "\n"
-#| "      <p class=\"lead\">\n"
-#| "        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
-#| "      </p>\n"
-#| "    "
 msgid ""
 "\n"
 "        <p class=\"lead\">\n"
@@ -13874,12 +13839,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-#| msgid ""
-#| "\n"
-#| "      <p class=\"lead\">\n"
-#| "        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
-#| "      </p>\n"
-#| "    "
 msgid ""
 "\n"
 "        <p class=\"lead\">\n"
@@ -13904,11 +13863,6 @@ msgid "Application Profiles"
 msgstr "Profaili za Programu"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
-#| "            Before you can publish your application,\n"
-#| "          "
 msgid ""
 "\n"
 "            Your project does not have any mobile workers! Only mobile workers\n"
@@ -13939,16 +13893,6 @@ msgid "Offline Install"
 msgstr "Usakinishaji Nje ya Mtandao"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                        <p>\n"
-#| "                          You haven't saved any questions as case properties.\n"
-#| "                          Only case properties become part of a case.\n"
-#| "                        </p>\n"
-#| "                        <p>\n"
-#| "                          Watch this video to learn how to save questions as case properties.\n"
-#| "                        </p>\n"
-#| "                      "
 msgid ""
 "\n"
 "                            Download\n"
@@ -13989,10 +13933,6 @@ msgid "Download Targeted Version"
 msgstr "Pakua Toleo Lililolengwa"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                            Open the app on your Android and use one of the following installation methods:\n"
-#| "                          "
 msgid ""
 "\n"
 "                            Open the app on your Android and use one of the\n"
@@ -14017,11 +13957,6 @@ msgid "Enter app code on installation screen: "
 msgstr "Weka msimbo wa programu kwenye skrini ya usakinishaji: "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                                                            (No app code available. If you would like to use an app code instead\n"
-#| "                                                            of scanning the application barcode, try making another version.)\n"
-#| "                                                          "
 msgid ""
 "\n"
 "                                (No app code available. If you would like to use\n"
@@ -14063,15 +13998,6 @@ msgstr ""
 "usakinishaji utaanza"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                                Note: Offline install automatically installs all multimedia\n"
-#| "                                included in your form. All subsequent remote updates will also\n"
-#| "                                include multimedia which could require a lot of data. See the\n"
-#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
-#| "                                  Help Site\n"
-#| "                                </a> for more info.\n"
-#| "                              "
 msgid ""
 "\n"
 "                                Note: Offline install automatically installs all\n"
@@ -14117,17 +14043,14 @@ msgid "View Source Files"
 msgstr "Tazama Faili Asili"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
-#| msgid "Send to"
 msgid "Send to:"
 msgstr "Tuma kwa:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
-#| msgid "Prompt Updates to CommCare"
 msgid "Update to CommCare:"
 msgstr "Sasisha hadi CommCare:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
-#| msgid "SMS charges will incur."
 msgid "SMS charges will be incurred."
 msgstr "Gharama za SMS zitatozwa."
 
@@ -14141,12 +14064,6 @@ msgid "No URL was found for this app, try rebuilding."
 msgstr "Hakuna URL iliyopatikana kwa programu hii, jaribu kujenga upya."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "        One or more of your versions is broken, please make sure it is\n"
-#| "        not marked as released. Make a new version if needed, and update\n"
-#| "        any live deployments as soon as possible.\n"
-#| "      "
 msgid ""
 "\n"
 "        One or more of your versions is broken, please make sure it is not\n"
@@ -14161,10 +14078,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "          All new versions should work, so if problems persist, please report the issue.\n"
-#| "        "
 msgid ""
 "\n"
 "          All new versions should work, so if problems persist, please report\n"
@@ -14215,11 +14128,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        For more information on deprecated case types, see the following\n"
-#| "        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
-#| "      "
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
@@ -14316,11 +14224,6 @@ msgid "Revert to Version?"
 msgstr "Rudisha kwenye Toleo?"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "              This version uses an outdated form of case management.\n"
-#| "              We advise against reverting back to this version.\n"
-#| "            "
 msgid ""
 "\n"
 "              This version uses an outdated form of case\n"
@@ -14333,10 +14236,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
-#| "          "
 msgid ""
 " Are you sure you want to revert to version\n"
 "            <span data-bind=\"text: version\"></span>?\n"
@@ -16998,9 +16897,7 @@ msgstr "Hakuna programu za Programu za Wavuti zilizopo"
 
 #: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html
 #: corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/users/templates/users/edit_role.html corehq/tabs/tabclasses.py
 msgid "Web Apps"
 msgstr "Programu za Wavuti"
 
@@ -21427,26 +21324,6 @@ msgstr ""
 "Huwezi kuweka anwani yako ya sasa ya IP kwenye sehemu ya IP Zilizokataliwa"
 
 #: corehq/apps/domain/forms.py
-msgid "The user being transferred to does not exist"
-msgstr "Mtumiaji anayehamishiwa hayupo"
-
-#: corehq/apps/domain/forms.py
-msgid "Mismatch in domains when confirming"
-msgstr "Kutokulingana kwa maeneo wakati wa kuthibitisha"
-
-#: corehq/apps/domain/forms.py
-msgid "Type the name of the project to confirm"
-msgstr "Andika jina la mradi ili kuthibitisha"
-
-#: corehq/apps/domain/forms.py
-msgid "New owner's CommCare username"
-msgstr "Jina la mtumiaji wa CommCare wa mmiliki mpya"
-
-#: corehq/apps/domain/forms.py corehq/apps/domain/views/internal.py
-msgid "Transfer Project"
-msgstr "Hamisha Mradi"
-
-#: corehq/apps/domain/forms.py
 msgid "You may not specify a sub area when the project has no specified area"
 msgstr "Huwezi kubainisha eneo dogo wakati mradi hauna eneo lililobainishwa"
 
@@ -22353,60 +22230,6 @@ msgstr "Programu ya Kutoa Hati"
 msgid "No application"
 msgstr "Hakuna programu"
 
-#: corehq/apps/domain/models.py
-msgid "Transfer domain request is no longer active"
-msgstr "Ombi la uhamisho wa domain halipo tena"
-
-#: corehq/apps/domain/models.py
-msgid "Transfer of ownership for CommCare project space."
-msgstr "Uhamisho wa umiliki wa nafasi ya mradi wa CommCare."
-
-#: corehq/apps/domain/models.py
-#, python-brace-format
-msgid "There has been a transfer of ownership of {domain}"
-msgstr "Kumekuwa na uhamisho wa umiliki wa {domain}"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-msgid "Transfer project ownership"
-msgstr "Hamisha umiliki wa mradi"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-#, python-format
-msgid ""
-"\n"
-"              By clicking \"accept\" below you acknowledge that you accept full ownership of this project space (\"%(domain)s\").\n"
-"              You agree to be bound by the terms of Dimagi's <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Terms of Service and Business Agreement</a>.\n"
-"              By accepting this agreement, your are acknowledging you have permission and authority to accept these terms. A Dimagi representative will notify you when the transfer is complete.\n"
-"            "
-msgstr ""
-"\n"
-"              Kwa kubofya \"kubali\" hapa chini unathibitisha kwamba unakubali umiliki kamili wa nafasi hii ya mradi (\"%(domain)s\").\n"
-"              Unakubali kufungwa na masharti ya <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Masharti ya Huduma na Makubaliano ya Biashara</a> ya Dimagi.\n"
-"              Kwa kukubali makubaliano haya, unathibitisha una ruhusa na mamlaka ya kukubali masharti haya. Mwakilishi wa Dimagi atakujulisha uhamisho utakapokamilika.\n"
-"            "
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap3/select.html
-#: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/domain_request.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-msgid "Accept"
-msgstr "Kubali"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-msgid "Decline"
-msgstr "Kataa"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-msgid ""
-"\n"
-"              Sorry this transfer request has expired.\n"
-"            "
-msgstr ""
-"\n"
-"              Samahani ombi hili la uhamisho limeisha muda wake.\n"
-"            "
-
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Enable Case Search"
 msgstr "Washa Utafutaji wa Kesi"
@@ -23050,41 +22873,6 @@ msgstr "Kitendo Kipya"
 #: corehq/apps/domain/templates/domain/admin/sms_settings.html
 msgid "Save Settings"
 msgstr "Hifadhi Mipangilio"
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain.html
-msgid ""
-"\n"
-"      Use this to transfer your project to another user.\n"
-"    "
-msgstr ""
-"\n"
-"      Tumia hii kuhamisha mradi wako kwa mtumiaji mwingine.\n"
-"    "
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
-#, python-format
-msgid ""
-"\n"
-"          You have a pending transfer with %(username)s\n"
-"        "
-msgstr ""
-"\n"
-"          Una uhamisho unaosubiri na %(username)s\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
-msgid ""
-"\n"
-"          Resend Transfer Request\n"
-"        "
-msgstr ""
-"\n"
-"          Tuma Ombi la Uhamisho Tena\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
-msgid "Cancel Transfer"
-msgstr "Ghairi Uhamisho"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
@@ -23921,6 +23709,13 @@ msgstr "Kubali Mialiko Yote"
 msgid "My Invitations"
 msgstr "Mialiko Yangu"
 
+#: corehq/apps/domain/templates/domain/bootstrap3/select.html
+#: corehq/apps/domain/templates/domain/bootstrap5/select.html
+#: corehq/apps/registration/templates/registration/domain_request.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+msgid "Accept"
+msgstr "Kubali"
+
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #, python-format
 msgid ""
@@ -24523,135 +24318,6 @@ msgstr ""
 "\n"
 "    Ikiwa unadhani hii ni makosa, unaweza kupuuza barua pepe hii.\n"
 "    Kujua zaidi kuhusu CommCare tembelea http://www.commcarehq.org/.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#, python-format
-msgid ""
-"\n"
-"    A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe\n"
-"    this is an error, please contact us immediately at <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
-"    and follow <a href=\"%(settings_url)s\">this link</a> to deactivate the transfer: %(settings_url)s\n"
-"  "
-msgstr ""
-"\n"
-"    Uhamisho wa nafasi ya mradi umeanzishwa na %(from_username)s kwenda kwa %(to_username)s.  Ikiwa unaamini\n"
-"    hii ni makosa, tafadhali wasiliana nasi mara moja kwa <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
-"    na fuata <a href=\"%(settings_url)s\">kiungo hiki</a> ili kufuta uhamisho: %(settings_url)s\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    Thanks for using our site!\n"
-"  "
-msgstr ""
-"\n"
-"    Asante kwa kutumia tovuti yetu!\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.txt
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"Hello,\n"
-msgstr ""
-"\n"
-"Habari,\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.txt
-#, python-format
-msgid ""
-"\n"
-"A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe this is an error, please contact us immediately at %(support_email)s and follow this link to deactivate the transfer: %(settings_url)s\n"
-msgstr ""
-"\n"
-"Uhamisho wa nafasi ya mradi umeanzishwa na %(from_username)s kwenda kwa %(to_username)s. Ikiwa unaamini hili ni kosa, tafadhali wasiliana nasi mara moja kupitia %(support_email)s na fuata kiungo hiki ili kufuta uhamisho: %(settings_url)s\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.txt
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"Thanks for using our site!\n"
-msgstr ""
-"\n"
-"Asante kwa kutumia tovuti yetu!\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-#, python-format
-msgid ""
-"\n"
-"    %(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept\n"
-"    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
-"  "
-msgstr ""
-"\n"
-"    %(from_username)s ameanzisha uhamisho wa umiliki wa nafasi ya mradi ya CommCare. Ili kukubali\n"
-"    umiliki wa nafasi hii ya mradi, tafadhali fuata <a href=\"%(activate_url)s\">kiungo hiki</a>: %(activate_url)s. Ikiwa huna akaunti ya mtumiaji wa CommCare tayari, utatakiwa kuunda moja ili kukubali umiliki wa nafasi hii ya mradi.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
-"  "
-msgstr ""
-"\n"
-"    Baada ya kukubali uhamisho, mtu kutoka Dimagi atawasiliana nawe ili kuthibitisha kuwa uhamisho wa umiliki umekamilika.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
-"  "
-msgstr ""
-"\n"
-"    Mipangilio yote ya mradi, akaunti za watumiaji, na ruhusa zitaendelea kubaki kama zilivyo baada ya uhamisho wa umiliki. Ikiwa ungependa kubadilisha yoyote kati ya mipangilio hii, tafadhali fanya hivyo baada ya kukubali umiliki wa nafasi ya mradi kupitia menyu ya mipangilio ya nafasi ya mradi.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
-"  "
-msgstr ""
-"\n"
-"    Ikiwa unadhani umepokea hii kimakosa, unaweza kupuuza barua pepe hii. Kujua zaidi kuhusu CommCare tembelea <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-#, python-format
-msgid ""
-"\n"
-"%(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
-msgstr ""
-"\n"
-"%(from_username)s ameanzisha uhamisho wa umiliki wa nafasi ya mradi ya CommCare. Ili kukubali umiliki wa nafasi hii ya mradi, tafadhali fuata kiungo hiki: %(activate_url)s. Ikiwa huna akaunti ya mtumiaji wa CommCare tayari, utatakiwa kuunda moja ili kukubali umiliki wa nafasi hii ya mradi.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
-msgstr ""
-"\n"
-"Baada ya kukubali uhamisho, mtu kutoka Dimagi atawasiliana nawe ili kuthibitisha kuwa uhamisho wa umiliki umekamilika.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
-msgstr ""
-"\n"
-"Mipangilio yote ya mradi, akaunti za watumiaji, na ruhusa zitaendelea kubaki kama zilivyo baada ya uhamisho wa umiliki. Ikiwa ungependa kubadilisha yoyote kati ya mipangilio hii, tafadhali fanya hivyo baada ya kukubali umiliki wa nafasi ya mradi kupitia menyu ya mipangilio ya nafasi ya mradi.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit http://www.commcarehq.org/.\n"
-msgstr ""
-"\n"
-"Ikiwa unadhani umepokea hii kimakosa, unaweza kupuuza barua pepe hii. Kujua zaidi kuhusu CommCare tembelea http://www.commcarehq.org/.\n"
 
 #: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
 #, python-format
@@ -26902,21 +26568,6 @@ msgstr "Sifa Zilizokokotolewa"
 msgid "Feature Flags and Privileges"
 msgstr "Bendera za Kipengele na Haki Maalum"
 
-#: corehq/apps/domain/views/internal.py
-#, python-brace-format
-msgid "Resent transfer request for project '{domain}'"
-msgstr "Ombi la uhamisho wa mradi '{domain}' limetumwa tena"
-
-#: corehq/apps/domain/views/internal.py
-#, python-brace-format
-msgid "Successfully transferred ownership of project '{domain}'"
-msgstr "Umekabidhi umiliki wa mradi '{domain}' kwa mafanikio"
-
-#: corehq/apps/domain/views/internal.py
-#, python-brace-format
-msgid "Declined ownership of project '{domain}'"
-msgstr "Umekataa umiliki wa mradi '{domain}'"
-
 #: corehq/apps/domain/views/releases.py
 msgid "Manage Releases By Location"
 msgstr "Dhibiti Matoleo Kwa Mahali"
@@ -26995,7 +26646,6 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr "Simamia Arifa za Mradi"
 
@@ -28780,7 +28430,6 @@ msgstr "Kiungo cha kesi hii"
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "CommCare Analytics"
 msgstr "Takwimu za CommCare"
 
@@ -33410,18 +33059,6 @@ msgstr ""
 "media zinazokosekana. Ripoti tatizo hili likiendelea."
 
 #: corehq/apps/hqmedia/tasks.py
-#, python-brace-format
-msgid "Could not find {file_path} in CCZ"
-msgstr "Imeshindikana kupata {file_path} kwenye CCZ"
-
-#: corehq/apps/hqmedia/tasks.py
-#, python-brace-format
-msgid "Locale ID {id} present in suite.xml but not in default app strings."
-msgstr ""
-"Kitambulisho cha lugha {id} kipo kwenye suite.xml lakini hakipo kwenye "
-"maneno chaguo-msingi ya programu."
-
-#: corehq/apps/hqmedia/tasks.py
 msgid "Could not find media_suite.xml in CCZ"
 msgstr "Imeshindikana kupata media_suite.xml kwenye CCZ"
 
@@ -33820,10 +33457,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
-#| msgid ""
-#| "<strong>Warning:</strong>\n"
-#| "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
-#| "  "
 msgid ""
 "\n"
 "      <strong>Warning:</strong>\n"
@@ -33838,11 +33471,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
-#| msgid ""
-#| "\n"
-#| "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-#| "        This application is missing references, so this zip will be incomplete.\n"
-#| "      "
 msgid ""
 "\n"
 "      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
@@ -33855,8 +33483,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
-#| msgid ""
-#| "This application currently does not contain any multimedia references."
 msgid ""
 "\n"
 "      This application currently does not contain any multimedia references.\n"
@@ -36260,7 +35886,6 @@ msgid "Other Case Type"
 msgstr "Aina Nyingine ya Kesi"
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Full Name"
 msgid "Stores Full Name"
 msgstr "Jina Kamili la Duka"
 
@@ -38480,22 +38105,25 @@ msgid "Child Locations"
 msgstr "Maeneo Tanzu"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/products/views.py
-msgid "Products"
-msgstr "Bidhaa"
-
-#: corehq/apps/locations/templates/locations/manage/location.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "            <strong>There was an issue creating this location.</strong><br />\n"
+#| "            Please make sure that at least one <a href=\"%(levels_url)s\">Organization Level</a>\n"
+#| "            has been created.\n"
+#| "          "
 msgid ""
 "\n"
 "            <strong>There was an issue creating this location.</strong><br />\n"
-"            Please make sure that at least one <a href=\"%(levels_url)s\">Organization Level</a>\n"
+"            Please make sure that at least one\n"
+"            <a href=\"%(levels_url)s\">Organization Level</a>\n"
 "            has been created.\n"
 "          "
 msgstr ""
 "\n"
-"            <strong>Kulikuwa na tatizo katika kuunda eneo hili.</strong><br />\n"
-"            Tafadhali hakikisha kwamba angalau moja <a href=\"%(levels_url)s\">Ngazi ya Shirika</a>\n"
+"            <strong>Kulikuwa na tatizo la kuunda eneo hili.</strong><br />\n"
+"            Tafadhali hakikisha angalau moja\n"
+"            <a href=\"%(levels_url)s\">Ngazi ya Shirika</a>\n"
 "            imeundwa.\n"
 "          "
 
@@ -38504,17 +38132,27 @@ msgid "Default monthly consumption values"
 msgstr "Thamani za matumizi ya kila mwezi chaguo-msingi"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
+#| msgid ""
+#| "\n"
+#| "                    Your permissions allow you to <strong>create, update, and delete locations</strong>\n"
+#| "                    and <strong>modify location settings</strong>. However, your project\n"
+#| "                    administrator has not granted you access to change workers at locations.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your permissions allow you to <strong>create, update, and delete locations</strong>\n"
-"                    and <strong>modify location settings</strong>. However, your project\n"
-"                    administrator has not granted you access to change workers at locations.\n"
+"                    Your permissions allow you to\n"
+"                    <strong>create, update, and delete locations</strong> and\n"
+"                    <strong>modify location settings</strong>. However, your\n"
+"                    project administrator has not granted you access to change\n"
+"                    workers at locations.\n"
 "                  "
 msgstr ""
 "\n"
-"                    Ruhusa zako zinakuwezesha <strong>kuunda, kusasisha, na kufuta maeneo</strong>\n"
-"                    na <strong>kubadilisha mipangilio ya eneo</strong>. Hata hivyo, msimamizi wa mradi wako\n"
-"                    hajakupa ruhusa ya kubadilisha wafanyakazi katika maeneo.\n"
+"                    Ruhusa zako zinakuwezesha\n"
+"                    <strong>kuunda, kusasisha, na kufuta maeneo</strong> na\n"
+"                    <strong>kubadilisha mipangilio ya eneo</strong>. Hata hivyo,\n"
+"                    msimamizi wa mradi wako hajakupa ruhusa ya kubadilisha\n"
+"                    wafanyakazi kwenye maeneo.\n"
 "                  "
 
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -38736,18 +38374,6 @@ msgstr "limeondolewa kwenye hifadhi"
 #: corehq/apps/locations/views.py
 msgid "Edit Location"
 msgstr "Hariri Eneo"
-
-#: corehq/apps/locations/views.py
-msgid "Update Product List"
-msgstr "Sasisha Orodha ya Bidhaa"
-
-#: corehq/apps/locations/views.py
-msgid "Specify Products Per Location"
-msgstr "Taja Bidhaa Kila Eneo"
-
-#: corehq/apps/locations/views.py
-msgid "Products at Location"
-msgstr "Bidhaa katika Eneo"
 
 #: corehq/apps/locations/views.py
 #, python-brace-format
@@ -39089,6 +38715,10 @@ msgstr "Bidhaa '{product_name}' ime{action} kwa mafanikio."
 msgid "Another product is already using the Product ID '{product_id}'"
 msgstr ""
 "Bidhaa nyingine tayari inatumia Kitambulisho cha Bidhaa '{product_id}'"
+
+#: corehq/apps/products/views.py
+msgid "Products"
+msgstr "Bidhaa"
 
 #: corehq/apps/products/views.py
 msgid ""
@@ -40921,7 +40551,6 @@ msgstr "Futa Sajili"
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/registry/views.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/tabs/tabclasses.py
 msgid "Data Registries"
@@ -42418,10 +42047,6 @@ msgstr "Idadi ya fomu ambazo hazijatumwa kwenye simu ya mtumiaji"
 msgid "The number of unsent forms in users' phones for {app_info}"
 msgstr ""
 "Idadi ya fomu ambazo hazijatumwa kwenye simu za watumiaji kwa {app_info}"
-
-#: corehq/apps/reports/standard/deployments.py
-msgid "The build profile from the user's last hearbeat request."
-msgstr "Profaili ya ujenzi kutoka ombi la mwisho la heartbeat la mtumiaji."
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -54146,26 +53771,14 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid "Unlock Linked Roles For Me"
 msgid "Unlock Linked Role For Me"
 msgstr "Fungua Jukumu Lililounganishwa Kwangu"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid "Lock Linked Roles For Me"
 msgid "Lock Linked Role For Me"
 msgstr "Funga Jukumu Lililounganishwa Kwa Ajili Yangu"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "            Linked configurations are controlled from a separate, linked project\n"
-#| "            space.\n"
-#| "            <a\n"
-#| "              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-#| "              target=\"_blank\"\n"
-#| "              >Learn more</a\n"
-#| "            >.\n"
-#| "          "
 msgid ""
 "\n"
 "                Linked configurations are controlled from a separate, linked\n"
@@ -54188,103 +53801,79 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Area Access"
 msgstr "Upatikanaji wa Eneo"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Can Edit"
 msgstr "Inaweza Kuhariri"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Can View"
 msgstr "Inaweza Kuangalia"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Access Specific Reports"
 msgstr "Fikia Ripoti Maalum"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which reports the role can access:"
 msgstr "Chagua ripoti ambazo jukumu linaweza kufikia:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Access Specific Tableau Reports"
 msgstr "Fikia Ripoti Maalum za Tableau"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which Tableau reports the role can access:"
 msgstr "Chagua ripoti za Tableau ambazo jukumu linaweza kufikia:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "All CommCare Analytics Roles"
 msgstr "Majukumu Yote ya Uchambuzi wa CommCare"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Assign all commcare analytics roles to users with this role"
 msgstr ""
 "Weka majukumu yote ya uchambuzi wa commcare kwa watumiaji wenye jukumu hili"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "CommCare Analytics Roles"
 msgstr "Majukumu ya Uchambuzi wa CommCare"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Commcare Analytics Roles:"
 msgstr "Majukumu ya Uchambuzi wa Commcare:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Other Settings"
 msgstr "Mipangilio Mengine"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Integration Access"
 msgstr "Ufikiaji wa Ujumuishaji"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow role to manage integration with other systems."
 msgstr "Ruhusu jukumu kusimamia ujumuishaji na mifumo mingine."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Subscription Info"
 msgstr "Simamia Taarifa za Usajili"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow role to manage subscription information."
 msgstr "Ruhusu jukumu kusimamia taarifa za usajili."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Full Organization Access"
 msgstr "Ufikiaji Kamili wa Shirika"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow role to access data from all locations."
 msgstr "Ruhusu jukumu kufikia data kutoka maeneo yote."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      Make sure any users assigned this role also have a\n"
-#| "                      location assigned to them. Users without assigned\n"
-#| "                      locations will not be permitted to log in.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        Make sure any users assigned this role also have a\n"
@@ -54299,12 +53888,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      Organization-based data access restrictions are only\n"
-#| "                      available on the Pro plan and above. Saving this role will\n"
-#| "                      enable full organization access for the assigned users.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        Organization-based data access restrictions are only\n"
@@ -54320,12 +53903,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      With the current configuration, this role will have full\n"
-#| "                      organization access and roles that can assign it will not.\n"
-#| "                      This is not recommended.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        With the current configuration, this role will have full\n"
@@ -54339,88 +53916,67 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Login-As All Users"
 msgstr "Ingia-Kama Watumiaji Wote"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow the user to log in as any mobile worker in Web Apps."
 msgstr ""
 "Ruhusu mtumiaji kuingia kama mfanyakazi yeyote wa simu kwenye Web Apps."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Limit Login-As"
 msgstr "Punguza Ingia-Kama"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow the user to log in as only specified users in Web Apps."
 msgstr "Ruhusu mtumiaji kuingia kama watumiaji maalum tu kwenye Web Apps."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Login-As Default User"
 msgstr "Ingia-Kama Mtumiaji Chaguo-msingi"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow the user to log in as the default user in Web Apps."
 msgstr "Ruhusu mtumiaji kuingia kama mtumiaji chaguo-msingi kwenye Web Apps."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Mobile App Access"
 msgstr "Ufikiaji wa Programu ya Simu"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow mobile users access to offline mobile application"
 msgstr "Ruhusu watumiaji wa simu kufikia programu ya simu isiyohitaji mtandao"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Default Landing Page"
 msgstr "Ukurasa Chaguo-msingi wa Kutua"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow Reporting Issues"
 msgstr "Ruhusu Kuripoti Matatizo"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow this role to report issues."
 msgstr "Ruhusu jukumu hili kuripoti matatizo."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Non-admin Editable"
 msgstr "Inaweza Kuhaririwa na Wasio Wasimamizi"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow all non-admins to assign this role to other users."
 msgstr "Ruhusu wasio wasimamizi wote kupangia watumiaji wengine jukumu hili."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Role Assignment"
 msgstr "Simamia Uteuzi wa Majukumu"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which other roles can assign this role:"
 msgstr "Chagua majukumu mengine yanayoweza kupangia jukumu hili:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      If the highlighted roles are selected, this role will have\n"
-#| "                      full organization access and be assignable by a role that\n"
-#| "                      does not. This is not recommended configuration.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        If the highlighted roles are selected, this role will\n"
@@ -54436,12 +53992,10 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Assign All User Profiles"
 msgstr "Weka Wasifu Wote wa Watumiaji"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid ""
 "Allow role to access all user profiles while setting up mobile workers and "
 "web users."
@@ -54450,12 +54004,10 @@ msgstr ""
 "wa simu na watumiaji wa wavuti."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Assign Specific User Profiles"
 msgstr "Weka Wasifu Maalum wa Watumiaji"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid ""
 "Select which user profiles the role can assign to mobile workers and web "
 "users:"
@@ -54464,12 +54016,10 @@ msgstr ""
 "simu na watumiaji wa wavuti:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow this role to manage project alerts."
 msgstr "Ruhusu jukumu hili kusimamia arifa za mradi."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid "Saving..."
 msgid "Saving ..."
 msgstr "Inaokoa ..."
 
@@ -54975,91 +54525,7 @@ msgstr ""
 "        <a href=\"#\">Jifunze zaidi</a> kuhusu SSO kwenye CommCare HQ.\n"
 "      "
 
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Role Name"
-msgstr "Jina la Jukumu"
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      Make sure any users assigned this role also have a\n"
-"                      location assigned to them. Users without assigned\n"
-"                      locations will not be permitted to log in.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa\n"
-"                      eneo. Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa kuingia.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      Organization-based data access restrictions are only\n"
-"                      available on the Pro plan and above. Saving this role will\n"
-"                      enable full organization access for the assigned users.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Vizuizi vya ufikiaji wa data kwa msingi wa shirika vinapatikana tu\n"
-"                      kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili kutawezesha\n"
-"                      ufikiaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      With the current configuration, this role will have full\n"
-"                      organization access and roles that can assign it will not.\n"
-"                      This is not recommended.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Kwa usanidi wa sasa, jukumu hili litakuwa na ufikiaji kamili wa shirika\n"
-"                      na majukumu yanayoweza kulipangia hayatakuwa nayo. Hii haipendekezwi.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      If the highlighted roles are selected, this role will have\n"
-"                      full organization access and be assignable by a role that\n"
-"                      does not. This is not recommended configuration.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Ikiwa majukumu yaliyopigwa rangi yatateuliwa, jukumu hili litakuwa na\n"
-"                      ufikiaji kamili wa shirika na linaweza kupangiwa na jukumu lisilo na ufikiaji huo.\n"
-"                      Hii si usanidi unaopendekezwa.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/select_permission.html
-#, python-format
-msgid ""
-"\n"
-"          This permission is already configured via\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Manage Web Apps Permissions\n"
-"          </a>\n"
-"          . Please remove this configuration before updating access here.\n"
-"        "
-msgstr ""
-"\n"
-"          Ruhusa hii tayari imesanidiwa kupitia\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Dhibiti Ruhusa za Programu za Wavuti\n"
-"          </a>\n"
-"          . Tafadhali ondoa usanidi huu kabla ya kusasisha ufikiaji hapa.\n"
-"        "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/select_permission.html
-msgid "Please select at least one item."
-msgstr "Tafadhali chagua angalau kipengee kimoja."
-
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
-#| msgid "Unlock Linked Fields?"
 msgid "Unlock Linked Roles?"
 msgstr "Fungua Majukumu Yaliyounganishwa?"
 
@@ -55090,14 +54556,35 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/partials/select_permission.html
-#| msgid "IP Access"
+#, python-format
+msgid ""
+"\n"
+"          This permission is already configured via\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Manage Web Apps Permissions\n"
+"          </a>\n"
+"          . Please remove this configuration before updating access here.\n"
+"        "
+msgstr ""
+"\n"
+"          Ruhusa hii tayari imesanidiwa kupitia\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Dhibiti Ruhusa za Programu za Wavuti\n"
+"          </a>\n"
+"          . Tafadhali ondoa usanidi huu kabla ya kusasisha ufikiaji hapa.\n"
+"        "
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
 msgid "No Access"
 msgstr "Hakuna Upatikanaji"
 
 #: corehq/apps/users/templates/users/partials/select_permission.html
-#| msgid "Access Key"
 msgid "Access All"
 msgstr "Fikia Yote"
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+msgid "Please select at least one item."
+msgstr "Tafadhali chagua angalau kipengee kimoja."
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid ""
@@ -55708,10 +55195,6 @@ msgid "Password reset email sent to {}"
 msgstr "Barua pepe ya kuweka upya nenosiri imetumwa kwa {}"
 
 #: corehq/apps/users/views/role.py
-msgid "Use Default"
-msgstr "Tumia Chaguo-msingi"
-
-#: corehq/apps/users/views/role.py
 msgid "Roles & Permissions"
 msgstr "Majukumu na Ruhusa"
 
@@ -55765,9 +55248,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
-#| msgid "Create Alert"
 msgid "Create Role"
 msgstr "Unda Jukumu"
+
+#: corehq/apps/users/views/role.py
+msgid "Use Default"
+msgstr "Tumia Chaguo-msingi"
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -61300,6 +60786,291 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid "The user being transferred to does not exist"
+#~ msgstr "Mtumiaji anayehamishiwa hayupo"
+
+#~ msgid "Mismatch in domains when confirming"
+#~ msgstr "Kutokulingana kwa maeneo wakati wa kuthibitisha"
+
+#~ msgid "Type the name of the project to confirm"
+#~ msgstr "Andika jina la mradi ili kuthibitisha"
+
+#~ msgid "New owner's CommCare username"
+#~ msgstr "Jina la mtumiaji wa CommCare wa mmiliki mpya"
+
+#~ msgid "Transfer Project"
+#~ msgstr "Hamisha Mradi"
+
+#~ msgid "Transfer domain request is no longer active"
+#~ msgstr "Ombi la uhamisho wa domain halipo tena"
+
+#~ msgid "Transfer of ownership for CommCare project space."
+#~ msgstr "Uhamisho wa umiliki wa nafasi ya mradi wa CommCare."
+
+#, python-brace-format
+#~ msgid "There has been a transfer of ownership of {domain}"
+#~ msgstr "Kumekuwa na uhamisho wa umiliki wa {domain}"
+
+#~ msgid "Transfer project ownership"
+#~ msgstr "Hamisha umiliki wa mradi"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "              By clicking \"accept\" below you acknowledge that you accept full ownership of this project space (\"%(domain)s\").\n"
+#~ "              You agree to be bound by the terms of Dimagi's <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Terms of Service and Business Agreement</a>.\n"
+#~ "              By accepting this agreement, your are acknowledging you have permission and authority to accept these terms. A Dimagi representative will notify you when the transfer is complete.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Kwa kubofya \"kubali\" hapa chini unathibitisha kwamba unakubali umiliki kamili wa nafasi hii ya mradi (\"%(domain)s\").\n"
+#~ "              Unakubali kufungwa na masharti ya <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Masharti ya Huduma na Makubaliano ya Biashara</a> ya Dimagi.\n"
+#~ "              Kwa kukubali makubaliano haya, unathibitisha una ruhusa na mamlaka ya kukubali masharti haya. Mwakilishi wa Dimagi atakujulisha uhamisho utakapokamilika.\n"
+#~ "            "
+
+#~ msgid "Decline"
+#~ msgstr "Kataa"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Sorry this transfer request has expired.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Samahani ombi hili la uhamisho limeisha muda wake.\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "      Use this to transfer your project to another user.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Tumia hii kuhamisha mradi wako kwa mtumiaji mwingine.\n"
+#~ "    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          You have a pending transfer with %(username)s\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Una uhamisho unaosubiri na %(username)s\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "          Resend Transfer Request\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Tuma Ombi la Uhamisho Tena\n"
+#~ "        "
+
+#~ msgid "Cancel Transfer"
+#~ msgstr "Ghairi Uhamisho"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe\n"
+#~ "    this is an error, please contact us immediately at <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
+#~ "    and follow <a href=\"%(settings_url)s\">this link</a> to deactivate the transfer: %(settings_url)s\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Uhamisho wa nafasi ya mradi umeanzishwa na %(from_username)s kwenda kwa %(to_username)s.  Ikiwa unaamini\n"
+#~ "    hii ni makosa, tafadhali wasiliana nasi mara moja kwa <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
+#~ "    na fuata <a href=\"%(settings_url)s\">kiungo hiki</a> ili kufuta uhamisho: %(settings_url)s\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    Thanks for using our site!\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Asante kwa kutumia tovuti yetu!\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "Hello,\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Habari,\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe this is an error, please contact us immediately at %(support_email)s and follow this link to deactivate the transfer: %(settings_url)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Uhamisho wa nafasi ya mradi umeanzishwa na %(from_username)s kwenda kwa %(to_username)s. Ikiwa unaamini hili ni kosa, tafadhali wasiliana nasi mara moja kupitia %(support_email)s na fuata kiungo hiki ili kufuta uhamisho: %(settings_url)s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Thanks for using our site!\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Asante kwa kutumia tovuti yetu!\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    %(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept\n"
+#~ "    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    %(from_username)s ameanzisha uhamisho wa umiliki wa nafasi ya mradi ya CommCare. Ili kukubali\n"
+#~ "    umiliki wa nafasi hii ya mradi, tafadhali fuata <a href=\"%(activate_url)s\">kiungo hiki</a>: %(activate_url)s. Ikiwa huna akaunti ya mtumiaji wa CommCare tayari, utatakiwa kuunda moja ili kukubali umiliki wa nafasi hii ya mradi.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Baada ya kukubali uhamisho, mtu kutoka Dimagi atawasiliana nawe ili kuthibitisha kuwa uhamisho wa umiliki umekamilika.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Mipangilio yote ya mradi, akaunti za watumiaji, na ruhusa zitaendelea kubaki kama zilivyo baada ya uhamisho wa umiliki. Ikiwa ungependa kubadilisha yoyote kati ya mipangilio hii, tafadhali fanya hivyo baada ya kukubali umiliki wa nafasi ya mradi kupitia menyu ya mipangilio ya nafasi ya mradi.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Ikiwa unadhani umepokea hii kimakosa, unaweza kupuuza barua pepe hii. Kujua zaidi kuhusu CommCare tembelea <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+#~ "  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "%(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "%(from_username)s ameanzisha uhamisho wa umiliki wa nafasi ya mradi ya CommCare. Ili kukubali umiliki wa nafasi hii ya mradi, tafadhali fuata kiungo hiki: %(activate_url)s. Ikiwa huna akaunti ya mtumiaji wa CommCare tayari, utatakiwa kuunda moja ili kukubali umiliki wa nafasi hii ya mradi.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Baada ya kukubali uhamisho, mtu kutoka Dimagi atawasiliana nawe ili kuthibitisha kuwa uhamisho wa umiliki umekamilika.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Mipangilio yote ya mradi, akaunti za watumiaji, na ruhusa zitaendelea kubaki kama zilivyo baada ya uhamisho wa umiliki. Ikiwa ungependa kubadilisha yoyote kati ya mipangilio hii, tafadhali fanya hivyo baada ya kukubali umiliki wa nafasi ya mradi kupitia menyu ya mipangilio ya nafasi ya mradi.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit http://www.commcarehq.org/.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Ikiwa unadhani umepokea hii kimakosa, unaweza kupuuza barua pepe hii. Kujua zaidi kuhusu CommCare tembelea http://www.commcarehq.org/.\n"
+
+#, python-brace-format
+#~ msgid "Resent transfer request for project '{domain}'"
+#~ msgstr "Ombi la uhamisho wa mradi '{domain}' limetumwa tena"
+
+#, python-brace-format
+#~ msgid "Successfully transferred ownership of project '{domain}'"
+#~ msgstr "Umekabidhi umiliki wa mradi '{domain}' kwa mafanikio"
+
+#, python-brace-format
+#~ msgid "Declined ownership of project '{domain}'"
+#~ msgstr "Umekataa umiliki wa mradi '{domain}'"
+
+#, python-brace-format
+#~ msgid "Could not find {file_path} in CCZ"
+#~ msgstr "Imeshindikana kupata {file_path} kwenye CCZ"
+
+#, python-brace-format
+#~ msgid "Locale ID {id} present in suite.xml but not in default app strings."
+#~ msgstr ""
+#~ "Kitambulisho cha lugha {id} kipo kwenye suite.xml lakini hakipo kwenye "
+#~ "maneno chaguo-msingi ya programu."
+
+#~ msgid "Update Product List"
+#~ msgstr "Sasisha Orodha ya Bidhaa"
+
+#~ msgid "Specify Products Per Location"
+#~ msgstr "Taja Bidhaa Kila Eneo"
+
+#~ msgid "Products at Location"
+#~ msgstr "Bidhaa katika Eneo"
+
+#~ msgid "The build profile from the user's last hearbeat request."
+#~ msgstr "Profaili ya ujenzi kutoka ombi la mwisho la heartbeat la mtumiaji."
+
+#~ msgid "Role Name"
+#~ msgstr "Jina la Jukumu"
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Make sure any users assigned this role also have a\n"
+#~ "                      location assigned to them. Users without assigned\n"
+#~ "                      locations will not be permitted to log in.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Hakikisha watumiaji wowote waliopangiwa jukumu hili pia wamepangiwa\n"
+#~ "                      eneo. Watumiaji wasio na maeneo yaliyopangiwa hawataruhusiwa kuingia.\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Organization-based data access restrictions are only\n"
+#~ "                      available on the Pro plan and above. Saving this role will\n"
+#~ "                      enable full organization access for the assigned users.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Vizuizi vya ufikiaji wa data kwa msingi wa shirika vinapatikana tu\n"
+#~ "                      kwenye mpango wa Pro na juu zaidi. Kuhifadhi jukumu hili kutawezesha\n"
+#~ "                      ufikiaji kamili wa shirika kwa watumiaji waliopangiwa.\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      With the current configuration, this role will have full\n"
+#~ "                      organization access and roles that can assign it will not.\n"
+#~ "                      This is not recommended.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Kwa usanidi wa sasa, jukumu hili litakuwa na ufikiaji kamili wa shirika\n"
+#~ "                      na majukumu yanayoweza kulipangia hayatakuwa nayo. Hii haipendekezwi.\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      If the highlighted roles are selected, this role will have\n"
+#~ "                      full organization access and be assignable by a role that\n"
+#~ "                      does not. This is not recommended configuration.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Ikiwa majukumu yaliyopigwa rangi yatateuliwa, jukumu hili litakuwa na\n"
+#~ "                      ufikiaji kamili wa shirika na linaweza kupangiwa na jukumu lisilo na ufikiaji huo.\n"
+#~ "                      Hii si usanidi unaopendekezwa.\n"
+#~ "                    "
 
 #~ msgid "CommCare from Google Play"
 #~ msgstr "CommCare kutoka Google Play"
