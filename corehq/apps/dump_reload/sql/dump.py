@@ -153,7 +153,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('auth.User', UsernameFilter()),
     FilteredModelIteratorBuilder('integration.DialerSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.GaenOtpServerSettings', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('integration.HmacCalloutSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.SimprintsIntegration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.KycConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.MoMoConfig', SimpleFilter('domain')),

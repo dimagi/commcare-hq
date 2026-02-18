@@ -229,19 +229,9 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                 download_id, compress_zip, filename, download_targeted_version
             )
         with build.timing_context("_zip_files_for_ccz"):
-            file_cache = _zip_files_for_ccz(fpath, files, current_progress, file_progress,
-                                            file_count, compression, task)
+            _zip_files_for_ccz(fpath, files, current_progress, file_progress,
+                               file_count, compression, task)
 
-        if include_index_files and toggles.LOCALE_ID_INTEGRITY.enabled(build.domain):
-            with build.timing_context("find_missing_locale_ids_in_ccz"):
-                locale_errors = find_missing_locale_ids_in_ccz(file_cache)
-            if locale_errors:
-                errors.extend(locale_errors)
-                notify_exception(
-                    None,
-                    message="CCZ missing locale ids from default/app_strings.txt",
-                    details={'domain': build.domain, 'app_id': build.id, 'errors': locale_errors}
-                )
         if include_index_files and include_multimedia_files:
             with build.timing_context("check_ccz_multimedia_integrity"):
                 multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
@@ -282,30 +272,6 @@ def _expose_download_link(fpath, filename, compress_zip, download_id):
         expose_cached_download(FileWrapper(open(fpath, 'rb')),
                                file_extension=file_extention_from_filename(filename),
                                **common_kwargs)
-
-
-def find_missing_locale_ids_in_ccz(file_cache):
-    errors = [
-        _("Could not find {file_path} in CCZ").format(file_path=file_path)
-        for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
-    if errors:
-        return errors
-
-    # Each line of an app_strings.txt file is of the format "name.of.key=value of key"
-    # decode is necessary because Application._make_language_files calls .encode('utf-8')
-    app_strings_ids = {
-        line.decode("utf-8").split('=')[0]
-        for line in file_cache['default/app_strings.txt'].splitlines()
-    }
-
-    from corehq.apps.app_manager.xform import parse_xml
-    parsed = parse_xml(file_cache['suite.xml'])
-    suite_ids = {locale.get("id") for locale in parsed.iter("locale")}
-
-    return [
-        _("Locale ID {id} present in suite.xml but not in default app strings.").format(id=id)
-        for id in (suite_ids - app_strings_ids) if id
-    ]
 
 
 # Check that all media files present in media_suite.xml were added to the zip

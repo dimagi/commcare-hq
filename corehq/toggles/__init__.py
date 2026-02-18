@@ -1022,18 +1022,18 @@ GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
-GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
-    "geocoder_autoload_user_location",
-    "USH: Auto-load the geocoder widget with the user's current location",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
-    geocoding query using the user's reported location The result will be used to populate the search field
-    of the geocoder widget.
-    """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
-)
+# GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
+#     "geocoder_autoload_user_location",
+#     "USH: Auto-load the geocoder widget with the user's current location",
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description="""
+#     When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
+#     geocoding query using the user's reported location The result will be used to populate the search field
+#     of the geocoder widget.
+#     """,
+#     parent_toggles=[USH_CASE_CLAIM_UPDATES],
+# )
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
     "geocoder_user_proximity",
@@ -1134,13 +1134,13 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
-SAAS_PROTOTYPE = StaticToggle(
-    'saas_prototype',
-    'Use allowed to view SaaS prototypes',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_USER],
-    description='Use this for rapid prototypes developed by the SaaS product team.',
-)
+# SAAS_PROTOTYPE = StaticToggle(
+#     'saas_prototype',
+#     'Use allowed to view SaaS prototypes',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_USER],
+#     description='Use this for rapid prototypes developed by the SaaS product team.',
+# )
 
 FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     'saas_formbuilder_save_to_case',
@@ -1181,13 +1181,13 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     [NAMESPACE_USER]
 )
 
-PRODUCTS_PER_LOCATION = StaticToggle(
-    'products_per_location',
-    "Products Per Location: Specify products stocked at individual locations.",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description="This doesn't actually do anything yet."
-)
+# PRODUCTS_PER_LOCATION = StaticToggle(
+#     'products_per_location',
+#     "Products Per Location: Specify products stocked at individual locations.",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+#     description="This doesn't actually do anything yet."
+# )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
@@ -1437,12 +1437,12 @@ EXPORT_DATA_SOURCE_DATA = StaticToggle(
 )
 
 
-ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
-    'enable_include_sms_gateway_charging',
-    'Enable include SMS gateway charging',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
+#     'enable_include_sms_gateway_charging',
+#     'Enable include SMS gateway charging',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 MESSAGE_LOG_METADATA = StaticToggle(
     'message_log_metadata',
@@ -1474,12 +1474,13 @@ CASE_DEDUPE_UPDATES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
 
-LEGACY_SYNC_SUPPORT = StaticToggle(
-    'legacy_sync_support',
-    "Support mobile sync bugs in older projects (2.9 and below).",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# TODO remove this toggle definition once the other feature flag removal PRs have landed
+# LEGACY_SYNC_SUPPORT = StaticToggle(
+#     'legacy_sync_support',
+#     "Support mobile sync bugs in older projects (2.9 and below).",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'call_center_location_owners',
@@ -1511,12 +1512,12 @@ INBOUND_SMS_LENIENCY = StaticToggle(
     description="WARNING: This wil be rolled out slowly; do not enable on your own.",
 )
 
-WHATSAPP_MESSAGING = StaticToggle(
-    'whatsapp_messaging',
-    "Default SMS to send messages via Whatsapp, where available",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# WHATSAPP_MESSAGING = StaticToggle(
+#     'whatsapp_messaging',
+#     "Default SMS to send messages via Whatsapp, where available",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
@@ -1570,13 +1571,13 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-LOCALE_ID_INTEGRITY = StaticToggle(
-    'locale_id_integrity',
-    'Verify all locale ids in suite are present in app strings before allowing CCZ download',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    notification_emails=['jschweers']
-)
+# LOCALE_ID_INTEGRITY = StaticToggle(
+#     'locale_id_integrity',
+#     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+#     notification_emails=['jschweers']
+# )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
@@ -1651,20 +1652,20 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
                  "large-scale failures would otherwise be next to impossible."),
 )
 
-PREVENT_MOBILE_UCR_SYNC = StaticToggle(
-    'prevent_mobile_ucr_sync',
-    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description='Prevents mobile UCRs from being generated or included in the sync payload',
-)
+#PREVENT_MOBILE_UCR_SYNC = StaticToggle(
+#    'prevent_mobile_ucr_sync',
+#    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
+#    TAG_DEPRECATED,
+#    [NAMESPACE_DOMAIN],
+#    description='Prevents mobile UCRs from being generated or included in the sync payload',
+#)
 
-TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
-    'two_factor_superuser_rollout',
-    'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_DEPRECATED,
-    [NAMESPACE_USER]
-)
+# TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
+#     'two_factor_superuser_rollout',
+#     'Users in this list will be forced to have Two-Factor Auth enabled',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_USER]
+# )
 
 CUSTOM_ICON_BADGES = FrozenPrivilegeToggle(
     privilege_slug=privileges.CUSTOM_ICON_BADGES,
@@ -1726,12 +1727,12 @@ TRAINING_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
-    'app_trans_with_transifex',
-    'Translate Application Content With Transifex',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_USER]
-)
+# APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+#     'app_trans_with_transifex',
+#     'Translate Application Content With Transifex',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_USER]
+# )
 
 VALIDATE_APP_TRANSLATIONS = StaticToggle(
     'validate_app_translations',
@@ -1802,26 +1803,27 @@ COPY_CASES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-DASHBOARD_REACH_REPORT = StaticToggle(
-    'dashboard_reach_reports',
-    'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# DASHBOARD_REACH_REPORT = StaticToggle(
+#     'dashboard_reach_reports',
+#     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
-PARTIAL_UI_TRANSLATIONS = StaticToggle(
-    'partial_ui_translations',
-    'Enable uploading a subset of translations in the UI Translations Excel upload',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# PARTIAL_UI_TRANSLATIONS = StaticToggle(
+#     'partial_ui_translations',
+#     'Enable uploading a subset of translations in the UI Translations Excel upload',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
-SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
-    'skip_orm_fixture_upload',
-    'Exposes an option in fixture api upload to skip saving through couchdbkit',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# TODO remove commented-out toggle definition
+# SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
+#     'skip_orm_fixture_upload',
+#     'Exposes an option in fixture api upload to skip saving through couchdbkit',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 ENABLE_UCR_MIRRORS = StaticToggle(
     'enable_ucr_mirrors',
@@ -1976,23 +1978,23 @@ IP_ACCESS_CONTROLS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
-    'show_build_profile_in_app_status',
-    'Show build profile installed on phone tracked via heartbeat request in App Status Report',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
+#     'show_build_profile_in_app_status',
+#     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
-LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
-    'livequery_read_from_standbys',
-    'Allow livequery restore to read data from plproxy standbys if they are available',
-    TAG_DEPRECATED,
-    [NAMESPACE_USER],
-    description="""
-    To allow a gradual rollout and testing of using the standby
-    databases to generate restore payloads.
-    """
-)
+#LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
+#    'livequery_read_from_standbys',
+#    'Allow livequery restore to read data from plproxy standbys if they are available',
+#    TAG_DEPRECATED,
+#    [NAMESPACE_USER],
+#    description="""
+#    To allow a gradual rollout and testing of using the standby
+#    databases to generate restore payloads.
+#    """
+#)
 
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
@@ -2111,13 +2113,13 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
-    'clean_old_formplayer_syncs',
-    'Delete old formplayer syncs during submission processing',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_OTHER],
-    default_randomness=0.001
-)
+# CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
+#     'clean_old_formplayer_syncs',
+#     'Delete old formplayer syncs during submission processing',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_OTHER],
+#     default_randomness=0.001
+# )
 
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
@@ -2150,16 +2152,16 @@ SSO_OIDC_DEVELOPMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
-ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
-    'fixtures_in_case_restore',
-    'Allow limited fixtures to be available in case restore for SMS workflows.',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    WARNING: To be used only for small templates since the performance implication has not been evaluated.
-    Do not enable on your own.
-    """
-)
+# ADD_LIMITED_FIXTURES_TO_CASE_RESTORE = StaticToggle(
+#     'fixtures_in_case_restore',
+#     'Allow limited fixtures to be available in case restore for SMS workflows.',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description="""
+#     WARNING: To be used only for small templates since the performance implication has not been evaluated.
+#     Do not enable on your own.
+#     """
+# )
 
 EMBEDDED_TABLEAU = StaticToggle(
     'embedded_tableau',
@@ -2355,16 +2357,16 @@ TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-SMS_USE_LATEST_DEV_APP = FeatureRelease(
-    'sms_use_latest_dev_app',
-    'Use latest development version of the app for SMS processing',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Simon Kelly',
-    description='This will revert the SMS processing to previous functionality of using the '
-                'development version of the app instead of the latest release. It should only'
-                'be used temporarily if a domain needs unreleased app changes to be used for SMS.',
-)
+# SMS_USE_LATEST_DEV_APP = FeatureRelease(
+#     'sms_use_latest_dev_app',
+#     'Use latest development version of the app for SMS processing',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     owner='Simon Kelly',
+#     description='This will revert the SMS processing to previous functionality of using the '
+#                 'development version of the app instead of the latest release. It should only'
+#                 'be used temporarily if a domain needs unreleased app changes to be used for SMS.',
+# )
 
 VIEW_FORM_ATTACHMENT = StaticToggle(
     'view_form_attachments',
@@ -2499,7 +2501,7 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
 LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     'location_restricted_scheduled_reports',
     'Allows access to report scheduling views for location restricted users',
-    TAG_DEPRECATED,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'

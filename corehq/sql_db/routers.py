@@ -1,17 +1,11 @@
-import os
-from contextlib import ContextDecorator
-from threading import local
-
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.sql_db.config import plproxy_standby_config
 from corehq.sql_db.connections import connection_manager, get_db_alias_or_none
-from corehq.sql_db.util import select_db_for_read, select_plproxy_db_for_read
+from corehq.sql_db.util import select_db_for_read
 
 from .config import plproxy_config
-
-READ_FROM_PLPROXY_STANDBYS = 'READ_FROM_PLPROXY_STANDBYS'
 
 HINT_INSTANCE = 'instance'
 HINT_PARTITION_VALUE = 'partition_value'
@@ -129,22 +123,15 @@ def db_for_read_write(model, write=True, hints=None):
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
-            return get_read_write_db_for_partitioned_model(model, hints, write)
+            return get_db_for_partitioned_model(model, hints)
         return DEFAULT_DB_ALIAS
     if app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
-        return get_read_write_db_for_partitioned_model(model, hints, write)
+        return get_db_for_partitioned_model(model, hints)
     else:
         default_db = DEFAULT_DB_ALIAS
         if not write:
             return get_load_balanced_app_db(app_label, default_db)
         return default_db
-
-
-def get_read_write_db_for_partitioned_model(model, hints, for_write):
-    db = get_db_for_partitioned_model(model, hints)
-    if for_write or not allow_read_from_plproxy_standby():
-        return db
-    return select_plproxy_db_for_read(db)
 
 
 def get_db_for_partitioned_model(model, hints):
@@ -179,18 +166,3 @@ def get_db_for_partitioned_model(model, hints):
 def get_load_balanced_app_db(app_name: str, default: str) -> str:
     read_dbs = settings.LOAD_BALANCED_APPS.get(app_name)
     return select_db_for_read(read_dbs) or default
-
-
-_thread_locals = local()
-
-
-def allow_read_from_plproxy_standby():
-    return os.environ.get(READ_FROM_PLPROXY_STANDBYS) or getattr(_thread_locals, READ_FROM_PLPROXY_STANDBYS, False)
-
-
-class read_from_plproxy_standbys(ContextDecorator):
-    def __enter__(self):
-        setattr(_thread_locals, READ_FROM_PLPROXY_STANDBYS, True)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        setattr(_thread_locals, READ_FROM_PLPROXY_STANDBYS, False)

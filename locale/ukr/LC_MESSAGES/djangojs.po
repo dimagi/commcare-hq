@@ -1417,7 +1417,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#| msgid "Case Name"
 msgid "Case Management"
 msgstr "Управління справами"
 
@@ -3995,7 +3994,6 @@ msgstr ""
 "fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Web Users</strong> &mdash; invite new web users, manage account "
 "settings, remove membership"
@@ -4004,17 +4002,14 @@ msgstr ""
 "керування налаштуваннями облікового запису, видалення членства"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Mobile Workers"
 msgstr "Редагування та перегляд мобільних працівників"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
 msgstr "Лише перегляд мобільних працівників"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
 "configuration for web users"
@@ -4023,17 +4018,14 @@ msgstr ""
 "конфігурацією tableau для веб-користувачів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View tableau configuration for web users"
 msgstr "Редагування та перегляд конфігурації tableau для веб-користувачів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only tableau configuration for web users"
 msgstr "Лише перегляд конфігурації tableau для веб-користувачів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings, deactivate or delete mobile workers."
@@ -4043,39 +4035,32 @@ msgstr ""
 "видалення мобільних працівників."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Web Users"
 msgstr "Редагування та перегляд веб-користувачів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Users"
 msgstr "Лише перегляд веб-користувачів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
 msgstr ""
 "<strong>Групи</strong> &mdash; керування групами мобільних працівників"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Groups"
 msgstr "Редагування та перегляд груп"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Groups"
 msgstr "Лише перегляд веб-груп"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing group membership (requires edit groups)."
 msgstr ""
 "Дозволити зміну членства в групі (потрібно право на редагування груп)."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
@@ -4083,22 +4068,18 @@ msgstr ""
 "<strong>Локації</strong> &mdash; керування локаціями в ієрархії організації"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Locations"
 msgstr "Редагування та перегляд локацій"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Locations"
 msgstr "Лише перегляд веб-локацій"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing workers at a location."
 msgstr "Дозволити зміну працівників на локації."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Data Dictionary</strong> &mdash; manage case properties within "
 "CommCare HQ"
@@ -4107,17 +4088,14 @@ msgstr ""
 "CommCare HQ"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data Dictionary"
 msgstr "Редагування та перегляд словника даних"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Data Dictionary"
 msgstr "Лише перегляд словника даних"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
@@ -4126,12 +4104,10 @@ msgstr ""
 "кейсів, переназначення кейсів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data"
 msgstr "Редагування та перегляд даних"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Messaging</strong> &mdash; configure and send conditional alerts"
 msgstr ""
@@ -4139,12 +4115,10 @@ msgstr ""
 "сповіщень"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access Messaging"
 msgstr "Доступ до меседжингу"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
 " data. Specific APIs may require additional permissions."
@@ -4153,12 +4127,10 @@ msgstr ""
 "читання та оновлення даних. Деякі API можуть вимагати додаткових дозволів."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access APIs"
 msgstr "Доступ до API"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Applications</strong> &mdash; modify or view the structure and "
 "configuration of all applications."
@@ -4167,17 +4139,14 @@ msgstr ""
 "конфігурацію всіх додатків."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Apps"
 msgstr "Редагувати та переглядати додатки"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Applications"
 msgstr "Додатки лише для перегляду"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -4187,12 +4156,10 @@ msgstr ""
 " ролі)"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View Roles and Permissions"
 msgstr "Перегляд ролей і дозволів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Dropzone</strong> &mdash; Upload and download files from the file "
 "Dropzone"
@@ -4201,17 +4168,14 @@ msgstr ""
 "Dropzone"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & Download files from the Dropzone "
 msgstr "Редагувати та завантажувати файли з Dropzone"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Dropzone"
 msgstr "Dropzone лише для перегляду"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
 "and structure of shared exports"
@@ -4220,7 +4184,6 @@ msgstr ""
 " вмісту та структури спільних експортів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
 "events and users"
@@ -4229,12 +4192,10 @@ msgstr ""
 "користувачів відстеження відвідуваності"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
 msgstr "Редагувати події відстеження відвідуваності"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
 "associated with this project"
@@ -4243,88 +4204,71 @@ msgstr ""
 "пов'язаною з цим проєктом"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View CommCare Analytics"
 msgstr "Редагувати та переглядати аналітику CommCare"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only CommCare Analytics"
 msgstr "Аналітика CommCare лише для перегляду"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Enterprise Release Management"
 msgstr "Управління релізами для підприємств"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Multi-Environment Release Management"
 msgstr "Управління релізами у кількох середовищах"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Project Spaces"
 msgstr "Пов'язані простори проєктів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to configure linked project spaces"
 msgstr "Дозволити ролі налаштовувати пов'язані простори проєктів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Configurations"
 msgstr "Пов'язані конфігурації"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to edit linked configurations on this project space"
 msgstr ""
 "Дозволити ролі редагувати пов'язані конфігурації в цьому просторі проєкту"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Reports"
 msgstr "Створення та редагування звітів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit reports in report builder."
 msgstr "Дозволити ролі створювати та редагувати звіти у конструкторі звітів."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Custom Web Reports"
 msgstr "Створення та редагування власних веб-звітів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit custom web reports."
 msgstr "Дозволити ролі створювати та редагувати власні веб-звіти."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Configurable Reports"
 msgstr "Створення та редагування налаштовуваних звітів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit configurable reports."
 msgstr "Дозволити ролі створювати та редагувати налаштовувані звіти."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All CommCare Reports"
 msgstr "Доступ до всіх звітів CommCare"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Reports"
 msgstr "Доступ до всіх звітів"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "Allow role to view all CommCare reports. Excludes embedded Tableau reports"
 msgstr ""
@@ -4332,102 +4276,53 @@ msgstr ""
 "включені"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all reports."
 msgstr "Дозволити ролі доступ до всіх звітів."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Download and Email Reports"
 msgstr "Завантаження та надсилання звітів електронною поштою"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to download and email report data."
 msgstr ""
 "Дозволити ролі завантажувати та надсилати дані звітів електронною поштою."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
 msgstr "Доступ до всіх звітів Tableau"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
 msgstr "Дозволити ролі доступ до всіх вбудованих звітів Tableau."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Use Web Apps for online data entry"
 msgstr "Використання веб-додатків для онлайн-введення даних"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#| msgid "Select a Report..."
 msgid "Select which web apps..."
 msgstr "Виберіть, які вебзастосунки..."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Manage Registries"
 msgstr "Керування реєстрами"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Select which registries the role can manage:"
 msgstr "Виберіть, якими реєстрами може керувати роль:"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View Registry Data"
 msgstr "Перегляд даних реєстру"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Select which registry data the role can view:"
 msgstr "Виберіть, які дані реєстру може переглядати роль:"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "An error occurred, please try again."
 msgstr "Виникла помилка, будь ласка, спробуйте ще раз."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "No Access"
-msgstr "Немає доступу"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access All"
-msgstr "Доступ до всього"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Limited Access"
-msgstr "Обмежений доступ"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which items the role can access:"
-msgstr "Оберіть, до яких елементів роль матиме доступ:"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which web apps the role has access to:"
-msgstr "Виберіть, до яких веб-додатків має доступ роль:"
-
-#: corehq/apps/users/static/users/js/roles.js
-#, javascript-format
-msgid "Select at least one item from the list for \"%s\""
-msgstr "Виберіть принаймні один елемент зі списку для \"%s\""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit Role: "
-msgstr "Редагувати роль: "
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View Role: "
-msgstr "Перегляд ролі: "
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "New Role"
-msgstr "Нова роль"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Delete Role: "
@@ -4649,6 +4544,34 @@ msgstr "Помилка! Відповідь: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ не вдалося виконати запит: "
+
+#~ msgid "No Access"
+#~ msgstr "Немає доступу"
+
+#~ msgid "Access All"
+#~ msgstr "Доступ до всього"
+
+#~ msgid "Limited Access"
+#~ msgstr "Обмежений доступ"
+
+#~ msgid "Select which items the role can access:"
+#~ msgstr "Оберіть, до яких елементів роль матиме доступ:"
+
+#~ msgid "Select which web apps the role has access to:"
+#~ msgstr "Виберіть, до яких веб-додатків має доступ роль:"
+
+#, javascript-format
+#~ msgid "Select at least one item from the list for \"%s\""
+#~ msgstr "Виберіть принаймні один елемент зі списку для \"%s\""
+
+#~ msgid "Edit Role: "
+#~ msgstr "Редагувати роль: "
+
+#~ msgid "View Role: "
+#~ msgstr "Перегляд ролі: "
+
+#~ msgid "New Role"
+#~ msgstr "Нова роль"
 
 #~ msgid "\n"
 #~ msgstr "\n"

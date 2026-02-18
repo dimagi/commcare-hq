@@ -1422,7 +1422,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#| msgid "Case Name"
 msgid "Case Management"
 msgstr "केस प्रबंधन"
 
@@ -3983,7 +3982,6 @@ msgstr ""
 "आपकी संस्था हमारे पते (<%- fromAddress %>) से ईमेल को ब्लॉक कर रही है।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Web Users</strong> &mdash; invite new web users, manage account "
 "settings, remove membership"
@@ -3992,17 +3990,14 @@ msgstr ""
 "करें, खाता सेटिंग्स प्रबंधित करें, सदस्यता हटाएँ"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Mobile Workers"
 msgstr "मोबाइल वर्कर्स को संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
 msgstr "केवल देखने योग्य मोबाइल वर्कर्स"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
 "configuration for web users"
@@ -4011,17 +4006,14 @@ msgstr ""
 "के लिए टेबलू कॉन्फ़िगरेशन प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View tableau configuration for web users"
 msgstr "वेब उपयोगकर्ताओं के लिए टेबलू कॉन्फ़िगरेशन संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only tableau configuration for web users"
 msgstr "केवल देखने योग्य टेबलू कॉन्फ़िगरेशन वेब उपयोगकर्ताओं के लिए"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings, deactivate or delete mobile workers."
@@ -4030,37 +4022,30 @@ msgstr ""
 "प्रबंधित करें, मोबाइल वर्कर्स को निष्क्रिय या हटाएं।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Web Users"
 msgstr "वेब उपयोगकर्ताओं को संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Users"
 msgstr "केवल देखने योग्य वेब उपयोगकर्ता"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
 msgstr "<strong>समूह</strong> &mdash; मोबाइल वर्कर्स के समूह प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Groups"
 msgstr "समूह संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Groups"
 msgstr "केवल देखने योग्य वेब समूह"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing group membership (requires edit groups)."
 msgstr "समूह सदस्यता बदलने की अनुमति दें (समूह संपादन आवश्यक)।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
@@ -4068,22 +4053,18 @@ msgstr ""
 "<strong>स्थान</strong> &mdash; संगठन की संरचना में स्थान प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Locations"
 msgstr "स्थान संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Locations"
 msgstr "केवल देखने योग्य वेब स्थान"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing workers at a location."
 msgstr "किसी स्थान पर वर्कर्स बदलने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Data Dictionary</strong> &mdash; manage case properties within "
 "CommCare HQ"
@@ -4092,17 +4073,14 @@ msgstr ""
 "प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data Dictionary"
 msgstr "डेटा शब्दकोश संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Data Dictionary"
 msgstr "केवल देखने योग्य डेटा शब्दकोश"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
@@ -4111,23 +4089,19 @@ msgstr ""
 " करें, केस पुनः असाइन करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data"
 msgstr "डेटा संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Messaging</strong> &mdash; configure and send conditional alerts"
 msgstr "<strong>संदेश</strong> &mdash; सशर्त अलर्ट कॉन्फ़िगर करें और भेजें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access Messaging"
 msgstr "संदेश तक पहुँच"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
 " data. Specific APIs may require additional permissions."
@@ -4137,12 +4111,10 @@ msgstr ""
 "हैं।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access APIs"
 msgstr "एपीआई तक पहुँच"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Applications</strong> &mdash; modify or view the structure and "
 "configuration of all applications."
@@ -4151,17 +4123,14 @@ msgstr ""
 "को संशोधित या देखें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Apps"
 msgstr "एप्लिकेशन संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Applications"
 msgstr "केवल देखने योग्य एप्लिकेशन"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -4171,12 +4140,10 @@ msgstr ""
 "हैं)"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View Roles and Permissions"
 msgstr "भूमिकाएँ और अनुमतियाँ देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Dropzone</strong> &mdash; Upload and download files from the file "
 "Dropzone"
@@ -4185,17 +4152,14 @@ msgstr ""
 " करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & Download files from the Dropzone "
 msgstr "ड्रॉपज़ोन से फाइलें संपादित करें और डाउनलोड करें "
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Dropzone"
 msgstr "केवल देखने योग्य ड्रॉपज़ोन"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
 "and structure of shared exports"
@@ -4204,7 +4168,6 @@ msgstr ""
 "और संरचना तक पहुँचें और संपादित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
 "events and users"
@@ -4213,12 +4176,10 @@ msgstr ""
 "उपयोगकर्ताओं का समन्वय करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
 msgstr "उपस्थिति ट्रैकिंग ईवेंट्स संपादित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
 "associated with this project"
@@ -4227,91 +4188,74 @@ msgstr ""
 "एनालिटिक्स को प्रबंधित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View CommCare Analytics"
 msgstr "CommCare एनालिटिक्स संपादित करें और देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only CommCare Analytics"
 msgstr "केवल देखने के लिए CommCare एनालिटिक्स"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Enterprise Release Management"
 msgstr "एंटरप्राइज रिलीज़ प्रबंधन"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Multi-Environment Release Management"
 msgstr "मल्टी-एनवायरनमेंट रिलीज़ प्रबंधन"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Project Spaces"
 msgstr "लिंक्ड प्रोजेक्ट स्पेस"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to configure linked project spaces"
 msgstr "भूमिका को लिंक्ड प्रोजेक्ट स्पेस कॉन्फ़िगर करने की अनुमति दें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Configurations"
 msgstr "लिंक्ड कॉन्फ़िगरेशन"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to edit linked configurations on this project space"
 msgstr ""
 "भूमिका को इस प्रोजेक्ट स्पेस में लिंक्ड कॉन्फ़िगरेशन संपादित करने की अनुमति "
 "दें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Reports"
 msgstr "रिपोर्ट बनाएं और संपादित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit reports in report builder."
 msgstr ""
 "भूमिका को रिपोर्ट बिल्डर में रिपोर्ट बनाने और संपादित करने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Custom Web Reports"
 msgstr "कस्टम वेब रिपोर्ट बनाएं और संपादित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit custom web reports."
 msgstr "भूमिका को कस्टम वेब रिपोर्ट बनाने और संपादित करने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Configurable Reports"
 msgstr "कॉन्फ़िगर करने योग्य रिपोर्ट बनाएं और संपादित करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit configurable reports."
 msgstr ""
 "भूमिका को कॉन्फ़िगर करने योग्य रिपोर्ट बनाने और संपादित करने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All CommCare Reports"
 msgstr "सभी CommCare रिपोर्ट तक पहुँचें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Reports"
 msgstr "सभी रिपोर्ट तक पहुँचें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "Allow role to view all CommCare reports. Excludes embedded Tableau reports"
 msgstr ""
@@ -4319,101 +4263,52 @@ msgstr ""
 "रिपोर्ट शामिल नहीं हैं"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all reports."
 msgstr "भूमिका को सभी रिपोर्ट तक पहुँचने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Download and Email Reports"
 msgstr "रिपोर्ट डाउनलोड और ईमेल करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to download and email report data."
 msgstr "भूमिका को रिपोर्ट डेटा डाउनलोड और ईमेल करने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
 msgstr "सभी Tableau रिपोर्ट तक पहुँचें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
 msgstr "भूमिका को सभी एम्बेडेड Tableau रिपोर्ट तक पहुँचने की अनुमति दें।"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Use Web Apps for online data entry"
 msgstr "ऑनलाइन डेटा एंट्री के लिए वेब ऐप्स का उपयोग करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#| msgid "Select a Report..."
 msgid "Select which web apps..."
 msgstr "कौन से वेब ऐप्स चुनें..."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Manage Registries"
 msgstr "रजिस्ट्रियों का प्रबंधन करें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Select which registries the role can manage:"
 msgstr "चुनें कि कौन सी रजिस्ट्रियाँ भूमिका प्रबंधित कर सकती है:"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View Registry Data"
 msgstr "रजिस्ट्री डेटा देखें"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Select which registry data the role can view:"
 msgstr "चुनें कि कौन सा रजिस्ट्री डेटा भूमिका देख सकती है:"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "An error occurred, please try again."
 msgstr "एक त्रुटि हुई, कृपया पुनः प्रयास करें।"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "No Access"
-msgstr "कोई पहुँच नहीं"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access All"
-msgstr "सभी तक पहुँच"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Limited Access"
-msgstr "सीमित पहुँच"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which items the role can access:"
-msgstr "चुनें कि भूमिका किन आइटम्स तक पहुँच सकती है:"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which web apps the role has access to:"
-msgstr "चुनें कि कौन से वेब ऐप्स तक भूमिका की पहुँच है:"
-
-#: corehq/apps/users/static/users/js/roles.js
-#, javascript-format
-msgid "Select at least one item from the list for \"%s\""
-msgstr "\"%s\" के लिए सूची से कम से कम एक आइटम चुनें"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit Role: "
-msgstr "भूमिका संपादित करें: "
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View Role: "
-msgstr "भूमिका देखें: "
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "New Role"
-msgstr "नई भूमिका"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Delete Role: "
@@ -4635,6 +4530,34 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
+
+#~ msgid "No Access"
+#~ msgstr "कोई पहुँच नहीं"
+
+#~ msgid "Access All"
+#~ msgstr "सभी तक पहुँच"
+
+#~ msgid "Limited Access"
+#~ msgstr "सीमित पहुँच"
+
+#~ msgid "Select which items the role can access:"
+#~ msgstr "चुनें कि भूमिका किन आइटम्स तक पहुँच सकती है:"
+
+#~ msgid "Select which web apps the role has access to:"
+#~ msgstr "चुनें कि कौन से वेब ऐप्स तक भूमिका की पहुँच है:"
+
+#, javascript-format
+#~ msgid "Select at least one item from the list for \"%s\""
+#~ msgstr "\"%s\" के लिए सूची से कम से कम एक आइटम चुनें"
+
+#~ msgid "Edit Role: "
+#~ msgstr "भूमिका संपादित करें: "
+
+#~ msgid "View Role: "
+#~ msgstr "भूमिका देखें: "
+
+#~ msgid "New Role"
+#~ msgstr "नई भूमिका"
 
 #~ msgid "\n"
 #~ msgstr "\n"

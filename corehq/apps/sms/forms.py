@@ -422,16 +422,6 @@ class SettingsForm(Form):
             ),
         ]
 
-        if toggles.WHATSAPP_MESSAGING.enabled(self.domain):
-            fields.append(hqcrispy.FieldWithHelpBubble(
-                'twilio_whatsapp_phone_number',
-                help_bubble_text=_("""
-                    Whatsapp-enabled phone number for use with Twilio.
-                    This should be formatted as a full-length, numeric-only
-                    phone number, e.g., 16173481000.
-                """),
-            ))
-
         return crispy.Fieldset(
             _("Registration Settings"),
             *fields

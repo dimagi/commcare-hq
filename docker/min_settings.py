@@ -48,9 +48,6 @@ CACHES = {
     'redis': redis_cache
 }
 
-WS4REDIS_CONNECTION = {
-    'host': redis_host,
-}
 
 ELASTICSEARCH_HOST = 'elasticsearch6'
 ELASTICSEARCH_PORT = 9200
