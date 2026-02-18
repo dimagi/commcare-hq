@@ -1512,12 +1512,12 @@ INBOUND_SMS_LENIENCY = StaticToggle(
     description="WARNING: This wil be rolled out slowly; do not enable on your own.",
 )
 
-WHATSAPP_MESSAGING = StaticToggle(
-    'whatsapp_messaging',
-    "Default SMS to send messages via Whatsapp, where available",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# WHATSAPP_MESSAGING = StaticToggle(
+#     'whatsapp_messaging',
+#     "Default SMS to send messages via Whatsapp, where available",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
