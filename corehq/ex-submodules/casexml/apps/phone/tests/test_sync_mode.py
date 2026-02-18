@@ -39,7 +39,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
+from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import flag_enabled
 
 USERNAME = "syncguy"
@@ -57,22 +57,20 @@ class BaseSyncTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(BaseSyncTest, cls).setUpClass()
-        delete_all_users()
-
         cls.project = Domain(name=TEST_DOMAIN_NAME)
         cls.project.save()
+        cls.addClassCleanup(cls.project.delete)
         cls.user = create_restore_user(
             cls.project.name,
             USERNAME,
         )
         cls.user_id = cls.user.user_id
         # this creates the initial blank sync token in the database
+        cls.addClassCleanup(delete_all_users)
+        cls.addClassCleanup(delete_all_domains)
 
     def setUp(self):
         super(BaseSyncTest, self).setUp()
-        FormProcessorTestUtils.delete_all_cases()
-        FormProcessorTestUtils.delete_all_xforms()
-        FormProcessorTestUtils.delete_all_sync_logs()
         self.device = self.get_device()
         self.device.sync(overwrite_cache=True, version=V1)
 
@@ -83,12 +81,6 @@ class BaseSyncTest(TestCase):
         )
         restore_config.restore_payload_path_cache.invalidate()
         super(BaseSyncTest, self).tearDown()
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        delete_all_domains()
-        super(BaseSyncTest, cls).tearDownClass()
 
     def get_device(self, **kw):
         kw.setdefault("project", self.project)
