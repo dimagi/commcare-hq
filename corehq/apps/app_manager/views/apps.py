@@ -396,8 +396,6 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
-        latest_version_for_build_profiles = {}
-
         context.update({
             'show_advanced': show_advanced,
             'show_biometric': show_biometric,
@@ -407,7 +405,6 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
-            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context
