@@ -1134,13 +1134,13 @@ def _ensure_search_index_is_enabled(domain, enabled):
         reindex_case_search_for_domain.delay(domain)
 
 
-SAAS_PROTOTYPE = StaticToggle(
-    'saas_prototype',
-    'Use allowed to view SaaS prototypes',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_USER],
-    description='Use this for rapid prototypes developed by the SaaS product team.',
-)
+# SAAS_PROTOTYPE = StaticToggle(
+#     'saas_prototype',
+#     'Use allowed to view SaaS prototypes',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_USER],
+#     description='Use this for rapid prototypes developed by the SaaS product team.',
+# )
 
 FORMBUILDER_SAVE_TO_CASE = StaticToggle(
     'saas_formbuilder_save_to_case',

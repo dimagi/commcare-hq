@@ -5,7 +5,7 @@ from django.utils.translation import gettext as _
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.prototype.models.cache_store import CacheStore
+from corehq.apps.styleguide.models import CacheStore
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
@@ -95,8 +95,8 @@ class TodoListDemoView(HqHtmxActionMixin, BasePageView):
 
 class TodoListStore(CacheStore):
     """
-    CacheStore is a helpful prototyping tool when you need to store
-    data on the server side for prototyping HTMX views.
+    CacheStore is a helpful tool when you need to store data on the
+    server side for styleguide / demo HTMX views.
 
     Caution: Please don't use this for real features.
     """
