@@ -42,20 +42,20 @@ function addDelegatedClickDispatch(linkTarget, linkDestination) {
 }
 
 function postFormFromLink(anchor, target, isInternal) {
-    let url = new URL(anchor.href);
-    let dest = url.origin + url.pathname;
-    let data = {};
+    const url = new URL(anchor.href);
+    const dest = url.origin + url.pathname;
+    const data = {};
     if (isInternal) {
         data['csrfmiddlewaretoken'] = $("#csrfTokenContainer").val();
     }
     url.searchParams.forEach(function (value, key) { data[key] = value; });
 
-    let form = document.createElement("form");
+    const form = document.createElement("form");
     form.method = "POST";
     form.action = dest;
     form.target = target;
-    for (let key in data) {
-        let element = document.createElement("input");
+    for (const key in data) {
+        const element = document.createElement("input");
         element.name = key;
         element.value = data[key];
         form.appendChild(element);
