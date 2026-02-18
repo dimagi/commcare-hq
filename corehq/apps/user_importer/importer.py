@@ -1,7 +1,5 @@
 import copy
 import logging
-import string
-import random
 from collections import defaultdict
 from datetime import datetime
 from corehq.util.soft_assert.api import soft_assert
@@ -43,7 +41,6 @@ from corehq.apps.user_importer.helpers import (
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
-    send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -67,7 +64,6 @@ allowed_headers = set([
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)', 'web_user', 'remove_web_user', 'remove', 'last_access_date (read only)',
     'last_login (read only)', 'last_name', 'status', 'first_name',
-    'send_confirmation_sms',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -547,10 +543,6 @@ class CCUserRow(BaseUserRow):
         from corehq.apps.user_importer.validation import is_password
         if self.row.get('password'):
             password = str(self.row.get('password'))
-        elif self.column_values["send_confirmation_sms"]:
-            # Set a dummy password to pass the validation, similar to GUI user creation
-            string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
-            password = ''.join(random.choices(string_set, k=10))
         else:
             password = None
         self.column_values['password'] = password
@@ -578,13 +570,8 @@ class CCUserRow(BaseUserRow):
         }
 
         for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
-                  'remove_web_user', 'send_confirmation_sms']:
+                  'remove_web_user']:
             values[v] = spec_value_to_boolean_or_none(self.row, v)
-
-        if values["send_confirmation_sms"] and not values["user_id"]:
-            values["is_account_confirmed"] = False
-        else:
-            values["is_account_confirmed"] = values["is_account_confirmed"]
 
         self.column_values.update(values)
         if not self._parse_username():
@@ -741,8 +728,6 @@ class CCUserRow(BaseUserRow):
         else:
             if cv["send_confirmation_email"]:
                 send_account_confirmation_if_necessary(self.user)
-            if cv["send_confirmation_sms"]:
-                send_account_confirmation_sms_if_necessary(self.user)
 
 
 class WebUserRow(BaseUserRow):
