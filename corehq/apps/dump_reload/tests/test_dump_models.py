@@ -77,6 +77,7 @@ IGNORE_MODELS = {
     "hqwebapp.HQOauthApplication",
     "hqwebapp.UserAccessLog",
     "hqwebapp.UserAgent",
+    "integration.HmacCalloutSettings",
     "notifications.DismissedUINotify",
     "notifications.LastSeenNotification",
     "notifications.Notification",
