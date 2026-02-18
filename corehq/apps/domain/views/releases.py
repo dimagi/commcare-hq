@@ -3,7 +3,6 @@ from datetime import datetime
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http.response import (
-    HttpResponseBadRequest,
     HttpResponseForbidden,
     JsonResponse,
 )
@@ -14,19 +13,10 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import (
-    get_brief_apps_in_domain,
-)
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.models import (
-    AppReleaseByLocation,
-    LatestEnabledBuildProfiles,
-)
-from corehq.apps.domain.forms import (
-    CreateManageReleasesByAppProfileForm,
-    SearchManageReleasesByAppProfileForm,
-    ManageReleasesByLocationForm,
-)
+from corehq.apps.app_manager.models import AppReleaseByLocation
+from corehq.apps.domain.forms import ManageReleasesByLocationForm
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.locations.models import SQLLocation
 
@@ -93,80 +83,6 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
             return self.get(request, *args, **kwargs)
 
 
-@method_decorator([toggles.RELEASE_BUILDS_PER_PROFILE.required_decorator(),
-                   require_can_edit_apps], name='dispatch')
-class ManageReleasesByAppProfile(BaseProjectSettingsView):
-    template_name = 'domain/bootstrap3/manage_releases_by_app_profile.html'
-    urlname = 'manage_releases_by_app_profile'
-    page_title = gettext_lazy("Manage Releases By App Profile")
-
-    @cached_property
-    def creation_form(self):
-        return CreateManageReleasesByAppProfileForm(
-            self.request,
-            self.domain,
-            data=self.request.POST if self.request.method == "POST" else None,
-        )
-
-    @staticmethod
-    def _get_initial_app_build_profile_details(build_profiles_per_app, app_id, app_build_profile_id):
-        # only need to set when performing search to populate with initial values in view
-        if build_profiles_per_app and app_id and app_id in build_profiles_per_app:
-            app_build_profiles = build_profiles_per_app[app_id]
-            return [{
-                'id': _id,
-                'text': details['name'],
-                'selected': app_build_profile_id == _id
-            } for _id, details in app_build_profiles.items()]
-
-    @property
-    def page_context(self):
-        apps_names = {}
-        build_profiles_per_app = {}
-        for app in get_brief_apps_in_domain(self.domain, include_remote=True):
-            apps_names[app.id] = app.name
-            build_profiles_per_app[app.id] = app.build_profiles
-        query = LatestEnabledBuildProfiles.objects
-        app_id = self.request.GET.get('app_id')
-        if app_id:
-            query = query.filter(app_id=app_id)
-        else:
-            query = query.filter(app_id__in=apps_names.keys())
-        version = self.request.GET.get('version')
-        if version:
-            query = query.filter(version=version)
-        app_build_profile_id = self.request.GET.get('app_build_profile_id')
-        if app_build_profile_id:
-            query = query.filter(build_profile_id=app_build_profile_id)
-        status = self.request.GET.get('status')
-        if status:
-            if status == 'active':
-                query = query.filter(active=True)
-            elif status == 'inactive':
-                query = query.filter(active=False)
-        app_releases_by_app_profile = [release.to_json(apps_names) for release in query.order_by('-version')]
-        return {
-            'creation_form': self.creation_form,
-            'search_form': SearchManageReleasesByAppProfileForm(self.request, self.domain),
-            'app_releases_by_app_profile': app_releases_by_app_profile,
-            'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'initial_app_build_profile_details': self._get_initial_app_build_profile_details(
-                build_profiles_per_app, app_id, app_build_profile_id),
-            'build_profiles_per_app': build_profiles_per_app,
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.creation_form.is_valid():
-            error_messages, success_messages = self.creation_form.save()
-            for success_message in success_messages:
-                messages.success(request, success_message)
-            for error_message in error_messages:
-                messages.error(request, error_message)
-            if not error_messages:
-                return redirect(self.urlname, self.domain)
-        return self.get(request, *args, **kwargs)
-
-
 @require_can_edit_apps
 @require_POST
 def deactivate_release_restriction(request, domain, restriction_id):
@@ -204,15 +120,7 @@ def _update_release_restriction(request, domain, restriction_id, active):
 @require_can_edit_apps
 @require_POST
 def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
-    if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(request):
-        return HttpResponseForbidden()
-    release = LatestEnabledBuildProfiles.objects.get(id=restriction_id)
-    if not release:
-        return HttpResponseBadRequest()
-    if request.POST.get('active') == 'false':
-        return _update_release_restriction_by_app_profile(release, restriction_id, active=False)
-    elif request.POST.get('active') == 'true':
-        return _update_release_restriction_by_app_profile(release, restriction_id, active=True)
+    return HttpResponseForbidden()
 
 
 def _update_release_restriction_by_app_profile(release, restriction_id, active):

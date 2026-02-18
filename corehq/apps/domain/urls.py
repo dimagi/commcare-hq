@@ -54,7 +54,6 @@ from corehq.apps.domain.views.internal import (
     toggle_diff,
 )
 from corehq.apps.domain.views.releases import (
-    ManageReleasesByAppProfile,
     ManageReleasesByLocation,
     activate_release_restriction,
     deactivate_release_restriction,
@@ -221,8 +220,6 @@ domain_settings = [
         name=RecoveryMeasuresHistory.urlname),
     url(r'^manage_releases_by_location/$', ManageReleasesByLocation.as_view(),
         name=ManageReleasesByLocation.urlname),
-    url(r'^manage_releases_by_app_profile/$', ManageReleasesByAppProfile.as_view(),
-        name=ManageReleasesByAppProfile.urlname),
     url(r'^deactivate_release_restriction/(?P<restriction_id>[\w-]+)/$', deactivate_release_restriction,
         name='deactivate_release_restriction'),
     url(r'^activate_release_restriction/(?P<restriction_id>[\w-]+)/$', activate_release_restriction,
