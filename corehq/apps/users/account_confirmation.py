@@ -11,6 +11,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language_for_sms,
 )
 from corehq.apps.registration.utils import project_logo_emails_context
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -72,5 +73,5 @@ def _get_account_confirmation_template_params(commcare_user, message_token, url_
         'username': commcare_user.raw_username,
         'url': url,
         'url_prefix': get_static_url_prefix(),
-        'hq_name': 'CommCare HQ',
+        'hq_name': commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME'],
     }
