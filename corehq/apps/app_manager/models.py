@@ -6324,7 +6324,7 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    def get_latest_app_version(self, build_profile_id):
+    def get_latest_app_version(self):
         self.app  # noqa validate app
         if self.app_prompt == "off":
             return {}
@@ -6341,20 +6341,18 @@ class GlobalAppConfig(models.Model):
                     return {"value": version, "force": force}
 
     @classmethod
-    @quickcache(['domain', 'app_id', 'build_profile_id'])
-    def get_latest_version_info(cls, domain, app_id, build_profile_id):
+    @quickcache(['domain', 'app_id'])
+    def get_latest_version_info(cls, domain, app_id):
         config = GlobalAppConfig.by_app_id(domain, app_id)
         return {
             "latest_apk_version": config.get_latest_apk_version(),
-            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
+            "latest_ccz_version": config.get_latest_app_version(),
         }
 
     def clear_version_caches(self):
-        build_profile_ids = [''] + list(self.app.build_profiles.keys())
-        for build_profile_id in build_profile_ids:
-            GlobalAppConfig.get_latest_version_info.clear(
-                GlobalAppConfig, self.domain, self.app_id, build_profile_id
-            )
+        GlobalAppConfig.get_latest_version_info.clear(
+            GlobalAppConfig, self.domain, self.app_id
+        )
 
 
 class AppReleaseByLocation(models.Model):
