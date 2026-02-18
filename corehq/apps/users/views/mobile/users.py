@@ -729,8 +729,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def two_stage_user_confirmation(self):
-        return (domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
-                or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain))
+        return domain_has_privilege(self.domain, privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION)
 
     @property
     def page_context(self):

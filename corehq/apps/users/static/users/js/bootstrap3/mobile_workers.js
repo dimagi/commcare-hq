@@ -179,32 +179,6 @@ var userModel = function (options) {
         });
     };
 
-    self.sendConfirmationSMS = function () {
-        var urlName = 'send_confirmation_sms';
-        var $modal = $('#confirm_' + self.user_id());
-
-        $modal.find(".btn").addSpinnerToButton();
-        $.ajax({
-            method: 'POST',
-            url: initialPageData.reverse(urlName, self.user_id()),
-            success: function (data) {
-                $modal.modal('hide');
-                if (data.success) {
-                    self.action_error('');
-                    self.confirmation_sent_at(new Date());
-                } else {
-                    self.action_error(data.error);
-                }
-
-            },
-            error: function () {
-                $modal.modal('hide');
-                $modal.find(".btn").removeSpinnerFromButton();
-                self.action_error(gettext("Issue communicating with server. Try again."));
-            },
-        });
-    };
-
     return self;
 };
 
