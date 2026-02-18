@@ -378,7 +378,6 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
-    'corehq.apps.prototype',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.motech',
