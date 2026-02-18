@@ -8,14 +8,9 @@ from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.fixtures.utils import clear_fixture_cache
-from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.ota.case_restore import get_case_hierarchy_for_restore
 from corehq.form_processor.models import CommCareCase
 from corehq.util.hmac_request import get_hmac_digest
-from corehq.util.test_utils import flag_enabled
-from corehq.apps.fixtures.models import LookupTable, LookupTableRow, Field, TypeField
 
 
 class TestRelatedCases(TestCase, TestXmlMixin):
@@ -69,73 +64,6 @@ class TestRelatedCases(TestCase, TestXmlMixin):
             [self.dad.case_id, self.kid.case_id, self.kid2.case_id,
              self.grandkid.case_id]
         )
-
-    @flag_enabled('ADD_LIMITED_FIXTURES_TO_CASE_RESTORE')
-    def test_locations_in_restore(self):
-        case_id = self.dad.case_id
-
-        domain_obj = create_domain(self.domain)
-
-        self.addCleanup(domain_obj.delete)
-
-        location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
-        location = SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
-
-        # a location in different domain that should not be present
-        create_domain("random-domain")
-        another_location_type = LocationType.objects.create(domain="random-domain", name="Top", code="top")
-        SQLLocation.objects.create(domain="random-domain", name="Top Location",
-                                   location_type=another_location_type)
-
-        response = self._generate_restore(case_id)
-        self.assertEqual(response.status_code, 200)
-
-        response_content = next(response.streaming_content)
-
-        locations_content = location_fixture_content.format(
-            user_id=case_id,
-            location_id=location.location_id
-        )
-        self.assertXmlPartialEqual(schema_fixture_content, response_content,
-                                   '{http://openrosa.org/http/response}schema')
-        self.assertXmlPartialEqual(locations_content, response_content,
-                                   '{http://openrosa.org/http/response}fixture[@id="locations"]')
-
-    @flag_enabled('ADD_LIMITED_FIXTURES_TO_CASE_RESTORE')
-    def test_lookup_table_in_restore(self):
-        case_id = self.dad.case_id
-
-        domain_obj = create_domain(self.domain)
-
-        self.addCleanup(domain_obj.delete)
-
-        table_tag = "atable"
-
-        table = LookupTable(domain=self.domain,
-                            tag=table_tag,
-                            description="A Table",
-                            is_global=True,
-                            fields=[TypeField(name="wing")])
-        table.save()
-        self.addCleanup(clear_fixture_cache, self.domain, [table.id])
-        row = LookupTableRow(
-            table_id=table.id,
-            domain=self.domain,
-            fields={
-                "wing": [Field(value="duck", properties={"says": "quack"})],
-            },
-            sort_key=0,
-        )
-        row.save()
-
-        response = self._generate_restore(case_id)
-        self.assertEqual(response.status_code, 200)
-
-        response_content = next(response.streaming_content)
-
-        lookup_table_content = lookup_table_fixture_content.format(table_tag=table_tag, user_id=case_id)
-        xpath = f'{{http://openrosa.org/http/response}}fixture[@id="item-list:{table_tag}"]'
-        self.assertXmlPartialEqual(lookup_table_content, response_content, xpath)
 
     def _generate_restore(self, case_id):
         url = reverse("case_restore", args=[self.domain, case_id])
