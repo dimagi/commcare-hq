@@ -683,37 +683,6 @@ class TestFixtureUpload(TestCase):
         self.assertNotEqual(new_uid, bad_uid)
         return result
 
-    def test_error_on_non_global_table(self):
-        data = [
-            ('types', [('N', 'things', 'no', 'name', 'yes')]),
-            ('things', [(None, 'N', 'apple')]),
-        ]
-        workbook = self.get_workbook_from_data(self.headers, data)
-        result = self.upload(workbook, skip_orm=True)
-        self.assertEqual(result.errors, ["type things is not defined as global"])
-        self.assertIsNone(self.get_table())
-
-    def test_ownerships_ignored_on_skip_orm(self):
-        user = CommCareUser.create(
-            self.domain, f"user@{self.domain}.commcarehq.org", "pass", None, None)
-        self.addCleanup(user.delete, self.domain, deleted_by=None)
-        region = LocationType(domain=self.domain, name="region", code="region")
-        region.save()
-        SQLLocation(domain=self.domain, name="loc", location_type=region).save()
-
-        headers = TestLookupTableOwnershipUpload.headers
-        data = [
-            ('types', [('N', 'things', 'yes', 'name')]),
-            ('things', [(None, 'N', 'apple', 'user', None, 'loc')]),
-        ]
-        workbook = self.get_workbook_from_data(headers, data)
-        result = self.upload(workbook, skip_orm=True)
-        apple_id, = [r.id for r in self.get_rows(None)]
-
-        ownerships = list(LookupTableRowOwner.objects.filter(domain=self.domain, row_id=apple_id))
-        self.assertFalse(ownerships)
-        self.assertFalse(result.errors)
-
     def test_sql_transaction(self):
         @contextmanager
         def checked_tx():

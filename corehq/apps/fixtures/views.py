@@ -62,7 +62,6 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import HqPermissions
 from corehq.sql_db.jsonops import JsonDelete, JsonGet, JsonSet
-from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
 
@@ -324,7 +323,6 @@ class UploadItemLists(TemplateView):
             self.domain,
             file_ref.download_id,
             replace,
-            SKIP_ORM_FIXTURE_UPLOAD.enabled(self.domain),
         )
         file_ref.set_task(task)
         return HttpResponseRedirect(
@@ -468,7 +466,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
 
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace, is_async, skip_orm, email = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async, email = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', str(e))
 
@@ -486,7 +484,6 @@ def _upload_fixture_api(request, domain):
                     domain,
                     download_id,
                     replace,
-                    skip_orm,
                     user_email=email
                 )
                 file_ref.set_task(task)
@@ -558,11 +555,7 @@ def _get_fixture_upload_args_from_request(request, domain):
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
-    skip_orm = False
-    if request.POST.get('skip_orm') == 'true' and SKIP_ORM_FIXTURE_UPLOAD.enabled(domain):
-        skip_orm = True
-
-    return _excel_upload_file(upload_file), replace, is_async, skip_orm, user_email
+    return _excel_upload_file(upload_file), replace, is_async, user_email
 
 
 @login_and_domain_required
