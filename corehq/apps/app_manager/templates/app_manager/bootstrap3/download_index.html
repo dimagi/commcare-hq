@@ -9,9 +9,6 @@
   {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
 {% endblock page_title %}
 
-{% block app_profiles %}
-{% endblock %}
-
 {% block mm_block %}
   {% initial_page_data 'app_id' app.id %}
   {% initial_page_data 'build_profiles' build_profiles %}
