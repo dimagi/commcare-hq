@@ -38,7 +38,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
-from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.test_utils import flag_enabled
 
@@ -318,10 +318,6 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=index_id,
-                                      referenced_type=PARENT_TYPE,
-                                      referenced_id=parent_id)
-
         self._testUpdate(self.device.last_sync.log.get_id, {parent_id, child_id})
 
         # close the mother case
@@ -350,9 +346,6 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=index_id,
-                                      referenced_type=PARENT_TYPE,
-                                      referenced_id=parent_id)
         # should be there
         self._testUpdate(self.device.last_sync.log.get_id, {parent_id, child_id})
 
@@ -711,15 +704,6 @@ class SyncTokenUpdateTest(BaseSyncTest):
             )],
             attrs={'create': True}
         )
-        parent_ref = CommCareCaseIndex(
-            identifier=PARENT_TYPE,
-            referenced_type=PARENT_TYPE,
-            referenced_id=parent.case_id)
-        grandparent_ref = CommCareCaseIndex(
-            identifier=PARENT_TYPE,
-            referenced_type=PARENT_TYPE,
-            referenced_id=grandparent.case_id)
-
         self.device.post_changes(child)
 
         self._testUpdate(
@@ -991,49 +975,49 @@ class ExtensionCasesSyncTokenUpdates(BaseSyncTest):
         """
         case_type = 'case'
 
-        E1 = CaseStructure(
+        extension_one = CaseStructure(
             case_id='extension_1',
             attrs={'create': True, 'owner_id': '-'},
         )
 
-        C = CaseStructure(
+        child = CaseStructure(
             case_id='child',
             attrs={'create': True, 'owner_id': '-'},
             indices=[CaseIndex(
-                E1,
+                extension_one,
                 identifier='extension_1',
                 relationship='extension',
                 related_type=case_type,
             )]
         )
 
-        O = CaseStructure(
+        parent = CaseStructure(
             case_id='owned',
             attrs={'create': True},
             indices=[CaseIndex(
-                C,
+                child,
                 identifier='child',
                 relationship='child',
                 related_type=case_type,
             )]
         )
-        E2 = CaseStructure(
+        extension_two = CaseStructure(
             case_id='extension_2',
             attrs={'create': True, 'owner_id': '-'},
             indices=[CaseIndex(
-                C,
+                child,
                 identifier='extension',
                 relationship='extension',
                 related_type=case_type,
             )]
         )
-        self.device.post_changes([O, E2])
+        self.device.post_changes([parent, extension_two])
         sync_log = self.device.last_sync.get_log()
 
-        expected_dependent_ids = set([C.case_id, E1.case_id, E2.case_id])
+        expected_dependent_ids = set([child.case_id, extension_one.case_id, extension_two.case_id])
         self.assertEqual(sync_log.dependent_case_ids_on_phone, expected_dependent_ids)
 
-        all_ids = set([E1.case_id, E2.case_id, O.case_id, C.case_id])
+        all_ids = set([extension_one.case_id, extension_two.case_id, parent.case_id, child.case_id])
         self.assertEqual(sync_log.case_ids_on_phone, all_ids)
 
 
@@ -1613,10 +1597,6 @@ class MultiUserSyncTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
-                                      referenced_type=PARENT_TYPE,
-                                      referenced_id=parent_id)
-
         # sanity check that we are in the right state
         sync_log = self.guy.last_sync.get_log()
         self._testUpdate(sync_log._id, {child_id}, {parent_id})
