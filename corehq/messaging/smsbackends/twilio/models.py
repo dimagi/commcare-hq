@@ -17,9 +17,6 @@ TO_FROM_BLACKLIST_ERROR_CODE = 21610
 REGION_PERMISSION_ERROR_CODE = 21408
 MESSAGE_BODY_REQUIRED_ERROR_CODE = 21602
 
-WHATSAPP_PREFIX = "whatsapp:"
-WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
-
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
@@ -65,16 +62,6 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
     @classmethod
     def get_opt_out_keywords(cls):
         return ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']
-
-    @classmethod
-    def convert_to_whatsapp(cls, number):
-        if number.startswith(WHATSAPP_PREFIX):
-            return number
-        return f"{WHATSAPP_PREFIX}{number}"
-
-    @classmethod
-    def convert_from_whatsapp(cls, number):
-        return number.replace(WHATSAPP_PREFIX, "")
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         if not orig_phone_number:
