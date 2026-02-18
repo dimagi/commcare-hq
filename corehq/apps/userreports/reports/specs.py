@@ -31,7 +31,6 @@ from dimagi.ext.jsonobject import (
     BooleanProperty,
     DictProperty,
     IntegerProperty,
-    JsonArray,
     JsonObject,
     ListProperty,
     ObjectProperty,
@@ -199,9 +198,9 @@ class FieldColumn(ReportColumn):
 
     def _use_terms_aggregation_for_max_min(self, data_source_config):
         return (
-            self.aggregation in ['max', 'min'] and
-            self._column_data_type(data_source_config) and
-            self._column_data_type(data_source_config) not in ['integer', 'decimal']
+            self.aggregation in ['max', 'min']
+            and self._column_data_type(data_source_config)
+            and self._column_data_type(data_source_config) not in ['integer', 'decimal']
         )
 
     def get_query_column_ids(self):
@@ -459,7 +458,8 @@ class PercentageColumn(ReportColumn):
         def _pct(data):
             return '{0:.0f}%'.format(_raw_pct(data))
 
-        _fraction = lambda data: '{num}/{denom}'.format(**data)
+        def _fraction(data):
+            return '{num}/{denom}'.format(**data)
 
         return {
             'percent': _pct,
@@ -502,6 +502,7 @@ class ArrayAggLastValueReportColumn(ReportColumn):
                 sortable=False,
             )
         ])
+
 
 def _add_column_id_if_missing(obj):
     if obj.get('column_id') is None:
