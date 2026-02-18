@@ -161,15 +161,15 @@ class ConnectionSettings(models.Model):
 
     @property
     def plaintext_custom_headers(self):
-        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
-            return {}
-
         def decrypt(value):
             if value.startswith(f'${ALGO_AES_CBC}$'):
                 ciphertext = value.split('$', 2)[2]
                 return b64_aes_cbc_decrypt(ciphertext)
             return value
-        return {k: decrypt(v) for k, v in self.custom_headers.items()}
+
+        if MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain) and self.custom_headers:
+            return {k: decrypt(v) for k, v in self.custom_headers.items()}
+        return {}
 
     def set_custom_headers(self, headers):
         """
@@ -192,9 +192,9 @@ class ConnectionSettings(models.Model):
         }
 
     def get_custom_headers_display(self):
-        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
-            return {}
-        return {k: PASSWORD_PLACEHOLDER for k, v in self.custom_headers.items()}
+        if MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain) and self.custom_headers:
+            return {k: PASSWORD_PLACEHOLDER for k, v in self.custom_headers.items()}
+        return {}
 
     @property
     def last_token(self) -> Optional[dict]:
