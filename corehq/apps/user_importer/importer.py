@@ -2,58 +2,54 @@ import copy
 import logging
 from collections import defaultdict
 from datetime import datetime
-from corehq.util.soft_assert.api import soft_assert
 
-from memoized import memoized
+from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS
-
-from corehq.apps.analytics.tasks import record_google_analytics_event
-from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import HqPermissions
-from corehq.apps.users.util import generate_mobile_username
-from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
+    ResourceConflict,
     ResourceNotFound,
-    ResourceConflict
 )
+from memoized import memoized
 
-from django.core.exceptions import ValidationError
-from corehq import privileges
-from corehq import toggles
+from dimagi.utils.logging import notify_error, notify_exception
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-)
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import get_tableau_group_ids_by_names
+from corehq.apps.sms.util import validate_phone_number
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.helpers import (
-    spec_value_to_boolean_or_none,
-)
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.model_log import InviteModelAction
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
+    HqPermissions,
     Invitation,
+    InvitationStatus,
     UserRole,
-    InvitationStatus
 )
-from corehq.apps.users.model_log import InviteModelAction
-from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, INVITATION_CHANGE_VIA_BULK_IMPORTER
-from corehq.apps.sms.util import validate_phone_number
-
-from dimagi.utils.logging import notify_error
+from corehq.apps.users.util import generate_mobile_username
+from corehq.const import (
+    INVITATION_CHANGE_VIA_BULK_IMPORTER,
+    USER_CHANGE_VIA_BULK_IMPORTER,
+)
+from corehq.util.soft_assert.api import soft_assert
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -1018,13 +1014,17 @@ class DomainInfo:
     @property
     @memoized
     def profiles_by_name(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            UserFieldsView,
+        )
         return CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
 
     @property
     @memoized
     def validators(self):
-        from corehq.apps.user_importer.validation import get_user_import_validators
+        from corehq.apps.user_importer.validation import (
+            get_user_import_validators,
+        )
         roles_by_name = list(self.roles_by_name)
         domain_user_specs = [
             spec

@@ -4,29 +4,33 @@ from typing import NamedTuple, Optional
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.utils.translation import gettext as _
+
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
-from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import (
+    user_can_access_other_user,
+    user_can_change_locations,
+)
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import user_can_access_other_user, user_can_change_locations
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
-from corehq.apps.users.validation import validate_assigned_locations_allow_users
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.users.views.utils import (
-    user_can_access_invite
+from corehq.apps.users.validation import (
+    validate_assigned_locations_allow_users,
 )
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.apps.users.views.utils import user_can_access_invite
 from corehq.util.workbook_json.excel import (
     StringTypeRequiredError,
     enforce_string_type,
@@ -282,10 +286,14 @@ class CustomDataValidator(ImportValidator):
     def __init__(self, domain, all_user_profiles_by_name, is_web_user_import):
         super().__init__(domain)
         if is_web_user_import:
-            from corehq.apps.users.views.mobile.custom_data_fields import WebUserFieldsView
+            from corehq.apps.users.views.mobile.custom_data_fields import (
+                WebUserFieldsView,
+            )
             self.custom_data_validator = WebUserFieldsView.get_validator(domain)
         else:
-            from corehq.apps.users.views.mobile.custom_data_fields import CommcareUserFieldsView
+            from corehq.apps.users.views.mobile.custom_data_fields import (
+                CommcareUserFieldsView,
+            )
             self.custom_data_validator = CommcareUserFieldsView.get_validator(domain)
         self.all_user_profiles_by_name = all_user_profiles_by_name
 
