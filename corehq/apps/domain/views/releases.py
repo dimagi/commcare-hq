@@ -115,24 +115,3 @@ def _update_release_restriction(request, domain, restriction_id, active):
                                if release.deactivated_on else None),
         }
     return JsonResponse(data=response_content)
-
-
-@require_can_edit_apps
-@require_POST
-def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
-    return HttpResponseForbidden()
-
-
-def _update_release_restriction_by_app_profile(release, restriction_id, active):
-    try:
-        release.activate() if active else release.deactivate()
-    except ValidationError as e:
-        response_content = {
-            'message': ','.join(e.messages)
-        }
-    else:
-        response_content = {
-            'id': restriction_id,
-            'success': True,
-        }
-    return JsonResponse(data=response_content)
