@@ -9,6 +9,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter, PhoneNumberFilter
@@ -18,6 +19,7 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationReportView,
     KycVerificationTableView,
 )
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.permissions import KYC_REPORT_PERMISSION
@@ -502,7 +504,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                 }
 
 
-@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class TestKycFilters(BaseTestKycView):
     urlname = KycVerificationTableView.urlname
 
@@ -524,7 +526,8 @@ class TestKycFilters(BaseTestKycView):
             user_data={
                 'first_name': 'John',
                 'phone_number': '123',
-                'kyc_verification_status': KycVerificationStatus.PASSED
+                'kyc_verification_status': KycVerificationStatus.PASSED,
+                'kyc_verified_by': cls.username,
             }
         )
         cls.user_pending = CommCareUser.create(
@@ -542,15 +545,19 @@ class TestKycFilters(BaseTestKycView):
         cls.case_verified = _create_case(
             factory,
             name='case_verified',
+            case_type='other-case',
+            owner_id=cls.webuser.user_id,
             data={
                 'first_name': 'Alice',
                 'phone_number': '789',
-                'kyc_verification_status': KycVerificationStatus.PASSED
+                'kyc_verification_status': KycVerificationStatus.PASSED,
+                'kyc_verified_by': cls.username,
             }
         )
         cls.case_pending = _create_case(
             factory,
             name='case_pending',
+            case_type='other-case',
             data={'first_name': 'Bob', 'phone_number': '000'}
         )
         # User case
@@ -563,6 +570,7 @@ class TestKycFilters(BaseTestKycView):
                 'phone_number': '111',
                 'kyc_verification_status': KycVerificationStatus.PASSED,
                 'hq_user_id': uuid.uuid4().hex,
+                'kyc_verified_by': cls.username,
             },
         )
         cls.usercase_pending = _create_case(
@@ -696,10 +704,64 @@ class TestKycFilters(BaseTestKycView):
         row = table_data.data[0]
         assert row.serialized_data['id'] == self.usercase_pending.external_id
 
+    @flag_enabled('KYC_VERIFICATION')
+    def test_case_list_filter_other_case_type_filters_by_owner(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other-case',
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
 
-def _create_case(factory, name, data, case_type='other-case'):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.endpoint, {EMWF.slug: f"u__{self.webuser.user_id}"})
+        assert response.status_code == 200
+
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        assert table_data.data[0].serialized_data['id'] == self.case_verified.case_id
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_verified_by_custom_user_data(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.endpoint, {'verified_by': self.username})
+
+        assert response.status_code == 200
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        assert table_data.data[0].serialized_data['id'] == self.user_verified.user_id
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_verified_by_other_case_type(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other-case',
+            api_field_to_user_data_map=self.kyc_mapping.copy(),
+        )
+        self.addCleanup(kyc_config.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.endpoint, {'verified_by': self.username})
+
+        assert response.status_code == 200
+        table_data = response.context['table'].data
+        assert len(table_data) == 1
+        assert table_data.data[0].serialized_data['id'] == self.case_verified.case_id
+
+
+def _create_case(factory, name, data, case_type='other-case', owner_id=None):
     return factory.create_case(
         case_name=name,
         case_type=case_type,
+        owner_id=owner_id,
         update=data
     )
