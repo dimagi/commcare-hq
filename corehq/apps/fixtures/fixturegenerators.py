@@ -95,11 +95,6 @@ def item_lists_by_app(app, module):
     return lookup_lists + ret
 
 
-def get_global_items_by_domain(domain, case_id):
-    global_types = LookupTable.objects.by_domain(domain).filter(is_global=True)
-    return ItemListsProvider().get_global_items(domain, global_types, case_id, False)
-
-
 class ItemListsProvider(FixtureProvider):
     id = 'item-list'
 

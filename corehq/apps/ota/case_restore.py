@@ -6,14 +6,8 @@ from casexml.apps.phone.xml import (
     get_case_element,
     get_registration_element_for_case,
 )
-from corehq.apps.fixtures.fixturegenerators import get_global_items_by_domain
-from corehq.apps.locations.fixtures import (
-    FlatLocationSerializer
-)
-from corehq.apps.locations.models import get_domain_locations
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
-from corehq.toggles import ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
 
 
 def get_case_hierarchy_for_restore(case):
@@ -35,18 +29,6 @@ def get_case_restore_response(domain, case_id):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))
-        if ADD_LIMITED_FIXTURES_TO_CASE_RESTORE.enabled(domain):
-            _add_limited_fixtures(domain, case_id, content)
         payload = content.get_fileobj()
 
     return RestoreResponse(payload).get_http_response()
-
-
-def _add_limited_fixtures(domain, case_id, content):
-    serializer = FlatLocationSerializer()
-    locations = get_domain_locations(domain)
-    nodes = serializer.get_xml_nodes(domain, 'locations', case_id, locations)
-    content.extend(nodes)
-    lookuptable = get_global_items_by_domain(domain, case_id)
-    if lookuptable:
-        content.extend(lookuptable)
