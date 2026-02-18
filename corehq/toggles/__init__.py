@@ -1022,18 +1022,18 @@ GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
-GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
-    "geocoder_autoload_user_location",
-    "USH: Auto-load the geocoder widget with the user's current location",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
-    geocoding query using the user's reported location The result will be used to populate the search field
-    of the geocoder widget.
-    """,
-    parent_toggles=[USH_CASE_CLAIM_UPDATES],
-)
+# GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
+#     "geocoder_autoload_user_location",
+#     "USH: Auto-load the geocoder widget with the user's current location",
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description="""
+#     When enabled, and if the user grants permissions, the geocoder widget will automatically do a reverse
+#     geocoding query using the user's reported location The result will be used to populate the search field
+#     of the geocoder widget.
+#     """,
+#     parent_toggles=[USH_CASE_CLAIM_UPDATES],
+# )
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
     "geocoder_user_proximity",
