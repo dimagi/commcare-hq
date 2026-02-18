@@ -1,7 +1,6 @@
 import DOMPurify from "dompurify";
 import markdowner from "markdown-it/dist/markdown-it";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import HMACCallout from "integration/js/hmac_callout";
 import toggles from "hqwebapp/js/toggles";
 
 
@@ -42,6 +41,30 @@ function addDelegatedClickDispatch(linkTarget, linkDestination) {
     }, true);
 }
 
+function postFormFromLink(anchor, target, isInternal) {
+    const url = new URL(anchor.href);
+    const dest = url.origin + url.pathname;
+    const data = {};
+    if (isInternal) {
+        data['csrfmiddlewaretoken'] = $("#csrfTokenContainer").val();
+    }
+    url.searchParams.forEach(function (value, key) { data[key] = value; });
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = dest;
+    form.target = target;
+    for (const key in data) {
+        const element = document.createElement("input");
+        element.name = key;
+        element.value = data[key];
+        form.appendChild(element);
+    }
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
 function getChainedRenderers() {
     let renderers = [];
 
@@ -59,22 +82,7 @@ function getChainedRenderers() {
         ));
         addDelegatedClickDispatch('gaen_otp',
             function (element) {
-                HMACCallout.unsignedCallout(element, 'otp_view', true);
-            });
-    }
-
-    if (initialPageData.get('hmac_root_url')) {
-        renderers.push(chainedRenderer(
-            function (href) {
-                return href.startsWith(initialPageData.get('hmac_root_url'));
-            },
-            function () {
-            },
-            "hmac_callout",
-        ));
-        addDelegatedClickDispatch('hmac_callout',
-            function (element) {
-                HMACCallout.signedCallout(element);
+                postFormFromLink(element, 'otp_view', true);
             });
     }
 

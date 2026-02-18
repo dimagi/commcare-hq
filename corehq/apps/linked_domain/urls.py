@@ -16,7 +16,6 @@ from corehq.apps.linked_domain.views import (
     toggles_and_previews,
     user_roles,
     otp_settings,
-    hmac_callout_settings,
     tableau_server_and_visualizations,
 )
 
@@ -40,7 +39,6 @@ urlpatterns = [
     url(r'^service/$', DomainLinkRMIView.as_view(), name=DomainLinkRMIView.urlname),
     url(r'^user_roles/$', user_roles, name='user_roles'),
     url(r'^otp_settings/$', otp_settings, name='otp_settings'),
-    url(r'^hmac_callout_settings/$', hmac_callout_settings, name='hmac_callout_settings'),
     url(r'^tableau_server_and_visualizatons/$', tableau_server_and_visualizations,
         name='tableau_server_and_visualizations'),
 ]
