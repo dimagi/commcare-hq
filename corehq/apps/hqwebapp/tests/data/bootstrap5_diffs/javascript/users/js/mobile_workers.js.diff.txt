@@ -13,7 +13,7 @@
  import "eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min";
  
  // These are used as css classes, so the values of success/warning/error need to be what they are.
-@@ -139,7 +139,7 @@
+@@ -134,7 +134,7 @@
              url: initialPageData.reverse(urlName, userIdOrName),
              data: bodyData,
              success: function (data) {
@@ -22,7 +22,7 @@
                  if (data.success) {
                      self.action_error('');
                  } else {
-@@ -147,7 +147,7 @@
+@@ -142,7 +142,7 @@
                  }
              },
              error: function () {
@@ -31,7 +31,7 @@
                  self.action_error(gettext("Issue communicating with server. Try again."));
              },
          });
-@@ -162,7 +162,7 @@
+@@ -157,7 +157,7 @@
              url: initialPageData.reverse(urlName, self.user_id()),
              success: function (data) {
                  $modal.find(".btn").enableButton();
@@ -40,7 +40,7 @@
                  if (data.success) {
                      self.action_error('');
                      self.confirmation_sent_at(new Date());
-@@ -173,7 +173,7 @@
+@@ -168,7 +168,7 @@
              },
              error: function () {
                  $modal.find(".btn").enableButton();
@@ -49,7 +49,7 @@
                  self.action_error(gettext("Issue communicating with server. Try again."));
              },
          });
-@@ -537,7 +537,7 @@
+@@ -484,7 +484,7 @@
          }
  
          if (options.show_deactivate_after_date) {
@@ -58,7 +58,7 @@
                  format: 'MM-y',
              });
          }
-@@ -589,7 +589,7 @@
+@@ -533,7 +533,7 @@
      });
  
      self.submitNewUser = function () {
