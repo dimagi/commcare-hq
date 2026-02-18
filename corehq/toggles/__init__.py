@@ -2501,7 +2501,7 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
 LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     'location_restricted_scheduled_reports',
     'Allows access to report scheduling views for location restricted users',
-    TAG_DEPRECATED,
+    tag=TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'
