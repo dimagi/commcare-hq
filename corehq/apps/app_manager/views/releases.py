@@ -60,7 +60,6 @@ from corehq.apps.app_manager.models import (
     ApplicationReleaseLog,
     AppReleaseByLocation,
     BuildProfile,
-    LatestEnabledBuildProfiles,
     SavedAppBuild,
 )
 from corehq.apps.app_manager.tasks import (
@@ -263,8 +262,7 @@ def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
         if (
-            LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists()
-            or AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
+            AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
         ):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
