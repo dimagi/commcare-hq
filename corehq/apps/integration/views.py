@@ -22,6 +22,8 @@ from corehq.apps.integration.forms import (
     GaenOtpServerSettingsForm,
     SimprintsIntegrationForm,
 )
+from corehq.apps.integration.models import GaenOtpServerSettings
+from corehq.apps.integration.util import get_gaen_otp_server_settings
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
