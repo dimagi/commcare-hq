@@ -235,14 +235,16 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
 
     @hq_hx_action('post')
     def search(self, request, *args, **kwargs):
+        debug_context, results = self._get_results(self.request.POST)
         header = ['case_id', 'name', 'owner_id']
         rows = [
             [case_.case_id, case_.name, case_.owner_id]
-            for case_ in self._get_results(self.request.POST)
+            for case_ in results
         ]
         return render(request, 'case_search/case_search_endpoint_results.html', {
             'header': header,
             'rows': rows,
+            'debug_context': debug_context,
         })
 
     def _get_results(self, query_dict):
@@ -252,18 +254,27 @@ class CaseSearchEndpoint(HqHtmxActionMixin, BaseProjectDataView):
             raise HtmxResponseException("Must provide real username")
 
         renderer = self._get_renderer(user, endpoint_params)
-        endpoint_filters = [
-            SearchCriteria('_xpath_query', renderer.render(expr))
-            for expr in query_dict.getlist('filter_expr') if expr
-        ]
+        renderer_params = {  # For debugging
+            f"{k}.{k2}": v2
+            for k, v in renderer.context_params.items()
+            for k2, v2 in v.dot_paths().items()
+        }
+        rendered_filters = [renderer.render(expr)
+                            for expr in query_dict.getlist('filter_expr') if expr]
+        endpoint_filters = [SearchCriteria('_xpath_query', rendered)
+                            for rendered in rendered_filters]
         try:
-            return get_case_search_results(
+            results = get_case_search_results(
                 self.domain,
                 query_dict['case_type'],
                 search_criteria + endpoint_filters,
             )
         except CaseSearchUserError as e:
             raise HtmxResponseException(str(e))
+        return {
+            'filters': rendered_filters,
+            'params': renderer_params,
+        }, results
 
     @staticmethod
     def _get_params(query_dict):
