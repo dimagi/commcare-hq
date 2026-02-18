@@ -4,22 +4,25 @@
 
 {% block css %}
   {% compress css %}
-    <link type="text/scss"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'preview_app/scss/preview_app.scss' %}"/>
-      <link type="text/css"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'select2/dist/css/select2.min.css' %}" />
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'preview_app/scss/preview_app.scss' %}"
+    />
+    <link
+      type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'select2/dist/css/select2.min.css' %}"
+    />
   {% endcompress %}
 {% endblock %}
 
 {% block body %}
   {% block csrf_token_block %}
-    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}" />
   {% endblock %}
-
   {% initial_page_data 'allowed_host' request.get_host %}
   {% initial_page_data 'app' app %}
   {% initial_page_data 'daterangepicker-show-clear' 'true' %}
@@ -33,7 +36,6 @@
   {% initial_page_data 'default_geocoder_location' default_geocoder_location %}
   {% initial_page_data 'has_geocoder_privs' has_geocoder_privs %}
   {% initial_page_data 'username' request.user.username %}
-  {% initial_page_data 'dialer_enabled' integrations.dialer_enabled %}
   {% initial_page_data 'gaen_otp_enabled' integrations.gaen_otp_enabled %}
   {% initial_page_data 'hmac_root_url' integrations.hmac_root_url %}
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
@@ -48,7 +50,6 @@
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
   {% registerurl 'report_sentry_error' request.domain %}
-  {% registerurl 'dialer_view' request.domain %}
   {% if integrations.gaen_otp_enabled %}
     {% registerurl 'gaen_otp_view' request.domain %}
   {% endif %}
@@ -56,7 +57,10 @@
   <section id="cases"></section>
   <div id="main-container">
     <div id="formplayer-progress-container"></div>
-    <section id="cloudcare-notifications" class="notifications-container"></section>
+    <section
+      id="cloudcare-notifications"
+      class="notifications-container"
+    ></section>
     <div id="restore-as-region"></div>
     <div id="breadcrumb-region"></div>
     <div class="scrollable-container dragscroll menu-scrollable-container">
@@ -64,16 +68,20 @@
       <small id="version-info" class="m-2"></small>
     </div>
     <div class="scrollable-container dragscroll form-scrollable-container">
-      <section id="webforms" data-bind="
+      <section
+        id="webforms"
+        data-bind="
           template: {
               name: 'form-fullform-ko-template',
               afterRender: afterRender
-          }">
-      </section>
+          }"
+      ></section>
     </div>
     {% if request.couch_user.can_edit_data %}
-      <section data-bind="template: { name: 'instance-viewer-ko-template' }"
-               id="cloudcare-debugger"></section>
+      <section
+        data-bind="template: { name: 'instance-viewer-ko-template' }"
+        id="cloudcare-debugger"
+      ></section>
     {% endif %}
   </div>
 {% endblock %}

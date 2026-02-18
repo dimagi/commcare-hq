@@ -26,7 +26,6 @@ from corehq.apps.data_dictionary.models import (
     CaseProperty
 )
 from corehq.apps.integration.models import (
-    DialerSettings,
     GaenOtpServerSettings,
     HmacCalloutSettings,
 )
@@ -47,7 +46,6 @@ from corehq.apps.linked_domain.const import (
     MODEL_REPORT,
     MODEL_ROLES,
     MODEL_DATA_DICTIONARY,
-    MODEL_DIALER_SETTINGS,
     MODEL_OTP_SETTINGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS,
@@ -67,8 +65,6 @@ from corehq.apps.linked_domain.local_accessors import \
     get_data_dictionary as local_get_data_dictionary
 from corehq.apps.linked_domain.local_accessors import \
     get_tableau_server_and_visualizations as local_get_tableau_server_and_visualizations
-from corehq.apps.linked_domain.local_accessors import \
-    get_dialer_settings as local_get_dialer_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_otp_settings as local_get_otp_settings
 from corehq.apps.linked_domain.local_accessors import \
@@ -91,8 +87,6 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_data_dictionary as remote_get_data_dictionary
 from corehq.apps.linked_domain.remote_accessors import \
     get_tableau_server_and_visualizations as remote_get_tableau_server_and_visualizations
-from corehq.apps.linked_domain.remote_accessors import \
-    get_dialer_settings as remote_get_dialer_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_otp_settings as remote_get_otp_settings
 from corehq.apps.linked_domain.remote_accessors import \
@@ -131,7 +125,6 @@ def update_model_type(domain_link, model_type, model_detail=None, is_pull=False,
         MODEL_CASE_SEARCH: update_case_search_config,
         MODEL_REPORT: update_linked_ucr,
         MODEL_DATA_DICTIONARY: update_data_dictionary,
-        MODEL_DIALER_SETTINGS: update_dialer_settings,
         MODEL_OTP_SETTINGS: update_otp_settings,
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
@@ -644,22 +637,6 @@ def update_tableau_server_and_visualizations(domain_link, is_pull=False, overwri
         vis.view_url = master_vis['view_url']
         vis.title = master_vis['title']
         vis.save()
-
-
-def update_dialer_settings(domain_link, is_pull=False, overwrite=False):
-    if domain_link.is_remote:
-        master_results = remote_get_dialer_settings(domain_link)
-    else:
-        master_results = local_get_dialer_settings(domain_link.master_domain)
-
-    model, created = DialerSettings.objects.get_or_create(domain=domain_link.linked_domain)
-
-    model.domain = domain_link.linked_domain
-    model.aws_instance_id = master_results['aws_instance_id']
-    model.is_enabled = master_results['is_enabled']
-    model.dialer_page_header = master_results['dialer_page_header']
-    model.dialer_page_subheader = master_results['dialer_page_subheader']
-    model.save()
 
 
 def update_otp_settings(domain_link, is_pull=False, overwrite=False):

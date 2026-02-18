@@ -60,7 +60,6 @@ from corehq.apps.linked_domain.local_accessors import (
     get_auto_update_rules,
     get_custom_data_models,
     get_data_dictionary,
-    get_dialer_settings,
     get_enabled_toggles_and_previews,
     get_fixture,
     get_hmac_callout_settings,
@@ -229,12 +228,6 @@ def get_latest_released_app_source(request, domain, app_id):
 @require_access_to_linked_domains
 def data_dictionary(request, domain):
     return JsonResponse(get_data_dictionary(domain))
-
-
-@login_or_api_key
-@require_access_to_linked_domains
-def dialer_settings(request, domain):
-    return JsonResponse(get_dialer_settings(domain))
 
 
 @login_or_api_key

@@ -17,7 +17,7 @@ class TestUpdateHmacCalloutSettings(BaseLinkedDomainTest):
     def tearDown(self):
         self.hmac_setup.delete()
 
-    def test_update_dialer_settings(self):
+    def test_update_hmac_callout_settings(self):
         self.assertEqual({'domain': self.linked_domain,
                           'destination_url': '',
                           'api_key': '',
