@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
+
 from field_audit.models import AuditAction
 
 from dimagi.utils.chunked import chunked
@@ -25,8 +26,9 @@ from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import (
+    estimate_partitioned_row_count,
     get_db_aliases_for_partitioned_query,
-    paginate_query_across_partitioned_databases, estimate_partitioned_row_count,
+    paginate_query_across_partitioned_databases,
 )
 from corehq.util.log import with_progress_bar
 from settings import HQ_ACCOUNT_ROOT
