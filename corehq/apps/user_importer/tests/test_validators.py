@@ -1,47 +1,57 @@
 from datetime import datetime
 from unittest.mock import patch
 
-import pytest
 from django.test import TestCase
+
+import pytest
 from faker import Faker
 from testil import assert_raises
 
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.tests.util import LocationHierarchyTestCase, restrict_user_by_location
-from corehq.apps.reports.models import TableauUser, TableauServer
+from corehq.apps.locations.tests.util import (
+    LocationHierarchyTestCase,
+    restrict_user_by_location,
+)
+from corehq.apps.reports.models import TableauServer, TableauUser
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import SiteCodeToLocationCache
 from corehq.apps.user_importer.validation import (
+    BooleanColumnValidator,
+    CustomDataValidator,
     DuplicateValidator,
     EmailValidator,
     ExistingUserValidator,
     GroupValidator,
-    UsernameLengthValidator,
+    LocationValidator,
     NewUserPasswordValidator,
     ProfileValidator,
-    RoleValidator,
-    UsernameTypeValidator,
     RequiredFieldsValidator,
-    UsernameValidator,
-    BooleanColumnValidator,
-    LocationValidator,
-    _get_invitation_or_editable_user,
-    CustomDataValidator,
-    TableauRoleValidator,
+    RoleValidator,
     TableauGroupsValidator,
+    TableauRoleValidator,
     UserAccessValidator,
+    UsernameLengthValidator,
+    UsernameTypeValidator,
+    UsernameValidator,
+    _get_invitation_or_editable_user,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
+from corehq.apps.users.models import (
+    CommCareUser,
+    HqPermissions,
+    Invitation,
+    WebUser,
+)
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field)
 from corehq.apps.users.views.mobile.custom_data_fields import (
+    CommcareUserFieldsView,
     UserFieldsView,
     WebUserFieldsView,
-    CommcareUserFieldsView,
 )
 from corehq.tests.tools import nottest
 from corehq.util.test_utils import flag_enabled

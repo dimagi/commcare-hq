@@ -1,13 +1,13 @@
 from datetime import date, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 from django.test import SimpleTestCase, TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting.const import (
-    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
     PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
 )
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
@@ -17,10 +17,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.domain.models import (
-    Domain,
-    OperatorCallLimitSettings,
-)
+from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
 
 from .. import forms
 from ..forms import (
