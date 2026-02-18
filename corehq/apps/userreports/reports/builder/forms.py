@@ -42,7 +42,6 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
     ReportMeta,
     get_datasource_config_infer_type,
-    guess_data_source_type,
     RegistryDataSourceConfiguration, RegistryReportConfiguration,
 )
 from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
@@ -1310,7 +1309,6 @@ class ConfigureNewReportBase(forms.Form):
             columns=self._get_report_columns(),
             filters=self._report_filters,
             configured_charts=self._report_charts,
-            data_source_type=guess_data_source_type(data_source_id),
             report_meta=ReportMeta(
                 created_by_builder=True,
                 report_builder_version="2.0",

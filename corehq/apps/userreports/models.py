@@ -7,7 +7,6 @@ from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
 from functools import cached_property
-from uuid import UUID
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -62,7 +61,6 @@ from .app_manager.data_source_meta import (
 from .columns import get_expanded_column_config
 from .const import (
     ALL_EXPRESSION_TYPES,
-    DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
     UCR_NAMED_EXPRESSION,
@@ -83,7 +81,6 @@ from .exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     DuplicateColumnIdError,
-    InvalidDataSourceType,
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
     ValidationError,
@@ -865,7 +862,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     # config_id of the datasource
     config_id = StringProperty(required=True)
     data_source_type = StringProperty(default=DATA_SOURCE_TYPE_STANDARD,
-                                      choices=[DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE])
+                                      choices=[DATA_SOURCE_TYPE_STANDARD])
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
@@ -902,7 +899,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        return get_datasource_config(self.config_id, self.domain, self.data_source_type)[0]
+        return get_datasource_config(self.config_id, self.domain)[0]
 
     @property
     @memoized
@@ -1562,63 +1559,29 @@ class UCRExpression(models.Model):
 
 
 def get_datasource_config_infer_type(config_id, domain):
-    return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
+    return get_datasource_config(config_id, domain)
 
 
-def guess_data_source_type(data_source_id):
-    """
-    Given a data source ID, try to guess its type (standard or aggregate).
-    """
-    # ints are definitely aggregate
-    if isinstance(data_source_id, int):
-        return DATA_SOURCE_TYPE_AGGREGATE
-    # static ids are standard
-    if id_is_static(data_source_id):
-        return DATA_SOURCE_TYPE_STANDARD
-    try:
-        # uuids are standard
-        UUID(data_source_id)
-        return DATA_SOURCE_TYPE_STANDARD
-    except ValueError:
-        try:
-            # int-like-things are aggregate
-            int(data_source_id)
-            return DATA_SOURCE_TYPE_AGGREGATE
-        except ValueError:
-            # default should be standard
-            return DATA_SOURCE_TYPE_STANDARD
-
-
-def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_STANDARD):
+def get_datasource_config(config_id, domain):
     def _raise_not_found():
         raise DataSourceConfigurationNotFoundError(_(
             'The data source referenced by this report could not be found.'
         ))
 
-    if data_source_type == DATA_SOURCE_TYPE_STANDARD:
-        is_static = id_is_static(config_id)
-        if is_static:
-            config = StaticDataSourceConfiguration.by_id(config_id)
-            if config.domain != domain:
-                _raise_not_found()
-        else:
-            try:
-                config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
-            except DocumentNotFound:
-                try:
-                    config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
-                except DocumentNotFound:
-                    _raise_not_found()
-        return config, is_static
-    elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
-        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-        try:
-            config = AggregateTableDefinition.objects.get(id=int(config_id), domain=domain)
-            return config, False
-        except AggregateTableDefinition.DoesNotExist:
+    is_static = id_is_static(config_id)
+    if is_static:
+        config = StaticDataSourceConfiguration.by_id(config_id)
+        if config.domain != domain:
             _raise_not_found()
     else:
-        raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
+        try:
+            config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
+        except DocumentNotFound:
+            try:
+                config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
+            except DocumentNotFound:
+                _raise_not_found()
+    return config, is_static
 
 
 def id_is_static(data_source_id):
