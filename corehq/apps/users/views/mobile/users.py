@@ -83,7 +83,9 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.bulk_download import (
     get_domains_from_user_filters,

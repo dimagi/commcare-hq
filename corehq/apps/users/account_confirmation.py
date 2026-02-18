@@ -1,13 +1,18 @@
 from datetime import datetime
 
 from django.template.loader import render_to_string
-from django.utils.translation import override, gettext_lazy as _
-from corehq.apps.domain.models import SMSAccountConfirmationSettings
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import override
 
-from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language_for_sms
+from dimagi.utils.web import get_static_url_prefix
+
+from corehq.apps.domain.models import SMSAccountConfirmationSettings
+from corehq.apps.domain.utils import (
+    encrypt_account_confirmation_info,
+    guess_domain_language_for_sms,
+)
 from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.web import get_static_url_prefix
 
 
 def send_account_confirmation_if_necessary(couch_user):
@@ -36,7 +41,9 @@ def should_send_account_confirmation(couch_user):
 
 def send_account_confirmation(commcare_user):
     from corehq.apps.hqwebapp.tasks import send_html_email_async
-    from corehq.apps.users.views.mobile import CommCareUserConfirmAccountViewByEmailView
+    from corehq.apps.users.views.mobile import (
+        CommCareUserConfirmAccountViewByEmailView,
+    )
     encrypted_user_info = encrypt_account_confirmation_info(commcare_user)
     template_params = _get_account_confirmation_template_params(
         commcare_user, encrypted_user_info, CommCareUserConfirmAccountViewByEmailView.urlname
