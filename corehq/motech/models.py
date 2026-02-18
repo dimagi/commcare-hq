@@ -192,9 +192,9 @@ class ConnectionSettings(models.Model):
         }
 
     def get_custom_headers_display(self):
-        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
-            return {}
-        return {k: PASSWORD_PLACEHOLDER for k, v in self.custom_headers.items()}
+        if MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain) and self.custom_headers:
+            return {k: PASSWORD_PLACEHOLDER for k, v in self.custom_headers.items()}
+        return {}
 
     @property
     def last_token(self) -> Optional[dict]:
