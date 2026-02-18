@@ -10,7 +10,10 @@ var appTranslationsModel = function (options) {
     self.format = ko.observable(options.format);
     self.lang = ko.observable(options.lang);
     self.url = ko.computed(function () {
-        return options.baseUrl + "?lang=" + self.lang() + "&format=" + self.format();
+        return options.baseUrl + "?" + new URLSearchParams({
+            lang: self.lang(),
+            format: self.format(),
+        }).toString();
     });
 
     self.disableDownload = ko.computed(function () {
