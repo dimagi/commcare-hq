@@ -674,7 +674,6 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
-    @flag_enabled('HMAC_CALLOUT')
     @flag_enabled('EMBEDDED_TABLEAU')
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_built(self):
@@ -686,7 +685,6 @@ class TestBuildViewModelsFromDataModels(BaseLinkedDomainTest):
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     @flag_enabled('WIDGET_DIALER')
     @flag_enabled('GAEN_OTP_SERVER')
-    @flag_enabled('HMAC_CALLOUT')
     @flag_enabled('EMBEDDED_TABLEAU')
     @flag_enabled('COMMTRACK')
     def test_feature_flag_view_models_are_ignored(self):
