@@ -831,9 +831,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-        is_account_confirmed = not (
-            self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
-            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
+        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
 
         role_id = UserRole.commcare_user_default(self.domain).get_id
         commcare_user = CommCareUser.create(
@@ -882,8 +880,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
-                'force_account_confirmation_by_sms': user_data.get('force_account_confirmation_by_sms'),
-                'phone_number': user_data.get('phone_number'),
                 'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
             }

@@ -725,30 +725,6 @@ class NewMobileWorkerForm(forms.Form):
             "on the first day of the month and year selected."
         ),
     )
-    force_account_confirmation_by_sms = forms.BooleanField(
-        label=gettext_noop("Require Account Confirmation by SMS?"),
-        help_text=gettext_noop(
-            "If checked, the user will be sent a confirmation SMS and asked to set their password."
-        ),
-        required=False,
-    )
-    phone_number = forms.CharField(
-        required=False,
-        label=gettext_noop("Phone Number"),
-        help_text=gettext_noop(
-            """
-            <div data-bind="visible: $root.phoneStatusMessage().length === 0">
-                    Please enter number including country code, without (+) and in digits only.
-            </div>
-            <div id="phone-error">
-                <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
-                    <i class="fa-solid fa-triangle-exclamation"
-                    data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
-                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
-                </span>
-            </div>
-        """)
-    )
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -831,17 +807,6 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
-        confirm_account_by_sms_field = crispy.Hidden(
-            'force_account_confirmation_by_sms',
-            '',
-            data_bind='value: force_account_confirmation_by_sms',
-        )
-        phone_number_field = crispy.Hidden(
-            'phone_number',
-            '',
-            data_bind='value: phone_number',
-        )
-
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -873,8 +838,6 @@ class NewMobileWorkerForm(forms.Form):
                 location_field,
                 confirm_account_field,
                 email_field,
-                confirm_account_by_sms_field,
-                phone_number_field,
                 send_email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
