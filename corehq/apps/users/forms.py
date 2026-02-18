@@ -59,7 +59,6 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.global_request import get_request_domain
 
 from ..hqwebapp.signals import clear_login_attempts
@@ -816,33 +815,16 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
-        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
-            confirm_account_by_sms_field = crispy.Field(
-                'force_account_confirmation_by_sms',
-                data_bind='checked: force_account_confirmation_by_sms',
-            )
-            phone_number_field = crispy.Div(
-                crispy.Field(
-                    'phone_number',
-                    data_bind="value: phone_number, valueUpdate: 'keyup'",
-                ),
-                data_bind='''
-                    css: {
-                        'has-error': $root.phoneStatus() === $root.STATUS.ERROR,
-                    },
-                '''
-            )
-        else:
-            confirm_account_by_sms_field = crispy.Hidden(
-                'force_account_confirmation_by_sms',
-                '',
-                data_bind='value: force_account_confirmation_by_sms',
-            )
-            phone_number_field = crispy.Hidden(
-                'phone_number',
-                '',
-                data_bind='value: phone_number',
-            )
+        confirm_account_by_sms_field = crispy.Hidden(
+            'force_account_confirmation_by_sms',
+            '',
+            data_bind='value: force_account_confirmation_by_sms',
+        )
+        phone_number_field = crispy.Hidden(
+            'phone_number',
+            '',
+            data_bind='value: phone_number',
+        )
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
