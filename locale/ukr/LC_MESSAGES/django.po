@@ -1319,7 +1319,6 @@ msgstr ""
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
@@ -1423,8 +1422,6 @@ msgstr ""
 "\n"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
 msgid ""
 "\n"
 "    Hello,\n"
@@ -5313,7 +5310,6 @@ msgstr "Заповнити робочий процес з HAR-файлу"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/ui/forms.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
 #: corehq/motech/dhis2/forms.py corehq/motech/forms.py
@@ -6437,7 +6433,6 @@ msgstr "ID користувача"
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/userreports/reports/view.py corehq/apps/users/landing_pages.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/reports.py corehq/tabs/tabclasses.py
 msgid "Reports"
@@ -8436,7 +8431,6 @@ msgstr "Встановити CommCare"
 #: corehq/apps/users/templates/users/bootstrap5/web_users.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/personalid_activation_modals.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/personalid_activation_modals.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
@@ -8447,15 +8441,6 @@ msgstr "Закрити"
 
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/odk_install.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "          You can also click\n"
-#| "          <strong>\n"
-#| "            <a class=\"track-usage-link\" href=\"%(profile_url)s\"\n"
-#| "               data-category=\"App Manager\" data-action=\"Initiate Install\"\n"
-#| "               data-label=\"Mobile Browser Link\">here</a>\n"
-#| "          </strong> in your mobile browser.\n"
-#| "        "
 msgid ""
 "\n"
 "          You can also click\n"
@@ -9828,7 +9813,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_profiles_select.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_profiles_select.html
-#: corehq/apps/domain/forms.py corehq/apps/reports/standard/deployments.py
+#: corehq/apps/domain/forms.py
 msgid "Build Profile"
 msgstr "Профіль збірки"
 
@@ -13737,10 +13722,6 @@ msgid "Current Profiles"
 msgstr "Поточні профілі"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-#| msgid ""
-#| "\n"
-#| "          Remote applications only support one build profile. Please remove all but one profile before saving.\n"
-#| "        "
 msgid ""
 "\n"
 "          Remote applications only support one build profile. Please remove all\n"
@@ -13753,12 +13734,6 @@ msgstr ""
 "        "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-#| msgid ""
-#| "\n"
-#| "        Application profiles let you install the same application with different languages\n"
-#| "        and options on different phones. Application profiles will appear in <em>new</em> versions\n"
-#| "        of the application.\n"
-#| "      "
 msgid ""
 "\n"
 "        Application profiles let you install the same application with different\n"
@@ -13776,10 +13751,6 @@ msgid "Manage application profiles here."
 msgstr "Керуйте профілями додатків тут."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
-#| msgid ""
-#| "\n"
-#| "        Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>\n"
-#| "      "
 msgid ""
 "\n"
 "        Learn more about Application Profiles on our\n"
@@ -13819,12 +13790,6 @@ msgid "Add Profile"
 msgstr "Додати профіль"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-#| msgid ""
-#| "\n"
-#| "      <p class=\"lead\">\n"
-#| "        Please click <i class=\"fa fa-plus\"></i> <strong>Add...</strong> to start building your App!\n"
-#| "      </p>\n"
-#| "    "
 msgid ""
 "\n"
 "        <p class=\"lead\">\n"
@@ -13841,12 +13806,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-#| msgid ""
-#| "\n"
-#| "      <p class=\"lead\">\n"
-#| "        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!\n"
-#| "      </p>\n"
-#| "    "
 msgid ""
 "\n"
 "        <p class=\"lead\">\n"
@@ -13871,11 +13830,6 @@ msgid "Application Profiles"
 msgstr "Профілі додатка"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "            Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.\n"
-#| "            Before you can publish your application,\n"
-#| "          "
 msgid ""
 "\n"
 "            Your project does not have any mobile workers! Only mobile workers\n"
@@ -13906,16 +13860,6 @@ msgid "Offline Install"
 msgstr "Офлайн-установка"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                        <p>\n"
-#| "                          You haven't saved any questions as case properties.\n"
-#| "                          Only case properties become part of a case.\n"
-#| "                        </p>\n"
-#| "                        <p>\n"
-#| "                          Watch this video to learn how to save questions as case properties.\n"
-#| "                        </p>\n"
-#| "                      "
 msgid ""
 "\n"
 "                            Download\n"
@@ -13956,10 +13900,6 @@ msgid "Download Targeted Version"
 msgstr "Завантажити цільову версію"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                            Open the app on your Android and use one of the following installation methods:\n"
-#| "                          "
 msgid ""
 "\n"
 "                            Open the app on your Android and use one of the\n"
@@ -13984,11 +13924,6 @@ msgid "Enter app code on installation screen: "
 msgstr "Введіть код додатка на екрані установки: "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                                                            (No app code available. If you would like to use an app code instead\n"
-#| "                                                            of scanning the application barcode, try making another version.)\n"
-#| "                                                          "
 msgid ""
 "\n"
 "                                (No app code available. If you would like to use\n"
@@ -14029,15 +13964,6 @@ msgstr ""
 "установка розпочнеться"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#| msgid ""
-#| "\n"
-#| "                                Note: Offline install automatically installs all multimedia\n"
-#| "                                included in your form. All subsequent remote updates will also\n"
-#| "                                include multimedia which could require a lot of data. See the\n"
-#| "                                <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946239/Installing+CommCare+on+Android+Devices\">\n"
-#| "                                  Help Site\n"
-#| "                                </a> for more info.\n"
-#| "                              "
 msgid ""
 "\n"
 "                                Note: Offline install automatically installs all\n"
@@ -14083,17 +14009,14 @@ msgid "View Source Files"
 msgstr "Переглянути вихідні файли"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
-#| msgid "Send to"
 msgid "Send to:"
 msgstr "Надіслати до:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
-#| msgid "Prompt Updates to CommCare"
 msgid "Update to CommCare:"
 msgstr "Оновити до CommCare:"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
-#| msgid "SMS charges will incur."
 msgid "SMS charges will be incurred."
 msgstr "Буде стягнута плата за SMS."
 
@@ -14107,12 +14030,6 @@ msgid "No URL was found for this app, try rebuilding."
 msgstr "URL для цього додатка не знайдено, спробуйте перебудувати."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "        One or more of your versions is broken, please make sure it is\n"
-#| "        not marked as released. Make a new version if needed, and update\n"
-#| "        any live deployments as soon as possible.\n"
-#| "      "
 msgid ""
 "\n"
 "        One or more of your versions is broken, please make sure it is not\n"
@@ -14127,10 +14044,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "          All new versions should work, so if problems persist, please report the issue.\n"
-#| "        "
 msgid ""
 "\n"
 "          All new versions should work, so if problems persist, please report\n"
@@ -14181,11 +14094,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        For more information on deprecated case types, see the following\n"
-#| "        <a target=\"_blank\" href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary#Deprecating-%%26-Delete-Case-Types-and-Case-Properties\">documentation</a>.\n"
-#| "      "
 msgid ""
 "\n"
 "        For more information on deprecated case types, see the following\n"
@@ -14282,11 +14190,6 @@ msgid "Revert to Version?"
 msgstr "Повернутися до версії?"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "              This version uses an outdated form of case management.\n"
-#| "              We advise against reverting back to this version.\n"
-#| "            "
 msgid ""
 "\n"
 "              This version uses an outdated form of case\n"
@@ -14299,10 +14202,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#| msgid ""
-#| "\n"
-#| "            Are you sure you want to revert to version <span data-bind=\"text: version\"></span>?</p>\n"
-#| "          "
 msgid ""
 " Are you sure you want to revert to version\n"
 "            <span data-bind=\"text: version\"></span>?\n"
@@ -16954,9 +16853,7 @@ msgstr "Немає доступних Веб-додатків"
 
 #: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html
 #: corehq/apps/users/landing_pages.py
-#: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/users/templates/users/edit_role.html corehq/tabs/tabclasses.py
 msgid "Web Apps"
 msgstr "Веб-додатки"
 
@@ -21380,26 +21277,6 @@ msgid "You cannot put your current IP address in the Denied IPs field"
 msgstr "Ви не можете додати вашу поточну IP-адресу до поля Заборонені IP"
 
 #: corehq/apps/domain/forms.py
-msgid "The user being transferred to does not exist"
-msgstr "Користувач, якому здійснюється передача, не існує"
-
-#: corehq/apps/domain/forms.py
-msgid "Mismatch in domains when confirming"
-msgstr "Невідповідність доменів під час підтвердження"
-
-#: corehq/apps/domain/forms.py
-msgid "Type the name of the project to confirm"
-msgstr "Введіть назву проєкту для підтвердження"
-
-#: corehq/apps/domain/forms.py
-msgid "New owner's CommCare username"
-msgstr "Ім'я користувача нового власника в CommCare"
-
-#: corehq/apps/domain/forms.py corehq/apps/domain/views/internal.py
-msgid "Transfer Project"
-msgstr "Передати проєкт"
-
-#: corehq/apps/domain/forms.py
 msgid "You may not specify a sub area when the project has no specified area"
 msgstr "Не можна вказати підобласть, якщо для проєкту не вказано область"
 
@@ -22311,60 +22188,6 @@ msgstr "Додаток для видачі облікових даних"
 msgid "No application"
 msgstr "Немає додатку"
 
-#: corehq/apps/domain/models.py
-msgid "Transfer domain request is no longer active"
-msgstr "Запит на передачу домену більше не активний"
-
-#: corehq/apps/domain/models.py
-msgid "Transfer of ownership for CommCare project space."
-msgstr "Передача права власності на простір проєкту CommCare."
-
-#: corehq/apps/domain/models.py
-#, python-brace-format
-msgid "There has been a transfer of ownership of {domain}"
-msgstr "Відбулася передача права власності на {domain}"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-msgid "Transfer project ownership"
-msgstr "Передати право власності на проєкт"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-#, python-format
-msgid ""
-"\n"
-"              By clicking \"accept\" below you acknowledge that you accept full ownership of this project space (\"%(domain)s\").\n"
-"              You agree to be bound by the terms of Dimagi's <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Terms of Service and Business Agreement</a>.\n"
-"              By accepting this agreement, your are acknowledging you have permission and authority to accept these terms. A Dimagi representative will notify you when the transfer is complete.\n"
-"            "
-msgstr ""
-"\n"
-"              Натискаючи \"прийняти\" нижче, ви підтверджуєте, що приймаєте повну відповідальність за цей простір проєкту (\"%(domain)s\").\n"
-"              Ви погоджуєтеся з умовами <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Умов надання послуг та бізнес-угоди</a> Dimagi.\n"
-"              Приймаючи цю угоду, ви підтверджуєте, що маєте дозвіл і повноваження приймати ці умови. Представник Dimagi повідомить вас, коли передача буде завершена.\n"
-"            "
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-#: corehq/apps/domain/templates/domain/bootstrap3/select.html
-#: corehq/apps/domain/templates/domain/bootstrap5/select.html
-#: corehq/apps/registration/templates/registration/domain_request.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-msgid "Accept"
-msgstr "Прийняти"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-msgid "Decline"
-msgstr "Відхилити"
-
-#: corehq/apps/domain/templates/domain/activate_transfer_domain.html
-msgid ""
-"\n"
-"              Sorry this transfer request has expired.\n"
-"            "
-msgstr ""
-"\n"
-"              Вибачте, термін дії цього запиту на передачу минув.\n"
-"            "
-
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Enable Case Search"
 msgstr "Увімкнути пошук випадків"
@@ -23023,41 +22846,6 @@ msgstr "Нова дія"
 #: corehq/apps/domain/templates/domain/admin/sms_settings.html
 msgid "Save Settings"
 msgstr "Зберегти налаштування"
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain.html
-msgid ""
-"\n"
-"      Use this to transfer your project to another user.\n"
-"    "
-msgstr ""
-"\n"
-"      Використовуйте це, щоб передати ваш проєкт іншому користувачу.\n"
-"    "
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
-#, python-format
-msgid ""
-"\n"
-"          You have a pending transfer with %(username)s\n"
-"        "
-msgstr ""
-"\n"
-"          У вас є очікуюча передача з %(username)s\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
-msgid ""
-"\n"
-"          Resend Transfer Request\n"
-"        "
-msgstr ""
-"\n"
-"          Повторно надіслати запит на передачу\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/admin/transfer_domain_pending.html
-msgid "Cancel Transfer"
-msgstr "Скасувати передачу"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
@@ -23893,6 +23681,13 @@ msgstr "Прийняти всі запрошення"
 msgid "My Invitations"
 msgstr "Мої запрошення"
 
+#: corehq/apps/domain/templates/domain/bootstrap3/select.html
+#: corehq/apps/domain/templates/domain/bootstrap5/select.html
+#: corehq/apps/registration/templates/registration/domain_request.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+msgid "Accept"
+msgstr "Прийняти"
+
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #, python-format
 msgid ""
@@ -24494,135 +24289,6 @@ msgstr ""
 "\n"
 "    Якщо ви вважаєте, що це помилка, просто проігноруйте цей лист.\n"
 "    Щоб дізнатися більше про CommCare, відвідайте http://www.commcarehq.org/.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#, python-format
-msgid ""
-"\n"
-"    A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe\n"
-"    this is an error, please contact us immediately at <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
-"    and follow <a href=\"%(settings_url)s\">this link</a> to deactivate the transfer: %(settings_url)s\n"
-"  "
-msgstr ""
-"\n"
-"    Ініційовано передачу простору проєкту від %(from_username)s до %(to_username)s. Якщо ви вважаєте,\n"
-"    що це помилка, будь ласка, негайно зв'яжіться з нами за адресою <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
-"    та перейдіть за <a href=\"%(settings_url)s\">цим посиланням</a>, щоб скасувати передачу: %(settings_url)s\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    Thanks for using our site!\n"
-"  "
-msgstr ""
-"\n"
-"    Дякуємо, що користуєтеся нашим сайтом!\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.txt
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"Hello,\n"
-msgstr ""
-"\n"
-"Вітаємо,\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.txt
-#, python-format
-msgid ""
-"\n"
-"A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe this is an error, please contact us immediately at %(support_email)s and follow this link to deactivate the transfer: %(settings_url)s\n"
-msgstr ""
-"\n"
-"Ініційовано передачу простору проєкту від %(from_username)s до %(to_username)s. Якщо ви вважаєте, що це помилка, будь ласка, негайно зв'яжіться з нами за адресою %(support_email)s та перейдіть за цим посиланням, щоб скасувати передачу: %(settings_url)s\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.txt
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"Thanks for using our site!\n"
-msgstr ""
-"\n"
-"Дякуємо, що користуєтеся нашим сайтом!\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-#, python-format
-msgid ""
-"\n"
-"    %(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept\n"
-"    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
-"  "
-msgstr ""
-"\n"
-"    %(from_username)s ініціював(-ла) передачу права власності на простір проєкту CommCare. Щоб прийняти\n"
-"    право власності на цей простір проєкту, перейдіть за <a href=\"%(activate_url)s\">цим посиланням</a>: %(activate_url)s.  Якщо у вас ще немає облікового запису користувача CommCare, вам потрібно буде створити його, щоб прийняти право власності на цей простір проєкту.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
-"  "
-msgstr ""
-"\n"
-"    Після прийняття передачі з вами зв'яжеться представник Dimagi, щоб підтвердити завершення передачі права власності.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
-"  "
-msgstr ""
-"\n"
-"    Усі налаштування проєкту, облікові записи користувачів та дозволи залишаться без змін після передачі права власності. Якщо ви бажаєте змінити будь-які з цих налаштувань, зробіть це після прийняття права власності через меню налаштувань простору проєкту.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.html
-msgid ""
-"\n"
-"    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
-"  "
-msgstr ""
-"\n"
-"    Якщо ви вважаєте, що отримали це повідомлення помилково, просто проігноруйте цей лист. Щоб дізнатися більше про CommCare, відвідайте <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
-"  "
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-#, python-format
-msgid ""
-"\n"
-"%(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
-msgstr ""
-"\n"
-"%(from_username)s ініціював(-ла) передачу права власності на простір проєкту CommCare. Щоб прийняти право власності на цей простір проєкту, перейдіть за цим посиланням: %(activate_url)s.  Якщо у вас ще немає облікового запису користувача CommCare, вам потрібно буде створити його, щоб прийняти право власності на цей простір проєкту.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
-msgstr ""
-"\n"
-"Після прийняття передачі з вами зв'яжеться представник Dimagi, щоб підтвердити завершення передачі права власності.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
-msgstr ""
-"\n"
-"Усі налаштування проєкту, облікові записи користувачів та дозволи залишаться без змін після передачі права власності. Якщо ви бажаєте змінити будь-які з цих налаштувань, зробіть це після прийняття права власності через меню налаштувань простору проєкту.\n"
-
-#: corehq/apps/domain/templates/domain/email/domain_transfer_to_request.txt
-msgid ""
-"\n"
-"If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit http://www.commcarehq.org/.\n"
-msgstr ""
-"\n"
-"Якщо ви вважаєте, що отримали це повідомлення помилково, просто проігноруйте цей лист. Щоб дізнатися більше про CommCare, відвідайте http://www.commcarehq.org/.\n"
 
 #: corehq/apps/domain/templates/domain/email/password_reset_confirmation.html
 #, python-format
@@ -26890,21 +26556,6 @@ msgstr "Обчислені властивості"
 msgid "Feature Flags and Privileges"
 msgstr "Функціональні прапорці та привілеї"
 
-#: corehq/apps/domain/views/internal.py
-#, python-brace-format
-msgid "Resent transfer request for project '{domain}'"
-msgstr "Повторно надіслано запит на передачу проєкту «{domain}»"
-
-#: corehq/apps/domain/views/internal.py
-#, python-brace-format
-msgid "Successfully transferred ownership of project '{domain}'"
-msgstr "Власність проєкту «{domain}» успішно передано"
-
-#: corehq/apps/domain/views/internal.py
-#, python-brace-format
-msgid "Declined ownership of project '{domain}'"
-msgstr "Відхилено передачу власності проєкту «{domain}»"
-
 #: corehq/apps/domain/views/releases.py
 msgid "Manage Releases By Location"
 msgstr "Керування випусками за місцем розташування"
@@ -26982,7 +26633,6 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Project Alerts"
 msgstr "Керування сповіщеннями проєкту"
 
@@ -28765,7 +28415,6 @@ msgstr "Посилання на цю справу"
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "CommCare Analytics"
 msgstr "CommCare Аналітика"
 
@@ -33388,18 +33037,6 @@ msgstr ""
 "медіафайлами. Повідомте про проблему, якщо це не зникне."
 
 #: corehq/apps/hqmedia/tasks.py
-#, python-brace-format
-msgid "Could not find {file_path} in CCZ"
-msgstr "Не вдалося знайти {file_path} у CCZ"
-
-#: corehq/apps/hqmedia/tasks.py
-#, python-brace-format
-msgid "Locale ID {id} present in suite.xml but not in default app strings."
-msgstr ""
-"Ідентифікатор локалі {id} присутній у suite.xml, але відсутній у стандартних"
-" рядках додатку."
-
-#: corehq/apps/hqmedia/tasks.py
 msgid "Could not find media_suite.xml in CCZ"
 msgstr "Не вдалося знайти media_suite.xml у CCZ"
 
@@ -33798,10 +33435,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
-#| msgid ""
-#| "<strong>Warning:</strong>\n"
-#| "    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.\n"
-#| "  "
 msgid ""
 "\n"
 "      <strong>Warning:</strong>\n"
@@ -33816,11 +33449,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
-#| msgid ""
-#| "\n"
-#| "        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
-#| "        This application is missing references, so this zip will be incomplete.\n"
-#| "      "
 msgid ""
 "\n"
 "      <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
@@ -33833,8 +33461,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_zip_notice.html
-#| msgid ""
-#| "This application currently does not contain any multimedia references."
 msgid ""
 "\n"
 "      This application currently does not contain any multimedia references.\n"
@@ -36243,7 +35869,6 @@ msgid "Other Case Type"
 msgstr "Інший тип справи"
 
 #: corehq/apps/integration/kyc/forms.py
-#| msgid "Full Name"
 msgid "Stores Full Name"
 msgstr "Повне ім'я магазину"
 
@@ -38469,22 +38094,25 @@ msgid "Child Locations"
 msgstr "Дочірні місця"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/products/views.py
-msgid "Products"
-msgstr "Продукти"
-
-#: corehq/apps/locations/templates/locations/manage/location.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "            <strong>There was an issue creating this location.</strong><br />\n"
+#| "            Please make sure that at least one <a href=\"%(levels_url)s\">Organization Level</a>\n"
+#| "            has been created.\n"
+#| "          "
 msgid ""
 "\n"
 "            <strong>There was an issue creating this location.</strong><br />\n"
-"            Please make sure that at least one <a href=\"%(levels_url)s\">Organization Level</a>\n"
+"            Please make sure that at least one\n"
+"            <a href=\"%(levels_url)s\">Organization Level</a>\n"
 "            has been created.\n"
 "          "
 msgstr ""
 "\n"
-"            <strong>Виникла проблема під час створення цього місця.</strong><br />\n"
-"            Будь ласка, переконайтеся, що створено хоча б один <a href=\"%(levels_url)s\">Рівень організації</a>.\n"
+"            <strong>Виникла проблема при створенні цієї локації.</strong><br />\n"
+"            Будь ласка, переконайтеся, що створено хоча б один\n"
+"            <a href=\"%(levels_url)s\">рівень організації</a>.\n"
 "          "
 
 #: corehq/apps/locations/templates/locations/manage/location.html
@@ -38492,17 +38120,26 @@ msgid "Default monthly consumption values"
 msgstr "Типові значення місячного споживання"
 
 #: corehq/apps/locations/templates/locations/manage/location.html
+#| msgid ""
+#| "\n"
+#| "                    Your permissions allow you to <strong>create, update, and delete locations</strong>\n"
+#| "                    and <strong>modify location settings</strong>. However, your project\n"
+#| "                    administrator has not granted you access to change workers at locations.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your permissions allow you to <strong>create, update, and delete locations</strong>\n"
-"                    and <strong>modify location settings</strong>. However, your project\n"
-"                    administrator has not granted you access to change workers at locations.\n"
+"                    Your permissions allow you to\n"
+"                    <strong>create, update, and delete locations</strong> and\n"
+"                    <strong>modify location settings</strong>. However, your\n"
+"                    project administrator has not granted you access to change\n"
+"                    workers at locations.\n"
 "                  "
 msgstr ""
 "\n"
-"                    Ваші дозволи дозволяють <strong>створювати, оновлювати та видаляти місця</strong>\n"
-"                    і <strong>змінювати налаштування місць</strong>. Однак адміністратор проєкту\n"
-"                    не надав вам доступу до зміни працівників у місцях.\n"
+"                    Ваші дозволи дають змогу\n"
+"                    <strong>створювати, оновлювати та видаляти локації</strong> і\n"
+"                    <strong>змінювати налаштування локацій</strong>. Однак адміністратор проєкту не надав вам доступу до зміни\n"
+"                    працівників у локаціях.\n"
 "                  "
 
 #: corehq/apps/locations/templates/locations/manage/location_template.html
@@ -38722,18 +38359,6 @@ msgstr "розархівовано"
 #: corehq/apps/locations/views.py
 msgid "Edit Location"
 msgstr "Редагувати локацію"
-
-#: corehq/apps/locations/views.py
-msgid "Update Product List"
-msgstr "Оновити список продуктів"
-
-#: corehq/apps/locations/views.py
-msgid "Specify Products Per Location"
-msgstr "Вказати продукти для кожної локації"
-
-#: corehq/apps/locations/views.py
-msgid "Products at Location"
-msgstr "Продукти на локації"
 
 #: corehq/apps/locations/views.py
 #, python-brace-format
@@ -39075,6 +38700,10 @@ msgstr "Продукт '{product_name}' успішно {action}."
 #, python-brace-format
 msgid "Another product is already using the Product ID '{product_id}'"
 msgstr "Інший продукт вже використовує ID продукту '{product_id}'"
+
+#: corehq/apps/products/views.py
+msgid "Products"
+msgstr "Продукти"
 
 #: corehq/apps/products/views.py
 msgid ""
@@ -40900,7 +40529,6 @@ msgstr "Видалити реєстр"
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/registry/views.py
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/tabs/tabclasses.py
 msgid "Data Registries"
@@ -42396,10 +42024,6 @@ msgstr "Кількість ненадісланих форм у телефоні
 #, python-brace-format
 msgid "The number of unsent forms in users' phones for {app_info}"
 msgstr "Кількість ненадісланих форм у телефонах користувачів для {app_info}"
-
-#: corehq/apps/reports/standard/deployments.py
-msgid "The build profile from the user's last hearbeat request."
-msgstr "Профіль збірки з останнього запиту користувача."
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -54104,26 +53728,14 @@ msgstr ""
 "          "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid "Unlock Linked Roles For Me"
 msgid "Unlock Linked Role For Me"
 msgstr "Розблокувати пов’язану роль для мене"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid "Lock Linked Roles For Me"
 msgid "Lock Linked Role For Me"
 msgstr "Заблокувати пов’язану роль для мене"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "            Linked configurations are controlled from a separate, linked project\n"
-#| "            space.\n"
-#| "            <a\n"
-#| "              href=\"https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\"\n"
-#| "              target=\"_blank\"\n"
-#| "              >Learn more</a\n"
-#| "            >.\n"
-#| "          "
 msgid ""
 "\n"
 "                Linked configurations are controlled from a separate, linked\n"
@@ -54146,102 +53758,78 @@ msgstr ""
 "              "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Area Access"
 msgstr "Доступ до територій"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Can Edit"
 msgstr "Може редагувати"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Can View"
 msgstr "Може переглядати"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Access Specific Reports"
 msgstr "Доступ до окремих звітів"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which reports the role can access:"
 msgstr "Оберіть, до яких звітів матиме доступ ця роль:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Access Specific Tableau Reports"
 msgstr "Доступ до окремих звітів Tableau"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which Tableau reports the role can access:"
 msgstr "Оберіть, до яких звітів Tableau матиме доступ ця роль:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "All CommCare Analytics Roles"
 msgstr "Усі ролі аналітики CommCare"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Assign all commcare analytics roles to users with this role"
 msgstr "Призначити всі ролі аналітики CommCare користувачам із цією роллю"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "CommCare Analytics Roles"
 msgstr "Ролі аналітики CommCare"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Commcare Analytics Roles:"
 msgstr "Ролі аналітики CommCare:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Other Settings"
 msgstr "Інші налаштування"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Integration Access"
 msgstr "Доступ до інтеграцій"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow role to manage integration with other systems."
 msgstr "Дозволити ролі керувати інтеграцією з іншими системами."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Subscription Info"
 msgstr "Керування підпискою"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow role to manage subscription information."
 msgstr "Дозволити ролі керувати інформацією про підписку."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Full Organization Access"
 msgstr "Повний доступ до організації"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow role to access data from all locations."
 msgstr "Дозволити ролі доступ до даних з усіх локацій."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      Make sure any users assigned this role also have a\n"
-#| "                      location assigned to them. Users without assigned\n"
-#| "                      locations will not be permitted to log in.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        Make sure any users assigned this role also have a\n"
@@ -54256,12 +53844,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      Organization-based data access restrictions are only\n"
-#| "                      available on the Pro plan and above. Saving this role will\n"
-#| "                      enable full organization access for the assigned users.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        Organization-based data access restrictions are only\n"
@@ -54277,12 +53859,6 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      With the current configuration, this role will have full\n"
-#| "                      organization access and roles that can assign it will not.\n"
-#| "                      This is not recommended.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        With the current configuration, this role will have full\n"
@@ -54296,92 +53872,71 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Login-As All Users"
 msgstr "Вхід як усі користувачі"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow the user to log in as any mobile worker in Web Apps."
 msgstr ""
 "Дозволити користувачу входити як будь-який мобільний працівник у Веб-"
 "додатках."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Limit Login-As"
 msgstr "Обмежити вхід як"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow the user to log in as only specified users in Web Apps."
 msgstr ""
 "Дозволити користувачу входити лише як зазначені користувачі у Веб-додатках."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Login-As Default User"
 msgstr "Вхід як користувач за замовчуванням"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow the user to log in as the default user in Web Apps."
 msgstr ""
 "Дозволити користувачу входити як користувач за замовчуванням у Веб-додатках."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Mobile App Access"
 msgstr "Доступ до мобільного додатку"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow mobile users access to offline mobile application"
 msgstr "Дозволити мобільним користувачам доступ до офлайн мобільного додатку"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Default Landing Page"
 msgstr "Сторінка за замовчуванням після входу"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow Reporting Issues"
 msgstr "Дозволити повідомлення про проблеми"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow this role to report issues."
 msgstr "Дозволити цій ролі повідомляти про проблеми."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Non-admin Editable"
 msgstr "Редагується неадміністратором"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow all non-admins to assign this role to other users."
 msgstr ""
 "Дозволити всім неадміністраторам призначати цю роль іншим користувачам."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Manage Role Assignment"
 msgstr "Керування призначенням ролей"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Select which other roles can assign this role:"
 msgstr "Виберіть, які інші ролі можуть призначати цю роль:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid ""
-#| "\n"
-#| "                      If the highlighted roles are selected, this role will have\n"
-#| "                      full organization access and be assignable by a role that\n"
-#| "                      does not. This is not recommended configuration.\n"
-#| "                    "
 msgid ""
 "\n"
 "                        If the highlighted roles are selected, this role will\n"
@@ -54397,12 +53952,10 @@ msgstr ""
 "                      "
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Assign All User Profiles"
 msgstr "Призначити всі профілі користувачів"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid ""
 "Allow role to access all user profiles while setting up mobile workers and "
 "web users."
@@ -54411,12 +53964,10 @@ msgstr ""
 "мобільних працівників і веб-користувачів."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Assign Specific User Profiles"
 msgstr "Призначити конкретні профілі користувачів"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid ""
 "Select which user profiles the role can assign to mobile workers and web "
 "users:"
@@ -54425,12 +53976,10 @@ msgstr ""
 "працівникам і веб-користувачам:"
 
 #: corehq/apps/users/templates/users/edit_role.html
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow this role to manage project alerts."
 msgstr "Дозволити цій ролі керувати сповіщеннями про проєкт."
 
 #: corehq/apps/users/templates/users/edit_role.html
-#| msgid "Saving..."
 msgid "Saving ..."
 msgstr "Збереження ..."
 
@@ -54936,90 +54485,7 @@ msgstr ""
 "        <a href=\"#\">Дізнайтеся більше</a> про SSO у CommCare HQ.\n"
 "      "
 
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Role Name"
-msgstr "Назва ролі"
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      Make sure any users assigned this role also have a\n"
-"                      location assigned to them. Users without assigned\n"
-"                      locations will not be permitted to log in.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Переконайтеся, що всім користувачам, яким призначено цю роль,\n"
-"                      також призначено локацію. Користувачі без призначених\n"
-"                      локацій не зможуть увійти в систему.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      Organization-based data access restrictions are only\n"
-"                      available on the Pro plan and above. Saving this role will\n"
-"                      enable full organization access for the assigned users.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Обмеження доступу до даних на основі організації доступні лише\n"
-"                      у плані Pro та вище. Збереження цієї ролі надасть повний доступ до організації призначеним користувачам.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      With the current configuration, this role will have full\n"
-"                      organization access and roles that can assign it will not.\n"
-"                      This is not recommended.\n"
-"                    "
-msgstr ""
-"\n"
-"                      За поточної конфігурації ця роль матиме повний доступ до організації, а ролі, які можуть її призначати, — ні.\n"
-"                      Це не рекомендується.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid ""
-"\n"
-"                      If the highlighted roles are selected, this role will have\n"
-"                      full organization access and be assignable by a role that\n"
-"                      does not. This is not recommended configuration.\n"
-"                    "
-msgstr ""
-"\n"
-"                      Якщо вибрано виділені ролі, ця роль матиме\n"
-"                      повний доступ до організації та буде призначатися роллю, яка цього доступу не має. Це не рекомендована конфігурація.\n"
-"                    "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/select_permission.html
-#, python-format
-msgid ""
-"\n"
-"          This permission is already configured via\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Manage Web Apps Permissions\n"
-"          </a>\n"
-"          . Please remove this configuration before updating access here.\n"
-"        "
-msgstr ""
-"\n"
-"          Цей дозвіл вже налаштовано через\n"
-"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
-"            Керування дозволами для Веб-застосунків\n"
-"          </a>\n"
-"          . Будь ласка, видаліть цю конфігурацію перед оновленням доступу тут.\n"
-"        "
-
-#: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#: corehq/apps/users/templates/users/partials/select_permission.html
-msgid "Please select at least one item."
-msgstr "Будь ласка, виберіть щонайменше один елемент."
-
 #: corehq/apps/users/templates/users/partials/linked_roles_modal.html
-#| msgid "Unlock Linked Fields?"
 msgid "Unlock Linked Roles?"
 msgstr "Розблокувати пов’язані ролі?"
 
@@ -55050,14 +54516,35 @@ msgstr ""
 "            "
 
 #: corehq/apps/users/templates/users/partials/select_permission.html
-#| msgid "IP Access"
+#, python-format
+msgid ""
+"\n"
+"          This permission is already configured via\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Manage Web Apps Permissions\n"
+"          </a>\n"
+"          . Please remove this configuration before updating access here.\n"
+"        "
+msgstr ""
+"\n"
+"          Цей дозвіл вже налаштовано через\n"
+"          <a target=\"_blank\" href=\"%(manage_web_apps_permissions_url)s\">\n"
+"            Керування дозволами для Веб-застосунків\n"
+"          </a>\n"
+"          . Будь ласка, видаліть цю конфігурацію перед оновленням доступу тут.\n"
+"        "
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
 msgid "No Access"
 msgstr "Немає доступу"
 
 #: corehq/apps/users/templates/users/partials/select_permission.html
-#| msgid "Access Key"
 msgid "Access All"
 msgstr "Доступ до всього"
+
+#: corehq/apps/users/templates/users/partials/select_permission.html
+msgid "Please select at least one item."
+msgstr "Будь ласка, виберіть щонайменше один елемент."
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid ""
@@ -55666,10 +55153,6 @@ msgid "Password reset email sent to {}"
 msgstr "Лист для скидання пароля надіслано на адресу {}"
 
 #: corehq/apps/users/views/role.py
-msgid "Use Default"
-msgstr "Використовувати за замовчуванням"
-
-#: corehq/apps/users/views/role.py
 msgid "Roles & Permissions"
 msgstr "Ролі та дозволи"
 
@@ -55723,9 +55206,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
-#| msgid "Create Alert"
 msgid "Create Role"
 msgstr "Створити роль"
+
+#: corehq/apps/users/views/role.py
+msgid "Use Default"
+msgstr "Використовувати за замовчуванням"
 
 #: corehq/apps/users/views/utils.py
 msgid "A row with no username was skipped"
@@ -61261,6 +60747,290 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "The user being transferred to does not exist"
+#~ msgstr "Користувач, якому здійснюється передача, не існує"
+
+#~ msgid "Mismatch in domains when confirming"
+#~ msgstr "Невідповідність доменів під час підтвердження"
+
+#~ msgid "Type the name of the project to confirm"
+#~ msgstr "Введіть назву проєкту для підтвердження"
+
+#~ msgid "New owner's CommCare username"
+#~ msgstr "Ім'я користувача нового власника в CommCare"
+
+#~ msgid "Transfer Project"
+#~ msgstr "Передати проєкт"
+
+#~ msgid "Transfer domain request is no longer active"
+#~ msgstr "Запит на передачу домену більше не активний"
+
+#~ msgid "Transfer of ownership for CommCare project space."
+#~ msgstr "Передача права власності на простір проєкту CommCare."
+
+#, python-brace-format
+#~ msgid "There has been a transfer of ownership of {domain}"
+#~ msgstr "Відбулася передача права власності на {domain}"
+
+#~ msgid "Transfer project ownership"
+#~ msgstr "Передати право власності на проєкт"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "              By clicking \"accept\" below you acknowledge that you accept full ownership of this project space (\"%(domain)s\").\n"
+#~ "              You agree to be bound by the terms of Dimagi's <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Terms of Service and Business Agreement</a>.\n"
+#~ "              By accepting this agreement, your are acknowledging you have permission and authority to accept these terms. A Dimagi representative will notify you when the transfer is complete.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Натискаючи \"прийняти\" нижче, ви підтверджуєте, що приймаєте повну відповідальність за цей простір проєкту (\"%(domain)s\").\n"
+#~ "              Ви погоджуєтеся з умовами <a href=\"https://www.dimagi.com/terms/latest/privacy/\">Умов надання послуг та бізнес-угоди</a> Dimagi.\n"
+#~ "              Приймаючи цю угоду, ви підтверджуєте, що маєте дозвіл і повноваження приймати ці умови. Представник Dimagi повідомить вас, коли передача буде завершена.\n"
+#~ "            "
+
+#~ msgid "Decline"
+#~ msgstr "Відхилити"
+
+#~ msgid ""
+#~ "\n"
+#~ "              Sorry this transfer request has expired.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              Вибачте, термін дії цього запиту на передачу минув.\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "      Use this to transfer your project to another user.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Використовуйте це, щоб передати ваш проєкт іншому користувачу.\n"
+#~ "    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          You have a pending transfer with %(username)s\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          У вас є очікуюча передача з %(username)s\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "          Resend Transfer Request\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Повторно надіслати запит на передачу\n"
+#~ "        "
+
+#~ msgid "Cancel Transfer"
+#~ msgstr "Скасувати передачу"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe\n"
+#~ "    this is an error, please contact us immediately at <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
+#~ "    and follow <a href=\"%(settings_url)s\">this link</a> to deactivate the transfer: %(settings_url)s\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Ініційовано передачу простору проєкту від %(from_username)s до %(to_username)s. Якщо ви вважаєте,\n"
+#~ "    що це помилка, будь ласка, негайно зв'яжіться з нами за адресою <a href=\"mailto:%(support_email)s\">%(support_email)s</a>\n"
+#~ "    та перейдіть за <a href=\"%(settings_url)s\">цим посиланням</a>, щоб скасувати передачу: %(settings_url)s\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    Thanks for using our site!\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Дякуємо, що користуєтеся нашим сайтом!\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "Hello,\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Вітаємо,\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "A transfer of project space has been initiated by %(from_username)s to %(to_username)s.  If you believe this is an error, please contact us immediately at %(support_email)s and follow this link to deactivate the transfer: %(settings_url)s\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Ініційовано передачу простору проєкту від %(from_username)s до %(to_username)s. Якщо ви вважаєте, що це помилка, будь ласка, негайно зв'яжіться з нами за адресою %(support_email)s та перейдіть за цим посиланням, щоб скасувати передачу: %(settings_url)s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Thanks for using our site!\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Дякуємо, що користуєтеся нашим сайтом!\n"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    %(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept\n"
+#~ "    ownership of this project space, please follow <a href=\"%(activate_url)s\">this link</a>: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    %(from_username)s ініціював(-ла) передачу права власності на простір проєкту CommCare. Щоб прийняти\n"
+#~ "    право власності на цей простір проєкту, перейдіть за <a href=\"%(activate_url)s\">цим посиланням</a>: %(activate_url)s.  Якщо у вас ще немає облікового запису користувача CommCare, вам потрібно буде створити його, щоб прийняти право власності на цей простір проєкту.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Після прийняття передачі з вами зв'яжеться представник Dimagi, щоб підтвердити завершення передачі права власності.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Усі налаштування проєкту, облікові записи користувачів та дозволи залишаться без змін після передачі права власності. Якщо ви бажаєте змінити будь-які з цих налаштувань, зробіть це після прийняття права власності через меню налаштувань простору проєкту.\n"
+#~ "  "
+
+#~ msgid ""
+#~ "\n"
+#~ "    If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    Якщо ви вважаєте, що отримали це повідомлення помилково, просто проігноруйте цей лист. Щоб дізнатися більше про CommCare, відвідайте <a href=\"http://www.commcarehq.org/\">http://www.commcarehq.org/</a>.\n"
+#~ "  "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "%(from_username)s has initiatied a transfer of ownership for a CommCare project space. To accept ownership of this project space, please follow this link: %(activate_url)s.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "%(from_username)s ініціював(-ла) передачу права власності на простір проєкту CommCare. Щоб прийняти право власності на цей простір проєкту, перейдіть за цим посиланням: %(activate_url)s.  Якщо у вас ще немає облікового запису користувача CommCare, вам потрібно буде створити його, щоб прийняти право власності на цей простір проєкту.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Після прийняття передачі з вами зв'яжеться представник Dimagi, щоб підтвердити завершення передачі права власності.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Усі налаштування проєкту, облікові записи користувачів та дозволи залишаться без змін після передачі права власності. Якщо ви бажаєте змінити будь-які з цих налаштувань, зробіть це після прийняття права власності через меню налаштувань простору проєкту.\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare visit http://www.commcarehq.org/.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Якщо ви вважаєте, що отримали це повідомлення помилково, просто проігноруйте цей лист. Щоб дізнатися більше про CommCare, відвідайте http://www.commcarehq.org/.\n"
+
+#, python-brace-format
+#~ msgid "Resent transfer request for project '{domain}'"
+#~ msgstr "Повторно надіслано запит на передачу проєкту «{domain}»"
+
+#, python-brace-format
+#~ msgid "Successfully transferred ownership of project '{domain}'"
+#~ msgstr "Власність проєкту «{domain}» успішно передано"
+
+#, python-brace-format
+#~ msgid "Declined ownership of project '{domain}'"
+#~ msgstr "Відхилено передачу власності проєкту «{domain}»"
+
+#, python-brace-format
+#~ msgid "Could not find {file_path} in CCZ"
+#~ msgstr "Не вдалося знайти {file_path} у CCZ"
+
+#, python-brace-format
+#~ msgid "Locale ID {id} present in suite.xml but not in default app strings."
+#~ msgstr ""
+#~ "Ідентифікатор локалі {id} присутній у suite.xml, але відсутній у стандартних"
+#~ " рядках додатку."
+
+#~ msgid "Update Product List"
+#~ msgstr "Оновити список продуктів"
+
+#~ msgid "Specify Products Per Location"
+#~ msgstr "Вказати продукти для кожної локації"
+
+#~ msgid "Products at Location"
+#~ msgstr "Продукти на локації"
+
+#~ msgid "The build profile from the user's last hearbeat request."
+#~ msgstr "Профіль збірки з останнього запиту користувача."
+
+#~ msgid "Role Name"
+#~ msgstr "Назва ролі"
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Make sure any users assigned this role also have a\n"
+#~ "                      location assigned to them. Users without assigned\n"
+#~ "                      locations will not be permitted to log in.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Переконайтеся, що всім користувачам, яким призначено цю роль,\n"
+#~ "                      також призначено локацію. Користувачі без призначених\n"
+#~ "                      локацій не зможуть увійти в систему.\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      Organization-based data access restrictions are only\n"
+#~ "                      available on the Pro plan and above. Saving this role will\n"
+#~ "                      enable full organization access for the assigned users.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Обмеження доступу до даних на основі організації доступні лише\n"
+#~ "                      у плані Pro та вище. Збереження цієї ролі надасть повний доступ до організації призначеним користувачам.\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      With the current configuration, this role will have full\n"
+#~ "                      organization access and roles that can assign it will not.\n"
+#~ "                      This is not recommended.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      За поточної конфігурації ця роль матиме повний доступ до організації, а ролі, які можуть її призначати, — ні.\n"
+#~ "                      Це не рекомендується.\n"
+#~ "                    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                      If the highlighted roles are selected, this role will have\n"
+#~ "                      full organization access and be assignable by a role that\n"
+#~ "                      does not. This is not recommended configuration.\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "                      Якщо вибрано виділені ролі, ця роль матиме\n"
+#~ "                      повний доступ до організації та буде призначатися роллю, яка цього доступу не має. Це не рекомендована конфігурація.\n"
+#~ "                    "
 
 #~ msgid "CommCare from Google Play"
 #~ msgstr "CommCare з Google Play"
