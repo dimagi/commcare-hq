@@ -51,7 +51,6 @@ from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
-from corehq.toggles import UCR_SUM_WHEN_TEMPLATES
 
 SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_AVG: MeanColumn,
@@ -376,12 +375,10 @@ class SumWhenTemplateColumn(SumWhenColumn):
     type = TypeProperty("sum_when_template")
     whens = ListProperty(DictProperty)      # List of SumWhenTemplateSpec dicts
 
-    @classmethod
-    def restricted_to_static(cls, domain):
-        return not UCR_SUM_WHEN_TEMPLATES.enabled(domain)
-
     def get_whens(self):
-        from corehq.apps.userreports.reports.factory import SumWhenTemplateFactory
+        from corehq.apps.userreports.reports.factory import (
+            SumWhenTemplateFactory,
+        )
         whens = []
         for spec in self.whens:
             template = SumWhenTemplateFactory.make_template(spec)
