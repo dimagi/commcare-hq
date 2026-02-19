@@ -13,22 +13,6 @@
 
     {% include "cloudcare/partials/case_list/menu_header.html" %}
 
-    <% if (!splitScreenToggleEnabled) { %>
-    <div class="module-search-container">
-      <div class="input-group input-group-lg">
-        <input type="text"
-               class="form-control"
-               placeholder="Search"
-               id="searchText">
-        <button class="btn btn-outline-primary"
-                type="button"
-                id="case-list-search-button">
-          <i class="fa fa-search" aria-hidden="true"></i>
-        </button>
-      </div>
-    </div>
-    <% } %>
-
     <div id="module-case-list-container__results-container"
          class="row g-0">
       <% if (mapAvailable) { %>

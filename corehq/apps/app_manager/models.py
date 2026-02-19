@@ -2573,18 +2573,17 @@ class CaseSearchLabel(BaseCaseSearchLabel):
     label = LabelProperty(default={'en': 'Search All Cases'})
 
 
-class CaseSearchAgainLabel(BaseCaseSearchLabel):
-    label = LabelProperty(default={'en': 'Search Again'})
-
-
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
+
+    Removed fields (do not reuse):
+    - again_label: Removed with SSCS migration (Feb 2026)
+    - search_again_label: Removed with SSCS migration (Feb 2026)
+      These fields may still exist in CouchDB documents but are no longer used.
     """
     command_label = LabelProperty(default={'en': 'Search All Cases'})
-    again_label = LabelProperty(default={'en': 'Search Again'})
     search_label = SchemaProperty(CaseSearchLabel)
-    search_again_label = SchemaProperty(CaseSearchAgainLabel)
     properties = SchemaListProperty(CaseSearchProperty)
     auto_launch = BooleanProperty(default=False)        # if true, skip the casedb case list
     default_search = BooleanProperty(default=False)     # if true, skip the search fields screen
@@ -2744,7 +2743,6 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             self.case_list_form._module = self
         if hasattr(self, 'search_config'):
             self.search_config.search_label._module = self
-            self.search_config.search_again_label._module = self
             self.search_config.title_label._module = self
             self.search_config.description._module = self
 
