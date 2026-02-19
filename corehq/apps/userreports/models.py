@@ -1558,10 +1558,6 @@ class UCRExpression(models.Model):
         return f"{self.name}{description}"
 
 
-def get_datasource_config_infer_type(config_id, domain):
-    return get_datasource_config(config_id, domain)
-
-
 def get_datasource_config(config_id, domain):
     def _raise_not_found():
         raise DataSourceConfigurationNotFoundError(_(
