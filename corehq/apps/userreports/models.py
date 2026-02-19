@@ -261,11 +261,6 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
 
-class MirroredEngineIds(DocumentSchema):
-    server_environment = StringProperty()
-    engine_ids = StringListProperty()
-
-
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -291,7 +286,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
-    mirrored_engine_ids = ListProperty(default=[])
+    # REMOVED_PROPERTY: mirrored_engine_ids
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -1114,7 +1109,7 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
-    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
+    # REMOVED_PROPERTY: mirrored_engine_ids
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
