@@ -751,7 +751,7 @@ class TestViewGeneric(ViewsBase):
         'is_allowed_to_be_release_notes_form', 'custom_assertions', 'title_context_block', 'id',
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'allow_form_copy', 'selected_form', 'slug',
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'allow_usercase',
-        'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
+        'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules',
         'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
         'form_submit_history_url', 'btn_style', 'ACCOUNTS_EMAIL', 'CHATBOT_ID', 'CHATBOT_TOKEN'
     }
