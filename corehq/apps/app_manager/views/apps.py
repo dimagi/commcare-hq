@@ -63,7 +63,6 @@ from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
     get_and_assert_practice_user_in_domain,
-    get_latest_enabled_versions_per_profile,
     get_settings_values,
     is_linked_app,
     is_remote_app,
@@ -397,10 +396,6 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
-        latest_version_for_build_profiles = {}
-        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            latest_version_for_build_profiles = get_latest_enabled_versions_per_profile(app.get_id)
-
         context.update({
             'show_advanced': show_advanced,
             'show_biometric': show_biometric,
@@ -410,7 +405,6 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
-            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context
