@@ -20,6 +20,14 @@ for AI coding assistants. For coding standards and best practices, see
 - Stream processing: Kafka
 - Version Control: Git
 
+## Architecture
+
+- `corehq/apps/` — primary Django app directory; most feature work lives here
+- `corehq/ex-submodules/` — internal packages added to the Python path
+- `submodules/` — git submodules also on the Python path
+- `localsettings.py` — local dev configuration (copy from `localsettings.example.py`)
+- `testsettings.py` — Django settings module used by pytest
+
 ## Common Commands
 
 ### Testing
@@ -58,6 +66,16 @@ npx prettier --write path/to/file.md
 Automated formatting and import-sorting changes should be committed
 separately from logic changes to keep diffs reviewable.
 
+### JavaScript
+
+```bash
+# Watch and rebuild JS during development
+yarn dev
+
+# Production build
+yarn build
+```
+
 ### Debugging
 
 ```bash
@@ -65,6 +83,12 @@ separately from logic changes to keep diffs reviewable.
 scripts/pr-failures.sh <pr_number>
 ```
 
+
+## Gotchas
+
+- **CouchDB is legacy** — prefer PostgreSQL/SQL for new data models
+- **Knockout.js is legacy** — prefer HTMX or Alpine.js for new frontend code
+- **Bootstrap 3 is legacy** — prefer Bootstrap 5; both coexist in the codebase
 
 ## Important Notes
 
