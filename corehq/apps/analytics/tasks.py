@@ -46,7 +46,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
     generate_monthly_web_user_statistics,
     send_partner_emails,
 )
-from corehq.apps.celery import periodic_task
+from corehq.apps.celery import analytics_task, periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
@@ -55,7 +55,6 @@ from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
 from corehq.util.dates import unix_time_in_micros
-from corehq.util.decorators import analytics_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from dimagi.utils.logging import notify_error

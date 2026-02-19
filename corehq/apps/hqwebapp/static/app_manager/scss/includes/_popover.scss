@@ -4,14 +4,15 @@
   border-radius: 0;
   color: $cc-light-cool-accent-hi;
   border: 0;
+  border-color: $cc-light-cool-accent-low;
 
-  .popover-title {
+  .popover-header {
     background-color: transparent;
     text-transform: uppercase;
-    font-size: 1.2rem;
+    font-size: 0.75rem;
     border-bottom: 1px solid darken($cc-light-cool-accent-low, 2);
   }
-  &.right > .arrow:after {
+  &.bs-popover-auto > .popover-arrow::after {
     border-right-color: $cc-light-cool-accent-low;
   }
 }
@@ -30,7 +31,7 @@
   padding-bottom: 25px;
   text-align: center;
   transition: background 0.5s;
-  font-size: 1.2rem;
+  font-size: 0.75rem;
   &:focus {
     color: $cc-light-cool-accent-hi;
   }
@@ -43,7 +44,7 @@
 
   > [class*="fa-"],
   > .fcc {
-    font-size: 4.5rem;
+    font-size: 2.8125rem;
     display: block;
     text-align: center;
     width: 100%;
@@ -51,7 +52,7 @@
   }
 
   > .fcc {
-    font-size: 5.15rem;
+    font-size: 3.2188rem;
     margin-top: -5px;
   }
 

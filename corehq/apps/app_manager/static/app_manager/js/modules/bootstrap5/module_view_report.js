@@ -2,7 +2,7 @@ import "commcarehq";
 import $ from "jquery";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import appManagerMedia from "app_manager/js/app_manager_media";
+import appManagerMedia from "app_manager/js/bootstrap5/app_manager_media";
 import reportModule from "app_manager/js/modules/bootstrap5/report_module";
 import choiceListUtils from "reports_core/js/choice_list_utils";
 import "select2/dist/js/select2.full.min";

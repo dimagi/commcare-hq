@@ -66,6 +66,7 @@ export default {
     NEXT_QUESTION: 'next_index',
     PREV_QUESTION: 'prev_index',
     SCROLLABLE_CONTENT_CONTAINER: '#content-plus-version-info-container',
+    APP_PREVIEW_FORM_CONTAINER: '.form-scrollable-container',
 
     // XForm Actions
     NEW_FORM: 'new-form',

@@ -70,14 +70,14 @@
                    </td>
                  </tr>
  
-@@ -138,25 +133,19 @@
+@@ -138,25 +133,23 @@
  
        </div>
  
 -      <div class="row"
 +      <div class="row mt-3"
             data-bind="visible: isPaginationActive">
--        <div class="col-md-4">
+         <div class="col-md-4">
 -          <div class="form-inline"
 -               style="margin: 1.6em 0;">
 -            <label for="pagination-limit">
@@ -91,8 +91,11 @@
 -              {% endfor %}
 -            </select>
 -          </div>
-+        <div class="col-lg-4">
-+          <select class="form-control" id="pagination-limit" data-bind="event: {change: updateListLimit}">
++          <select
++            class="form-select mb-2"
++            id="pagination-limit"
++            data-bind="event: {change: updateListLimit}"
++          >
 +            {% for limit in pagination.limit_options %}
 +              <option value="{{ limit }}">
 +                {{ limit }} {{ pagination.text.limit }}
@@ -100,9 +103,8 @@
 +            {% endfor %}
 +          </select>
          </div>
--        <div class="col-md-8">
+         <div class="col-md-8">
 -          {% include 'hqwebapp/partials/bootstrap3/pagination.html' %}
-+        <div class="col-lg-8">
 +          {% include 'hqwebapp/partials/bootstrap5/pagination.html' %}
          </div>
        </div>

@@ -1,18 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import migrations
 
-from corehq.toggles import (
-    TAG_SOLUTIONS_OPEN,
-    TAG_SOLUTIONS_CONDITIONAL,
-    TAG_SOLUTIONS_LIMITED,
-    TAG_SAAS_CONDITIONAL,
-    TAG_SOLUTIONS,
-    TAG_PRODUCT,
-    TAG_CUSTOM,
-    TAG_INTERNAL,
-    TAG_RELEASE,
-    TAG_DEPRECATED,
-)
 from corehq.toggles.sql_models import ToggleEditPermission
 from corehq.util.django_migrations import skip_on_fresh_install
 
@@ -20,34 +8,35 @@ from corehq.util.django_migrations import skip_on_fresh_install
 # This migration assigns edit permissions for all toggle tags to superusers to maintain consistency
 # with the current behavior.
 
-TOGGLE_TAGS = [
-    TAG_SOLUTIONS_OPEN,
-    TAG_SOLUTIONS_CONDITIONAL,
-    TAG_SOLUTIONS_LIMITED,
-    TAG_SAAS_CONDITIONAL,
-    TAG_SOLUTIONS,
-    TAG_PRODUCT,
-    TAG_CUSTOM,
-    TAG_INTERNAL,
-    TAG_RELEASE,
-    TAG_DEPRECATED
+# Inlined here to avoid depending on removed Tag definitions
+TOGGLE_TAG_SLUGS = [
+    'solutions_open',
+    'solutions_conditional',
+    'solutions_limited',
+    'saas_conditional',
+    'solutions',
+    'product',
+    'custom',
+    'solutions_internal',  # TAG_INTERNAL
+    'release',
+    'deprecated',
 ]
 
 
 @skip_on_fresh_install
 def _assign_all_toggle_edit_permissions_to_superusers(apps, schema_editor):
     superusers = User.objects.filter(is_superuser=True).values_list('username', flat=True)
-    for tag in TOGGLE_TAGS:
-        toggle_permission = ToggleEditPermission.objects.get_by_tag_slug(tag.slug)
+    for tag_slug in TOGGLE_TAG_SLUGS:
+        toggle_permission = ToggleEditPermission.objects.get_by_tag_slug(tag_slug)
         if not toggle_permission:
-            toggle_permission = ToggleEditPermission(tag_slug=tag.slug)
+            toggle_permission = ToggleEditPermission(tag_slug=tag_slug)
         toggle_permission.add_users(list(superusers))
 
 
 def _reverse(apps, schema_editor):
     superusers = User.objects.filter(is_superuser=True).values_list('username', flat=True)
-    for tag in TOGGLE_TAGS:
-        toggle_permission = ToggleEditPermission.objects.get_by_tag_slug(tag.slug)
+    for tag_slug in TOGGLE_TAG_SLUGS:
+        toggle_permission = ToggleEditPermission.objects.get_by_tag_slug(tag_slug)
         if toggle_permission:
             toggle_permission.remove_users(list(superusers))
 

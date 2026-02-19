@@ -1,0 +1,10 @@
+--- 
++++ 
+@@ -1,6 +1,6 @@
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import uploadersModule from "hqmedia/js/bootstrap3/uploaders";
++import uploadersModule from "hqmedia/js/bootstrap5/uploaders";
+ 
+ let uploaders = {};
+ 

@@ -28,7 +28,6 @@ from corehq.toggles import (
     NAMESPACE_DOMAIN,
     NAMESPACE_EMAIL_DOMAIN,
     NAMESPACE_USER,
-    TAG_CUSTOM,
     TAG_DEPRECATED,
     TAG_INTERNAL,
     DynamicallyPredictablyRandomToggle,
@@ -237,7 +236,7 @@ class ToggleEditView(BasePageView):
 
 
 def _notify_on_change(static_toggle, added_entries, username):
-    is_deprecated_toggle = (static_toggle.tag in (TAG_DEPRECATED, TAG_CUSTOM, TAG_INTERNAL))
+    is_deprecated_toggle = (static_toggle.tag in (TAG_DEPRECATED, TAG_INTERNAL))
     if added_entries and (static_toggle.notification_emails or is_deprecated_toggle):
         subject = "User {} added {} on {} in environment {}".format(
             username, static_toggle.slug,

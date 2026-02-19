@@ -135,6 +135,7 @@ accounting
  0113_geojson_export_priv
  0114_custom_icon_badges_priv
  0115_loc_cols_in_user_last_activity_priv
+ 0116_creditadjustment_payment_type
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -713,6 +714,7 @@ integration
  0013_kycconfig_phone_number_field
  0014_kycconfig_passing_threshold
  0015_kycconfig_connection_settings_and_more
+ 0016_kycconfig_stores_full_name
 ip_access
  0001_initial
 ivr
@@ -1252,6 +1254,8 @@ toggles
  0002_assign_permissions_superusers
  0003_delete_web_usercase_toggle
  0004_alter_toggleeditpermission_tag_slug
+ 0005_alter_toggleeditpermission_tag_slug
+ 0006_alter_toggleeditpermission_tag_slug
 translations
  0001_initial
  0002_transifexblacklist

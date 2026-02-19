@@ -999,7 +999,10 @@ function Question(json, parent) {
             currentNode = parent;
         }
         var el = $("#" + self.entry.entryId + "-label");
-        const scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+        let scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+        if (!scrollContainer.length) {
+            scrollContainer = $(constants.APP_PREVIEW_FORM_CONTAINER);
+        }
         scrollContainer.animate({
             scrollTop: scrollContainer.scrollTop() + $(el).offset().top - 80,
         });

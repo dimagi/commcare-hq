@@ -5,15 +5,10 @@ import zipfile
 
 from django.test import TestCase
 
-from unittest.mock import patch
-
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.hqmedia.models import CommCareImage
-from corehq.apps.hqmedia.tasks import (
-    check_ccz_multimedia_integrity,
-    find_missing_locale_ids_in_ccz,
-)
+from corehq.apps.hqmedia.tasks import check_ccz_multimedia_integrity
 from corehq.apps.hqmedia.views import iter_media_files
 
 
@@ -35,19 +30,6 @@ class CCZTest(TestCase):
             self.image.add_domain(self.domain)
             self.image.save()
             self.addCleanup(self.image.delete)
-
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_missing_locale_ids(self, mock):
-        files = self.factory.app.create_all_files()
-        errors = find_missing_locale_ids_in_ccz(files)
-        self.assertEqual(len(errors), 0)
-
-        default_app_strings = files['default/app_strings.txt'].decode('utf-8').splitlines()
-        files['default/app_strings.txt'] = "\n".join([line for line in default_app_strings
-                                                      if not line.startswith("forms.m0f0")]).encode('utf-8')
-        errors = find_missing_locale_ids_in_ccz(files)
-        self.assertEqual(len(errors), 1)
-        self.assertIn('forms.m0f0', errors[0])
 
     def test_multimedia_integrity(self):
         icon_path = 'jr://file/commcare/icon.png'

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import appManagerWidgets from "app_manager/js/widgets";
+-import "hqwebapp/js/bootstrap3/widgets";  // .hqwebapp-select2
++import "hqwebapp/js/bootstrap5/widgets";  // .hqwebapp-select2
+ 
+ $(function () {
+     // Application version select2: pagination, display comment

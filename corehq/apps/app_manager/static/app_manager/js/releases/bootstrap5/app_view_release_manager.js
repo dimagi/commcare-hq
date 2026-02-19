@@ -6,7 +6,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import appManager from "app_manager/js/bootstrap5/app_manager";
 import releases from "app_manager/js/releases/bootstrap5/releases";
 import languageProfiles from "app_manager/js/releases/bootstrap5/language_profiles";
-import previewApp from "app_manager/js/preview_app";
+import previewApp from "app_manager/js/bootstrap5/preview_app";
 import noopMetrics from "analytix/js/noopMetrics";
 import google from "analytix/js/google";
 import "app_manager/js/releases/bootstrap5/update_prompt";
@@ -78,7 +78,7 @@ if ($releaseLogsTab.length) {
 var o = {
     currentAppVersion: initialPageData.get('app_version') || -1,
     recipient_contacts: initialPageData.get('sms_contacts'),
-    download_modal_id: '#download-zip-modal',
+    downloadModalId: '#download-zip-modal',
     latestReleasedVersion: initialPageData.get('latestReleasedVersion'),
     upstreamBriefs: initialPageData.get('upstream_briefs'),
     upstreamUrl: initialPageData.get('upstream_url'),

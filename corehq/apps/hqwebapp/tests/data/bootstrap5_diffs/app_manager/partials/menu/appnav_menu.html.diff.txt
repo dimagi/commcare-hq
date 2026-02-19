@@ -38,18 +38,27 @@
          >
            <i class="new-module-icon fa fa-plus"></i>
            {% trans "Add..." %}
-@@ -73,8 +73,8 @@
+@@ -71,15 +71,13 @@
+   <div class="modal-dialog" role="document">
+     <div class="modal-content">
        <div class="modal-header">
++        <h4 class="modal-title">{% trans "Your menus were reordered" %}</h4>
          <button
            type="button"
 -          class="close"
 -          data-dismiss="modal"
-+          class="btn-close"  {# todo B5: css-close #}
++          class="btn-close"
 +          data-bs-dismiss="modal"
            aria-label="Close"
-         >
-           <span aria-hidden="true">&times;</span>
-@@ -103,7 +103,7 @@
+-        >
+-          <span aria-hidden="true">&times;</span>
+-        </button>
+-        <h4 class="modal-title">{% trans "Your menus were reordered" %}</h4>
++        ></button>
+       </div>
+       <form
+         action="{% url "move_child_modules_after_parents" domain app.id %}"
+@@ -103,7 +101,7 @@
            {% endblocktrans %}
          </div>
          <div class="modal-footer">

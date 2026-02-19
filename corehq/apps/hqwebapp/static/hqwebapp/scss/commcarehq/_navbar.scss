@@ -4,6 +4,7 @@
   background: linear-gradient(#fdfdfd, #f4f4f4);
   margin-bottom: 0px;
   min-height: $navbar-height;
+  z-index: $zindex-navbar;
 
   .navbar-brand {
     padding-top: 11px;

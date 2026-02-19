@@ -1,7 +1,7 @@
 from django.http import Http404
 from django.utils.translation import gettext as _
 
-from corehq.apps.celery import task
+from corehq.apps.celery import serial_task, task
 from celery.utils.log import get_task_logger
 from collections import defaultdict
 
@@ -19,7 +19,6 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.users.dbaccessors import get_all_users_by_domain
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.toggles import VELLUM_SAVE_TO_CASE
-from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter
 
 logger = get_task_logger(__name__)

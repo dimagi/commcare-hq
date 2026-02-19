@@ -26,6 +26,11 @@
 .case-properties {
   table-layout: fixed;
   word-wrap: break-word;
+
+  // use same selector as bootstrap to target cell backgrounds
+  > :not(caption) > * > * {
+    background-color: unset;
+  }
 }
 
 .hq-icon {

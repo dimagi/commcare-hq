@@ -138,11 +138,19 @@ urlpatterns = [
         messaging_events, name="api_messaging_event_list"),
     url(r'messaging-event/(?P<api_version>v1)/(?P<event_id>\d+)/$',
         messaging_events, name="api_messaging_event_detail"),
+
+    # Case API v0.6 endpoints
     url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch),
+    # Trailing slash optional: https://github.com/dimagi/commcare-hq/pull/29939
+    url(r'v0.6/case/?$', case_api, name='case_api_v0.6'),
+    url(r'v0\.6/case/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_v0.6_detail'),
+    path('v0.6/case/ext/<path:external_id>/', case_api),
+    # Case API v2 endpoints
     url(r'case/v2/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch'),
-    # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
-    url(r'v0\.6/case(?:/(?P<case_id>[\w\-,]+))?/?$', case_api),
-    url(r'case/v2(?:/(?P<case_id>[\w\-,]+))?/?$', case_api, name='case_api'),
+    url(r'case/v2/?$', case_api, name='case_api'),
+    url(r'case/v2/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_detail'),
+    path('case/v2/ext/<path:external_id>/', case_api, name='case_api_detail_ext'),
+
     path('', include(list(versioned_apis(_OLD_API_LIST)))),
     url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view()),
     url(r'^case_attachment/v1/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),

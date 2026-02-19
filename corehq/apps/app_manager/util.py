@@ -151,7 +151,7 @@ def generate_xmlns():
     return str(uuid.uuid4()).upper()
 
 
-def save_xform(app, form, xml):
+def save_xform(app, form, xml, mapping_diff=None):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render().decode('utf-8')
@@ -165,6 +165,9 @@ def save_xform(app, form, xml):
     except XFormException:
         pass
     else:
+        if mapping_diff:
+            form.actions = form.actions.with_updates({}, mapping_diff)
+
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
         uid = generate_xmlns()
         tag_xmlns = xform.data_node.tag_xmlns

@@ -193,7 +193,10 @@ def can_edit_form_location(domain, web_user, form):
 
 
 def location_safe(view):
-    """Decorator to apply to a view after making sure it's location-safe
+    """
+    This decorator marks a view as safe to access for any user, including those
+    restricted to a specific location, aka views that are "location safe".
+
     Supports view functions, class-based views, tastypie resources, and HQ reports.
     For classes, decorate the class, not the dispatch method.
     """

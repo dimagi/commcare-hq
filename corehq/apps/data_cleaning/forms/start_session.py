@@ -55,6 +55,7 @@ class ResumeOrRestartCaseSessionForm(forms.Form):
     case_type = forms.CharField(
         label=gettext_lazy('Case Type'),
         required=False,
+        strip=False,
     )
     next_step = forms.ChoiceField(
         label=gettext_lazy('Next Step'),

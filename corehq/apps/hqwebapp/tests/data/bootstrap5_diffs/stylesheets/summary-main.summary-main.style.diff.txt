@@ -27,7 +27,15 @@
    .fa-ul {
      margin-left: 0;
    }
-@@ -27,10 +29,10 @@
+@@ -24,13 +26,18 @@
+ .case-properties {
+   table-layout: fixed;
+   word-wrap: break-word;
++
++  // use same selector as bootstrap to target cell backgrounds
++  > :not(caption) > * > * {
++    background-color: unset;
++  }
  }
  
  .hq-icon {

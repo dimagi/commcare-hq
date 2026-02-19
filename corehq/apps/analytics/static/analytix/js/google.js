@@ -83,12 +83,13 @@ define('analytix/js/google', [
      */
     var trackEvent = function (eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
         var originalArgs = arguments;
+        const safeCallback = utils.createSafeCallback(eventCallback);
         _ready.done(function () {
             var params = {
                 event_category: eventCategory,
                 event_label: eventLabel,
                 event_value: eventValue,
-                event_callback: eventCallback,
+                event_callback: safeCallback,
                 event_action: eventAction,
             };
             if (_.isObject(eventParameters)) {
@@ -97,8 +98,8 @@ define('analytix/js/google', [
             _logger.debug.log(_logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], originalArgs), "Event Recorded");
             _gtag('event', eventAction, params);
         }).fail(function () {
-            if (_.isFunction(eventCallback)) {
-                eventCallback();
+            if (_.isFunction(safeCallback)) {
+                safeCallback();
             }
         });
     };

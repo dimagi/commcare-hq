@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
 from corehq.apps.users.models import WebUser
-from corehq.toggles import TAG_CUSTOM, TAG_SOLUTIONS
+from corehq.toggles import TAG_RELEASE, TAG_GA_PATH
 from corehq.toggles.sql_models import ToggleEditPermission
 
 
@@ -144,7 +144,7 @@ class TestSuperuserManagementView(TestCase):
         data = {
             'csv_email_list': user.username,
             'privileges': ['is_superuser', 'is_staff'],
-            'feature_flag_edit_permissions': [TAG_SOLUTIONS.slug, TAG_CUSTOM.slug],
+            'feature_flag_edit_permissions': [TAG_GA_PATH.slug, TAG_RELEASE.slug],
             'can_assign_superuser': ['can_assign_superuser']
         }
 
@@ -156,6 +156,6 @@ class TestSuperuserManagementView(TestCase):
         self.assertTrue(updated_user.is_superuser)
         self.assertTrue(updated_user.is_staff)
         self.assertTrue(updated_user.can_assign_superuser)
-        for tag_slug in [TAG_SOLUTIONS.slug, TAG_CUSTOM.slug]:
+        for tag_slug in [TAG_GA_PATH.slug, TAG_RELEASE.slug]:
             permission = ToggleEditPermission.objects.get_by_tag_slug(tag_slug)
             self.assertIn(user.username, permission.enabled_users)

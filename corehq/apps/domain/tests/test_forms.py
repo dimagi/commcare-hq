@@ -282,6 +282,8 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
             self.account, self.domain, date.today(), None,
             plan_version=DefaultProductPlan.get_default_plan_version(), is_active=True,
         )
+        self.account.auto_pay_user = self.user.name
+        self.account.save()
 
     def create_form(self, new_plan_version, **kwargs):
         args = (self.account, self.domain.name, self.user.username, new_plan_version, self.subscription)
@@ -290,7 +292,7 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
     def test_form_initial_values(self):
         plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
         form = self.create_form(plan_version)
-        self.assertEqual(form['plan_edition'].value(), plan_version.plan.edition)
+        assert form['plan_edition'].value() == plan_version.plan.edition
 
     def test_pay_monthly_subscription(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -298,13 +300,13 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
-        self.assertEqual(self.subscription.date_end, date.today())
+        assert form.is_valid()
+        assert self.subscription.date_end == date.today()
 
         new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        self.assertEqual(new_subscription.plan_version, new_plan_version)
-        self.assertEqual(new_subscription.date_start, date.today())
-        self.assertIsNone(new_subscription.date_end)
+        assert new_subscription.plan_version == new_plan_version
+        assert new_subscription.date_start == date.today()
+        assert new_subscription.date_end is None
 
     def test_pay_annually_subscription(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -312,13 +314,13 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
-        self.assertEqual(self.subscription.date_end, date.today())
+        assert form.is_valid()
+        assert self.subscription.date_end == date.today()
 
         new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        self.assertEqual(new_subscription.plan_version, new_plan_version)
-        self.assertEqual(new_subscription.date_start, date.today())
-        self.assertEqual(new_subscription.date_end, new_subscription.date_start + relativedelta(years=1))
+        assert new_subscription.plan_version == new_plan_version
+        assert new_subscription.date_start == date.today()
+        assert new_subscription.date_end == new_subscription.date_start + relativedelta(years=1)
 
     def test_pay_annually_creates_prepayment_invoice(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -326,16 +328,15 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
+        assert form.is_valid()
 
         prepayment_invoice = WirePrepaymentInvoice.objects.get(domain=self.domain.name)
         new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        self.assertEqual(prepayment_invoice.date_start, new_subscription.date_start)
-        self.assertEqual(prepayment_invoice.date_end, new_subscription.date_end)
-        self.assertEqual(prepayment_invoice.date_due,
-                         date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
-        self.assertEqual(prepayment_invoice.balance,
-                         new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+        assert prepayment_invoice.date_start == new_subscription.date_start
+        assert prepayment_invoice.date_end == new_subscription.date_end
+        assert prepayment_invoice.date_due == date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE)
+        assert (prepayment_invoice.balance
+                == new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
 
     def test_downgrade_minimum_subscription_length(self):
         self.subscription.delete()
@@ -348,12 +349,42 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         new_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
-        self.assertEqual(self.subscription.date_end, old_date_start + timedelta(days=30))
+        assert form.is_valid()
+        assert self.subscription.date_end == old_date_start + timedelta(days=30)
 
         next_subscription = self.subscription.next_subscription
-        self.assertEqual(next_subscription.plan_version, new_plan_version)
-        self.assertEqual(next_subscription.date_start, old_date_start + timedelta(days=30))
+        assert next_subscription.plan_version == new_plan_version
+        assert next_subscription.date_start == old_date_start + timedelta(days=30)
+
+    def test_autopay_required_for_monthly_plan(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=False
+        )
+        self.account.auto_pay_user = None
+        self.account.save()
+        form = self.create_form_for_submission(new_plan_version)
+        form.full_clean()
+        assert not form.is_valid()
+
+        self.account.auto_pay_user = 'someone@example.com'
+        self.account.save()
+        form.full_clean()
+        assert form.is_valid()
+
+    def test_autopay_required_if_set_on_account(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=True
+        )
+        self.account.require_auto_pay = True
+        self.account.auto_pay_user = None
+        self.account.save()
+        form = self.create_form_for_submission(new_plan_version)
+        form.full_clean()
+        assert not form.is_valid()
+
+        self.account.auto_pay_user = 'someone@example.com'
+        form.full_clean()
+        assert form.is_valid()
 
 
 class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):

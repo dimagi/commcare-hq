@@ -7,12 +7,6 @@ import re
 import urllib.parse
 import uuid
 
-from captcha.fields import ReCaptchaField
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Layout, Submit
-from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -44,6 +38,13 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
+
+from captcha.fields import ReCaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.layout import Layout, Submit
+from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
@@ -114,7 +115,6 @@ from corehq.apps.domain.models import (
     AppReleaseModeSetting,
     OperatorCallLimitSettings,
     SMSAccountConfirmationSettings,
-    TransferDomainRequest,
     all_restricted_ucr_expressions,
 )
 from corehq.apps.hqmedia.models import (
@@ -317,60 +317,6 @@ class IPAccessConfigForm(forms.Form):
         if self.current_ip in self.cleaned_data['ip_denylist']:
             self.add_error('ip_denylist', _("You cannot put your current IP address in the Denied IPs field"))
         return self.cleaned_data
-
-
-class TransferDomainFormErrors(object):
-    USER_DNE = gettext_lazy('The user being transferred to does not exist')
-    DOMAIN_MISMATCH = gettext_lazy('Mismatch in domains when confirming')
-
-
-class TransferDomainForm(forms.ModelForm):
-
-    class Meta(object):
-        model = TransferDomainRequest
-        fields = ['domain', 'to_username']
-
-    def __init__(self, domain, from_username, *args, **kwargs):
-        super(TransferDomainForm, self).__init__(*args, **kwargs)
-        self.current_domain = domain
-        self.from_username = from_username
-
-        self.fields['domain'].label = _('Type the name of the project to confirm')
-        self.fields['to_username'].label = _('New owner\'s CommCare username')
-
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            'domain',
-            'to_username',
-            StrictButton(
-                _("Transfer Project"),
-                type="submit",
-                css_class='btn-danger',
-            )
-        )
-
-    def save(self, commit=True):
-        instance = super(TransferDomainForm, self).save(commit=False)
-        instance.from_username = self.from_username
-        if commit:
-            instance.save()
-        return instance
-
-    def clean_domain(self):
-        domain = self.cleaned_data['domain']
-
-        if domain != self.current_domain:
-            raise forms.ValidationError(TransferDomainFormErrors.DOMAIN_MISMATCH)
-
-        return domain
-
-    def clean_to_username(self):
-        username = self.cleaned_data['to_username']
-        web_user = WebUser.get_by_username(username)
-        if not (web_user and web_user.is_active):
-            raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
-
-        return username
 
 
 class SubAreaMixin(object):
@@ -2117,8 +2063,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                if not self.plan_version.plan.is_annual_plan:
-                    # always require auto-pay for new monthly subscriptions
+                if self.is_autopay_required() and not self.account.require_auto_pay:
                     self.account.require_auto_pay = True
                     self.account.save(update_fields=['require_auto_pay'])
 
@@ -2217,6 +2162,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 current_edition=self.current_subscription.plan_version.plan.edition,
                 next_edition=self.plan_version.plan.edition
             )
+
+    def is_autopay_required(self):
+        # always require auto-pay for new monthly subscriptions
+        return self.account.require_auto_pay or not self.is_annual_plan_selected()
+
+    def clean(self):
+        if self.is_autopay_required() and not self.account.auto_pay_enabled:
+            raise ValidationError(_("Please provide an autopay card before continuing."))
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):

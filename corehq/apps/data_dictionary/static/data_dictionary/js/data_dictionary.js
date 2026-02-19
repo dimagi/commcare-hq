@@ -28,12 +28,16 @@ var caseType = function (
     dataUrl,
 ) {
     var self = {};
-    self.name = name || gettext("No Name");
+    self.name = name;
+    self.displayName = name || gettext("No Name");
+    // bootstrap3TabSelector can probably be removed when migrating to bootstrap5
+    // Obviously also remove the 'data-target' attribute that uses it in base.html
+    self.bootstrap3TabSelector = "#" + $.escapeSelector(encodeURIComponent(name));
     self.deprecated = deprecated;
     self.appCount = moduleCount;  // The number of application modules using this case type
     self.propertyCount = propertyCount;
     self.deprecatedPropertyCount = deprecatedPropertyCount;
-    self.url = "#" + name;
+    self.url = "#" + encodeURIComponent(name);
     self.fhirResourceType = ko.observable(fhirResourceType);
     self.groups = ko.observableArray();
     self.geoCaseProp = geoCaseProp;
@@ -47,7 +51,7 @@ var caseType = function (
     self.loadCaseProperties = function (isLoading) {
         if (self.groups().length === 0) {
             isLoading(true);
-            const caseTypeUrl = self.dataUrl + self.name + '/';
+            const caseTypeUrl = self.dataUrl + encodeURIComponent(self.name) + '/';
             fetchCaseProperties(caseTypeUrl).then(() => {
                 self.groups.sort(sortGroupsFn);
                 self.resetSaveButton();
@@ -458,7 +462,7 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
 
     self.getHashNavigationCaseType = function () {
         const fullHash = window.location.hash.split('?')[0],
-            hash = fullHash.substring(1);
+            hash = decodeURIComponent(fullHash.substring(1));
         return _.find(self.caseTypes(), function (prop) {
             return prop.name === hash;
         });
@@ -511,7 +515,10 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
         activeCaseType.deprecated = shouldDeprecate;
         $("#case-type-error").hide();
         $.ajax({
-            url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
+            url: initialPageData.reverse(
+                'deprecate_or_restore_case_type',
+                encodeURIComponent(activeCaseType.name),
+            ),
             method: 'POST',
             data: {
                 'is_deprecated': shouldDeprecate,
@@ -528,7 +535,10 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
     self.deleteCaseType = function () {
         $("#case-type-error").hide();
         $.ajax({
-            url: initialPageData.reverse('delete_case_type', self.getActiveCaseType().name),
+            url: initialPageData.reverse(
+                'delete_case_type',
+                encodeURIComponent(self.getActiveCaseType().name),
+            ),
             method: 'POST',
             success: function () {
                 window.location.href = initialPageData.reverse('data_dictionary');

@@ -76,6 +76,26 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(len(api_cases), 1)
         self.assertItemsEqual(api_cases[0]['case_id'], 'id1')
 
+    def test_get_by_case_id(self):
+        self._setup_case([('owner1', 'id1')])
+        url = f'{self.list_endpoint}id1/'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200)
+        api_case = response.json()
+        self.assertEqual(api_case['case_id'], 'id1')
+
+    def test_get_by_missing_case_id(self):
+        url = f'{self.list_endpoint}missing-case-id/'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.content.decode(), '')
+
+    def test_get_by_empty_case_id(self):
+        url = f'{self.list_endpoint}/'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.content.decode(), '')
+
     def test_get_list_format(self):
         """
         Any case in the appropriate domain should be in the list from the API.

@@ -1189,6 +1189,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         "form_data": form_data,
         "question_response_map": question_response_map,
         "ordered_question_values": ordered_question_values,
+        "attachments": _get_attachments(instance, form_data),
         "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
     })
 
@@ -1377,6 +1378,39 @@ def _get_display_options(request, domain, user, form, support_enabled):
         "show_edit_submission": show_edit_submission,
         "show_resave": show_resave,
     }
+
+
+def _get_attachments(instance, form_data):
+    """
+    Map attachments to their corresponding questions.
+
+    Returns list of three-tuples:
+    [
+        (key, attachment, question | None),
+        ...
+    ]
+    """
+    if not getattr(instance, 'attachments', None):
+        return []
+
+    def collect_questions(data):
+        for question in data:
+            if getattr(question, 'children', None):
+                collect_questions(question.children)
+            elif getattr(question, 'response', None):
+                try:
+                    # use first question with unique response, ignore other
+                    # questions with matching responses
+                    questions_by_response.setdefault(question.response, question)
+                except TypeError:
+                    pass  # question.response has unhashable type
+
+    questions_by_response = {}
+    collect_questions(form_data)
+    attachments = []
+    for key, attachment in instance.attachments.items():
+        attachments.append((key, attachment, questions_by_response.get(key)))
+    return attachments
 
 
 def safely_get_form(request, domain, instance_id):

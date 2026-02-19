@@ -24,7 +24,7 @@
     "></inline-edit>
   </div>
 
-  <div class="appmanager-edit-description">
+  <div class="appmanager-edit-description mt-2">
     <inline-edit params="
         value: '{{ app.short_comment|escapejs }}',
         url: '{% url "edit_app_attr" domain app.id 'comment' %}',
@@ -38,14 +38,14 @@
 
 {% block form-view %}
   {% registerurl "edit_add_ons" domain app.id %}
-  <div class="appmanager-tabs-container">
+  <div class="mt-3">
     {% block app_view_tabs %}{% endblock app_view_tabs %}
   </div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
   {% for uploader in uploaders %}
-    {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
+    {% include 'hqmedia/partials/bootstrap5/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
   {% endfor %}
   {% include 'app_manager/partials/bootstrap5/toggle_diff_modal.html' %}
 {% endblock %}

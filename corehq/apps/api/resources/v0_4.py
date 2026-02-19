@@ -40,7 +40,11 @@ from corehq.apps.api.serializers import (
     CommCareCaseSerializer,
     XFormInstanceSerializer,
 )
-from corehq.apps.api.util import get_obj, get_object_or_not_exist
+from corehq.apps.api.util import (
+    get_obj,
+    get_object_or_not_exist,
+    object_does_not_exist,
+)
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
 )
@@ -214,8 +218,10 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     closed_by = fields.CharField(attribute='closed_by', null=True)
 
     def obj_get(self, bundle, **kwargs):
-        case_id = kwargs['pk']
         domain = kwargs['domain']
+        case_id = kwargs['pk']
+        if not case_id:
+            raise object_does_not_exist('CommCareCase', '')
         return self.case_es(domain).get_document(case_id)
 
     class Meta(v0_3.CommCareCaseResource.Meta):

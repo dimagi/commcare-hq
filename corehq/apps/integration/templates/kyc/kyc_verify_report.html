@@ -38,12 +38,10 @@
             hx-target="#verify-alert"
             hq-hx-action="verify_rows"
             hx-vals='{
-                    "selected_ids": [],
-                    "verify_all": true
+                    "selected_ids": []
                 }'
           >
-            <span> {% trans "Verify All" %} </span>
-            <span class="d-none"> {% trans "Verify Selected" %} </span>
+            <span> {% trans "Verify Selected" %} </span>
           </button>
 
           <button

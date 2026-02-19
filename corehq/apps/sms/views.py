@@ -1913,11 +1913,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     ("custom_daily_outbound_sms_limit",
                      "custom_daily_outbound_sms_limit"),
                 ])
-            if toggles.WHATSAPP_MESSAGING.enabled(self.domain):
-                field_map.extend([
-                    ("twilio_whatsapp_phone_number",
-                     "twilio_whatsapp_phone_number"),
-                ])
 
             for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,

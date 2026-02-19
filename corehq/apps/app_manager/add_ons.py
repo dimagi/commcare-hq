@@ -175,14 +175,12 @@ _ADD_ONS = {
 _LAYOUT = [
     {
         "slug": "case_management",
-        "collapse": False,
         "name": _("Case Management"),
         "description": _("Build more complex workflows"),
         "slugs": ["conditional_form_actions", "empty_case_lists", "subcases"],
     },
     {
         "slug": "mobile",
-        "collapse": True,
         "name": _("Mobile Experience"),
         "description": _("Improve the user experience of your mobile workers"),
         "slugs": [
@@ -195,14 +193,12 @@ _LAYOUT = [
     },
     {
         "slug": "xpath",
-        "collapse": True,
         "name": _("Calculations"),
         "description": _("Add logic to your app with XPath expressions"),
         "slugs": ["display_conditions", "conditional_enum", "calc_xpaths", "advanced_itemsets"],
     },
     {
         "slug": "efficiency",
-        "collapse": True,
         "name": _("App Building Efficiency"),
         "description": _("Tools to help build your apps faster"),
         "slugs": ["case_detail_overwrite"],

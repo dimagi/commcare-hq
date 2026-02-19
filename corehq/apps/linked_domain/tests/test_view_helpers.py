@@ -527,44 +527,12 @@ class TestBuildFeatureFlagViewModels(TestCase):
 
         self.assertEqual(expected_view_models, view_models)
 
-    @flag_enabled('WIDGET_DIALER')
-    def test_build_feature_flag_view_models_returns_dialer_settings(self):
-        expected_view_models = [
-            {
-                'type': 'dialer_settings',
-                'name': 'Dialer Settings',
-                'detail': None,
-                'last_update': 'Never',
-                'can_update': True,
-                'is_linkable': True,
-            }
-        ]
-        view_models = build_feature_flag_view_models(self.domain)
-
-        self.assertEqual(expected_view_models, view_models)
-
     @flag_enabled('GAEN_OTP_SERVER')
     def test_build_feature_flag_view_models_returns_otp_settings(self):
         expected_view_models = [
             {
                 'type': 'otp_settings',
                 'name': 'OTP Pass-through Settings',
-                'detail': None,
-                'last_update': 'Never',
-                'can_update': True,
-                'is_linkable': True,
-            }
-        ]
-        view_models = build_feature_flag_view_models(self.domain)
-
-        self.assertEqual(expected_view_models, view_models)
-
-    @flag_enabled('HMAC_CALLOUT')
-    def test_build_feature_flag_view_models_returns_hmac_callout(self):
-        expected_view_models = [
-            {
-                'type': 'hmac_callout_settings',
-                'name': 'Signed Callout',
                 'detail': None,
                 'last_update': 'Never',
                 'can_update': True,

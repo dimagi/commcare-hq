@@ -32,7 +32,8 @@ from corehq.apps.app_manager.exceptions import (
     AppManagerException,
     FormNotFoundException,
 )
-from corehq.apps.app_manager.models import ModuleNotFoundException
+from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
+from corehq.apps.app_manager.models import ModuleNotFoundException, AdvancedForm
 from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.app_manager.util import (
     app_callout_templates,
@@ -49,6 +50,7 @@ from corehq.apps.app_manager.views.utils import (
     set_lang_cookie,
 )
 from corehq.apps.cloudcare.utils import should_show_preview_app
+from corehq.apps.data_dictionary.util import get_case_properties
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
@@ -147,7 +149,7 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     vellum_options = _get_base_vellum_options(request, domain, form, context['lang'])
     vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
-    vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
+    vellum_options['plugins'] = _get_vellum_plugins(domain, form, module, vellum_options)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
 
@@ -228,7 +230,7 @@ def _get_base_vellum_options(request, domain, form, displayLang):
     :param displayLang: --> derived from the base context
     """
     app = form.get_app()
-    return {
+    options = {
         'intents': {
             'templates': next(app_callout_templates),
         },
@@ -247,6 +249,19 @@ def _get_base_vellum_options(request, domain, form, displayLang):
             'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
         },
     }
+
+    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    is_advanced_form = isinstance(form, AdvancedForm)
+    case_type = form.get_module().case_type
+    if case_type and has_vellum_case_mapping and not is_advanced_form:
+        options['caseManagement'] = {
+            'mappings': form.actions.get_mappings(),
+            'properties': sorted(get_case_properties(domain, case_type).values_list('name', flat=True)),
+            'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
+            'reserved_words': load_case_reserved_words(),
+        }
+
+    return options
 
 
 def _get_vellum_core_context(request, domain, app, module, form, lang):
@@ -291,7 +306,7 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
     return core
 
 
-def _get_vellum_plugins(domain, form, module):
+def _get_vellum_plugins(domain, form, module, options):
     """
     Returns a list of enabled vellum plugins based on the domain's
     privileges.
@@ -300,6 +315,8 @@ def _get_vellum_plugins(domain, form, module):
     if (toggles.COMMTRACK.enabled(domain)
             or toggles.NON_COMMTRACK_LEDGERS.enabled(domain)):
         vellum_plugins.append("commtrack")
+    if "caseManagement" in options:
+        vellum_plugins.append("caseManagement")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
     if toggles.COMMCARE_CONNECT.enabled(domain):

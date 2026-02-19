@@ -41,7 +41,6 @@ dependencies = [
     "django-otp",
     "django-phonenumber-field",
     "django-prbac",
-    "django-redis-sessions",
     "django-redis",
     "django-recaptcha",
     "django-statici18n",
@@ -50,7 +49,6 @@ dependencies = [
     "django-transfer",
     "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
-    "django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl",
     "django~=5.2.0",
     "djangorestframework",
     "dropbox",
@@ -89,7 +87,6 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pycryptodome>=3.6.6", # security update
     "python-dateutil",
-    "python-imap",
     "pyphonetics",
     "python-magic",
     "pytz",
@@ -110,14 +107,11 @@ dependencies = [
     "simpleeval",
     "simplejson",
     "six",
-    "socketpool",
     "sqlagg",
     "SQLAlchemy",
     "stripe",
-    "suds-py3",
     "text-unidecode",
     "toposort",
-    "transifex-python",
     "tropo-webapi-python",
     "turn-python",
     "twilio",
@@ -158,7 +152,7 @@ docs = [
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
     "pyOpenSSL", # CI builds fail without OpenSSL
-    "urllib3<=1.26.20", # fix doc tests AssertionError: Current app already created
+    "urllib3<=2.6.3", # fix doc tests AssertionError: Current app already created
 ]
 prod = [
     "flower",

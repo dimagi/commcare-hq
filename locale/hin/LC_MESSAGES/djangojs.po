@@ -214,16 +214,6 @@ msgstr "चार्ट"
 msgid "Show All Dates"
 msgstr "सभी तिथियाँ दिखाएँ"
 
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
-#: corehq/apps/locations/static/locations/js/location_types.js
-msgid "You have unsaved changes."
-msgstr "आपके पास बिना सहेजे गए परिवर्तन हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/add_ons.js
-msgid "There was an error saving."
-msgstr "सहेजने में त्रुटि हुई।"
-
 #: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
 msgid "Hide Past Versions"
 msgstr "पिछले संस्करण छुपाएँ"
@@ -231,74 +221,6 @@ msgstr "पिछले संस्करण छुपाएँ"
 #: corehq/apps/app_manager/static/app_manager/js/app_exchange.js
 msgid "See Past Versions"
 msgstr "पिछले संस्करण देखें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
-msgstr "केस टाइप्स में केवल a-z, 0-9, '-' और '_' अक्षर ही शामिल हो सकते हैं"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid ""
-"This is a reserved case type. Refer to <a "
-"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
-" target=\"_blank\" rel=\"noopener\">doc</a> before using."
-msgstr ""
-"यह एक आरक्षित केस प्रकार है। उपयोग करने से पहले <a "
-"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
-" target=\"_blank\" rel=\"noopener\">दस्तावेज़</a> देखें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "This is a reserved case type. Please choose another name."
-msgstr "यह एक आरक्षित केस टाइप है। कृपया कोई अन्य नाम चुनें।"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "This case type has been deprecated in the Data Dictionary."
-msgstr "इस केस टाइप को डेटा डिक्शनरी में डिप्रिकेट कर दिया गया है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-msgid "Add"
-msgstr "जोड़ें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "Moved successfully."
-msgstr "सफलतापूर्वक स्थानांतरित किया गया।"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "You have unsaved changes"
-msgstr "आपके पास बिना सहेजे गए परिवर्तन हैं"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "Add a new case type or use an existing one"
-msgstr "एक नया केस टाइप जोड़ें या मौजूदा का उपयोग करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "What is a Survey Menu?"
-msgstr "सर्वे मेनू क्या है?"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid ""
-"Surveys are used to collect independent forms that do not need to be tracked"
-" over time. Common examples include satisfaction surveys or anonymous "
-"feedback forms."
-msgstr ""
-"सर्वे का उपयोग स्वतंत्र फॉर्म एकत्र करने के लिए किया जाता है जिन्हें समय के "
-"साथ ट्रैक करने की आवश्यकता नहीं होती। सामान्य उदाहरणों में संतुष्टि सर्वे या"
-" गुमनाम फीडबैक फॉर्म शामिल हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid "What is a Case List?"
-msgstr "केस लिस्ट क्या है?"
-
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-msgid ""
-"Case Lists are used to register and track related data (cases) over time. "
-"This data can be referenced in other forms and by other cases. Common "
-"examples include maternal health, student attendance, or crop monitoring."
-msgstr ""
-"केस लिस्ट का उपयोग संबंधित डेटा (केस) को समय के साथ पंजीकृत और ट्रैक करने के"
-" लिए किया जाता है। इस डेटा का उपयोग अन्य फॉर्म और अन्य केस द्वारा किया जा "
-"सकता है। सामान्य उदाहरणों में मातृ स्वास्थ्य, छात्र उपस्थिति, या फसल निगरानी"
-" शामिल हैं।"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
@@ -313,9 +235,435 @@ msgid "Invalid Project Selected"
 msgstr "अमान्य प्रोजेक्ट चयनित"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/multimedia_size_util.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/multimedia_size_util.js
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr "ओह, इस सेक्शन को लोड करने में समस्या आई। कृपया पुनः प्रयास करें।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
+#: corehq/apps/locations/static/locations/js/location_types.js
+msgid "You have unsaved changes."
+msgstr "आपके पास बिना सहेजे गए परिवर्तन हैं।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/add_ons.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/add_ons.js
+msgid "There was an error saving."
+msgstr "सहेजने में त्रुटि हुई।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
+msgstr "केस टाइप्स में केवल a-z, 0-9, '-' और '_' अक्षर ही शामिल हो सकते हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid ""
+"This is a reserved case type. Refer to <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">doc</a> before using."
+msgstr ""
+"यह एक आरक्षित केस प्रकार है। उपयोग करने से पहले <a "
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955258/User+Case+Management\""
+" target=\"_blank\" rel=\"noopener\">दस्तावेज़</a> देखें।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "This is a reserved case type. Please choose another name."
+msgstr "यह एक आरक्षित केस टाइप है। कृपया कोई अन्य नाम चुनें।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "This case type has been deprecated in the Data Dictionary."
+msgstr "इस केस टाइप को डेटा डिक्शनरी में डिप्रिकेट कर दिया गया है।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
+msgid "Add"
+msgstr "जोड़ें"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "Moved successfully."
+msgstr "सफलतापूर्वक स्थानांतरित किया गया।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "You have unsaved changes"
+msgstr "आपके पास बिना सहेजे गए परिवर्तन हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "Add a new case type or use an existing one"
+msgstr "एक नया केस टाइप जोड़ें या मौजूदा का उपयोग करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "What is a Survey Menu?"
+msgstr "सर्वे मेनू क्या है?"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid ""
+"Surveys are used to collect independent forms that do not need to be tracked"
+" over time. Common examples include satisfaction surveys or anonymous "
+"feedback forms."
+msgstr ""
+"सर्वे का उपयोग स्वतंत्र फॉर्म एकत्र करने के लिए किया जाता है जिन्हें समय के "
+"साथ ट्रैक करने की आवश्यकता नहीं होती। सामान्य उदाहरणों में संतुष्टि सर्वे या"
+" गुमनाम फीडबैक फॉर्म शामिल हैं।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid "What is a Case List?"
+msgstr "केस लिस्ट क्या है?"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/app_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
+msgid ""
+"Case Lists are used to register and track related data (cases) over time. "
+"This data can be referenced in other forms and by other cases. Common "
+"examples include maternal health, student attendance, or crop monitoring."
+msgstr ""
+"केस लिस्ट का उपयोग संबंधित डेटा (केस) को समय के साथ पंजीकृत और ट्रैक करने के"
+" लिए किया जाता है। इस डेटा का उपयोग अन्य फॉर्म और अन्य केस द्वारा किया जा "
+"सकता है। सामान्य उदाहरणों में मातृ स्वास्थ्य, छात्र उपस्थिति, या फसल निगरानी"
+" शामिल हैं।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/download_async_modal.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/download_async_modal.js
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
+msgid ""
+"Sorry, something went wrong with the download. If you see this repeatedly "
+"please report an issue."
+msgstr ""
+"माफ़ कीजिए, डाउनलोड में कुछ गड़बड़ हो गई। यदि यह बार-बार होता है तो कृपया एक"
+" समस्या रिपोर्ट करें।"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Active"
+msgstr "सक्रिय"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Inactive"
+msgstr "निष्क्रिय"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Deactivate"
+msgstr "निष्क्रिय करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_app_profile.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_app_profile.js
+msgid "Activate"
+msgstr "सक्रिय करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
+#: corehq/apps/sms/static/sms/js/add_gateway.js
+msgid "Remove"
+msgstr "हटाएँ"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/source_files.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/source_files.js
+msgid "Please enter a version to compare"
+msgstr "कृपया तुलना करने के लिए एक संस्करण दर्ज करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Warning: unrecognized language"
+msgstr "चेतावनी: अपरिचित भाषा"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You have unsaved changes in your supported languages"
+msgstr "आपकी समर्थित भाषाओं में असहेजे गए परिवर्तन हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "There are errors in your configuration"
+msgstr "आपकी कॉन्फ़िगरेशन में त्रुटियाँ हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "You must have at least one language"
+msgstr "कम से कम एक भाषा होनी चाहिए"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Please enter language"
+msgstr "कृपया भाषा दर्ज करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Invalid language code"
+msgstr "अमान्य भाषा कोड"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "Language appears twice"
+msgstr "भाषा दो बार दिखाई दे रही है"
+
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap3/supported_languages.js
+#: corehq/apps/app_manager/static/app_manager/js/bootstrap5/supported_languages.js
+msgid "This conflicts with a current language"
+msgstr "यह वर्तमान भाषा के साथ टकराव करता है"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache"
+msgstr "कैश"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Lazy Load"
+msgstr "लेज़ी लोड"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Cache & Lazy Load"
+msgstr "कैश और लेज़ी लोड"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Tab Name"
+msgstr "टैब नाम"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Display Condition"
+msgstr "प्रदर्शन शर्त"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid ""
+"Warning: Calculated property used is not compatible with caching and may "
+"result in stale data on case list properties"
+msgstr ""
+"चेतावनी: प्रयुक्त गणना की गई संपत्ति कैशिंग के अनुकूल नहीं है और इससे केस "
+"सूची गुणों में पुराना डेटा आ सकता है"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Oct 31, "
+msgstr "31 अक्टूबर, "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Format "
+msgstr " प्रारूप "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Days late "
+msgstr " दिन देर से "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Years since date"
+msgstr "तारीख के बाद से वर्ष"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months since date"
+msgstr "तारीख के बाद से महीने"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks since date"
+msgstr "तारीख के बाद से सप्ताह"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days since date"
+msgstr "तारीख के बाद से दिन"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Days until date"
+msgstr "तारीख तक दिन"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Weeks until date"
+msgstr "तारीख तक सप्ताह"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid "Months until date"
+msgstr "तारीख तक महीने"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
+msgid " Measuring "
+msgstr " मापना "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Custom Expression"
+msgstr "डेटा टैब: कस्टम एक्सप्रेशन"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/detail_tab_nodeset.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/detail_tab_nodeset.js
+msgid "Data Tab: Child Cases: "
+msgstr "डेटा टैब: चाइल्ड केस: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid "Edit Graph"
+msgstr "ग्राफ संपादित करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
+msgid "Copied!"
+msgstr "कॉपी किया गया!"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/graph_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/graph_config.js
+msgid ""
+"It is recommended that you leave this value blank. Future changes to your "
+"report's chart configuration will not be reflected here."
+msgstr ""
+"अनुशंसा की जाती है कि आप इस मान को खाली छोड़ दें। भविष्य में आपकी रिपोर्ट के"
+" चार्ट कॉन्फ़िगरेशन में किए गए बदलाव यहां पर नहीं दिखेंगे।"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Don't Use Case Tiles"
+msgstr "केस टाइल्स का उपयोग न करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Manually configure Case Tiles"
+msgstr "केस टाइल्स को मैन्युअली कॉन्फ़िगर करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "Edit Custom Variables"
+msgstr "कस्टम वेरिएबल्स संपादित करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You have unsaved detail screen configurations."
+msgstr "आपके पास बिना सहेजे डिटेल स्क्रीन कॉन्फ़िगरेशन हैं।"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your tab: "
+msgstr "आपके टैब में एक त्रुटि है: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There is an error in your property name: "
+msgstr "आपके प्रॉपर्टी नाम में एक त्रुटि है: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr "आप केवल 'इमेज' प्रारूप के साथ एक ही प्रॉपर्टी रख सकते हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Boundary' format"
+msgstr "'Geo Boundary' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Boundary Color' format"
+msgstr ""
+"'Geo Boundary Color' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Points' format"
+msgstr "'Geo Points' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "You can only have one property with the 'Geo Points Colors' format"
+msgstr ""
+"'Geo Points Colors' प्रारूप के साथ आप केवल एक ही प्रॉपर्टी रख सकते हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "All properties must be below a tab."
+msgstr "सभी प्रॉपर्टीज़ को टैब के नीचे होना चाहिए।"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid ""
+"Search Properties and Default Search Filters can't have common properties. "
+"Please update following properties: "
+msgstr ""
+"सर्च प्रॉपर्टीज़ और डिफ़ॉल्ट सर्च फ़िल्टर में सामान्य प्रॉपर्टीज़ नहीं हो "
+"सकतीं। कृपया निम्नलिखित प्रॉपर्टीज़ अपडेट करें: "
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen.js
+msgid "There are errors in your configuration."
+msgstr "आपकी कॉन्फ़िगरेशन में त्रुटियां हैं।"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/screen_config.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/screen_config.js
+msgid "<%- name %> (Calculated Property #<%- index %>)"
+msgstr "<%- name %> (गणना की गई प्रॉपर्टी #<%- index %>)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (a, b, c)"
+msgstr "बढ़ते क्रम में (a, b, c)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (May 1st, May 2nd)"
+msgstr "बढ़ते क्रम में (1 मई, 2 मई)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1, 2, 3)"
+msgstr "बढ़ते क्रम में (1, 2, 3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Increasing (1.1, 1.2, 1.3)"
+msgstr "बढ़ते क्रम में (1.1, 1.2, 1.3)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (c, b, a)"
+msgstr "घटते क्रम में (c, b, a)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (May 2nd, May 1st)"
+msgstr "घटते क्रम में (2 मई, 1 मई)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (3, 2, 1)"
+msgstr "घटते क्रम में (3, 2, 1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Decreasing (1.3, 1.2, 1.1)"
+msgstr "घटते क्रम में (1.3, 1.2, 1.1)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort calculation."
+msgstr "क्रमबद्ध गणना अनुपस्थित है।"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/sort_rows.js
+#: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/sort_rows.js
+msgid "Missing sort property."
+msgstr "क्रमबद्ध गुणधर्म अनुपस्थित है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Mobile UCR Options"
@@ -334,7 +682,8 @@ msgid "Lookup Table Options"
 msgstr "लुकअप टेबल विकल्प"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Lookup Table"
 msgstr "लुकअप टेबल"
 
@@ -342,107 +691,9 @@ msgstr "लुकअप टेबल"
 msgid "Select a Lookup Table..."
 msgstr "एक लुकअप टेबल चुनें..."
 
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache"
-msgstr "कैश"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Lazy Load"
-msgstr "लेज़ी लोड"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Cache & Lazy Load"
-msgstr "कैश और लेज़ी लोड"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Tab Name"
-msgstr "टैब नाम"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Display Condition"
-msgstr "प्रदर्शन शर्त"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid ""
-"Warning: Calculated property used is not compatible with caching and may "
-"result in stale data on case list properties"
-msgstr ""
-"चेतावनी: प्रयुक्त गणना की गई संपत्ति कैशिंग के अनुकूल नहीं है और इससे केस "
-"सूची गुणों में पुराना डेटा आ सकता है"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Oct 31, "
-msgstr "31 अक्टूबर, "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Format "
-msgstr " प्रारूप "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Days late "
-msgstr " दिन देर से "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Years since date"
-msgstr "तारीख के बाद से वर्ष"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months since date"
-msgstr "तारीख के बाद से महीने"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks since date"
-msgstr "तारीख के बाद से सप्ताह"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days since date"
-msgstr "तारीख के बाद से दिन"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Days until date"
-msgstr "तारीख तक दिन"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Weeks until date"
-msgstr "तारीख तक सप्ताह"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid "Months until date"
-msgstr "तारीख तक महीने"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/column.js
-msgid " Measuring "
-msgstr " मापना "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Custom Expression"
-msgstr "डेटा टैब: कस्टम एक्सप्रेशन"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/detail_tab_nodeset.js
-msgid "Data Tab: Child Cases: "
-msgstr "डेटा टैब: चाइल्ड केस: "
-
 #: corehq/apps/app_manager/static/app_manager/js/details/fixture_select.js
 msgid "Select One"
 msgstr "एक चुनें"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid "Edit Graph"
-msgstr "ग्राफ संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-#: corehq/apps/reports/static/reports/js/bootstrap3/single_form.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/single_form.js
-msgid "Copied!"
-msgstr "कॉपी किया गया!"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js
-msgid ""
-"It is recommended that you leave this value blank. Future changes to your "
-"report's chart configuration will not be reflected here."
-msgstr ""
-"अनुशंसा की जाती है कि आप इस मान को खाली छोड़ दें। भविष्य में आपकी रिपोर्ट के"
-" चार्ट कॉन्फ़िगरेशन में किए गए बदलाव यहां पर नहीं दिखेंगे।"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 #: corehq/apps/export/static/export/js/models.js
@@ -456,94 +707,6 @@ msgstr "पैरेंट"
 #: corehq/apps/app_manager/static/app_manager/js/details/parent_select.js
 msgid "Unknown menu"
 msgstr "अज्ञात मेनू"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Don't Use Case Tiles"
-msgstr "केस टाइल्स का उपयोग न करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Manually configure Case Tiles"
-msgstr "केस टाइल्स को मैन्युअली कॉन्फ़िगर करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "Edit Custom Variables"
-msgstr "कस्टम वेरिएबल्स संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You have unsaved detail screen configurations."
-msgstr "आपके पास बिना सहेजे डिटेल स्क्रीन कॉन्फ़िगरेशन हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your tab: "
-msgstr "आपके टैब में एक त्रुटि है: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There is an error in your property name: "
-msgstr "आपके प्रॉपर्टी नाम में एक त्रुटि है: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "You can only have one property with the 'Image' format"
-msgstr "आप केवल 'इमेज' प्रारूप के साथ एक ही प्रॉपर्टी रख सकते हैं"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "All properties must be below a tab."
-msgstr "सभी प्रॉपर्टीज़ को टैब के नीचे होना चाहिए।"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid ""
-"Search Properties and Default Search Filters can't have common properties. "
-"Please update following properties: "
-msgstr ""
-"सर्च प्रॉपर्टीज़ और डिफ़ॉल्ट सर्च फ़िल्टर में सामान्य प्रॉपर्टीज़ नहीं हो "
-"सकतीं। कृपया निम्नलिखित प्रॉपर्टीज़ अपडेट करें: "
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
-msgid "There are errors in your configuration."
-msgstr "आपकी कॉन्फ़िगरेशन में त्रुटियां हैं।"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
-msgid "<%- name %> (Calculated Property #<%- index %>)"
-msgstr "<%- name %> (गणना की गई प्रॉपर्टी #<%- index %>)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (a, b, c)"
-msgstr "बढ़ते क्रम में (a, b, c)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (May 1st, May 2nd)"
-msgstr "बढ़ते क्रम में (1 मई, 2 मई)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1, 2, 3)"
-msgstr "बढ़ते क्रम में (1, 2, 3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Increasing (1.1, 1.2, 1.3)"
-msgstr "बढ़ते क्रम में (1.1, 1.2, 1.3)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (c, b, a)"
-msgstr "घटते क्रम में (c, b, a)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (May 2nd, May 1st)"
-msgstr "घटते क्रम में (2 मई, 1 मई)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (3, 2, 1)"
-msgstr "घटते क्रम में (3, 2, 1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Decreasing (1.3, 1.2, 1.1)"
-msgstr "घटते क्रम में (1.3, 1.2, 1.1)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort calculation."
-msgstr "क्रमबद्ध गणना अनुपस्थित है।"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/sort_rows.js
-msgid "Missing sort property."
-msgstr "क्रमबद्ध गुणधर्म अनुपस्थित है।"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid ""
@@ -593,6 +756,22 @@ msgid "Markdown"
 msgstr "मार्कडाउन"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Boundary (Mobile only)"
+msgstr "Geo Boundary (केवल मोबाइल पर)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Boundary Color (Mobile only)"
+msgstr "Geo Boundary Color (केवल मोबाइल पर)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Points (Mobile only)"
+msgstr "Geo Points (केवल मोबाइल पर)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "Geo Points Colors (Mobile only)"
+msgstr "Geo Points Colors (केवल मोबाइल पर)"
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Address Popup (Web Apps only)"
 msgstr "पता पॉपअप (केवल वेब ऐप्स के लिए)"
 
@@ -624,113 +803,135 @@ msgstr "अनुवाद योग्य पाठ"
 msgid "Image"
 msgstr "छवि"
 
-#: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js
-#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js
-msgid ""
-"Sorry, something went wrong with the download. If you see this repeatedly "
-"please report an issue."
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+msgid "The \"%(format)s\" format requires columns with formats: %(dependencies)s."
 msgstr ""
-"माफ़ कीजिए, डाउनलोड में कुछ गड़बड़ हो गई। यदि यह बार-बार होता है तो कृपया एक"
-" समस्या रिपोर्ट करें।"
+"\"%(format)s\" प्रारूप के लिए निम्नलिखित प्रारूपों वाले कॉलम आवश्यक हैं: "
+"%(dependencies)s."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Type required"
 msgstr "केस प्रकार आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag required"
 msgstr "केस टैग आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr "केस टैग: केवल अक्षर, संख्या, '-', और '_' की अनुमति है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case Tag already in use"
 msgstr "केस टैग पहले से उपयोग में है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "subcase of"
 msgstr "सबकेस"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "autoselect mode: "
 msgstr "ऑटोसेलेक्ट मोड: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid " (from fixture)"
 msgstr " (फिक्सचर से)"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Autoselect mode required"
 msgstr "ऑटोसेलेक्ट मोड आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Property required"
 msgstr "प्रॉपर्टी आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Case required"
 msgstr "केस आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Lookup table tag required"
 msgstr "लुकअप टेबल टैग आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Expected case type required"
 msgstr "अपेक्षित केस प्रकार आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase parent reference is missing"
 msgstr "सबकेस के लिए पैरेंट संदर्भ गायब है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Parent reference ID required for subcases: "
 msgstr "सबकेस के लिए पैरेंट संदर्भ आईडी आवश्यक है: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Subcase must be in same repeat context as parent \""
 msgstr "सबकेस को पैरेंट \" के समान रिपीट संदर्भ में होना चाहिए"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/actions.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/actions.js
 msgid "Select parent"
 msgstr "पैरेंट चुनें"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Raw"
 msgstr "कच्चा"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Data"
 msgstr "यूज़र डेटा"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "User Properties"
 msgstr "यूज़र प्रॉपर्टीज़"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Case Index"
 msgstr "केस इंडेक्स"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load / Update / Close a case"
 msgstr "केस लोड / अपडेट / बंद करें"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Automatic Case Selection"
 msgstr "स्वचालित केस चयन"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Load Case From Fixture"
 msgstr "फिक्सचर से केस लोड करें"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
 msgid "Open a Case"
 msgstr "केस खोलें"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property updated by two questions"
 msgstr "प्रॉपर्टी दो प्रश्नों द्वारा अपडेट की गई"
 
@@ -739,7 +940,8 @@ msgid "Reserved word: "
 msgstr "आरक्षित शब्द: "
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Inside the wrong repeat!"
 msgstr "गलत रिपीट के अंदर!"
 
@@ -751,17 +953,60 @@ msgstr "सबकेस के लिए पैरेंट प्रॉपर�
 msgid "Two properties load to the same question"
 msgstr "दो प्रॉपर्टी एक ही प्रश्न में लोड हो रही हैं"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged case settings"
 msgstr "आपके केस सेटिंग्स में कोई बदलाव नहीं हुआ है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "आपकी यूज़र प्रॉपर्टीज़ सेटिंग्स में कोई बदलाव नहीं हुआ है"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "संपत्ति अपरिचित उपसर्ग <strong> का उपयोग करती है"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_designer.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_designer.js
+msgid "Edit Form"
+msgstr "फॉर्म संपादित करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_view.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_view.js
+msgid "Form Settings"
+msgstr "फॉर्म सेटिंग्स"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "This form either no longer exists or has a different case type"
+msgstr "यह फॉर्म या तो अब मौजूद नहीं है या इसका केस प्रकार अलग है"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Unrecognized value"
+msgstr "अपरिचित मान"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Manual Linking Datums"
+msgstr "मैन्युअल लिंकिंग डेटम्स"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Set datums required to navigate to the selected form or menu"
+msgstr "चयनित फॉर्म या मेनू पर नेविगेट करने के लिए आवश्यक डेटम्स सेट करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "Datum ID"
+msgstr "डेटम आईडी"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap3/form_workflow.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/bootstrap5/form_workflow.js
+msgid "XPath Expression"
+msgstr "XPath अभिव्यक्ति"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -781,158 +1026,129 @@ msgstr ""
 msgid "Select a Question"
 msgstr "प्रश्न चुनें"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js
-msgid "Edit Form"
-msgstr "फॉर्म संपादित करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js
-msgid "Form Settings"
-msgstr "फॉर्म सेटिंग्स"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "This form either no longer exists or has a different case type"
-msgstr "यह फॉर्म या तो अब मौजूद नहीं है या इसका केस प्रकार अलग है"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Unrecognized value"
-msgstr "अपरिचित मान"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Manual Linking Datums"
-msgstr "मैन्युअल लिंकिंग डेटम्स"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Set datums required to navigate to the selected form or menu"
-msgstr "चयनित फॉर्म या मेनू पर नेविगेट करने के लिए आवश्यक डेटम्स सेट करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "Datum ID"
-msgstr "डेटम आईडी"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js
-msgid "XPath Expression"
-msgstr "XPath अभिव्यक्ति"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Active"
-msgstr "सक्रिय"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Inactive"
-msgstr "निष्क्रिय"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Deactivate"
-msgstr "निष्क्रिय करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js
-msgid "Activate"
-msgstr "सक्रिय करें"
-
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
-#: corehq/apps/sms/static/sms/js/add_gateway.js
-msgid "Remove"
-msgstr "हटाएँ"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Menu Settings"
 msgstr "मेनू सेटिंग्स"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Case type is required."
 msgstr "केस प्रकार आवश्यक है।"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Go back to case list"
 msgstr "केस सूची पर वापस जाएँ"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/module_view.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/module_view.js
 msgid "Proceed with registered case"
 msgstr "पंजीकृत केस के साथ आगे बढ़ें"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Show All"
 msgstr "सभी दिखाएँ"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "Display text is required"
 msgstr "डिस्प्ले टेक्स्ट आवश्यक है"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "You have unsaved changes in your report list module"
 msgstr "आपकी रिपोर्ट सूची मॉड्यूल में बिना सहेजे गए परिवर्तन हैं"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap3/report_module.js
+#: corehq/apps/app_manager/static/app_manager/js/modules/bootstrap5/report_module.js
 msgid "This code is used in multiple places."
 msgstr "यह कोड कई स्थानों पर उपयोग किया गया है।"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/app_view_release_manager.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/app_view_release_manager.js
 msgid "Releases"
 msgstr "रिलीज़"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "You have unsaved changes to your application profiles"
 msgstr "आपके एप्लिकेशन प्रोफाइल में बिना सहेजे गए परिवर्तन हैं"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "There was an error saving"
 msgstr "सहेजने में त्रुटि हुई"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/language_profiles.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/language_profiles.js
 msgid "Select a user"
 msgstr "एक उपयोगकर्ता चुनें"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "(Default)"
 msgstr "(डिफ़ॉल्ट)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Unknown App"
 msgstr "अज्ञात ऐप"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 "एक त्रुटि हुई। पृष्ठ को पुनः लोड करें और फिर से नया संस्करण बनाने के लिए "
 "क्लिक करें।"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "माफ़ कीजिए, यह पूरा नहीं हो सका। कृपया अपना पृष्ठ पुनः लोड करें और फिर से "
 "प्रयास करें"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "The versions list has changed since you loaded the page."
 msgstr "जब से आपने पृष्ठ लोड किया है, संस्करण सूची बदल गई है।"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/releases.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/releases.js
 msgid "No new changes!"
 msgstr "कोई नया परिवर्तन नहीं!"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap3/update_prompt.js
+#: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
 msgstr "आपकी प्रॉम्प्ट सेटिंग में बिना सहेजे गए परिवर्तन हैं"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr "इस विकल्प के लिए CommCare %s में अपग्रेड करें!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr "CommCare %s में अपग्रेड करें!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Auto-set by "
 msgstr "स्वतः सेट किया गया "
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid ""
 "This value is currently inherited from the master app. Once this page is "
 "saved, it will no longer be inherited."
@@ -940,17 +1156,15 @@ msgstr ""
 "यह मान वर्तमान में मास्टर ऐप से विरासत में मिला है। एक बार यह पृष्ठ सहेजने "
 "के बाद, यह विरासत में नहीं रहेगा।"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "You have unsaved settings."
 msgstr "आपकी सेटिंग्स में बिना सहेजे गए परिवर्तन हैं।"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
+#: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 msgid "Settings"
 msgstr "सेटिंग्स"
-
-#: corehq/apps/app_manager/static/app_manager/js/source_files.js
-msgid "Please enter a version to compare"
-msgstr "कृपया तुलना करने के लिए एक संस्करण दर्ज करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js
 msgid "Filter properties"
@@ -1067,6 +1281,8 @@ msgid "save"
 msgstr "सहेजें"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Case Property"
 msgstr "केस प्रॉपर्टी"
 
@@ -1083,41 +1299,71 @@ msgstr "नवीनतम सहेजा गया"
 msgid "[unknown]"
 msgstr "[अज्ञात]"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Warning: unrecognized language"
-msgstr "चेतावनी: अपरिचित भाषा"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "getCurrentMugInput"
+msgstr "getCurrentMugInput"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You have unsaved changes in your supported languages"
-msgstr "आपकी समर्थित भाषाओं में असहेजे गए परिवर्तन हैं"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "jstree"
+msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "There are errors in your configuration"
-msgstr "आपकी कॉन्फ़िगरेशन में त्रुटियाँ हैं"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "You must have at least one language"
-msgstr "कम से कम एक भाषा होनी चाहिए"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "getData"
+msgstr "getData"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Please enter language"
-msgstr "कृपया भाषा दर्ज करें"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "loadXML"
+msgstr "loadXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Invalid language code"
-msgstr "अमान्य भाषा कोड"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "createXML"
+msgstr "createXML"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "Language appears twice"
-msgstr "भाषा दो बार दिखाई दे रही है"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "loadXFormOrError"
+msgstr "loadXFormOrError"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
-msgid "This conflicts with a current language"
-msgstr "यह वर्तमान भाषा के साथ टकराव करता है"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "addQuestion"
+msgstr "प्रश्न जोड़ें"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/483.js
-msgid "New Form"
-msgstr "नया फ़ॉर्म"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "nodeIDFromLabel"
+msgstr "लेबल से नोड आईडी"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "getSections"
+msgstr "सेक्शन प्राप्त करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/395.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/455.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/77.js
+msgid "collapseSection"
+msgstr "सेक्शन संक्षिप्त करें"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/485.js
 msgid "Drag question here"
@@ -1159,21 +1405,51 @@ msgstr "सभी अभिव्यक्तियाँ सत्य होन
 msgid "True when ANY of the expressions are true."
 msgstr "कोई भी अभिव्यक्ति सत्य होने पर सत्य।"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} मान्य डेटा पैरेंट नहीं है"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "createXML"
-msgstr "createXML"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid ""
+"\"{caseProperty}\" is assigned by another question. You can still save the "
+"form, but will need to have only one question for any case property in order"
+" to build the application"
+msgstr ""
+"\"{caseProperty}\" किसी अन्य प्रश्न द्वारा असाइन किया गया है। आप अभी भी "
+"फॉर्म को सहेज सकते हैं, लेकिन एप्लिकेशन बनाने के लिए किसी भी केस प्रॉपर्टी "
+"के लिए केवल एक प्रश्न होना आवश्यक है।"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getData"
-msgstr "getData"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Case Management"
+msgstr "केस प्रबंधन"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/880.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid ""
+"Saving a question as a case property makes it accessible and reusable across"
+" your application. To manage all your case properties from this form, click "
+"on the Manage Case button. "
+msgstr ""
+"किसी प्रश्न को केस प्रॉपर्टी के रूप में सहेजने से वह आपकी एप्लिकेशन में सुलभ"
+" और पुन: उपयोग योग्य हो जाता है। इस फॉर्म से अपनी सभी केस प्रॉपर्टीज़ "
+"प्रबंधित करने के लिए, 'केस प्रबंधित करें' बटन पर क्लिक करें। "
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "**{word}** is a reserved word"
+msgstr "**{word}** एक आरक्षित शब्द है"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid ""
+"This question is used to update multiple case properties. If you wish to "
+"update these case properties, please visit the [Manage Case Page]({url})"
+msgstr ""
+"यह प्रश्न कई केस प्रॉपर्टीज़ को अपडेट करने के लिए उपयोग किया जाता है। यदि आप"
+" इन केस प्रॉपर्टीज़ को अपडेट करना चाहते हैं, तो कृपया [केस प्रबंधन "
+"पृष्ठ]({url}) पर जाएँ।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
@@ -1206,7 +1482,8 @@ msgid "no comment"
 msgstr "कोई टिप्पणी नहीं"
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
-#: corehq/apps/translations/static/translations/js/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/app_translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/app_translations.js
 msgid "Select Profile"
 msgstr "प्रोफ़ाइल चुनें"
 
@@ -2290,7 +2567,8 @@ msgstr "सहेजने में विफल "
 msgid "Please wait and do not navigate away..."
 msgstr "कृपया प्रतीक्षा करें और कहीं और न जाएँ..."
 
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js
+#: corehq/apps/hqmedia/static/hqmedia/js/bootstrap3/references_main.js
+#: corehq/apps/hqmedia/static/hqmedia/js/bootstrap5/references_main.js
 msgid ""
 "Error fetching multimedia, please try again or report an issue if the "
 "problem persists."
@@ -3403,23 +3681,28 @@ msgstr ""
 "उपयोगकर्ताओं को लोड नहीं किया जा सका। कृपया बाद में पुनः प्रयास करें या यदि "
 "यह समस्या बनी रहती है तो एक समस्या रिपोर्ट करें।"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Delete Translation"
 msgstr "अनुवाद हटाएं"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Add Translation"
 msgstr "अनुवाद जोड़ें"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto fill translations"
 msgstr "अनुवाद स्वतः भरें"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Auto Fill translations"
 msgstr "अनुवाद स्वतः भरें"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
@@ -3427,15 +3710,18 @@ msgstr ""
 "यह आपके चयनित भाषा के लिए सबसे सामान्य अनुवाद चुनेगा। आप बाद में इन्हें "
 "आवश्यकतानुसार संपादित कर सकते हैं।"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "You have unsaved user interface translations."
 msgstr "आपके पास बिना सहेजे गए यूज़र इंटरफेस अनुवाद हैं।"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid "Parameters formatting problem!"
 msgstr "पैरामीटर स्वरूपण समस्या!"
 
-#: corehq/apps/translations/static/translations/js/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap3/translations.js
+#: corehq/apps/translations/static/translations/js/bootstrap5/translations.js
 msgid ""
 "Autofill is not available in English (en). Please change your language using"
 " the dropdown in the top left."
@@ -3659,11 +3945,6 @@ msgstr "उपलब्धता जांची जा रही है..."
 msgid "Issue connecting to server. Check Internet connection."
 msgstr "सर्वर से कनेक्ट करने में समस्या। इंटरनेट कनेक्शन जांचें।"
 
-#: corehq/apps/users/static/users/js/bootstrap3/roles_and_permissions.js
-#: corehq/apps/users/static/users/js/bootstrap5/roles_and_permissions.js
-msgid "View Only"
-msgstr "केवल देखें"
-
 #: corehq/apps/users/static/users/js/bootstrap3/web_users.js
 #: corehq/apps/users/static/users/js/bootstrap5/web_users.js
 msgid "<%- days %> days remaining"
@@ -3700,23 +3981,7 @@ msgstr ""
 "ने इसे अस्वीकार कर दिया। आमतौर पर इसका मतलब है कि या तो ईमेल पता गलत है या "
 "आपकी संस्था हमारे पते (<%- fromAddress %>) से ईमेल को ब्लॉक कर रही है।"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "No Access"
-msgstr "कोई पहुँच नहीं"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access All"
-msgstr "सभी तक पहुँच"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Limited Access"
-msgstr "सीमित पहुँच"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which items the role can access:"
-msgstr "चुनें कि भूमिका किन आइटम्स तक पहुँच सकती है:"
-
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Web Users</strong> &mdash; invite new web users, manage account "
 "settings, remove membership"
@@ -3724,15 +3989,15 @@ msgstr ""
 "<strong>वेब उपयोगकर्ता</strong> &mdash; नए वेब उपयोगकर्ताओं को आमंत्रित "
 "करें, खाता सेटिंग्स प्रबंधित करें, सदस्यता हटाएँ"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View Mobile Workers"
 msgstr "मोबाइल वर्कर्स को संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only Mobile Workers"
 msgstr "केवल देखने योग्य मोबाइल वर्कर्स"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
 "configuration for web users"
@@ -3740,15 +4005,15 @@ msgstr ""
 "<strong>टेबलू कॉन्फ़िगरेशन प्रबंधित करें</strong> &mdash; वेब उपयोगकर्ताओं "
 "के लिए टेबलू कॉन्फ़िगरेशन प्रबंधित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View tableau configuration for web users"
 msgstr "वेब उपयोगकर्ताओं के लिए टेबलू कॉन्फ़िगरेशन संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only tableau configuration for web users"
 msgstr "केवल देखने योग्य टेबलू कॉन्फ़िगरेशन वेब उपयोगकर्ताओं के लिए"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings, deactivate or delete mobile workers."
@@ -3756,50 +4021,50 @@ msgstr ""
 "<strong>मोबाइल वर्कर्स</strong> &mdash; नए खाते बनाएं, खाता सेटिंग्स "
 "प्रबंधित करें, मोबाइल वर्कर्स को निष्क्रिय या हटाएं।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View Web Users"
 msgstr "वेब उपयोगकर्ताओं को संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only Web Users"
 msgstr "केवल देखने योग्य वेब उपयोगकर्ता"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
 msgstr "<strong>समूह</strong> &mdash; मोबाइल वर्कर्स के समूह प्रबंधित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View Groups"
 msgstr "समूह संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only Web Groups"
 msgstr "केवल देखने योग्य वेब समूह"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow changing group membership (requires edit groups)."
 msgstr "समूह सदस्यता बदलने की अनुमति दें (समूह संपादन आवश्यक)।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
 msgstr ""
 "<strong>स्थान</strong> &mdash; संगठन की संरचना में स्थान प्रबंधित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View Locations"
 msgstr "स्थान संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only Web Locations"
 msgstr "केवल देखने योग्य वेब स्थान"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow changing workers at a location."
 msgstr "किसी स्थान पर वर्कर्स बदलने की अनुमति दें।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Data Dictionary</strong> &mdash; manage case properties within "
 "CommCare HQ"
@@ -3807,15 +4072,15 @@ msgstr ""
 "<strong>डेटा शब्दकोश</strong> &mdash; CommCare HQ के भीतर केस प्रॉपर्टीज़ "
 "प्रबंधित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View Data Dictionary"
 msgstr "डेटा शब्दकोश संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only Data Dictionary"
 msgstr "केवल देखने योग्य डेटा शब्दकोश"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
@@ -3823,20 +4088,20 @@ msgstr ""
 "<strong>डेटा</strong> &mdash; फॉर्म और केस डेटा देखें, निर्यात करें, संपादित"
 " करें, केस पुनः असाइन करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View Data"
 msgstr "डेटा संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Messaging</strong> &mdash; configure and send conditional alerts"
 msgstr "<strong>संदेश</strong> &mdash; सशर्त अलर्ट कॉन्फ़िगर करें और भेजें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Access Messaging"
 msgstr "संदेश तक पहुँच"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
 " data. Specific APIs may require additional permissions."
@@ -3845,11 +4110,11 @@ msgstr ""
 " पढ़ें और अपडेट करें। कुछ एपीआई के लिए अतिरिक्त अनुमतियाँ आवश्यक हो सकती "
 "हैं।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Access APIs"
 msgstr "एपीआई तक पहुँच"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Applications</strong> &mdash; modify or view the structure and "
 "configuration of all applications."
@@ -3857,15 +4122,15 @@ msgstr ""
 "<strong>एप्लिकेशन</strong> &mdash; सभी एप्लिकेशन की संरचना और कॉन्फ़िगरेशन "
 "को संशोधित या देखें।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View Apps"
 msgstr "एप्लिकेशन संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only Applications"
 msgstr "केवल देखने योग्य एप्लिकेशन"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -3874,11 +4139,11 @@ msgstr ""
 "वर्कर की भूमिकाएँ और अनुमतियाँ देखें (केवल एडमिन भूमिकाएँ संपादित कर सकते "
 "हैं)"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View Roles and Permissions"
 msgstr "भूमिकाएँ और अनुमतियाँ देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Dropzone</strong> &mdash; Upload and download files from the file "
 "Dropzone"
@@ -3886,15 +4151,15 @@ msgstr ""
 "<strong>ड्रॉपज़ोन</strong> &mdash; फाइल ड्रॉपज़ोन से फाइलें अपलोड और डाउनलोड"
 " करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & Download files from the Dropzone "
 msgstr "ड्रॉपज़ोन से फाइलें संपादित करें और डाउनलोड करें "
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only Dropzone"
 msgstr "केवल देखने योग्य ड्रॉपज़ोन"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
 "and structure of shared exports"
@@ -3902,7 +4167,7 @@ msgstr ""
 "<strong>साझा निर्यात प्रबंधित करें</strong> &mdash; साझा निर्यात की सामग्री "
 "और संरचना तक पहुँचें और संपादित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
 "events and users"
@@ -3910,11 +4175,11 @@ msgstr ""
 "<strong>उपस्थिति ट्रैकिंग</strong> &mdash; उपस्थिति ट्रैकिंग ईवेंट्स और "
 "उपयोगकर्ताओं का समन्वय करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit Attendance Tracking Events"
 msgstr "उपस्थिति ट्रैकिंग ईवेंट्स संपादित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
 "associated with this project"
@@ -3922,141 +4187,128 @@ msgstr ""
 "<strong>CommCare एनालिटिक्स</strong> &mdash; इस प्रोजेक्ट से जुड़ी CommCare "
 "एनालिटिक्स को प्रबंधित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Edit & View CommCare Analytics"
 msgstr "CommCare एनालिटिक्स संपादित करें और देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "View-Only CommCare Analytics"
 msgstr "केवल देखने के लिए CommCare एनालिटिक्स"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Enterprise Release Management"
 msgstr "एंटरप्राइज रिलीज़ प्रबंधन"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Multi-Environment Release Management"
 msgstr "मल्टी-एनवायरनमेंट रिलीज़ प्रबंधन"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Linked Project Spaces"
 msgstr "लिंक्ड प्रोजेक्ट स्पेस"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to configure linked project spaces"
 msgstr "भूमिका को लिंक्ड प्रोजेक्ट स्पेस कॉन्फ़िगर करने की अनुमति दें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Linked Configurations"
 msgstr "लिंक्ड कॉन्फ़िगरेशन"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to edit linked configurations on this project space"
 msgstr ""
 "भूमिका को इस प्रोजेक्ट स्पेस में लिंक्ड कॉन्फ़िगरेशन संपादित करने की अनुमति "
 "दें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Create and Edit Reports"
 msgstr "रिपोर्ट बनाएं और संपादित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to create and edit reports in report builder."
 msgstr ""
 "भूमिका को रिपोर्ट बिल्डर में रिपोर्ट बनाने और संपादित करने की अनुमति दें।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Create and Edit Custom Web Reports"
 msgstr "कस्टम वेब रिपोर्ट बनाएं और संपादित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to create and edit custom web reports."
 msgstr "भूमिका को कस्टम वेब रिपोर्ट बनाने और संपादित करने की अनुमति दें।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Create and Edit Configurable Reports"
 msgstr "कॉन्फ़िगर करने योग्य रिपोर्ट बनाएं और संपादित करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to create and edit configurable reports."
 msgstr ""
 "भूमिका को कॉन्फ़िगर करने योग्य रिपोर्ट बनाने और संपादित करने की अनुमति दें।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Access All CommCare Reports"
 msgstr "सभी CommCare रिपोर्ट तक पहुँचें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Access All Reports"
 msgstr "सभी रिपोर्ट तक पहुँचें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid ""
 "Allow role to view all CommCare reports. Excludes embedded Tableau reports"
 msgstr ""
 "भूमिका को सभी CommCare रिपोर्ट देखने की अनुमति दें। इसमें एम्बेडेड Tableau "
 "रिपोर्ट शामिल नहीं हैं"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to access all reports."
 msgstr "भूमिका को सभी रिपोर्ट तक पहुँचने की अनुमति दें।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Download and Email Reports"
 msgstr "रिपोर्ट डाउनलोड और ईमेल करें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to download and email report data."
 msgstr "भूमिका को रिपोर्ट डेटा डाउनलोड और ईमेल करने की अनुमति दें।"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Access All Tableau Reports"
 msgstr "सभी Tableau रिपोर्ट तक पहुँचें"
 
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Allow role to access all embedded Tableau reports."
 msgstr "भूमिका को सभी एम्बेडेड Tableau रिपोर्ट तक पहुँचने की अनुमति दें।"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Manage Registries"
-msgstr "रजिस्ट्रियों का प्रबंधन करें"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which registries the role can manage:"
-msgstr "चुनें कि कौन सी रजिस्ट्रियाँ भूमिका प्रबंधित कर सकती है:"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View Registry Data"
-msgstr "रजिस्ट्री डेटा देखें"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which registry data the role can view:"
-msgstr "चुनें कि कौन सा रजिस्ट्री डेटा भूमिका देख सकती है:"
-
-#: corehq/apps/users/static/users/js/roles.js
+#: corehq/apps/users/static/users/js/edit_role.js
 msgid "Use Web Apps for online data entry"
 msgstr "ऑनलाइन डेटा एंट्री के लिए वेब ऐप्स का उपयोग करें"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which web apps the role has access to:"
-msgstr "चुनें कि कौन से वेब ऐप्स तक भूमिका की पहुँच है:"
+#: corehq/apps/users/static/users/js/edit_role.js
+msgid "Select which web apps..."
+msgstr "कौन से वेब ऐप्स चुनें..."
 
-#: corehq/apps/users/static/users/js/roles.js
-#, javascript-format
-msgid "Select at least one item from the list for \"%s\""
-msgstr "\"%s\" के लिए सूची से कम से कम एक आइटम चुनें"
+#: corehq/apps/users/static/users/js/edit_role.js
+msgid "Manage Registries"
+msgstr "रजिस्ट्रियों का प्रबंधन करें"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit Role: "
-msgstr "भूमिका संपादित करें: "
+#: corehq/apps/users/static/users/js/edit_role.js
+msgid "Select which registries the role can manage:"
+msgstr "चुनें कि कौन सी रजिस्ट्रियाँ भूमिका प्रबंधित कर सकती है:"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View Role: "
-msgstr "भूमिका देखें: "
+#: corehq/apps/users/static/users/js/edit_role.js
+msgid "View Registry Data"
+msgstr "रजिस्ट्री डेटा देखें"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "New Role"
-msgstr "नई भूमिका"
+#: corehq/apps/users/static/users/js/edit_role.js
+msgid "Select which registry data the role can view:"
+msgstr "चुनें कि कौन सा रजिस्ट्री डेटा भूमिका देख सकती है:"
+
+#: corehq/apps/users/static/users/js/edit_role.js
+msgid "An error occurred, please try again."
+msgstr "एक त्रुटि हुई, कृपया पुनः प्रयास करें।"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Delete Role: "
@@ -4066,9 +4318,9 @@ msgstr "भूमिका हटाएँ: "
 msgid "Are you sure you want to delete the role <%- role %>?"
 msgstr "क्या आप वाकई भूमिका <%- role %> को हटाना चाहते हैं?"
 
-#: corehq/apps/users/static/users/js/roles.js
-msgid "An error occurred, please try again."
-msgstr "एक त्रुटि हुई, कृपया पुनः प्रयास करें।"
+#: corehq/apps/users/static/users/js/roles_and_permissions.js
+msgid "View Only"
+msgstr "केवल देखें"
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
@@ -4279,6 +4531,40 @@ msgstr "विफल! प्रतिक्रिया है: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
 
+#~ msgid "No Access"
+#~ msgstr "कोई पहुँच नहीं"
+
+#~ msgid "Access All"
+#~ msgstr "सभी तक पहुँच"
+
+#~ msgid "Limited Access"
+#~ msgstr "सीमित पहुँच"
+
+#~ msgid "Select which items the role can access:"
+#~ msgstr "चुनें कि भूमिका किन आइटम्स तक पहुँच सकती है:"
+
+#~ msgid "Select which web apps the role has access to:"
+#~ msgstr "चुनें कि कौन से वेब ऐप्स तक भूमिका की पहुँच है:"
+
+#, javascript-format
+#~ msgid "Select at least one item from the list for \"%s\""
+#~ msgstr "\"%s\" के लिए सूची से कम से कम एक आइटम चुनें"
+
+#~ msgid "Edit Role: "
+#~ msgstr "भूमिका संपादित करें: "
+
+#~ msgid "View Role: "
+#~ msgstr "भूमिका देखें: "
+
+#~ msgid "New Role"
+#~ msgstr "नई भूमिका"
+
+#~ msgid "\n"
+#~ msgstr "\n"
+
+#~ msgid "New Form"
+#~ msgstr "नया फ़ॉर्म"
+
 #~ msgid "Your location"
 #~ msgstr "आपका स्थान"
 
@@ -4310,9 +4596,6 @@ msgstr "CommCare HQ अनुरोध करने में असमर्थ
 #~ msgid "2-digit"
 #~ msgstr "2-अंकीय"
 
-#~ msgid "Questions"
-#~ msgstr "प्रश्न"
-
 #~ msgid "Copy"
 #~ msgstr "कॉपी करें"
 
@@ -4324,9 +4607,6 @@ msgstr "CommCare HQ अनुरोध करने में असमर्थ
 
 #~ msgid "Bulk Update All Questions"
 #~ msgstr "सभी प्रश्नों का बल्क अपडेट करें"
-
-#~ msgid "Add Question"
-#~ msgstr "प्रश्न जोड़ें"
 
 #~ msgid "Click {btn} to start building your form."
 #~ msgstr "{btn} पर क्लिक करें और अपना फ़ॉर्म बनाना शुरू करें।"

@@ -4,7 +4,7 @@ import _ from "underscore";
 import baseAce from "hqwebapp/js/base_ace";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import multimediaSizeUtil from "app_manager/js/bootstrap5/multimedia_size_util";
-import "app_manager/js/download_async_modal";
+import "app_manager/js/bootstrap5/download_async_modal";
 import "app_manager/js/bootstrap5/source_files";
 
 $(function () {

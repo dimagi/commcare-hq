@@ -395,10 +395,13 @@ class UpdateCaseAction(FormAction):
             # because update_multi is meant to be exclusive with update, no items need to be moved
             return False
 
-        self.update_multi = {k: [v] for (k, v) in self.update.items()}
+        self.update_multi = self._multi_updates()
         self.update = {}
 
         return True
+
+    def _multi_updates(self):
+        return self.update_multi or {k: [v] for k, v in self.update.items()}
 
     def normalize_update(self):
         '''
@@ -548,6 +551,12 @@ class UpdateCaseAction(FormAction):
         if all_missing_mappings:
             raise MissingPropertyMapException(*all_missing_mappings)
 
+    def get_mappings(self):
+        return {
+            case_property: [_to_json_sans_doc_type(update) for update in updates]
+            for (case_property, updates) in self._multi_updates().items()
+        }
+
 
 class PreloadAction(FormAction):
 
@@ -657,6 +666,19 @@ class OpenCaseAction(FormAction):
     def _update_has_name(self, update):
         return bool(update.question_path)
 
+    def get_mappings(self):
+        updates = self.name_update_multi or [self.name_update]
+        return {
+            'name': [_to_json_sans_doc_type(update) for update in updates]
+        }
+
+
+def _to_json_sans_doc_type(obj):
+    json = obj.to_json()
+    if 'doc_type' in json:
+        del json['doc_type']
+    return json
+
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
@@ -698,6 +720,33 @@ class UpdateCaseDiff(DocumentSchema):
 class FormActionsDiff(DocumentSchema):
     open_case = SchemaProperty(OpenCaseDiff)
     update_case = SchemaProperty(UpdateCaseDiff)
+
+    @classmethod
+    def from_json(cls, universal_diff_json, is_registration=False):
+        open_diff = OpenCaseDiff()
+        update_diff = UpdateCaseDiff(universal_diff_json)
+
+        if is_registration:
+            if 'name' in update_diff.add:
+                name_additions = update_diff.add['name']
+                open_diff.add = name_additions
+                del update_diff.add['name']
+
+            if 'name' in update_diff.update:
+                name_updates = update_diff.update['name']
+                open_diff.update = name_updates
+                del update_diff.update['name']
+
+            if 'name' in update_diff.delete:
+                name_deletions = update_diff.delete['name']
+                open_diff.delete = name_deletions
+                del update_diff.delete['name']
+
+        diff = FormActionsDiff()
+        diff.open_case = open_diff
+        diff.update_case = update_diff
+
+        return diff
 
 
 class FormActions(UpdateableDocument):
@@ -768,6 +817,14 @@ class FormActions(UpdateableDocument):
                 self.update_case.normalize_update()
             else:
                 self.update_case.make_single()
+
+    def get_mappings(self):
+        mappings = {}
+        if self.open_case:
+            mappings.update(self.open_case.get_mappings())
+        if self.update_case:
+            mappings.update(self.update_case.get_mappings())
+        return mappings
 
 
 class CaseIndex(DocumentSchema):
