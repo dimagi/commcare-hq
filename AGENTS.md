@@ -51,6 +51,14 @@ ruff check --select I --fix path/to/file.py
 ruff format path/to/file.py
 ```
 
+### Debugging
+
+```bash
+# Fetch PR test failures
+scripts/pr-failures.sh <pr_number>
+```
+
+
 ## Important Notes
 
 - Refer to `CODE_STANDARDS.md` for coding conventions and best practices
