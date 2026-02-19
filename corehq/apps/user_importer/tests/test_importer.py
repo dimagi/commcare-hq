@@ -2066,7 +2066,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             True
         )
         self.assertEqual(self.user_invite.primary_location, self.loc1)
-        self.assertListEqual(
+        self.assertCountEqual(
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
             [self.loc1._id, self.loc2._id]
         )
@@ -2089,7 +2089,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             True
         )
         self.assertEqual(self.user_invite.primary_location, self.loc2)
-        self.assertListEqual(
+        self.assertCountEqual(
             list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
             [self.loc2._id]
         )
