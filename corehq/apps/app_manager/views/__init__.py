@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 from corehq.apps.app_manager.views.app_summary import (
     AppCaseSummaryView,
     AppDataView,
