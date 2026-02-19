@@ -1195,12 +1195,6 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
-        if toggles.APP_TESTING.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _('Application Testing'),
-                url=(reverse('app_execution:workflow_list', args=[self.domain])),
-            ))
-
         return submenu_context
 
     @property

@@ -2795,13 +2795,13 @@ RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
                 'for the number of records to be populated during building or rebuilding'
 )
 
-APP_TESTING = StaticToggle(
-    slug='app_testing',
-    label='App Testing UI',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description=''
-)
+# APP_TESTING = StaticToggle(
+#     slug='app_testing',
+#     label='App Testing UI',
+#     tag=TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description=''
+# )
 
 CSQL_FIXTURE = StaticToggle(
     slug='module_badges',
