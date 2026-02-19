@@ -30,6 +30,19 @@ for AI coding assistants. For coding standards and best practices, see
 
 ## Common Commands
 
+### Dependencies
+
+```bash
+# Install/sync Python dependencies
+uv sync
+```
+
+### Running the app
+
+```bash
+./manage.py runserver
+```
+
 ### Testing
 
 ```bash
@@ -37,8 +50,8 @@ for AI coding assistants. For coding standards and best practices, see
 pytest --reusedb=1 path/to/test.py
 ```
 
-Use the `--reusedb=1` parameter when running tests to avoid resetting
-the test database unnecessarily
+Use `pytest-unmagic` for explicit test fixtures (see `CODE_STANDARDS.md`).
+Notable markers: `es_test` (Elasticsearch), `sharded` (shard DBs), `slow`.
 
 ### Linting
 
