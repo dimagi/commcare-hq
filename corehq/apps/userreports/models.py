@@ -544,22 +544,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
-    def validate_db_config(self):
-        mirrored_engine_ids = self.mirrored_engine_ids
-        if not mirrored_engine_ids:
-            return
-        if self.engine_id in mirrored_engine_ids:
-            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
-
-        for engine_id in mirrored_engine_ids:
-            if not connection_manager.engine_id_is_available(engine_id):
-                raise BadSpecError(
-                    "DB for engine_id {} is not availble".format(engine_id)
-                )
-
-        if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
-            raise BadSpecError("No two engine_ids should point to the same database")
-
     @property
     def data_domains(self):
         return [self.domain]
@@ -1200,13 +1184,6 @@ class StaticDataSourceConfiguration(JsonObject):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
-
-        def _get_mirrored_engine_ids():
-            for env in static_config.mirrored_engine_ids:
-                if env.server_environment == settings.SERVER_ENVIRONMENT:
-                    return env.engine_ids
-            return []
-        doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
         return DataSourceConfiguration.wrap(doc)
 
 
