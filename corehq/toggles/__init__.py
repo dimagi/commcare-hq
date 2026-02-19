@@ -1781,12 +1781,12 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
 )
 
 
-RELEASE_BUILDS_PER_PROFILE = StaticToggle(
-    'release_builds_per_profile',
-    'Do not release builds for all app profiles by default. Then manage via Source files view',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# RELEASE_BUILDS_PER_PROFILE = StaticToggle(
+#     'release_builds_per_profile',
+#     'Do not release builds for all app profiles by default. Then manage via Source files view',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',

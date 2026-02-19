@@ -6,7 +6,6 @@ from corehq.apps.app_manager.models import (
     Application,
     BuildProfile,
     GlobalAppConfig,
-    LatestEnabledBuildProfiles,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
@@ -73,17 +72,6 @@ class TestGlobalAppConfig(TestCase):
 
         app.save()  # app is v4
 
-        # Add a build-profile-specific release at v2
-        cls.latest_profile = LatestEnabledBuildProfiles(
-            domain=cls.domain,
-            app_id=app.get_id,
-            build_profile_id=cls.build_profile_id,
-            version=cls.v2_build.version,
-            build_id=cls.v2_build.get_id,
-            active=True,
-        )
-        cls.latest_profile.save()
-
         cls.app = app
 
     @classmethod
@@ -133,20 +121,17 @@ class TestGlobalAppConfig(TestCase):
         app_config = self.app.global_app_config
         app_config.save()
         test_cases = [
-            ('off', '', {}),
-            ('on', '', {'value': self.v3_build.version, 'force': False}),
-            ('forced', '', {'value': self.v3_build.version, 'force': True}),
-            ('off', self.build_profile_id, {}),
-            ('on', self.build_profile_id, {'value': self.v2_build.version, 'force': False}),
-            ('forced', self.build_profile_id, {'value': self.v2_build.version, 'force': True}),
+            ('off', {}),
+            ('on', {'value': self.v3_build.version, 'force': False}),
+            ('forced', {'value': self.v3_build.version, 'force': True}),
         ]
-        for config, build_profile_id, response in test_cases:
+        for config, response in test_cases:
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
             config = GlobalAppConfig.by_app_id(self.domain, self.app.origin_id)
             self.assertEqual(
-                config.get_latest_app_version(build_profile_id),
+                config.get_latest_app_version(),
                 response
             )
 
@@ -166,33 +151,19 @@ class TestGlobalAppConfig(TestCase):
             app_config.save()
             config = GlobalAppConfig.by_app_id(self.domain, self.app.origin_id)
             self.assertEqual(
-                config.get_latest_app_version(build_profile_id=''),
+                config.get_latest_app_version(),
                 response
             )
 
     def test_load_from_build(self):
         config = self._fresh_config(self.v3_build.id)
         with self.assertRaises(AssertionError):
-            config.get_latest_app_version(build_profile_id='')
+            config.get_latest_app_version()
 
     def test_missing_app(self):
         config = self._fresh_config('missing_id')
         with self.assertRaises(Http404):
-            config.get_latest_app_version(build_profile_id='')
-
-    def test_latest_profile_serialize(self):
-        self.assertEqual(
-            self.latest_profile.to_json({self.app.get_id: self.app.name}),
-            {
-                'id': self.latest_profile.id,
-                'app_id': self.app.get_id,
-                'active': True,
-                'version': self.v2_build.version,
-                'build_profile_id': self.build_profile_id,
-                'app_name': 'foo',
-                'profile_name': 'English only'
-            }
-        )
+            config.get_latest_app_version()
 
     def _fresh_config(self, app_id):
         config = GlobalAppConfig.by_app_id(self.domain, app_id)
