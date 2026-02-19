@@ -39,7 +39,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.tests.utils import sharded
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import flag_enabled
 
 USERNAME = "syncguy"
@@ -72,6 +72,9 @@ class BaseSyncTest(TestCase):
         super(BaseSyncTest, self).setUp()
         self.device = self.get_device()
         self.device.sync(overwrite_cache=True, version=V1)
+        self.addCleanup(FormProcessorTestUtils.delete_all_cases)
+        self.addCleanup(FormProcessorTestUtils.delete_all_xforms)
+        self.addCleanup(FormProcessorTestUtils.delete_all_sync_logs)
 
     def tearDown(self):
         restore_config = RestoreConfig(
