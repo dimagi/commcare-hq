@@ -647,12 +647,12 @@ def _ensure_valid_randomness(randomness):
         raise Exception('randomness must be between 0 and 1!')
 
 
-APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
-    'custom-parent-ref',
-    'ICDS: Custom case parent reference',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
+# APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
+#     'custom-parent-ref',
+#     'ICDS: Custom case parent reference',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+# )
 
 LAZY_LOAD_MULTIMEDIA = StaticToggle(
     'optional-media',
