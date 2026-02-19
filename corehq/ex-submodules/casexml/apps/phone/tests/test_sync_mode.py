@@ -59,7 +59,6 @@ class BaseSyncTest(TestCase):
         super(BaseSyncTest, cls).setUpClass()
         cls.project = Domain(name=TEST_DOMAIN_NAME)
         cls.project.save()
-        cls.addClassCleanup(cls.project.delete)
         cls.user = create_restore_user(
             cls.project.name,
             USERNAME,
