@@ -862,16 +862,16 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-UCR_SUM_WHEN_TEMPLATES = StaticToggle(
-    'ucr_sum_when_templates',
-    'Allow sum when template columns in dynamic UCRs',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
-    ),
-    help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
-)
+# UCR_SUM_WHEN_TEMPLATES = StaticToggle(
+#     'ucr_sum_when_templates',
+#     'Allow sum when template columns in dynamic UCRs',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+#     description=(
+#         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+#     ),
+#     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
+# )
 
 ASYNC_RESTORE = StaticToggle(
     'async_restore',
