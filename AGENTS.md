@@ -9,7 +9,8 @@ for AI coding assistants. For coding standards and best practices, see
 - Backend: Python, Django
 - Python dependency management: uv
 - Testing: pytest
-- Linting & formatting: Ruff, Flake8, isort, YAPF
+- Linting: Flake8
+- Formatting & import sorting: Ruff
 - Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy), Bootstrap 5
   (Bootstrap 3 for legacy code)
 - JavaScript bundling & dependency management: Webpack, Yarn
@@ -35,7 +36,7 @@ the test database unnecessarily
 
 ```bash
 # Python linting
-ruff check path/to/file.py
+flake8 path/to/file.py
 
 # JavaScript linting
 npx eslint path/to/file.js
@@ -49,7 +50,13 @@ ruff check --select I --fix path/to/file.py
 
 # Format Python code
 ruff format path/to/file.py
+
+# Format Markdown files
+npx prettier --write path/to/file.md
 ```
+
+Automated formatting and import-sorting changes should be committed
+separately from logic changes to keep diffs reviewable.
 
 ### Debugging
 
