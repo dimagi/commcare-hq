@@ -2200,12 +2200,12 @@ REPORT_TIMING_PROFILING = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-COWIN_INTEGRATION = StaticToggle(
-    'cowin_integration',
-    'Integrate with COWIN APIs',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# COWIN_INTEGRATION = StaticToggle(
+#     'cowin_integration',
+#     'Integrate with COWIN APIs',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 EXPRESSION_REPEATER = StaticToggle(
     'expression_repeater',

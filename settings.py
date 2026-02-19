@@ -404,7 +404,6 @@ HQ_APPS = (
     'custom.covid',
     'custom.inddex',
     'custom.nutrition_project',
-    'custom.cowin.COWINAppConfig',
     'custom.hmhb',
 
     'custom.ccqa',
@@ -839,8 +838,6 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
-    'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
-    'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
     'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
     'corehq.motech.repeaters.expression.repeaters.FormExpressionRepeater',
     'corehq.motech.repeaters.expression.repeaters.ArcGISFormExpressionRepeater',
