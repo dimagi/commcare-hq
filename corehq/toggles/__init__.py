@@ -2379,7 +2379,7 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
 DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER = StaticToggle(
     'disable_form_attachment_download_in_browser',
     'Restrict users from downloading audio/video form attachments in browser',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
