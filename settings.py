@@ -1152,9 +1152,6 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 USE_PHONE_ENTRIES = True
 COMMCARE_ANALYTICS_HOST = ""
 
-# FCM Server creds used for sending FCM Push Notifications
-FCM_CREDS = None
-
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 CONNECTID_CLIENT_ID = ''
 CONNECTID_SECRET_KEY = ''
