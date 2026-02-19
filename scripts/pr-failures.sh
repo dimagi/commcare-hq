@@ -32,5 +32,5 @@ echo "Failures:"
 for RUN_ID in $RUN_IDS; do
     gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>&1 \
         | grep -E "(FAILED |short test summary info|\[.*\] ERROR:)" \
-        | sed 's/^[^\t]*\t[^\t]*\t[0-9T:.-]*Z //'
+        | sed 's/^[^\t]*\t[^\t]*\t[0-9T:.-]*Z //' || true
 done
