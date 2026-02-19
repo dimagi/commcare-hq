@@ -109,7 +109,6 @@ var ContentViewModel = function (initialValues) {
     );
 
     self.survey_reminder_intervals_enabled = ko.observable(initialValues.survey_reminder_intervals_enabled);
-    self.fcm_message_type = ko.observable(initialValues.fcm_message_type);
 
 };
 
