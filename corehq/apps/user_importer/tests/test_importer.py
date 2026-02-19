@@ -2065,19 +2065,18 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.upload_record.pk,
             True
         )
-        self.assertEqual(self.user_invite.primary_location, self.loc1)
-        self.assertCountEqual(
-            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            [self.loc1._id, self.loc2._id]
-        )
+        assert self.user_invite.primary_location == self.loc1
+        assert set(self.user_invite.assigned_locations.values_list('location_id', flat=True)) == {
+            self.loc1._id, self.loc2._id
+        }
         invitation_history = self.user_invite.invitationhistory_set.last()
-        self.assertEqual(
-            invitation_history.changes['assigned_locations'],
-            UserChangeMessage.assigned_locations_info([self.loc1, self.loc2])[ASSIGNED_LOCATIONS_FIELD]
+        assert (
+            invitation_history.changes['assigned_locations']
+            == UserChangeMessage.assigned_locations_info([self.loc1, self.loc2])[ASSIGNED_LOCATIONS_FIELD]
         )
-        self.assertEqual(
-            invitation_history.changes['location'],
-            UserChangeMessage.primary_location_info(self.loc1)[LOCATION_FIELD]
+        assert (
+            invitation_history.changes['location']
+            == UserChangeMessage.primary_location_info(self.loc1)[LOCATION_FIELD]
         )
 
         import_users_and_groups(
@@ -2088,19 +2087,16 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.upload_record.pk,
             True
         )
-        self.assertEqual(self.user_invite.primary_location, self.loc2)
-        self.assertCountEqual(
-            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            [self.loc2._id]
-        )
+        assert self.user_invite.primary_location == self.loc2
+        assert set(self.user_invite.assigned_locations.values_list('location_id', flat=True)) == {self.loc2._id}
         invitation_history = self.user_invite.invitationhistory_set.last()
-        self.assertEqual(
-            invitation_history.changes['assigned_locations'],
-            UserChangeMessage.assigned_locations_info([self.loc2])[ASSIGNED_LOCATIONS_FIELD]
+        assert (
+            invitation_history.changes['assigned_locations']
+            == UserChangeMessage.assigned_locations_info([self.loc2])[ASSIGNED_LOCATIONS_FIELD]
         )
-        self.assertEqual(
-            invitation_history.changes['location'],
-            UserChangeMessage.primary_location_info(self.loc2)[LOCATION_FIELD]
+        assert (
+            invitation_history.changes['location']
+            == UserChangeMessage.primary_location_info(self.loc2)[LOCATION_FIELD]
         )
 
         import_users_and_groups(
@@ -2111,19 +2107,16 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.upload_record.pk,
             True
         )
-        self.assertIsNone(self.user_invite.primary_location)
-        self.assertListEqual(
-            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            []
-        )
+        assert self.user_invite.primary_location is None
+        assert not self.user_invite.assigned_locations.exists()
         invitation_history = self.user_invite.invitationhistory_set.last()
-        self.assertEqual(
-            invitation_history.changes['assigned_locations'],
-            UserChangeMessage.assigned_locations_info([])[ASSIGNED_LOCATIONS_FIELD]
+        assert (
+            invitation_history.changes['assigned_locations']
+            == UserChangeMessage.assigned_locations_info([])[ASSIGNED_LOCATIONS_FIELD]
         )
-        self.assertEqual(
-            invitation_history.changes['location'],
-            UserChangeMessage.primary_location_info(None)[LOCATION_FIELD]
+        assert (
+            invitation_history.changes['location']
+            == UserChangeMessage.primary_location_info(None)[LOCATION_FIELD]
         )
 
     def test_invite_location_column_missing(self):
@@ -2136,19 +2129,16 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.upload_record.pk,
             True
         )
-        self.assertEqual(self.user_invite.primary_location, self.loc1)
-        self.assertListEqual(
-            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            [self.loc1._id]
-        )
+        assert self.user_invite.primary_location == self.loc1
+        assert set(self.user_invite.assigned_locations.values_list('location_id', flat=True)) == {self.loc1._id}
         invitation_history = self.user_invite.invitationhistory_set.last()
-        self.assertEqual(
-            invitation_history.changes['assigned_locations'],
-            UserChangeMessage.assigned_locations_info([self.loc1])[ASSIGNED_LOCATIONS_FIELD]
+        assert (
+            invitation_history.changes['assigned_locations']
+            == UserChangeMessage.assigned_locations_info([self.loc1])[ASSIGNED_LOCATIONS_FIELD]
         )
-        self.assertEqual(
-            invitation_history.changes['location'],
-            UserChangeMessage.primary_location_info(self.loc1)[LOCATION_FIELD]
+        assert (
+            invitation_history.changes['location']
+            == UserChangeMessage.primary_location_info(self.loc1)[LOCATION_FIELD]
         )
 
         import_users_and_groups(
@@ -2159,14 +2149,11 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.upload_record.pk,
             True
         )
-        self.assertEqual(self.user_invite.primary_location, self.loc1)
-        self.assertListEqual(
-            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            [self.loc1._id]
-        )
+        assert self.user_invite.primary_location == self.loc1
+        assert set(self.user_invite.assigned_locations.values_list('location_id', flat=True)) == {self.loc1._id}
         invitation_history = self.user_invite.invitationhistory_set.last()
-        self.assertTrue('assigned_locations' not in invitation_history.changes)
-        self.assertTrue('location' not in invitation_history.changes)
+        assert 'assigned_locations' not in invitation_history.changes
+        assert 'location' not in invitation_history.changes
 
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
