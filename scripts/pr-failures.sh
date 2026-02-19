@@ -18,7 +18,7 @@ echo "Failed checks:"
 echo "$FAILED" | awk -F'\t' '{print "  " $1}'
 
 # Extract unique run IDs from GitHub Actions URLs (runs/<id>/job/<id>)
-RUN_IDS=$(echo "$FAILED" | grep -oE 'runs/[0-9]+' | grep -oE '[0-9]+' | sort -u)
+RUN_IDS=$(echo "$FAILED" | grep -oE 'runs/[0-9]+' | grep -oE '[0-9]+' | sort -u) || true
 
 if [[ -z "$RUN_IDS" ]]; then
     echo ""
