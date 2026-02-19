@@ -116,11 +116,6 @@ IGNORE_MODELS = {
 
 # TODO: determine which of these should not be ignored
 UNKNOWN_MODELS = {
-    "aggregate_ucrs.AggregateTableDefinition",
-    "aggregate_ucrs.PrimaryColumn",
-    "aggregate_ucrs.SecondaryColumn",
-    "aggregate_ucrs.SecondaryTableDefinition",
-    "aggregate_ucrs.TimeAggregationDefinition",
     "auditcare.AccessAudit",
     "auditcare.AuditcareMigrationMeta",
     "auditcare.HttpAccept",
