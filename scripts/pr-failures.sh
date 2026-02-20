@@ -4,6 +4,17 @@
 
 set -euo pipefail
 
+if ! command -v gh &>/dev/null; then
+    echo "Error: 'gh' (GitHub CLI) is not installed." >&2
+    echo "Install it from https://cli.github.com/" >&2
+    exit 1
+fi
+
+if ! gh auth status &>/dev/null; then
+    echo "Error: 'gh' is not authenticated. Run 'gh auth login' first." >&2
+    exit 1
+fi
+
 PR=${1:?Usage: scripts/pr-failures.sh <pr_number>}
 REPO="dimagi/commcare-hq"
 
