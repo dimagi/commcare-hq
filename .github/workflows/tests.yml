@@ -45,15 +45,17 @@ jobs:
       with:
         driver: docker-container
         driver-opts: network=host
-    - name: Build web image
+    - name: Build base web image
       uses: docker/build-push-action@v6
       with:
         context: .
         file: Dockerfile
-        tags: hqtest-web
+        tags: dimagi/commcarehq-py3.13:latest
         load: true
         cache-from: type=gha,scope=web
         cache-to: type=gha,scope=web,mode=max
+    - name: Build web image
+      run: docker build -t hqtest-web -f docker/Dockerfile docker
     - name: Build couch image
       uses: docker/build-push-action@v6
       with:
