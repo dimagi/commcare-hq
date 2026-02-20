@@ -40,6 +40,38 @@ jobs:
       with:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver: docker-container
+        driver-opts: network=host
+    - name: Build web image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: Dockerfile
+        tags: hqtest-web
+        load: true
+        cache-from: type=gha,scope=web
+        cache-to: type=gha,scope=web,mode=max
+    - name: Build couch image
+      uses: docker/build-push-action@v6
+      with:
+        context: docker/files
+        file: docker/files/Dockerfile.couch
+        tags: hqtest-couch
+        load: true
+        cache-from: type=gha,scope=couch
+        cache-to: type=gha,scope=couch,mode=max
+    - name: Build elasticsearch6 image
+      uses: docker/build-push-action@v6
+      with:
+        context: docker
+        file: docker/files/Dockerfile.es.6
+        tags: hqtest-elasticsearch6
+        load: true
+        cache-from: type=gha,scope=es6
+        cache-to: type=gha,scope=es6,mode=max
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
