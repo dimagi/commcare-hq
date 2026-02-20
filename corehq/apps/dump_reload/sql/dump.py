@@ -222,7 +222,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('fhir.FHIRResourceProperty', SimpleFilter('resource_type__domain')),
     FilteredModelIteratorBuilder('app_manager.GlobalAppConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.AppReleaseByLocation', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ApplicationReleaseLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.ResourceOverride', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.CredentialApplication', SimpleFilter('domain')),
