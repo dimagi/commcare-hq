@@ -2,12 +2,6 @@ from collections import defaultdict
 
 from django.db import models
 
-from corehq.motech.const import ALGO_AES_CBC
-from corehq.motech.utils import (
-    b64_aes_cbc_decrypt,
-    b64_aes_cbc_encrypt,
-)
-
 
 class SMSTranslations(models.Model):
     domain = models.CharField(max_length=255, unique=True)
@@ -56,24 +50,3 @@ class Translation(object):
                 return dict([(key, val[0]) for key, val in translations.items()])
             else:
                 return translations
-
-
-class TransifexOrganization(models.Model):
-    slug = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    api_token = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name + ' (' + self.slug + ')'
-
-    @property
-    def plaintext_api_token(self):
-        if self.api_token == '':
-            return ''
-        ciphertext = self.api_token.split('$', 2)[2]
-        return b64_aes_cbc_decrypt(ciphertext)
-
-    @plaintext_api_token.setter
-    def plaintext_api_token(self, plaintext):
-        ciphertext = b64_aes_cbc_encrypt(plaintext)
-        self.api_token = f'${ALGO_AES_CBC}${ciphertext}'
