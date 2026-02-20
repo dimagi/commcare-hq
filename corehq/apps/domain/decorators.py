@@ -60,7 +60,10 @@ auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
-SSO_AUTH_FAIL_RESPONSE = {"error": "SSO user must use api key authentication"}
+SSO_AUTH_FAIL_RESPONSE = {
+    "error": "Basic authentication is not supported for SSO users. "
+             "Use the ApiKey authorization header: 'Authorization: ApiKey <username>:<api_key>'"
+}
 
 
 def load_domain(req, domain):

@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 
 from corehq.apps.domain.auth import HQApiKeyAuthentication
-from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.decorators import SSO_AUTH_FAIL_RESPONSE, api_auth
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.sso.models import AuthenticatedEmailDomain, LoginEnforcementType
 from corehq.apps.sso.tests import generator as sso_generator
@@ -134,7 +134,7 @@ class SSOApiAuthenticationTest(AuthenticationTestBase):
         request.META['HTTP_AUTHORIZATION'] = f"basic {encoded}"
         res = self.call_api(request)
         assert res.status_code == 401
-        assert json.loads(res.content)['error'] == "SSO user must use api key authentication"
+        assert json.loads(res.content) == SSO_AUTH_FAIL_RESPONSE
 
     def test_non_sso_user_with_basic_auth_succeeds(self):
         request = self.factory.get('/myapi/')
