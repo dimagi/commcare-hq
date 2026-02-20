@@ -988,6 +988,9 @@ class OperatorCallLimitSettings(models.Model):
     )
 
 
+# This is only used in one place, `_get_account_confirmation_template_params`
+# from `corehq.apps.users.account_confirmation`, where it is used for
+# EMAIL account confirmation, and only the `project_name` field is used.
 class SMSAccountConfirmationSettings(models.Model):
     PROJECT_NAME_DEFAULT = "CommCare HQ"
     PROJECT_NAME_MAX_LENGTH = 30
