@@ -66,9 +66,6 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.integration.kyc.views import KycConfigurationView
 from corehq.apps.integration.payments.views import PaymentConfigurationView
-from corehq.apps.integration.views import (
-    GaenOtpServerSettingsView,
-)
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
@@ -2253,12 +2250,6 @@ def _get_integration_section(domain, couch_user):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
-        })
-
-    if toggles.GAEN_OTP_SERVER.enabled(domain):
-        integration.append({
-            'title': _(GaenOtpServerSettingsView.page_title),
-            'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
         })
 
     if toggles.EMBEDDED_TABLEAU.enabled(domain):
