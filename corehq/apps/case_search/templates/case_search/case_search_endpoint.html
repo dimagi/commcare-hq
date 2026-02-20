@@ -1,14 +1,14 @@
 {% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+{% js_entry "case_search/js/case_search_endpoint" %}
 
 {% block page_title %}
   {{ current_page.title }}
 {% endblock %}
 
 {% block page_content %}
-  <div class="row"><div class="col-lg-8">
+  <div class="row"><div class="col-lg-12">
   <form method="post"
         hx-post="{{ request.path_info }}"
         hq-hx-action="search"
@@ -17,10 +17,33 @@
         x-data="{
           params: [{ id: 0 }],
           nextParamId: 1,
-          endpointParams: [{ id: 0, required: false }],
+          endpointParams: [{ id: 0, required: false, name: '' }],
           nextEndpointParamId: 1,
-          filters: [{ id: 0 }],
-          nextFilterId: 1,
+          init() {
+            const dispatchConfig = () => {
+              window.dispatchEvent(new CustomEvent('query-builder:config', {
+                detail: {
+                  types: [{
+                    name: 'text',
+                    operators: [
+                      { name: 'equals', has_value: true },
+                      { name: 'not equals', has_value: true },
+                      { name: 'is empty', has_value: false },
+                    ],
+                  }],
+                  variables: [
+                    { id: 'case_id', name: 'case_id', type: 'text' },
+                    { id: 'name', name: 'name', type: 'text' },
+                  ],
+                  parameters: this.endpointParams
+                    .filter(p => p.name)
+                    .map(p => ({ id: p.name, name: p.name })),
+                },
+              }));
+            };
+            setTimeout(dispatchConfig, 0);
+            this.$watch('endpointParams', dispatchConfig);
+          },
         }">
     {% csrf_token %}
 
@@ -68,6 +91,7 @@
                 <input type="text"
                        class="form-control"
                        name="endpoint_param_name"
+                       x-model="endpointParam.name"
                        placeholder="{% trans_html_attr 'Parameter Name' %}">
               </div>
               <div class="col-auto">
@@ -96,7 +120,7 @@
           </template>
           <button type="button"
                   class="btn btn-outline-primary"
-                  @click="endpointParams.push({ id: nextEndpointParamId++, required: false })">
+                  @click="endpointParams.push({ id: nextEndpointParamId++, required: false, name: '' })">
             <i class="fa fa-plus"></i> {% trans "Add Parameter" %}
           </button>
         </div>
@@ -104,28 +128,7 @@
           <label class="form-label">
             {% trans "Server-Side Filters" %}
           </label>
-          <template x-for="(filter, index) in filters" :key="filter.id">
-            <div class="row mb-2 align-items-center">
-              <div class="col">
-                <input type="text"
-                       class="form-control"
-                       name="filter_expr"
-                       placeholder="{% trans_html_attr 'CSQL Expression' %}">
-              </div>
-              <div class="col-auto">
-                <button type="button"
-                        class="btn btn-outline-danger"
-                        @click="filters.splice(index, 1)">
-                  <i class="fa fa-trash-can"></i>
-                </button>
-              </div>
-            </div>
-          </template>
-          <button type="button"
-                  class="btn btn-outline-primary"
-                  @click="filters.push({ id: nextFilterId++ })">
-            <i class="fa fa-plus"></i> {% trans "Add Filter" %}
-          </button>
+          {% include "case_search/partials/query_builder_body.html" %}
         </div>
       </div>
     </div>
