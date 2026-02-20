@@ -50,7 +50,7 @@ jobs:
           docker-images-v1-
     - name: Load cached Docker images
       if: steps.docker-cache.outputs.cache-hit == 'true'
-      run: zstd -d /tmp/docker-cache/images.tar.zst --stdout | docker load
+      run: zstd -d /tmp/docker-cache/images.tar.zst --stdout | docker load || true
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
@@ -83,20 +83,37 @@ jobs:
     - name: Save Docker images to cache
       if: always() && steps.docker-cache.outputs.cache-hit != 'true'
       run: |
+        set -o pipefail
         mkdir -p /tmp/docker-cache
+        echo "Images available for caching:"
+        docker images --format '{{.Repository}}:{{.Tag}}' | sort
         # Save pulled and base images for future runs. Shared layers
         # are deduplicated in the tarball. zstd is used for fast
         # compression/decompression.
-        docker save \
+        # Collect images that actually exist locally
+        images=""
+        for img in \
           dimagi/commcarehq-py3.13:latest \
           dimagi/docker-postgresql:14 \
           redis:7 \
           zookeeper:3.7 \
           confluentinc/cp-kafka:7.2.14 \
-          minio/minio \
+          minio/minio:latest \
           apache/couchdb:3.5.0 \
           docker.elastic.co/elasticsearch/elasticsearch:6.8.23 \
-        | zstd -T0 -3 > /tmp/docker-cache/images.tar.zst
+        ; do
+          if docker image inspect "$img" > /dev/null 2>&1; then
+            images="$images $img"
+          else
+            echo "WARNING: $img not found locally, skipping"
+          fi
+        done
+        if [ -n "$images" ]; then
+          docker save $images | zstd -T0 -3 > /tmp/docker-cache/images.tar.zst
+        else
+          echo "No images to cache"
+          exit 1
+        fi
     - name: Upload Docker image cache
       if: always() && steps.docker-cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
