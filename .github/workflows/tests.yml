@@ -40,40 +40,17 @@ jobs:
       with:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+    - name: Restore Docker image cache
+      id: docker-cache
+      uses: actions/cache/restore@v4
       with:
-        driver: docker-container
-        driver-opts: network=host
-    - name: Build base web image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        file: Dockerfile
-        tags: dimagi/commcarehq-py3.13:latest
-        load: true
-        cache-from: type=gha,scope=web
-        cache-to: type=gha,scope=web,mode=max
-    - name: Build web image
-      run: docker build -t hqtest-web -f docker/Dockerfile docker
-    - name: Build couch image
-      uses: docker/build-push-action@v6
-      with:
-        context: docker/files
-        file: docker/files/Dockerfile.couch
-        tags: hqtest-couch
-        load: true
-        cache-from: type=gha,scope=couch
-        cache-to: type=gha,scope=couch,mode=max
-    - name: Build elasticsearch6 image
-      uses: docker/build-push-action@v6
-      with:
-        context: docker
-        file: docker/files/Dockerfile.es.6
-        tags: hqtest-elasticsearch6
-        load: true
-        cache-from: type=gha,scope=es6
-        cache-to: type=gha,scope=es6,mode=max
+        path: /tmp/docker-cache
+        key: docker-images-v1-${{ hashFiles('docker/hq-compose.yml', 'docker/hq-compose-os-default.yml', 'docker/Dockerfile', 'docker/files/Dockerfile.*') }}
+        restore-keys: |
+          docker-images-v1-
+    - name: Load cached Docker images
+      if: steps.docker-cache.outputs.cache-hit == 'true'
+      run: zstd -d /tmp/docker-cache/images.tar.zst --stdout | docker load
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
@@ -103,6 +80,29 @@ jobs:
     - name: Stop containers
       if: always()
       run: scripts/docker down
+    - name: Save Docker images to cache
+      if: always() && steps.docker-cache.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p /tmp/docker-cache
+        # Save pulled and base images for future runs. Shared layers
+        # are deduplicated in the tarball. zstd is used for fast
+        # compression/decompression.
+        docker save \
+          dimagi/commcarehq-py3.13:latest \
+          dimagi/docker-postgresql:14 \
+          redis:7 \
+          zookeeper:3.7 \
+          confluentinc/cp-kafka:7.2.14 \
+          minio/minio \
+          apache/couchdb:3.5.0 \
+          docker.elastic.co/elasticsearch/elasticsearch:6.8.23 \
+        | zstd -T0 -3 > /tmp/docker-cache/images.tar.zst
+    - name: Upload Docker image cache
+      if: always() && steps.docker-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: /tmp/docker-cache
+        key: docker-images-v1-${{ hashFiles('docker/hq-compose.yml', 'docker/hq-compose-os-default.yml', 'docker/Dockerfile', 'docker/files/Dockerfile.*') }}
     - name: Upload test artifacts
       if: always()
       uses: actions/upload-artifact@v5
