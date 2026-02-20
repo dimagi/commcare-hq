@@ -988,35 +988,6 @@ class OperatorCallLimitSettings(models.Model):
     )
 
 
-# This is only used in one place, `_get_account_confirmation_template_params`
-# from `corehq.apps.users.account_confirmation`, where it is used for
-# EMAIL account confirmation, and only the `project_name` field is used.
-class SMSAccountConfirmationSettings(models.Model):
-    PROJECT_NAME_DEFAULT = "CommCare HQ"
-    PROJECT_NAME_MAX_LENGTH = 30
-    CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
-    CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM = 1
-    CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM = 30
-
-    domain = models.CharField(max_length=256, db_index=True)
-    project_name = models.CharField(
-        default=PROJECT_NAME_DEFAULT,
-        max_length=PROJECT_NAME_MAX_LENGTH,
-    )
-    confirmation_link_expiry_time = models.IntegerField(
-        default=CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT,
-        validators=[
-            MinValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM),
-            MaxValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM),
-        ]
-    )
-
-    @staticmethod
-    def get_settings(domain):
-        domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
-        return domain_obj
-
-
 class AppReleaseModeSetting(models.Model):
 
     domain = models.CharField(max_length=256, db_index=True, unique=True)

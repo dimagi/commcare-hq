@@ -500,7 +500,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CSQLFixtureExpressionLog', 'expression__domain'),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
-    ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),
     ModelDeletion('events', 'Event', 'domain'),
