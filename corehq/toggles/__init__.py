@@ -2027,29 +2027,29 @@ REFER_CASE_REPEATER = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Allow+refer+case+repeaters+to+be+setup",
 )
 
-WIDGET_DIALER = StaticToggle(
-    'widget_dialer',
-    'USH: Enable usage of AWS Connect Dialer',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
-)
+# WIDGET_DIALER = StaticToggle(
+#     'widget_dialer',
+#     'USH: Enable usage of AWS Connect Dialer',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+usage+of+AWS+Connect+Dialer",
+# )
 
-HMAC_CALLOUT = StaticToggle(
-    'hmac_callout',
-    'USH: Enable signed messaging url callouts in cloudcare',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
-)
+# HMAC_CALLOUT = StaticToggle(
+#     'hmac_callout',
+#     'USH: Enable signed messaging url callouts in cloudcare',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+signed+messaging+url+callouts+in+cloudcare",  # noqa: E501
+# )
 
-GAEN_OTP_SERVER = StaticToggle(
-    'gaen_otp_server',
-    'USH: Enable retrieving OTPs from a GAEN Server',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
-)
+# GAEN_OTP_SERVER = StaticToggle(
+#     'gaen_otp_server',
+#     'USH: Enable retrieving OTPs from a GAEN Server',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Enable+retrieving+OTPs+from+a+GAEN+Server",
+# )
 
 PARALLEL_USER_IMPORTS = StaticToggle(
     'parallel_user_imports',
