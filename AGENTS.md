@@ -89,6 +89,8 @@ yarn dev
 yarn build
 ```
 
+Refer to the `docs/js-guide/` directory for the JavaScript Guide
+
 ### Debugging
 
 ```bash
@@ -96,14 +98,8 @@ yarn build
 scripts/pr-failures.sh <pr_number>
 ```
 
-
 ## Gotchas
 
 - **CouchDB is legacy** — prefer PostgreSQL/SQL for new data models
 - **Knockout.js is legacy** — prefer HTMX or Alpine.js for new frontend code
 - **Bootstrap 3 is legacy** — prefer Bootstrap 5; both coexist in the codebase
-
-## Important Notes
-
-- Refer to `CODE_STANDARDS.md` for coding conventions and best practices
-- Refer to the `docs/js-guide/` directory for the JavaScript Guide
