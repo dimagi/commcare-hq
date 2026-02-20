@@ -30,6 +30,13 @@ for AI coding assistants. For coding standards and best practices, see
 
 ## Common Commands
 
+**Activate the virtualenv** before running any commands to ensure tools
+like `flake8`, `pytest`, and `manage.py` are available:
+
+```bash
+source .venv/bin/activate
+```
+
 ### Dependencies
 
 ```bash
