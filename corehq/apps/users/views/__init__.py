@@ -36,7 +36,6 @@ from django.utils.translation import gettext as _, gettext_lazy, gettext_noop
 
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django_digest.decorators import httpdigest
@@ -1485,14 +1484,3 @@ def change_password(request, domain, login_id):
 @login_and_domain_required
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
-
-
-@always_allow_project_access
-@csrf_exempt
-@require_POST
-@require_superuser
-def register_fcm_device_token(request, domain, couch_user_id, device_token):
-    user = WebUser.get_by_user_id(couch_user_id)
-    user.fcm_device_token = device_token
-    user.save()
-    return HttpResponse()

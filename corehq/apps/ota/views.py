@@ -452,7 +452,6 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
     num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
     commcare_version = request.GET.get('cc_version', '')
-    fcm_token = ''
     # if mobile cannot determine app version it sends -1
     if app_version == -1:
         app_version = None
@@ -467,14 +466,14 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
         UserReportingMetadataStaging.add_heartbeat(
             request.domain, couch_user._id, app_id, app_build_id, last_sync, device_id,
-            app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id, fcm_token
+            app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id,
         )
     else:
         record = UserReportingMetadataStaging(domain=request.domain, user_id=couch_user._id, app_id=app_id,
             build_id=app_build_id, sync_date=last_sync, device_id=device_id, app_version=app_version,
             num_unsent_forms=num_unsent_forms, num_quarantined_forms=num_quarantined_forms,
             commcare_version=commcare_version, build_profile_id=build_profile_id,
-            last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow(), fcm_token=fcm_token)
+            last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow())
         try:
             record.process_record(couch_user)
         except ResourceConflict:

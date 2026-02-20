@@ -51,7 +51,7 @@ class HeartbeatTests(TestCase):
 
     def _do_request(self, user, device_id, app_id=None, app_version=1, last_sync='',
                     unsent_forms=0, quarantined_forms=0, cc_version='2.39', url=None,
-                    response_code=200, fcm_token=''):
+                    response_code=200):
         url = url or self.url
         resp = self.client.get(url, {
             'app_id': app_id or self.app.get_id,
@@ -61,7 +61,6 @@ class HeartbeatTests(TestCase):
             'num_unsent_forms': unsent_forms,
             'num_quarantined_forms': quarantined_forms,
             'cc_version': cc_version,
-            'fcm_token': fcm_token
         }, **self._auth_headers(user))
         self.assertEqual(resp.status_code, response_code)
         process_reporting_metadata_staging()
@@ -124,16 +123,6 @@ class HeartbeatTests(TestCase):
         # ensure the cache was wiped on delete
         device_log_request.delete()
         self.assertFalse(heartbeat_contains_force_logs())
-
-    def test_heartbeat_fcm_token_not_stored(self):
-        self._do_request(
-            self.user,
-            device_id='4',
-            fcm_token='token-101'
-        )
-        device = CommCareUser.get(self.user.get_id).get_device('4')
-        self.assertIsNone(device.fcm_token)
-        self.assertIsNone(device.fcm_token_timestamp)
 
     @patch("corehq.apps.ota.views.deterministic_random")
     def test_incude_user_for_integrity_reporting(self, deterministic_random_mock):

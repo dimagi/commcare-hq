@@ -21,7 +21,6 @@ from .views import (
     paginate_enterprise_users,
     paginate_web_users,
     reactivate_web_user,
-    register_fcm_device_token,
     remove_web_user,
     test_httpdigest,
     undo_remove_web_user,
@@ -159,11 +158,6 @@ urlpatterns = [
     url(r'^roles/new/$', EditRoleView.as_view(), name='create_role'),
     url(r'^roles/edit/(?P<role_id>[ \w-]+)', EditRoleView.as_view(), name=EditRoleView.urlname),
     url(r'^roles/delete/$', delete_user_role, name='delete_user_role'),
-    url(
-        r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
-        register_fcm_device_token,
-        name='register_fcm_device_token'
-    ),
     url(r'^httpdigest/?$', test_httpdigest, name='test_httpdigest'),
 ] + [
     url(r'^commcare/$', MobileWorkerListView.as_view(), name=MobileWorkerListView.urlname),
