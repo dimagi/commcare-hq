@@ -11,9 +11,13 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.data_analytics.feature_calcs import FEATURE_METRICS
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.data_analytics.malt_generator import generate_malt
-from corehq.apps.data_analytics.metric_registry import compute_daily_metrics_for_domain
+from corehq.apps.data_analytics.metric_registry import (
+    collect_metrics_for_domain,
+    compute_daily_metrics_for_domain,
+)
 from corehq.apps.data_analytics.models import DomainMetrics
 from corehq.apps.data_analytics.util import (
     last_month_datespan,
@@ -188,3 +192,57 @@ def get_domains_to_update():
     ).values_list('domain', flat=True)
 
     return set(active_domains) - set(domains_up_to_date)
+
+
+@periodic_task(
+    run_every=crontab(hour="22", minute="0", day_of_month="28"),
+    queue='background_queue',
+)
+def collect_feature_metrics():
+    """Monthly task to collect feature usage metrics for all domains."""
+    domains = _get_active_domain_names()
+    for chunk in chunked(domains, 5000):
+        collect_feature_metrics_for_domains.delay(chunk)
+
+
+@task(queue='background_queue')
+def collect_feature_metrics_for_domains(domains):
+    for domain_name in domains:
+        _collect_feature_metrics_for_domain(domain_name)
+
+
+def _collect_feature_metrics_for_domain(domain_name):
+    try:
+        domain_obj = Domain.get_by_name(domain_name)
+        if not domain_obj:
+            return
+
+        existing = DomainMetrics.objects.filter(
+            domain=domain_name,
+        ).first()
+
+        updates = collect_metrics_for_domain(
+            domain_obj, FEATURE_METRICS, existing,
+        )
+        if updates:
+            DomainMetrics.objects.update_or_create(
+                domain=domain_name,
+                defaults=updates,
+            )
+    except Exception as e:
+        notify_exception(
+            None,
+            message=(
+                f'Failed to collect feature metrics for '
+                f'{domain_name}: {e}'
+            ),
+        )
+
+
+def _get_active_domain_names():
+    is_domain_active = filters.term('is_active', True)
+    return list(
+        DomainES().filter(is_domain_active)
+        .terms_aggregation('name.exact', 'domain')
+        .size(0).run().aggregations.domain.keys
+    )
