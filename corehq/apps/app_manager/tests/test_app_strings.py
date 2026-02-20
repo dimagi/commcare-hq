@@ -187,7 +187,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
         # wrap to have assign_references called
         app = Application.wrap(factory.app.to_json())
 
-        with flag_disabled('USH_CASE_CLAIM_UPDATES'):
+        with flag_disabled('SYNC_SEARCH_CASE_CLAIM'):
             # default language
             self.assertEqual(app.default_language, 'en')
             en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
@@ -201,7 +201,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(es_app_strings['case_search.m0'], 'Search All Cases')
             self.assertEqual(es_app_strings['case_search.m0.again'], 'Search Again')
 
-        with flag_enabled('USH_CASE_CLAIM_UPDATES'):
+        with flag_enabled('SYNC_SEARCH_CASE_CLAIM'):
             # default language
             en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
             self.assertEqual(en_app_strings['case_search.m0'], 'Get them')
