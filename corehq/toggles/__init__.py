@@ -1825,12 +1825,12 @@ COPY_CASES = StaticToggle(
 #     [NAMESPACE_DOMAIN]
 # )
 
-ENABLE_UCR_MIRRORS = StaticToggle(
-    'enable_ucr_mirrors',
-    'Enable the mirrored engines for UCRs in this domain',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# ENABLE_UCR_MIRRORS = StaticToggle(
+#     'enable_ucr_mirrors',
+#     'Enable the mirrored engines for UCRs in this domain',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 LOCATION_COLUMNS_APP_STATUS_REPORT = FrozenPrivilegeToggle(
     privilege_slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
