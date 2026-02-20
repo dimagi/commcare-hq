@@ -116,7 +116,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackendMapping,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
+from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
@@ -834,13 +834,11 @@ class TestDeleteDomain(TestCase):
     def _assert_translations_count(self, domain_name, count):
         self._assert_queryset_count([
             SMSTranslations.objects.filter(domain=domain_name),
-            TransifexBlacklist.objects.filter(domain=domain_name),
         ], count)
 
     def test_translations_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             SMSTranslations.objects.create(domain=domain_name, langs=['en'], translations={'a': 'a'})
-            TransifexBlacklist.objects.create(domain=domain_name, app_id='123', field_name='xyz')
             self._assert_translations_count(domain_name, 1)
 
         self.domain.delete()

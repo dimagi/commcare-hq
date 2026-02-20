@@ -59,63 +59,6 @@ class Translation(object):
                 return translations
 
 
-FIELD_NAME_HELP = (
-    'This is the same string that appears in the bulk app translation '
-    "download in the module's sheet for case list or case detail under "
-    '"property", or in the bulk ui translation download, also under '
-    '"property". This could be an XPath, case property name, or UI '
-    'property name. If it is an ID mapping then the property should be '
-    "'&lt;property&gt; (ID Mapping Text)'. For ID mapping values each "
-    "value should be '&lt;id mapping value&gt; (ID Mapping Value)'. "
-    'Create a separate blacklist item for every property.'
-    '<br>'
-    'Example: Case detail for tasks_type could have separate entries for '
-    'each of the following:'
-    '<ul>'
-    '    <li>tasks_type (ID Mapping Text)</li>'
-    '    <li>child (ID Mapping Value)</li>'
-    '    <li>pregnancy (ID Mapping Value)</li>'
-    '</ul>'
-)
-
-
-class TransifexBlacklist(models.Model):
-    """Used for removing case list and case detail translations before an upload to Transifex.
-
-    Note that field_name is not sufficient to exclude properties as you can
-    have two details in the same module that display the same information in a
-    different way e.g. date of birth and age in years. display_text is used to
-    determine which trnaslations to hold back from Transifex
-    """
-
-    domain = models.CharField(max_length=255)
-    app_id = models.CharField(max_length=255)
-    module_id = models.CharField(max_length=255, blank=True)
-    field_type = models.CharField(
-        max_length=100,
-        choices=(
-            ('detail', 'Case Detail'),
-            ('list', 'Case List'),
-            ('ui', 'UI'),
-        )
-    )
-    field_name = models.TextField(help_text=FIELD_NAME_HELP)
-    display_text = models.TextField(
-        blank=True,
-        help_text="The default language's translation for this detail/list. "
-        "If display_text is not filled out then all translations that match "
-        "the field_type and field_name will be blacklisted")
-
-    def __str__(self):
-        return "TransifexBlacklist(domain='{}', field_type='{}', field_name='{}')".format(
-            self.domain,
-            self.field_type,
-            self.field_name,
-        )
-        # app and module omitted to avoid hitting database
-        # app_id and module_id omitted because they are unfriendly
-
-
 class TransifexOrganization(models.Model):
     slug = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -148,4 +91,3 @@ class TransifexProject(models.Model):
 
 
 admin.site.register(TransifexProject)
-admin.site.register(TransifexBlacklist)

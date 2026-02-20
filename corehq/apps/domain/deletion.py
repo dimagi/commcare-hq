@@ -459,7 +459,6 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('toggles', _disable_toggles, []),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
-    ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
     ModelDeletion('translations', 'TransifexProject', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
