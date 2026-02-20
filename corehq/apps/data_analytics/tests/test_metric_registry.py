@@ -1,11 +1,18 @@
+import json
 from unittest.mock import MagicMock
 
 from django.test import SimpleTestCase
+
+from corehq.apps.domain.calculations import all_domain_stats
+from corehq.apps.domain.tests.test_domain_calculated_properties import (
+    BaseCalculatedPropertiesTest,
+)
 
 from ..metric_registry import (
     DomainContext,
     MetricDef,
     collect_metrics_for_domain,
+    compute_daily_metrics_for_domain,
     get_metrics_by_schedule,
     get_metrics_registry,
 )
@@ -177,3 +184,16 @@ class TestRegistryCoversMap(SimpleTestCase):
             f'Duplicate field names: '
             f'{[n for n in field_names if field_names.count(n) > 1]}'
         )
+
+
+class DomainCalculatedPropertiesTest(BaseCalculatedPropertiesTest):
+
+    def test_calculated_properties_are_serializable(self):
+        stats = all_domain_stats()
+        metrics = compute_daily_metrics_for_domain(self.domain, stats)
+        json.dumps(metrics)
+
+    def test_domain_does_not_have_project_icon(self):
+        stats = all_domain_stats()
+        metrics = compute_daily_metrics_for_domain(self.domain, stats)
+        self.assertFalse(metrics['has_project_icon'])

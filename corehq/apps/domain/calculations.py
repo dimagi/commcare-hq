@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
@@ -14,30 +14,22 @@ from couchforms.analytics import (
 )
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.data_analytics.esaccessors import get_mobile_users
-from corehq.apps.data_analytics.models import DOMAIN_METRICS_TO_PROPERTIES_MAP
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.export.dbaccessors import (
     get_case_exports_by_domain,
-    get_export_count_by_domain,
     get_form_exports_by_domain,
 )
 from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
-from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
-from corehq.apps.userreports.util import (
-    number_of_report_builder_reports,
-    number_of_ucr_reports,
-)
 from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
@@ -346,85 +338,6 @@ def all_domain_stats():
     return {
         "web_users": webuser_counts,
         "commcare_users": commcare_counts,
-    }
-
-
-def domain_metrics(domain_obj, id, all_stats):
-    props = calced_props(domain_obj, id, all_stats)
-    metrics_dict = {
-        metrics_attr: props.get(props_key)
-        for metrics_attr, props_key in DOMAIN_METRICS_TO_PROPERTIES_MAP.items()
-    }
-    metrics_dict['domain'] = domain_obj.name
-    metrics_dict['last_modified'] = datetime.now(tz=timezone.utc)
-
-    # these are calculated fields on the Django model, so don't try to write them
-    for key in ['has_app', 'has_used_sms', 'has_used_sms_in_last_30_days']:
-        del metrics_dict[key]
-
-    return metrics_dict
-
-
-def calced_props(domain_obj, id, all_stats):
-    dom = domain_obj.name
-    return {
-        "_id": id,
-        "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
-        "cp_n_active_cc_users": int(CALC_FNS["active_mobile_users"](dom)),
-        "cp_n_active_cc_users_365_days": int(CALC_FNS["active_mobile_users"](dom, 365)),
-        "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
-        "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
-        "cp_n_users_submitted_form": total_distinct_users(dom),
-        "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
-        "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
-        "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
-        "cp_n_90_day_cases": int(CALC_FNS["cases_in_last"](dom, 90)),
-        "cp_n_cases": int(CALC_FNS["cases"](dom)),
-        "cp_n_forms": int(CALC_FNS["forms"](dom)),
-        "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
-        "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
-        "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
-        "cp_first_domain_for_user": CALC_FNS["first_domain_for_user"](dom),
-        "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-        "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
-        "cp_is_active": CALC_FNS["active"](dom),
-        "cp_has_app": CALC_FNS["has_app"](dom),
-        "cp_last_updated": json_format_datetime(datetime.utcnow()),
-        "cp_n_in_sms": int(CALC_FNS["sms"](dom, INCOMING)),
-        "cp_n_out_sms": int(CALC_FNS["sms"](dom, OUTGOING)),
-        "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
-        "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
-        "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
-        "cp_n_sms_90_d": int(CALC_FNS["sms_in_last"](dom, 90)),
-        "cp_sms_ever": CALC_FNS["sms_in_last_bool"](dom),
-        "cp_sms_30_d": CALC_FNS["sms_in_last_bool"](dom, 30),
-        "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
-        "cp_n_sms_in_60_d": int(CALC_FNS["sms_in_in_last"](dom, 60)),
-        "cp_n_sms_in_90_d": int(CALC_FNS["sms_in_in_last"](dom, 90)),
-        "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
-        "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
-        "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
-        "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
-        "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type=USERCASE_TYPE),
-        "cp_n_trivet_backends": num_telerivet_backends(dom),
-        "cp_use_domain_security": use_domain_security_settings(domain_obj),
-        "cp_n_custom_roles": num_custom_roles(dom),
-        "cp_using_locations": users_have_locations(dom),
-        "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
-        "cp_n_case_sharing_olevels": num_case_sharing_loc_types(dom),
-        "cp_n_case_sharing_groups": num_case_sharing_groups(dom),
-        "cp_n_repeaters": num_repeaters(dom),
-        "cp_n_case_exports": num_exports(dom),
-        "cp_n_deid_exports": num_deid_exports(dom),
-        "cp_n_saved_exports": num_saved_exports(dom),
-        "cp_n_rb_reports": number_of_report_builder_reports(dom),
-        "cp_n_ucr_reports": number_of_ucr_reports(dom),
-        "cp_n_lookup_tables": num_lookup_tables(dom),
-        "cp_has_project_icon": has_domain_icon(domain_obj),
-        "cp_n_apps_with_icon": num_apps_with_icon(dom),
-        "cp_n_apps": len(_get_domain_apps(dom)),
-        "cp_n_apps_with_multi_lang": num_apps_with_multi_languages(dom),
-        "cp_n_saved_custom_exports": get_export_count_by_domain(dom),
     }
 
 
