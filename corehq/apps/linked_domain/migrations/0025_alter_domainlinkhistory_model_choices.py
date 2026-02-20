@@ -2,14 +2,23 @@
 
 from django.db import migrations, models
 
+REMOVED_MODELS = ["dialer_settings", "opt_settings", "hmac_callout_settings"]
+
+
+def _delete_existing_rows(apps, schema_editor):
+    DomainLinkHistory = apps.get_model("linked_domain", "DomainLinkHistory")
+    DomainLinkHistory.objects.filter(model__in=REMOVED_MODELS).delete()
+
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('linked_domain', '0024_alter_domainlinkhistory_model'),
     ]
 
     operations = [
+        migrations.RunPython(
+            _delete_existing_rows, reverse_code=migrations.RunPython.noop
+        ),
         migrations.AlterField(
             model_name='domainlinkhistory',
             name='model',
