@@ -57,6 +57,7 @@ jobs:
         --divided-we-run=${{ matrix.DIVIDED_WE_RUN }}
         --showlocals
         --max-test-time=29
+        --durations=50
         -p no:cacheprovider
     - name: "Codecov upload"
       env:
