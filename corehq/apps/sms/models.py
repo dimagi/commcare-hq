@@ -1022,7 +1022,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_API_SMS = 'API'
     CONTENT_CHAT_SMS = 'CHT'
     CONTENT_EMAIL = 'EML'
-    CONTENT_FCM_Notification = 'FCM'
     CONTENT_CONNECT = 'CON'
     CONTENT_CONNECT_SURVEY = 'CSY'
 
@@ -1037,7 +1036,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_API_SMS, gettext_noop('Message Sent Via API')),
         (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, gettext_noop('Email')),
-        (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
         (CONTENT_CONNECT, gettext_noop('Connect Message')),
         (CONTENT_CONNECT_SURVEY, gettext_noop('Connect Message Survey')),
     )
@@ -1053,7 +1051,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_API_SMS: "api-sms",
         CONTENT_CHAT_SMS: "chat-sms",
         CONTENT_EMAIL: "email",
-        CONTENT_FCM_Notification: "fcm-notification",
         CONTENT_CONNECT: "connect",
         CONTENT_CONNECT_SURVEY: "connect-survey",
     }
@@ -1112,7 +1109,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
-    ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
     FILTER_MISMATCH = 'FILTER_MISMATCH'
 
     ERROR_MESSAGES = {
@@ -1169,7 +1165,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 "sending reminder emails on a Trial plan has been reached."),
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
-        ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
         FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
     }
 
@@ -1386,7 +1381,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ConnectMessageSurveyContent,
             CustomContent,
             EmailContent,
-            FCMNotificationContent,
             SMSContent,
             SMSSurveyContent,
         )
@@ -1399,8 +1393,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
             return cls.CONTENT_EMAIL, None, None, None
-        elif isinstance(content, FCMNotificationContent):
-            return cls.CONTENT_FCM_Notification, None, None, None
         elif isinstance(content, ConnectMessageContent):
             return cls.CONTENT_CONNECT, None, None, None
         elif isinstance(content, ConnectMessageSurveyContent):
