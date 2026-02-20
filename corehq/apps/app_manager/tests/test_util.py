@@ -66,11 +66,6 @@ class TestGlobalAppConfig(TestCase):
         cls.v2_build.save()  # v2 is starred
 
         app.save()  # app is now v3
-        cls.v3_build = app.make_build()
-        cls.v3_build.is_released = True
-        cls.v3_build.save()  # v3 is starred
-
-        app.save()  # app is v4
 
         cls.app = app
 
@@ -122,8 +117,8 @@ class TestGlobalAppConfig(TestCase):
         app_config.save()
         test_cases = [
             ('off', {}),
-            ('on', {'value': self.v3_build.version, 'force': False}),
-            ('forced', {'value': self.v3_build.version, 'force': True}),
+            ('on', {'value': self.v2_build.version, 'force': False}),
+            ('forced', {'value': self.v2_build.version, 'force': True}),
         ]
         for config, response in test_cases:
             app_config = self.app.global_app_config
@@ -156,7 +151,7 @@ class TestGlobalAppConfig(TestCase):
             )
 
     def test_load_from_build(self):
-        config = self._fresh_config(self.v3_build.id)
+        config = self._fresh_config(self.v2_build.id)
         with self.assertRaises(AssertionError):
             config.get_latest_app_version()
 
