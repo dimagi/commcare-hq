@@ -56,7 +56,7 @@ class AuthenticationTestBase(TestCase):
         domain_obj = create_domain(name=cls.domain)
         cls.addClassCleanup(domain_obj.delete)
         cls.user = WebUser.create(cls.domain, USERNAME, 'password', None, None)
-        cls.addClassCleanup(cls.user.delete, cls.domain)
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user()).plaintext_key
 
     def call_api(self, request, allow_creds_in_data=False):
@@ -117,7 +117,7 @@ class SSOApiAuthenticationTest(AuthenticationTestBase):
         cls.sso_user = WebUser.create(
             cls.domain, cls.sso_username, 'password', None, None
         )
-        cls.addClassCleanup(cls.sso_user.delete, cls.domain)
+        cls.addClassCleanup(cls.sso_user.delete, cls.domain, deleted_by=None)
         cls.sso_api_key = HQApiKey.objects.create(
             user=cls.sso_user.get_django_user()
         ).plaintext_key
