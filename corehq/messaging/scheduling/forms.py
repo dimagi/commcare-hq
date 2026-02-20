@@ -19,7 +19,7 @@ from django.forms.widgets import (
     HiddenInput,
     Select,
     SelectMultiple,
-    Textarea
+    Textarea,
 )
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
@@ -2699,7 +2699,9 @@ class ScheduleForm(Form):
             raise json_error()
 
         if self.cleaned_data.get("use_user_case_for_filter"):
-            from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
+            from corehq.apps.data_dictionary.util import (
+                get_data_dict_props_by_case_type,
+            )
             user_case_properties = (
                 get_data_dict_props_by_case_type(self.domain, exclude_deprecated=True))[USERCASE_TYPE]
             invalid_keys = \
