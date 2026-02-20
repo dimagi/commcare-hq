@@ -13,12 +13,13 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.data_analytics.malt_generator import generate_malt
+from corehq.apps.data_analytics.metric_registry import compute_daily_metrics_for_domain
 from corehq.apps.data_analytics.models import DomainMetrics
 from corehq.apps.data_analytics.util import (
     last_month_datespan,
     last_month_dict,
 )
-from corehq.apps.domain.calculations import all_domain_stats, domain_metrics
+from corehq.apps.domain.calculations import all_domain_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES, FormES, filters
 from corehq.util.log import send_HTML_email
@@ -142,7 +143,7 @@ def update_domain_metrics_for_domains(domains):
 def _update_or_create_domain_metrics(domain, all_stats):
     try:
         domain_obj = Domain.get_by_name(domain)
-        metrics_dict = domain_metrics(domain_obj, domain_obj['_id'], all_stats)
+        metrics_dict = compute_daily_metrics_for_domain(domain_obj, all_stats)
         metrics, __ = DomainMetrics.objects.update_or_create(
             defaults=metrics_dict,
             domain=domain_obj.name,
