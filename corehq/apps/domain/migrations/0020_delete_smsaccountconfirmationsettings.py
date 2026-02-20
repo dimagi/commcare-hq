@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('domain', '0019_remove_usercase_enabled_field'),
+        ('domain', '0020_delete_transferdomainrequest'),
     ]
 
     operations = [
