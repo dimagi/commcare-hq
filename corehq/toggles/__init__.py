@@ -1741,13 +1741,13 @@ VALIDATE_APP_TRANSLATIONS = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
-AGGREGATE_UCRS = StaticToggle(
-    'aggregate_ucrs',
-    'Enable experimental aggregate UCR support',
-    TAG_DEPRECATED,  # this might change in the future
-    namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['czue'],
-)
+# AGGREGATE_UCRS = StaticToggle(
+#     'aggregate_ucrs',
+#     'Enable experimental aggregate UCR support',
+#     TAG_DEPRECATED,  # this might change in the future
+#     namespaces=[NAMESPACE_DOMAIN],
+#     notification_emails=['czue'],
+# )
 
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
