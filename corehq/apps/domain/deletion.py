@@ -253,7 +253,7 @@ def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
         'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
-        'FCMNotificationContent', 'ConnectMessageContent', 'ConnectMessageSurveyContent'
+        'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -414,7 +414,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent',
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
         'ConnectMessageContent', 'ConnectMessageSurveyContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
@@ -430,6 +430,7 @@ DOMAIN_DELETE_OPERATIONS = [
     PartitionedModelDeletion('scheduling_partitioned', 'CaseAlertScheduleInstance', 'domain'),
     PartitionedModelDeletion('scheduling_partitioned', 'CaseTimedScheduleInstance', 'domain'),
     PartitionedModelDeletion('scheduling_partitioned', 'TimedScheduleInstance', 'domain'),
+    ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
     ModelDeletion('export', 'DeIdHash', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),

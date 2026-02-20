@@ -7,7 +7,10 @@ from django.db import models, transaction
 from django.http import Http404
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_released_app,
+)
 from corehq.apps.app_manager.exceptions import AppInDifferentDomainException, FormNotFoundException
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
@@ -263,8 +266,6 @@ class ContentForeignKeyMixin(models.Model):
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
     sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
-    fcm_notification_content = models.ForeignKey('scheduling.FCMNotificationContent', null=True,
-                                                 on_delete=models.CASCADE)
     connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
                                                 on_delete=models.CASCADE)
     connect_survey_content = models.ForeignKey('scheduling.ConnectMessageSurveyContent', null=True,
@@ -287,8 +288,6 @@ class ContentForeignKeyMixin(models.Model):
             return self.custom_content
         elif self.sms_callback_content_id:
             return self.sms_callback_content
-        elif self.fcm_notification_content:
-            return self.fcm_notification_content
         elif self.connect_message_content:
             return self.connect_message_content
         elif self.connect_survey_content:
@@ -308,7 +307,7 @@ class ContentForeignKeyMixin(models.Model):
     @content.setter
     def content(self, value):
         from corehq.messaging.scheduling.models import (SMSContent, EmailContent, SMSSurveyContent,
-            IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent,
+            IVRSurveyContent, CustomContent, SMSCallbackContent,
             ConnectMessageContent, ConnectMessageSurveyContent)
 
         self.sms_content = None
@@ -332,8 +331,6 @@ class ContentForeignKeyMixin(models.Model):
             self.custom_content = value
         elif isinstance(value, SMSCallbackContent):
             self.sms_callback_content = value
-        elif isinstance(value, FCMNotificationContent):
-            self.fcm_notification_content = value
         elif isinstance(value, ConnectMessageContent):
             self.connect_message_content = value
         elif isinstance(value, ConnectMessageSurveyContent):
@@ -575,7 +572,10 @@ class SurveyContent(Content):
     @memoized
     def get_memoized_app_module_form(self, domain):
         try:
-            app = get_latest_released_app(domain, self.app_id)
+            if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
+                app = get_app(domain, self.app_id)
+            else:
+                app = get_latest_released_app(domain, self.app_id)
             form = app.get_form(self.form_unique_id)
             module = form.get_module()
         except (Http404, FormNotFoundException, AppInDifferentDomainException):
