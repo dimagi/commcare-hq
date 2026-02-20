@@ -175,15 +175,6 @@ class ContentForm(Form):
     # names in the HTML are prefixed with "content-"
     prefix = 'content'
 
-    FCM_SUBJECT_MAX_LENGTH = 255
-    FCM_MESSAGE_MAX_LENGTH = 2048
-
-    fcm_message_type = ChoiceField(
-        required=False,
-        choices=FCMNotificationContent.MESSAGE_TYPES,
-        initial=FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION,
-        label=''
-    )
     subject = CharField(
         required=False,
         widget=HiddenInput,
@@ -242,11 +233,6 @@ class ContentForm(Form):
         required=False,
         label=gettext_lazy("Intervals"),
     )
-    fcm_action = ChoiceField(
-        required=False,
-        label=gettext_lazy("Action on Notification"),
-        choices=FCMNotificationContent.ACTION_CHOICES,
-    )
 
     def __init__(self, *args, **kwargs):
         if 'schedule_form' not in kwargs:
@@ -268,11 +254,6 @@ class ContentForm(Form):
             }
 
     def clean_subject(self):
-        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
-                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
-            cleaned_value = self._clean_message_field('subject')
-            return self._validate_fcm_message_length(cleaned_value, self.FCM_SUBJECT_MAX_LENGTH)
-
         if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_EMAIL:
             return None
 
@@ -284,10 +265,6 @@ class ContentForm(Form):
                 and self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_EMAIL
         ):
             return None
-        if (self.schedule_form.cleaned_data.get('content') == ScheduleForm.CONTENT_FCM_NOTIFICATION
-                and self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION):
-            cleaned_value = self._clean_message_field('message')
-            return self._validate_fcm_message_length(cleaned_value, self.FCM_MESSAGE_MAX_LENGTH)
 
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS,
                                                                   ScheduleForm.CONTENT_EMAIL,
@@ -314,31 +291,6 @@ class ContentForm(Form):
             raise ValidationError(_("Please fill out at least one translation"))
 
         return cleaned_value
-
-    @staticmethod
-    def _validate_fcm_message_length(value, max_length):
-        for data in value.values():
-            if len(data) > max_length:
-                raise ValidationError(_('This field must not exceed {} characters'.format(max_length)))
-        return value
-
-    def clean_fcm_message_type(self):
-        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
-            return None
-
-        value = self.cleaned_data.get('fcm_message_type')
-        if not value:
-            raise ValidationError(_("This field is required"))
-        return value
-
-    def clean_fcm_action(self):
-        if self.schedule_form.cleaned_data.get('content') != ScheduleForm.CONTENT_FCM_NOTIFICATION:
-            return None
-
-        value = self.cleaned_data.get('fcm_action')
-        if self.cleaned_data['fcm_message_type'] == FCMNotificationContent.MESSAGE_TYPE_DATA and not value:
-            raise ValidationError(_("This field is required"))
-        return value
 
     def clean_app_and_form_unique_id(self):
         if self.schedule_form.cleaned_data.get('content') not in (ScheduleForm.CONTENT_SMS_SURVEY,
@@ -456,13 +408,6 @@ class ContentForm(Form):
             return CustomContent(
                 custom_content_id=self.cleaned_data['custom_sms_content_id']
             )
-        elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_FCM_NOTIFICATION:
-            return FCMNotificationContent(
-                subject=self.cleaned_data['subject'],
-                message=self.cleaned_data['message'],
-                action=self.cleaned_data['fcm_action'],
-                message_type=self.cleaned_data['fcm_message_type'],
-            )
         elif self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_CONNECT_MESSAGE:
             return ConnectMessageContent(
                 message=self.cleaned_data['message'],
@@ -524,11 +469,7 @@ class ContentForm(Form):
                         crispy.Div(template='scheduling/partials/rich_text_message_configuration.html'),
                         data_bind='with: html_message',
                     ),
-                    data_bind=(
-                        f"visible: $root.content() === '{ScheduleForm.CONTENT_EMAIL}' || "
-                        f"($root.content() === '{ScheduleForm.CONTENT_FCM_NOTIFICATION}' && "
-                        f"fcm_message_type() === '{FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION}')"
-                    )
+                    data_bind=f"visible: $root.content() === '{ScheduleForm.CONTENT_EMAIL}'"
                 ),
                 hqcrispy.B3MultiField(
                     _("Message"),
@@ -543,9 +484,7 @@ class ContentForm(Form):
                     data_bind=(
                         f"visible: $root.content() === '{ScheduleForm.CONTENT_SMS}' || "
                         f"$root.content() === '{ScheduleForm.CONTENT_SMS_CALLBACK}' || "
-                        f"$root.content() === '{ScheduleForm.CONTENT_CONNECT_MESSAGE}' || "
-                        f"($root.content() === '{ScheduleForm.CONTENT_FCM_NOTIFICATION}' && "
-                        f"fcm_message_type() === '{FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION}')"
+                        f"$root.content() === '{ScheduleForm.CONTENT_CONNECT_MESSAGE}'"
                     ),
                 )
             ]
@@ -565,29 +504,12 @@ class ContentForm(Form):
                         f"visible: $root.content() === '{ScheduleForm.CONTENT_SMS}' || "
                         f"$root.content() === '{ScheduleForm.CONTENT_EMAIL}' || "
                         f"$root.content() === '{ScheduleForm.CONTENT_SMS_CALLBACK}' || "
-                        f"$root.content() === '{ScheduleForm.CONTENT_CONNECT_MESSAGE}' || "
-                        f"($root.content() === '{ScheduleForm.CONTENT_FCM_NOTIFICATION}' && "
-                        f"fcm_message_type() === '{FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION}')"
+                        f"$root.content() === '{ScheduleForm.CONTENT_CONNECT_MESSAGE}'"
                     ),
                 ),
             ]
 
         return [
-            hqcrispy.B3MultiField(
-                _('Message type'),
-                crispy.Field(
-                    'fcm_message_type',
-                    data_bind='value: fcm_message_type',
-                ),
-                data_bind=f"visible: $root.content() === '{ScheduleForm.CONTENT_FCM_NOTIFICATION}'"
-            ),
-            crispy.Div(
-                crispy.Field('fcm_action'),
-                data_bind=(
-                    f"visible: $root.content() === '{ScheduleForm.CONTENT_FCM_NOTIFICATION}' && "
-                    f"fcm_message_type() === '{FCMNotificationContent.MESSAGE_TYPE_DATA}'"
-                )
-            ),
             hqcrispy.B3MultiField(
                 _("Subject"),
                 crispy.Field(
@@ -598,11 +520,7 @@ class ContentForm(Form):
                     crispy.Div(template='scheduling/partials/message_configuration.html'),
                     data_bind='with: subject',
                 ),
-                data_bind=(
-                    f"visible: $root.content() === '{ScheduleForm.CONTENT_EMAIL}' || "
-                    f"($root.content() === '{ScheduleForm.CONTENT_FCM_NOTIFICATION}' && "
-                    f"fcm_message_type() === '{FCMNotificationContent.MESSAGE_TYPE_NOTIFICATION}')"
-                )
+                data_bind=f"visible: $root.content() === '{ScheduleForm.CONTENT_EMAIL}'"
             ),
             *message_fields,
             crispy.Div(
@@ -718,8 +636,6 @@ class ContentForm(Form):
         elif isinstance(content, FCMNotificationContent):
             result['subject'] = content.subject
             result['message'] = content.message
-            result['fcm_action'] = content.action
-            result['fcm_message_type'] = content.message_type
         elif isinstance(content, ConnectMessageContent):
             result['message'] = content.message
         elif isinstance(content, ConnectMessageSurveyContent):
@@ -3127,17 +3043,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_POSITIVE = 'POSITIVE'
 
     use_case = 'conditional_alert'
-
-    FCM_SUPPORTED_RECIPIENT_TYPES = [
-        ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
-        ScheduleInstance.RECIPIENT_TYPE_LOCATION,
-        ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
-        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
-        CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
-        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME,
-        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID,
-        CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
-    ]
 
     # start_date is defined on the superclass but cleaning it in this subclass
     # depends on start_date_type, which depends on send_frequency
