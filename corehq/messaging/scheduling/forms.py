@@ -108,7 +108,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 from corehq.toggles import (
     COMMCARE_CONNECT,
     EXTENSION_CASES_SYNC_ENABLED,
-    FCM_NOTIFICATION,
     RICH_TEXT_EMAILS,
 )
 
@@ -3313,10 +3312,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
-        if (
-            self.initial.get('content') == self.CONTENT_FCM_NOTIFICATION
-            or (FCM_NOTIFICATION.enabled(self.domain) and settings.FCM_CREDS)
-        ):
+        if self.initial.get('content') == self.CONTENT_FCM_NOTIFICATION:
             self.fields['content'].choices += [
                 (self.CONTENT_FCM_NOTIFICATION, _("Push Notification"))
             ]
@@ -3914,20 +3910,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 raise ValidationError(_("Email case property can only be used with Email content"))
 
         if self.cleaned_data.get('content') == self.CONTENT_FCM_NOTIFICATION:
-            if not settings.FCM_CREDS:
-                raise ValidationError(_("Push Notifications is no longer available on this environment."
-                                        " Please contact Administrator."))
-            if not FCM_NOTIFICATION.enabled(self.domain):
-                raise ValidationError(_("Push Notifications is not available for your project."
-                                        " Please contact Administrator."))
-
-            recipient_types_choices = dict(self.fields['recipient_types'].choices)
-            unsupported_recipient_types = {str(recipient_types_choices[recipient_type])
-                                           for recipient_type in recipient_types
-                                           if recipient_type not in self.FCM_SUPPORTED_RECIPIENT_TYPES}
-            if unsupported_recipient_types:
-                raise ValidationError(_("'{}' recipient types are not supported for Push Notifications"
-                                        .format(', '.join(unsupported_recipient_types))))
+            raise ValidationError(
+                _("Push Notifications is no longer available. Please contact Administrator.")
+            )
 
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
