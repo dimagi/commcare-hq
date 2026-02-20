@@ -1741,13 +1741,13 @@ VALIDATE_APP_TRANSLATIONS = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
-AGGREGATE_UCRS = StaticToggle(
-    'aggregate_ucrs',
-    'Enable experimental aggregate UCR support',
-    TAG_DEPRECATED,  # this might change in the future
-    namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['czue'],
-)
+# AGGREGATE_UCRS = StaticToggle(
+#     'aggregate_ucrs',
+#     'Enable experimental aggregate UCR support',
+#     TAG_DEPRECATED,  # this might change in the future
+#     namespaces=[NAMESPACE_DOMAIN],
+#     notification_emails=['czue'],
+# )
 
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
@@ -2350,12 +2350,12 @@ SUPERSET_ANALYTICS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
-    'two_stage_user_provisioning_by_sms',
-    'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
+#     'two_stage_user_provisioning_by_sms',
+#     'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 # SMS_USE_LATEST_DEV_APP = FeatureRelease(
 #     'sms_use_latest_dev_app',

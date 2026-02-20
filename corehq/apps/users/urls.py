@@ -1,22 +1,27 @@
-from django.urls import include, re_path as url
+from django.urls import include
+from django.urls import re_path as url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 
+from ..hqwebapp.decorators import waf_allow
 from .views import (
     DefaultProjectUserSettingsView,
+    DownloadWebUsersStatusView,
     EditWebUserView,
     InviteWebUserView,
-    UploadWebUsers,
-    WebUserUploadStatusView,
     ListWebUsersView,
+    UploadWebUsers,
+    WebUserUploadJobPollView,
+    WebUserUploadStatusView,
     add_domain_membership,
     change_password,
-    delete_phone_number,
-    delete_request,
     check_sso_trust,
     deactivate_web_user,
+    delete_phone_number,
+    delete_request,
     domain_accounts,
+    download_web_users,
     make_phone_number_default,
     paginate_enterprise_users,
     paginate_web_users,
@@ -26,21 +31,6 @@ from .views import (
     test_httpdigest,
     undo_remove_web_user,
     verify_phone_number,
-    download_web_users,
-    DownloadWebUsersStatusView,
-    WebUserUploadJobPollView,
-)
-from .views.role import (
-    EditRoleView,
-    delete_user_role,
-    ListRolesView,
-    post_user_role,
-)
-from .views.web import (
-    accept_invitation,
-    delete_invitation,
-    DomainRequestView,
-    reinvite_web_user,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -49,12 +39,16 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
-    CommCareUserConfirmAccountBySMSView,
+    ClearCommCareUsers,
+    CommCareUserAccountConfirmedView,
+    CommCareUserConfirmAccountViewByEmailView,
+    CommCareUserPasswordResetView,
     CommCareUsersLookup,
+    CommcareUserUploadJobPollView,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
-    DemoRestoreStatusView,
     DeleteCommCareUsers,
+    DemoRestoreStatusView,
     DownloadUsersStatusView,
     EditCommCareUserView,
     FilteredCommCareUserDownload,
@@ -63,7 +57,8 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
-    set_personalid_link_status,
+    bulk_user_upload_api,
+    commcare_user_download_job_poll,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
@@ -71,25 +66,28 @@ from .views.mobile.users import (
     demo_restore_job_poll,
     download_commcare_users,
     force_user_412,
+    link_connectid_user,
     paginate_mobile_workers,
     reset_demo_user_restore,
     restore_commcare_user,
+    send_confirmation_email,
+    set_personalid_link_status,
     toggle_demo_mode,
     update_user_groups,
-    commcare_user_download_job_poll,
     web_user_download_job_poll,
-    CommCareUserConfirmAccountViewByEmailView,
-    send_confirmation_email,
-    send_confirmation_sms,
-    CommcareUserUploadJobPollView,
-    ClearCommCareUsers,
-    link_connectid_user,
-    bulk_user_upload_api,
-    CommCareUserPasswordResetView,
-    CommCareUserAccountConfirmedView,
 )
-from ..hqwebapp.decorators import waf_allow
-
+from .views.role import (
+    EditRoleView,
+    ListRolesView,
+    delete_user_role,
+    post_user_role,
+)
+from .views.web import (
+    DomainRequestView,
+    accept_invitation,
+    delete_invitation,
+    reinvite_web_user,
+)
 
 user_management_urls = [
     UserManagementReportDispatcher.url_pattern(),
@@ -265,16 +263,6 @@ urlpatterns = [
         r'^commcare/account_confirmed/$',
         CommCareUserAccountConfirmedView.as_view(),
         name=CommCareUserAccountConfirmedView.urlname
-    ),
-    url(
-        r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$',
-        send_confirmation_sms,
-        name='send_confirmation_sms'
-    ),
-    url(
-        r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
-        CommCareUserConfirmAccountBySMSView.as_view(),
-        name=CommCareUserConfirmAccountBySMSView.urlname
     ),
     url(
         r'^commcare/link_connectid_user/$',

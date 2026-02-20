@@ -27,7 +27,6 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
-from corehq.toggles import AGGREGATE_UCRS
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -135,8 +134,7 @@ class ApplicationDataSourceUIHelper(object):
             [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
         )
         if self.enable_raw:
-            available_data_sources = get_datasources_for_domain(domain, include_static=True,
-                                                                include_aggregate=AGGREGATE_UCRS.enabled(domain))
+            available_data_sources = get_datasources_for_domain(domain, include_static=True)
             _add_choices(
                 self.source_field,
                 [(ds.data_source_id, ds.display_name) for ds in available_data_sources]
