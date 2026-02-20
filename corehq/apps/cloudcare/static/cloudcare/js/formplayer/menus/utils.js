@@ -151,9 +151,7 @@ var getMenuView = function (menuResponse) {
         gtx.logCaseList(menuResponse, searchFieldList);
 
         if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
-            noopMetrics.track.event('Started Case Search', {
-                'Split Screen Case Search': true,  // Always enabled: split screen is always on for case search.
-            });
+            noopMetrics.track.event('Started Case Search');
         }
         var caseListView = getCaseListView(menuResponse);
         return caseListView(menuData);
