@@ -2350,12 +2350,12 @@ SUPERSET_ANALYTICS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
-    'two_stage_user_provisioning_by_sms',
-    'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
+#     'two_stage_user_provisioning_by_sms',
+#     'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 # SMS_USE_LATEST_DEV_APP = FeatureRelease(
 #     'sms_use_latest_dev_app',

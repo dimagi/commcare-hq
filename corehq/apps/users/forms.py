@@ -2,6 +2,7 @@ import datetime
 import json
 import secrets
 import string
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
@@ -20,17 +21,23 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 
-from corehq import toggles
-from corehq import privileges
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password, send_password_reset_email
+from corehq.apps.domain.forms import (
+    EditBillingAccountInfoForm,
+    clean_password,
+    send_password_reset_email,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import (
     EnterpriseMobileWorkerSettings,
@@ -39,33 +46,41 @@ from corehq.apps.enterprise.models import (
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
-from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput, Select2Ajax, SelectToggle
+from corehq.apps.hqwebapp.widgets import (
+    BootstrapSwitchInput,
+    Select2Ajax,
+    SelectToggle,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import CommCareUser, TableauUser
 from corehq.apps.reports.util import (
+    DEFAULT_TABLEAU_ROLE,
     TableauGroupTuple,
     get_all_tableau_groups,
     get_allowed_tableau_groups_for_domain,
     get_tableau_groups_for_user,
     update_tableau_user,
-    DEFAULT_TABLEAU_ROLE,
 )
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
-from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING_BY_SMS
+from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util.global_request import get_request_domain
 
 from ..hqwebapp.signals import clear_login_attempts
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import ConnectIDUserLink, CouchUser, DeactivateMobileWorkerTrigger, UserRole
+from .models import (
+    ConnectIDUserLink,
+    CouchUser,
+    DeactivateMobileWorkerTrigger,
+    UserRole,
+)
 from .util import cc_user_domain, format_username, log_user_change
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -710,30 +725,6 @@ class NewMobileWorkerForm(forms.Form):
             "on the first day of the month and year selected."
         ),
     )
-    force_account_confirmation_by_sms = forms.BooleanField(
-        label=gettext_noop("Require Account Confirmation by SMS?"),
-        help_text=gettext_noop(
-            "If checked, the user will be sent a confirmation SMS and asked to set their password."
-        ),
-        required=False,
-    )
-    phone_number = forms.CharField(
-        required=False,
-        label=gettext_noop("Phone Number"),
-        help_text=gettext_noop(
-            """
-            <div data-bind="visible: $root.phoneStatusMessage().length === 0">
-                    Please enter number including country code, without (+) and in digits only.
-            </div>
-            <div id="phone-error">
-                <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
-                    <i class="fa-solid fa-triangle-exclamation"
-                    data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
-                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
-                </span>
-            </div>
-        """)
-    )
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -816,34 +807,6 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
-        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
-            confirm_account_by_sms_field = crispy.Field(
-                'force_account_confirmation_by_sms',
-                data_bind='checked: force_account_confirmation_by_sms',
-            )
-            phone_number_field = crispy.Div(
-                crispy.Field(
-                    'phone_number',
-                    data_bind="value: phone_number, valueUpdate: 'keyup'",
-                ),
-                data_bind='''
-                    css: {
-                        'has-error': $root.phoneStatus() === $root.STATUS.ERROR,
-                    },
-                '''
-            )
-        else:
-            confirm_account_by_sms_field = crispy.Hidden(
-                'force_account_confirmation_by_sms',
-                '',
-                data_bind='value: force_account_confirmation_by_sms',
-            )
-            phone_number_field = crispy.Hidden(
-                'phone_number',
-                '',
-                data_bind='value: phone_number',
-            )
-
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -875,8 +838,6 @@ class NewMobileWorkerForm(forms.Form):
                 location_field,
                 confirm_account_field,
                 email_field,
-                confirm_account_by_sms_field,
-                phone_number_field,
                 send_email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
@@ -1053,7 +1014,10 @@ class MultipleSelectionForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
 
-        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        from corehq.apps.hqwebapp.utils.bootstrap import (
+            BOOTSTRAP_5,
+            get_bootstrap_version,
+        )
         is_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
 
         self.helper.layout = crispy.Layout(
@@ -1134,7 +1098,9 @@ class SelectUserLocationForm(forms.Form):
         )
 
     def clean_assigned_locations(self):
-        from corehq.apps.users.validation import validate_assigned_locations_allow_users
+        from corehq.apps.users.validation import (
+            validate_assigned_locations_allow_users,
+        )
         location_ids = self.data.getlist('assigned_locations')
         error = validate_assigned_locations_allow_users(self.domain, location_ids)
         if error:
@@ -1156,7 +1122,9 @@ class SelectUserLocationForm(forms.Form):
                 'assigned_locations',
                 _("You do not have permissions to assign one of those locations.")
             )
-        from corehq.apps.users.validation import validate_primary_location_assignment
+        from corehq.apps.users.validation import (
+            validate_primary_location_assignment,
+        )
         error = validate_primary_location_assignment(primary_location_id, assigned_location_ids)
         if error:
             self.add_error('primary_location', error)
