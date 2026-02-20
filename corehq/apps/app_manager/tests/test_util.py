@@ -4,7 +4,6 @@ from django.test.testcases import TestCase, SimpleTestCase
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
-    BuildProfile,
     GlobalAppConfig,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -49,14 +48,10 @@ class TestGlobalAppConfig(TestCase):
         super(TestGlobalAppConfig, cls).setUpClass()
         cls.project = Domain.get_or_create_with_name(cls.domain)
 
-        cls.build_profile_id = 'english'
         factory = AppFactory(cls.domain, 'foo')
         m0, f0 = factory.new_basic_module("bar", "bar")
         f0.source = get_simple_form(xmlns=f0.unique_id)
         app = factory.app
-        app.build_profiles = {
-            cls.build_profile_id: BuildProfile(langs=['en'], name='English only'),
-        }
         app.langs = ["en"]
         app.version = 1
         app.save()  # app is now v2
