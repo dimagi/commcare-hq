@@ -66,6 +66,24 @@ def verify_user(kyc_user, config):
     return verification_status, verification_error
 
 
+def _mock_api_result_for_testing():
+    import random
+    testing_outcome = {
+        "passed": KycVerificationStatus.PASSED,
+        "failed": KycVerificationStatus.FAILED
+    }
+    weights = {
+        "passed": 0.8,  # 80%
+        "failed": 0.2,  # 20%
+    }
+    choice = random.choices(
+        population=list(testing_outcome.keys()),
+        weights=list(weights.values()),
+        k=1,
+    )[0]
+    return testing_outcome[choice]
+
+
 def mtn_kyc_verify(kyc_user, config):
     """
     Verify a user using the Chenosis MTN KYC API.
@@ -111,6 +129,9 @@ def mtn_kyc_verify(kyc_user, config):
     #         }
     #     }
 
+    # This is for testing only since we don't have a working testing environment for verification yet
+    return _mock_api_result_for_testing()
+
     user_data = get_user_data_for_api(kyc_user, config)
     _validate_schema('kycVerify/v1', user_data)  # See kyc-verify-v1.json
     requests = config.connection_settings.get_requests()
@@ -150,6 +171,9 @@ def orange_cameroon_kyc_verify(kyc_user, config):
     #         "lastName": "Last"
     #     }
     # }
+
+    # This is for testing only since we don't have a working testing environment for verification yet
+    return _mock_api_result_for_testing()
 
     user_data = get_user_data_for_api(kyc_user, config)
     _validate_name_fields(config, user_data)

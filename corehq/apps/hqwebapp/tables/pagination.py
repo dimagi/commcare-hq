@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator, InvalidPage
-from django.http import Http404, QueryDict
+from django.http import Http404
 from django.views.generic.list import ListView
 
 from django_tables2 import SingleTableMixin
@@ -85,17 +85,15 @@ class HtmxInvalidPageRedirectMixin:
         because the HX-Push-Url header is ignored by the browser when a redirect
         occurs.
         """
-        # sort is the only GET parameter we want to keep
-        # when redirecting to the first page
-        sort = request.GET.get('sort')
-        params = f"sort={sort}" if sort else ""
-
-        # reset the GET parameters to only include sort, no `page` information
-        request.GET = QueryDict(params)
+        # preserve all the query params except for 'page'
+        preserved_params = request.GET.copy()
+        if 'page' in preserved_params:
+            del preserved_params['page']
 
         # re-fetch the get response with the modified request
+        request.GET = preserved_params
         response = super().get(request, *args, **kwargs)
-        params = f"?{params}" if params else ""
+        params = f"?{preserved_params.urlencode()}" if preserved_params else ""
 
         # get the host page url
         host_url = self.get_host_url() + params
