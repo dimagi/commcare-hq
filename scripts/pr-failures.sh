@@ -1,6 +1,7 @@
 #!/bin/bash
 # Show test failures for a GitHub Actions CI run on a PR.
-# Usage: scripts/pr-failures.sh <pr_number>
+# Usage: scripts/pr-failures.sh [<pr_number>]
+# If no PR number is given, uses the current branch's open PR.
 
 set -euo pipefail
 
@@ -15,13 +16,17 @@ if ! gh auth status &>/dev/null; then
     exit 1
 fi
 
-PR=${1:?Usage: scripts/pr-failures.sh <pr_number>}
-REPO="dimagi/commcare-hq"
+PR=${1:-}
+REPO=$(gh repo view --json nameWithOwner -q ".nameWithOwner")
 
-FAILED=$(gh pr checks "$PR" --repo "$REPO" 2>/dev/null | awk -F'\t' '$2 == "fail"') || true
+if [[ -n "$PR" ]]; then
+    FAILED=$(gh pr checks "$PR" --repo "$REPO" 2>/dev/null | awk -F'\t' '$2 == "fail"') || true
+else
+    FAILED=$(gh pr checks --repo "$REPO" 2>/dev/null | awk -F'\t' '$2 == "fail"') || true
+fi
 
 if [[ -z "$FAILED" ]]; then
-    echo "No failed checks for PR #$PR."
+    echo "No failed checks${PR:+ for PR #$PR}."
     exit 0
 fi
 
