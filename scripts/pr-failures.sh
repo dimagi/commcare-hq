@@ -11,18 +11,19 @@ if ! command -v gh &>/dev/null; then
     exit 1
 fi
 
-if ! gh auth status &>/dev/null; then
-    echo "Error: 'gh' is not authenticated. Run 'gh auth login' first." >&2
-    exit 1
-fi
-
 PR=${1:-}
 REPO=$(gh repo view --json nameWithOwner -q ".nameWithOwner")
 
+gh_exit=0
 if [[ -n "$PR" ]]; then
-    FAILED=$(gh pr checks "$PR" --repo "$REPO" 2>/dev/null | awk -F'\t' '$2 == "fail"') || true
+    FAILED=$(gh pr checks "$PR" --repo "$REPO" | awk -F'\t' '$2 == "fail"') || gh_exit=$?
 else
-    FAILED=$(gh pr checks --repo "$REPO" 2>/dev/null | awk -F'\t' '$2 == "fail"') || true
+    FAILED=$(gh pr checks --repo "$REPO" | awk -F'\t' '$2 == "fail"') || gh_exit=$?
+fi
+
+# Non-zero exit + no tab-separated output = real gh error (already printed to stderr)
+if [[ $gh_exit -ne 0 && -z "$FAILED" ]]; then
+    exit 1
 fi
 
 if [[ -z "$FAILED" ]]; then
