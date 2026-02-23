@@ -119,22 +119,20 @@
               {% trans "Error fetching link data." %}
             </div>
             <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
-              <div class="form-group">  {# todo B5: css-form-group #}
-                <div class="card">
-                  <div class="card-header h5">
-                    <span data-bind="text: name"></span>
-                    <span class="badge text-bg-primary" data-bind="text: caseType"></span>
-                  </div>
-                  <div class="card-body">
-                    <div class="controls">
-                      <textarea name="_xpath"
-                        placeholder="XPath Expression"
-                        rows="1"
-                        data-bind="text: xpath, value: xpath"
-                        class="form-control vertical-resize"
-                        spellcheck="false">
-                      </textarea>
-                    </div>
+              <div class="card mb-3">
+                <div class="card-header h5">
+                  <span data-bind="text: name"></span>
+                  <span class="badge text-bg-primary" data-bind="text: caseType"></span>
+                </div>
+                <div class="card-body">
+                  <div class="controls">
+                    <textarea name="_xpath"
+                      placeholder="XPath Expression"
+                      rows="1"
+                      data-bind="text: xpath, value: xpath"
+                      class="form-control vertical-resize"
+                      spellcheck="false">
+                    </textarea>
                   </div>
                 </div>
               </div>
