@@ -40,7 +40,6 @@ from .views.mobile.groups import (
 )
 from .views.mobile.users import (
     CommCareUserAccountConfirmedView,
-    CommCareUserConfirmAccountBySMSView,
     CommCareUserConfirmAccountViewByEmailView,
     CommCareUserPasswordResetView,
     CommCareUsersLookup,
@@ -71,7 +70,6 @@ from .views.mobile.users import (
     reset_demo_user_restore,
     restore_commcare_user,
     send_confirmation_email,
-    send_confirmation_sms,
     set_personalid_link_status,
     toggle_demo_mode,
     update_user_groups,
@@ -264,16 +262,6 @@ urlpatterns = [
         r'^commcare/account_confirmed/$',
         CommCareUserAccountConfirmedView.as_view(),
         name=CommCareUserAccountConfirmedView.urlname
-    ),
-    url(
-        r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$',
-        send_confirmation_sms,
-        name='send_confirmation_sms'
-    ),
-    url(
-        r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
-        CommCareUserConfirmAccountBySMSView.as_view(),
-        name=CommCareUserConfirmAccountBySMSView.urlname
     ),
     url(
         r'^commcare/link_connectid_user/$',

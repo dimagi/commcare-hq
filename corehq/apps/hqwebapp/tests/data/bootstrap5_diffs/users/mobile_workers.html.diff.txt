@@ -12,7 +12,7 @@
  
  {% block page_content %}
    {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
-@@ -29,7 +29,7 @@
+@@ -28,7 +28,7 @@
  
    <div>
      <div class="row">
@@ -21,7 +21,7 @@
          <p class="lead">
            {% blocktrans %}
              Mobile Workers can log into applications in this project space and
-@@ -50,13 +50,14 @@
+@@ -49,13 +49,14 @@
            {% endblocktrans %}
          </p>
          <div class="btn-toolbar" style="margin-bottom: 20px;">
@@ -38,7 +38,7 @@
                data-bind="click: initializeUser"
              >
                <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
-@@ -76,7 +77,7 @@
+@@ -75,7 +76,7 @@
              {% if can_bulk_edit_users %}
                <a
                  id="bulk_upload"
@@ -47,7 +47,7 @@
                  href="{% url "upload_commcare_users" domain %}"
                >
                  <i class="fa-solid fa-cloud-arrow-up"></i>
-@@ -85,14 +86,14 @@
+@@ -84,14 +85,14 @@
              {% endif %}
              {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
                <a
@@ -64,7 +64,7 @@
                  href="{% url "commcare_users_lookup" domain %}"
                >
                  <i class="fa fa-search"></i>
-@@ -110,7 +111,12 @@
+@@ -109,7 +110,12 @@
              <form novalidate data-bind="submit: submitNewUser">
                <div class="modal-content">
                  <div class="modal-header">
@@ -78,7 +78,7 @@
                      <span aria-hidden="true">&times;</span>
                      <span class="sr-only">{% trans 'Close' %}</span>
                    </button>
-@@ -120,17 +126,18 @@
+@@ -119,17 +125,18 @@
                  </div>
                  <div class="modal-body" data-bind="if: stagedUser">
                    <div class="form-horizontal" data-bind="with: stagedUser">
@@ -100,7 +100,7 @@
                    >
                      {% trans 'Cancel' %}
                    </button>
-@@ -149,7 +156,8 @@
+@@ -148,7 +155,8 @@
            <div class="modal-dialog">
              <div class="modal-content">
                <div class="modal-header">
@@ -110,7 +110,7 @@
                    <span aria-hidden="true">&times;</span>
                    <span class="sr-only">{% trans 'Close' %}</span>
                  </button>
-@@ -192,8 +200,8 @@
+@@ -191,8 +199,8 @@
                <div class="modal-footer">
                  <button
                    type="button"
@@ -121,7 +121,7 @@
                  >
                    {% trans 'Cancel' %}
                  </button>
-@@ -211,21 +219,22 @@
+@@ -210,21 +218,22 @@
      {% endif %}
  
      <div
@@ -152,7 +152,7 @@
              </tr>
            </thead>
            <tbody data-bind="foreach: newUsers">
-@@ -277,13 +286,14 @@
+@@ -276,13 +285,14 @@
      </div>
    </div>
    <div id="users-list" class="ko-template">
@@ -172,7 +172,7 @@
              <search-box
                data-apply-bindings="false"
                params="value: query,
-@@ -291,11 +301,11 @@
+@@ -290,11 +300,11 @@
                                              placeholder: '{% trans_html_attr "Search Workers..." %}'"
              ></search-box>
            </div>
@@ -186,7 +186,7 @@
                data-bind="visible: !deactivatedOnly(), click: function() { deactivatedOnly(true); }"
              >
                {% trans 'Show Deactivated Mobile Workers' %}
-@@ -303,7 +313,7 @@
+@@ -302,7 +312,7 @@
              <button
                id="gtm-show-enabled-mobile-workers"
                type="button"
@@ -195,7 +195,7 @@
                data-bind="visible: deactivatedOnly(), click: function() { deactivatedOnly(false); }"
              >
                {% trans 'Show Active Mobile Workers' %}
-@@ -350,24 +360,25 @@
+@@ -349,24 +359,25 @@
          <table
            class="table table-striped table-responsive"
            style="margin-bottom: 0;"
@@ -228,7 +228,7 @@
                {% endif %}
              </tr>
            </thead>
-@@ -390,17 +401,17 @@
+@@ -389,17 +400,17 @@
                {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
                  <td>
                    <span
@@ -249,7 +249,7 @@
                      data-bind="visible: is_personalid_link_active() === null"
                      >{% trans 'Not Linked' %}</span
                    >
-@@ -411,9 +422,9 @@
+@@ -410,9 +421,9 @@
                    <div data-bind="visible: !is_active()">
                      <button
                        type="button"
@@ -262,7 +262,7 @@
                      >
                        {% trans "Reactivate" %}
                      </button>
-@@ -423,13 +434,13 @@
+@@ -422,13 +433,13 @@
                      </p>
                    </div>
                    {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
@@ -280,7 +280,7 @@
                        >
                          {% trans "Unlink PersonalID" %}
                        </button>
-@@ -439,9 +450,9 @@
+@@ -438,9 +449,9 @@
                      >
                        <button
                          type="button"
@@ -293,7 +293,7 @@
                        >
                          {% trans "Link PersonalID" %}
                        </button>
-@@ -450,9 +461,9 @@
+@@ -449,9 +460,9 @@
                    <div data-bind="visible: is_active()">
                      <button
                        type="button"
@@ -306,7 +306,7 @@
                      >
                        {% trans "Deactivate" %}
                      </button>
-@@ -470,8 +481,9 @@
+@@ -469,8 +480,9 @@
                          <div class="modal-header">
                            <button
                              type="button"
@@ -318,7 +318,7 @@
                            >
                              <span aria-hidden="true">&times;</span>
                              <span class="sr-only">{% trans "Close" %}</span>
-@@ -509,8 +521,8 @@
+@@ -508,8 +520,8 @@
                          <div class="modal-footer">
                            <button
                              type="button"
@@ -329,7 +329,7 @@
                            >
                              {% trans "Cancel" %}
                            </button>
-@@ -534,8 +546,9 @@
+@@ -533,8 +545,9 @@
                          <div class="modal-header">
                            <button
                              type="button"
@@ -341,7 +341,7 @@
                            >
                              <span aria-hidden="true">&times;</span>
                              <span class="sr-only">{% trans "Close" %}</span>
-@@ -573,14 +586,14 @@
+@@ -572,14 +585,14 @@
                          <div class="modal-footer">
                            <button
                              type="button"
@@ -359,7 +359,7 @@
                              data-bind="click: function(user) { user.is_active(false); }"
                            >
                              {% trans 'Deactivate' %}
-@@ -606,7 +619,9 @@
+@@ -605,7 +618,9 @@
              <strong>There was an issue contacting the server.</strong>
              Please check your internet connection. If this issue continues,
              please
@@ -370,7 +370,7 @@
            {% endblocktrans %}
          </div>
          <pagination
-@@ -624,17 +639,19 @@
+@@ -623,17 +638,19 @@
    </div>
    {% if two_stage_user_confirmation %}
      <div
@@ -395,7 +395,7 @@
              <search-box
                data-apply-bindings="false"
                params="value: query,
-@@ -645,7 +662,7 @@
+@@ -644,7 +661,7 @@
            </div>
          </div>
        </div>
@@ -404,7 +404,7 @@
          <div class="alert alert-info" data-bind="visible: showNoUsers">
            {% blocktrans %}
              No pending account confirmations were found that matched your query.
-@@ -709,11 +726,11 @@
+@@ -708,11 +725,11 @@
                <td>
                  <!-- ko text: confirmationSentAtText --><!-- /ko -->
                  <span
@@ -418,7 +418,7 @@
                    data-bind="visible: isExpired()"
                    >{% trans "Expired" %}</span
                  >
-@@ -721,9 +738,9 @@
+@@ -720,9 +737,9 @@
                <td>
                  <button
                    type="button"
@@ -429,9 +429,9 @@
 +                  data-bs-toggle="modal"
 +                  data-bind="attr: {'data-bs-target': '#confirm_' + user_id()}"
                  >
-                   {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING_BY_SMS" %}
-                     {% trans "Send Confirmation SMS" %}
-@@ -740,8 +757,9 @@
+                   {% trans "Send Confirmation Email" %}
+                 </button>
+@@ -735,8 +752,9 @@
                        <div class="modal-header">
                          <button
                            type="button"
@@ -443,7 +443,7 @@
                          >
                            <span aria-hidden="true">&times;</span>
                            <span class="sr-only">{% trans "Close" %}</span>
-@@ -787,8 +805,8 @@
+@@ -766,8 +784,8 @@
                        <div class="modal-footer">
                          <button
                            type="button"
@@ -454,7 +454,7 @@
                          >
                            {% trans "Cancel" %}
                          </button>
-@@ -829,7 +847,9 @@
+@@ -798,7 +816,9 @@
              <strong>There was an issue contacting the server.</strong>
              Please check your internet connection. If this issue continues,
              please

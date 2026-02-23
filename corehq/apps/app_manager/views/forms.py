@@ -885,9 +885,6 @@ def get_form_view_context(
     else:
         # TODO: figure out a cleaner method
         form.actions.make_multi()
-        context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
-        })
         case_config_options.update({
             'actions': form.actions,
             'allowUsercase': allow_usercase,

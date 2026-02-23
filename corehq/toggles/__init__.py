@@ -647,12 +647,12 @@ def _ensure_valid_randomness(randomness):
         raise Exception('randomness must be between 0 and 1!')
 
 
-APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
-    'custom-parent-ref',
-    'ICDS: Custom case parent reference',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
+# APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
+#     'custom-parent-ref',
+#     'ICDS: Custom case parent reference',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+# )
 
 LAZY_LOAD_MULTIMEDIA = StaticToggle(
     'optional-media',
@@ -862,16 +862,16 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-UCR_SUM_WHEN_TEMPLATES = StaticToggle(
-    'ucr_sum_when_templates',
-    'Allow sum when template columns in dynamic UCRs',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
-    ),
-    help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
-)
+# UCR_SUM_WHEN_TEMPLATES = StaticToggle(
+#     'ucr_sum_when_templates',
+#     'Allow sum when template columns in dynamic UCRs',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+#     description=(
+#         "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+#     ),
+#     help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
+# )
 
 ASYNC_RESTORE = StaticToggle(
     'async_restore',
@@ -1342,16 +1342,16 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
-NON_COMMTRACK_LEDGERS = StaticToggle(
-    'non_commtrack_ledgers',
-    "Enable ledgers for projects not using Supply.",
-    TAG_DEPRECATED,
-    description=(
-        'Turns on the ledger fixture and ledger transaction question types in '
-        'the form builder. ONLY WORKS ON SQL DOMAINS!'
-    ),
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# NON_COMMTRACK_LEDGERS = StaticToggle(
+#     'non_commtrack_ledgers',
+#     "Enable ledgers for projects not using Supply.",
+#     TAG_DEPRECATED,
+#     description=(
+#         'Turns on the ledger fixture and ledger transaction question types in '
+#         'the form builder. ONLY WORKS ON SQL DOMAINS!'
+#     ),
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
@@ -1741,13 +1741,13 @@ VALIDATE_APP_TRANSLATIONS = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
-AGGREGATE_UCRS = StaticToggle(
-    'aggregate_ucrs',
-    'Enable experimental aggregate UCR support',
-    TAG_DEPRECATED,  # this might change in the future
-    namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['czue'],
-)
+# AGGREGATE_UCRS = StaticToggle(
+#     'aggregate_ucrs',
+#     'Enable experimental aggregate UCR support',
+#     TAG_DEPRECATED,  # this might change in the future
+#     namespaces=[NAMESPACE_DOMAIN],
+#     notification_emails=['czue'],
+# )
 
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
@@ -1781,12 +1781,12 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
 )
 
 
-RELEASE_BUILDS_PER_PROFILE = StaticToggle(
-    'release_builds_per_profile',
-    'Do not release builds for all app profiles by default. Then manage via Source files view',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# RELEASE_BUILDS_PER_PROFILE = StaticToggle(
+#     'release_builds_per_profile',
+#     'Do not release builds for all app profiles by default. Then manage via Source files view',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
@@ -1825,12 +1825,12 @@ COPY_CASES = StaticToggle(
 #     [NAMESPACE_DOMAIN]
 # )
 
-ENABLE_UCR_MIRRORS = StaticToggle(
-    'enable_ucr_mirrors',
-    'Enable the mirrored engines for UCRs in this domain',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
+# ENABLE_UCR_MIRRORS = StaticToggle(
+#     'enable_ucr_mirrors',
+#     'Enable the mirrored engines for UCRs in this domain',
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN]
+# )
 
 LOCATION_COLUMNS_APP_STATUS_REPORT = FrozenPrivilegeToggle(
     privilege_slug=privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
@@ -2350,12 +2350,12 @@ SUPERSET_ANALYTICS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
-    'two_stage_user_provisioning_by_sms',
-    'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
+#     'two_stage_user_provisioning_by_sms',
+#     'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 # SMS_USE_LATEST_DEV_APP = FeatureRelease(
 #     'sms_use_latest_dev_app',
@@ -2379,7 +2379,7 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
 DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER = StaticToggle(
     'disable_form_attachment_download_in_browser',
     'Restrict users from downloading audio/video form attachments in browser',
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -2729,13 +2729,13 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     description='The project logo replaces the CommCare logo.',
 )
 
-VELLUM_CASE_MICRO_IMAGE = StaticToggle(
-    slug='case_micro_image',
-    label='Add case micro images to case list',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Add a micro image to cases in the case list.'
-)
+# VELLUM_CASE_MICRO_IMAGE = StaticToggle(
+#     slug='case_micro_image',
+#     label='Add case micro images to case list',
+#     tag=TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Add a micro image to cases in the case list.'
+# )
 
 SUPPORT_GEO_JSON_EXPORT = FrozenPrivilegeToggle(
     privileges.GEOJSON_EXPORT,
@@ -2763,13 +2763,14 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
 )
 
 
-SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
-    slug='support_road_network_disbursement_algorithm',
-    label='Add Road Network disbursement algorithm on geospatial settings page',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
-)
+# DEPRECATED: Road Network Algorithm feature removed (Feb 2026)
+# SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+#     slug='support_road_network_disbursement_algorithm',
+#     label='Add Road Network disbursement algorithm on geospatial settings page',
+#     tag=TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+# )
 
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'ush_restore_file_location_case_sync_restriction',
