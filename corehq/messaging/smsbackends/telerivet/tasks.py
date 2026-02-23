@@ -34,7 +34,7 @@ def process_incoming_message(*args, **kwargs):
         fields = {a: kwargs[a] for (a, b) in TELERIVET_INBOUND_FIELD_MAP}
         log = IncomingRequest(**fields)
         log.save()
-    except Exception as e:
+    except Exception:
         notify_exception(None, "Could not save Telerivet log entry")
         pass
 
