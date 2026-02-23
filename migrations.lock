@@ -455,7 +455,6 @@ domain
  0017_appmanagerdomainsettings
  0018_enable_all_add_ons
  0019_remove_usercase_enabled_field
- 0020_delete_transferdomainrequest
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -935,7 +934,6 @@ repeaters
  0019_connectformrepeater
  0020_repeater_extra_backoff_codes
  0021_alter_repeatrecord_state_and_more
- 0022_delete_cowin_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -991,6 +989,7 @@ scheduling
  0027_emailcontent_html_message
  0028_alertschedule_use_user_case_for_filter_and_more
  0029_connectmessagecontent_connectmessagesurveycontent_and_more
+ 0030_remove_fcm_notification
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -1387,6 +1386,7 @@ users
  0085_usercredential
  0086_backfill_usercases
  0087_alter_sqluserdata_managers
+ 0088_remove_fcm_notification
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
