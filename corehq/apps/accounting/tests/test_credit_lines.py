@@ -35,15 +35,12 @@ class TestCreditLines(BaseInvoiceTestCase):
         self.user_rate = self.subscription.plan_version.feature_rates.filter(
             feature__feature_type=FeatureType.USER)[:1].get()
 
-        num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
-        num_excess = num_active - self.user_rate.monthly_limit
+        self.num_active_users = random.randint(
+            self.user_rate.monthly_limit + 1,
+            self.user_rate.monthly_limit + 2,
+        )
+        num_excess = self.num_active_users - self.user_rate.monthly_limit
         self.monthly_user_fee = num_excess * self.user_rate.per_excess_fee
-
-    def tearDown(self):
-        for user in self.domain.all_users():
-            user.delete(self.domain.name, deleted_by=None)
-        super().tearDown()
 
     def test_product_line_item_credits(self):
         """
@@ -117,14 +114,13 @@ class TestCreditLines(BaseInvoiceTestCase):
         self._test_credit_use(rate_credit_by_account)
         self._test_credit_use(rate_credit_by_subscription)
 
-    def _generate_users_fee_to_credit_against(self):
-        user_rate = self.subscription.plan_version.feature_rates.filter(
-            feature__feature_type=FeatureType.USER)[:1].get()
-        num_active = random.randint(user_rate.monthly_limit + 1, user_rate.monthly_limit + 2)
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
-        num_excess = num_active - user_rate.monthly_limit
-        per_month_fee = num_excess * user_rate.per_excess_fee
-        return user_rate, per_month_fee
+    def _create_user_history(self, invoice_date):
+        record_date = invoice_date - relativedelta(days=1)
+        DomainUserHistory.objects.create(
+            domain=self.domain.name,
+            num_users=self.num_active_users,
+            record_date=record_date,
+        )
 
     def _test_line_item_crediting(self, get_line_item_from_invoice):
         """
@@ -132,7 +128,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         for month_num in range(2, 5):
             invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, month_num)
-            tasks.calculate_users_in_all_domains(invoice_date)
+            self._create_user_history(invoice_date)
             tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 
@@ -233,7 +229,7 @@ class TestCreditLines(BaseInvoiceTestCase):
     def _test_final_invoice_balance(self):
         for month_num in range(2, 5):
             invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start, month_num)
-            tasks.calculate_users_in_all_domains(invoice_date)
+            self._create_user_history(invoice_date)
             tasks.generate_invoices_based_on_date(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 
