@@ -1,4 +1,4 @@
-When creating PRs, always create them as drafts and always use the GitHub PR template.
+When creating PRs, always create them as drafts with the "DON'T REVIEW YET" label and always use the GitHub PR template.
 
 When adding template descriptions, avoid verbally restating the code diff. Focus on useful context for the reviewer.
 
