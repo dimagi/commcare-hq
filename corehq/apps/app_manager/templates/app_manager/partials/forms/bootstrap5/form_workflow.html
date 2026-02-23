@@ -1,6 +1,6 @@
 {% load i18n %}
-<div class="form-group">  {# todo B5: css-form-group #}
-  <label class="form-label col-md-2">
+<div class="row mb-3">
+  <label class="col-form-label col-md-2">
     {% trans "End of Form Navigation" %}
     <span class="hq-help-template"
           data-title="{% trans "End of Form Navigation" %}"
@@ -9,7 +9,7 @@
     ></span>
   </label>
   <div id="form-workflow" class="col-md-4 commcare-feature" data-since-version="2.10">
-    <div class="form-group" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">  {# todo B5: css-form-group, css-has-error #}
+    <div class="row mb-3" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">  {# todo B5: css-has-error #}
       <select name="post_form_workflow" class="form-select" data-bind="
                 optstr: workflowOptions(),
                 value: workflow,
@@ -33,7 +33,7 @@
 
       <!-- Container for Form Link UI. Will be populated with existing form links and where new
           form links will be added -->
-      <div class="form-links" data-bind="
+      <div class="form-links mb-3" data-bind="
                 template: {
                     name: 'form-link-template',
                     foreach: formLinks,
@@ -41,7 +41,7 @@
                 }
                 ">
       </div>
-      <div class="form-group">  {# todo B5: css-form-group #}
+      <div class="mb-3">
         <strong>
           {% trans "Navigation Fallback" %}
         </strong>
@@ -54,7 +54,7 @@
                     "></select>
         </div>
       </div>
-      <div class="form-group">  {# todo B5: css-form-group #}
+      <div class="mb-3">
         <button class="btn btn-outline-primary" data-bind="click: onAddFormLink">
           <i class="fa fa-plus"></i>
           {% trans "Add link" %}
