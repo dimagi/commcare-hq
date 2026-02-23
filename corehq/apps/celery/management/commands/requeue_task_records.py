@@ -142,7 +142,7 @@ class Command(BaseCommand):
                 )
                 failed += 1
 
-            return succeeded, failed
+        return succeeded, failed
 
     def _parse_datetime(self, value, flag):
         if value is None:
