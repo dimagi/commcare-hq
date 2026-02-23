@@ -1,6 +1,7 @@
 import kombu.utils.json as kombu_json
 from celery import current_app
 from django.core.management.base import BaseCommand, CommandError
+from django.utils.dateparse import parse_datetime
 
 from corehq.apps.celery.models import TaskRecord
 
@@ -14,6 +15,7 @@ class Command(BaseCommand):
         # Dry run (no changes made)
         $ python manage.py requeue_task_records --all
         $ python manage.py requeue_task_records --task-name myapp.tasks.my_task
+        $ python manage.py requeue_task_records --start 2025-01-01T00:00:00
 
         # Actually requeue
         $ python manage.py requeue_task_records --all --commit
@@ -22,6 +24,7 @@ class Command(BaseCommand):
     help = (
         "Requeue TaskRecord objects into the Celery broker. "
         "Use --task-name to filter which records to requeue, "
+        "--start and --end to specify a date created time window, "
         "or --all to requeue every record. Runs as a dry run by default."
     )
 
@@ -40,6 +43,20 @@ class Command(BaseCommand):
             ),
         )
         parser.add_argument(
+            '--start',
+            help=(
+                "Only requeue records created at or after this datetime "
+                "(ISO 8601)"
+            ),
+        )
+        parser.add_argument(
+            '--end',
+            help=(
+                "Only requeue records created before or at this datetime "
+                "(ISO 8601)"
+            ),
+        )
+        parser.add_argument(
             '--commit',
             action='store_true',
             help=(
@@ -48,13 +65,22 @@ class Command(BaseCommand):
             ),
         )
 
-    def handle(self, requeue_all, task_name, commit, **options):
-        if not any([requeue_all, task_name]):
-            raise CommandError("Specify --all or --task-name.")
+    def handle(self, requeue_all, task_name, start, end, commit, **options):
+        if not any([requeue_all, task_name, start, end]):
+            raise CommandError(
+                "Specify --all, --start, --end, or --task-name."
+            )
+
+        start_dt = self._parse_datetime(start, '--start')
+        end_dt = self._parse_datetime(end, '--end')
 
         records = TaskRecord.objects.all()
         if task_name:
             records = records.filter(name=task_name)
+        if start_dt:
+            records = records.filter(date_created__gte=start_dt)
+        if end_dt:
+            records = records.filter(date_created__lte=end_dt)
 
         records = list(records)
         if not records:
@@ -115,3 +141,13 @@ class Command(BaseCommand):
                 failed += 1
 
             return succeeded, failed
+
+    def _parse_datetime(self, value, flag):
+        if value is None:
+            return None
+        dt = parse_datetime(value)
+        if dt is None:
+            raise CommandError(
+                f"{flag}: invalid datetime '{value}'. Use ISO 8601 format."
+            )
+        return dt
