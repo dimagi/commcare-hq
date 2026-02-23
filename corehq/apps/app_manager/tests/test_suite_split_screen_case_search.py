@@ -81,14 +81,14 @@ class DynamicSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertEqual(True, self.module.is_auto_select())
         self.assertEqual("false", suite.xpath("./remote-request[1]/session/query/@dynamic_search")[0])
 
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_search_on_clear(self):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual("true", suite.xpath("./remote-request[1]/session/query/@search_on_clear")[0])
 
     @patch('corehq.apps.app_manager.models.ModuleBase.is_auto_select', return_value=True)
-    @flag_enabled('SPLIT_SCREEN_CASE_SEARCH')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_search_on_clear_disable_with_auto_select(self, mock):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
