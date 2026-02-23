@@ -1,0 +1,117 @@
+import kombu.utils.json as kombu_json
+from celery import current_app
+from django.core.management.base import BaseCommand, CommandError
+
+from corehq.apps.celery.models import TaskRecord
+
+
+class Command(BaseCommand):
+    """
+    Requeue TaskRecord objects into the Celery broker.
+
+    Examples::
+
+        # Dry run (no changes made)
+        $ python manage.py requeue_task_records --all
+        $ python manage.py requeue_task_records --task-name myapp.tasks.my_task
+
+        # Actually requeue
+        $ python manage.py requeue_task_records --all --commit
+    """
+
+    help = (
+        "Requeue TaskRecord objects into the Celery broker. "
+        "Use --task-name to filter which records to requeue, "
+        "or --all to requeue every record. Runs as a dry run by default."
+    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            dest='requeue_all',
+            help="Requeue all TaskRecord objects",
+        )
+        parser.add_argument(
+            '--task-name',
+            help=(
+                "Only requeue records matching this task name "
+                "(e.g. myapp.tasks.my_task)"
+            ),
+        )
+        parser.add_argument(
+            '--commit',
+            action='store_true',
+            help=(
+                "Actually requeue the tasks. "
+                "Without this flag the command runs as a dry run."
+            ),
+        )
+
+    def handle(self, requeue_all, task_name, commit, **options):
+        if not any([requeue_all, task_name]):
+            raise CommandError("Specify --all or --task-name.")
+
+        records = TaskRecord.objects.all()
+        if task_name:
+            records = records.filter(name=task_name)
+
+        records = list(records)
+        if not records:
+            self.stdout.write("No matching TaskRecord objects found.")
+            return
+
+        self.stdout.write(f"Found {len(records)} TaskRecord(s) to requeue:")
+        for record in records:
+            self.stdout.write(f"  {record}")
+
+        if not commit:
+            self.stdout.write(
+                self.style.WARNING(
+                    "\nDry run. Pass --commit to actually requeue."
+                )
+            )
+            return
+
+        succeeded, failed = self._requeue(records)
+
+        self.stdout.write(f"\nDone. {succeeded} requeued, {failed} failed.")
+
+    def _requeue(self, records):
+        succeeded = 0
+        failed = 0
+        for record in records:
+            try:
+                task = current_app.tasks[record.name]
+            except KeyError:
+                self.stderr.write(
+                    self.style.ERROR(
+                        f"Task '{record.name}' is not registered. "
+                        f"Skipping {record.task_id}."
+                    )
+                )
+                failed += 1
+                continue
+
+            args = kombu_json.loads(record.args)
+            kwargs = kombu_json.loads(record.kwargs)
+            try:
+                task.apply_async(
+                    args=args, kwargs=kwargs, task_id=str(record.task_id)
+                )
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"Requeued {record.task_id} ({record.name})"
+                    )
+                )
+                succeeded += 1
+            except Exception as e:
+                self.stderr.write(
+                    self.style.ERROR(
+                        f"Failed to requeue {record.task_id} ({record.name}): "
+                        f"{e}"
+                    )
+                )
+                failed += 1
+
+            return succeeded, failed
