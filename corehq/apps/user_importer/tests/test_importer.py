@@ -2067,8 +2067,10 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         )
         self.assertEqual(self.user_invite.primary_location, self.loc1)
         self.assertListEqual(
-            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            [self.loc1._id, self.loc2._id]
+            list(self.user_invite.assigned_locations
+                 .order_by('location_id')
+                 .values_list('location_id', flat=True)),
+            sorted([self.loc1._id, self.loc2._id])
         )
         invitation_history = self.user_invite.invitationhistory_set.last()
         self.assertEqual(
@@ -2090,8 +2092,10 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         )
         self.assertEqual(self.user_invite.primary_location, self.loc2)
         self.assertListEqual(
-            list(self.user_invite.assigned_locations.values_list('location_id', flat=True)),
-            [self.loc2._id]
+            list(self.user_invite.assigned_locations
+                 .order_by('location_id')
+                 .values_list('location_id', flat=True)),
+            sorted([self.loc2._id])
         )
         invitation_history = self.user_invite.invitationhistory_set.last()
         self.assertEqual(
