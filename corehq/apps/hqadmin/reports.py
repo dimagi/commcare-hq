@@ -241,11 +241,17 @@ class UserAuditReport(AdminReport, DatespanMixin):
         return query[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
 
     def _is_invalid_time_range(self):
-        """Check if start date equals end date and end time is before start time."""
+        """Check if start date equals end date and end time is before start time.
+
+        Midnight (00:00) as end time is a special value meaning "include
+        the full day", so it is always valid.
+        """
         if (
             self.datespan.startdate and self.datespan.enddate
             and self.datespan.startdate == self.datespan.enddate
         ):
+            if self.end_time == time(0, 0):
+                return False
             return self.end_time < self.start_time
         return False
 
