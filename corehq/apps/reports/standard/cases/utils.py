@@ -241,7 +241,8 @@ def add_case_owners_and_location_access(
         case_owners = get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slugs)
         case_owner_filters.append(case_es.owner(case_owners))
 
-    query = query.OR(*case_owner_filters)
+    if case_owner_filters:
+        query = query.OR(*case_owner_filters)
 
     if not can_access_all_locations:
         query = query_location_restricted_cases(query, domain, couch_user)
