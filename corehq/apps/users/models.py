@@ -911,8 +911,6 @@ class DeviceIdLastUsed(DocumentSchema):
     last_used = DateTimeProperty()
     commcare_version = StringProperty()
     app_meta = SchemaListProperty(DeviceAppMeta)
-    fcm_token = StringProperty()
-    fcm_token_timestamp = DateTimeProperty()
 
     def update_meta(self, commcare_version=None, app_meta=None):
         if commcare_version:
@@ -2433,8 +2431,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
-
-    fcm_device_token = StringProperty()
     # this property is used to mark users who signed up from internal invitations
     # such as those going through the recruiting pipeline
     # to better mark them in our analytics
@@ -3008,7 +3004,6 @@ class UserReportingMetadataStaging(models.Model):
     commcare_version = models.TextField(null=True)
     build_profile_id = models.TextField(null=True)
     last_heartbeat = models.DateTimeField(null=True)
-    fcm_token = models.TextField(null=True)
 
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
