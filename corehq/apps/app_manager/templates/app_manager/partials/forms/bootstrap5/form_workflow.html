@@ -120,12 +120,10 @@
             </div>
             <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
               <div class="form-group">  {# todo B5: css-form-group #}
-                <div class="card panel-appmanager">  {# todo B5: css-panel #}
-                  <div class="card-header">
-                    <h4 class="card-title card-title-nolink">
-                      <span data-bind="text: name"></span>
-                      <span class="badge text-bg-primary" data-bind="text: caseType"></span>
-                    </h4>
+                <div class="card">
+                  <div class="card-header h5">
+                    <span data-bind="text: name"></span>
+                    <span class="badge text-bg-primary" data-bind="text: caseType"></span>
                   </div>
                   <div class="card-body">
                     <div class="controls">
