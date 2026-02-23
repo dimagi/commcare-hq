@@ -18,7 +18,7 @@ gh_exit=0
 if [[ -n "$PR" ]]; then
     FAILED=$(gh pr checks "$PR" --repo "$REPO" | awk -F'\t' '$2 == "fail"') || gh_exit=$?
 else
-    FAILED=$(gh pr checks --repo "$REPO" | awk -F'\t' '$2 == "fail"') || gh_exit=$?
+    FAILED=$(gh pr checks | awk -F'\t' '$2 == "fail"') || gh_exit=$?
 fi
 
 # Non-zero exit + no tab-separated output = real gh error (already printed to stderr)
