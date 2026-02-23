@@ -82,14 +82,16 @@ class Command(BaseCommand):
         if end_dt:
             records = records.filter(date_created__lte=end_dt)
 
-        records = list(records)
+        records = list(records.order_by('date_created'))
         if not records:
             self.stdout.write("No matching TaskRecord objects found.")
             return
 
         self.stdout.write(f"Found {len(records)} TaskRecord(s) to requeue:")
         for record in records:
-            self.stdout.write(f"  {record}")
+            self.stdout.write(f"  {record.name}")
+            self.stdout.write(f"    id:      {record.task_id}")
+            self.stdout.write(f"    created: {record.date_created}")
 
         if not commit:
             self.stdout.write(
