@@ -1,7 +1,7 @@
 from looseversion import LooseVersion
 from getpass import getpass
 from importlib import import_module
-from pkg_resources import DistributionNotFound, get_distribution
+from importlib.metadata import PackageNotFoundError, distribution
 
 from django.conf import settings
 from django.core.cache import caches
@@ -111,7 +111,7 @@ VALIDATED_STEP_DATA_PATH = ["validated_step_data", "auth", "password"]
 
 def get_two_factor_version():
     try:
-        dist = get_distribution("django-two-factor-auth")
-    except DistributionNotFound:
+        dist = distribution("django-two-factor-auth")
+    except PackageNotFoundError:
         return None
     return dist.version
