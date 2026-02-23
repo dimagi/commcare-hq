@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from nose.tools import assert_equal, assert_raises
 
-from corehq.apps.es import case_search_adapter, user_adapter
+from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.models import GeoPolygon
 from corehq.apps.geospatial.reports import (
@@ -58,7 +58,7 @@ def test_validate_geometry_schema():
 
 
 @flag_enabled('MICROPLANNING')
-@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter], setup_class=True)
 class TestCaseGroupingReport(BaseReportTest):
 
     @classmethod
