@@ -52,21 +52,24 @@ ko.bindingHandlers.xpathValidator = (function () {
                 value = $(element).val();
             }
             var input = $(element).get(0);
-            var xpathText, allowCaseHashtags, errorHtml;
+            var xpathText, allowCaseHashtags, errorHtml, isInvalid;
             if (_.has(value, 'text')) {
                 xpathText = value.text;
                 allowCaseHashtags = !!value.allowCaseHashtags;
                 errorHtml = value.errorHtml;
+                isInvalid = value.isInvalid;
             } else {
                 xpathText = value;
                 allowCaseHashtags = false;
                 errorHtml = '';
+                isInvalid = null;
             }
 
             ko.renderTemplate('XPathValidator.template', {
                 xpathValidator: XPathValidator(xpathText, allowCaseHashtags),
                 input: input,
                 errorHtml: errorHtml,
+                isInvalid: isInvalid,
             }, {}, element, 'replaceNode');
         },
     };
