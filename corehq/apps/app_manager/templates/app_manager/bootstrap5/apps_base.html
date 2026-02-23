@@ -76,7 +76,8 @@
       <div class="js-xpath-input-target control-group" data-bind="css: {error: xpathValidator.error}">
         <textarea class="form-control vertical-resize" spellcheck="false"
                   data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
-                          value: xpathValidator.xpathText"></textarea>
+                          value: xpathValidator.xpathText,
+                          css: {'is-invalid': xpathValidator.error() || (typeof isInvalid === 'function' && isInvalid())}"></textarea>
         <!--ko if: xpathValidator.error()-->
         <div class="alert alert-danger" data-bind="html: errorHtml"></div>
         <!--/ko-->
