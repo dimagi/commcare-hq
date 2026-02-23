@@ -58,5 +58,5 @@ class SimpleStartTime(BaseTimeFilter):
 class SimpleEndTime(BaseTimeFilter):
     slug = 'end_time'
     label = gettext_lazy("End Time")
-    default_time = "23:59"
-    help_inline = gettext_lazy("Optional. Leave blank to use default (end of day).")
+    default_time = "00:00"
+    help_inline = gettext_lazy("Optional. Leave blank to include the full day.")

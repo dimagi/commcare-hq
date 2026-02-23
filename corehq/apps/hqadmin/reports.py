@@ -150,9 +150,13 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def end_time(self):
-        """Get end time from request, defaulting to 23:59."""
-        time_str = self.request.GET.get('end_time', '23:59')
-        return self._parse_time(time_str, default=time(23, 59))
+        """Get end time from request, defaulting to 00:00 (midnight).
+
+        Midnight signals to get_date_range_where that the full day
+        should be included.
+        """
+        time_str = self.request.GET.get('end_time', '00:00')
+        return self._parse_time(time_str, default=time(0, 0))
 
     def _parse_time(self, time_str, default):
         """Parse a time string in HH:MM format, returning default if invalid."""
