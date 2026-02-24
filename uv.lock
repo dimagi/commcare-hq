@@ -3331,11 +3331,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/0d/03/637acd83955328062
 
 [[package]]
 name = "turn-python"
-version = "0.0.1"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ac/6e/c88e97cc70e2cbc8f094040a03542edd4851969e0d3533fb0abcb6b1257f/turn-python-0.0.1.tar.gz", hash = "sha256:52dfe35e456ecfe8f75780b067ca7fe31118298aa8960555ea84cd5ac9c2dba1", size = 3173, upload-time = "2020-04-29T14:33:21.151Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/b3/e0d3b3f5d692f7faaa3bde4467e2adb5a0eb9a9d6af9d5efeea8991039be/turn_python-1.0.0.tar.gz", hash = "sha256:4c925ec295b7ef1f48340747ee8f4eaebb5da7b6e9268a034491641f5eec3f7b", size = 5960, upload-time = "2025-06-11T07:15:02.78Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ce/db/47076c498fbe2f2f1c87c71bb7000fda078004ad919c953ef9bccf0fe473/turn_python-0.0.1-py3-none-any.whl", hash = "sha256:990eba93b381cdeef8dd207e6359281dc95cf985b04f872f01d83e850cb8e816", size = 3647, upload-time = "2020-04-29T14:33:19.021Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/e2/0aaa50ccf60b7d30738b473309665bfac611089c6f58873e499179a0aec9/turn_python-1.0.0-py3-none-any.whl", hash = "sha256:9556523b6711deb8d8aa0bc5964a935056b5b2659cd1a0a0fc90f13b94607a25", size = 5391, upload-time = "2025-06-11T07:15:01.639Z" },
 ]
 
 [[package]]
