@@ -56,8 +56,8 @@ uv sync
 # Run tests with database reuse for faster execution
 pytest --reusedb=1 path/to/test.py
 
-# If tests fail due to schema changes, reset the test DB:
-pytest --reusedb=reset path/to/test.py
+# If tests fail due to schema changes, migrate the test DB:
+pytest --reusedb=migrate path/to/test.py
 ```
 
 Use `pytest-unmagic` for explicit test fixtures (see `CODE_STANDARDS.md`).
