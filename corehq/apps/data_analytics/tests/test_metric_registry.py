@@ -1,6 +1,8 @@
 import json
+from datetime import datetime
 from unittest.mock import MagicMock
 
+from django.db.models import BooleanField, DateTimeField, IntegerField
 from django.test import SimpleTestCase
 
 from corehq.apps.domain.calculations import all_domain_stats
@@ -8,6 +10,7 @@ from corehq.apps.domain.tests.test_domain_calculated_properties import (
     BaseCalculatedPropertiesTest,
 )
 
+from ..feature_calcs import FEATURE_METRICS
 from ..metric_registry import (
     DomainContext,
     MetricDef,
@@ -16,7 +19,7 @@ from ..metric_registry import (
     get_metrics_by_schedule,
     get_metrics_registry,
 )
-from ..models import DOMAIN_METRICS_TO_PROPERTIES_MAP
+from ..models import DOMAIN_METRICS_TO_PROPERTIES_MAP, DomainMetrics
 
 
 class TestMetricDef(SimpleTestCase):
@@ -162,6 +165,65 @@ class TestCollectMetricsForDomain(SimpleTestCase):
             domain_obj, [bad_metric, good_metric], existing_metrics=None
         )
         assert updates == {'count': 5}
+
+
+class TestDomainAPIExposesFeatureMetrics(SimpleTestCase):
+    """Verify that FEATURE_METRICS are reachable through the Domain API.
+
+    The Domain API exposes calculated properties by calling
+    DomainMetrics.to_calculated_properties(), which uses
+    DOMAIN_METRICS_TO_PROPERTIES_MAP to produce cp_-prefixed keys.
+    """
+
+    def test_feature_metrics_in_domain_metrics_to_properties_map(self):
+        """Every FEATURE_METRICS entry must be in DOMAIN_METRICS_TO_PROPERTIES_MAP."""
+        for metric in FEATURE_METRICS:
+            self.assertIn(
+                metric.field_name,
+                DOMAIN_METRICS_TO_PROPERTIES_MAP,
+                msg=f'{metric.field_name!r} missing from DOMAIN_METRICS_TO_PROPERTIES_MAP',
+            )
+            self.assertEqual(
+                DOMAIN_METRICS_TO_PROPERTIES_MAP[metric.field_name],
+                metric.cp_name,
+                msg=f'{metric.field_name!r}: expected {metric.cp_name!r}',
+            )
+
+    def test_feature_metrics_returned_by_to_calculated_properties(self):
+        """to_calculated_properties() must include all FEATURE_METRICS cp_names.
+
+        This method is exactly what DomainMetadataResource calls to populate
+        the 'calculated_properties' field of the Domain API response.
+        """
+        # Build an in-memory DomainMetrics with all required fields set to
+        # sensible defaults (mirrors the helper in test_tasks.py).
+        kwargs = {}
+        for field in DomainMetrics._meta.get_fields():
+            if isinstance(field, BooleanField) and not field.null:
+                kwargs[field.name] = False
+            elif isinstance(field, DateTimeField) and not field.null:
+                kwargs[field.name] = datetime(2024, 1, 1)
+            elif isinstance(field, IntegerField) and not field.null:
+                kwargs[field.name] = 0
+        # Set feature metrics to known values
+        for metric in FEATURE_METRICS:
+            kwargs[metric.field_name] = True if metric.is_boolean else 1
+
+        metrics = DomainMetrics(domain='test-domain', **kwargs)
+        result = metrics.to_calculated_properties()
+
+        for metric in FEATURE_METRICS:
+            self.assertIn(
+                metric.cp_name,
+                result,
+                msg=f'{metric.cp_name!r} missing from to_calculated_properties()',
+            )
+            expected = True if metric.is_boolean else 1
+            self.assertEqual(
+                result[metric.cp_name],
+                expected,
+                msg=f'{metric.cp_name!r}: expected {expected!r}, got {result[metric.cp_name]!r}',
+            )
 
 
 class TestRegistryCoversMap(SimpleTestCase):
