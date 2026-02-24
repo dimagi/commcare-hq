@@ -61,8 +61,8 @@ ptop*.json
 /coverage-js
 
 # Celery
-celery.db
-celerybeat-schedule*
+/celery.db
+/celerybeat-schedule*
 
 # Sphinx
 docs/_build
