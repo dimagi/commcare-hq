@@ -346,6 +346,8 @@ if [ "$CMD" == "test" ]; then
     # Cache the test database for future runs if we didn't restore from cache
     if [ "$RESTORED_DB" = "false" ] && [ ! -f "$DB_DUMP" ]; then
         echo "Dumping test database for cache..."
+        # Reclaim artifacts/ ownership — the container changes it to cchq:cchq
+        sudo chown -R "$(id -u):$(id -g)" artifacts 2>/dev/null || true
         docker compose up -d postgres
         if docker compose exec -T postgres pg_dump -U commcarehq -Fc test_commcarehq > "$DB_DUMP"; then
             echo "Test database dump created ($(wc -c < "$DB_DUMP") bytes)."
