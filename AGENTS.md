@@ -110,3 +110,11 @@ scripts/pr-failures.sh <pr_number>
 - **CouchDB is legacy** — prefer PostgreSQL/SQL for new data models
 - **Knockout.js is legacy** — prefer HTMX or Alpine.js for new frontend code
 - **Bootstrap 3 is legacy** — prefer Bootstrap 5; both coexist in the codebase
+
+## Version Control
+
+- When changes are ready to be committed, the changes should be broken into
+  logical steps to make reviewing easier. Each step should be staged with a
+  suggested commit message that summarizes the step.
+- The AI Assistant should leave it to the developer to commit the staged
+  changes, and to sign the commit if applicable.
