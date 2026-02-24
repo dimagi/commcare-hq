@@ -55,14 +55,13 @@
       {% trans "Close Condition" %}
     </div>
     <div class="card-body">
-      <label>
-        <input
-          type="checkbox"  {# todo B5: css-checkbox #}
-          data-bind="checked: close_case,
-                          disable: !hasPrivilege"
-        />
-        {% trans "Close this case when the form is complete" %}
-      </label>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="close_case" data-bind="checked: close_case,
+        disable: !hasPrivilege">
+        <label class="form-check-label" for="close_case">
+          {% trans "Close this case when the form is complete" %}
+        </label>
+      </div>
       {% if add_ons.conditional_form_actions %}
       <div
         data-bind="template: {
