@@ -40,6 +40,13 @@ jobs:
       with:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Cache test database
+      if: matrix.TEST == 'python'
+      id: db-cache
+      uses: actions/cache@v4
+      with:
+        path: artifacts/test_db.dump
+        key: test-db-v1-${{ hashFiles('**/migrations/**/*.py') }}
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}

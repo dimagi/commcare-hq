@@ -317,7 +317,39 @@ if [ "$CMD" == "test" ]; then
     # Some version information is encoded in docker image names
     docker images
 
+    # Restore cached test database if available (saves ~200s of schema setup)
+    DB_DUMP=artifacts/test_db.dump
+    RESTORED_DB=false
+    mkdir -p artifacts
+    if [ -f "$DB_DUMP" ]; then
+        echo "Restoring test database from cache..."
+        docker compose up -d postgres
+        for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U commcarehq > /dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        if docker compose exec -T postgres createdb -U commcarehq test_commcarehq 2>/dev/null \
+            && docker compose exec -T postgres pg_restore -U commcarehq -d test_commcarehq --no-owner < "$DB_DUMP"; then
+            echo "Test database restored successfully."
+            RESTORED_DB=true
+        else
+            echo "WARNING: Failed to restore test database, falling back to normal setup."
+            rm -f "$DB_DUMP"
+        fi
+    fi
+
     docker compose run --rm web run_tests "${TEST:-python}" "$@"
+    TEST_EXIT=$?
+
+    # Cache the test database for future runs if we didn't restore from cache
+    if [ "$RESTORED_DB" = "false" ] && [ ! -f "$DB_DUMP" ]; then
+        echo "Dumping test database for cache..."
+        docker compose exec -T postgres pg_dump -U commcarehq -Fc test_commcarehq > "$DB_DUMP" 2>/dev/null || rm -f "$DB_DUMP"
+    fi
+
+    exit $TEST_EXIT
 elif [ "$CMD" == "shell" ]; then
     docker compose run --rm web ./manage.py $CMD "$@"
 elif [ "$CMD" == "bootstrap" ]; then
