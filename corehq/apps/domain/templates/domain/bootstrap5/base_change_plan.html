@@ -5,26 +5,27 @@
 
 {% block stylesheets %}{{ block.super }}
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'accounting/less/pricing.less' %}" />
+          href="{% static 'accounting/scss/pricing.scss' %}" />
   {% endcompress %}
-{% endblock %}
+{% endblock stylesheets %}
 
 {% block page_content %}
   {% block plan_breadcrumbs %}
-  <ol class="breadcrumb">  {# todo B5: css-breadcrumb #}
-    {% for step in steps %}
-      <li>
-        <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>
-      </li>
-    {% endfor %}
-  </ol>
-  {% endblock %}
+    <nav arial-label="breadcrumb">
+      <ol class="breadcrumb text-bg-light px-3 py-2">
+        {% for step in steps %}
+          <li class="breadcrumb-item">
+            <a href="{{ step.url }}" class="breadcrumb-{{ forloop.counter }}">{{ step.title }}</a>
+          </li>
+        {% endfor %}
+      </ol>
+    </nav>
+  {% endblock plan_breadcrumbs %}
   <div class="select-plan-header">
     <h2>{{ step_title }}</h2>
   </div>
-  {% block form_content %}
-  {% endblock %}
-{% endblock %}
+  {% block form_content %}{% endblock form_content %}
+{% endblock page_content %}

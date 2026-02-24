@@ -1,0 +1,33 @@
+--- 
++++ 
+@@ -3,8 +3,8 @@
+ 
+ <div data-bind="with: filter">
+ 
+-  <div class="form-group">
+-    <button class="btn btn-default"
++  <div class="form-group">  {# todo B5: css-form-group #}
++    <button class="btn btn-outline-primary"
+             data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+       <i class="fa fa-plus"></i>
+       {% trans "Add filter" %}
+@@ -13,8 +13,8 @@
+ 
+   <div data-bind="visible: showing">
+     <form class="form-horizontal">
+-      <div class="form-group">
+-        <label class="control-label {% css_label_class %}">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label {% css_label_class %}">
+           {% trans "Filter" %}
+           <span class="hq-help-template"
+                 data-title="{% trans "Filter" %}"
+@@ -37,7 +37,7 @@
+                               data-bind="value: filterText"
+                     ></textarea>
+           <br>
+-          <button class="btn btn-danger" data-bind="click: function(data){showing(false);}">
++          <button class="btn btn-outline-danger" data-bind="click: function(data){showing(false);}">
+             <i class="fa fa-remove"></i>
+             {% trans "Remove filter" %}
+           </button>

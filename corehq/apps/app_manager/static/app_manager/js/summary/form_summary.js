@@ -6,7 +6,7 @@ import models from "app_manager/js/summary/models";
 import formModels from "app_manager/js/summary/form_models";
 import utils from "app_manager/js/summary/utils";
 import "app_manager/js/menu";  // enable lang switcher and "Updates to publish" banner
-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // popover
+import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // popover
 import "hqwebapp/js/components/search_box";
 
 $(function () {

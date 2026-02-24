@@ -1,48 +1,57 @@
 from datetime import datetime
 from unittest.mock import patch
 
-import pytest
 from django.test import TestCase
+
+import pytest
 from faker import Faker
 from testil import assert_raises
 
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.tests.util import LocationHierarchyTestCase, restrict_user_by_location
-from corehq.apps.reports.models import TableauUser, TableauServer
+from corehq.apps.locations.tests.util import (
+    LocationHierarchyTestCase,
+    restrict_user_by_location,
+)
+from corehq.apps.reports.models import TableauServer, TableauUser
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import SiteCodeToLocationCache
 from corehq.apps.user_importer.validation import (
+    BooleanColumnValidator,
+    CustomDataValidator,
     DuplicateValidator,
     EmailValidator,
     ExistingUserValidator,
     GroupValidator,
-    UsernameLengthValidator,
+    LocationValidator,
     NewUserPasswordValidator,
     ProfileValidator,
-    RoleValidator,
-    UsernameTypeValidator,
     RequiredFieldsValidator,
-    UsernameValidator,
-    BooleanColumnValidator,
-    ConfirmationSmsValidator,
-    LocationValidator,
-    _get_invitation_or_editable_user,
-    CustomDataValidator,
-    TableauRoleValidator,
+    RoleValidator,
     TableauGroupsValidator,
+    TableauRoleValidator,
     UserAccessValidator,
+    UsernameLengthValidator,
+    UsernameTypeValidator,
+    UsernameValidator,
+    _get_invitation_or_editable_user,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
+from corehq.apps.users.models import (
+    CommCareUser,
+    HqPermissions,
+    Invitation,
+    WebUser,
+)
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field)
 from corehq.apps.users.views.mobile.custom_data_fields import (
+    CommcareUserFieldsView,
     UserFieldsView,
     WebUserFieldsView,
-    CommcareUserFieldsView,
 )
 from corehq.tests.tools import nottest
 from corehq.util.test_utils import flag_enabled
@@ -232,87 +241,6 @@ def test_existing_users():
         validator(user_specs[1])
 
 
-def test_validating_sms_confirmation_entry():
-    validator = ConfirmationSmsValidator("domain")
-    # No entry for confirmation sms
-    user_spec = {'username': 'hello'}
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result is None
-
-    # Confirmation sms set to False
-    user_spec = {ConfirmationSmsValidator.confirmation_sms_header: 'False'}
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result is None
-
-    # Confirmation sms set to True, existing user, active
-    user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True',
-        'user_id': 1,
-        ConfirmationSmsValidator.active_status_header: 'True'
-    }
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for an "\
-        "existing user, is_active must be empty or set to False."
-
-    # Confirmation sms set to True, existing user, account confirmed
-    user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True',
-        'user_id': 1,
-        ConfirmationSmsValidator.account_confirmed_header: 'True'
-    }
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for an "\
-        "existing user, is_account_confirmed must be empty."
-
-    # Confirmation sms set to True, existing user, account confirmed, active
-    user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True',
-        'user_id': 1,
-        ConfirmationSmsValidator.account_confirmed_header: 'True',
-        ConfirmationSmsValidator.active_status_header: 'True'
-    }
-    validation_result = validator.validate_spec(user_spec)
-    expect = "When 'send_confirmation_sms' is True for an existing user, " \
-        "is_active must be empty or set to False and is_account_confirmed must be empty."
-    assert validation_result == expect
-
-    # Confirmation sms set to True, existing user, account not confirmed, not active
-    user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True',
-        'user_id': 1,
-        ConfirmationSmsValidator.active_status_header: 'False'
-    }
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result is None
-
-    # Confirmation sms set to True, new user, account not confirmed, not active
-    user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True',
-        ConfirmationSmsValidator.active_status_header: 'False'
-    }
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result is None
-
-    # Confirmation sms set to True, new user, active
-    user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True',
-        ConfirmationSmsValidator.active_status_header: 'True'
-    }
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for a new user, "\
-        "is_active must be either empty or set to False."
-
-    # Confirmation sms set to True, new user, active, account confirmed
-    user_spec = {
-        ConfirmationSmsValidator.confirmation_sms_header: 'True',
-        ConfirmationSmsValidator.active_status_header: 'True',
-        ConfirmationSmsValidator.account_confirmed_header: 'True'
-    }
-    validation_result = validator.validate_spec(user_spec)
-    assert validation_result == "When 'send_confirmation_sms' is True for a new user, "\
-        "is_active and is_account_confirmed must be either empty or set to False."
-
-
 class TestLocationValidator(LocationHierarchyTestCase):
 
     domain = 'test-domain'
@@ -442,7 +370,6 @@ class TestLocationValidator(LocationHierarchyTestCase):
         delete_all_users()
 
 
-@flag_enabled('RESTRICT_USER_PROFILE_ASSIGNMENT')
 class TestProfileValidator(TestCase):
     domain = 'test-domain'
 

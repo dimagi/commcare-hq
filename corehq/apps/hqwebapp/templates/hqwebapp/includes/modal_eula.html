@@ -1,0 +1,53 @@
+{% load i18n %}
+<div class="modal fade" id="eulaModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{% trans "CommCare HQ Terms" %}</h4>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% blocktrans %}
+            We want to let you know that we've updated our
+            <a href="https://www.dimagi.com/terms/latest/tos/" target="_blank"
+              >Terms of Service</a
+            >. Beginning December 10, 2025, all new subscriptions will follow
+            the updated renewal process outlined in the revised Terms of
+            Service. By continuing to use our service after this date, you agree
+            to the updated Terms of Service. For more information, please refer
+            to the <i>Billing and Renewal</i> section.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            This update is part of our ongoing efforts to streamline operations
+            and ensure a smoother experience for our customers. Existing
+            subscriptions will continue under the current terms until renewal.
+            Any subscriptions initiated or renewed on or after December 10th
+            will automatically align with the updated Terms of Service.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            Click on the 'I Agree' button to let us know that you agree to our
+            new Terms. If you do not agree to our new Terms, you may choose to
+            stop using our services. If you have any questions or need
+            clarification, please don't hesitate to contact
+            <a href="mailto:{{ ACCOUNTS_EMAIL }}">{{ ACCOUNTS_EMAIL }}</a>.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            Thank you for being a part of the CommCare community.
+          {% endblocktrans %}
+        </p>
+        <p>- {% trans "The Dimagi Team" %}</p>
+      </div>
+      <div class="modal-footer">
+        <button id="eula-agree" type="submit" class="btn btn-primary">
+          {% trans 'I Agree' %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

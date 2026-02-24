@@ -10,14 +10,13 @@ from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.exceptions import RejectedStaleExport
 from corehq.apps.export.utils import get_export, get_default_export_settings_if_available
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.signals import get_task_time_to_start
-from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from corehq.util.quickcache import quickcache

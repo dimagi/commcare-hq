@@ -1,4 +1,40 @@
 {
+  "analytics": {
+    "in_progress": true
+  },
+  "app_manager": {
+    "in_progress": true,
+    "templates": [
+      "app_exchange.html",
+      "app_view_release_manager.html",
+      "app_view_settings.html",
+      "base_summary.html",
+      "case_summary.html",
+      "form_summary.html",
+      "form_summary_base.html",
+      "form_summary_diff.html",
+      "languages.html",
+      "partials/bulk_upload_app_translations.html",
+      "partials/form_summary_header.html",
+      "partials/releases/app_release_logs.html",
+      "partials/releases/build_profiles.html",
+      "partials/releases/releases.html",
+      "partials/releases/releases_deploy_modal.html",
+      "partials/releases/releases_deploy_modal_sms.html",
+      "partials/releases/releases_table.html",
+      "partials/settings/add_ons.html",
+      "partials/settings/app_settings.html",
+      "partials/settings/commcare_settings.html",
+      "partials/settings/multimedia_ajax.html"
+    ],
+    "javascript": [
+      "js/app_exchange.js",
+      "js/app_view.js",
+      "js/summary/case_summary.js",
+      "js/summary/form_diff.js",
+      "js/summary/form_summary.js"
+    ]
+  },
   "builds": {
     "is_complete": true,
     "templates": [
@@ -57,7 +93,6 @@
   "domain": {
     "in_progress": true,
     "templates": [
-      "activate_transfer_domain.html",
       "admin/case_search.html",
       "admin/commtrack_settings.html",
       "admin/edit_alert.html",
@@ -75,10 +110,13 @@
       "admin/recovery_measures_history.html",
       "admin/sms_rates.html",
       "admin/sms_settings.html",
-      "admin/transfer_domain.html",
-      "admin/transfer_domain_pending.html",
+      "confirm_billing_info.html",
       "internal_calculations.html",
-      "internal_settings.html"
+      "internal_settings.html",
+      "update_billing_contact_info.html"
+    ],
+    "javascript": [
+      "js/update_billing_contact_info.js"
     ]
   },
   "dropbox": {
@@ -88,6 +126,9 @@
     "is_complete": true
   },
   "enterprise": {
+    "is_complete": true
+  },
+  "events": {
     "is_complete": true
   },
   "export": {
@@ -102,13 +143,17 @@
   "hqcase": {
     "is_complete": true
   },
+  "hqmedia": {
+    "in_progress": true
+  },
   "hqwebapp": {
     "in_progress": true,
     "templates": [
-      "maintenance_alerts.html",
       "close_window.html",
       "crispy/field/multifield.html",
-      "includes/create_item_form.html"
+      "includes/create_item_form.html",
+      "includes/modal_eula.html",
+      "maintenance_alerts.html"
     ]
   },
   "integration": {
@@ -152,6 +197,26 @@
   "programs": {
     "is_complete": true
   },
+  "registration": {
+    "in_progress": true,
+    "templates": [
+      "base.html",
+      "confirmation_error.html",
+      "confirmation_resend.html",
+      "confirmation_sent.html",
+      "confirmation_waiting.html",
+      "domain_request.html",
+      "email/base_templates/_base.html",
+      "email/base_templates/_base_container_project_logo.html",
+      "email/password_reset_email_hq.html",
+      "register_new_user.html"
+    ],
+    "javascript": [
+      "js/password_reset_confirm.js",
+      "js/password_reset_form.js",
+      "js/register_new_user.js"
+    ]
+  },
   "registry": {
     "is_complete": true
   },
@@ -177,10 +242,41 @@
     ],
     "is_complete": true
   },
+  "sso": {
+    "in_progress": true,
+    "templates": [
+      "accounting_admin/edit_identity_provider.html",
+      "accounting_admin/new_identity_provider.html",
+      "enterprise_admin/edit_identity_provider.html",
+      "enterprise_admin/manage_sso.html",
+      "partials/admin_danger_zone.html",
+      "partials/manage_authenticated_email_domains.html",
+      "partials/manage_sso_exempt_users.html",
+      "partials/manage_sso_test_users.html",
+      "permissions/untrusted_identity_provider_for_domain.html"
+    ],
+    "javascript": [
+      "js/enterprise_edit_identity_provider.js"
+    ]
+  },
+  "translations": {
+    "in_progress": true
+  },
   "user_importer": {
     "is_complete": true
   },
   "userreports": {
     "in_progress": true
+  },
+  "users": {
+    "in_progress": true,
+    "templates": [
+      "partials/edit_role_modal.html",
+      "partials/linked_roles_modal.html",
+      "roles_and_permissions.html"
+    ],
+    "javascript": [
+      "js/roles_and_permissions.js"
+    ]
   }
 }

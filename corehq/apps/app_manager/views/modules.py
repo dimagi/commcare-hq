@@ -82,7 +82,7 @@ from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
 from corehq.apps.app_manager.util import (
     generate_xmlns,
-    is_usercase_in_use,
+    domain_has_usercase_access,
     is_valid_case_type,
     module_case_hierarchy_has_circular_reference,
     module_offers_search,
@@ -117,7 +117,7 @@ from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
-    get_all_case_types_for_domain,
+    get_non_system_case_types_for_domain,
     get_case_types_for_domain_es
 )
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
@@ -135,11 +135,11 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(user, module):
     if isinstance(module, AdvancedModule):
-        return "app_manager/module_view_advanced.html"
+        return "app_manager/bootstrap3/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return "app_manager/module_view_report.html"
+        return "app_manager/bootstrap3/module_view_report.html"
     else:
-        return "app_manager/module_view.html"
+        return "app_manager/bootstrap3/module_view.html"
 
 
 def get_module_view_context(request, app, module, lang=None):
@@ -563,7 +563,7 @@ def _get_module_details_context(request, app, module, case_property_builder, mes
     }
     try:
         case_properties = case_property_builder.get_properties(module.case_type)
-        if is_usercase_in_use(app.domain) and module.case_type != USERCASE_TYPE:
+        if domain_has_usercase_access(app.domain) and module.case_type != USERCASE_TYPE:
             usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
             case_properties |= usercase_properties
     except CaseError as e:
@@ -650,7 +650,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "excl_form_ids": None,
         "form_session_endpoints": None,
         "display_style": None,
-        "custom_icon_form": None,
+        "custom_icon_type": None,
         "custom_icon_text_body": None,
         "custom_icon_xpath": None,
         "use_default_image_for_all": None,
@@ -687,15 +687,13 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
-    if should_edit("custom_icon_form"):
+    if should_edit("custom_icon_type"):
         handle_custom_icon_edits(request, module, lang)
     if should_edit("no_items_text"):
         module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            raise AppMisconfigurationError('"{}" is a reserved case type'.format(USERCASE_TYPE))
-        elif case_type and not is_valid_case_type(case_type, module):
+        if case_type and not is_valid_case_type(case_type):
             raise AppMisconfigurationError("case type is improperly formatted")
         else:
             old_case_type = module["case_type"]
@@ -1226,25 +1224,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.custom_variables_dict = custom_variables_dict['long']
 
     if sort_elements is not None:
-        # Attempt to map new elements to old so we don't lose translations
-        # Imperfect because the same field may be used multiple times, or user may change field
-        old_elements_by_field = {e['field']: e for e in detail.short.sort_elements}
-
-        detail.short.sort_elements = []
-        for sort_element in sort_elements:
-            item = SortElement()
-            item.field = sort_element['field']
-            item.type = sort_element['type']
-            item.direction = sort_element['direction']
-            item.blanks = sort_element['blanks']
-            if item.field in old_elements_by_field:
-                item.display = old_elements_by_field[item.field].display
-            item.display[lang] = sort_element['display']
-            if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
-                item.sort_calculation = sort_element['sort_calculation']
-            else:
-                item.sort_calculation = ""
-            detail.short.sort_elements.append(item)
+        error_response = _update_sort_elements(domain, lang, detail, sort_elements)
+        if error_response:
+            return error_response
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
         if module_case_hierarchy_has_circular_reference(module):
@@ -1257,6 +1239,41 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     resp = {}
     app.save(resp)
     return JsonResponse(resp)
+
+
+def _update_sort_elements(domain, lang, detail, sort_elements):
+    # Attempt to map new elements to old so we don't lose translations
+    # Imperfect because the same field may be used multiple times, or user may change field
+    old_elements_by_field = {}
+    old_elements_by_calculation = {}
+    for sort_element in detail.short.sort_elements:
+        if sort_element.sort_calculation:
+            old_elements_by_calculation[sort_element.sort_calculation] = sort_element
+        elif sort_element.field:
+            old_elements_by_field[sort_element.field] = sort_element
+    detail.short.sort_elements = []
+    for sort_element in sort_elements:
+        item = _init_new_sort_element(sort_element)
+        if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
+            item.sort_calculation = sort_element['sort_calculation']
+            is_valid, error_message = item.valid()
+            if not is_valid:
+                return HttpResponseBadRequest(error_message)
+        if item.sort_calculation and item.sort_calculation in old_elements_by_calculation:
+            item.display = old_elements_by_calculation[item.sort_calculation].display
+        elif item.field and item.field in old_elements_by_field:
+            item.display = old_elements_by_field[item.field].display
+        item.display[lang] = sort_element['display']
+        detail.short.sort_elements.append(item)
+
+
+def _init_new_sort_element(sort_element):
+    item = SortElement()
+    item.field = sort_element['field']
+    item.type = sort_element['type']
+    item.direction = sort_element['direction']
+    item.blanks = sort_element['blanks']
+    return item
 
 
 def _gather_and_update_search_properties(params, app, module, lang):
@@ -1495,7 +1512,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string("app_manager/partials/build_errors.html", {
+    response_html = render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
@@ -1728,7 +1745,7 @@ class AllCaseTypesView(LoginAndDomainMixin, View):
     urlname = 'all_case_types'
 
     def get(self, request, domain):
-        existing_case_types = list(get_all_case_types_for_domain(domain))
+        existing_case_types = list(get_non_system_case_types_for_domain(domain))
         existing_case_types.sort(key=str.lower)  # Sort case-insensitively
         return JsonResponse({
             'existing_case_types': existing_case_types,

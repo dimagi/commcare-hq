@@ -3,7 +3,6 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
-from django.utils.translation import gettext as _
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
@@ -28,27 +27,6 @@ def base_template(request):
         'secure_cookies': settings.SECURE_COOKIES,
         'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,
         'MINIMUM_PASSWORD_LENGTH': settings.MINIMUM_PASSWORD_LENGTH,
-    }
-
-
-def chat_widget_config(request):
-    """Global chat widget configuration with translated strings"""
-    return {
-        'chat_widget_config': {
-            'button_text': _("Need Help?"),
-            'welcome_message': _(
-                "Hi there! I'm CommCare Companion, your personal guide to CommCare! "
-                "What can I help you with today?"
-            ),
-            'starter_questions': [
-                _("I need help with building my CommCare application."),
-                _("I need help troubleshooting my mobile application."),
-                _("I need help with exporting or understanding my data.")
-            ],
-            'typing_indicator_text': _("Finding the best answer"),
-            'new_chat_confirmation_message': _("Starting a new chat will clear your current conversation. "
-                                               "Continue?"),
-        }
     }
 
 
@@ -189,6 +167,13 @@ def enterprise_mode(request):
     }
 
 
+def ai_chat_widget(request):
+    return {
+        'CHATBOT_ID': settings.AI_CHATBOT_ID,
+        'CHATBOT_TOKEN': settings.AI_CHATBOT_TOKEN,
+    }
+
+
 def commcare_hq_names(request=None):
     return {
         'commcare_hq_names': {
@@ -201,8 +186,9 @@ def commcare_hq_names(request=None):
 def server_location_display(request):
     context = {}
     current_env = settings.SERVER_ENVIRONMENT
-    if current_env in ServerLocation.ENVS:
-        server = ServerLocation.ENVS.get(current_env)
+    envs = ServerLocation.get_envs()
+    if current_env in envs:
+        server = envs.get(current_env)
         context = {
             'server_display': {
                 'country_code': server['country_code'],

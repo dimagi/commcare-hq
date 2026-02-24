@@ -566,16 +566,16 @@ for these packages.
 
 ```sh
 $ npm --version
-10.2.4
+11.6.2
 $ node --version
-v20.11.1
+v24.11.1
 ```
 
 On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
-easiest way to get onto the current nodejs v16 is
+easiest way to get onto the current nodejs v24 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 

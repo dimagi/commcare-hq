@@ -10,7 +10,6 @@ from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
@@ -438,16 +437,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if not dj_user.is_active:
             raise BadRequest(_("This user is inactive and cannot reset their password."))
 
-        send_password_reset_email(
-            [dj_user],
-            domain_override=None,
-            subject_template_name='registration/password_reset_subject.txt',
-            email_template_name='registration/password_reset_email.html',
-            use_https=request.is_secure(),
-            token_generator=default_token_generator,
-            request=request,
-        )
-
+        send_password_reset_email([dj_user])
         self.log_throttled_access(request)
         return self.create_response(request, {}, response_class=http.HttpAccepted)
 
@@ -665,12 +655,15 @@ class GroupResource(v0_4.GroupResource):
         always_return_data = True
 
     def serialize(self, request, data, format, options=None):
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) and not self._is_list(request, data):
             if 'error_message' in data.data:
                 data = {'error_message': data.data['error_message']}
             elif request.method == 'POST':
                 data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
+
+    def _is_list(self, request, data):
+        return request.method == 'PATCH' and isinstance(data, list)
 
     def patch_list(self, request=None, **kwargs):
         return super().patch_list_replica(self.obj_create, request, **kwargs)

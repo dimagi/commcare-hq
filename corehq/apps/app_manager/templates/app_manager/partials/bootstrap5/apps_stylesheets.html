@@ -1,0 +1,17 @@
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% compress css %}
+  <link type="text/scss"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/scss/font-workflow.scss' %}" />
+  <link type="text/scss"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/scss/app_manager.scss' %}" />
+  <link type="text/scss"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/scss/preview_app.scss' %}"/>
+{% endcompress %}

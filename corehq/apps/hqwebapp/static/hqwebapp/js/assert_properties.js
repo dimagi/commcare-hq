@@ -1,29 +1,29 @@
-define("hqwebapp/js/assert_properties", ['underscore'], function (_) {
-    var assertRequired = function (object, required) {
-        var all = _.keys(object),
-            missing = _.difference(required, all);
+import _ from "underscore";
 
-        if (missing.length) {
-            throw new Error("Required properties missing: " + missing.join(", "));
-        }
+var assertRequired = function (object, required) {
+    var all = _.keys(object),
+        missing = _.difference(required, all);
 
-        return true;
-    };
+    if (missing.length) {
+        throw new Error("Required properties missing: " + missing.join(", "));
+    }
 
-    var assert = function (object, required, optional) {
-        assertRequired(object, required);
+    return true;
+};
 
-        var all = _.keys(object),
-            excess = _.difference(all, required, optional);
-        if (excess.length) {
-            throw new Error("Unexpected properties encountered: " + excess.join(", "));
-        }
+var assert = function (object, required, optional) {
+    assertRequired(object, required);
 
-        return true;
-    };
+    var all = _.keys(object),
+        excess = _.difference(all, required, optional);
+    if (excess.length) {
+        throw new Error("Unexpected properties encountered: " + excess.join(", "));
+    }
 
-    return {
-        assert: assert,
-        assertRequired: assertRequired,
-    };
-});
+    return true;
+};
+
+export default {
+    assert: assert,
+    assertRequired: assertRequired,
+};

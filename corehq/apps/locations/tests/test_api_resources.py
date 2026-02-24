@@ -237,6 +237,20 @@ class LocationV0_6Test(APIResourceTest):
             key_value_pair in created_location_json['metadata'].items()
             for key_value_pair in post_data_location_data.items()))
 
+    def test_minimal_post(self):
+        post_data = {
+            "location_type_code": "state",
+            "name": "Gratis",
+        }
+        response = self._assert_auth_post_resource(self.list_endpoint, post_data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+        created_location = SQLLocation.objects.get(name="Gratis")
+        created_location_json = created_location.to_json()
+        self.assertTrue(all(
+            key_value_pair in created_location_json.items()
+            for key_value_pair in post_data.items()))
+
     def test_successful_put1(self):
         put_data = {
             "name": "New Denver",

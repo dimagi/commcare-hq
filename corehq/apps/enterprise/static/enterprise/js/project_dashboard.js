@@ -5,7 +5,7 @@ import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import noopMetrics from "analytix/js/noopMetrics";
-import tempusDominus from "hqwebapp/js/tempus_dominus";
+import hqTempusDominus from "hqwebapp/js/tempus_dominus";
 import moment from "moment";
 import "hqwebapp/js/bootstrap5/hq.helpers";
 import "hqwebapp/js/components/select_toggle";
@@ -111,8 +111,8 @@ var DateRangeModal = function ($modal, datePicker, presetOptions, maxDateRangeDa
 
     const updateWidgetDates = function (startDate, endDate) {
         datePicker.dates.clear();
-        datePicker.dates.setValue(new tempusDominus.tempusDominus.DateTime(startDate));
-        datePicker.dates.setValue(new tempusDominus.tempusDominus.DateTime(endDate), 1);
+        datePicker.dates.setValue(new hqTempusDominus.DateTime(startDate));
+        datePicker.dates.setValue(new hqTempusDominus.DateTime(endDate), 1);
         self.customStartDate(startDate);
         self.customEndDate(endDate);
     };
@@ -176,8 +176,8 @@ var DateRangeModal = function ($modal, datePicker, presetOptions, maxDateRangeDa
             const selectedDate = moment(datePicker.dates.picked[0]);
             datePicker.updateOptions({
                 restrictions: {
-                    minDate: new tempusDominus.tempusDominus.DateTime(selectedDate.clone().subtract(maxDateRangeDays, 'days')),
-                    maxDate: new tempusDominus.tempusDominus.DateTime(selectedDate.clone().add(maxDateRangeDays, 'days')),
+                    minDate: new hqTempusDominus.DateTime(selectedDate.clone().subtract(maxDateRangeDays, 'days')),
+                    maxDate: new hqTempusDominus.DateTime(selectedDate.clone().add(maxDateRangeDays, 'days')),
                 },
             });
         } else {
@@ -241,7 +241,7 @@ function updateDisplayTotal($element, kwargs) {
 
 $(function () {
     const metricType = initialPageData.get('metric_type');
-    const datePicker = tempusDominus.createDefaultDateRangePicker(
+    const datePicker = hqTempusDominus.createDefaultDateRangePicker(
         document.getElementById("id_date_range"),
         moment().subtract(30, "days"),
         moment(),

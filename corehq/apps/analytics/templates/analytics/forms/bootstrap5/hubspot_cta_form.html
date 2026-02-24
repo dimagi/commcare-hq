@@ -8,106 +8,86 @@
         <p data-bind="text: errorMessage"></p>
       </div>
     <!-- /ko -->
-    <div class="row">
+    <div class="row mb-3">
       <div class="col-md-6">
-        <div class="form-group">  {# todo B5: css-form-group #}
-          <label class="form-label">
-            {% trans "First name" %}<span class="asteriskField">*</span>
-          </label>
-          <div class="controls">
-            <input
-              class="form-control"
-              type="text"
-              name="firstname"
-              data-bind="textInput: firstname"
-            />
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="form-group">  {# todo B5: css-form-group #}
-          <label class="form-label">
-            {% trans "Last name" %}<span class="asteriskField">*</span>
-          </label>
-          <div class="controls">
-            <input
-              class="form-control"
-              type="text"
-              name="lastname"
-              data-bind="textInput: lastname"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="form-group">  {# todo B5: css-form-group #}
-      <label class="form-label">
-        {% trans "Professional email" %}<span class="asteriskField">*</span>
-      </label>
-      <div class="controls">
+        <label class="form-label">
+          {% trans "First name" %}<span class="asteriskField">*</span>
+        </label>
         <input
-          type="email"
-          name="email"
-          data-bind="textInput: email"
           class="form-control"
+          type="text"
+          name="firstname"
+          data-bind="textInput: firstname"
+        />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">
+          {% trans "Last name" %}<span class="asteriskField">*</span>
+        </label>
+        <input
+          class="form-control"
+          type="text"
+          name="lastname"
+          data-bind="textInput: lastname"
         />
       </div>
     </div>
-    <div class="row">
+    <div class="mb-3">
+      <label class="form-label">
+        {% trans "Professional email" %}<span class="asteriskField">*</span>
+      </label>
+      <input
+        type="email"
+        name="email"
+        data-bind="textInput: email"
+        class="form-control"
+      />
+    </div>
+    <div class="row mb-3">
       <div class="col-md-6">
-        <div class="form-group">  {# todo B5: css-form-group #}
-          <label class="form-label">
-            {% trans "Organization" %}<span class="asteriskField">*</span>
-          </label>
-          <div class="controls">
-            <input
-              class="form-control"
-              type="text"
-              name="company"
-              data-bind="textInput: company"
-            />
-          </div>
-        </div>
+        <label class="form-label">
+          {% trans "Organization" %}<span class="asteriskField">*</span>
+        </label>
+        <input
+          class="form-control"
+          type="text"
+          name="company"
+          data-bind="textInput: company"
+        />
       </div>
       <div class="col-md-6">
-        <div class="form-group">  {# todo B5: css-form-group #}
-          <label class="form-label">
-            {% trans "Job title" %}<span class="asteriskField">*</span>
-          </label>
-          <div class="controls">
-            <input
-              class="form-control"
-              type="text"
-              name="jobtitle"
-              data-bind="textInput: jobtitle"
-            />
-          </div>
-        </div>
+        <label class="form-label">
+          {% trans "Job title" %}<span class="asteriskField">*</span>
+        </label>
+        <input
+          class="form-control"
+          type="text"
+          name="jobtitle"
+          data-bind="textInput: jobtitle"
+        />
       </div>
     </div>
-    <div class="form-group">  {# todo B5: css-form-group #}
+    <div class="mb-3">
       <label class="form-label">
         {% trans "Preferred language" %}<span class="asteriskField">*</span>
       </label>
-      <div class="controls">
-        <select  {# todo B5: css-select-form-control #}
-          class="form-control"
-          name="language"
-          data-bind="value: language"
-        >
-          <option value="">{% trans "Please Select" %}</option>
-          <option value="English">{% trans "English" %}</option>
-          <option value="French">{% trans "French" %}</option>
-          <option value="Spanish">{% trans "Spanish" %}</option>
-        </select>
-      </div>
+      <select
+        class="form-select"
+        name="language"
+        data-bind="value: language"
+      >
+        <option value="">{% trans "Please Select" %}</option>
+        <option value="English">{% trans "English" %}</option>
+        <option value="French">{% trans "French" %}</option>
+        <option value="Spanish">{% trans "Spanish" %}</option>
+      </select>
     </div>
-    <div class="form-group">  {# todo B5: css-form-group #}
+    <div class="mb-3">
       <label class="form-label">
         {% trans "How did you hear about us?" %}
       </label>
-      <select  {# todo B5: css-select-form-control #}
-        class="form-control"
+      <select
+        class="form-select"
         name="discoverySource"
         data-bind="value: discoverySource"
       >
@@ -121,21 +101,22 @@
         <option value="Other">{% trans "Other" %}</option>
       </select>
     </div>
-    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">  {# todo B5: css-form-group #}
+    <div
+      class="mb-3"
+      data-bind="visible: discoverySource() === 'Other'"
+    >
       <label class="form-label">
         {% trans "We'd love to hear more! Please specify -" %}
       </label>
-      <div class="controls">
-        <input
-          class="form-control"
-          type="text"
-          name="otherSource"
-          data-bind="textInput: otherSource"
-        />
-      </div>
+      <input
+        class="form-control"
+        type="text"
+        name="otherSource"
+        data-bind="textInput: otherSource"
+      />
     </div>
     {% blocktrans %}
-      By clicking this button, you agree to Dimagi's
+      By clicking Submit Request, you agree to Dimagi's
       <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank">Terms of Service</a> and
       <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">Privacy Policy</a>.
     {% endblocktrans %}

@@ -19,10 +19,12 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration, RegistryDataSourceConfiguration,
 )
+from corehq.apps.userreports.pillow import _SHARED_ADAPTER_CACHES
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 
 from ..data_source_providers import MockDataSourceProvider
+from ..pillow import ConfigurableReportPillowProcessor
 
 
 def get_sample_report_config():
@@ -40,12 +42,14 @@ def get_sample_registry_data_source(**kwargs):
 
 
 def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
+    """Configure UCR processors and discard other pillow processors"""
     configs_by_domain = {}
     for config in configs:
         configs_by_domain.setdefault(config.domain, []).append(config)
 
-    for proc in pillow.processors:
-        if hasattr(proc, 'table_manager'):
+    _SHARED_ADAPTER_CACHES.clear()
+    for proc in list(pillow.processors):
+        if isinstance(proc, ConfigurableReportPillowProcessor):
             proc.table_manager.data_source_providers = [
                 MockDataSourceProvider(configs_by_domain)
             ]
@@ -54,6 +58,8 @@ def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
                     for config in configs:
                         proc.table_manager.rebuild_coordinator.reset(config._id)
                 proc.table_manager.get_adapters(domain)  # bootstrap
+        else:
+            pillow.processors.remove(proc)
 
 
 def cleanup_ucr(data_source):

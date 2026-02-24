@@ -12,11 +12,13 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.integration.kyc.models import (
     KycConfig,
+    KycProviderThresholdFields,
     KycProviders,
     UserDataStore,
 )
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.ui.fields import JsonField
+from corehq.motech.models import ConnectionSettings
 
 
 class KycConfigureForm(forms.ModelForm):
@@ -26,8 +28,12 @@ class KycConfigureForm(forms.ModelForm):
         fields = [
             'user_data_store',
             'other_case_type',
+            'stores_full_name',
             'provider',
+            'connection_settings',
             'api_field_to_user_data_map',
+            'phone_number_field',
+            'passing_threshold',
         ]
 
     user_data_store = forms.ChoiceField(
@@ -39,10 +45,23 @@ class KycConfigureForm(forms.ModelForm):
         label=_('Other Case Type'),
         required=False,
     )
+    stores_full_name = forms.BooleanField(
+        label=_('Stores Full Name'),
+        required=False,
+        initial=False,
+        help_text=_(
+            "Check this box if the project stores the beneficiary's full name in a single field "
+            "instead of separate first and last name fields."
+        ),
+    )
     provider = forms.ChoiceField(
         label=_('Provider'),
         required=True,
         choices=KycProviders.choices,
+    )
+    connection_settings = forms.ChoiceField(
+        label=_('Connection Settings'),
+        required=True,
     )
     api_field_to_user_data_map = JsonField(
         label=_('API Field to Recipient Data Map'),
@@ -55,11 +74,29 @@ class KycConfigureForm(forms.ModelForm):
             'https://commcare-hq.readthedocs.io/integrations/kyc.html#api-field-to-recipient-data-map'
         ),
     )
+    phone_number_field = forms.CharField(
+        label=_('Phone Number Field'),
+        required=False,
+        help_text=_('The case property or user data field that contains the phone number. '
+                    'Leave blank if it’s not used for KYC verification.'),
+    )
+    passing_threshold = JsonField(
+        label=_('Passing Threshold'),
+        required=True,
+        expected_type=dict,
+        help_text=format_html_lazy(
+            _('Maps API field for the KYC provider to the minimum score required to pass KYC verification.'
+              ' To learn more about this, please have a look at our '
+              '<a href="{}" target="_blank">support documentation</a>.'),
+            'https://commcare-hq.readthedocs.io/integrations/kyc.html#passing-threshold-for-kyc-verification'
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = kwargs.pop('instance')
 
+        self.fields['connection_settings'].choices = self._get_domain_connection_settings()
         self.fields['other_case_type'].choices = self._get_case_types()
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -77,14 +114,33 @@ class KycConfigureForm(forms.ModelForm):
                     x_show='otherCaseTypeChoice === user_data_store',
                 ),
                 crispy.Div(
-                    'provider',
-                    x_init='provider = $el.value',
+                    crispy.Field(
+                        'provider',
+                        x_model='provider',
+                        x_init='provider = $el.value',
+                    ),
                     x_show='showProvider',
+                ),
+                crispy.Div(
+                    'stores_full_name',
+                    x_show=f"otherCaseTypeChoice === user_data_store && "
+                           f"provider === '{KycProviders.ORANGE_CAMEROON_KYC}'"
+                ),
+                crispy.Div(
+                    'connection_settings',
                 ),
                 crispy.Div(
                     'api_field_to_user_data_map',
                     x_init='api_field_to_user_data_map = $el.value',
                     css_id='api-mapping',
+                ),
+                crispy.Div(
+                    'phone_number_field',
+                ),
+                crispy.Div(
+                    'passing_threshold',
+                    x_init='passing_threshold = $el.value',
+                    css_id='passing-threshold',
                 ),
                 twbscrispy.StrictButton(
                     _('Save'),
@@ -93,6 +149,7 @@ class KycConfigureForm(forms.ModelForm):
                 ),
                 x_data=json.dumps({
                     'user_data_store': self.instance.user_data_store,
+                    'provider': self.instance.provider,
                     'showProvider': len(KycProviders.choices) > 1,
                     'otherCaseTypeChoice': UserDataStore.OTHER_CASE_TYPE,
                 }),
@@ -105,3 +162,35 @@ class KycConfigureForm(forms.ModelForm):
             (case_type, case_type) for case_type in case_types
             if case_type not in (USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE)
         ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        provider = cleaned_data.get('provider')
+        passing_threshold = cleaned_data.get('passing_threshold')
+        stores_full_name = cleaned_data.get('stores_full_name')
+
+        if provider and passing_threshold:
+            try:
+                required_fields = KycProviderThresholdFields.get_required_fields(provider, stores_full_name)
+                missing_fields = [field for field in required_fields if field not in passing_threshold]
+
+                if missing_fields:
+                    self.add_error('passing_threshold', _(
+                        'The following required fields are missing from the passing threshold: {}'
+                    ).format(', '.join(missing_fields)))
+            except ValueError as e:
+                self.add_error('provider', str(e))
+
+        if provider != KycProviders.ORANGE_CAMEROON_KYC:
+            cleaned_data['stores_full_name'] = None
+
+        return cleaned_data
+
+    def _get_domain_connection_settings(self):
+        return ConnectionSettings.objects.filter(
+            domain=self.instance.domain
+        ).values_list('id', 'name')
+
+    def clean_connection_settings(self):
+        connection_settings_id = self.cleaned_data['connection_settings']
+        return ConnectionSettings.objects.get(id=connection_settings_id)

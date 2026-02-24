@@ -4,6 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import QueryDict
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
+from django.template.context import Context
 from django.utils.translation import gettext as _
 
 from django_tables2.rows import BoundRows
@@ -99,7 +100,8 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """
         Can be overridden for customization.
         """
-        table = self.table_class(data=self.get_table_data())
+        table_class = self.get_table_class()
+        table = table_class(data=self.get_table_data(), **self.get_table_kwargs())
         # Elastic Table uses queryset for data which gets evaluated lazily on pagination.
         # As export is not paginated, we need to ensure that all records are fetched.
         if isinstance(table, ElasticTable):
@@ -112,7 +114,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """
         Can be overridden to provide additional context for the export.
         """
-        return {}
+        return Context()
 
     def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()

@@ -54,6 +54,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
+    FormActionsDiffException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -72,6 +73,7 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
+    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -80,10 +82,6 @@ from corehq.apps.app_manager.templatetags.xforms_extras import (
 from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
     USERCASE_XPATH_SUBSTRING_MATCHES,
-    actions_use_usercase,
-    advanced_actions_use_usercase,
-    enable_usercase,
-    is_usercase_in_use,
     module_loads_registry_case,
     module_uses_inline_search,
     save_xform,
@@ -211,8 +209,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         form.extra_actions = actions
     else:
         form.actions = actions
-    if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
-        enable_usercase(domain)
 
     datums_json = json.loads(request.POST.get('arbitrary_datums'))
     datums = [ArbitraryDatum.wrap(item) for item in datums_json]
@@ -231,7 +227,11 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    form.actions = _get_updates(form.actions, request.POST)
+    allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    try:
+        form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
+    except FormActionsDiffException as e:
+        return HttpResponseBadRequest(e.get_user_message())
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -240,9 +240,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         if isinstance(condition.answer, str):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions):
-        if not is_usercase_in_use(domain):
-            enable_usercase(domain)
 
     response_json = {}
     app.save(response_json)
@@ -251,10 +248,10 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
-def _get_updates(existing_actions, data):
+def _get_updates(existing_actions, data, allow_conflicts):
     updates = json.loads(data['actions'])
-    update_diff = json.loads(data['update_diff']) if 'update_diff' in data else {}
-    return existing_actions.with_updates(updates, update_diff)
+    update_diff = FormActionsDiff(json.loads(data['update_diff']) if 'update_diff' in data else {})
+    return existing_actions.with_updates(updates, update_diff, allow_conflicts)
 
 
 @waf_allow('XSS_BODY')
@@ -339,7 +336,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                save_xform(app, form, xform)
+                case_update_diff = _get_case_update_diff(request, form)
+                save_xform(app, form, xform, case_update_diff)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -435,7 +433,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
-    if should_edit("custom_icon_form"):
+    if should_edit("custom_icon_type"):
         handle_custom_icon_edits(request, form, lang)
 
     if should_edit('session_endpoint_id'):
@@ -532,9 +530,10 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
+    case_update_diff = _get_case_update_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'))
+        xml = save_xform(app, form, xml.encode('utf-8'), case_update_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
@@ -552,6 +551,17 @@ def patch_xform(request, domain, app_id, form_unique_id):
 def apply_patch(patch, text):
     dmp = diff_match_patch()
     return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
+
+
+def _get_case_update_diff(request, form):
+    update_diff = None
+    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    if has_vellum_case_mapping and 'mapping_diff' in request.POST:
+        update_diff = FormActionsDiff.from_json(
+            json.loads(request.POST['mapping_diff']),
+            is_registration=form.is_registration_form(),
+        )
+    return update_diff
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
@@ -797,7 +807,6 @@ def get_form_view_context(
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
         'allow_usercase': allow_usercase,
-        'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
         'is_training_module': module.is_training_module,
         'is_allowed_to_be_release_notes_form': form.is_allowed_to_be_release_notes_form,
@@ -816,7 +825,7 @@ def get_form_view_context(
             {'test': assertion.test, 'text': assertion.text.get(current_lang)}
             for assertion in form.custom_assertions
         ],
-        'form_icon': None,
+        'form_custom_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
@@ -827,8 +836,8 @@ def get_form_view_context(
         }
     }
 
-    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
-        context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
+    if domain_has_privilege(domain, privileges.CUSTOM_ICON_BADGES):
+        context['form_custom_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
@@ -874,9 +883,8 @@ def get_form_view_context(
                 'schedule_options': schedule_options,
             })
     else:
-        context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
-        })
+        # TODO: figure out a cleaner method
+        form.actions.make_multi()
         case_config_options.update({
             'actions': form.actions,
             'allowUsercase': allow_usercase,

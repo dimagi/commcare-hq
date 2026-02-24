@@ -154,7 +154,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./entry",
         )
 
-    def test_session_schema(self):
+    @patch('corehq.apps.app_manager.app_schemas.session_schema.domain_has_usercase_access', return_value=False)
+    def test_session_schema(self, _mock):
         # Session schema should not contain case
         self.assertEqual(get_session_schema(self.form), {
             'id': 'commcaresession',

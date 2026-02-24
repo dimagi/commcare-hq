@@ -1,4 +1,4 @@
-{% extends "app_manager/app_view.html" %}
+{% extends "app_manager/bootstrap5/app_view.html" %}
 {% load compress %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -14,7 +14,7 @@
   {% endif %}
 {% endblock %}
 
-{% js_entry_b3 "app_manager/js/app_view" %}
+{% js_entry "app_manager/js/app_view" %}
 
 {% block app_view_tabs %}
   {% initial_page_data 'app_view_options' app_view_options %}

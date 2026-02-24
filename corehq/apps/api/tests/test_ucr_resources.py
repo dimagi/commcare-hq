@@ -413,6 +413,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         ).decode('utf-8')
 
 
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestUCRPaginated(TestCase):
     @classmethod
     def setUpClass(cls):

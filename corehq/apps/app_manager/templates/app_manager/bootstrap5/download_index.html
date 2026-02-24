@@ -1,0 +1,65 @@
+{% extends "app_manager/bootstrap5/source_files.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% js_entry 'app_manager/js/bootstrap5/download_index_main' %}
+
+{% block page_title %}
+  {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
+{% endblock page_title %}
+
+{% block mm_block %}
+  {% initial_page_data 'app_id' app.id %}
+  {% initial_page_data 'build_profiles' build_profiles %}
+  <h2>{% trans 'Multimedia Sizes' %}</h2>
+  {% include 'app_manager/partials/bootstrap5/build_profiles_select.html' %}
+  <div id="multimedia-sizes-container" class="ko-template">
+    {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
+  </div>
+{% endblock %}
+{% block downloads %}
+  <h2>Downloads</h2>
+  <table class="table table-condensed">
+    <tr>
+      <td>
+        <a href="#download_ccz" data-bs-toggle="modal"  class='download-zip'>
+          <i class="fa-regular fa-file-zipper"></i>
+          CommCare.ccz
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="{% url "download_bulk_app_translations" app.domain app.id %}">
+          <i class="fa-regular fa-file-excel"></i>
+          {% trans "Bulk application translations" %}
+        </a>
+      </td>
+    </tr>
+  </table>
+{% endblock downloads %}
+
+{% block file_description %}
+  <a href="{{ file.name }}" target="_blank"><i class="fa-solid fa-up-right-from-square"></i></a>
+{% endblock file_description %}
+
+{% block file_source %}
+  <pre class="prettyprint" data-filename="{{ file.name }}">{{ file.source|force_escape }}</pre>
+{% endblock file_source %}
+
+{% block post_files %}
+  {% if app.copy_of and not files %}
+    <div class="alert alert-info">
+      This build was made before I knew how to save the files for a specific build.
+      To see this view for the current not-yet-built version of this app,
+      <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
+    </div>
+  {% endif %}
+{% endblock post_files %}
+
+{% block modals %}
+  {{ block.super }}
+  {% url "download_ccz" app.domain app.id as ccz_url %}
+  {% include 'app_manager/partials/bootstrap5/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
+{% endblock %}

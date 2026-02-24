@@ -47,6 +47,12 @@ legend {
   }
 }
 
+#next-error {
+  position: fixed;
+  bottom: 0px;
+  z-index: $zindex-next-error;
+}
+
 .sticky-submit {
     position: sticky;
     bottom: 0;

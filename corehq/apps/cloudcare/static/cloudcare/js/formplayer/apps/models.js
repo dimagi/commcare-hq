@@ -1,11 +1,7 @@
-define("cloudcare/js/formplayer/apps/models", [
-    'backbone',
-], function (
-    Backbone,
-) {
-    return Backbone.Model.extend({
-        urlRoot: "appSelects",
-        idAttribute: "_id",
-    });
+import Backbone from "backbone";
+
+export default Backbone.Model.extend({
+    urlRoot: "appSelects",
+    idAttribute: "_id",
 });
 

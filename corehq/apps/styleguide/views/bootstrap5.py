@@ -24,10 +24,12 @@ from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_errors import Error
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout import KnockoutCrispyExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_knockout_validation import \
     KnockoutValidationCrispyExampleForm
+from corehq.apps.styleguide.examples.bootstrap5.datepicker_alpine_crispy import DatepickerAlpineForm
 from corehq.apps.styleguide.examples.bootstrap5.disabled_fields import DisabledFieldsExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.multiselect_form import MultiselectDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.placeholder_help_text import PlaceholderHelpTextExampleForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_ajax_form import Select2AjaxDemoForm
+from corehq.apps.styleguide.examples.bootstrap5.select2_alpine_crispy import Select2AlpineForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_autocomplete_ko_form import Select2AutocompleteKoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_css_class_form import Select2CssClassDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.select2_dynamic_ko_form import Select2DynamicKoForm
@@ -139,8 +141,8 @@ def styleguide_htmx_and_alpine(request):
                 code=get_python_example_context('htmx_alpine_form_demo.py'),
                 language="Python",
             ),
-            'htmx_hq_hx_action': CodeForDisplay(
-                code=get_python_example_context('htmx_hq_hx_action.py'),
+            'htmx_todo_list_view': CodeForDisplay(
+                code=get_python_example_context('htmx_todo_list.py'),
                 language="Python",
             ),
             'htmx_todo_main': CodeForDisplay(
@@ -158,6 +160,26 @@ def styleguide_htmx_and_alpine(request):
             'htmx_todo_item_done': CodeForDisplay(
                 code=get_example_context('styleguide/htmx_todo/item_done.html'),
                 language="Django",
+            ),
+            'htmx_next_action_simple_forms': CodeForDisplay(
+                code=get_python_example_context('htmx_next_action_simple_forms.py'),
+                language="Python",
+            ),
+            'htmx_next_action_simple_view': CodeForDisplay(
+                code=get_python_example_context('htmx_next_action_simple_view.py'),
+                language="Python",
+            ),
+            'htmx_next_action_simple_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_next_action_simple/main.html'),
+                language="Django",
+            ),
+            'htmx_next_action_simple_form_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_next_action_simple/next_step_with_message.html'),
+                language="Django",
+            ),
+            'htmx_debug_mixin_usage': CodeForDisplay(
+                code=get_python_example_context('htmx_debug_mixin_usage.py'),
+                language="Python",
             ),
             'loading_button': CodeForDisplayWithPartial(
                 code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_button.html'),
@@ -177,6 +199,84 @@ def styleguide_htmx_and_alpine(request):
         }
     })
     return render(request, 'styleguide/bootstrap5/htmx_and_alpine.html', context)
+
+
+@use_bootstrap5
+def styleguide_knockout_to_alpine_guide(request):
+    context = get_navigation_context("styleguide_knockout_to_alpine_guide_b5")
+    context.update({
+        'examples': {
+            'ko_simple': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/ko_simple.html'),
+                code_js=get_js_example_context('ko_migration/ko_simple.js'),
+            ),
+            'alpine_simple': get_html_example_context('ko_migration/alpine_simple.html'),
+            'ko_complex': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/ko_complex.html'),
+                code_js=get_js_example_context('ko_migration/ko_complex.js'),
+            ),
+            'alpine_complex': HtmlWithJsDemo(
+                code_html=get_html_example_context('ko_migration/alpine_complex.html'),
+                code_js=get_js_example_context('ko_migration/alpine_complex.js'),
+            ),
+            'alpine_complex_reusable': CodeForDisplay(
+                code=get_js_example_context('ko_migration/alpine_complex_reusable.js'),
+                language='JS',
+            ),
+            'use_alpine_complex_reusable': CodeForDisplay(
+                code=get_js_example_context('ko_migration/use_alpine_complex_reusable.js'),
+                language='JS',
+            ),
+            'htmx_complex_view': CodeForDisplay(
+                code=get_python_example_context('htmx_key_value_view.py'),
+                language="Python",
+            ),
+            'htmx_complex_store': CodeForDisplay(
+                code=get_python_example_context('htmx_complex_store.py'),
+                language="Python",
+            ),
+            'htmx_complex_partial': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_key_values/partial.html'),
+                language='Django',
+            ),
+            'htmx_complex_main': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_key_values/main.html'),
+                language='Django',
+            ),
+            'htmx_complex_error': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_key_values/field_with_error.html'),
+                language='Django',
+            ),
+            'prompt_start': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_start.md'),
+                language='Markdown',
+            ),
+            'prompt_simple': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_simple.md'),
+                language='Markdown',
+            ),
+            'prompt_modules': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_modules.md'),
+                language='Markdown',
+            ),
+            'prompt_htmx_alpine': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_htmx_alpine.md'),
+                language='Markdown',
+            ),
+            'prompt_one_liner': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_one_liner.md'),
+                language='Markdown',
+            ),
+            'prompt_review': CodeForDisplay(
+                code=get_html_example_context('ko_migration/prompt_review.md'),
+                language='Markdown',
+            ),
+        },
+        'complex_initial_value': [
+            {'key': 'color', 'value': 'Purple'},
+        ],
+    })
+    return render(request, 'styleguide/bootstrap5/knockout_to_alpine.html', context)
 
 
 @use_bootstrap5
@@ -232,72 +332,83 @@ def styleguide_molecules_buttons(request):
 @use_bootstrap5
 def styleguide_molecules_selections(request):
     context = get_navigation_context("styleguide_molecules_selections_b5")
-    context.update({
-        'examples': {
-            'toggles': get_example_context('styleguide/bootstrap5/examples/toggles.html'),
-            'toggles_crispy': CrispyFormsDemo(
-                SelectToggleDemoForm(), get_python_example_context('select_toggle_form.py'),
-            ),
-            'select2_manual': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_manual.html'),
-                code_js=get_js_example_context('select2_manual.js'),
-            ),
-            'select2_manual_allow_clear': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_manual_allow_clear.html'),
-                code_js=get_js_example_context('select2_manual_allow_clear.js'),
-            ),
-            'select2_manual_crispy': CrispyFormsWithJsDemo(
-                form=Select2ManualDemoForm(),
-                code_python=get_python_example_context('select2_manual_form.py'),
-                code_js=get_js_example_context('select2_manual_crispy.js'),
-            ),
-            'select2_css_class': get_example_context('styleguide/bootstrap5/examples/select2_css_class.html'),
-            'select2_css_class_multiple': get_example_context(
-                'styleguide/bootstrap5/examples/select2_css_class_multiple.html'),
-            'select2_css_class_crispy': CrispyFormsDemo(
-                Select2CssClassDemoForm(), get_python_example_context('select2_css_class_form.py'),
-            ),
-            'select2_ko_dynamic': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_ko_dynamic.html'),
-                code_js=get_js_example_context('select2_ko_dynamic.js'),
-            ),
-            'select2_ko_dynamic_crispy': CrispyFormsWithJsDemo(
-                form=Select2DynamicKoForm(),
-                code_python=get_python_example_context('select2_dynamic_ko_form.py'),
-                code_js=get_js_example_context('select2_dynamic_ko_crispy.js'),
-            ),
-            'select2_ko_static': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_ko_static.html'),
-                code_js=get_js_example_context('select2_ko_static.js'),
-            ),
-            'select2_ko_static_crispy': CrispyFormsWithJsDemo(
-                form=Select2StaticKoForm(),
-                code_python=get_python_example_context('select2_static_ko_form.py'),
-                code_js=get_js_example_context('select2_static_ko_crispy.js'),
-            ),
-            'select2_ko_autocomplete': HtmlWithJsDemo(
-                code_html=get_html_example_context('select2_ko_autocomplete.html'),
-                code_js=get_js_example_context('select2_ko_autocomplete.js'),
-            ),
-            'select2_ko_autocomplete_crispy': CrispyFormsWithJsDemo(
-                form=Select2AutocompleteKoForm(),
-                code_python=get_python_example_context('select2_autocomplete_ko_form.py'),
-                code_js=get_js_example_context('select2_autocomplete_ko_crispy.js'),
-            ),
-            'multiselect': HtmlWithJsDemo(
-                code_html=get_html_example_context('multiselect.html'),
-                code_js=get_js_example_context('multiselect.js'),
-            ),
-            'multiselect_crispy': CrispyFormsWithJsDemo(
-                form=MultiselectDemoForm(),
-                code_python=get_python_example_context('multiselect_form.py'),
-                code_js=get_js_example_context('multiselect_crispy.js'),
-            ),
-            'select2_ajax_crispy': CrispyFormsDemo(
-                Select2AjaxDemoForm(), get_python_example_context('select2_ajax_form.py'),
-            ),
+    context.update(
+        {
+            'examples': {
+                'toggles': get_example_context('styleguide/bootstrap5/examples/toggles.html'),
+                'toggles_crispy': CrispyFormsDemo(
+                    SelectToggleDemoForm(),
+                    get_python_example_context('select_toggle_form.py'),
+                ),
+                'select2_manual': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_manual.html'),
+                    code_js=get_js_example_context('select2_manual.js'),
+                ),
+                'select2_manual_allow_clear': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_manual_allow_clear.html'),
+                    code_js=get_js_example_context('select2_manual_allow_clear.js'),
+                ),
+                'select2_manual_crispy': CrispyFormsWithJsDemo(
+                    form=Select2ManualDemoForm(),
+                    code_python=get_python_example_context('select2_manual_form.py'),
+                    code_js=get_js_example_context('select2_manual_crispy.js'),
+                ),
+                'select2_css_class': get_html_example_context('select2_css_class.html'),
+                'select2_alpine_basic': get_html_example_context('select2_alpine_basic.html'),
+                'select2_alpine_with_options': get_html_example_context('select2_alpine_with_options.html'),
+                'select2_alpine_select2change': get_html_example_context('select2_alpine_select2change.html'),
+                'select2_css_class_multiple': get_html_example_context('select2_css_class_multiple.html'),
+                'select2_css_class_crispy': CrispyFormsDemo(
+                    Select2CssClassDemoForm(),
+                    get_python_example_context('select2_css_class_form.py'),
+                ),
+                'select2_ko_dynamic': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_ko_dynamic.html'),
+                    code_js=get_js_example_context('select2_ko_dynamic.js'),
+                ),
+                'select2_ko_dynamic_crispy': CrispyFormsWithJsDemo(
+                    form=Select2DynamicKoForm(),
+                    code_python=get_python_example_context('select2_dynamic_ko_form.py'),
+                    code_js=get_js_example_context('select2_dynamic_ko_crispy.js'),
+                ),
+                'select2_ko_static': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_ko_static.html'),
+                    code_js=get_js_example_context('select2_ko_static.js'),
+                ),
+                'select2_ko_static_crispy': CrispyFormsWithJsDemo(
+                    form=Select2StaticKoForm(),
+                    code_python=get_python_example_context('select2_static_ko_form.py'),
+                    code_js=get_js_example_context('select2_static_ko_crispy.js'),
+                ),
+                'select2_ko_autocomplete': HtmlWithJsDemo(
+                    code_html=get_html_example_context('select2_ko_autocomplete.html'),
+                    code_js=get_js_example_context('select2_ko_autocomplete.js'),
+                ),
+                'select2_ko_autocomplete_crispy': CrispyFormsWithJsDemo(
+                    form=Select2AutocompleteKoForm(),
+                    code_python=get_python_example_context('select2_autocomplete_ko_form.py'),
+                    code_js=get_js_example_context('select2_autocomplete_ko_crispy.js'),
+                ),
+                'multiselect': HtmlWithJsDemo(
+                    code_html=get_html_example_context('multiselect.html'),
+                    code_js=get_js_example_context('multiselect.js'),
+                ),
+                'multiselect_crispy': CrispyFormsWithJsDemo(
+                    form=MultiselectDemoForm(),
+                    code_python=get_python_example_context('multiselect_form.py'),
+                    code_js=get_js_example_context('multiselect_crispy.js'),
+                ),
+                'select2_ajax_crispy': CrispyFormsDemo(
+                    Select2AjaxDemoForm(),
+                    get_python_example_context('select2_ajax_form.py'),
+                ),
+                'select2_alpine_crispy': CrispyFormsDemo(
+                    Select2AlpineForm(),
+                    get_python_example_context('select2_alpine_crispy.py'),
+                ),
+            }
         }
-    })
+    )
     return render(request, 'styleguide/bootstrap5/molecules/selections.html', context)
 
 
@@ -462,6 +573,12 @@ def styleguide_molecules_dates_times(request):
             'time_only_24': HtmlWithJsDemo(
                 code_html=get_html_example_context('time_only_24.html'),
                 code_js=get_js_example_context('time_only_24.js'),
+            ),
+            'datepicker_alpine_simple': get_html_example_context('datepicker_alpine_simple.html'),
+            'datepicker_alpine_datetime': get_html_example_context('datepicker_alpine_datetime.html'),
+            'datepicker_alpine_crispy': CrispyFormsDemo(
+                DatepickerAlpineForm(),
+                get_python_example_context('datepicker_alpine_crispy.py'),
             ),
         }
     })

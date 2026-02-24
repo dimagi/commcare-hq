@@ -1,55 +1,47 @@
-define("cloudcare/js/formplayer/layout/views/progress_bar", [
-    'jquery',
-    'underscore',
-    'backbone.marionette',
-    'hqwebapp/js/toggles',
-], function (
-    $,
-    _,
-    Marionette,
-    toggles,
-) {
-    var ProgressView = Marionette.View.extend({
-        template: _.template($("#progress-view-template").html() || ""),
+import $ from "jquery";
+import _ from "underscore";
+import Marionette from "backbone.marionette";
+import toggles from "hqwebapp/js/toggles";
 
-        initialize: function (options) {
-            this.progressMessage = options.progressMessage;
-            this.progressEl = $(this.el);
-        },
+var ProgressView = Marionette.View.extend({
+    template: _.template($("#progress-view-template").html() || ""),
 
-        templateContext: function () {
-            return {
-                progressMessage: this.progressMessage,
-            };
-        },
+    initialize: function (options) {
+        this.progressMessage = options.progressMessage;
+        this.progressEl = $(this.el);
+    },
 
-        hasProgress: function () {
-            return +this.progressEl.find('.js-progress-bar').width() > 0;
-        },
+    templateContext: function () {
+        return {
+            progressMessage: this.progressMessage,
+        };
+    },
 
-        setProgress: function (done, total, duration) {
-            if (done === 0) {
-                this.progressEl.find('.progress').addClass("d-none");
-                this.progressEl.find('.js-loading').removeClass("d-none");
-            } else {
-                this.progressEl.find('.progress').removeClass("d-none");
-                this.progressEl.find('.js-loading').addClass("d-none");
-            }
+    hasProgress: function () {
+        return +this.progressEl.find('.js-progress-bar').width() > 0;
+    },
 
-            var progress = total === 0 ? 0 : done / total;
-            // Due to jQuery bug, can't use .animate() with % until jQuery 3.0
-            this.progressEl.find('.js-progress-bar').css('transition', duration + 'ms');
-            this.progressEl.find('.js-progress-bar').width(progress * 100 + '%');
-            if (total > 0 && !(toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR'))) {
-                this.progressEl.find('.js-subtext small').text(
-                    gettext('Completed: ') + done + '/' + total,
-                );
-            }
-        },
-    });
+    setProgress: function (done, total, duration) {
+        if (done === 0) {
+            this.progressEl.find('.progress').addClass("d-none");
+            this.progressEl.find('.js-loading').removeClass("d-none");
+        } else {
+            this.progressEl.find('.progress').removeClass("d-none");
+            this.progressEl.find('.js-loading').addClass("d-none");
+        }
 
-    return function (options) {
-        return new ProgressView(options);
-    };
+        var progress = total === 0 ? 0 : done / total;
+        // Due to jQuery bug, can't use .animate() with % until jQuery 3.0
+        this.progressEl.find('.js-progress-bar').css('transition', duration + 'ms');
+        this.progressEl.find('.js-progress-bar').width(progress * 100 + '%');
+        if (total > 0 && !(toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR'))) {
+            this.progressEl.find('.js-subtext small').text(
+                gettext('Completed: ') + done + '/' + total,
+            );
+        }
+    },
 });
 
+export default function (options) {
+    return new ProgressView(options);
+}

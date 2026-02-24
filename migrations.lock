@@ -127,6 +127,15 @@ accounting
  0105_alter_billingcontactinfo_city_and_more
  0106_alter_billingcontactinfo_company_name
  0107_two_stage_mobile_worker_creation_priv
+ 0108_subscription_auto_renew_and_more
+ 0109_enable_all_add_ons_priv
+ 0110_alter_customerinvoicecommunicationhistory_communication_type_and_more
+ 0111_rename_is_auto_invoiceable_billingaccount_require_auto_pay
+ 0112_data_dict_types_priv
+ 0113_geojson_export_priv
+ 0114_custom_icon_badges_priv
+ 0115_loc_cols_in_user_last_activity_priv
+ 0116_creditadjustment_payment_type
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -218,6 +227,7 @@ blobs
  0012_rename_indexes
  0013_drop_icds_cas_index
  0014_alter_deletedblobmeta_id
+ 0015_rename_blobmeta_parent_id_type_code_name_blobs_blobm_parent__73d7c2_idx
 campaign
  0001_initial
  0002_dashboardmap_dashboardreport
@@ -237,6 +247,7 @@ case_importer
  0011_update_blob_paths
  0012_auto_20190405_1747
  0013_make_duplicates_errors
+ 0014_rename_caseuploadrecord_domain_created_case_import_domain_21a470_idx
 case_search
  0001_initial
  0002_auto_20161114_1901
@@ -254,6 +265,8 @@ case_search
  0014_casesearchconfig_index_name
  0015_csqlfixtureexpression_csqlfixtureexpressionlog
  0016_csqlfixtureexpression_user_data_criteria
+celery
+ 0001_taskrecord
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -392,6 +405,7 @@ data_interfaces
  0036_backfill_dedupe_match_values
  0037_add_dedupe_update_toggle
  0038_alter_caseduplicate_potential_duplicates
+ 0039_rename_caserulesubmission_domain_created_on_data_interf_domain_718740_idx_and_more
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -437,6 +451,11 @@ domain
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
  0014_appreleasemodesetting
  0015_delete_projectlimit
+ 0016_rename_superuserprojectentryrecord_domain_username_domain_supe_domain_c3d32e_idx
+ 0017_appmanagerdomainsettings
+ 0018_enable_all_add_ons
+ 0019_remove_usercase_enabled_field
+ 0020_delete_transferdomainrequest
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -624,6 +643,8 @@ form_processor
  0095_remove_xforminstance_deleted_state
  0096_add_partial_index_cases
  0097_case_domain_type_id_index
+ 0098_rename_caseattachment_case_name_form_proces_case_id_2fd259_idx_and_more
+ 0099_xforminstance_form_proces_domain_3bcfdd_idx_and_more
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -643,6 +664,7 @@ geospatial
  0007_geoconfig_max_case_distance_and_more
  0008_geoconfig_flag_assigned_cases
  0009_geoconfig_api_key_cbc_encryption
+ 0010_remove_road_network_algorithm
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -691,6 +713,10 @@ integration
  0010_alter_kycconfig_api_field_to_user_data_map
  0011_remove_kycconfig_connection_settings
  0012_momoconfig
+ 0013_kycconfig_phone_number_field
+ 0014_kycconfig_passing_threshold
+ 0015_kycconfig_connection_settings_and_more
+ 0016_kycconfig_stores_full_name
 ip_access
  0001_initial
 ivr
@@ -770,6 +796,8 @@ motech
  0017_connectionsettings_use_aes_cbc_encryption
  0018_openmrsimporter_use_aes_cbc_encryption
  0019_connectionsettings_custom_headers
+ 0020_alter_connectionsettings_increase_max_url_lengths
+ 0021_alter_requestlog_request_url
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -800,6 +828,7 @@ ota
  0010_alter_devicelogrequest
  0011_remove_devicelogrequest_deviceid
  0012_integritysamplepercentage
+ 0013_alter_serialidbucket_index_together
 otp_static
  0001_initial
  0002_throttling
@@ -831,6 +860,7 @@ phonelog
  0013_delete_olddevicereportentry
  0014_auto_20170718_2039
  0015_devicereportentry_android_version_and_more
+ 0016_rename_devicereportentry_domain_device_id_phonelog_da_domain_e98c65_idx_and_more
 phonenumber
  0001_squashed_0001_initial (10 squashed migrations)
 pillow_retry
@@ -858,6 +888,8 @@ preindex
  0002_initial
  0003_initial
  0004_initial
+ 0005_initial
+ 0006_initial
 products
  0001_initial
 project_limits
@@ -905,6 +937,8 @@ repeaters
  0018_datasourceupdate
  0019_connectformrepeater
  0020_repeater_extra_backoff_codes
+ 0021_alter_repeatrecord_state_and_more
+ 0022_delete_cowin_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -969,6 +1003,7 @@ scheduling_partitioned
  0006_unique_indexes
  0007_index_cleanup
  0008_track_attempts
+ 0009_rename_alertscheduleinstance_active_next_event_due_scheduling__active_c8422f_idx_and_more
 sessions
  0001_initial
 sites
@@ -1035,6 +1070,7 @@ sms
  0058_email_html_body
  0059_remove_unicel_backend
  0060_alter_messagingevent_content_type_and_more
+ 0061_rename_expectedcallback_domain_date_sms_expecte_domain_d5863a_idx_and_more
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1062,6 +1098,7 @@ smsforms
  0001_initial
  0002_add_state_tracking_fields
  0003_make_fields_not_null
+ 0004_rename_sqlxformssession_session_is_open_connection_id_smsforms_sq_session_5286fb_idx_and_more
 sql_accessors
  0001_initial
  0002_add_sync_functions
@@ -1220,6 +1257,10 @@ toggle_ui
 toggles
  0001_toggle_edit_permission
  0002_assign_permissions_superusers
+ 0003_delete_web_usercase_toggle
+ 0004_alter_toggleeditpermission_tag_slug
+ 0005_alter_toggleeditpermission_tag_slug
+ 0006_alter_toggleeditpermission_tag_slug
 translations
  0001_initial
  0002_transifexblacklist
@@ -1347,6 +1388,8 @@ users
  0083_reset_ccu_dm_is_active
  0084_remove_hqapikey_key
  0085_usercredential
+ 0086_backfill_usercases
+ 0087_alter_sqluserdata_managers
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

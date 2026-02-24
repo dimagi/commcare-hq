@@ -71,13 +71,14 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
-from corehq.apps.app_manager.const import FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
+from corehq.apps.app_manager.const import (
+    FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
+)
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
     get_app_languages,
     get_apps_in_domain,
-    get_build_by_version,
     get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
@@ -97,7 +98,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationError,
     InvalidPropertyException,
     DiffConflictException,
-    MissingPropertyException,
+    MissingPropertyMapException,
 )
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.apps.app_manager.helpers.validators import (
@@ -136,10 +137,8 @@ from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
     get_correct_app_class,
     get_latest_app_release_by_location,
-    get_latest_enabled_build_for_profile,
-    get_latest_enabled_versions_per_profile,
     is_remote_app,
-    is_usercase_in_use,
+    domain_has_usercase_access,
     module_loads_registry_case,
     module_offers_search,
     module_uses_inline_search,
@@ -185,7 +184,7 @@ from corehq.apps.users.dbaccessors import get_display_name_for_user_id
 from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.util import bitly, view_utils
+from corehq.util import bitly
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
@@ -353,11 +352,11 @@ class FormAction(UpdateableDocument):
         action_properties = action.properties()
         if 'name_path' in action_properties and action.name_path:
             yield 'name', action.name_path
-        if action_properties.get('name_update') and action.name_update.question_path:
+        if action_properties.get('name_update') and action.name_update and action.name_update.question_path:
             yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
-        if 'update' in action_properties:
+        if 'update' in action_properties and action.update:
             for name, conditional_case_update in action.update.items():
                 yield name, conditional_case_update.question_path
         if 'case_properties' in action_properties:
@@ -377,80 +376,183 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 
 class UpdateCaseAction(FormAction):
+    # `update` is the "official" version, while `update_multi` is intended as a way
+    # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
+    # buildable state, where `update` is specified, or conflicts are waiting to be resolved, where
+    # `update_multi` will hold the updates.
     update = SchemaDictProperty(ConditionalCaseUpdate)
     update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
 
     def make_multi(self):
         '''
         Moves any updates from `update` into `update_multi`
+        Returns true when anything was moved
         '''
-        if not (self.update and len(self.update)):
-            # update contains no items, so no changes are necessary
-            return
+        if self.update_multi:
+            # because update_multi is meant to be exclusive with update, no items need to be moved
+            return False
 
-        self.update_multi = {k: [v] for (k, v) in self.update.items()}
+        self.update_multi = self._multi_updates()
         self.update = {}
+
+        return True
+
+    def _multi_updates(self):
+        return self.update_multi or {k: [v] for k, v in self.update.items()}
 
     def normalize_update(self):
         '''
         Attempt to move `update_multi` to `update`
         If `update_multi` contains multiple updates mapped to the same case property, no changes will occur
+        Returns true when updates are normalized, or false if nothing is done
         '''
         multi_question_cases = ((k, v) for (k, v) in self.update_multi.items() if len(v) > 1)
         if any(multi_question_cases):
             # must continue to use `update_multi`, as there are multiple questions saving to the same case property
-            return
+            return False
 
-        normalized_update = {k: v[0] for (k, v) in self.update_multi.items()}
+        normalized_update = {k: v[0] for (k, v) in self.update_multi.items() if v}
         self.update = normalized_update
-        self.update_multi = None
+        self.update_multi = {}
 
-    DIFF_ACTION_ADD = 'add'
-    DIFF_ACTION_DELETE = 'del'
-    DIFF_ACTION_UPDATE = 'update'
+        return True
 
-    DIFF_VALUE_UPDATED = 'updated'
+    def make_single(self):
+        '''
+        Force `update_multi` into `update`, even if it means losing values
+        Returns true when anything was moved
+        '''
+        if not self.update_multi:
+            return False
 
-    def apply_updates(self, updates, diffs):
-        self.check_for_duplicate_keys(diffs)
-        self.check_for_invalid_updates(diffs)
+        for case_property, updates in self.update_multi.items():
+            if updates:
+                self.update[case_property] = updates[-1]
 
+        self.update_multi = {}
+
+        return True
+
+    def apply_updates(self, updates, diffs, allow_conflicts=True):
+        # Remove the 'update' properties. Update/update_multi
+        # are intended to be updated via diffs
+        updates = self._get_non_update_properties(updates)
         self.update_object(updates)
+        self.make_multi()
 
-        if self.DIFF_ACTION_ADD in diffs:
-            for (key, value) in diffs[self.DIFF_ACTION_ADD].items():
-                self.update[key] = ConditionalCaseUpdate(value)
+        self.apply_diffs_to_mappings(self.update_multi, diffs)
 
-        if self.DIFF_ACTION_DELETE in diffs:
-            for key in diffs[self.DIFF_ACTION_DELETE]:
-                if key in self.update:
-                    del self.update[key]
+        if allow_conflicts:
+            self.normalize_update()
+        else:
+            self.make_single()
 
-        if self.DIFF_ACTION_UPDATE in diffs:
-            for (key, value) in diffs[self.DIFF_ACTION_UPDATE].items():
-                self.update[key] = ConditionalCaseUpdate(value[self.DIFF_VALUE_UPDATED])
+    @staticmethod
+    def _get_non_update_properties(updates):
+        return {key: updates[key] for key in updates if key not in ['update', 'update_multi']}
 
-    def check_for_duplicate_keys(self, diffs):
-        addition_keys = set(diffs.get(self.DIFF_ACTION_ADD, {}).keys())
-        deletion_keys = set(diffs.get(self.DIFF_ACTION_DELETE, []))
-        update_keys = set(diffs.get(self.DIFF_ACTION_UPDATE, {}).keys())
+    def get_property_names(self):
+        all_names = set()
+        if self.update:
+            all_names.update(list(self.update.keys()))
+        elif self.update_multi:
+            all_names.update(list(self.update_multi.keys()))
 
-        overlapping_addition_keys = addition_keys & (deletion_keys | update_keys)
-        overlapping_deletion_keys = deletion_keys & update_keys
-        overlapping_keys = overlapping_addition_keys | overlapping_deletion_keys
+        return all_names
 
-        if overlapping_keys:
-            raise DiffConflictException(*overlapping_keys)
+    @classmethod
+    def apply_diffs_to_mappings(cls, current_mappings, diffs):
+        '''
+        Expects `current_mappings` to be a dictionary of `ConditionalCaseUpdate` lists.
+        Expects `diffs` to be an `UpdateCaseDiff`
+        Uses 'diffs' to modify 'current_mappings' in-place.
+        '''
+        cls._check_for_duplicate_keys(diffs)
 
-    def check_for_invalid_updates(self, diffs):
-        missing_keys = []
-        if self.DIFF_ACTION_UPDATE in diffs:
-            for key in diffs[self.DIFF_ACTION_UPDATE].keys():
-                if key not in self.update:
-                    missing_keys.append(key)
+        cls._apply_additions_to_mappings(current_mappings, diffs.add)
+        cls._apply_deletions_to_mappings(current_mappings, diffs.delete)
+        cls._apply_updates_to_mappings(current_mappings, diffs.update)
 
-            if missing_keys:
-                raise MissingPropertyException(*missing_keys)
+        return current_mappings
+
+    @staticmethod
+    def _check_for_duplicate_keys(diffs):
+        addition_mappings = set()
+        for case_property, additions in diffs.add.items():
+            for addition in additions:
+                addition_mappings.add(f'{case_property}->{addition.question_path}')
+
+        deletion_mappings = set()
+        for case_property, deletions in diffs.delete.items():
+            for deletion in deletions:
+                deletion_mappings.add(f'{case_property}->{deletion.question_path}')
+
+        update_mappings = set()
+        for case_property, updates in diffs.update.items():
+            for update in updates:
+                update_mappings.add(f'{case_property}->{update.question_path}')
+
+        overlapping_addition_mappings = addition_mappings & (deletion_mappings | update_mappings)
+        overlapping_deletion_mappings = deletion_mappings & update_mappings
+        overlapping_mappings = overlapping_addition_mappings | overlapping_deletion_mappings
+
+        if overlapping_mappings:
+            raise DiffConflictException(*overlapping_mappings)
+
+    @staticmethod
+    def _apply_additions_to_mappings(current_mappings, additions):
+        for (key, questions) in additions.items():
+            additions_map = {
+                question['question_path']: question for question in questions
+            }
+            all_updates = []
+            for existing_update in current_mappings.get(key, []):
+                incoming_update = additions_map.pop(existing_update.question_path, None)
+                update_to_insert = incoming_update if incoming_update else existing_update
+                all_updates.append(update_to_insert)
+
+            for incoming_update in additions_map.values():
+                all_updates.append(incoming_update)
+
+            current_mappings[key] = all_updates
+
+    @staticmethod
+    def _apply_deletions_to_mappings(current_mappings, deletions):
+        for (key, questions) in deletions.items():
+            existing_updates = current_mappings.get(key, [])
+            for deletion in questions:
+                existing_updates = [
+                    item for item in existing_updates if item.question_path != deletion.question_path
+                ]
+            current_mappings[key] = existing_updates
+
+    @staticmethod
+    def _apply_updates_to_mappings(current_mappings, updates):
+        all_missing_mappings = []
+        for (key, questions) in updates.items():
+            incoming_updates_map = {value['question_path']: value for value in questions}
+            existing_updates = current_mappings.get(key, [])
+
+            for existing_update in existing_updates:
+                if existing_update.question_path in incoming_updates_map:
+                    incoming_update = incoming_updates_map[existing_update.question_path]
+                    existing_update.update_mode = incoming_update.update_mode
+                    incoming_updates_map.pop(existing_update.question_path)
+
+            missing_mappings = [
+                {'case_property': key, 'question_path': value.question_path}
+                for value in incoming_updates_map.values()
+            ]
+            all_missing_mappings.extend(missing_mappings)
+
+        if all_missing_mappings:
+            raise MissingPropertyMapException(*all_missing_mappings)
+
+    def get_mappings(self):
+        return {
+            case_property: [_to_json_sans_doc_type(update) for update in updates]
+            for (case_property, updates) in self._multi_updates().items()
+        }
 
 
 class PreloadAction(FormAction):
@@ -480,30 +582,66 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
-    # `name_update` is the "official" version, while `name_update_multi` is intended as a temporary option
+    # `name_update` is the "official" version, while `name_update_multi` is intended as a way
     # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
     # buildable state, where `name_update` is specified, or conflicts are waiting to be resolved, where
-    # `name_updatd_multi` will hold the updates.
+    # `name_update_multi` will hold the updates.
     name_update = SchemaProperty(ConditionalCaseUpdate)
     name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
 
-    DIFF_VALUE_UPDATED = 'updated'
+    _NAME_UPDATE_MULTI_FIELD_NAME = 'name_update_multi'
 
-    def apply_updates(self, updates, diffs):
+    def apply_updates(self, updates, diffs, allow_conflicts=True):
+        # Remove the 'update' properties. name_update/name_update_multi
+        # are intended to be updated via diffs
+        updates = self._get_non_update_properties(updates)
         self.update_object(updates)
-        if self.DIFF_VALUE_UPDATED in diffs:
-            self.name_update = ConditionalCaseUpdate(diffs[self.DIFF_VALUE_UPDATED])
+        self.make_multi()
+
+        self.apply_name_update(diffs)
+
+        if allow_conflicts:
+            self.normalize_name_update()
+        else:
+            self.make_single()
+
+    @staticmethod
+    def _get_non_update_properties(updates):
+        return {key: updates[key] for key in updates if key not in ['name_update', 'name_update_multi']}
+
+    def apply_name_update(self, diffs):
+        # UpdateCaseAction's 'update' dictionary is a representation of any generic updates.
+        # Because OpenCaseAction only updates a single field, we can convert it to UpdateCaseAction's more
+        # generic format in order to avoid duplicating logic.
+        mappings = {self._NAME_UPDATE_MULTI_FIELD_NAME: self.name_update_multi}
+        update_diff = diffs.convert_to_update_diff()
+        UpdateCaseAction.apply_diffs_to_mappings(mappings, update_diff)
+        self.name_update_multi = mappings[self._NAME_UPDATE_MULTI_FIELD_NAME]
 
     def make_multi(self):
         '''
         Moves any updates from `name_update` into `name_update_multi`
         '''
-        if not (self.name_update):
+        if self.name_update_multi:
             return
 
         self.name_update_multi = [self.name_update]
         self.name_update = None
+
+    def make_single(self):
+        '''
+        Force `update_name_multi` into `update_name`, even if it means losing values
+        '''
+        if not self.name_update_multi:
+            return False
+
+        if self.name_update_multi:
+            self.name_update = self.name_update_multi[-1]
+
+        self.name_update_multi = []
+
+        return True
 
     def normalize_name_update(self):
         '''
@@ -515,6 +653,28 @@ class OpenCaseAction(FormAction):
 
         self.name_update = self.name_update_multi[0]
         self.name_update_multi = []
+
+    def has_name_update(self):
+        if self.name_update_multi:
+            return any([self._update_has_name(update) for update in self.name_update_multi])
+
+        return self.name_update and self._update_has_name(self.name_update)
+
+    def _update_has_name(self, update):
+        return bool(update.question_path)
+
+    def get_mappings(self):
+        updates = self.name_update_multi or [self.name_update]
+        return {
+            'name': [_to_json_sans_doc_type(update) for update in updates]
+        }
+
+
+def _to_json_sans_doc_type(obj):
+    json = obj.to_json()
+    if 'doc_type' in json:
+        del json['doc_type']
+    return json
 
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
@@ -535,8 +695,58 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
         return 'subcase_{}'.format(self.id)
 
 
-class FormActions(UpdateableDocument):
+class OpenCaseDiff(DocumentSchema):
+    add = SchemaListProperty(ConditionalCaseUpdate)
+    delete = SchemaListProperty(ConditionalCaseUpdate)
+    update = SchemaListProperty(ConditionalCaseUpdate)
 
+    def convert_to_update_diff(self):
+        return UpdateCaseDiff(
+            add={OpenCaseAction._NAME_UPDATE_MULTI_FIELD_NAME: self.add} if self.add else {},
+            delete={OpenCaseAction._NAME_UPDATE_MULTI_FIELD_NAME: self.delete} if self.delete else {},
+            update={OpenCaseAction._NAME_UPDATE_MULTI_FIELD_NAME: self.update} if self.update else {}
+        )
+
+
+class UpdateCaseDiff(DocumentSchema):
+    add = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+    delete = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+    update = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+
+class FormActionsDiff(DocumentSchema):
+    open_case = SchemaProperty(OpenCaseDiff)
+    update_case = SchemaProperty(UpdateCaseDiff)
+
+    @classmethod
+    def from_json(cls, universal_diff_json, is_registration=False):
+        open_diff = OpenCaseDiff()
+        update_diff = UpdateCaseDiff(universal_diff_json)
+
+        if is_registration:
+            if 'name' in update_diff.add:
+                name_additions = update_diff.add['name']
+                open_diff.add = name_additions
+                del update_diff.add['name']
+
+            if 'name' in update_diff.update:
+                name_updates = update_diff.update['name']
+                open_diff.update = name_updates
+                del update_diff.update['name']
+
+            if 'name' in update_diff.delete:
+                name_deletions = update_diff.delete['name']
+                open_diff.delete = name_deletions
+                del update_diff.delete['name']
+
+        diff = FormActionsDiff()
+        diff.open_case = open_diff
+        diff.update_case = update_diff
+
+        return diff
+
+
+class FormActions(UpdateableDocument):
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
     close_case = SchemaProperty(FormAction)
@@ -557,7 +767,7 @@ class FormActions(UpdateableDocument):
 
     def all_property_names(self):
         names = set()
-        names.update(list(self.update_case.update.keys()))
+        names.update(self.update_case.get_property_names())
         names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
             names.update(list(subcase.case_properties.keys()))
@@ -568,7 +778,7 @@ class FormActions(UpdateableDocument):
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
 
-    def with_updates(self, updates, diffs):
+    def with_updates(self, updates, diffs, allow_conflicts=True):
         '''
         Produce a new FormActions object containing all updates, including
         'open_case' and 'update_case', affected by the diffs
@@ -576,16 +786,42 @@ class FormActions(UpdateableDocument):
         dest = FormActions(self.to_json())  # clone object
 
         update_case_updates = updates.pop('update_case', {})
-        update_case_diffs = diffs.get('update_case', {})
-        dest.update_case.apply_updates(update_case_updates, update_case_diffs)
+        dest.update_case.apply_updates(update_case_updates, diffs.update_case, allow_conflicts)
 
         open_case_updates = updates.pop('open_case', {})
-        open_case_diffs = diffs.get('open_case', {})
-        dest.open_case.apply_updates(open_case_updates, open_case_diffs)
+        dest.open_case.apply_updates(open_case_updates, diffs.open_case, allow_conflicts)
 
         dest.update_object(updates)
 
         return dest
+
+    def make_multi(self):
+        if self.open_case:
+            self.open_case.make_multi()
+
+        if self.update_case:
+            self.update_case.make_multi()
+
+    def make_single(self, allow_conflicts=True):
+        if self.open_case:
+            if allow_conflicts:
+                self.open_case.normalize_name_update()
+            else:
+                self.open_case.make_single()
+
+        if self.update_case:
+            if allow_conflicts:
+                self.update_case.normalize_update()
+            else:
+                self.update_case.make_single()
+
+    def get_mappings(self):
+        mappings = {}
+        if self.open_case:
+            mappings.update(self.open_case.get_mappings())
+        if self.update_case:
+            mappings.update(self.update_case.get_mappings())
+        return mappings
 
 
 class CaseIndex(DocumentSchema):
@@ -1563,9 +1799,18 @@ class CustomIcon(DocumentSchema):
     One can set either a simple text to display or
     an xpath expression to be evaluated for example count of cases within.
     """
-    form = StringProperty()
+
+    form = "badge"  # form is always badge
     text = DictProperty(str)
     xpath = StringProperty()
+
+    @property
+    def is_text(self):
+        return not self.is_xpath
+
+    @property
+    def is_xpath(self):
+        return bool(self.xpath)
 
 
 class NavMenuItemMediaMixin(DocumentSchema):
@@ -2078,6 +2323,13 @@ class DetailColumn(IndexedSchema):
 
 
 class SortElement(IndexedSchema):
+    """
+    A sort entry for case list
+
+    It should either have a field or a sort calculation to sort by.
+    Having sort calculation makes field redundant.
+    For legacy sort element entries that have both present, sort calculation is considered.
+    """
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
@@ -2087,6 +2339,14 @@ class SortElement(IndexedSchema):
 
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
+
+    def valid(self):
+        """
+        returns if object is valid; along with an error message in case invalid
+        """
+        if not self.field and not self.sort_calculation:
+            return False, _("Sort property needs a property or a calculation")
+        return True, None
 
 
 class CaseListLookupMixin(DocumentSchema):
@@ -2827,7 +3087,8 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
         """
-        return any(form.uses_usercase() for form in self.get_forms())
+        return (self.case_type == const.USERCASE_TYPE
+                or any(form.uses_usercase() for form in self.get_forms()))
 
     def grid_display_style(self):
         return self.display_style == 'grid'
@@ -4675,8 +4936,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        from corehq.apps.analytics.tasks import track_workflow_noop, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
-        from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
@@ -4693,11 +4952,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
 
-        request = view_utils.get_request()
-        user = getattr(request, 'couch_user', None)
-        if user and user.days_since_created == 0:
-            track_workflow_noop(user.get_email(), 'Saved the App Builder within first 24 hours')
-        send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
@@ -4707,8 +4961,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
 
-        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
-
+        _refresh_data_dictionary(self.domain, self.get_id)
         if response_json is not None:
             if 'update' not in response_json:
                 response_json['update'] = {}
@@ -4749,6 +5002,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def commcare_flavor(self):
         return None if self.target_commcare_flavor == "none" else self.target_commcare_flavor
+
+
+def _refresh_data_dictionary(domain, get_id):  # easy patch target
+    from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
+    refresh_data_dictionary_from_app.delay(domain, get_id)
 
 
 def validate_lang(lang):
@@ -5510,7 +5768,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def get_case_types(self):
         extra_types = set()
-        if is_usercase_in_use(self.domain):
+        if domain_has_usercase_access(self.domain):
             extra_types.add(const.USERCASE_TYPE)
 
         return set(chain(*[m.get_case_types() for m in self.get_modules()])) | extra_types
@@ -5875,9 +6133,6 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
         messages.warning(request, _("Copying the application succeeded, but the application is missing "
                                     "multimedia file(s)."))
 
-    if not app.is_remote_app():
-        enable_usercase_if_necessary(app)
-
     return app
 
 
@@ -5927,12 +6182,6 @@ def _update_valid_domains_for_media(app, domain_to_add):
             if domain_to_add not in media.valid_domains:
                 media.valid_domains.append(domain_to_add)
                 media.save()
-
-
-def enable_usercase_if_necessary(app):
-    if any(module.uses_usercase() for module in app.get_modules()):
-        from corehq.apps.app_manager.util import enable_usercase
-        enable_usercase(app.domain)
 
 
 class DeleteApplicationRecord(DeleteRecord):
@@ -6075,7 +6324,7 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    def get_latest_app_version(self, build_profile_id):
+    def get_latest_app_version(self):
         self.app  # noqa validate app
         if self.app_prompt == "off":
             return {}
@@ -6089,27 +6338,21 @@ class GlobalAppConfig(models.Model):
                     return {}
                 else:
                     version = self.app.version
-                    if build_profile_id:
-                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
-                        if latest:
-                            version = latest.version
                     return {"value": version, "force": force}
 
     @classmethod
-    @quickcache(['domain', 'app_id', 'build_profile_id'])
-    def get_latest_version_info(cls, domain, app_id, build_profile_id):
+    @quickcache(['domain', 'app_id'])
+    def get_latest_version_info(cls, domain, app_id):
         config = GlobalAppConfig.by_app_id(domain, app_id)
         return {
             "latest_apk_version": config.get_latest_apk_version(),
-            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
+            "latest_ccz_version": config.get_latest_app_version(),
         }
 
     def clear_version_caches(self):
-        build_profile_ids = [''] + list(self.app.build_profiles.keys())
-        for build_profile_id in build_profile_ids:
-            GlobalAppConfig.get_latest_version_info.clear(
-                GlobalAppConfig, self.domain, self.app_id, build_profile_id
-            )
+        GlobalAppConfig.get_latest_version_info.clear(
+            GlobalAppConfig, self.domain, self.app_id
+        )
 
 
 class AppReleaseByLocation(models.Model):
@@ -6202,85 +6445,6 @@ class LatestEnabledBuildProfiles(models.Model):
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
         GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_caches()
-        self.expire_cache(self.domain)
-
-    @property
-    def build(self):
-        if not hasattr(self, '_build'):
-            self._build = get_build_by_version(self.domain, self.app_id, self.version)['value']
-        return self._build
-
-    def clean(self):
-        if self.active:
-            if not self.build['is_released']:
-                raise ValidationError({
-                    'version': _("Version {} not released. Can not enable profiles for unreleased versions"
-                                 ).format(self.build['version'])
-                })
-            latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
-                app_id=self.build['copy_of'],
-                build_profile_id=self.build_profile_id
-            )
-            if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
-                raise ValidationError({
-                    'version': _("Latest version available for this profile is {}, which is "
-                                 "higher than this version. Disable any higher versions first."
-                                 ).format(latest_enabled_build_profile.version)})
-
-    @classmethod
-    def update_status(cls, build, build_profile_id, active):
-        """
-        create a new object or just set the status of an existing one for an app
-        build and build profile to the status passed
-        :param active: to be set as active, True/False
-        """
-        app_id = build.copy_of
-        build_id = build.get_id
-        version = build.version
-        try:
-            build_profile = LatestEnabledBuildProfiles.objects.get(
-                app_id=app_id,
-                version=version,
-                build_profile_id=build_profile_id,
-                build_id=build_id
-            )
-        except cls.DoesNotExist:
-            build_profile = LatestEnabledBuildProfiles(
-                app_id=app_id,
-                version=version,
-                build_profile_id=build_profile_id,
-                build_id=build_id,
-                domain=build.domain
-            )
-        # assign it to avoid re-fetching during validations
-        build_profile._build = build
-        build_profile.activate() if active else build_profile.deactivate()
-
-    def activate(self):
-        self.active = True
-        self.full_clean()
-        self.save()
-
-    def deactivate(self):
-        self.active = False
-        self.full_clean()
-        self.save()
-
-    @classmethod
-    def for_app_and_profile(cls, app_id, build_profile_id):
-        return cls.objects.filter(
-            app_id=app_id,
-            build_profile_id=build_profile_id,
-            active=True
-        ).order_by('-version').first()
-
-    def expire_cache(self, domain):
-        get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
-        get_latest_enabled_versions_per_profile.clear(self.app_id)
-
-    def to_json(self, app_names):
-        from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
-        return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
 
 
 class ApplicationReleaseLog(models.Model):

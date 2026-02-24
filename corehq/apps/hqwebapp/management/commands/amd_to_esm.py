@@ -84,7 +84,7 @@ class Command(BaseCommand):
                     fout.write(line)
 
             # Move commcarehq to the top
-            if "commcarehq" in [i[0] for i in imports]:
+            if "commcarehq" in [i[0] for i in imports if i[0] is not None]:
                 fout.write('import "commcarehq";\n')
 
             # Add imports, ESM-style
@@ -156,6 +156,7 @@ class Command(BaseCommand):
                 item = item[:-1]
             return (item, comment)
         logger.warning(f"Could not parse {description} from line: {line}")
+        return (None, comment)  # Ensure a tuple is always returned
 
     def parse_one_line_arguments(self, line, index):
         '''

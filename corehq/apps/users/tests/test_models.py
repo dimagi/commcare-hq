@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+from django.contrib.auth.hashers import get_hasher
 from django.db import IntegrityError, transaction
 from django.test import SimpleTestCase, TestCase
 
@@ -351,6 +352,17 @@ class CouchUserSaveRaceConditionTests(TestCase):
         super().setUpClass()
         cls.domain = create_domain('race-user-test')
         cls.addClassCleanup(cls.domain.delete)
+
+
+class TestCouchUser(TestCase):
+
+    def test_check_user(self):
+        user = CouchUser(username='test')
+        hasher = get_hasher('md5')  # get a hasher that is not the default
+        user.password = hasher.encode('test', hasher.salt())
+
+        # should not raise ValueError: Cannot force an update in save() with no primary key.
+        assert user.check_password('test')
 
 
 class ConnectIDUserLinkTests(TestCase):

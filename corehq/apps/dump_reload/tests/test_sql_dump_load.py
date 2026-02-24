@@ -1,7 +1,7 @@
 import inspect
 import json
 import uuid
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
@@ -137,11 +137,13 @@ class BaseDumpLoadTest(TestCase):
     def _check_signals_handle_raw(self, models):
         """Ensure that any post_save signal handlers have been updated
         to handle 'raw' calls."""
+        from django.dispatch.dispatcher import _make_id
         whitelist_receivers = [
             'django_digest.models._post_save_persist_partial_digests'
         ]
+        found_models = set()
         for model in models:
-            for receiver in post_save._live_receivers(model):
+            for receiver in self._post_save_receivers.get(_make_id(model), []):
                 receiver_path = receiver.__module__ + '.' + receiver.__name__
                 if receiver_path in whitelist_receivers:
                     continue
@@ -150,6 +152,19 @@ class BaseDumpLoadTest(TestCase):
                     receiver, model
                 )
                 self.assertIn('raw', args, message)
+                found_models.add(model)
+        expected_models = getattr(self, 'raw_post_save_models', set())
+        assert found_models == expected_models, "Found 'post_save' signal" \
+            f" with 'raw' arg for {found_models}, expected {expected_models}"
+
+    @property
+    def _post_save_receivers(self):
+        receivers = defaultdict(list)
+        for (ignore, model_id), receiver, *ignored in post_save.receivers:
+            receiver = receiver()  # derefence weakref
+            if receiver is not None:
+                receivers[model_id].append(receiver)
+        return receivers
 
 
 @nottest
@@ -327,6 +342,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.users.models import WebUser
         from django.contrib.auth.models import User
+        self.raw_post_save_models = {User}
 
         expected_object_counts = Counter({User: 3})
 
@@ -363,6 +379,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
     def test_sqluserdata(self):
         from corehq.apps.users.models import SQLUserData, WebUser
         from django.contrib.auth.models import User
+        self.raw_post_save_models = {User}
 
         expected_object_counts = Counter({User: 1, SQLUserData: 1})
 
@@ -413,6 +430,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry
         from corehq.apps.users.models import CommCareUser
         from django.contrib.auth.models import User
+        self.raw_post_save_models = {User}
 
         expected_object_counts = Counter({
             User: 1,
@@ -443,6 +461,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.ota.models import DemoUserRestore
         from django.contrib.auth.models import User
+        self.raw_post_save_models = {User}
 
         expected_object_counts = Counter({
             User: 1,
@@ -530,6 +549,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
     def test_location(self):
         from corehq.apps.locations.models import LocationType, SQLLocation
         from corehq.apps.locations.tests.util import setup_locations_and_types
+        self.raw_post_save_models = {SQLLocation}
         expected_object_counts = Counter({LocationType: 3, SQLLocation: 11})
 
         location_type_names = ['province', 'district', 'city']

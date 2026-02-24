@@ -378,7 +378,6 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
-    'corehq.apps.prototype',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.motech',
@@ -405,7 +404,6 @@ HQ_APPS = (
     'custom.covid',
     'custom.inddex',
     'custom.nutrition_project',
-    'custom.cowin.COWINAppConfig',
     'custom.hmhb',
 
     'custom.ccqa',
@@ -625,7 +623,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
-    "repeat_record_queue": 60 * 60,
+    "repeat_record_queue": 15 * 60,
     "saved_exports_queue": 6 * 60 * 60,
     "send_report_throttled": 6 * 60 * 60,
     "sms_queue": 5 * 60,
@@ -840,8 +838,6 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
-    'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
-    'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
     'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
     'corehq.motech.repeaters.expression.repeaters.FormExpressionRepeater',
     'corehq.motech.repeaters.expression.repeaters.ArcGISFormExpressionRepeater',
@@ -1165,6 +1161,9 @@ CONNECTID_SECRET_KEY = ''
 CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
+CONNECTID_CREDENTIALS_CLIENT_ID = ''
+CONNECTID_CREDENTIALS_CLIENT_SECRET = ''
+CONNECTID_ADD_USER_ANALYTICS_URL = 'http://localhost:8080/users/add_user_analytics/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
@@ -1172,14 +1171,20 @@ MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
 
-# Used by `corehq.apps.integration.kyc`. Override in localsettings.py
-MTN_KYC_CONNECTION_SETTINGS = {
-    'url': 'https://dev.api.chenosis.io/',
-    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
-    'client_id': 'test',
-    'client_secret': 'password',
-}
+#### Chatbot configuration
+# Override in localsettings.py
+# See https://docs.openchatstudio.com/chat_widget/
 
+# ID of the chatbot in Open Chat Studio
+AI_CHATBOT_ID = None
+AI_CHATBOT_TOKEN = None
+
+#  Credentials for Orange Cameroon API. Override in localsettings.py
+ORANGE_CAMEROON_API_CREDS = {
+    'x-auth-token': '',
+    'channel_msisdn': '',
+    'channel_pin': '',
+}
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1304,7 +1309,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
                 'corehq.util.context_processors.server_location_display',
-                'corehq.util.context_processors.chat_widget_config',
+                'corehq.util.context_processors.ai_chat_widget',
             ],
             'debug': DEBUG,
             'loaders': [

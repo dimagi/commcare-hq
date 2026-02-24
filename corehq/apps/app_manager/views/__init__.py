@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 from corehq.apps.app_manager.views.app_summary import (
     AppCaseSummaryView,
     AppDataView,
@@ -20,7 +21,6 @@ from corehq.apps.app_manager.views.apps import (
     edit_app_attr,
     edit_app_langs,
     edit_app_ui_translations,
-    enable_usercase,
     get_app_ui_translations,
     new_app,
     pull_upstream_app,
@@ -98,7 +98,6 @@ from corehq.apps.app_manager.views.releases import (
     revert_to_copy,
     save_copy,
     short_odk_url,
-    toggle_build_profile,
     update_build_comment,
 )
 from corehq.apps.app_manager.views.schedules import (

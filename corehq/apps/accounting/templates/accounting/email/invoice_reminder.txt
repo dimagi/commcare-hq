@@ -1,10 +1,35 @@
 {% load i18n %}
 
+{% if autopay_enabled %}
 {% blocktrans %}
-Dear {{ domain_or_account }} administrator, this is a reminder that your
-{{ plan_name }} Billing Statement for {{ month_name }} is due in
-{{ days_until_due }} days.
+  Dear {{ domain_or_account }} administrator, this is a reminder that automatic
+  payment of {{ amount_due }} for {{ month_name }} is scheduled for
+  {{ date_due }}. We will charge the autopay card on record for your billing
+  account.
 
+  If the automatic payment fails, you will have
+  {{ overdue_invoice_limit_days }} days to complete payment before your
+  subscription is paused.
+{% endblocktrans %}
+{% else %}
+{% blocktrans %}
+  Dear {{ domain_or_account }} administrator, this is a reminder that your
+  {{ plan_name }} Billing Statement for {{ month_name }} is due in
+  {{ days_until_due }} days.
+{% endblocktrans %}
+{% endif %}
+
+{% if autopay_required and not autopay_enabled %}
+{% blocktrans %}
+  Our records indicate that you have not added an autopay card to your
+  account. Providing an autopay method is a requirement for all monthly
+  subscriptions. If an autopay card is not added by
+  {{ overdue_invoice_limit_days }} days beyond {{ date_due }} and the Billing
+  Statement remains unpaid, we will automatically pause your subscription.
+{% endblocktrans %}
+{% endif %}
+
+{% blocktrans %}
 Statement No.: {{ statement_number }}
 Project Space: {{ domain }}
 Software Plan: {{ plan_name }}
@@ -32,7 +57,11 @@ Total Balance: {{ total_balance }}
 {% endif %}
 
 
-{% if can_pay_by_wire %}
+{% if autopay_enabled and can_pay_by_wire %}
+{% trans "You can also pay this bill sooner by credit card or by wire:" %}
+{% elif autopay_enabled and not can_pay_by_wire %}
+{% trans "You can also pay this bill sooner by credit card:" %}
+{% elif can_pay_by_wire %}
 {% trans "You can pay this bill by credit card or by wire:" %}
 {% else %}
 {% trans "You can pay this bill by credit card:" %}

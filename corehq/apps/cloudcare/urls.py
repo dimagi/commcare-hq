@@ -3,7 +3,6 @@ from django.urls import include, re_path as url
 from corehq.apps.cloudcare.views import (
     EditCloudcareUserPermissionsView,
     FormplayerMain,
-    FormplayerMainPreview,
     LoginAsUsers,
     PreviewAppView,
     ReadableQuestions,
@@ -18,7 +17,6 @@ app_urls = [
     url(r'^v2/$', FormplayerMain.as_view(), name=FormplayerMain.urlname),
     url(r'^v2/view_app/(?P<app_id>[\w-]+)/build/(?P<build_id>[\w-]+)/$', FormplayerMain.as_view(),
         name='formplayer_main_view_build'),
-    url(r'^v2/preview/$', FormplayerMainPreview.as_view(), name=FormplayerMainPreview.urlname),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
     url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error'),
     url(r'^report_sentry_error', report_sentry_error, name='report_sentry_error'),

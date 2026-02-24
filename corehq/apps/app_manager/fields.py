@@ -27,7 +27,6 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
-from corehq.toggles import AGGREGATE_UCRS
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -135,8 +134,7 @@ class ApplicationDataSourceUIHelper(object):
             [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
         )
         if self.enable_raw:
-            available_data_sources = get_datasources_for_domain(domain, include_static=True,
-                                                                include_aggregate=AGGREGATE_UCRS.enabled(domain))
+            available_data_sources = get_datasources_for_domain(domain, include_static=True)
             _add_choices(
                 self.source_field,
                 [(ds.data_source_id, ds.display_name) for ds in available_data_sources]
@@ -633,7 +631,7 @@ class ApplicationDataRMIHelper(object):
         all_case_type_names = get_case_types_for_domain(self.domain)
         all_case_type_objs = [RMIDataChoice(
             id=case_type,
-            text=case_type,
+            text=show_outer_spaces(case_type),
             data={
                 'unknown': True
             }
@@ -683,3 +681,17 @@ class ApplicationDataRMIHelper(object):
         response = self.get_form_rmi_response()
         response.update(self.get_case_rmi_response())
         return response
+
+
+def show_outer_spaces(value):
+    """Replace leading and/or trailing space with a bullet
+
+    Convenient for disambiguating values like 'thing' and 'thing '.
+    The "middle dot" character was chosen based on the convention of
+    IDE's that render spaces at the end of a line as a dot.
+    """
+    if value.startswith(" "):
+        value = '\u00b7' + value[1:]
+    if value.endswith(" "):
+        value = value[:-1] + '\u00b7'
+    return value

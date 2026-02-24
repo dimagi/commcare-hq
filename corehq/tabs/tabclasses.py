@@ -22,16 +22,18 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.accounting.views import (
     TriggerAutopaymentsView,
+    TriggerAutoRenewalView,
     TriggerDowngradeView,
     TriggerRemovedSsoUserAutoDeactivationView,
 )
-from corehq.apps.app_manager.dbaccessors import (
-    get_brief_apps_in_domain,
-)
-from corehq.apps.app_manager.util import is_remote_app, is_linked_app
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.case_search.views import CSQLFixtureExpressionView
+from corehq.apps.data_cleaning.decorators import (
+    bulk_data_cleaning_enabled_for_request,
+)
 from corehq.apps.data_dictionary.views import DataDictionaryView
-from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
@@ -49,25 +51,21 @@ from corehq.apps.events.views import (
     AttendeesListView,
     EventsView,
 )
-from corehq.apps.case_search.views import CSQLFixtureExpressionView
 from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
-    FeaturePreviewStatusReport,
     FeaturePreviewAuditReport,
+    FeaturePreviewStatusReport,
+    UCRDataLoadReport,
     UserAuditReport,
     UserListReport,
-    UCRDataLoadReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.integration.kyc.views import KycConfigurationView
 from corehq.apps.integration.payments.views import PaymentConfigurationView
-from corehq.apps.integration.views import (
-    DialerSettingsView,
-    GaenOtpServerSettingsView,
-    HmacCalloutSettingsView,
-)
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
@@ -90,15 +88,14 @@ from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.styleguide.views import MainStyleGuideView
-from corehq.apps.translations.integrations.transifex.utils import (
-    transifex_details_available_for_domain,
-)
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.permissions import (
+    can_access_kyc_report,
+    can_access_payments_report,
     can_download_data_files,
     can_view_sms_exports,
-    can_access_payments_report,
 )
 from corehq.messaging.scheduling.views import \
     BroadcastListView as NewBroadcastListView
@@ -117,12 +114,6 @@ from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
-from corehq.apps.users.models import HqPermissions
-from corehq.apps.geospatial.views import (
-    GeospatialConfigPage,
-    GPSCaptureView,
-)
-from corehq.apps.integration.kyc.views import KycConfigurationView
 
 
 class ProjectReportsTab(UITab):
@@ -687,10 +678,10 @@ class ProjectDataTab(UITab):
         export_data_views = []
         if self.can_only_see_deid_exports:
             from corehq.apps.export.views.list import (
+                DeIdCaseExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
                 DeIdFormExportListView,
-                DeIdCaseExportListView,
                 ODataFeedListView,
             )
             export_data_views.append({
@@ -722,9 +713,9 @@ class ProjectDataTab(UITab):
             from corehq.apps.export.views.download import (
                 BulkDownloadNewFormExportView,
                 DownloadNewCaseExportView,
+                DownloadNewDatasourceExportView,
                 DownloadNewFormExportView,
                 DownloadNewSmsExportView,
-                DownloadNewDatasourceExportView,
             )
             from corehq.apps.export.views.edit import (
                 EditCaseDailySavedExportView,
@@ -1067,7 +1058,10 @@ class ProjectDataTab(UITab):
 
     @cached_property
     def _can_view_kyc_integration(self):
-        return toggles.KYC_VERIFICATION.enabled(self.domain)
+        return (
+            toggles.KYC_VERIFICATION.enabled(self.domain)
+            and can_access_kyc_report(self.couch_user, self.domain)
+        )
 
     @cached_property
     def _can_view_payments_integration(self):
@@ -1198,17 +1192,6 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
-        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _('Translations'),
-                url=(reverse('convert_translations', args=[self.domain])),
-            ))
-        if toggles.APP_TESTING.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _('Application Testing'),
-                url=(reverse('app_execution:workflow_list', args=[self.domain])),
-            ))
-
         return submenu_context
 
     @property
@@ -1750,12 +1733,21 @@ class ProjectUsersTab(UITab):
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
-            from corehq.apps.users.views import ListRolesView
+            from corehq.apps.users.views.role import EditRoleView, ListRolesView
             return {
                 'title': _(ListRolesView.page_title),
                 'url': reverse(ListRolesView.urlname, args=[self.domain]),
                 'description': _("View and manage user roles."),
-                'subpages': [],
+                'subpages': [
+                    {
+                        'title': _("Create Role"),
+                        'urlname': 'create_role'
+                    },
+                    {
+                        'title': _("Edit Role"),
+                        'urlname': EditRoleView.urlname
+                    },
+                ],
                 'show_in_dropdown': True,
             }
 
@@ -1968,44 +1960,6 @@ class TranslationsTab(UITab):
              'title': 'Convert Translations'
              }
         ]))
-        if transifex_details_available_for_domain(self.domain):
-            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
-                items.append((_('Translations'), [
-                    {
-                        'url': reverse('create_update_translations', args=[self.domain]),
-                        'title': _('Create or Update Translations')
-                    },
-                    {
-                        'url': reverse('push_translations', args=[self.domain]),
-                        'title': _('Push Translations')
-                    },
-                    {
-                        'url': reverse('pull_translations', args=[self.domain]),
-                        'title': _('Pull Translations')
-                    },
-                    {
-                        'url': reverse('backup_translations', args=[self.domain]),
-                        'title': _('Backup Translations')
-                    },
-                    {
-                        'url': reverse('pull_resource', args=[self.domain]),
-                        'title': _('Pull Resource')
-                    },
-                    {
-                        'url': reverse('blacklist_translations', args=[self.domain]),
-                        'title': _('Blacklist Translations')
-                    },
-                    {
-                        'url': reverse('download_translations', args=[self.domain]),
-                        'title': _('Download Translations')
-                    },
-                ]))
-        if self._request.user.is_staff:
-            items.append((_('Translations'), [
-                {'url': reverse('delete_translations', args=[self.domain]),
-                 'title': 'Delete Translations'
-                 }
-            ]))
         return items
 
 
@@ -2180,11 +2134,10 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views.internal import TransferDomainView
     from corehq.apps.domain.views.settings import (
+        CredentialsApplicationSettingsView,
         FeaturePreviewsView,
         ManageDomainMobileWorkersView,
-        CredentialsApplicationSettingsView,
         RecoveryMeasuresHistory,
     )
     from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -2203,12 +2156,6 @@ def _get_administration_section(domain):
     })
 
     administration.extend(_get_manage_domain_alerts_section(domain))
-
-    if toggles.TRANSFER_DOMAIN.enabled(domain):
-        administration.append({
-            'title': _(TransferDomainView.page_title),
-            'url': reverse(TransferDomainView.urlname, args=[domain])
-        })
 
     if toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
         administration.append({
@@ -2303,24 +2250,6 @@ def _get_integration_section(domain, couch_user):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
-        })
-
-    if toggles.WIDGET_DIALER.enabled(domain):
-        integration.append({
-            'title': _(DialerSettingsView.page_title),
-            'url': reverse(DialerSettingsView.urlname, args=[domain])
-        })
-
-    if toggles.HMAC_CALLOUT.enabled(domain):
-        integration.append({
-            'title': _(HmacCalloutSettingsView.page_title),
-            'url': reverse(HmacCalloutSettingsView.urlname, args=[domain])
-        })
-
-    if toggles.GAEN_OTP_SERVER.enabled(domain):
-        integration.append({
-            'title': _(GaenOtpServerSettingsView.page_title),
-            'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
         })
 
     if toggles.EMBEDDED_TABLEAU.enabled(domain):
@@ -2518,6 +2447,10 @@ class AccountingTab(UITab):
                     'url': reverse(TriggerAutopaymentsView.urlname),
                 },
                 {
+                    'title': _(TriggerAutoRenewalView.page_title),
+                    'url': reverse(TriggerAutoRenewalView.urlname),
+                },
+                {
                     'title': _(TriggerRemovedSsoUserAutoDeactivationView.page_title),
                     'url': reverse(TriggerRemovedSsoUserAutoDeactivationView.urlname),
                 }
@@ -2669,9 +2602,10 @@ class AdminTab(UITab):
                 {'title': _('Manage Notifications'),
                  'url': reverse(ManageNotificationView.urlname),
                  'icon': 'fa fa-bell'},
-                {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email'),
-                 'icon': 'fa fa-envelope'},
+                # Disabled until https://dimagi.atlassian.net/browse/SAAS-19006 is addressed
+                # {'title': _('Mass Email Users'),
+                #  'url': reverse('mass_email'),
+                #  'icon': 'fa fa-envelope'},
                 {'title': _('Maintenance Alerts'),
                  'url': reverse('alerts'),
                  'icon': 'fa fa-warning'},

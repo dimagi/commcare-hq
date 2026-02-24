@@ -46,9 +46,10 @@ class CreditsAutomatedReport(object):
         format_dict = Format.FORMAT_DICT[Format.XLS_2007]
 
         file_attachment = {
-            'title': 'Credits_on_hq_{}_{}'.format(
+            'title': 'Credits_on_hq_{}_{}.{}'.format(
                 yesterday.isoformat(),
                 settings.SERVER_ENVIRONMENT,
+                format_dict['extension'],
             ),
             'mimetype': format_dict['mimetype'],
             'file_obj': file_to_attach,

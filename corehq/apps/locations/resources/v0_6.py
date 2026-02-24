@@ -145,7 +145,8 @@ class LocationResource(v0_5.LocationResource):
                                    site_code=site_code)
 
     def _validate_unique_among_siblings(self, location, name, parent, location_site_code):
-        if has_siblings_with_name(location, name, parent.location_id):
+        parent_id = None if parent is None else parent.location_id
+        if has_siblings_with_name(location, name, parent_id):
             raise LocationAPIError(
                 _("Location with same name and parent already exists."), site_code=location_site_code
             )

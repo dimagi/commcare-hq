@@ -9,7 +9,7 @@ from typing import List, Dict
 from xml.sax.saxutils import escape
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Detail, DetailVariable, XPathVariable, TileGroup, Style, EndpointAction
 )
@@ -21,15 +21,7 @@ CUSTOM = "custom"
 
 class CaseTileTemplates(models.TextChoices):
     PERSON_SIMPLE = ("person_simple", _("Person Simple"))
-    ONE_ONE_TWO = ("one_one_two", _("Title row, subtitle row, third row with two cells, and map"))
-    ONE_TWO_ONE = ("one_two_one", _("Title row, second row with two cells, third row, and map"))
-    ONE_TWO_ONE_ONE = ("one_two_one_one", _("Title row, second row with two cells, third and "
-                                            "fourth rows, and map"))
-    ONE_3X_TWO_4X_ONE_2X = ("one_3X_two_4X_one_2X", _("Three upper rows, four rows with two cells, two lower rows "
-                                                      "and map"))
-    ONE_TWO_TWO = ("one_two_two", _("Title row, second row with two cells, third row with two cells"))
     ICON_TEXT_GRID = ("icon_text_grid", _("2 x 3 grid of image and text"))
-    BHA_REFERRALS = ("bha_referrals", _("BHA Referrals"))
 
 
 @dataclass
@@ -47,14 +39,15 @@ class CaseTileTemplateConfig:
 
 @memoized
 def case_tile_template_config(template):
-    try:
-        with open(
-            TILE_DIR / (template + '.json'),
-            encoding='utf-8'
-        ) as f:
-            data = json.loads(f.read())
-    except FileNotFoundError:
-        data = {}
+    if template == CUSTOM:
+        return CaseTileTemplateConfig()
+    if template not in CaseTileTemplates.values:
+        raise CaseTileMisconfigurationError(f"'{template}' is not a valid case tile template")
+    with open(
+        TILE_DIR / (template + '.json'),
+        encoding='utf-8'
+    ) as f:
+        data = json.loads(f.read())
     return CaseTileTemplateConfig(**data)
 
 

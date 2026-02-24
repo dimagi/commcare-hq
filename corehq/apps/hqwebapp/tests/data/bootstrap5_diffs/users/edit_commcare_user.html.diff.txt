@@ -1,0 +1,213 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
++{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+-{% js_entry_b3 'users/js/bootstrap3/edit_commcare_user' %}
++{% js_entry 'users/js/bootstrap5/edit_commcare_user' %}
+ 
+ {% block page_content %}
+   {% initial_page_data "couch_user_id" couch_user.user_id %}
+@@ -34,53 +34,53 @@
+       {% endblocktrans %}
+     </p>
+   {% endif %}
+-  <ul class="nav nav-tabs sticky-tabs mb-3" id="user-settings-tabs">
+-    <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
+-    <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
++  <ul class="nav nav-tabs sticky-tabs mb-3" id="user-settings-tabs">  {# todo B5: css-nav #}
++    <li><a href="#basic-info" data-bs-toggle="tab">{% trans "Basic" %}</a></li>
++    <li><a href="#groups" data-bs-toggle="tab">{% trans "Groups" %}</a></li>
+     {% if commtrack_enabled or uses_locations %}
+       <li>
+-        <a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a>
++        <a href="#commtrack-data" data-bs-toggle="tab">{% trans "Locations" %}</a>
+       </li>
+     {% endif %}
+     {% if not request.is_view_only %}
+       <li>
+-        <a href="#user-password" data-toggle="tab">{% trans "Security" %}</a>
++        <a href="#user-password" data-bs-toggle="tab">{% trans "Security" %}</a>
+       </li>
+     {% endif %}
+     {% if not is_currently_logged_in_user and not request.is_view_only %}
+       <li>
+-        <a href="#user-permanent" data-toggle="tab">{% trans "Actions" %}</a>
++        <a href="#user-permanent" data-bs-toggle="tab">{% trans "Actions" %}</a>
+       </li>
+     {% endif %}
+     <li>
+-      <a href="#user-metadata" data-toggle="tab">{% trans "User Metadata" %}</a>
++      <a href="#user-metadata" data-bs-toggle="tab">{% trans "User Metadata" %}</a>
+     </li>
+   </ul>
+   <div class="tab-content" id="settings">
+     <div class="tab-pane" id="basic-info">
+-      <div class="panel-body">
+-        {% include 'users/partials/bootstrap3/basic_info_form.html' with user_type="mobile" %}
++      <div class="card-body">
++        {% include 'users/partials/bootstrap5/basic_info_form.html' with user_type="mobile" %}
+       </div>
+     </div>
+ 
+     <div class="tab-pane" id="groups">
+-      <div class="panel-body">
+-        {% include 'users/partials/bootstrap3/commcare_user_groups.html' %}
++      <div class="card-body">
++        {% include 'users/partials/bootstrap5/commcare_user_groups.html' %}
+       </div>
+     </div>
+     {% if commtrack %}
+       <div class="tab-pane" id="commtrack-data">
+-        <div class="panel-body">
++        <div class="card-body">
+           {% if couch_user.user_location_id %}
+             <a
+-              class="btn btn-default"
++              class="btn btn-outline-primary"
+               href="{% url "edit_location" domain couch_user.user_location_id %}"
+             >
+               <i class="fa-solid fa-up-right-from-square"></i>
+               {% trans "User Location" %}
+             </a>
+           {% endif %}
+-          {% include "users/partials/bootstrap3/edit_commtrack_user_settings.html" %}
++          {% include "users/partials/bootstrap5/edit_commtrack_user_settings.html" %}
+           {% if support_info.locations %}
+             <h4>{% trans "[Support only] Assigned Locations" %}</h4>
+             <div class="list-group">
+@@ -90,7 +90,7 @@
+                   class="list-group-item"
+                 >
+                   {{ location.get_path_display }}
+-                  <span class="badge">{{ location.location_type.name }}</span>
++                  <span class="badge rounded-pill">{{ location.location_type.name }}</span>
+                 </a>
+               {% endfor %}
+             </div>
+@@ -99,7 +99,7 @@
+       </div>
+     {% endif %}
+     <div class="tab-pane" id="user-password">
+-      <div class="panel-body">
++      <div class="card-body">
+         {% if not request.is_view_only %}
+           {% if reset_password_form %}
+             <form
+@@ -108,7 +108,7 @@
+               action="{% url "change_password" domain couch_user.user_id %}"
+               method="POST"
+             >
+-              {% crispy reset_password_form %}
++              {% crispy reset_password_form %}  {# todo B5: crispy #}
+             </form>
+             <hr />
+           {% endif %}
+@@ -117,7 +117,7 @@
+               action="{% url "send_password_reset_email" domain couch_user.user_id %}"
+               method="POST"
+             >
+-              {% crispy send_password_reset_email_form %}
++              {% crispy send_password_reset_email_form %}  {# todo B5: crispy #}
+             </form>
+           {% endif %}
+         {% endif %}
+@@ -125,10 +125,10 @@
+     </div>
+     {% if not is_currently_logged_in_user and not request.is_view_only %}
+       <div class="tab-pane" id="user-permanent">
+-        <div class="panel-body">
++        <div class="card-body">
+           <div class="form form-horizontal">
+             {% if request|request_has_privilege:"LOADTEST_USERS" %}
+-              {% crispy form_user_update.action_form %}
++              {% crispy form_user_update.action_form %}  {# todo B5: crispy #}
+             {% endif %}
+ 
+             <fieldset>
+@@ -178,9 +178,9 @@
+                 </p>
+                 <p>
+                   <a
+-                    class="btn btn-danger"
++                    class="btn btn-outline-danger"
+                     href="#delete_user_{{ couch_user.user_id }}"
+-                    data-toggle="modal"
++                    data-bs-toggle="modal"
+                   >
+                     <i class="fa-regular fa-trash-can"></i>
+                     {% trans "Delete Mobile Worker" %}
+@@ -219,7 +219,7 @@
+                       value="{{ couch_user.is_demo_user|yesno:"no,yes" }}"
+                     />
+                     {% csrf_token %}
+-                    <button type="submit" class="btn btn-default">
++                    <button type="submit" class="btn btn-outline-primary">
+                       {% if couch_user.is_demo_user %}
+                         <i class="fa-regular fa-trash-can"></i>
+                         {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
+@@ -237,7 +237,7 @@
+                       method="post"
+                     >
+                       {% csrf_token %}
+-                      <button type="submit" class="btn btn-default">
++                      <button type="submit" class="btn btn-outline-primary">
+                         <i class="fa-solid fa-refresh"></i>
+                         {% trans 'Refresh Demo Mode data' %}
+                       </button>
+@@ -254,7 +254,7 @@
+       </div>
+     {% endif %}
+     <div class="tab-pane" id="user-metadata">
+-      <div class="panel-body">
++      <div class="card-body">
+         <table class="table">
+           <tbody>
+             <tr>
+@@ -314,7 +314,7 @@
+                   <tbody>
+                     {% for device in couch_user.devices|dictsortreversed:"last_used" %}
+                       <tr>
+-                        <td style="font-family: monospace">
++                        <td style="font-family: monospace">  {# todo B5: inline-style #}
+                           {{ device.device_id }}
+                         </td>
+                         <td>{{ device.last_used|to_user_time:request }}</td>
+@@ -333,7 +333,7 @@
+ 
+ {% block modals %}
+   {{ block.super }}
+-  {% include 'users/partials/bootstrap3/basic_info_modals.html' with user_type='mobile' %}
++  {% include 'users/partials/bootstrap5/basic_info_modals.html' with user_type='mobile' %}
+   {% if not is_currently_logged_in_user %}
+     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
+       <div class="modal-dialog">
+@@ -341,8 +341,8 @@
+           <div class="modal-header">
+             <button
+               type="button"
+-              class="close"
+-              data-dismiss="modal"
++              class="btn-close"  {# todo B5: css-close #}
++              data-bs-dismiss="modal"
+               aria-label="Close"
+             >
+               <span aria-hidden="true">&times;</span>
+@@ -429,12 +429,12 @@
+               />
+             </div>
+             <div class="modal-footer">
+-              <a href="#" data-dismiss="modal" class="btn btn-default"
++              <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary"
+                 >{% trans 'Cancel' %}</a
+               >
+               <button
+                 type="submit"
+-                class="btn btn-danger"
++                class="btn btn-outline-danger"
+                 data-bind="
+                              css: {disabled: disabled()},
+                              attr: {disabled: disabled()}

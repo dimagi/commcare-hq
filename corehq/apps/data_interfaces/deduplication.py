@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.utils.text import slugify
 
-from casexml.apps.case.const import CASE_UI_OWNER_ID
+from casexml.apps.case.const import CASE_UI_NAME, CASE_UI_OWNER_ID
 
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
@@ -13,6 +13,10 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 
 DUPLICATE_LIMIT = 1000
 DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
+CASE_UI_PROPERTIES = {
+    CASE_UI_NAME,
+    CASE_UI_OWNER_ID,
+}
 
 
 def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):

@@ -21,6 +21,7 @@ from corehq.apps.app_manager.models import (
     DetailTab,
     FormLink,
     Module,
+    SortElement,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.util.test_utils import flag_enabled, privilege_enabled
@@ -509,3 +510,39 @@ class BuildErrorsTest(TestCase):
             'type': 'search on clear with auto select',
             'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}},
         }, errors)
+
+    def test_validate_details_for_build_valid_field_with_sort_elements(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('basic', 'person')
+        module.case_details.short.sort_elements = [
+            SortElement(
+                field='',
+                type='string',
+                direction='ascending'
+            )
+        ]
+        errors = module.validate_for_build()
+        self.assertListEqual(
+            errors,
+            [{
+                'type': 'invalid sort field',
+                'field': '',
+                'module': {
+                    'id': 0,
+                    'name': {'en': 'basic module'},
+                    'unique_id': 'basic_module'
+                }
+            }]
+        )
+
+        # do not validate field if sort calculation present
+        module.case_details.short.sort_elements = [
+            SortElement(
+                field='',
+                type='string',
+                direction='ascending',
+                sort_calculation="ifcalculation"
+            )
+        ]
+        errors = module.validate_for_build()
+        self.assertListEqual(errors, [])

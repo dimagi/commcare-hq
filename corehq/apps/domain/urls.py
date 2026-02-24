@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.urls import include, re_path as url
 from django.contrib.auth.views import (
     PasswordChangeDoneView,
     PasswordChangeView,
@@ -7,6 +6,8 @@ from django.contrib.auth.views import (
     PasswordResetDoneView,
     PasswordResetView,
 )
+from django.urls import include
+from django.urls import re_path as url
 from django.utils.translation import gettext as _
 from django.views.generic import RedirectView
 
@@ -37,33 +38,30 @@ from corehq.apps.domain.views.accounting import (
     SelectPlanView,
     SubscriptionRenewalView,
     WireInvoiceView,
+    disable_subscription_auto_renew,
+    enable_subscription_auto_renew,
     pause_subscription,
 )
-from corehq.apps.domain.views.base import select, accept_all_invitations
+from corehq.apps.domain.views.base import accept_all_invitations, select
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.import_apps import ImportAppStepsView
 from corehq.apps.domain.views.internal import (
-    ActivateTransferDomainView,
-    DeactivateTransferDomainView,
     EditInternalCalculationsView,
     EditInternalDomainInfoView,
     FlagsAndPrivilegesView,
     ProjectLimitsView,
-    TransferDomainView,
     calculated_properties,
     toggle_diff,
 )
 from corehq.apps.domain.views.releases import (
-    ManageReleasesByAppProfile,
     ManageReleasesByLocation,
     activate_release_restriction,
     deactivate_release_restriction,
-    toggle_release_restriction_by_app_profile,
 )
 from corehq.apps.domain.views.settings import (
-    delete_domain_alert,
-    update_domain_alert_status,
     CaseSearchConfigView,
+    CredentialsApplicationSettingsView,
+    CustomPasswordResetView,
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
     EditDomainAlertView,
@@ -71,16 +69,17 @@ from corehq.apps.domain.views.settings import (
     EditMyProjectSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
+    ImportAppFromAnotherServerView,
     ManageDomainAlertsView,
     ManageDomainMobileWorkersView,
-    CustomPasswordResetView,
     RecoveryMeasuresHistory,
-    ImportAppFromAnotherServerView,
-    CredentialsApplicationSettingsView,
+    delete_domain_alert,
+    update_domain_alert_status,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
-from corehq.apps.hqwebapp.decorators import waf_allow
-from corehq.apps.integration.urls import settings_patterns as integration_settings
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
+from corehq.apps.integration.urls import \
+    settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
@@ -90,7 +89,7 @@ from corehq.motech.repeaters.views import (
 )
 
 PASSWORD_RESET_KWARGS = {
-    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
+    'template_name': 'login_and_password/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')},
@@ -108,10 +107,6 @@ urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
     url('^accept_all_invitations/$', accept_all_invitations, name='accept_all_invitations'),
-    url(r'^domain/transfer/(?P<guid>\w+)/activate$',
-        ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
-    url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
-        DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
     url(r'^accounts/password_change/$',
         PasswordChangeView.as_view(
             template_name='login_and_password/password_change_form.html'),
@@ -122,20 +117,24 @@ urlpatterns = [
             extra_context={'current_page': {'page_name': _('Password Change Complete')}}),
         name='password_change_done'),
     url(r'^accounts/password_reset_email/$',
-        PasswordResetView.as_view(**PASSWORD_RESET_KWARGS), name='password_reset_email'),
+        use_bootstrap5(PasswordResetView.as_view(**PASSWORD_RESET_KWARGS)), name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$',
-        PasswordResetDoneView.as_view(**PASSWORD_RESET_DONE_KWARGS),
+        use_bootstrap5(PasswordResetDoneView.as_view(**PASSWORD_RESET_DONE_KWARGS)),
         name='password_reset_done'),
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         CustomPasswordResetView.as_view(
-            template_name='login_and_password/bootstrap3/password_reset_confirm.html',
+            template_name='login_and_password/password_reset_confirm.html',
             form_class=HQSetPasswordForm,
             extra_context={'current_page': {'page_name': _('Password Reset Confirmation')}},
         ),
         name=CustomPasswordResetView.urlname),
-    url(r'^accounts/password_reset_confirm/done/$', PasswordResetCompleteView.as_view(
-        template_name='login_and_password/password_reset_complete.html',
-        extra_context={'current_page': {'page_name': _('Password Reset Complete')}}),
+    url(r'^accounts/password_reset_confirm/done/$',
+        use_bootstrap5(
+            PasswordResetCompleteView.as_view(
+                template_name='login_and_password/password_reset_complete.html',
+                extra_context={'current_page': {'page_name': _('Password Reset Complete')}}
+            )
+        ),
         name='password_reset_complete'),
 ]
 
@@ -162,6 +161,8 @@ domain_settings = [
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
+    url(r'^subscription/auto_renew/disable/$', disable_subscription_auto_renew, name='disable_auto_renew'),
+    url(r'^subscription/auto_renew/enable/$', enable_subscription_auto_renew, name='enable_auto_renew'),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
     url(r'^subscription/credits/make_wire_payment/$', CreditsWireInvoiceView.as_view(),
@@ -192,7 +193,6 @@ domain_settings = [
     url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^integration/', include(integration_settings)),
-    url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
@@ -219,14 +219,10 @@ domain_settings = [
         name=RecoveryMeasuresHistory.urlname),
     url(r'^manage_releases_by_location/$', ManageReleasesByLocation.as_view(),
         name=ManageReleasesByLocation.urlname),
-    url(r'^manage_releases_by_app_profile/$', ManageReleasesByAppProfile.as_view(),
-        name=ManageReleasesByAppProfile.urlname),
     url(r'^deactivate_release_restriction/(?P<restriction_id>[\w-]+)/$', deactivate_release_restriction,
         name='deactivate_release_restriction'),
     url(r'^activate_release_restriction/(?P<restriction_id>[\w-]+)/$', activate_release_restriction,
         name='activate_release_restriction'),
-    url(r'^toggle_release_restriction_by_app_profile/(?P<restriction_id>[\w-]+)/$',
-        toggle_release_restriction_by_app_profile, name='toggle_release_restriction_by_app_profile'),
     url(r'^import_app/$', ImportAppFromAnotherServerView.as_view(),
         name=ImportAppFromAnotherServerView.urlname),
     url(r'^import_app/steps/$', ImportAppStepsView.as_view(),

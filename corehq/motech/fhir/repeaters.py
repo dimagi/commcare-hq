@@ -143,8 +143,8 @@ class FHIRRepeater(CaseRepeater):
 
 def _get_cases_by_id(domain, case_blocks):
     case_ids = [case_block['@case_id'] for case_block in case_blocks]
-    cases = CommCareCase.objects.get_cases(case_ids, domain, ordered=True)
-    return {c.case_id: c for c in cases}
+    cases = CommCareCase.objects.get_cases(case_ids, ordered=True)
+    return {c.case_id: c for c in cases if c.domain == domain}
 
 
 def _get_resource_types_by_case_type(domain, fhir_version, cases):

@@ -10,7 +10,6 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.apps.users.tests.util import patch_user_data_db_layer
-from corehq.tests.util.context import add_context
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import mock_out_couch
 
@@ -28,6 +27,9 @@ from ..signals import update_user_in_es
 @patch('corehq.apps.sms.tasks.sync_user_phone_numbers', new=MagicMock())
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock())
 @patch('corehq.apps.users.models.CommCareUser.project', new=MagicMock())
+@patch('corehq.apps.callcenter.tasks.Domain.get_by_name', new=lambda _: MagicMock())
+@patch('corehq.apps.analytics.signals.get_subscription_properties_by_user', new=MagicMock(return_value={}))
+@patch('corehq.apps.analytics.signals.get_domain_membership_properties', new=MagicMock(return_value={}))
 @es_test
 class TestUserSignals(SimpleTestCase):
 
@@ -37,7 +39,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.users.signals._update_user_in_es')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_usercases,
                                update_hubspot_properties):
-        CommCareUser(username='test').save()
+        CommCareUser(username='test', domain='domain').save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
@@ -50,24 +52,22 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.users.signals._update_user_in_es')
     def test_webuser_save(self, send_to_es, invalidate, sync_usercases,
                           update_hubspot_properties):
-        WebUser().save()
+        WebUser(domains=['domain']).save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
-        self.assertFalse(sync_usercases.called)
+        self.assertTrue(sync_usercases.called)
         self.assertTrue(update_hubspot_properties.called)
 
 
 @mock_out_couch()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
+@patch_user_data_db_layer
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_usercases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 @es_test(requires=[user_adapter], setup_class=True)
 class TestUserSyncToEs(SimpleTestCase):
-
-    def setUp(self):
-        add_context(patch_user_data_db_layer(), self)
 
     @sync_users_to_es()
     def test_sync_to_es_create_update_delete(self, *mocks):

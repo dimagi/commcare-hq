@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/partials/bootstrap3/bulk_upload.html" %}
++{% extends "hqwebapp/partials/bootstrap5/bulk_upload.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+@@ -6,7 +6,7 @@
+   <li>
+     <p>
+       {% trans "Include only paths where the multimedia file is missing?" %}
+-      <select-toggle data-apply-bindings="false"
++      <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
+                      params="name: 'only_missing',
+                              id: 'only_missing',
+                              value: only_missing,

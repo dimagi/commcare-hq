@@ -22,7 +22,7 @@
 
 <ul class="fa-ul" data-bind="foreach: modules">
   <li data-bind="visible: isVisible, css: getDiffClass('module'), popover: getDiffPopover(changes['module'], 'module') ">
-    <h4>
+    <h4 class="mt-3">
       <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
         <i data-bind="attr: { 'class': icon }"></i>
         <span data-bind="text: $root.translate(name), css: getDiffClass('name'), popover: getDiffPopover(changes['name'], 'name')"></span>
@@ -33,9 +33,9 @@
       </div>
     </h4>
     <!-- ko if: short_comment -->
-    <ul class="text-muted fa-ul" data-bind="visible: $root.showComments">
+    <ul class="text-body-secondary fa-ul" data-bind="visible: $root.showComments">
       <li>
-        <i class = "fa-li fa text-muted fa-quote-left"></i>
+        <i class = "fa-li fa text-body-secondary fa-quote-left"></i>
         <span data-bind="text: short_comment, css: getDiffClass('short_comment'), popover: getDiffPopover(changes['short_comment'], 'short_comment')"></span>
       </li>
     </ul>
@@ -43,7 +43,7 @@
     <!-- ko if: module_filter -->
     <ul class="fa-ul" data-bind="visible: $root.showRelevance">
       <li>
-        <i data-bind="attr: {'class': 'fa-li text-muted fa-solid fa-code-branch'}"></i>
+        <i data-bind="attr: {'class': 'fa-li text-body-secondary fa-solid fa-code-branch'}"></i>
         <span data-bind="text: module_filter, css: getDiffClass('module_filter'), popover: getDiffPopover(changes['module_filter'], 'module_filter')"></span>
       </li>
     </ul>
@@ -63,7 +63,7 @@
         <!-- ko if: short_comment -->
         <ul class="fa-ul" data-bind="visible: $root.showComments()">
           <li>
-            <i class = "fa-li fa text-muted fa-quote-left"></i>
+            <i class = "fa-li fa text-body-secondary fa-quote-left"></i>
             <span data-bind="text: short_comment, css: getDiffClass('short_comment'), popover: getDiffPopover(changes['short_comment'], 'short_comment')"></span>
           </li>
         </ul>
@@ -71,7 +71,7 @@
         <!-- ko if: form_filter -->
         <ul class="fa-ul" data-bind="visible: $root.showRelevance">
           <li>
-            <i data-bind="attr: {'class': 'fa-li text-muted fa-solid fa-code-branch'}"></i>
+            <i data-bind="attr: {'class': 'fa-li text-body-secondary fa-solid fa-code-branch'}"></i>
             <span data-bind="text: form_filter, css: getDiffClass('form_filter'), popover: getDiffPopover(changes['form_filter'], 'form_filter')"></span>
           </li>
         </ul>
@@ -86,7 +86,7 @@
 
 {# Button for question attribute #}
 <script type="text/html" id="attribute-toggle">
-  <button type="button" class="btn btn-default"
+  <button type="button" class="btn btn-outline-primary rounded-pill text-nowrap mb-1"
     data-bind="click: clickFn, css: { active: activeObs }">
     <i class="fa fa-calculator" data-bind="attr: {'class': icon}"></i>
     &nbsp;<span data-bind="text: text"></span>
@@ -104,7 +104,7 @@
       <span data-bind="text: $root.questionLabel($data), css: getDiffClass('translations'), popover: getDiffPopover(changes['translations'], 'translations')"></span>
       <!-- /ko -->
       <!-- ko if: required -->
-      <sup class="text-muted" data-bind="css: getDiffClass('required'), popover: getDiffPopover(changes['required'], 'required')">{% trans "required" %}</sup>
+      <sup class="text-body-secondary" data-bind="css: getDiffClass('required'), popover: getDiffPopover(changes['required'], 'required')">{% trans "required" %}</sup>
       <!-- /ko -->
     </span>
     <!-- ko if: children -->
@@ -114,7 +114,7 @@
     <!-- /ko -->
     <!-- ko if: type == "Select" -->
     <!-- ko if: $data.data_source && $data.data_source.nodeset -->
-    <ul class="fa-ul text-muted" data-bind="visible: $root.showDefaultValues">
+    <ul class="fa-ul text-body-secondary" data-bind="visible: $root.showDefaultValues">
       <li><strong>{% trans "Instance" %}:</strong> <span data-bind="text:data_source.instance_id"></span></li>
       <li><strong>{% trans "Nodeset" %}:</strong> <span data-bind="text:data_source.nodeset"></span></li>
       <li><strong>{% trans "Value" %}:</strong> <span data-bind="text:data_source.value_ref"></span></li>
@@ -125,60 +125,60 @@
     <!-- ko if:  comment || calculate || relevant || constraint || setvalue || load_properties || save_properties  -->
     <ul class="fa-ul">
       <!-- ko if: comment -->
-      <li class="text-muted" data-bind="visible: $root.showComments">
-        <i class = "fa-li fa text-muted fa-quote-left"></i>
+      <li class="text-body-secondary" data-bind="visible: $root.showComments">
+        <i class = "fa-li fa text-body-secondary fa-quote-left"></i>
         <span data-bind="text: comment, css: getDiffClass('comment'), popover: getDiffPopover(changes['comment'], 'comment')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: calculate -->
       <li data-bind="visible: $root.showCalculations">
-        <i class = "fa-li fa text-muted fa-calculator"></i>
+        <i class = "fa-li fa text-body-secondary fa-calculator"></i>
         <span data-bind="text: calculate, css: getDiffClass('calculate'), popover: getDiffPopover(changes['calculate'], 'calculate')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: relevant -->
       <li data-bind="visible: $root.showRelevance" >
-        <i class = "fa-li text-muted fa-solid fa-code-branch"></i>
+        <i class = "fa-li text-body-secondary fa-solid fa-code-branch"></i>
         <span data-bind="text: relevant, css: getDiffClass('relevant'), popover: getDiffPopover(changes['relevant'], 'relevant')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: constraint -->
       <li data-bind="visible: $root.showConstraints">
-        <i class = "fa-li fa text-muted fa-ban"></i>
+        <i class = "fa-li fa text-body-secondary fa-ban"></i>
         <span data-bind="text: constraint, css: getDiffClass('constraint'), popover: getDiffPopover(changes['constraint'], 'constraint')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: setvalue -->
       <li data-bind="visible: $root.showDefaultValues">
-        <i class = "fa-li fa text-muted fa-home"></i>
+        <i class = "fa-li fa text-body-secondary fa-home"></i>
         <span data-bind="text: setvalue, css: getDiffClass('setvalue'), popover: getDiffPopover(changes['setvalue'], 'setvalue')"></span>
       </li>
       <!-- /ko -->
       <!-- ko foreach: load_properties -->
       <li data-bind="visible: $root.showCaseProperties">
-        <i class = "fa fa-li text-muted fa-briefcase"></i>
+        <i class = "fa fa-li text-body-secondary fa-briefcase"></i>
         <span data-bind="css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property), popover: $parent.getLoadSavePopover('load_properties', $data.case_type, $data.property)">
-          <span class="text-muted" data-bind="text:$data.case_type, css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property)"></span> -
+          <span class="text-body-secondary" data-bind="text:$data.case_type, css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property)"></span> -
           <!-- ko text: $data.property --><!-- /ko -->
         </span>
         <span title="{% trans 'Load property' %}">
-          <i class = "fa text-muted fa-arrow-right"></i>
-          <i class = "fa text-muted fa-file"></i>
+          <i class = "fa text-body-secondary fa-arrow-right"></i>
+          <i class = "fa text-body-secondary fa-file"></i>
         </span>
       </li>
       <!-- /ko -->
       <!-- ko foreach: save_properties -->
       <li data-bind="visible: $root.showCaseProperties">
-        <i class = "fa fa-li text-muted fa-file"></i>
+        <i class = "fa fa-li text-body-secondary fa-file"></i>
         <span title="{% trans 'Save property' %}">
-          <i class = "fa text-muted fa-arrow-right"></i>
-          <i class = "fa text-muted fa-briefcase"></i>
+          <i class = "fa text-body-secondary fa-arrow-right"></i>
+          <i class = "fa text-body-secondary fa-briefcase"></i>
         </span>
         <span data-bind="css: $parent.getLoadSaveDiffClass('save_properties', $data.case_type, $data.property), popover: $parent.getLoadSavePopover('save_properties', $data.case_type, $data.property)">
-          <span class="text-muted" data-bind="text:$data.case_type"></span> -
+          <span class="text-body-secondary" data-bind="text:$data.case_type"></span> -
           <!-- ko text: $data.property --><!-- /ko -->
           <!-- ko if: $data.update_mode === 'edit' -->
-          <sup class="text-muted">{% trans 'save only on edit' %}</sup>
+          <sup class="text-body-secondary">{% trans 'save only on edit' %}</sup>
           <!-- /ko -->
         </span>
       </li>

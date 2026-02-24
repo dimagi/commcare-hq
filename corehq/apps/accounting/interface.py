@@ -67,6 +67,7 @@ from .models import (
     FeatureType,
     Invoice,
     PaymentRecord,
+    PaymentType,
     SoftwarePlan,
     SoftwarePlanVersion,
     Subscription,
@@ -1401,6 +1402,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
             ),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
+            DataTablesColumn("Payment Type"),
             DataTablesColumn("Invoice"),
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
@@ -1465,6 +1467,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     )
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
+                dict(PaymentType.CHOICES)[credit_adj.payment_type] if credit_adj.payment_type else '',
                 invoice_column_cell(credit_adj.invoice) if credit_adj.invoice else None,
                 credit_adj.note,
                 quantize_accounting_decimal(credit_adj.amount),

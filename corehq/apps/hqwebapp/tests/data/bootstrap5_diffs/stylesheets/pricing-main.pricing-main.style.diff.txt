@@ -1,0 +1,243 @@
+--- 
++++ 
+@@ -1,16 +1,16 @@
+-@import "../../hqwebapp/less/_hq/includes/variables.less";
+-@import "../../hqwebapp/less/_hq/includes/mixins.less";
+-
+-@toggle-switch-height: 34px;
+-@toggle-switch-width: 60px;
+-@slider-padding: 4px;
+-@slider-height: @toggle-switch-height - @slider-padding * 2;
++@import "../../hqwebapp/scss/commcarehq/variables";
++@import "../../hqwebapp/scss/commcarehq/mixins";
++
++$toggle-switch-height: 34px;
++$toggle-switch-width: 60px;
++$slider-padding: 4px;
++$slider-height: $toggle-switch-height - $slider-padding * 2;
+ 
+ .switch {
+   display: inline-block;
+-  height: @toggle-switch-height;
++  height: $toggle-switch-height;
+   position: relative;
+-  width: @toggle-switch-width;
++  width: $toggle-switch-width;
+ 
+   input {
+     display: none;
+@@ -18,7 +18,7 @@
+ }
+ 
+ .slider {
+-  background-color: @cc-brand-mid;
++  background-color: $cc-brand-mid;
+   cursor: pointer;
+   top: 0;
+   left: 0;
+@@ -29,18 +29,18 @@
+ 
+   &::before {
+     background-color: #ffffff;
+-    bottom: @slider-padding;
++    bottom: $slider-padding;
+     content: "";
+-    height: @slider-height;
+-    left: @slider-padding;
++    height: $slider-height;
++    left: $slider-padding;
+     position: absolute;
+     transition: 0.4s;
+-    width: @slider-height;
++    width: $slider-height;
+   }
+ }
+ 
+ input:checked + .slider {
+-  background-color: @cc-brand-mid;
++  background-color: $cc-brand-mid;
+ }
+ 
+ input:focus + .slider {
+@@ -48,11 +48,11 @@
+ }
+ 
+ input:checked + .slider:before {
+-  transform: translateX(@slider-height);
++  transform: translateX($slider-height);
+ }
+ 
+ .slider.round {
+-  border-radius: @toggle-switch-height;
++  border-radius: $toggle-switch-height;
+   &::before {
+     border-radius: 50%;
+   }
+@@ -60,25 +60,25 @@
+ 
+ .switch-label {
+   vertical-align: top;
+-  line-height: @toggle-switch-height;
++  line-height: $toggle-switch-height;
+   font-weight: bold;
+ 
+   .switch {
+-    margin-bottom: -@slider-height * 0.45;
+-    margin-left: @slider-padding * 2;
+-    margin-right: @slider-padding * 2;
++    margin-bottom: -$slider-height * 0.45;
++    margin-left: $slider-padding * 2;
++    margin-right: $slider-padding * 2;
+   }
+ }
+ 
+ .refund-text {
+-  color: @cc-brand-mid;
++  color: $cc-brand-mid;
+ }
+ 
+ .tile {
+   padding: 20px 20px 30px;
+   display: block;
+   position: relative;
+-  color: @cc-text;
++  color: $cc-text;
+   border-radius: 5px;
+   text-align: center;
+ 
+@@ -94,13 +94,13 @@
+   }
+ 
+   .pricing-type-annual {
+-    background-color: @cc-text;
++    background-color: $cc-text;
+     color: white !important;
+   }
+ 
+   .pricing-type-monthly {
+-    color: @cc-text;
+-    border-color: @cc-text;
++    color: $cc-text;
++    border-color: $cc-text;
+   }
+ 
+   .btn {
+@@ -128,7 +128,7 @@
+   }
+ 
+   &:after { // scss-lint:disable PropertyCount
+-    border: 4px solid @cc-brand-mid;
++    border: 4px solid $cc-brand-mid;
+     border-radius: inherit;
+     bottom: 0;
+     content: " ";
+@@ -177,7 +177,7 @@
+   margin-bottom: 20px;
+ }
+ 
+-._make-color-tile(@_color-tile) {
++@mixin _make-color-tile($color-tile) {
+   width: 230px;
+   height: 370px;
+   position: relative;
+@@ -193,11 +193,11 @@
+   }
+ 
+   h3 {
+-    color: @_color-tile !important;
++    color: $color-tile !important;
+   }
+ 
+   .btn {
+-    color: @_color-tile !important;
++    color: $color-tile !important;
+     position: absolute;
+     bottom: 30px;
+     width: 76%;
+@@ -205,16 +205,16 @@
+   }
+ 
+   .btn-current {
+-    border-color: @_color-tile;
++    border-color: $color-tile;
+   }
+ 
+   .pricing-type-monthly {
+-    border-color: @_color-tile;
+-    color: @_color-tile !important;
++    border-color: $color-tile;
++    color: $color-tile !important;
+   }
+ 
+   .pricing-type-annual {
+-    background-color: @_color-tile;
++    background-color: $color-tile;
+   }
+ 
+   .plan-desc {
+@@ -223,16 +223,16 @@
+ 
+   &:before,
+   &:after {
+-    border-color: @_color-tile;
++    border-color: $color-tile;
+   }
+ 
+   .btn-current {
+-    color: @_color-tile !important;
++    color: $color-tile !important;
+   }
+ }
+ 
+ .tile-free {
+-  ._make-color-tile(@cc-neutral-mid);
++  @include _make-color-tile($cc-neutral-mid);
+   .pricing-type {
+     opacity: 0;
+   }
+@@ -242,19 +242,19 @@
+ }
+ 
+ .tile-standard {
+-  ._make-color-tile(@cc-att-pos-mid);
++  @include _make-color-tile($cc-att-pos-mid);
+ }
+ 
+ .tile-pro {
+-  ._make-color-tile(@cc-light-cool-accent-mid);
++  @include _make-color-tile($cc-light-cool-accent-mid);
+ }
+ 
+ .tile-advanced {
+-  ._make-color-tile(@cc-dark-cool-accent-mid);
++  @include _make-color-tile($cc-dark-cool-accent-mid);
+ }
+ 
+ .tile-enterprise {
+-  ._make-color-tile(@cc-brand-mid);
++  @include _make-color-tile($cc-brand-mid);
+ }
+ 
+ .select-plan-row {
+@@ -285,7 +285,7 @@
+ }
+ 
+ .tile-paused {
+-  ._make-color-tile(@cc-neutral-mid);
++  @include _make-color-tile($cc-neutral-mid);
+ 
+   width: 475px;
+   height: auto;
+@@ -298,10 +298,10 @@
+     margin-top: 0;
+     text-transform: uppercase;
+     margin-bottom: 10px;
+-    color: @cc-neutral-mid;
++    color: $cc-neutral-mid;
+ 
+     &:hover {
+-      color: @cc-neutral-mid;
++      color: $cc-neutral-mid;
+     }
+   }
+ 

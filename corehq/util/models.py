@@ -420,3 +420,15 @@ def foreign_init(cls):
     super_init = cls.__init__
     cls.__init__ = __init__
     return cls
+
+
+class GetOrNoneManager(models.Manager):
+    """
+    Adds get_or_none method to objects
+    """
+
+    def get_or_none(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except self.model.DoesNotExist:
+            return None

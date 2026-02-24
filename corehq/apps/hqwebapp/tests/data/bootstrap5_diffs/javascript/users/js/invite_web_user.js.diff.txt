@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -2,8 +2,8 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import customDataFields from "users/js/bootstrap3/custom_data_fields";
+-import "hqwebapp/js/bootstrap3/validators.ko";
++import customDataFields from "users/js/bootstrap5/custom_data_fields";
++import "hqwebapp/js/bootstrap5/validators.ko";
+ import "locations/js/widgets";
+ 
+ var inviteWebUserFormHandler = function () {

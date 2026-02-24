@@ -1,5 +1,5 @@
 from celery.schedules import crontab
-from corehq.apps.celery import task
+from corehq.apps.celery import serial_task, task
 
 from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
@@ -22,7 +22,10 @@ from .util import (
 )
 
 
-@task(queue='case_import_queue')
+# set a timeout long enough to give queued tasks a chance to process before timing out
+@serial_task(
+    '{domain}', default_retry_delay=60 * 10, max_retries=144, timeout=24 * 60 * 60, queue='case_import_queue'
+)
 def bulk_import_async(config_list_json, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
     result_stored = False

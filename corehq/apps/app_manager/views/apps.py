@@ -3,6 +3,9 @@ import json
 import os
 from collections import defaultdict
 
+import urllib3
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 from django.contrib import messages
 from django.http import (
     HttpResponse,
@@ -13,21 +16,11 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET, require_POST
-
-import urllib3
+from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
-
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request, json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_APP_TEMPLATE_FORM_ID,
-    send_hubspot_form,
-    track_workflow_noop,
-)
 from corehq.apps.app_manager import add_ons, id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_layout,
@@ -49,8 +42,9 @@ from corehq.apps.app_manager.decorators import (
 )
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
+    AppValidationError,
     IncompatibleFormTypeException,
-    RearrangeError, AppValidationError,
+    RearrangeError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -58,29 +52,28 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     ExchangeApplication,
+    LinkedApplication,
     Module,
     ModuleNotFoundException,
     app_template_dir,
+    load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template, LinkedApplication
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
     get_and_assert_practice_user_in_domain,
-    get_latest_enabled_versions_per_profile,
     get_settings_values,
     is_linked_app,
     is_remote_app,
 )
-from corehq.apps.app_manager.util import enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
-    validate_custom_assertions,
     update_linked_app,
+    validate_custom_assertions,
     validate_langs,
 )
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
@@ -91,16 +84,16 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     track_domain_request,
 )
+from corehq.apps.domain.models import all_app_manager_add_ons_enabled
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors import (
-    get_practice_mode_mobile_workers,
-)
+from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.dates import iso_string_to_datetime
@@ -148,9 +141,6 @@ def default_new_app(request, domain):
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
     """
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow_noop(request.couch_user.username, "User created a new blank application")
-
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
     add_ons.init_app(request, app)
@@ -160,13 +150,6 @@ def default_new_app(request, domain):
     clear_app_cache(request, domain)
     app.save()
     return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-
-
-@require_POST
-@require_can_edit_apps
-def enable_usercase(request, domain):
-    enable_usercase_util(domain)
-    return JsonResponse({"success": 1})
 
 
 def get_app_view_context(request, app):
@@ -286,7 +269,16 @@ def get_app_view_context(request, app):
             'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
             'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
+        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False),
+
+        'is_linked_app': is_linked_app(app),
+        'is_remote_app': is_remote_app(app),
+
+        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
     })
+
+    # dependent on bulk_ui_translation_upload and bulk_app_translation_upload
+    # keys existing in context
     context.update({
         'bulk_ui_translation_form': get_bulk_upload_form(
             context,
@@ -298,14 +290,7 @@ def get_app_view_context(request, app):
             form_class=AppTranslationsBulkUploadForm,
         ),
     })
-    context.update({
-        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False)
-    })
 
-    context.update({
-        'is_linked_app': is_linked_app(app),
-        'is_remote_app': is_remote_app(app),
-    })
     if isinstance(app, Application):
         context.update({'custom_assertions': [
             {'test': assertion.test, 'text': assertion.text.get(lang)}
@@ -411,10 +396,6 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
-        latest_version_for_build_profiles = {}
-        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            latest_version_for_build_profiles = get_latest_enabled_versions_per_profile(app.get_id)
-
         context.update({
             'show_advanced': show_advanced,
             'show_biometric': show_biometric,
@@ -424,7 +405,6 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
-            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context
@@ -503,8 +483,6 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow_noop(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
@@ -558,6 +536,7 @@ def _build_sample_app(app):
 
 
 @require_can_edit_apps
+@use_bootstrap5
 def app_exchange(request, domain):
     template = "app_manager/app_exchange.html"
     records = []
@@ -995,5 +974,4 @@ def pull_upstream_app(request, domain, app_id):
             messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
-    track_workflow_noop(request.couch_user.username, "Linked domain: upstream app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

@@ -1,4 +1,5 @@
 import uuid
+
 import pytest
 from casexml.apps.case.mock import CaseFactory
 from django.contrib.auth.models import User

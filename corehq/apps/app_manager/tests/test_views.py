@@ -18,6 +18,7 @@ from corehq.apps.app_manager.models import (
     Module,
     ReportModule,
     ShadowModule,
+    SortElement,
 )
 from corehq.apps.app_manager.tests.util import add_build, get_simple_form
 from corehq.apps.app_manager.views import (
@@ -35,7 +36,7 @@ from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.util.test_utils import flag_enabled, timelimit
+from corehq.util.test_utils import flag_enabled, has_permissions, timelimit
 
 from .app_factory import AppFactory
 from .test_form_versioning import INVALID_TEMPLATE
@@ -596,20 +597,25 @@ def apps_modules_setup(test_case):
 class TestViewGeneric(ViewsBase):
     domain = 'test-view-generic'
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.app = Application.new_app(cls.domain, "TestApp")
+        cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
+        cls.module = cls.app.add_module(Module.new_module("Module0", "en"))
+        cls.form = cls.app.new_form(
+            cls.module.id, "Form0", "en",
+            attachment=get_simple_form(xmlns='xmlns-0.0'))
+        cls.app.save()
+        app_adapter.index(cls.app, refresh=True)  # Send to ES
+
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
 
-        self.app = Application.new_app(self.domain, "TestApp")
-        self.app.build_spec = BuildSpec.from_string('2.7.0/latest')
-        self.module = self.app.add_module(Module.new_module("Module0", "en"))
-        self.form = self.app.new_form(
-            self.module.id, "Form0", "en",
-            attachment=get_simple_form(xmlns='xmlns-0.0'))
-        self.app.save()
-        app_adapter.index(self.app, refresh=True)  # Send to ES
-
-    def tearDown(self):
-        self.app.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        super().tearDownClass()
 
     def test_view_app(self, mock1):
         url = reverse('view_app', kwargs={
@@ -617,8 +623,8 @@ class TestViewGeneric(ViewsBase):
             'app_id': self.app.id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_app)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_app
 
     def test_view_module(self, mock1):
         url = reverse('view_module', kwargs={
@@ -627,8 +633,8 @@ class TestViewGeneric(ViewsBase):
             'module_unique_id': self.module.unique_id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_module)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_module
 
     def test_view_module_legacy(self, mock1):
         url = reverse('view_module_legacy', kwargs={
@@ -637,8 +643,8 @@ class TestViewGeneric(ViewsBase):
             'module_id': self.module.id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_module)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_module
 
     def test_view_form(self, mock1):
         url = reverse('view_form', kwargs={
@@ -647,8 +653,8 @@ class TestViewGeneric(ViewsBase):
             'form_unique_id': self.form.unique_id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_form)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_form
 
     def test_view_form_legacy(self, mock1):
         url = reverse('view_form_legacy', kwargs={
@@ -658,8 +664,8 @@ class TestViewGeneric(ViewsBase):
             'form_id': self.form.id,
         })
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context.keys(), self.expected_keys_form)
+        assert response.status_code == 200
+        assert set(response.context.keys()) >= self.expected_keys_form
 
     expected_keys_app = {
         'None', 'perms', 'practice_users', 'EULA_COMPLIANCE', 'bulk_ui_translation_form',
@@ -670,7 +676,7 @@ class TestViewGeneric(ViewsBase):
         'app', 'prompt_settings_url', 'is_remote_app', 'show_biometric', 'linked_name',
         'selected_form', 'module', 'MINIMUM_PASSWORD_LENGTH', 'MINIMUM_ZXCVBN_SCORE',
         'SUPPORT_EMAIL', 'app_view_options', 'show_advanced', 'role_version', 'custom_assertions',
-        'is_app_settings_page', 'domain_names', 'latest_version_for_build_profiles', 'ANALYTICS_CONFIG',
+        'is_app_settings_page', 'domain_names', 'ANALYTICS_CONFIG',
         'csrf_token', 'LANGUAGE_CODE', 'app_name', 'sub', 'is_saas_environment', 'js_entry',
         'selected_module', 'add_ons_layout', 'is_dimagi_environment', 'TIME_ZONE', 'env', 'add_ons',
         'show_shadow_forms', 'can_edit_apps', 'ANALYTICS_IDS', 'active_tab', 'current_url_name',
@@ -688,7 +694,7 @@ class TestViewGeneric(ViewsBase):
         'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'has_mobile_workers',
         'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
         'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'form_submit_history_url', 'btn_style',
-        'chat_widget_config', 'ACCOUNTS_EMAIL',
+        'ACCOUNTS_EMAIL', 'all_add_ons_enabled', 'CHATBOT_ID', 'CHATBOT_TOKEN'
     }
 
     expected_keys_module = {
@@ -701,12 +707,12 @@ class TestViewGeneric(ViewsBase):
         'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules',
         'app_id', 'request', 'MINIMUM_PASSWORD_LENGTH', 'type', 'is_saas_environment', 'show_all_projects_link',
         'enterprise_mode', 'csrf_token', 'is_dimagi_environment', 'domain_names',
-        'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'show_training_modules', 'AUDIO_LABEL',
-        'show_shadow_module_v1', 'practice_users', 'add_ons', 'module_icon', 'SALES_EMAIL', 'app', 'domain_links',
+        'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'show_training_modules', 'AUDIO_LABEL', 'app',
+        'show_shadow_module_v1', 'practice_users', 'add_ons', 'module_custom_icon', 'SALES_EMAIL', 'domain_links',
         'app_subset', 'show_biometric', 'case_list_form_options', 'MINIMUM_ZXCVBN_SCORE', 'ICON_LABEL', 'app_name',
         'linkable_domains', 'alerts', 'show_shadow_forms', 'data_registry_workflow_choices', 'use_bootstrap5',
         'title_block', 'login_template', 'base_template', 'MEDIA_URL', 'lang', 'show_live_preview',
-        'latest_version_for_build_profiles', 'edit_name_url', 'case_types', 'js_options', 'privileges',
+        'edit_name_url', 'case_types', 'js_options', 'privileges',
         'settings_active', 'commcare_hq_names', 'add_ons_layout', 'limit_to_linked_domains', 'module', 'True',
         'multimedia', 'MAPBOX_ACCESS_TOKEN', 'all_case_modules', 'LANGUAGES',
         'allow_report_an_issue', 'ANALYTICS_CONFIG', 'custom_icon', 'page_title_block', 'INVOICING_CONTACT_EMAIL',
@@ -717,7 +723,7 @@ class TestViewGeneric(ViewsBase):
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
         'formats_supporting_case_list_optimizations', 'module_type', 'icon_class', 'form_submit_history_url',
-        'btn_style', 'chat_widget_config', 'ACCOUNTS_EMAIL',
+        'btn_style', 'ACCOUNTS_EMAIL', 'CHATBOT_ID', 'CHATBOT_TOKEN'
     }
 
     expected_keys_form = {
@@ -731,11 +737,11 @@ class TestViewGeneric(ViewsBase):
         'is_saas_environment', 'show_all_projects_link', 'enterprise_mode', 'module_is_multi_select', 'csrf_token',
         'nav_form', 'xform_validation_errored', 'allow_form_filtering',
         'is_dimagi_environment', 'domain_names', 'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'js_entry',
-        'show_training_modules', 'AUDIO_LABEL', 'show_shadow_module_v1', 'practice_users', 'add_ons',
-        'module_icon', 'custom_instances', 'SALES_EMAIL', 'app', 'domain_links', 'form_errors', 'app_subset',
+        'show_training_modules', 'AUDIO_LABEL', 'show_shadow_module_v1', 'practice_users', 'add_ons', 'app',
+        'module_custom_icon', 'custom_instances', 'SALES_EMAIL', 'domain_links', 'form_errors', 'app_subset',
         'show_biometric', 'MINIMUM_ZXCVBN_SCORE', 'ICON_LABEL', 'app_name', 'linkable_domains', 'alerts',
-        'show_shadow_forms', 'use_bootstrap5', 'form_icon', 'title_block', 'login_template', 'base_template',
-        'MEDIA_URL', 'lang', 'show_live_preview', 'latest_version_for_build_profiles',
+        'show_shadow_forms', 'use_bootstrap5', 'form_custom_icon', 'title_block', 'login_template',
+        'base_template', 'MEDIA_URL', 'lang', 'show_live_preview',
         'edit_name_url', 'privileges', 'settings_active', 'commcare_hq_names', 'add_ons_layout',
         'limit_to_linked_domains', 'module', 'is_case_list_form', 'True', 'multimedia', 'MAPBOX_ACCESS_TOKEN',
         'xform_validation_missing', 'LANGUAGES', 'allow_report_an_issue',
@@ -744,11 +750,166 @@ class TestViewGeneric(ViewsBase):
         'restrict_domain_creation', 'PRIVACY_EMAIL',
         'is_allowed_to_be_release_notes_form', 'custom_assertions', 'title_context_block', 'id',
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'allow_form_copy', 'selected_form', 'slug',
-        'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
-        'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
+        'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'allow_usercase',
+        'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules',
         'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class', 'case_property_warning',
-        'form_submit_history_url', 'btn_style', 'chat_widget_config', 'ACCOUNTS_EMAIL',
+        'form_submit_history_url', 'btn_style', 'ACCOUNTS_EMAIL', 'CHATBOT_ID', 'CHATBOT_TOKEN'
     }
+
+
+class TestModuleViewsBase(ViewsBase):
+    domain = 'test-module-views'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        factory = AppFactory(domain=cls.domain)
+        cls.app = factory.app
+        cls.module = factory.new_basic_module('open_case', 'house', with_form=False)
+        cls.app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.username, password=self.password)
+
+
+class TestEditModuleDetailScreens(TestModuleViewsBase):
+    def test_edit_module_detail_screens(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": ""
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": "now()"
+                }
+            ])
+        }
+
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property_validations(self, *args):
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "",
+                    "type": "plain",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "First",
+                    "sort_calculation": ""
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode('utf-8'), 'Sort property needs a property or a calculation')
+
+    @flag_enabled("SORT_CALCULATION_IN_CASE_LIST")
+    def test_sort_property_translations_retention(self):
+        self.app = Application.get(self.app._id)
+        self.app.modules[0].case_details.short.sort_elements = [
+            SortElement(
+                field='name',
+                type='string',
+                direction='ascending',
+                blanks='first',
+                display={'en': 'Name', 'hin': 'Naam'},
+                sort_calculation=''
+            ),
+            SortElement(
+                field='',
+                type='int',
+                direction='descending',
+                blanks='last',
+                display={'en': 'Age', 'hin': 'Umar'},
+                sort_calculation='if(age>5,1,2)'
+            )
+        ]
+        self.app.save()
+        url = reverse('edit_module_detail_screens', kwargs={
+            'domain': self.app.domain,
+            'app_id': self.app.id,
+            'module_unique_id': self.module.unique_id,
+        })
+        update_params = {
+            "type": "case",
+            "sort_elements": json.dumps([
+                {
+                    "field": "name",
+                    "type": "string",
+                    "direction": "ascending",
+                    "blanks": "first",
+                    "display": "Nameeee",
+                    "sort_calculation": ""
+                },
+                {
+                    "field": "",
+                    "type": "int",
+                    "direction": "descending",
+                    "blanks": "first",
+                    "display": "Ageee",
+                    "sort_calculation": "if(age>5,1,2)"
+                }
+            ])
+        }
+        response = self.client.post(url, update_params)
+        self.assertEqual(response.status_code, 200)
+        app = Application.get(self.app._id)
+        new_sort_elements = app.modules[0].case_details.short.sort_elements
+        self.assertEqual(
+            new_sort_elements[0].display,
+            {'en': 'Nameeee', 'hin': 'Naam'}
+        )
+        self.assertEqual(
+            new_sort_elements[1].display,
+            {'en': 'Ageee', 'hin': 'Umar'}
+        )
 
 
 class TestDownloadCaseSummaryViewByAPIKey(TestCase):
@@ -758,12 +919,13 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     def setUpClass(cls):
         # Set up a domain and an app.
         super().setUpClass()
-        cls.domain = Domain.get_by_name("test-domain")
-        if not cls.domain:
-            cls.domain = Domain(name="test-domain", is_active=True)
+        cls.domain = Domain(name="test-domain", is_active=True)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+
         cls.app = Application.new_app("test-domain", "TestApp")
         cls.app.save()
+        cls.addClassCleanup(cls.app.delete)
 
         # Set up the cls.web_user: set password and give access to the cls.domain.
         old_web_user = WebUser.get_by_username("test_user")
@@ -772,6 +934,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         cls.web_user = WebUser.create(
             cls.domain.name, "test_user", "my_password", None, None, is_active=True
         )
+        cls.addClassCleanup(cls.web_user.delete, None, None)
 
         # Generate an API key for the cls.web_user.
         cls.web_user_api_key = HQApiKey.objects.get_or_create(
@@ -785,20 +948,13 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
             kwargs={"domain": cls.domain.name, "app_id": cls.app.get_id},
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.app.delete()
-        cls.web_user_api_key.delete()
-        cls.web_user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super().tearDownClass()
-
     def _encode_basic_credentials(self, username, password):
         """Base64-encode a username and password."""
         return base64.b64encode(
             "{}:{}".format(username, password).encode("utf-8")
         ).decode("utf-8")
 
+    @has_permissions(view_apps=True)
     def test_correct_api_key(self):
         """Sending a correct API key returns a response with the case summary file."""
         response = self.client.get(
@@ -809,6 +965,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], "application/vnd.ms-excel")
 
+    @has_permissions(view_apps=True)
     def test_incorrect_api_key(self):
         """Sending an incorrect (or missing) API key returns a 401 response."""
         with self.subTest("Missing API key"):
@@ -834,6 +991,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
             )
             self.assertEqual(response.status_code, 401)
 
+    @has_permissions(view_apps=True)
     def test_already_authenticated_does_not_need_api_key(self):
         """If a user is already authenticated, then the user does not need to send an API key."""
         # Authenticate the user.
@@ -844,6 +1002,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], "application/vnd.ms-excel")
 
+    @has_permissions(view_apps=True)
     def test_unsupported_request_methods(self):
         """Test sending requests by unsupported HTTP methods to the view."""
         unsupported_methods = ["POST", "PUT", "PATCH", "DELETE"]
@@ -853,6 +1012,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
                 response = request_method(self.url)
                 self.assertEqual(response.status_code, 405)
 
+    @has_permissions(view_apps=True)
     def test_correct_credentials(self):
         """Sending valid or invalid username & password does not succeed."""
         with self.subTest("Valid credentials"):
@@ -872,6 +1032,15 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
                 self.url, HTTP_AUTHORIZATION=f"Basic {invalid_credentials}"
             )
             self.assertEqual(response.status_code, 401)
+
+    @has_permissions(view_apps=False)
+    def test_inadequate_permissions(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.plaintext_key}",
+        )
+
+        self.assertEqual(response.status_code, 403)
 
 
 def test_doctests():

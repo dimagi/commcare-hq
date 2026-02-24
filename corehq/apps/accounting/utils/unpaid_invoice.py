@@ -144,9 +144,14 @@ class InvoiceReminder(UnpaidInvoiceAction):
         else:
             account_name = invoice.get_domain()
 
-        subject = _(
-            "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-        ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
+        if invoice.account.auto_pay_enabled:
+            subject = _(
+                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} days"
+            ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
+        else:
+            subject = _(
+                "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
+            ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
 
         send_HTML_email(
             subject,
@@ -181,6 +186,9 @@ class InvoiceReminder(UnpaidInvoiceAction):
             'total_balance': fmt_dollar_amount(total),
             'plan_name': subscription.plan_version.plan.name,
             'can_pay_by_wire': invoice.can_pay_by_wire,
+            'autopay_enabled': subscription.account.auto_pay_enabled,
+            'autopay_required': subscription.account.require_auto_pay,
+            'overdue_invoice_limit_days': OVERDUE_INVOICE_LIMIT_DAYS,
         })
         return context
 

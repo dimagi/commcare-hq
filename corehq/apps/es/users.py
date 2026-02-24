@@ -48,6 +48,7 @@ class UserES(HQESQuery):
             created,
             mobile_users,
             web_users,
+            exclude_dimagi_users,
             user_ids,
             location,
             login_as_user,
@@ -222,6 +223,11 @@ def admin_users():
 def demo_users():
     """Matches users who has is_demo_user set to True"""
     return filters.term("is_demo_user", True)
+
+
+def exclude_dimagi_users():
+    """Exclude users whose username ends with @dimagi.com"""
+    return filters.NOT(filters.wildcard("username.exact", "*@dimagi.com"))
 
 
 def created(gt=None, gte=None, lt=None, lte=None):

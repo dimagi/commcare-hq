@@ -10,7 +10,7 @@ from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.templatetags import i18n
 from django.urls import reverse
-from django.utils.html import conditional_escape, format_html
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
@@ -395,9 +395,11 @@ def chevron(value):
     Displays a green up chevron if value > 0, and a red down chevron if value < 0
     """
     if value > 0:
-        return format_html('<span class="fa fa-chevron-up" style="color: #006400;"></span>')
+        return mark_safe(  # nosec: no user input
+            '<span class="fa fa-chevron-up" style="color: #006400;"></span>')
     elif value < 0:
-        return format_html('<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
+        return mark_safe(  # nosec: no user input
+            '<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
     else:
         return ''
 

@@ -6,6 +6,7 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import (
     CouchUser,
@@ -19,7 +20,7 @@ from ...models import ReportConfig, ReportNotification
 
 @patch('corehq.apps.reports.standard.monitoring.util.get_simplified_users',
        new=lambda q: [])
-@es_test(requires=[case_adapter, form_adapter], setup_class=True)
+@es_test(requires=[case_adapter, user_adapter, form_adapter], setup_class=True)
 class TestScheduledReports(TestCase):
 
     def test_scheduled_reports_sends_to_recipients(self):

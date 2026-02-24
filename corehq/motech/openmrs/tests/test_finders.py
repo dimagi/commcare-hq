@@ -258,7 +258,7 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
         case = CaseMock({
             'first_name': 'Mahapajapati',
             'last_name': 'Gotami',
-            'address_1': '585 Massachusetts Ave',
+            'address_1': '245 Main Street',
             'address_2': 'Cambridge',
             'dob': '1983-01-01T00:00:00.000+0200',
         })

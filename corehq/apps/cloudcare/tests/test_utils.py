@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import (
@@ -5,10 +7,17 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import (
+    get_simple_form,
+    patch_validate_xform,
+)
 from corehq.apps.cloudcare.models import ApplicationAccess, SQLAppGroup
 from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
     get_mobile_ucr_count,
+    get_web_app_ids_available_to_user,
+    get_web_apps_available_to_user,
     should_restrict_web_apps_usage,
 )
 from corehq.apps.domain.shortcuts import create_domain
@@ -126,7 +135,7 @@ class TestCanUserAccessWebApp(TestCase):
     def test_commcare_user_has_access_if_assigned_role_that_can_access_all_web_apps(self):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(access_web_apps=True))
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -134,7 +143,7 @@ class TestCanUserAccessWebApp(TestCase):
         # mobile users have not historically required this new permission, so we need to assume they have access
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(access_web_apps=False))
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -143,28 +152,28 @@ class TestCanUserAccessWebApp(TestCase):
             self.commcare_user, HqPermissions(web_apps_list=[self.build_doc["copy_of"]])
         )
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
     def test_commcare_user_does_not_have_access_if_assigned_role_that_can_access_different_app(self):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
     def test_web_user_has_access_if_assigned_role_that_can_access_all_web_apps(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(access_web_apps=True))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
     def test_web_user_does_not_have_access_if_assigned_role_that_cannot_access_web_apps(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(access_web_apps=False))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
@@ -173,7 +182,7 @@ class TestCanUserAccessWebApp(TestCase):
             self.web_user, HqPermissions(web_apps_list=[self.build_doc["copy_of"]])
         )
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -182,21 +191,21 @@ class TestCanUserAccessWebApp(TestCase):
             self.web_user, HqPermissions(web_apps_list=[self.build_doc["copy_of"]])
         )
 
-        has_access = can_user_access_web_app(self.web_user, self.app_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.app_doc['_id'])
 
         self.assertTrue(has_access)
 
     def test_web_user_does_not_have_access_if_assigned_role_that_can_access_different_app(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
     def test_web_user_does_not_have_access_to_canonical_if_assigned_role_that_can_access_different_app(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.web_user, self.app_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.app_doc['_id'])
 
         self.assertFalse(has_access)
 
@@ -205,7 +214,7 @@ class TestCanUserAccessWebApp(TestCase):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(access_web_apps=False))
         self.add_user_to_group_for_app_id(self.commcare_user, self.build_doc['_id'])
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -215,7 +224,7 @@ class TestCanUserAccessWebApp(TestCase):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
         self.add_user_to_group_for_app_id(self.commcare_user, self.build_doc['_id'])
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
@@ -224,7 +233,7 @@ class TestCanUserAccessWebApp(TestCase):
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
         self.add_user_to_group_for_app_id(self.commcare_user, 'random-app')
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
@@ -235,7 +244,7 @@ class TestCanUserAccessWebApp(TestCase):
         )
         self.add_user_to_group_for_app_id(self.commcare_user, self.build_doc['_id'])
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -246,7 +255,7 @@ class TestCanUserAccessWebApp(TestCase):
         )
         self.add_user_to_group_for_app_id(self.commcare_user, "random-app")
 
-        has_access = can_user_access_web_app(self.commcare_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.commcare_user, self.build_doc['copy_of'])
 
         self.assertTrue(has_access)
 
@@ -255,7 +264,7 @@ class TestCanUserAccessWebApp(TestCase):
         # web users always have permission via groups
         self.set_role_on_user_with_permissions(self.commcare_user, HqPermissions(web_apps_list=["random-app"]))
 
-        has_access = can_user_access_web_app(self.web_user, self.build_doc)
+        has_access = can_user_access_web_app(self.domain, self.web_user, self.build_doc['copy_of'])
 
         self.assertFalse(has_access)
 
@@ -290,3 +299,90 @@ class TestCanUserAccessWebApp(TestCase):
         self.addCleanup(group.delete)
         app_access = ApplicationAccess.objects.create(domain=self.domain, restrict=True)
         SQLAppGroup.objects.create(app_id=app_id, group_id=group._id, application_access=app_access)
+
+
+@patch_validate_xform()
+@patch('corehq.apps.app_manager.models._refresh_data_dictionary', MagicMock)
+class TestGetWebAppsAvailableToUser(TestCase):
+    domain = 'test-get_web_app_ids_available_to_user'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = MagicMock()
+        project = create_domain(cls.domain)
+        cls.addClassCleanup(project.delete)
+
+    def assert_apps(self, expected):
+        self.assertItemsEqual(
+            [app['_id'] for app in get_web_apps_available_to_user(self.domain, self.user)],
+            expected
+        )
+        self.assertItemsEqual(
+            [app_id for app_id in get_web_app_ids_available_to_user(self.domain, self.user)],
+            expected
+        )
+
+    def _make_app(self):
+        factory = AppFactory(self.domain, name='foo')
+        m0, f0 = factory.new_basic_module("bar", "bar")
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        app = factory.app
+        app.save()
+        self.addCleanup(app.delete)
+        return app
+
+    def test(self):
+        app = self._make_app()
+        self.assert_apps([])
+
+        # Doesn't show up after cloudcare enabled 'cause there's no build
+        app.cloudcare_enabled = True
+        app.save()
+        self.assert_apps([])
+
+        build_1 = app.make_build()
+        build_1.save()
+        self.assert_apps([])
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([build_1._id])
+
+        build_1.is_released = True
+        build_1.save()
+        self.assert_apps([build_1._id])
+
+        app.save()
+        build_2 = app.make_build()
+        build_2.save()
+        self.assert_apps([build_1._id])  # build 2 not released yet
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([build_2._id])
+
+        # disabling cloudcare doesn't take effect until appropriate stage
+        app.cloudcare_enabled = False
+        app.save()
+        self.assert_apps([build_1._id])
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([build_2._id])
+
+        build_3 = app.make_build()
+        build_3.save()
+        self.assert_apps([build_1._id])
+        with flag_enabled('CLOUDCARE_LATEST_BUILD'):
+            self.assert_apps([])
+
+        build_3.is_released = True
+        build_3.save()
+        self.assert_apps([])
+
+    def test_deleted_app_is_gone(self):
+        app = self._make_app()
+        app.cloudcare_enabled = True
+        app.save()
+        build_1 = app.make_build()
+        build_1.is_released = True
+        build_1.save()
+        self.assert_apps([build_1._id])
+        app.delete_app()
+        app.save()
+        self.assert_apps([])

@@ -3,9 +3,9 @@ import io
 import ipaddress
 import json
 import logging
-import uuid
 import re
 import urllib.parse
+import uuid
 
 from django import forms
 from django.conf import settings
@@ -26,13 +26,13 @@ from django.forms.fields import (
     Field,
     ImageField,
     IntegerField,
-    SelectMultiple,
 )
 from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -83,7 +83,6 @@ from corehq.apps.app_manager.const import (
     AMPLIFIES_YES,
 )
 from corehq.apps.app_manager.dbaccessors import (
-    get_app,
     get_apps_in_domain,
     get_brief_apps_in_domain,
     get_version_build_id,
@@ -92,9 +91,8 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
-    LatestEnabledBuildProfiles,
-    RemoteApp,
     CredentialApplication,
+    RemoteApp,
 )
 from corehq.apps.callcenter.views import (
     CallCenterOptionsController,
@@ -110,13 +108,15 @@ from corehq.apps.domain.models import (
     RESTRICTED_UCR_EXPRESSIONS,
     SUB_AREA_CHOICES,
     AllowedUCRExpressionSettings,
+    AppManagerDomainSettings,
     AppReleaseModeSetting,
     OperatorCallLimitSettings,
-    SMSAccountConfirmationSettings,
-    TransferDomainRequest,
     all_restricted_ucr_expressions,
 )
-from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
+from corehq.apps.hqmedia.models import (
+    CommCareImage,
+    LogoForSystemEmailsReference,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.models import ServerLocation
@@ -137,12 +137,11 @@ from corehq.toggles import (
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
-    TWO_STAGE_USER_PROVISIONING_BY_SMS,
-    USE_LOGO_IN_SYSTEM_EMAILS
+    USE_LOGO_IN_SYSTEM_EMAILS,
 )
+from corehq.util.global_request import get_request
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -315,60 +314,6 @@ class IPAccessConfigForm(forms.Form):
         return self.cleaned_data
 
 
-class TransferDomainFormErrors(object):
-    USER_DNE = gettext_lazy('The user being transferred to does not exist')
-    DOMAIN_MISMATCH = gettext_lazy('Mismatch in domains when confirming')
-
-
-class TransferDomainForm(forms.ModelForm):
-
-    class Meta(object):
-        model = TransferDomainRequest
-        fields = ['domain', 'to_username']
-
-    def __init__(self, domain, from_username, *args, **kwargs):
-        super(TransferDomainForm, self).__init__(*args, **kwargs)
-        self.current_domain = domain
-        self.from_username = from_username
-
-        self.fields['domain'].label = _('Type the name of the project to confirm')
-        self.fields['to_username'].label = _('New owner\'s CommCare username')
-
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            'domain',
-            'to_username',
-            StrictButton(
-                _("Transfer Project"),
-                type="submit",
-                css_class='btn-danger',
-            )
-        )
-
-    def save(self, commit=True):
-        instance = super(TransferDomainForm, self).save(commit=False)
-        instance.from_username = self.from_username
-        if commit:
-            instance.save()
-        return instance
-
-    def clean_domain(self):
-        domain = self.cleaned_data['domain']
-
-        if domain != self.current_domain:
-            raise forms.ValidationError(TransferDomainFormErrors.DOMAIN_MISMATCH)
-
-        return domain
-
-    def clean_to_username(self):
-        username = self.cleaned_data['to_username']
-        web_user = WebUser.get_by_username(username)
-        if not (web_user and web_user.is_active):
-            raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
-
-        return username
-
-
 class SubAreaMixin(object):
 
     def clean_sub_area(self):
@@ -515,16 +460,6 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
-    confirmation_link_expiry = IntegerField(
-        label=gettext_lazy("Account confirmation link expiry"),
-        required=True,
-        help_text=gettext_lazy(
-            """
-            Default time (in days) for which account confirmation link will be valid.
-            """
-        )
-    )
-
     operator_call_limit = IntegerField(
         label=gettext_lazy("Call limit"),
         required=True,
@@ -533,12 +468,6 @@ class DomainGlobalSettingsForm(forms.Form):
             Limit on number of calls allowed to an operator for each call type.
             """
         )
-    )
-
-    confirmation_sms_project_name = CharField(
-        label=gettext_lazy("Confirmation SMS project name"),
-        required=True,
-        help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
     release_mode_visibility = BooleanField(
@@ -557,6 +486,22 @@ class DomainGlobalSettingsForm(forms.Form):
             release page of applications.
             """
         )
+    )
+
+    enable_all_add_ons = BooleanField(
+        label=gettext_lazy("Application Add-Ons"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("Enable All Application Add-Ons"),
+        ),
+        help_text=gettext_lazy(
+            """
+            Enables all add-ons for all CommCare applications. To manage
+            add-ons on a per-application basis, this setting should be
+            disabled, and add-ons can be managed in the "Add-Ons" tab in
+            the application's settings.
+            """
+        ),
     )
 
     orphan_case_alerts_warning = BooleanField(
@@ -593,6 +538,19 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Name of the channel created in connect messaging.")
     )
 
+    opt_out_of_data_sharing = BooleanField(
+        label=gettext_lazy("Data Sharing"),
+        required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(gettext_lazy(
+                "Opt Out of "
+                "<a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2386001966/"
+                "Data+Sharing+Opt-Outs+-+CommCare\" "
+                "target=\"_blank\"> Aggregate Data Usage</a>"
+            )),
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -627,14 +585,25 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['connect_messaging_channel_name']
 
         self._handle_call_limit_visibility()
-        self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
+        self._handle_enable_all_add_ons()
         self._handle_orphan_case_alerts_setting_value()
+        self._handle_opt_out_of_data_sharing_setting_value()
 
         if not EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             del self.fields['exports_use_elasticsearch']
         else:
             self._handle_exports_use_elasticsearch_setting_value()
+
+        checkbox_fields = [
+            hqcrispy.CheckboxField('release_mode_visibility'),
+        ]
+        if 'enable_all_add_ons' in self.fields:
+            checkbox_fields.append(hqcrispy.CheckboxField('enable_all_add_ons'))
+        checkbox_fields.extend([
+            hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+            hqcrispy.CheckboxField('opt_out_of_data_sharing'),
+        ])
 
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.layout = crispy.Layout(
@@ -644,8 +613,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 'project_description',
                 'default_timezone',
                 crispy.Div(*self.get_extra_fields()),
-                hqcrispy.CheckboxField('release_mode_visibility'),
-                hqcrispy.CheckboxField('orphan_case_alerts_warning'),
+                *checkbox_fields,
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -682,22 +650,6 @@ class DomainGlobalSettingsForm(forms.Form):
             extra_fields.append('connect_messaging_channel_name')
         return extra_fields
 
-    def _handle_account_confirmation_by_sms_settings(self):
-        if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
-            del self.fields['confirmation_link_expiry']
-            del self.fields['confirmation_sms_project_name']
-        else:
-            settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
-            min_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
-            max_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
-            self.fields['confirmation_link_expiry'].initial = settings_obj.confirmation_link_expiry_time
-            self._add_range_validation_to_integer_input(
-                "confirmation_link_expiry", min_value_expiry, max_value_expiry
-            )
-            project_max_length = SMSAccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
-            self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
-            self.fields['confirmation_sms_project_name'].max_length = project_max_length
-
     def _handle_call_limit_visibility(self):
         if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
             del self.fields['operator_call_limit']
@@ -713,11 +665,21 @@ class DomainGlobalSettingsForm(forms.Form):
         self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
             domain=self.domain).is_visible
 
+    def _handle_enable_all_add_ons(self):
+        if not domain_has_privilege(self.domain, privileges.SHOW_ENABLE_ALL_ADD_ONS):
+            del self.fields['enable_all_add_ons']
+            return
+        app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=self.domain)
+        self.fields['enable_all_add_ons'].initial = bool(app_mgr and app_mgr.all_add_ons_enabled)
+
     def _handle_orphan_case_alerts_setting_value(self):
         self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
 
     def _handle_exports_use_elasticsearch_setting_value(self):
         self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
+
+    def _handle_opt_out_of_data_sharing_setting_value(self):
+        self.fields['opt_out_of_data_sharing'].initial = not self.project.internal.can_use_data
 
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
@@ -759,10 +721,6 @@ class DomainGlobalSettingsForm(forms.Form):
             self.system_emails_logo_enabled,
             _("Logo for systems emails exceeds {} MB size limit").format(upload_size_limit)
         )
-
-    def clean_confirmation_link_expiry(self):
-        data = self.cleaned_data['confirmation_link_expiry']
-        return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
 
     def clean_operator_call_limit(self):
         data = self.cleaned_data['operator_call_limit']
@@ -859,21 +817,26 @@ class DomainGlobalSettingsForm(forms.Form):
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
 
-    def _save_account_confirmation_settings(self, domain):
-        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(domain.name):
-            settings = SMSAccountConfirmationSettings.get_settings(domain.name)
-            settings.project_name = self.cleaned_data.get('confirmation_sms_project_name')
-            settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
-            settings.save()
-
     def _save_release_mode_setting(self, domain):
         setting_obj = AppReleaseModeSetting.get_settings(domain=domain.name)
         if self.cleaned_data.get("release_mode_visibility") != setting_obj.is_visible:
             setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
             setting_obj.save()
 
+    def _save_enable_all_add_ons_setting(self, domain):
+        value = self.cleaned_data.get("enable_all_add_ons", False)
+        app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=self.domain)
+        if value != bool(app_mgr and app_mgr.all_add_ons_enabled):
+            AppManagerDomainSettings.objects.update_or_create(
+                domain=self.domain,
+                defaults={'all_add_ons_enabled': value},
+            )
+
     def _save_orphan_case_alerts_setting(self, domain):
         domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
+
+    def _save_opt_out_of_data_sharing_setting(self, domain):
+        domain.update_internal(can_use_data=not self.cleaned_data.get("opt_out_of_data_sharing"))
 
     def _save_exports_use_elasticsearch(self, domain):
         domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", True)
@@ -896,9 +859,10 @@ class DomainGlobalSettingsForm(forms.Form):
             messages.error(request, _('Unable to save logo: {}').format(err))
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
-        self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
+        self._save_enable_all_add_ons_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
+        self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             self._save_exports_use_elasticsearch(domain)
         domain.save()
@@ -1367,18 +1331,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         self.can_edit_eula = can_edit_eula
         additional_fields = []
         if self.can_edit_eula:
-            additional_fields = ['custom_eula', 'can_use_data']
+            additional_fields = ['custom_eula']
             self.fields['custom_eula'] = ChoiceField(
                 label="Custom Eula?",
                 choices=tf_choices(_('Yes'), _('No')),
                 required=False,
                 help_text='Set to "yes" if this project has a customized EULA as per their contract.'
-            )
-            self.fields['can_use_data'] = ChoiceField(
-                label="Can use project data?",
-                choices=tf_choices('Yes', 'No'),
-                required=False,
-                help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
             )
 
         self.helper = hqcrispy.HQFormHelper()
@@ -1550,7 +1508,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         } if self.cleaned_data["workshop_region"] else {}
         if self.can_edit_eula:
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
-            kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
         domain.update_deployment(
             countries=self.cleaned_data['countries'],
@@ -1608,8 +1565,7 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
-def send_password_reset_email(active_users, domain_override, subject_template_name,
-                              email_template_name, use_https, token_generator, request):
+def send_password_reset_email(active_users):
     """
     Generates a one-use only link for resetting password and sends to the
     user.
@@ -1617,20 +1573,17 @@ def send_password_reset_email(active_users, domain_override, subject_template_na
     if settings.IS_SAAS_ENVIRONMENT:
         subject_template_name = 'registration/email/password_reset_subject_hq.txt'
         email_template_name = 'registration/email/password_reset_email_hq.html'
+    else:
+        subject_template_name = 'registration/password_reset_subject.txt',
+        email_template_name = 'registration/password_reset_email.html',
 
-    # the code below is copied from default PasswordForm
     for user in active_users:
         # Make sure that no email is sent to a user that actually has
         # a password marked as unusable
         if not user.has_usable_password():
             continue
-        if not domain_override:
-            current_site = get_current_site(request)
-            site_name = current_site.name
-            domain = current_site.domain
-        else:
-            site_name = domain = domain_override
-
+        request = get_request()
+        current_site = get_current_site(request)
         couch_user = CouchUser.from_django_user(user)
         if not couch_user:
             continue
@@ -1641,12 +1594,12 @@ def send_password_reset_email(active_users, domain_override, subject_template_na
 
         c = {
             'email': user_email,
-            'domain': domain,
-            'site_name': site_name,
+            'domain': current_site.domain,
+            'site_name': current_site.name,
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'user': user,
-            'token': token_generator.make_token(user),
-            'protocol': 'https' if use_https else 'http',
+            'token': default_token_generator.make_token(user),
+            'protocol': 'https' if request.is_secure() else 'http',
         }
         c.update(project_logo_emails_context(None, couch_user=couch_user))
         subject = render_to_string(subject_template_name, c)
@@ -1697,15 +1650,8 @@ class BasePasswordResetForm(NoAutocompleteMixin, forms.Form):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
 
-    def save(self, active_users, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             # WARNING: Django 1.7 passes this in automatically. do not remove
-             html_email_template_name=None,
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, **kwargs):
-        send_password_reset_email(active_users, domain_override, subject_template_name,
-                                  email_template_name, use_https, token_generator, request)
+    def save(self, active_users, **kwargs):
+        send_password_reset_email(active_users)
 
 
 class UsernameAwareEmailField(forms.EmailField):
@@ -1727,13 +1673,7 @@ class UsernameAwareEmailField(forms.EmailField):
 class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form):
     email = UsernameAwareEmailField(label=gettext_lazy("Email"), max_length=254)
 
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             # WARNING: Django 1.7 passes this in automatically. do not remove
-             html_email_template_name=None,
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, **kwargs):
+    def save(self, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1746,9 +1686,7 @@ class HQPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.Form
         # get a password reset email.
         active_users = get_active_users_by_email(email)
 
-        super().save(active_users, domain_override, subject_template_name,
-                     email_template_name, html_email_template_name, use_https,
-                     token_generator, from_email, request, **kwargs)
+        super().save(active_users, **kwargs)
 
 
 class UsernameOrEmailField(forms.CharField):
@@ -1781,13 +1719,7 @@ class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.
         self.cleaned_data["email"] = mobile_username_email
         return super().clean_email()
 
-    def save(self, domain_override=None,
-             subject_template_name='registration/password_reset_subject.txt',
-             email_template_name='registration/password_reset_email.html',
-             # WARNING: Django 1.7 passes this in automatically. do not remove
-             html_email_template_name=None,
-             use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None, **kwargs):
+    def save(self, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1800,9 +1732,7 @@ class DomainPasswordResetForm(BasePasswordResetForm, NoAutocompleteMixin, forms.
         # get a password reset email.
         active_users = get_active_users_by_email(email, self.domain)
 
-        super().save(active_users, domain_override, subject_template_name,
-                     email_template_name, html_email_template_name, use_https,
-                     token_generator, from_email, request, **kwargs)
+        super().save(active_users, **kwargs)
 
 
 class ConfidentialDomainPasswordResetForm(DomainPasswordResetForm):
@@ -1878,69 +1808,75 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         except BillingContactInfo.DoesNotExist:
             pass
 
-        super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
+        super().__init__(data, *args, **kwargs)
 
         self.helper = hqcrispy.HQFormHelper()
         fields = [
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
-                         data_initial=json.dumps(self.initial.get('email_list'))),
-            'phone_number'
+            crispy.Field(
+                'email_list',
+                css_class='form-control form-control-lg accounting-email-select2',
+                data_initial=json.dumps(self.initial.get('email_list')),
+            ),
+            'phone_number',
         ]
 
         if is_ops_user and self.initial.get('email_list'):
-            fields.insert(4, crispy.Div(
+            fields.insert(
+                4,
                 crispy.Div(
-                    css_class='col-sm-3 col-md-2'
-                ),
-                crispy.Div(
-                    crispy.HTML(", ".join(self.initial.get('email_list'))),
-                    css_class='col-sm-9 col-md-8 col-lg-6'
-                ),
-                css_id='emails-text',
-                css_class='collapse form-group'
-            ))
-
-            fields.insert(5, crispy.Div(
-                crispy.Div(
-                    css_class='col-sm-3 col-md-2'
-                ),
-                crispy.Div(
-                    StrictButton(
-                        _("Show contact emails as text"),
-                        type="button",
-                        css_class='btn btn-default',
-                        css_id='show_emails'
+                    crispy.Div(
+                        crispy.HTML(', '.join(self.initial.get('email_list'))),
+                        css_class='field-control-offset',
                     ),
-                    crispy.HTML('<p class="help-block">%s</p>' %
-                                _('Useful when you want to copy contact emails')),
-                    css_class='col-sm-9 col-md-8 col-lg-6'
+                    css_id='emails-text',
+                    css_class='collapse mb-3',
                 ),
-                css_class='form-group'
-            ))
+            )
+
+            fields.insert(
+                5,
+                crispy.Div(
+                    crispy.Div(
+                        StrictButton(
+                            _('Show contact emails as text'),
+                            type='button',
+                            css_class='btn btn-outline-secondary',
+                            css_id='show_emails',
+                        ),
+                        crispy.HTML(
+                            format_html(
+                                '<p class="help-block">{}</i> ', _('Useful when you want to copy contact emails')
+                            ),
+                        ),
+                        css_class='field-control-offset',
+                    ),
+                    css_class='mb-3',
+                ),
+            )
 
         self.helper.layout = crispy.Layout(
+            crispy.Fieldset(_('Basic Information'), *fields),
             crispy.Fieldset(
-                _("Basic Information"),
-                *fields
-            ),
-            crispy.Fieldset(
-                _("Mailing Address"),
+                _('Mailing Address'),
                 'first_line',
                 'second_line',
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_country_code=self.current_country or '',
-                             data_country_name=COUNTRIES.get(self.current_country, '')),
+                crispy.Field(
+                    'country',
+                    css_class='form-control form-control-lg accounting-country-select2',
+                    data_country_code=self.current_country or '',
+                    data_country_name=COUNTRIES.get(self.current_country, ''),
+                ),
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Update Billing Information"),
-                    type="submit",
+                    _('Update Billing Information'),
+                    type='submit',
                     css_class='btn btn-primary',
                 ),
             ),
@@ -1989,56 +1925,85 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         widget=forms.HiddenInput,
     )
 
-    def __init__(self, account, domain, creating_user, plan_version, current_subscription, data=None,
-                 *args, **kwargs):
+    def __init__(
+        self, account, domain, creating_user, plan_version, current_subscription, data=None, *args, **kwargs
+    ):
         self.plan_version = plan_version
         self.current_subscription = current_subscription
-        super(ConfirmNewSubscriptionForm, self).__init__(account, domain, creating_user, data=data,
-                                                         *args, **kwargs)
+        super().__init__(account, domain, creating_user, data=data, *args, **kwargs)
+
+        email_list = [email for email in self.initial.get('email_list', []) if email]  # filter out empty strings
+        if not email_list:
+            email_list = [creating_user]
 
         self.fields['plan_edition'].initial = self.plan_version.plan.edition
         self.fields['is_annual_plan'].initial = self.plan_version.plan.is_annual_plan
 
-        from corehq.apps.domain.views.accounting import DomainSubscriptionView
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        for field_name in ['first_name', 'last_name', 'first_line', 'city', 'postal_code', 'country']:
+            self.fields[field_name].required = True
+
+        self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             'plan_edition',
             'is_annual_plan',
             crispy.Fieldset(
-                _("Basic Information"),
+                _('Basic Information'),
                 'company_name',
-                'first_name',
-                'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
-                             data_initial=json.dumps(self.initial.get('email_list'))),
+                crispy.Field(
+                    'first_name',
+                    x_model='firstName',
+                    x_init=f"firstName = '{self.initial.get('first_name') or ''}'",
+                ),
+                crispy.Field(
+                    'last_name',
+                    x_model='lastName',
+                    x_init=f"lastName = '{self.initial.get('last_name') or ''}'",
+                ),
+                crispy.Field(
+                    'email_list',
+                    x_model='emailList',
+                    x_init=f"emailList = {json.dumps(email_list)}",
+                    css_class='form-control form-control-lg accounting-email-select2',
+                    data_initial=json.dumps(email_list),
+                    **{
+                        '@select2Change': 'emailList = $event.detail;',
+                    }
+                ),
                 'phone_number',
             ),
             crispy.Fieldset(
-                _("Mailing Address"),
-                'first_line',
+                _('Mailing Address'),
+                crispy.Field(
+                    'first_line',
+                    x_model='firstLine',
+                    x_init=f"firstLine = '{self.initial.get('first_line') or ''}'",
+                ),
                 'second_line',
-                'city',
+                crispy.Field(
+                    'city',
+                    x_model='city',
+                    x_init=f"city = '{self.initial.get('city') or ''}'",
+                ),
                 'state_province_region',
-                'postal_code',
-                crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_country_code=self.current_country or '',
-                             data_country_name=COUNTRIES.get(self.current_country, ''))
+                crispy.Field(
+                    'postal_code',
+                    x_model='postalCode',
+                    x_init=f"postalCode = '{self.initial.get('postal_code') or ''}'",
+                ),
+                crispy.Field(
+                    'country',
+                    css_class='form-control form-control-lg accounting-country-select2',
+                    x_model='country',
+                    x_init=f"country = '{self.initial.get('country') or ''}'",
+                    data_country_code=self.current_country or '',
+                    data_country_name=COUNTRIES.get(self.current_country, ''),
+                    **{
+                        '@select2Change': 'country = $event.detail;',
+                    }
+                ),
             ),
-            hqcrispy.FormActions(
-                hqcrispy.LinkButton(_("Cancel"),
-                                    reverse(DomainSubscriptionView.urlname,
-                                            args=[self.domain]),
-                                    css_class="btn btn-default"),
-                StrictButton(_("Subscribe to Plan"),
-                             type="submit",
-                             id='btn-subscribe-to-plan',
-                             css_class='btn btn-primary disable-on-submit-no-spinner '
-                                       'add-spinner-on-click'),
-            ),
-            crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
-            crispy.Hidden(name="old_plan", value=current_subscription.plan_version.plan.edition),
-            crispy.Hidden(name="new_plan", value=plan_version.plan.edition)
+            crispy.Hidden(name='old_plan', value=current_subscription.plan_version.plan.edition),
+            crispy.Hidden(name='new_plan', value=plan_version.plan.edition),
         )
 
     def save(self, commit=True):
@@ -2047,6 +2012,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 account_save_success = super(ConfirmNewSubscriptionForm, self).save()
                 if not account_save_success:
                     return False
+
+                if self.is_autopay_required() and not self.account.require_auto_pay:
+                    self.account.require_auto_pay = True
+                    self.account.save(update_fields=['require_auto_pay'])
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 new_sub_date_start, new_sub_date_end = self.new_subscription_start_end_dates()
@@ -2143,6 +2112,14 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 current_edition=self.current_subscription.plan_version.plan.edition,
                 next_edition=self.plan_version.plan.edition
             )
+
+    def is_autopay_required(self):
+        # always require auto-pay for new monthly subscriptions
+        return self.account.require_auto_pay or not self.is_annual_plan_selected()
+
+    def clean(self):
+        if self.is_autopay_required() and not self.account.auto_pay_enabled:
+            raise ValidationError(_("Please provide an autopay card before continuing."))
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
@@ -2854,140 +2831,6 @@ class ManageReleasesByLocationForm(forms.Form):
         return True, None
 
 
-class BaseManageReleasesByAppProfileForm(forms.Form):
-    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=True)
-    version = forms.IntegerField(label=gettext_lazy('Version'), required=False, widget=Select(choices=[]))
-
-    def __init__(self, request, domain, *args, **kwargs):
-        self.request = request
-        self.domain = domain
-        super(BaseManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
-        self.fields['app_id'].choices = self.app_id_choices()
-        self.helper = HQFormHelper()
-        self.helper.form_tag = False
-
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                "",
-                *self.form_fields()
-            ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    *self._buttons()
-                )
-            )
-        )
-
-    def app_id_choices(self):
-        choices = [(None, _('Select Application'))]
-        for app in get_brief_apps_in_domain(self.domain):
-            choices.append((app.id, app.name))
-        return choices
-
-    def form_fields(self):
-        return [
-            crispy.Field('app_id', css_class="hqwebapp-select2 app-id-search-select"),
-            crispy.Field('version', css_class='version-input'),
-        ]
-
-    @staticmethod
-    def _buttons():
-        raise NotImplementedError
-
-
-class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
-    app_build_profile_id = forms.ChoiceField(label=gettext_lazy("Build Profile"), choices=(),
-                                             required=False)
-    status = forms.ChoiceField(label=gettext_lazy("Status"),
-                               choices=(
-                                   ('', gettext_lazy('Select Status')),
-                                   ('active', gettext_lazy('Active')),
-                                   ('inactive', gettext_lazy('Inactive'))),
-                               required=False)
-
-    def __init__(self, request, domain, *args, **kwargs):
-        super(SearchManageReleasesByAppProfileForm, self).__init__(request, domain, *args, **kwargs)
-        if request.GET.get('app_id'):
-            self.fields['app_id'].initial = request.GET.get('app_id')
-        if request.GET.get('status'):
-            self.fields['status'].initial = request.GET.get('status')
-
-    def form_fields(self):
-        form_fields = super(SearchManageReleasesByAppProfileForm, self).form_fields()
-        form_fields.extend([
-            crispy.Field('app_build_profile_id', css_class="hqwebapp-select2 app-build-profile-id-select"),
-            crispy.Field('status', id='status-input')
-        ])
-        return form_fields
-
-    @staticmethod
-    def _buttons():
-        return [
-            crispy.Button('search', gettext_lazy("Search"), data_bind="click: search",
-                          css_class='btn-primary'),
-            crispy.Button('clear', gettext_lazy("Clear"), data_bind="click: clear"),
-        ]
-
-
-class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
-    build_profile_id = forms.CharField(label=gettext_lazy('Build Profile'),
-                                       required=True, widget=SelectMultiple(choices=[]),)
-
-    def save(self):
-        success_messages = []
-        error_messages = []
-        for build_profile_id in self.cleaned_data['build_profile_id']:
-            try:
-                LatestEnabledBuildProfiles.update_status(self.build, build_profile_id,
-                                                         active=True)
-                success_messages.append(_('Restriction for profile {profile} set successfully.').format(
-                    profile=self.build.build_profiles[build_profile_id]['name'],
-                ))
-            except ValidationError as e:
-                error_messages.append(_('Restriction for profile {profile} failed: {message}').format(
-                    profile=self.build.build_profiles[build_profile_id]['name'],
-                    message=', '.join(e.messages)
-                ))
-        return error_messages, success_messages
-
-    @cached_property
-    def build(self):
-        return get_app(self.domain, self.version_build_id)
-
-    @cached_property
-    def version_build_id(self):
-        app_id = self.cleaned_data['app_id']
-        version = self.cleaned_data['version']
-        return get_version_build_id(self.domain, app_id, version)
-
-    def form_fields(self):
-        form_fields = super(CreateManageReleasesByAppProfileForm, self).form_fields()
-        form_fields.extend([
-            crispy.Field('build_profile_id', id='build-profile-id-input')
-        ])
-        return form_fields
-
-    @staticmethod
-    def _buttons():
-        return [Submit('submit', gettext_lazy("Add New Restriction"), css_class='btn-primary')]
-
-    def clean(self):
-        if self.cleaned_data.get('version'):
-            try:
-                self.version_build_id
-            except BuildNotFoundException as e:
-                self.add_error('version', e)
-
-    def clean_build_profile_id(self):
-        return self.data.getlist('build_profile_id')
-
-    def clean_version(self):
-        # ensure value is present for a post request
-        if not self.cleaned_data.get('version'):
-            self.add_error('version', _("Please select version"))
-        return self.cleaned_data.get('version')
-
-
 class DomainAlertForm(forms.Form):
     text = CharField(
         label="Text",
@@ -3094,7 +2937,7 @@ class ExtractAppInfoForm(forms.Form):
 
     def _get_source_server(self, parsed_url):
         server_mapping = {subdomain: server for server, subdomain
-                          in ServerLocation.SUBDOMAINS.items()}
+                          in ServerLocation.get_subdomains().items()}
 
         netloc = parsed_url.netloc.split(".")
 
@@ -3178,7 +3021,7 @@ class ImportAppForm(forms.Form):
         return app_file
 
     def construct_download_url(self, source_server, source_domain, app_id):
-        server_address = ServerLocation.SUBDOMAINS[source_server]
+        server_address = ServerLocation.get_subdomains()[source_server]
         return f"https://{server_address}.commcarehq.org/a/{source_domain}/apps/source/{app_id}/"
 
 

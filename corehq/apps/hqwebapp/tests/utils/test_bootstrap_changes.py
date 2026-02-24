@@ -396,6 +396,15 @@ def test_add_todo_comments_for_flags_template():
     eq(line, """          <div class="form-inline nav"  {# todo B5: css-form-inline, css-nav #}\n""")
 
 
+def test_add_todo_comments_for_flags_template_submodule():
+    line = """          <div class="form-inline nav"\n"""
+    flags = flag_changed_css_classes(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    line = add_todo_comments_for_flags(flags, line, is_template=True, is_submodule_app=True)
+    eq(line, """          <div class="form-inline nav"  <!-- todo B5: css-form-inline, css-nav -->\n""")
+
+
 def test_add_todo_comments_for_flags_template_replace():
     line = """          {% crispy form %}  {# todo B5: css-form-inline, css-nav #}\n"""
     flags = flag_crispy_forms_in_template(line)

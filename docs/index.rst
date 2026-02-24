@@ -155,6 +155,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     migration_command_pattern
     migrations
     couch_to_sql_models
+    couch_design_doc_changes
 
 .. toctree::
     :caption: Architecture Decisions

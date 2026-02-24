@@ -14,7 +14,7 @@ from soil import DownloadBase
 from soil.progress import set_task_progress
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
@@ -26,7 +26,6 @@ from corehq.motech.repeaters.models import RepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
-from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule

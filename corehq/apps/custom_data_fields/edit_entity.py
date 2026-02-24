@@ -14,7 +14,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
-from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
+from corehq.apps.hqwebapp.crispy import FieldsetAccordionGroup, HQFormHelper, HQModalFormHelper
 from corehq import privileges
 
 from .models import (
@@ -142,6 +142,7 @@ class CustomDataEditor(object):
     def make_fieldsets(self, form_fields, is_post, field_name_includes_prefix=False):
         if self.ko_model:
             field_names = []
+            profile_names = []
             for field_name, field in form_fields.items():
                 data_bind_field_name = (
                     without_prefix(field_name, self.prefix) if field_name_includes_prefix else field_name)
@@ -153,20 +154,37 @@ class CustomDataEditor(object):
                     data_binds.append("select2: " + json.dumps([
                         {"id": id, "text": text} for id, text in field.widget.choices
                     ]))
-                field_names.append(Field(
-                    field_name,
-                    data_bind=", ".join(data_binds)
-                ))
+                if field_name.endswith(PROFILE_SLUG):
+                    profile_names.append(Field(
+                        field_name,
+                        data_bind=", ".join(data_binds)
+                    ))
+                else:
+                    field_names.append(Field(
+                        field_name,
+                        data_bind=", ".join(data_binds)
+                    ))
         else:
             field_names = list(form_fields)
+            profile_names = []
 
         form_fieldsets = []
-        if field_names:
-            form_fieldsets.append(Fieldset(
-                _("Additional Information"),
-                *field_names,
+        if profile_names or field_names:
+            user_data_div = Div(
                 css_class="custom-data-fieldset"
-            ))
+            )
+            form_fieldsets.append(user_data_div)
+            if profile_names:
+                user_data_div.append(Fieldset(
+                    _("Profile"),
+                    *profile_names
+                ))
+            if field_names:
+                user_data_div.append(FieldsetAccordionGroup(
+                    _("Additional Information"),
+                    *field_names,
+                    active=True
+                ))
         if not is_post:
             form_fieldsets.append(self.uncategorized_form)
         return form_fieldsets
@@ -235,6 +253,8 @@ class CustomDataEditor(object):
         else:
             CustomDataForm.helper = HQFormHelper()
         CustomDataForm.helper.form_tag = False
+        CustomDataForm.helper.label_class = 'col-sm-3 col-md-2'
+        CustomDataForm.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         form_fieldsets = self.make_fieldsets(form_fields, post_dict is not None)
 
@@ -308,12 +328,13 @@ class CustomDataEditor(object):
             self.field_view.urlname, args=[self.domain]
         ))
 
-        return Fieldset(
+        return FieldsetAccordionGroup(
             _("Unrecognized Information"),
             Div(
                 HTML(msg),
                 css_class="alert alert-warning",
                 css_id="js-unrecognized-data",
             ),
-            *help_div
+            *help_div,
+            active=True
         ) if len(help_div) else HTML('')

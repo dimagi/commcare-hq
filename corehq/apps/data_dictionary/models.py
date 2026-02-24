@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from django.db import models
@@ -166,14 +167,63 @@ class CaseProperty(models.Model):
         return super(CaseProperty, self).delete(*args, **kwargs)
 
     def check_validity(self, value):
-        if value and self.data_type == 'date':
-            try:
-                datetime.strptime(value, ISO_DATE_FORMAT)
-            except ValueError:
-                raise exceptions.InvalidDate(sample=value)
-        elif value and self.data_type == 'select' and self.allowed_values.exists():
-            if not self.allowed_values.filter(allowed_value=value).exists():
-                raise exceptions.InvalidSelectValue(sample=value, message=self.valid_values_message)
+        if value is None or value == '':
+            return
+        validation_methods = {
+            self.DataType.DATE: self._validate_date,
+            self.DataType.NUMBER: self._validate_number,
+            self.DataType.SELECT: self._validate_select,
+            self.DataType.GPS: self._validate_gps,
+            self.DataType.PHONE_NUMBER: self._validate_phone_number,
+        }
+        method = validation_methods.get(
+            self.data_type,
+            lambda x: None
+        )
+        method(value)  # Raises CaseRowError subclass if `value` is invalid
+
+    @staticmethod
+    def _validate_date(value):
+        try:
+            datetime.strptime(value, ISO_DATE_FORMAT)
+        except ValueError:
+            raise exceptions.InvalidDate(sample=value)
+
+    @staticmethod
+    def _validate_number(value):
+        try:
+            float(value)
+        except ValueError:
+            raise exceptions.InvalidNumber(sample=value)
+
+    def _validate_select(self, value):
+        if not self.allowed_values.exists():
+            return
+        if not self.allowed_values.filter(allowed_value=value).exists():
+            raise exceptions.InvalidSelectValue(
+                sample=value,
+                message=self.valid_values_message,
+            )
+
+    @staticmethod
+    def _validate_gps(value):
+        gps_pattern = (
+            r'^-?\d+\.?\d*\s+'  # Latitude
+            r'-?\d+\.?\d*'  # Longitude
+            r'(?:\s+-?\d+\.?\d*)?'  # Elevation (optional)
+            r'(?:\s+\d+\.?\d*)?$'  # Precision (optional)
+        )
+        if not re.match(gps_pattern, value):
+            raise exceptions.InvalidGPS(sample=value)
+
+    @staticmethod
+    def _validate_phone_number(value):
+        phone_number_pattern = r'^[0-9\.\(\)\+\-\ ]+$'
+        if not re.match(phone_number_pattern, value):
+            raise exceptions.InvalidPhoneNumber(sample=value)
+        digit_count = sum(1 for char in value if char.isdigit())
+        if digit_count < 5:
+            raise exceptions.InvalidPhoneNumber(sample=value)
 
     @property
     def valid_values_message(self):

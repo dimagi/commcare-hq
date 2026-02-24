@@ -44,8 +44,6 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 from corehq import toggles
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import (
-    HUBSPOT_SAVED_UCR_FORM_ID,
-    send_hubspot_form,
     track_workflow_noop,
     update_hubspot_properties,
 )
@@ -230,9 +228,6 @@ class BaseUserConfigReportsView(BaseDomainView):
             'data_sources': get_datasources_for_domain(self.domain, include_static=True),
             'use_updated_ucr_naming': toggle_enabled(self.request, toggles.UCR_UPDATED_NAMING)
         })
-        if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
-            from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-            context['aggregate_data_sources'] = AggregateTableDefinition.objects.filter(domain=self.domain)
         return context
 
     @property
@@ -725,7 +720,6 @@ class ConfigureReport(ReportBuilderView):
                 else:
                     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
             self._delete_temp_data_source(report_data)
-            send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
                 'report_url': reverse(ConfigurableReportView.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,

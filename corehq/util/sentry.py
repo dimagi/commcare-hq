@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 RATE_LIMITED_EXCEPTIONS = {
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
-    'socketpool.pool.MaxTriesError': 'couchdb',
 
     'corehq.elastic.ESError': 'elastic',
     'elasticsearch.exceptions.ConnectionTimeout': 'elastic',
@@ -104,7 +103,11 @@ sanitize_system_passwords = HQSanitzeSystemPasswords()
 
 def subtype_error(tb: TracebackType, rate_limit_key: str) -> str:
     if rate_limit_key == 'postgres':
-        f_locals = inspect.getinnerframes(tb)[-1].frame.f_locals
+        try:
+            f_locals = inspect.getinnerframes(tb)[-1].frame.f_locals
+        except AttributeError:
+            # Seen in Sentry: billiard.einfo.Traceback object has no attribute 'f_lineno'
+            return rate_limit_key
         dsn = None
         if f_locals.get('dsn'):
             dsn = f_locals['dsn']

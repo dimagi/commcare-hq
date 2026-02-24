@@ -107,7 +107,7 @@ class UcrTableManagerTest(SimpleTestCase):
             def iter_configs_since(self, timestamp):
                 raise NotImplementedError
 
-        manager = TestManager(None, False)
+        manager = TestManager(None, False, None)
         adapters = list(manager.iter_adapters('one'))
         assert adapters == [
             ('one', Adapter(Config(1))),
@@ -126,7 +126,7 @@ class UcrTableManagerTest(SimpleTestCase):
                 yield 'one', Config(1)
                 yield 'two', Config(1)
 
-        manager = TestManager(None, False)
+        manager = TestManager(None, False, None)
         adapters = list(manager.iter_adapters(since=datetime.now(UTC)))
         assert adapters == [
             ('one', Adapter(Config(1))),
@@ -150,6 +150,22 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         })], run_migrations=False)
 
         adapters = table_manager.get_adapters(ds_1_domain)
+        assert [a.config for a in adapters] == [data_source_1]
+
+    def test_table_adapters_for_migration_process(self):
+        # this test is for a regression in _filter_domains_to_skip
+        skip_domain_filter_patch.stop()  # unpatch _filter_domains_to_skip
+        self.addCleanup(skip_domain_filter_patch.start)
+        data_source_1 = get_sample_data_source()
+        ds_1_domain = data_source_1.domain
+        data_source_1.save()
+
+        table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })], run_migrations=True, ucr_division='0f')
+        table_manager.configure_dedicated_migration_process()
+
+        adapters = table_manager.migration_cache.get_adapters()
         assert [a.config for a in adapters] == [data_source_1]
 
     @patch("corehq.apps.userreports.pillow.rebuild_sql_tables")

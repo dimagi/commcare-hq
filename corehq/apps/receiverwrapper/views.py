@@ -4,7 +4,6 @@ import logging
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.core.cache import cache
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
@@ -35,7 +34,7 @@ from corehq.apps.domain.auth import (
 from corehq.apps.domain.decorators import (
     api_auth,
     check_domain_mobile_access,
-    login_or_basic_ex,
+    login_or_basic_or_api_key_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
     login_or_oauth2_ex,
@@ -60,7 +59,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils.xform import convert_xform_to_json, sanitize_instance_xml
+from corehq.form_processor.utils.xform import convert_xform_to_json
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
@@ -69,26 +68,13 @@ from tastypie.http import HttpTooManyRequests
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
-CACHE_EXPIRY_7_DAYS_IN_SECS = 7 * 24 * 60 * 60
 
 
-# This mirrors the logic of require_mobile_access, but with a whitelist exempted
+# This mirrors the logic of require_mobile_access
 def _has_mobile_access(domain, user_id, request):
     """Unless going through formplayer or the API, users need access_mobile_endpoints"""
-    if (is_from_formplayer(request)
-            or request.couch_user.has_permission(domain, 'access_mobile_endpoints')):
-        return True
-
-    if toggles.OPEN_SUBMISSION_ENDPOINT.enabled(domain):
-        # log incorrect access at most once every 7 days to ease transition off flag
-        cache_key = f"form_submission_permissions_audit_v2:{user_id}"
-        if not cache.get(cache_key):
-            cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
-            message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
-            notify_exception(request, message=message)
-        return True
-
-    return False
+    return (is_from_formplayer(request)
+            or request.couch_user.has_permission(domain, 'access_mobile_endpoints'))
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
@@ -107,11 +93,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     try:
         instance, attachments = couchforms.get_instance_and_attachment(request)
-        instance = sanitize_instance_xml(instance, request)
     except MultimediaBug:
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
-            instance = sanitize_instance_xml(instance, request)
             xform = convert_xform_to_json(instance)
             meta = xform.get("meta", {})
         except Exception:
@@ -316,7 +300,6 @@ def _noauth_post(request, domain, app_id=None):
     except BadSubmissionRequest as e:
         return HttpResponseBadRequest(e.message)
 
-    instance = sanitize_instance_xml(instance, request)
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
 
@@ -350,7 +333,7 @@ def _noauth_post(request, domain, app_id=None):
 
         # todo: consider whether we want to remove this call, and/or pass the result
         # through to the next function so we don't have to get the cases again later
-        cases = CommCareCase.objects.get_cases(list(case_ids), domain)
+        cases = CommCareCase.objects.get_cases(list(case_ids))
         for case in cases:
             if case.domain != domain:
                 return False
@@ -388,7 +371,7 @@ def _secure_post_digest(request, domain, app_id=None):
 
 
 @handle_401_response
-@login_or_basic_ex(allow_cc_users=True)
+@login_or_basic_or_api_key_ex(allow_cc_users=True)
 @two_factor_exempt
 @set_request_duration_reporting_threshold(60)
 def _secure_post_basic(request, domain, app_id=None):

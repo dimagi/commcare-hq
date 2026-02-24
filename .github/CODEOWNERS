@@ -15,14 +15,10 @@
 
 /corehq/blobs/ @millerdev
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
-/corehq/form_processor/ @snopoke
 /corehq/messaging/ @mkangia
 /corehq/motech/ @kaapstorm
 /corehq/pillows/ @calellowitz @amitphulera
-/corehq/sql_accessors/ @snopoke
-/corehq/sql_db/ @snopoke @calellowitz
-/corehq/sql_proxy_accessors/ @snopoke
-/corehq/sql_proxy_standby_accessors/ @snopoke
+/corehq/sql_db/ @calellowitz
 /corehq/tests/ @millerdev
 /corehq/util/couch.py @esoergel
 /corehq/util/couch_helpers.py @millerdev
@@ -33,14 +29,11 @@
 /corehq/warehouse/ @calellowitz
 /corehq/warnings.py @millerdev
 
-/corehq/apps/accounting/ @dannyroberts @biyeun @nospame
-/corehq/apps/analytics/ @biyeun
-/corehq/apps/app_manager/ @orangejenny
-/corehq/apps/callcenter/ @snopoke
-/corehq/apps/case_search/ @MartinRiese @esoergel @stephherbers @Robert-Costello @Jtang-1
+/corehq/apps/accounting/ @dannyroberts @nospame
+/corehq/apps/case_search/ @MartinRiese @esoergel @stephherbers @Robert-Costello
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py @millerdev
-/corehq/apps/cloudcare/ @MartinRiese @stephherbers @Robert-Costello @Jtang-1 @nospame
+/corehq/apps/cloudcare/ @MartinRiese @stephherbers @Robert-Costello @nospame
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/data_dictionary/ @esoergel @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
@@ -49,23 +42,19 @@
 /corehq/apps/es/ @esoergel @amitphulera
 /corehq/apps/geospatial/ @zandre-eng
 /corehq/apps/hqcase/ @esoergel
-/corehq/apps/hqwebapp/ @orangejenny @biyeun
 /corehq/apps/hqwebapp/apps.py @gherceg
 /corehq/apps/hqwebapp/two_factor_methods.py @gherceg
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
 /corehq/apps/locations/adjacencylist.py @millerdev
 /corehq/apps/locations/resources/v0_6.py @AddisonDunn
-/corehq/apps/ota/ @snopoke @esoergel
+/corehq/apps/ota/ @esoergel
 /corehq/apps/reports/models.py @AddisonDunn
 /corehq/apps/reports/standard/cases/ @esoergel
 /corehq/apps/reports/standard/tableau.py @AddisonDunn
-/corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/settings/views.py @gherceg
 /corehq/apps/sms*/ @mkangia
-/corehq/apps/smsbillables/ @dannyroberts @biyeun
-/corehq/apps/sso/ @biyeun
-/corehq/apps/styleguide/ @biyeun
+/corehq/apps/smsbillables/ @dannyroberts
 /corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz
 /corehq/apps/userreports/reports/builder/ @kaapstorm
@@ -75,7 +64,7 @@
 
 /custom/covid/management/commands/ @stephherbers @AddisonDunn
 
-/docs/js-guide/ @orangejenny @millerdev
+/docs/js-guide/ @millerdev
 
 /docker/ @millerdev
 

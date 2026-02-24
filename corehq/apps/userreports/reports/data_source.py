@@ -1,7 +1,4 @@
-from corehq.apps.userreports.const import (
-    DATA_SOURCE_TYPE_STANDARD,
-    UCR_SQL_BACKEND,
-)
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.custom.data_source import (
     ConfigurableReportCustomDataSource,
 )
@@ -22,7 +19,7 @@ class ConfigurableReportDataSource(object):
     """
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by,
-                 distinct_on, custom_query_provider=None, data_source_type=DATA_SOURCE_TYPE_STANDARD):
+                 distinct_on, custom_query_provider=None):
         """
             config_or_config_id: an instance of DataSourceConfiguration or an id pointing to it
         """
@@ -36,7 +33,6 @@ class ConfigurableReportDataSource(object):
             self._config = None
             self._config_id = config_or_config_id
 
-        self.data_source_type = data_source_type
         self._filters = filters
         self._order_by = order_by
         self._distinct_on = distinct_on
@@ -53,7 +49,6 @@ class ConfigurableReportDataSource(object):
         return cls(
             domain=spec.domain,
             config_or_config_id=spec.config_id,
-            data_source_type=spec.data_source_type,
             filters=filters,
             aggregation_columns=spec.aggregation_columns,
             columns=spec.report_columns,
@@ -100,7 +95,7 @@ class ConfigurableReportDataSource(object):
     @property
     def config(self):
         if self._config is None:
-            self._config, _ = get_datasource_config(self._config_id, self.domain, self.data_source_type)
+            self._config, _ = get_datasource_config(self._config_id, self.domain)
         return self._config
 
     @property

@@ -96,15 +96,24 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
         container: (config.container) ? document.querySelector(config.container) : undefined,
     });
 
-    if (!config.datetime) {
-        // Since picking a date is a single-click action, hide the picker on date selection
-        picker.subscribe('change.td',  () => {
+    // Helper: tell Alpine that the input changed so x-model can update.
+    const notifyAlpine = () => {
+        el.dispatchEvent(new Event('input'));
+    };
+
+    // Subscribe to Tempus Dominus change events
+    picker.subscribe('change.td', () => {
+        if (!config.datetime) {
+            // Since picking a date is a single-click action, hide the picker on date selection
             picker.hide();
-        });
-    }
+        }
+        // Make sure Alpine's x-model sees the new value
+        notifyAlpine();
+    });
 
     el.addEventListener('error.td', (event) => {
         picker.dates.setValue(null);
+        notifyAlpine();   // also sync the cleared value
         event.stopPropagation();
     });
 

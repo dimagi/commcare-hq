@@ -224,10 +224,11 @@ class ApiKeyFallbackBackend(object):
                 Q(expiration_date__isnull=True) | Q(expiration_date__gte=datetime.now(tz.utc))
             )
 
-            api_domain_filter = Q(domain='')
+            api_domain_filter = Q()
             domain = getattr(request, 'domain', '')
             if domain:
-                api_domain_filter = api_domain_filter | Q(domain=domain)
+                domain_accessible = Q(domain='') | Q(domain=domain)
+                api_domain_filter = domain_accessible
 
             ip = get_ip(request)
             api_whitelist_filter = Q(ip_allowlist=[]) | Q(ip_allowlist__contains=[ip])

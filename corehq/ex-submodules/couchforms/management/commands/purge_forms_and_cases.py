@@ -72,7 +72,7 @@ though deletion would be re-confirmed so dont panic
 
     def iterate_forms_and_collect_case_ids(self):
         print("Iterating Through %s XForms and Collecting Case Ids" % len(self.xform_ids))
-        for xform in XFormInstance.objects.iter_forms(self.xform_ids, self.domain):
+        for xform in XFormInstance.objects.iter_forms(self.xform_ids):
             # Get app version by fetching app corresponding to xform build_id since xform.form
             # does not have updated app version unless form was updated for that version
             app_version_built_with = self.get_xform_build_version(xform)
@@ -105,7 +105,7 @@ though deletion would be re-confirmed so dont panic
             _raise_xform_domain_mismatch(xform)
 
     def print_case_details(self):
-        for case in CommCareCase.objects.iter_cases(self.case_ids, self.domain):
+        for case in CommCareCase.objects.iter_cases(self.case_ids):
             _print_case_details(case, self.case_writer)
 
     def delete_permitted(self):

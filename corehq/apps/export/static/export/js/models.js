@@ -104,10 +104,20 @@ var ExportInstance = function (instanceJSON, options) {
         if (!self.hasDailySavedAccess && self.is_daily_saved_export()) {
             return false;
         }
+        if (self.geoPropertyError()) {
+            return false;
+        }
         return true;
     });
 
     self.duplicateLabel = ko.observable();
+
+    self.geoPropertyError = ko.pureComputed(function () {
+        return (
+            self.export_format() === constants.EXPORT_FORMATS.GEOJSON
+            && self.geoProperties.length === 0
+        );
+    });
 
     self.hasDuplicateColumnLabels = ko.pureComputed(function () {
         self.duplicateLabel('');

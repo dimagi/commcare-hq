@@ -1,4 +1,5 @@
 import csv
+import datetime
 import os
 from contextlib import ExitStack
 from datetime import date
@@ -84,8 +85,10 @@ def inddex_domain():
             on_exit(domain.delete)
 
             with patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: []):
-                datasource_config_id = populate_inddex_domain(DOMAIN)
-                config = get_ucr_datasource_config_by_id(datasource_config_id)
+                with patch('casexml.apps.case.xml.parser.CaseUpdate.guess_modified_on') as patch_modified_on:
+                    patch_modified_on.return_value = datetime.datetime(2025, 12, 7, 20, 0, 0)
+                    datasource_config_id = populate_inddex_domain(DOMAIN)
+                    config = get_ucr_datasource_config_by_id(datasource_config_id)
 
         on_exit(lambda: _get_or_create_user(domain.name, create=False).delete(None, None))
         on_exit(LookupTable.objects.filter(domain=domain.name).delete)

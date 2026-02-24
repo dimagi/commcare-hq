@@ -1,6 +1,7 @@
 import logging
 from functools import wraps
 from typing import Callable, Optional
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.utils.translation import gettext as _
@@ -18,6 +19,7 @@ from corehq.motech.const import (
     REQUEST_POST,
     REQUEST_PUT,
     REQUEST_TIMEOUT,
+    SSRF_WHITELISTED_DOMAINS,
 )
 from corehq.motech.models import RequestLog, RequestLogEntry
 from corehq.motech.utils import (
@@ -327,6 +329,9 @@ def json_or_http_error(response):
 
 
 def validate_user_input_url_for_repeaters(url, domain, src):
+    if urlparse(url).hostname in SSRF_WHITELISTED_DOMAINS:
+        return
+
     try:
         validate_user_input_url(url)
     except InvalidURL:

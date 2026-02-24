@@ -1,0 +1,40 @@
+<div
+  x-data="{
+    name: 'Fred',
+    count: 0,
+    isVisible: false,
+    get greeting() {
+      return `Hello, ${this.name}!`;
+    },
+  }"
+>
+  <p>
+    Name:
+    <input
+      type="text"
+      class="form-control"
+      x-model="name"
+    />
+  </p>
+  <p x-text="greeting"></p>
+  <p>
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      @click="count++"
+    >Increment</button>
+  </p>
+  <p>
+    Count: <span class="badge bg-secondary" x-text="count"></span>
+  </p>
+  <p>
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      @click="isVisible = !isVisible"
+    >Toggle Message</button>
+  </p>
+  <div x-show="isVisible" x-cloak="">
+    Hello there!
+  </div>
+</div>

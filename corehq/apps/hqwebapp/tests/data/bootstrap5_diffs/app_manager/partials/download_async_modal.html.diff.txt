@@ -1,0 +1,37 @@
+--- 
++++ 
+@@ -4,10 +4,10 @@
+ 
+     Usage:
+ 
+-    <a href="#{ID_OF_MODAL}" data-toggle="modal" class="download-zip">Click me!</a>
+-    {% include 'app_manager/partials/bootstrap3/download_async_modal.html' with element_id={ID_OF_MODAL} url={URL_TO_DOWNLOAD.} %}
++    <a href="#{ID_OF_MODAL}" data-bs-toggle="modal" class="download-zip">Click me!</a>
++    {% include 'app_manager/partials/bootstrap5/download_async_modal.html' with element_id={ID_OF_MODAL} url={URL_TO_DOWNLOAD.} %}
+ 
+-    Simply set ID_OF_MODAL and URL_TO_DOWNLOAD and include app_manager/js/bootstrap3/download_async_modal.js in your page.
++    Simply set ID_OF_MODAL and URL_TO_DOWNLOAD and include app_manager/js/bootstrap5/download_async_modal.js in your page.
+     Clicking the link should open the modal, start the polling, and will give the user a link when the download is ready.
+ {% endcomment %}
+ 
+@@ -17,17 +17,16 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <button type="button" class="close" data-dismiss="modal">
+-          <span aria-hidden="true">&times;</span>
++        <h4 class="modal-title">{% trans "Downloading Your File" %}</h4>
++        <button type="button" class="btn-close" data-bs-dismiss="modal">
+         </button>
+-        <h4 class="modal-title">{% trans "Downloading Your File" %}</h4>
+       </div>
+       <div class="modal-body">
+         <div id="{{element_id}}-downloading">
+           <i class="fa fa-spin fa-spinner"></i>
+           {% trans 'Processing data. Please wait...' %}
+         </div>
+-        <div class="hide" id="{{element_id}}-download-progress"></div>
++        <div class="d-none" id="{{element_id}}-download-progress"></div>
+       </div>
+     </div>
+   </div>

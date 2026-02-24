@@ -1,0 +1,41 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% registerurl "feature_flags_and_privileges" "---" %}
+
+<div class="modal fade" id="copy-toggles">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{% trans "Feature Discrepancy" %}</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal">
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% blocktrans %}
+            The following features are not turned on in the domain to which
+            you're copying. Please enable the necessary feature flags required
+            for the app to function from
+            <a id="feature-flags-link" href="" target="_blank">here</a>.
+          {% endblocktrans %}
+        </p>
+        <div></div>
+        <ul class="list-unstyled"></ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-primary" data-bs-dismiss="modal">
+          {% trans "Cancel" %}
+        </button>
+        <button class="btn btn-primary">{% trans "Copy" %}</button>
+      </div>
+    </div>
+  </div>
+  <script type="text/html">
+    <li class="mb-2">
+      <span class="badge toggle-badge bg-<%- tag_css_class %>">
+        <%- tag_name %>
+      </span>
+      <%- label %>
+    </li>
+  </script>
+</div>

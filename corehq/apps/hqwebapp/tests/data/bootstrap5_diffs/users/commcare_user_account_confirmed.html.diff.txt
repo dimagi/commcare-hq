@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ {% load i18n %}
+ {% load field_tags %}
+ {% load hq_shared_tags %}
+-{% js_entry_b3 'users/js/bootstrap3/accept_invite' %}
++{% js_entry 'users/js/bootstrap5/accept_invite' %}
+ 
+ {% block title %}{% blocktrans %}Account Confirmed{% endblocktrans %}{% endblock title %}
+ {% block tabs %}
+@@ -11,7 +11,7 @@
+ {% block login-content %}
+   <div class="container-fluid">
+     <div class="row">
+-      <div class="col-xs-12">
++      <div class="col-sm-12">
+         <div class="reg-form-container sign-in-container">
+           <div class="form-bubble form-bubble-lg">
+             <h3>{% trans "You can now log into the mobile app." %}</h3>

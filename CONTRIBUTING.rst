@@ -29,7 +29,8 @@ considered for review or re-review
 
 
 
-When opening a PR, please review our `Guide to Authoring Pull Requests`_.  
+When opening a PR, please review our `Guide to Authoring Pull Requests`_ and our
+`AI Contribution Guidelines`_ if relevant.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
 
@@ -104,6 +105,7 @@ to see how that works.
 .. _Read the Docs: https://commcare-hq.readthedocs.io/
 .. _reStructuredText: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _autoclass: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+.. _AI Contribution Guidelines: https://github.com/dimagi/open-source/blob/master/docs/ai_contribution_guidelines.md
 
 
 Updating requirements

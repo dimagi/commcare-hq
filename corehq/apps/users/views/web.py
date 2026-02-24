@@ -22,12 +22,7 @@ from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_EXISTING_USER_INVITE_FORM,
-    HUBSPOT_NEW_USER_INVITE_FORM,
-    send_hubspot_form,
-    track_workflow_noop,
-)
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import BasePageView, logout
@@ -45,7 +40,7 @@ from corehq.const import USER_CHANGE_VIA_INVITATION
 
 class UserInvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
-    template = "users/accept_invite.html"
+    template = "users/bootstrap3/accept_invite.html"
 
     def __call__(self, request, uuid, **kwargs):
         # add the correct parameters to this instance
@@ -138,7 +133,6 @@ class UserInvitationView(object):
                 track_workflow_noop(request.couch_user.get_email(),
                                     "Current user accepted a project invitation",
                                     {"Current user accepted a project invitation": "yes"})
-                send_hubspot_form(HUBSPOT_EXISTING_USER_INVITE_FORM, request)
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
@@ -198,7 +192,6 @@ class UserInvitationView(object):
                     track_workflow_noop(request.POST['email'],
                                         "New User Accepted a project invitation",
                                         {"New User Accepted a project invitation": "yes"})
-                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
                 if (CouchUser.get_by_username(invitation.email)
@@ -292,7 +285,7 @@ def delete_invitation(request, domain):
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
     page_title = gettext_lazy("Request Access")
-    template_name = "users/domain_request.html"
+    template_name = "users/bootstrap3/domain_request.html"
     request_form = None
 
     @property
@@ -329,7 +322,7 @@ class DomainRequestView(BasePageView):
                     domain_request.send_request_email()
                     domain_request.save()
                     domain_obj = Domain.get_by_name(domain_request.domain)
-                    return render(request, "users/confirmation_sent.html", {
+                    return render(request, "users/bootstrap3/confirmation_sent.html", {
                         'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain,
                     })
         return self.get(request, *args, **kwargs)

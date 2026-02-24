@@ -7,10 +7,7 @@ from django.db import models, transaction
 from django.http import Http404
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import (
-    get_app,
-    get_latest_released_app,
-)
+from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import AppInDifferentDomainException, FormNotFoundException
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
@@ -578,10 +575,7 @@ class SurveyContent(Content):
     @memoized
     def get_memoized_app_module_form(self, domain):
         try:
-            if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
-                app = get_app(domain, self.app_id)
-            else:
-                app = get_latest_released_app(domain, self.app_id)
+            app = get_latest_released_app(domain, self.app_id)
             form = app.get_form(self.form_unique_id)
             module = form.get_module()
         except (Http404, FormNotFoundException, AppInDifferentDomainException):

@@ -1,0 +1,65 @@
+--- 
++++ 
+@@ -1,27 +1,27 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% initial_page_data 'custom_assertions' custom_assertions %}
+-<label class="control-label col-sm-2">
++<label class="form-label col-md-2">
+   {% trans "Custom Assertions" %}
+   <span class="hq-help-template"
+         data-title="{% trans "Custom Assertions" %}"
+         data-content="{% blocktrans %}Add custom assertions that you will use elsewhere.{% endblocktrans %}"
+   ></span>
+ </label>
+-<div class="col-sm-10" id="custom-assertions">
++<div class="col-md-10" id="custom-assertions">
+   <table class="table table-condensed">
+     <thead>
+     <tr>
+-      <th class="col-sm-4">{% trans "Test" %}</th>
+-      <th class="col-sm-6">
++      <th class="col-md-4">{% trans "Test" %}</th>
++      <th class="col-md-6">
+         {% trans "Message Text" %}
+       </th>
+-      <th class="col-sm-2">&nbsp;</th>
++      <th class="col-md-2">&nbsp;</th>
+     </tr>
+     </thead>
+     <tbody data-bind="foreach: customAssertions">
+     <tr>
+-      <td class="col-sm-4">
++      <td class="col-md-4">
+         <input
+           class="form-control"
+           type="text"
+@@ -30,7 +30,7 @@
+           data-bind="value: test"
+         /><!-- Not directly sent to server since there is no "name" attribute -->
+       </td>
+-      <td class="col-sm-6">
++      <td class="col-md-6">
+         <input
+           class="form-control"
+           type="text"
+@@ -39,8 +39,8 @@
+           data-bind="value: text"
+         /><!-- Not directly sent to server since there is no "name" attribute -->
+       </td>
+-      <td class="col-sm-2">
+-        <i style="cursor: pointer;" class="fa fa-remove"
++      <td class="col-md-2">
++        <i style="cursor: pointer;" class="fa fa-remove"  {# todo B5: inline-style #}
+            data-bind="click: $parent.removeAssertion"></i>
+       </td>
+     </tr>
+@@ -48,7 +48,7 @@
+   </table>
+   <p>
+     <button type="button"
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             data-bind="click: addAssertion">
+       <i class="fa fa-plus"></i> {% trans "Add custom assertion" %}
+     </button>

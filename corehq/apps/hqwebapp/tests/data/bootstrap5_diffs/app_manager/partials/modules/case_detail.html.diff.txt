@@ -1,0 +1,56 @@
+--- 
++++ 
+@@ -1,16 +1,16 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% include 'app_manager/partials/modules/bootstrap3/case_list_missing_warning.html' %}
++{% include 'app_manager/partials/modules/bootstrap5/case_list_missing_warning.html' %}
+ 
+ <div data-bind="saveButton: longScreen.saveButton"></div>
+ 
+ 
+-{% include 'app_manager/partials/modules/bootstrap3/custom_detail_variables.html' with screen='longScreen' editorId='custom-variables-editor-long' %}
++{% include 'app_manager/partials/modules/bootstrap5/custom_detail_variables.html' with screen='longScreen' editorId='custom-variables-editor-long' %}
+ 
+-<div class="panel panel-appmanager">
+-  <div class="panel-heading">
+-    <h4 class="panel-title panel-title-nolink">
++<div class="card panel-appmanager">  {# todo B5: css-panel #}
++  <div class="card-header">
++    <h4 class="card-title card-title-nolink">
+       {% trans "Display Properties" %}
+       <span class="hq-help-template"
+             data-title="{% trans "Case Detail" %}"
+@@ -18,25 +18,25 @@
+       ></span>
+     </h4>
+   </div>
+-  <div class="panel-body" data-bind="with: longScreen">
++  <div class="card-body" data-bind="with: longScreen">
+     {% if request|toggle_enabled:'CASE_LIST_TILE_CUSTOM' %}
+-      {% include 'app_manager/partials/modules/bootstrap3/case_tile_templates.html' %}
+-      {% include 'app_manager/partials/modules/bootstrap3/case_tile_preview.html' %}
++      {% include 'app_manager/partials/modules/bootstrap5/case_tile_templates.html' %}
++      {% include 'app_manager/partials/modules/bootstrap5/case_tile_preview.html' %}
+     {% endif %}
+ 
+-    {% include 'app_manager/partials/modules/bootstrap3/case_list_properties.html' %}
++    {% include 'app_manager/partials/modules/bootstrap5/case_list_properties.html' %}
+   </div>
+ </div>
+ 
+ <div class="btn-group">
+ 
+-  <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
++  <button class="btn btn-outline-primary" data-bind="click: function() { longScreen.addTab(false); }">
+     <i class="fa fa-plus"></i>
+     {% trans "Add Tab" %}
+   </button>
+ 
+   {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
+-    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
++    <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">  {# todo B5: css-dropdown #}
+       <span class="caret"></span>
+     </button>
+     <ul class="dropdown-menu">

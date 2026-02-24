@@ -138,7 +138,7 @@ class FormattedDetailColumn(object):
     @property
     def template(self):
         template = sx.Template(
-            text=sx.Text(xpath_function=self.xpath_function),
+            text=(sx.Text(xpath_function=self.xpath_function) if self.xpath_function else sx.Text()),
             form=self.template_form,
             width=self.template_width,
         )
@@ -606,6 +606,26 @@ class Address(HideShortColumn):
 @register_format_type('address-popup')
 class AddressPopup(HideShortColumn):
     template_form = 'address-popup'
+
+
+@register_format_type('geo-boundary')
+class GeoBoundary(HideShortColumn):
+    template_form = 'geo_boundary'
+
+
+@register_format_type('geo-boundary-color')
+class GeoBoundaryColor(HideShortColumn):
+    template_form = 'geo_boundary_color_hex'
+
+
+@register_format_type('geo-points')
+class GeoPoints(HideShortColumn):
+    template_form = 'geo_points'
+
+
+@register_format_type('geo-points-colors')
+class GeoPointsColors(HideShortColumn):
+    template_form = 'geo_points_colors_hex'
 
 
 @register_format_type('picture')

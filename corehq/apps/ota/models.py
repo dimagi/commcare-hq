@@ -98,8 +98,7 @@ class SerialIdBucket(models.Model):
     current_value = models.IntegerField(default=-1)
 
     class Meta(object):
-        index_together = ('domain', 'bucket_id',)
-        unique_together = ('domain', 'bucket_id',)
+        unique_together = ('domain', 'bucket_id')
 
     @classmethod
     def get_next(cls, domain, bucket_id, session_id=None):

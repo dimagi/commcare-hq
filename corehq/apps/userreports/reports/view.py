@@ -273,6 +273,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def get(self, request, *args, **kwargs):
         if self.has_permissions(self.domain, request.couch_user):
             self.get_spec_or_404()
+            # render_as` is not an `AllowedRendering` value because
+            # `ConfigurableReportView` doesn't extend `GenericReportView`
             if kwargs.get('render_as') == 'email':
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':

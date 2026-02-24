@@ -1,62 +1,55 @@
 import copy
 import logging
-import string
-import random
 from collections import defaultdict
 from datetime import datetime
-from corehq.util.soft_assert.api import soft_assert
 
-from memoized import memoized
+from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS
-
-from corehq.apps.analytics.tasks import record_google_analytics_event
-from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import HqPermissions
-from corehq.apps.users.util import generate_mobile_username
-from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
+    ResourceConflict,
     ResourceNotFound,
-    ResourceConflict
 )
+from memoized import memoized
 
-from django.core.exceptions import ValidationError
-from corehq import privileges
-from corehq import toggles
+from dimagi.utils.logging import notify_error, notify_exception
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-)
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.models import Domain
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import get_tableau_group_ids_by_names
+from corehq.apps.sms.util import validate_phone_number
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.helpers import (
-    spec_value_to_boolean_or_none,
-)
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
-    send_account_confirmation_sms_if_necessary,
 )
+from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.model_log import InviteModelAction
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
+    HqPermissions,
     Invitation,
+    InvitationStatus,
     UserRole,
-    InvitationStatus
 )
-from corehq.apps.users.model_log import InviteModelAction
-from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER, INVITATION_CHANGE_VIA_BULK_IMPORTER
-from corehq.apps.sms.util import validate_phone_number
-
-from dimagi.utils.logging import notify_error
+from corehq.apps.users.util import generate_mobile_username
+from corehq.const import (
+    INVITATION_CHANGE_VIA_BULK_IMPORTER,
+    USER_CHANGE_VIA_BULK_IMPORTER,
+)
+from corehq.util.soft_assert.api import soft_assert
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -67,7 +60,6 @@ allowed_headers = set([
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)', 'web_user', 'remove_web_user', 'remove', 'last_access_date (read only)',
     'last_login (read only)', 'last_name', 'status', 'first_name',
-    'send_confirmation_sms',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -332,34 +324,48 @@ def get_location_from_site_code(site_code, location_cache):
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
                                     assigned_location_ids=None, profile=None, tableau_role=None,
                                     tableau_group_ids=None, user_change_logger=None, send_email=True):
+    """
+    :param primary_location_id: The primary location will be changed only if
+        a value other than `None` is passed.
+    :param assigned_location_ids: Assigned locations will be changed only if
+        a value other than `None` is passed.
+    """
     from corehq.apps.users.views import InviteWebUserView
 
-    if assigned_location_ids is None:
-        assigned_location_ids = []
-    primary_location = SQLLocation.by_location_id(primary_location_id)
     invite_fields = {
         'invited_by': upload_user.user_id,
         'invited_on': datetime.utcnow(),
         'tableau_role': tableau_role,
         'tableau_group_ids': tableau_group_ids,
-        'primary_location': primary_location,
         'role': role_qualified_id,
         'profile': profile,
     }
+
+    # It's not clear why only these two were chosen to be recorded as changed values
+    changed_values = {
+        'role_name': role_qualified_id,
+        'profile': profile
+    }
+
+    if primary_location_id is not None:
+        primary_location = SQLLocation.by_location_id(primary_location_id)
+        invite_fields['primary_location'] = primary_location
+        changed_values['primary_location'] = primary_location
+
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
         is_accepted=False,
         defaults=invite_fields,
     )
-    assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-                          for assigned_location_id in assigned_location_ids]
-    invite.assigned_locations.set(assigned_locations)
-    changes = InviteWebUserView.format_changes(domain,
-                                               {'role_name': role_qualified_id,
-                                                'profile': profile,
-                                                'assigned_locations': assigned_locations,
-                                                'primary_location': primary_location})
+
+    if assigned_location_ids is not None:
+        assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
+                              for assigned_location_id in assigned_location_ids]
+        invite.assigned_locations.set(assigned_locations)
+        changed_values['assigned_locations'] = assigned_locations
+
+    changes = InviteWebUserView.format_changes(domain, changed_values=changed_values)
     if invite_created:
         if send_email:
             invite.send_activation_email()
@@ -367,9 +373,12 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
             user_change_logger.add_info(UserChangeMessage.invited_to_domain(domain))
         action = InviteModelAction.CREATE
         invite_fields.update({'domain': domain, 'email': email})
-        invite_fields.pop('primary_location')
+
+        # pop already formatted fields before update
+        invite_fields.pop('primary_location', None)
         invite_fields.pop('role')
         invite_fields.pop('profile')
+
         changes.update(invite_fields)
     else:
         action = InviteModelAction.UPDATE
@@ -530,10 +539,6 @@ class CCUserRow(BaseUserRow):
         from corehq.apps.user_importer.validation import is_password
         if self.row.get('password'):
             password = str(self.row.get('password'))
-        elif self.column_values["send_confirmation_sms"]:
-            # Set a dummy password to pass the validation, similar to GUI user creation
-            string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
-            password = ''.join(random.choices(string_set, k=10))
         else:
             password = None
         self.column_values['password'] = password
@@ -561,13 +566,8 @@ class CCUserRow(BaseUserRow):
         }
 
         for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
-                  'remove_web_user', 'send_confirmation_sms']:
+                  'remove_web_user']:
             values[v] = spec_value_to_boolean_or_none(self.row, v)
-
-        if values["send_confirmation_sms"] and not values["user_id"]:
-            values["is_account_confirmed"] = False
-        else:
-            values["is_account_confirmed"] = values["is_account_confirmed"]
 
         self.column_values.update(values)
         if not self._parse_username():
@@ -724,8 +724,6 @@ class CCUserRow(BaseUserRow):
         else:
             if cv["send_confirmation_email"]:
                 send_account_confirmation_if_necessary(self.user)
-            if cv["send_confirmation_sms"]:
-                send_account_confirmation_sms_if_necessary(self.user)
 
 
 class WebUserRow(BaseUserRow):
@@ -859,8 +857,8 @@ class WebUserRow(BaseUserRow):
                 self.check_invitation_status(self.domain, cv['username'])
 
             user_invite_loc_id = None
-            user_invite_locs_ids = []
-            if self.domain_info.can_assign_locations and cv['location_codes']:
+            user_invite_locs_ids = None
+            if self.domain_info.can_assign_locations and cv['location_codes'] is not None:
                 if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
                         cv['location_codes'][0], self.domain_info.location_cache
@@ -870,6 +868,9 @@ class WebUserRow(BaseUserRow):
                         for loc in cv['location_codes']
                     ]
                     user_invite_loc_id = user_invite_loc.location_id
+                else:
+                    user_invite_loc_id = ''
+                    user_invite_locs_ids = []
             profile = None
             if cv["profile_name"]:
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
@@ -1013,13 +1014,17 @@ class DomainInfo:
     @property
     @memoized
     def profiles_by_name(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            UserFieldsView,
+        )
         return CustomDataFieldsDefinition.get_profiles_by_name(self.domain, UserFieldsView.field_type)
 
     @property
     @memoized
     def validators(self):
-        from corehq.apps.user_importer.validation import get_user_import_validators
+        from corehq.apps.user_importer.validation import (
+            get_user_import_validators,
+        )
         roles_by_name = list(self.roles_by_name)
         domain_user_specs = [
             spec

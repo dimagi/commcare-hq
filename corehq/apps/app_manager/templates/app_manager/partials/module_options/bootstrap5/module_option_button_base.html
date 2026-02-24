@@ -1,0 +1,15 @@
+<div class="col-sm">
+  <button
+    type="button"
+    class="new-module-option bg-transparent border-0 fw-normal h-100 w-100 p-0"
+    data-type="{{ module_type }}"
+  >
+    <div class="card h-100">
+      <div class="card-header fs-5">{% block heading %}{% endblock %}</div>
+      <div class="card-body py-4 text-center">
+        <i class="{{ icon_class }} d-block w-100 mb-2"></i>
+        {% block description %}{% endblock %}
+      </div>
+    </div>
+  </button>
+</div>

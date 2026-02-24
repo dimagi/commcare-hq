@@ -39,5 +39,5 @@ class Command(BaseCommand):
         for case_id_chunk in with_progress_bar(case_id_chunks):
             case_id_chunk = list(case_id_chunk)
             with CriticalSection([get_sync_key(case_id) for case_id in case_id_chunk], timeout=5 * 60):
-                for case in CommCareCase.objects.get_cases(case_id_chunk, rule.domain):
+                for case in CommCareCase.objects.get_cases(case_id_chunk):
                     rule.run_rule(case, utcnow())

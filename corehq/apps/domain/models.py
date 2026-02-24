@@ -1,18 +1,16 @@
-import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F
-from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
-from django.template.loader import render_to_string
-from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 
+from langcodes import langs as all_langs
 from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -37,7 +35,6 @@ from dimagi.utils.couch.database import (
 )
 from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
-from dimagi.utils.web import get_url_base
 
 from corehq import toggles
 from corehq.apps.app_manager.const import (
@@ -48,25 +45,17 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.util import log_user_change
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_doc_ids_for_domain_grouped_by_db,
 )
-from corehq.util.quickcache import quickcache, get_session_key
+from corehq.util.models import GetOrNoneManager
+from corehq.util.quickcache import get_session_key, quickcache
 from corehq.util.soft_assert import soft_assert
-from langcodes import langs as all_langs
 
-from .exceptions import (
-    InactiveTransferDomainException,
-    NameUnavailableException,
-)
+from .exceptions import NameUnavailableException
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
-
-from django.core.validators import MaxValueValidator, MinValueValidator
 
 lang_lookup = defaultdict(str)
 
@@ -118,6 +107,10 @@ LICENSE_LINKS = {
     'cc-nc-sa': 'http://creativecommons.org/licenses/by-nc-sa/4.0',
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
+
+# Set these to the most up to date version of LicenseAgreements
+EULA_CURRENT_VERSION = '4.0'
+AUTOPAY_TERMS_CURRENT_VERSION = '1.0'
 
 
 def cached_property(method):
@@ -191,6 +184,11 @@ class CallCenterProperties(DocumentSchema):
         self.case_actions_datasource_enabled = config.cases_active.enabled
         post = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
         return pre != post
+
+
+class LicenseAgreementType:
+    EULA = "End User License Agreement"
+    AUTOPAY_TERMS = "Autopay Terms"
 
 
 class LicenseAgreement(DocumentSchema):
@@ -326,7 +324,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     restrict_superusers = BooleanProperty(default=False)
     allow_domain_requests = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=False)
-    usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
 
@@ -456,6 +453,16 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # name that users see for connect messaging channels tied to this domain
     connect_messaging_channel_name = StringProperty()
 
+    # TODO:
+    #   * Simplify the Domain Couch model by splitting off properties.
+    #   * Group properties by Django app into domain settings SQL models,
+    #     e.g. Add more app-manager-related settings to
+    #     AppManagerDomainSettings:
+    #     + Domain.usercase_enabled
+    #     + AppReleaseModeSetting.is_visible
+    #     + etc.
+    # (Norman, 2025-09-24)
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -565,8 +572,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return get_brief_apps_in_domain(self.name)
 
     def full_applications(self, include_builds=True):
-        from corehq.apps.app_manager.util import get_correct_app_class
         from corehq.apps.app_manager.models import Application
+        from corehq.apps.app_manager.util import get_correct_app_class
 
         def wrap_application(a):
             return get_correct_app_class(a['doc']).wrap(a['doc'])
@@ -666,8 +673,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         generate a new, unique name. Throws exception if it can't figure out
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
+        from corehq.apps.domain.dbaccessors import (
+            domain_or_deleted_domain_exists,
+        )
         from corehq.apps.domain.utils import get_domain_url_slug
-        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
         name = get_domain_url_slug(hr_name, max_length=max_length)
         if not name:
             raise NameUnavailableException
@@ -733,7 +742,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         )
 
     def save(self, **params):
-        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
+        from corehq.apps.domain.dbaccessors import (
+            domain_or_deleted_domain_exists,
+        )
 
         self.last_modified = datetime.utcnow()
         if not self._rev:
@@ -882,169 +893,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return 50000
 
 
-class TransferDomainRequest(models.Model):
-    active = models.BooleanField(default=True, blank=True)
-    request_time = models.DateTimeField(null=True, blank=True)
-    request_ip = models.CharField(max_length=80, null=True, blank=True)
-    confirm_time = models.DateTimeField(null=True, blank=True)
-    confirm_ip = models.CharField(max_length=80, null=True, blank=True)
-    transfer_guid = models.CharField(max_length=32, null=True, blank=True)
-
-    domain = models.CharField(max_length=256)
-    from_username = models.CharField(max_length=80)
-    to_username = models.CharField(max_length=80)
-
-    TRANSFER_TO_EMAIL = 'domain/email/domain_transfer_to_request'
-    TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_from_request'
-    DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
-
-    class Meta(object):
-        app_label = 'domain'
-
-    @property
-    @memoized
-    def to_user(self):
-        from corehq.apps.users.models import WebUser
-        return WebUser.get_by_username(self.to_username)
-
-    @property
-    @memoized
-    def from_user(self):
-        from corehq.apps.users.models import WebUser
-        return WebUser.get_by_username(self.from_username)
-
-    @classmethod
-    def get_by_guid(cls, guid):
-        try:
-            return cls.objects.get(transfer_guid=guid, active=True)
-        except TransferDomainRequest.DoesNotExist:
-            return None
-
-    @classmethod
-    def get_active_transfer(cls, domain, from_username):
-        try:
-            return cls.objects.get(domain=domain, from_username=from_username, active=True)
-        except TransferDomainRequest.DoesNotExist:
-            return None
-        except TransferDomainRequest.MultipleObjectsReturned:
-            # Deactivate all active transfer except for most recent
-            latest = cls.objects \
-                .filter(domain=domain, from_username=from_username, active=True, request_time__isnull=False) \
-                .latest('request_time')
-            cls.objects \
-                .filter(domain=domain, from_username=from_username) \
-                .exclude(pk=latest.pk) \
-                .update(active=False)
-
-            return latest
-
-    def requires_active_transfer(fn):
-        def decorate(self, *args, **kwargs):
-            if not self.active:
-                raise InactiveTransferDomainException(_("Transfer domain request is no longer active"))
-            return fn(self, *args, **kwargs)
-        return decorate
-
-    @requires_active_transfer
-    def send_transfer_request(self):
-        self.transfer_guid = uuid.uuid4().hex
-        self.request_time = datetime.utcnow()
-        self.save()
-
-        self.email_to_request()
-        self.email_from_request()
-
-    def activate_url(self):
-        return "{url_base}/domain/transfer/{guid}/activate".format(
-            url_base=get_url_base(),
-            guid=self.transfer_guid
-        )
-
-    def deactivate_url(self):
-        return "{url_base}/domain/transfer/{guid}/deactivate".format(
-            url_base=get_url_base(),
-            guid=self.transfer_guid
-        )
-
-    def email_to_request(self):
-        context = self.as_dict()
-
-        html_content = render_to_string("{template}.html".format(template=self.TRANSFER_TO_EMAIL), context)
-        text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
-
-        send_html_email_async.delay(
-            _('Transfer of ownership for CommCare project space.'),
-            self.to_user.get_email(),
-            html_content,
-            text_content=text_content,
-            domain=self.domain,
-            use_domain_gateway=True,
-        )
-
-    def email_from_request(self):
-        context = self.as_dict()
-        context.update({
-            'settings_url': "{url_base}{path}".format(url_base=get_url_base(),
-                                                      path=reverse('transfer_domain_view', args=[self.domain])),
-            'support_email': settings.SUPPORT_EMAIL,
-        })
-
-        html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
-        text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
-
-        send_html_email_async.delay(
-            _('Transfer of ownership for CommCare project space.'),
-            self.from_user.get_email(),
-            html_content,
-            text_content=text_content,
-            domain=self.domain,
-            use_domain_gateway=True,
-        )
-
-    @requires_active_transfer
-    def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):
-
-        self.confirm_time = datetime.utcnow()
-        if 'ip' in kwargs:
-            self.confirm_ip = kwargs['ip']
-
-        self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
-        self.from_user.save()
-        if by_user:
-            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.from_user,
-                            changed_by_user=by_user, changed_via=transfer_via,
-                            change_messages=UserChangeMessage.domain_removal(self.domain))
-            log_user_change(by_domain=self.domain, for_domain=self.domain, couch_user=self.to_user,
-                            changed_by_user=by_user, changed_via=transfer_via,
-                            change_messages=UserChangeMessage.domain_addition(self.domain))
-        self.to_user.save()
-        self.active = False
-        self.save()
-
-        html_content = render_to_string(
-            "{template}.html".format(template=self.DIMAGI_CONFIRM_EMAIL),
-            self.as_dict())
-        text_content = render_to_string(
-            "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
-            self.as_dict())
-
-        send_html_email_async.delay(
-            _('There has been a transfer of ownership of {domain}').format(domain=self.domain),
-            settings.SUPPORT_EMAIL, html_content, text_content=text_content,
-        )
-
-    def as_dict(self):
-        return {
-            'domain': self.domain,
-            'from_username': self.from_username,
-            'to_username': self.to_username,
-            'guid': self.transfer_guid,
-            'request_time': self.request_time,
-            'deactivate_url': self.deactivate_url(),
-            'activate_url': self.activate_url(),
-        }
-
-
 class DomainAuditRecordEntry(models.Model):
     domain = models.TextField(unique=True, db_index=True)
     cp_n_downloads_custom_exports = models.BigIntegerField(default=0)
@@ -1159,3 +1007,21 @@ class AppReleaseModeSetting(models.Model):
     def get_settings(domain):
         domain_obj, created = AppReleaseModeSetting.objects.get_or_create(domain=domain)
         return domain_obj
+
+
+class AppManagerDomainSettings(models.Model):
+    domain = models.CharField(max_length=255, primary_key=True)
+    all_add_ons_enabled = models.BooleanField(default=False)
+
+    objects = GetOrNoneManager()
+
+
+def all_app_manager_add_ons_enabled(domain):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    from corehq.privileges import SHOW_ENABLE_ALL_ADD_ONS
+
+    if not domain_has_privilege(domain, SHOW_ENABLE_ALL_ADD_ONS):
+        return False
+
+    app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=domain)
+    return bool(app_mgr and app_mgr.all_add_ons_enabled)

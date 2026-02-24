@@ -2,20 +2,18 @@ import csv
 from datetime import timedelta
 from itertools import chain
 
+import attr
+from dimagi.utils.parsing import string_to_datetime
 from django.contrib.auth.models import User
 from django.db.models import ForeignKey, Min
-
-import attr
-
-from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.users.models import Invitation, WebUser
 from corehq.util.models import ForeignValue
 
-from ..models import AccessAudit, NavigationEventAudit
+from ..models import ACCESS_CHOICES, AccessAudit, NavigationEventAudit
 
 
-def filters_for_navigation_event_query(user, domain=None, start_date=None, end_date=None):
+def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=None):
     where = get_date_range_where(start_date, end_date)
     if user:
         where['user'] = user
@@ -24,9 +22,29 @@ def filters_for_navigation_event_query(user, domain=None, start_date=None, end_d
     return where
 
 
-def navigation_events_by_user(user, domain=None, start_date=None, end_date=None):
-    where = filters_for_navigation_event_query(user, domain, start_date, end_date)
+def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
+    return chain(
+        navigation_events_by_user(user, domain, start_date, end_date, action),
+        access_events_by_user(user, domain, start_date, end_date, action),
+    )
+
+
+def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
+    where = filters_for_audit_event_query(user, domain, start_date, end_date)
     query = NavigationEventAudit.objects.filter(**where)
+    if action:
+        query = query.extra(
+            where=["headers::jsonb->>'REQUEST_METHOD' = %s"],
+            params=[action]
+        )
+    return AuditWindowQuery(query)
+
+
+def access_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
+    where = filters_for_audit_event_query(user, domain, start_date, end_date)
+    if action:
+        where['access_type'] = action
+    query = AccessAudit.objects.filter(**where)
     return AuditWindowQuery(query)
 
 
@@ -110,6 +128,11 @@ def get_domain_first_access_times(domains, start_date=None, end_date=None):
 
 
 def write_generic_log_event(writer, event):
+    row = get_generic_log_event_row(event)
+    writer.writerow(row)
+
+
+def get_action_and_resource(event):
     action = ''
     resource = ''
     if event.doc_type == 'NavigationEventAudit':
@@ -117,19 +140,24 @@ def write_generic_log_event(writer, event):
         resource = event.request_path
     else:
         assert event.doc_type == 'AccessAudit'
-        action = event.access_type
+        action = ACCESS_CHOICES[event.access_type]
         resource = event.path
 
-    writer.writerow([
+    return action, resource
+
+
+def get_generic_log_event_row(event):
+    action, resource = get_action_and_resource(event)
+    return [
         event.event_date,
         event.doc_type,
         event.user,
-        event.domain,
+        event.domain or '',
         event.ip_address,
         action,
         resource,
         event.description,
-    ])
+    ]
 
 
 def write_export_from_all_log_events(file_obj, start, end):

@@ -73,10 +73,9 @@ class XFormInstanceManager(RequireDBManager):
             query = query.filter(domain=domain)
         return query.exists()
 
-    def get_forms(self, form_ids, domain=None, ordered=False):
+    def get_forms(self, form_ids, ordered=False):
         """
         :param form_ids: list of form_ids to fetch
-        :param domain: Currently unused, may be enforced in the future.
         :param ordered:  True if the list of returned forms should have the
                          same order as the list of form_ids passed in
         """
@@ -88,13 +87,12 @@ class XFormInstanceManager(RequireDBManager):
             sort_with_id_list(forms, form_ids, 'form_id')
         return forms
 
-    def iter_forms(self, form_ids, domain=None):
+    def iter_forms(self, form_ids):
         """
         :param form_ids: list of form_ids.
-        :param domain: See the same parameter of `get_forms`.
         """
         for chunk in chunked(form_ids, 100):
-            yield from self.get_forms([_f for _f in chunk if _f], domain)
+            yield from self.get_forms([_f for _f in chunk if _f])
 
     @staticmethod
     def get_attachments(form_id):
@@ -744,11 +742,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     class Meta(object):
         db_table = "form_processor_xforminstancesql"
         app_label = "form_processor"
-        index_together = [
-            ('domain', 'state'),
-            ('domain', 'user_id'),
-        ]
         indexes = [
+            models.Index(fields=['domain', 'state']),
+            models.Index(fields=['domain', 'user_id']),
             models.Index(fields=['xmlns']),
             models.Index(fields=['deleted_on'],
                          name=create_unique_index_name('form_processor',
@@ -777,8 +773,8 @@ class DeprecatedXFormAttachmentSQL(models.Model):
     class Meta(object):
         db_table = "form_processor_xformattachmentsql"
         app_label = "form_processor"
-        index_together = [
-            ("form_id", "name"),
+        indexes = [
+            models.Index(fields=["form_id", "name"]),
         ]
 
 

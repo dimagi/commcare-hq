@@ -3,6 +3,8 @@ from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change
 from pillowtop.utils import force_seq_int
 
+TIMEOUT = 10_000  # 10 seconds in ms
+
 
 class CouchChangeFeed(ChangeFeed):
 
@@ -15,7 +17,7 @@ class CouchChangeFeed(ChangeFeed):
 
     def iter_changes(self, since, forever):
         from corehq.apps.change_feed.data_sources import SOURCE_COUCH
-        extra_args = {'feed': 'continuous'} if forever else {}
+        extra_args = {'feed': 'continuous', 'heartbeat': TIMEOUT} if forever else {}
         extra_args.update(self._extra_couch_view_params)
         if self._couch_filter:
             extra_args.update({'filter': self._couch_filter})
@@ -27,6 +29,9 @@ class CouchChangeFeed(ChangeFeed):
             **extra_args
         )
         for couch_change in changes_stream:
+            if couch_change is None:
+                yield None  # heartbeat / consumer timeout
+                continue
             change = change_from_couch_row(couch_change, document_store=self._document_store)
             populate_change_metadata(change, SOURCE_COUCH, self._couch_db.dbname)
             yield change

@@ -1,0 +1,28 @@
+<div
+  class="card mb-3"
+  x-data="{
+    selectedDateTime: '',
+  }"
+>
+  <div class="card-body">
+    <label
+      for="alpine-datepicker-datetime"
+      class="form-label"
+    >
+      Date &amp; time picker (24-hour, yyyy-MM-dd H:mm:ss)
+    </label>
+    <input
+      id="alpine-datepicker-datetime"
+      type="text"
+      class="form-control w-auto"
+      x-model="selectedDateTime"
+      x-datepicker='{"datetime": true}'
+      placeholder="YYYY-MM-DD HH:MM:SS"
+      autocomplete="off"
+    />
+    <p class="mt-2 mb-0 small text-muted">
+      <strong>Selected date &amp; time:</strong>
+      <span x-text="selectedDateTime || '—'"></span>
+    </p>
+  </div>
+</div>

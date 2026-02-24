@@ -8,6 +8,7 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import (
     delete_all_cases,
     extract_caseblocks_from_xml,
+    get_case_xmlns,
 )
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import (
@@ -18,6 +19,7 @@ from casexml.apps.phone.restore import (
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.const import LOADTEST_HARD_LIMIT
@@ -52,6 +54,11 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         cls.domain.delete()
         super(LoadtestUserTest, cls).tearDownClass()
 
+    @staticmethod
+    def _is_usercase(cb):
+        ns = get_case_xmlns(V2)
+        return cb.xml_element.findtext(f'{{{ns}}}create/{{{ns}}}case_type') == USERCASE_TYPE
+
     def test_no_factor_set(self):
         self.user.loadtest_factor = None
         self.user.save()
@@ -61,8 +68,11 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
             restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2)
         )
+
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
+        caseblocks = [cb for cb in caseblocks if not self._is_usercase(cb)]
+
         self.assertEqual(1, len(caseblocks))
         self.assertEqual(caseblocks[0].get_case_id(), case.case_id)
 
@@ -76,8 +86,11 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
             restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2),
         )
+
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
+        caseblocks = [cb for cb in caseblocks if not self._is_usercase(cb)]
+
         self.assertEqual(6, len(caseblocks))
         self.assertEqual(1, len([cb for cb in caseblocks
                                  if cb.get_case_id() == case1.case_id]))
@@ -105,6 +118,8 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         )
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
+        caseblocks = [cb for cb in caseblocks if not self._is_usercase(cb)]
+
         self.assertEqual(6, len(caseblocks))
         self.assertEqual(1, len([cb for cb in caseblocks
                                  if cb.get_case_id() == child.case_id]))

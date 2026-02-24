@@ -1,0 +1,24 @@
+--- 
++++ 
+@@ -7,8 +7,8 @@
+       <i
+         class="fa-solid fa-gear"
+         title="{% trans 'Application Settings' %}"
+-        data-toggle="tooltip"
+-        data-placement="left"
++        data-bs-toggle="tooltip"
++        data-bs-placement="left"
+       ></i>
+     </a>
+   </div>
+@@ -18,9 +18,7 @@
+       <span class="variable-app_name appname-text">{{ app_name }}</span>
+     </a>
+   </h2>
+-  <div id="js-publish-status"
+-       class="appnav-name-publish"
+-       style="display: none;">
++  <div id="js-publish-status" class="appnav-name-publish d-none">
+     {% trans "Updates Available to Publish" %}
+   </div>
+   {% if linked_name and linked_version %}

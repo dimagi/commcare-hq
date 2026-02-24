@@ -15,7 +15,7 @@
  }
  
  .bg-full-cover-fixed.b-loaded {
-@@ -23,13 +23,13 @@
+@@ -23,13 +23,15 @@
    bottom: 0;
    left: 0;
    right: 0;
@@ -23,6 +23,7 @@
 -  opacity: 0.3;
 +  background-color: #45566E;
 +  opacity: 0.75;
++  z-index: -1;
  }
  
  .bg-container {
@@ -31,4 +32,5 @@
 -  background-color: lighten(@cc-text, 10%);
 +  background-color: lighten($cc-text, 10%);
    position: fixed;
++  z-index: -1;
  }

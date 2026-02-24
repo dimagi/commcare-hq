@@ -1,0 +1,29 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ {% load field_tags %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 'users/js/bootstrap3/accept_invite' %}
++{% js_entry 'users/js/bootstrap5/accept_invite' %}
+ 
+ {% block title %}{% blocktrans %}Confirm your account to join the {{ domain_name }} project{% endblocktrans %}{% endblock title %}
+ {% block tabs %}{% endblock %}
+@@ -11,7 +11,7 @@
+ {% block login-content %}
+   <div class="container-fluid">
+     <div class="row">
+-      <div class="col-xs-12">
++      <div class="col-sm-12">
+         <div class="reg-form-container sign-in-container">
+           <div class="form-bubble form-bubble-lg">
+             {% if request.user.is_authenticated %}
+@@ -68,7 +68,7 @@
+                   {% endblocktrans %}
+                   {% endwith %}
+                 </h4>
+-                {% include 'users/partials/bootstrap3/register_user_form_fields.html' %}
++                {% include 'users/partials/bootstrap5/register_user_form_fields.html' %}
+               </form>
+           {% endif %}
+           </div>

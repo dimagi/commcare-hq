@@ -1,43 +1,36 @@
-from django.urls import include, re_path as url
+from django.urls import include
+from django.urls import re_path as url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 
+from ..hqwebapp.decorators import waf_allow
 from .views import (
     DefaultProjectUserSettingsView,
+    DownloadWebUsersStatusView,
     EditWebUserView,
     InviteWebUserView,
-    UploadWebUsers,
-    WebUserUploadStatusView,
-    ListRolesView,
     ListWebUsersView,
+    UploadWebUsers,
+    WebUserUploadJobPollView,
+    WebUserUploadStatusView,
     add_domain_membership,
     change_password,
-    delete_phone_number,
-    delete_request,
     check_sso_trust,
     deactivate_web_user,
-    delete_user_role,
+    delete_phone_number,
+    delete_request,
     domain_accounts,
+    download_web_users,
     make_phone_number_default,
     paginate_enterprise_users,
     paginate_web_users,
-    post_user_role,
     reactivate_web_user,
     register_fcm_device_token,
     remove_web_user,
     test_httpdigest,
     undo_remove_web_user,
     verify_phone_number,
-    download_web_users,
-    DownloadWebUsersStatusView,
-    WebUserUploadJobPollView,
-)
-from .views.web import (
-    accept_invitation,
-    delete_invitation,
-    DomainRequestView,
-    reinvite_web_user,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -46,12 +39,15 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
-    CommCareUserConfirmAccountBySMSView,
+    CommCareUserAccountConfirmedView,
+    CommCareUserConfirmAccountViewByEmailView,
+    CommCareUserPasswordResetView,
     CommCareUsersLookup,
+    CommcareUserUploadJobPollView,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
-    DemoRestoreStatusView,
     DeleteCommCareUsers,
+    DemoRestoreStatusView,
     DownloadUsersStatusView,
     EditCommCareUserView,
     FilteredCommCareUserDownload,
@@ -60,7 +56,8 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
-    set_personalid_link_status,
+    bulk_user_upload_api,
+    commcare_user_download_job_poll,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
@@ -68,24 +65,28 @@ from .views.mobile.users import (
     demo_restore_job_poll,
     download_commcare_users,
     force_user_412,
+    link_connectid_user,
     paginate_mobile_workers,
     reset_demo_user_restore,
     restore_commcare_user,
+    send_confirmation_email,
+    set_personalid_link_status,
     toggle_demo_mode,
     update_user_groups,
-    user_download_job_poll,
-    CommCareUserConfirmAccountViewByEmailView,
-    send_confirmation_email,
-    send_confirmation_sms,
-    CommcareUserUploadJobPollView,
-    ClearCommCareUsers,
-    link_connectid_user,
-    bulk_user_upload_api,
-    CommCareUserPasswordResetView,
-    CommCareUserAccountConfirmedView,
+    web_user_download_job_poll,
 )
-from ..hqwebapp.decorators import waf_allow
-
+from .views.role import (
+    EditRoleView,
+    ListRolesView,
+    delete_user_role,
+    post_user_role,
+)
+from .views.web import (
+    DomainRequestView,
+    accept_invitation,
+    delete_invitation,
+    reinvite_web_user,
+)
 
 user_management_urls = [
     UserManagementReportDispatcher.url_pattern(),
@@ -126,6 +127,11 @@ urlpatterns = [
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
     url(r'^web/download/$', download_web_users, name='download_web_users'),
     url(
+        r'^web/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        web_user_download_job_poll,
+        name='web_user_download_job_poll'
+    ),
+    url(
         r'^web/download/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         DownloadWebUsersStatusView.as_view(),
         name='download_web_users_status'
@@ -147,6 +153,8 @@ urlpatterns = [
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
+    url(r'^roles/new/$', EditRoleView.as_view(), name='create_role'),
+    url(r'^roles/edit/(?P<role_id>[ \w-]+)', EditRoleView.as_view(), name=EditRoleView.urlname),
     url(r'^roles/delete/$', delete_user_role, name='delete_user_role'),
     url(
         r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
@@ -186,7 +194,7 @@ urlpatterns = [
         name=ConfirmTurnOffDemoModeView.urlname
     ),
     url(r'^commcare/delete/$', DeleteCommCareUsers.as_view(), name=DeleteCommCareUsers.urlname),
-    url(r'^commcare/clear/$', ClearCommCareUsers.as_view(), name=ClearCommCareUsers.urlname),
+
     url(r'^commcare/lookup/$', CommCareUsersLookup.as_view(), name=CommCareUsersLookup.urlname),
     url(
         r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$',
@@ -237,8 +245,8 @@ urlpatterns = [
     ),
     url(
         r'^commcare/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        user_download_job_poll,
-        name='user_download_job_poll'
+        commcare_user_download_job_poll,
+        name='commcare_user_download_job_poll'
     ),
     url(
         r'^commcare/confirm_charges/$',
@@ -254,16 +262,6 @@ urlpatterns = [
         r'^commcare/account_confirmed/$',
         CommCareUserAccountConfirmedView.as_view(),
         name=CommCareUserAccountConfirmedView.urlname
-    ),
-    url(
-        r'^commcare/send_confirmation_sms/(?P<user_id>[ \w-]+)/$',
-        send_confirmation_sms,
-        name='send_confirmation_sms'
-    ),
-    url(
-        r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
-        CommCareUserConfirmAccountBySMSView.as_view(),
-        name=CommCareUserConfirmAccountBySMSView.urlname
     ),
     url(
         r'^commcare/link_connectid_user/$',

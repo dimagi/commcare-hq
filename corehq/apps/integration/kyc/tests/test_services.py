@@ -1,24 +1,32 @@
 import doctest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-import requests
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 import jsonschema
 import pytest
+import requests
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus, \
-    KycVerificationFailureCause
-from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
+from corehq.apps.integration.kyc.models import (
+    KycConfig,
+    KycProviders,
+    KycUser,
+    KycVerificationFailureCause,
+    KycVerificationStatus,
+    UserDataStore,
+)
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
+    get_percent_matching_score,
     get_user_data_for_api,
+    order_and_case_insensitive_matching_score,
     verify_user,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
+from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
 
@@ -77,10 +85,19 @@ class BaseKycUserSetup(TestCase):
             None, None,
             first_name='abc',
         )
+        self.connection_settings = ConnectionSettings.objects.create(
+            domain=self.domain,
+            name='test-conn-settings',
+            username='test-username',
+            password='test-password',
+            url='http://test-url.com',
+        )
         self.config = KycConfig.objects.create(
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=self._sample_api_field_to_user_data_map(),
+            passing_threshold=self._sample_passing_thresholds(),
+            connection_settings=self.connection_settings,
         )
         self.kyc_user = KycUser(self.config, self.user)
 
@@ -98,6 +115,19 @@ class BaseKycUserSetup(TestCase):
             "nationality": {
                 "data_field": "nationality"
             }
+        }
+
+    def _sample_passing_thresholds(self):
+        return {
+            "firstName": 100,
+            "lastName": 100,
+            "phoneNumber": 100,
+            "emailAddress": 100,
+            "nationalIdNumber": 100,
+            "streetAddress": 100,
+            "city": 100,
+            "postCode": 100,
+            "country": 100,
         }
 
 
@@ -128,19 +158,14 @@ class TestGetUserDataForAPI(BaseKycUserSetup):
             case_type=USERCASE_TYPE,
             external_id=self.user.user_id,
             save=True,
-            case_json={'nationality': 'German'}
+            # For user case, except name, other user data is stored as case properties
+            case_json={'first_name': 'abc', 'nationality': 'German'}
         )
         self.addCleanup(case.delete)
+        kyc_user = KycUser(self.config, case)
 
-        result = get_user_data_for_api(self.kyc_user, self.config)
+        result = get_user_data_for_api(kyc_user, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'German'})
-
-    def test_user_case_data_store_with_no_case(self):
-        self.config.user_data_store = UserDataStore.USER_CASE
-        self.config.save()
-
-        with self.assertRaises(UserCaseNotFound):
-            get_user_data_for_api(self.kyc_user, self.config)
 
     def test_custom_case_data_store(self):
         self.config.user_data_store = UserDataStore.OTHER_CASE_TYPE
@@ -200,13 +225,49 @@ class TestVerifyUser(BaseKycUserSetup):
     @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
     @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
     @patch('corehq.motech.requests.Requests.post')
-    def test_kyc_success(self, mock_post, *args):
+    def test_mtn_kyc_verify_success(self, mock_post, *args):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = self._sample_response_json()
         mock_post.return_value = mock_response
 
         verification_status, error = verify_user(self.kyc_user, self.config)
+
+        assert verification_status == KycVerificationStatus.PASSED
+        assert error is None
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch(
+        'corehq.apps.integration.kyc.services.get_user_data_for_api',
+        return_value={'firstName': 'John', 'lastName': 'Doe', 'phoneNumber': 1234}
+    )
+    @patch('corehq.motech.requests.Requests.post')
+    def test_orange_cameroon_kyc_verify_success(self, mock_post, *args):
+        config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            provider=KycProviders.ORANGE_CAMEROON_KYC,
+            passing_threshold={
+                "firstName": 100,
+                "lastName": 100,
+            },
+            connection_settings=self.connection_settings,
+            stores_full_name=False,
+        )
+        kyc_user = KycUser(config, self.user)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "message": "customer 1234567890 successfully retrieve full name.",
+            "data": {
+                "firstName": "john",
+                "lastName": "doe"
+            }
+        }
+        mock_post.return_value = mock_response
+
+        verification_status, error = verify_user(kyc_user, config)
 
         assert verification_status == KycVerificationStatus.PASSED
         assert error is None
@@ -222,6 +283,42 @@ class TestVerifyUser(BaseKycUserSetup):
         mock_post.return_value = mock_response
 
         verification_status, error = verify_user(self.kyc_user, self.config)
+
+        assert verification_status == KycVerificationStatus.FAILED
+        assert error == KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch(
+        'corehq.apps.integration.kyc.services.get_user_data_for_api',
+        return_value={'firstName': 'John', 'lastName': 'Doe', 'phoneNumber': 1234}
+    )
+    @patch('corehq.motech.requests.Requests.post')
+    def test_orange_cameroon_kyc_failed(self, mock_post, *args):
+        config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            provider=KycProviders.ORANGE_CAMEROON_KYC,
+            passing_threshold={
+                "firstName": 100,
+                "lastName": 100,
+            },
+            connection_settings=self.connection_settings,
+            stores_full_name=False,
+        )
+        kyc_user = KycUser(config, self.user)
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "message": "customer 1234567890 successfully retrieve full name.",
+            "data": {
+                "firstName": "jane",  # different first name
+                "lastName": "doe"
+            }
+        }
+        mock_post.return_value = mock_response
+
+        verification_status, error = verify_user(kyc_user, config)
 
         assert verification_status == KycVerificationStatus.FAILED
         assert error == KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
@@ -252,3 +349,105 @@ class TestVerifyUser(BaseKycUserSetup):
         verification_status, error = verify_user(self.kyc_user, self.config)
         assert error == KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
         assert verification_status == KycVerificationStatus.ERROR
+
+
+class TestGetPercentMatchingScore(SimpleTestCase):
+
+    def test_exact_match(self):
+        score = get_percent_matching_score("john doe", "john doe")
+        assert score == 100.0
+
+    def test_case_sensitive_exact_match(self):
+        score = get_percent_matching_score("JOHN DOE", "john doe")
+        assert score < 100.0
+
+    def test_completely_different_strings(self):
+        score = get_percent_matching_score("john", "xyz")
+        assert score < 50.0
+
+    def test_single_character_difference(self):
+        score = get_percent_matching_score("john", "joan")
+        assert score > 70.0
+        assert score < 100.0
+
+    def test_substring_match(self):
+        score = get_percent_matching_score("john", "john doe")
+        assert score == 50.0
+
+    def test_empty_string_comparison(self):
+        score = get_percent_matching_score("", "john")
+        assert score == 0
+
+    def test_both_empty_strings_perfect_match(self):
+        score = get_percent_matching_score("", "")
+        assert score == 100.0
+
+    def test_none_value_raises_error(self):
+        with pytest.raises(ValueError, match='Both values are required'):
+            get_percent_matching_score(None, "john")
+
+    def test_full_name_matching(self):
+        # Very similar names
+        score = get_percent_matching_score("john doe", "john doy")
+        assert score > 85.0
+
+        # Names with middle name vs without
+        score = get_percent_matching_score("john michael doe", "john doe")
+        assert score < 100.0
+
+
+class TestOrderInsensitiveMatchingScore(SimpleTestCase):
+
+    def test_same_order(self):
+        score = order_and_case_insensitive_matching_score("john doe", "john doe")
+        assert score == 100.0
+
+    def test_reversed_order(self):
+        score = order_and_case_insensitive_matching_score("john doe", "doe john")
+        assert score == 100.0
+
+    def test_different_order_three_words(self):
+        score = order_and_case_insensitive_matching_score("john michael doe", "doe john michael")
+        assert score == 100.0
+
+    def test_case_insensitive(self):
+        score = order_and_case_insensitive_matching_score("John Doe", "doe john")
+        assert score == 100.0
+
+    def test_similar_words_different_order(self):
+        score = order_and_case_insensitive_matching_score("john doe", "doe joan")
+        assert score > 70.0
+        assert score < 100.0
+
+    def test_extra_word_in_one_string(self):
+        score = order_and_case_insensitive_matching_score("john doe smith", "john doe")
+        assert score > 50.0
+        assert score < 100.0
+
+    def test_completely_different_names(self):
+        score = order_and_case_insensitive_matching_score("john doe", "alice bob")
+        assert score < 50.0
+
+    def test_single_word_match(self):
+        score = order_and_case_insensitive_matching_score("john", "john")
+        assert score == 100.0
+
+    def test_empty_string_comparison(self):
+        score = order_and_case_insensitive_matching_score("", "john doe")
+        assert score == 0
+
+    def test_both_empty_strings_perfect_match(self):
+        score = order_and_case_insensitive_matching_score("", "")
+        assert score == 100.0
+
+    def test_none_value_raises_error(self):
+        with pytest.raises(ValueError, match='Both values are required'):
+            order_and_case_insensitive_matching_score(None, "john doe")
+
+    def test_leading_trailing_whitespace(self):
+        score = order_and_case_insensitive_matching_score("  john doe  ", "doe john")
+        assert score == 100.0
+
+    def test_special_characters_in_names(self):
+        score = order_and_case_insensitive_matching_score("o'brien smith", "smith o'brien")
+        assert score == 100.0

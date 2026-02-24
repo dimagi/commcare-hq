@@ -154,12 +154,14 @@ def make_template_dependency_renames(line, spec):
     return line, []
 
 
-def add_todo_comments_for_flags(flags, line, is_template):
+def add_todo_comments_for_flags(flags, line, is_template, is_submodule_app=False):
     if flags:
         line = line.rstrip('\n')
         flag_summary = [f[0] for f in flags]
-        open_comment = "{#" if is_template else "/*"
-        close_comment = "#}" if is_template else "*/"
+        template_flag_open = "<!--" if is_submodule_app else "{#"
+        template_flag_close = "-->" if is_submodule_app else "#}"
+        open_comment = template_flag_open if is_template else "/*"
+        close_comment = template_flag_close if is_template else "*/"
         comment = f"{open_comment} todo B5: {', '.join(flag_summary)} {close_comment}\n"
 
         todo_regex = _get_todo_regex(is_template)

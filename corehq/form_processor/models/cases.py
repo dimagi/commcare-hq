@@ -66,10 +66,9 @@ class CommCareCaseManager(RequireDBManager):
         except CommCareCase.DoesNotExist:
             raise CaseNotFound(case_id)
 
-    def get_cases(self, case_ids, domain=None, ordered=False, prefetched_indices=None):
+    def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
         """
         :param case_ids: List of case IDs to fetch
-        :param domain: Currently unused, may be enforced in the future.
         :param ordered: Return cases in the same order as ``case_ids``
         :param prefetched_indices: If not None this must be a dict
             containing ALL the indices for ALL the cases being fetched.
@@ -93,13 +92,12 @@ class CommCareCaseManager(RequireDBManager):
 
         return cases
 
-    def iter_cases(self, case_ids, domain=None):
+    def iter_cases(self, case_ids):
         """
         :param case_ids: case ids iterable.
-        :param domain: See the same parameter of `get_cases`.
         """
         for chunk in chunked((x for x in case_ids if x), 100, list):
-            yield from self.get_cases(chunk, domain)
+            yield from self.get_cases(chunk)
 
     def get_case_by_external_id(self, domain, external_id, case_type=None, raise_multiple=False):
         """Get case in domain with external id and optional case type
@@ -274,8 +272,9 @@ class CommCareCaseManager(RequireDBManager):
                 [domain, case_ids]
             )
             undeleted_count = sum(row[0] for row in cursor)
-        for case in self.iter_cases(case_ids, domain):
-            publish_case_saved(case)
+        for case in self.iter_cases(case_ids):
+            if case.domain == domain:
+                publish_case_saved(case)
         return undeleted_count
 
     def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
@@ -461,7 +460,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             ix.referenced_id for ix in self.reverse_indices
             if (index_identifier is None or ix.identifier == index_identifier)
         ]
-        return type(self).objects.get_cases(subcase_ids, self.domain)
+        return type(self).objects.get_cases(subcase_ids)
 
     def get_reverse_index_map(self):
         return self.get_index_map(True)
@@ -822,13 +821,11 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         ).format(c=self)
 
     class Meta(object):
-        index_together = [
-            ["owner_id", "server_modified_on"],
-            ["domain", "owner_id", "closed"],
-            ["domain", "external_id", "type"],
-            ["domain", "type", "id"],
-        ]
         indexes = [
+            models.Index(fields=["owner_id", "server_modified_on"]),
+            models.Index(fields=["domain", "owner_id", "closed"]),
+            models.Index(fields=["domain", "external_id", "type"]),
+            models.Index(fields=["domain", "type", "id"]),
             models.Index(fields=['deleted_on'],
                          name=create_unique_index_name('form_processor',
                                                        'commcarecase',
@@ -974,8 +971,8 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     class Meta(object):
         app_label = "form_processor"
         db_table = "form_processor_caseattachmentsql"
-        index_together = [
-            ["case", "name"],
+        indexes = [
+            models.Index(fields=["case", "name"]),
         ]
 
 
@@ -1180,9 +1177,9 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
         )
 
     class Meta(object):
-        index_together = [
-            ["domain", "case"],
-            ["domain", "referenced_id"],
+        indexes = [
+            models.Index(fields=["domain", "case"]),
+            models.Index(fields=["domain", "referenced_id"]),
         ]
         unique_together = ('case', 'identifier')
         db_table = 'form_processor_commcarecaseindexsql'
@@ -1535,10 +1532,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         ordering = ['server_date']
         db_table = 'form_processor_casetransaction'
         app_label = "form_processor"
-        index_together = [
-            ('case', 'server_date', 'sync_log_id'),
+        indexes = [
+            models.Index(fields=['case', 'server_date', 'sync_log_id']),
+            models.Index(fields=['form_id']),
         ]
-        indexes = [models.Index(fields=['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):

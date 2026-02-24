@@ -518,5 +518,4 @@ CONVERSIONS = {
     "modified_on": iso_string_to_datetime,
     "opened_on": iso_string_to_datetime,
     "server_modified_on": iso_string_to_datetime,
-    "closed_on": iso_string_to_datetime,
 }

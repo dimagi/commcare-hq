@@ -8,6 +8,7 @@ from memoized import memoized
 
 from sentry_sdk import Scope
 
+from corehq.sql_db.connections import cleanup_connections
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
@@ -61,6 +62,7 @@ class ConstructedPillow:
                  change_processed_event_handler=None, processor_chunk_size=0,
                  is_dedicated_migration_process=False):
         self.pillow_id = name
+        self.process_num = process_num
         self.checkpoint = checkpoint
         self.change_feed = change_feed
         self.processor_chunk_size = processor_chunk_size
@@ -104,14 +106,17 @@ class ConstructedPillow:
         """
         Main entry point for running pillows forever.
         """
-        pillow_logging.info("Starting pillow %s" % self.pillow_id)
+        pillow_logging.info("Starting pillow %s %s", self.pillow_id, self.process_num)
         scope = Scope.get_current_scope()
         scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:
             self._run_migrations_forever()
         else:
             while True:
-                self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+                try:
+                    self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+                except PillowtopCheckpointReset:
+                    pass
 
     def _run_migrations_forever(self):
         for processor in self.processors:
@@ -128,6 +133,7 @@ class ConstructedPillow:
             updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         if updated:
             self._record_checkpoint_in_datadog()
+        cleanup_connections(self.pillow_id)
 
     @property
     @memoized
@@ -154,49 +160,34 @@ class ConstructedPillow:
             at the end of the batch, otherwise is updated for every change.
         """
         context = PillowRuntimeContext(changes_seen=0)
-        min_wait_seconds = 30
-
-        def process_offset_chunk(chunk, context):
-            if not chunk:
-                return
-            self._batch_process_with_error_handling(chunk)
-            self._update_checkpoint(chunk[-1], context)
-
-        # keep track of chunk for batch processors
         changes_chunk = []
-        last_process_time = datetime.utcnow()
 
-        try:
-            for change in self.change_feed.iter_changes(since=since or None, forever=forever):
+        for change in self.change_feed.iter_changes(since=since or None, forever=forever):
+            if change is None and not changes_chunk:
+                self._update_checkpoint(None, None)
+                self._record_timeout_in_datadog()
+                continue
+            if self.batch_processors:
+                # Queue and process in chunks for both batch and serial processors
+                if change is not None:
+                    context.changes_seen += 1
+                    changes_chunk.append(change)
+                chunk_full = len(changes_chunk) == self.processor_chunk_size
+                # change is None means consumer timeout -> process partial chunk to avoid lag
+                if chunk_full or (change is None and changes_chunk):
+                    self._batch_process_with_error_handling(changes_chunk)
+                    self._update_checkpoint(changes_chunk[-1], context)
+                    changes_chunk = []
+            else:
+                # process all changes one by one
+                assert change is not None
                 context.changes_seen += 1
-                if change:
-                    if self.batch_processors:
-                        # Queue and process in chunks for both batch
-                        #   and serial processors
-                        changes_chunk.append(change)
-                        chunk_full = len(changes_chunk) == self.processor_chunk_size
-                        time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
-                        if chunk_full or time_elapsed:
-                            last_process_time = datetime.utcnow()
-                            self._batch_process_with_error_handling(changes_chunk)
-                            # update checkpoint for just the latest change
-                            self._update_checkpoint(changes_chunk[-1], context)
-                            # reset for next chunk
-                            changes_chunk = []
-                    else:
-                        # process all changes one by one
-                        processing_time = self.process_with_error_handling(change)
-                        self._record_change_in_datadog(change, processing_time)
-                        self._update_checkpoint(change, context)
-                else:
-                    self._update_checkpoint(None, None)
-            process_offset_chunk(changes_chunk, context)
-        except PillowtopCheckpointReset:
-            process_offset_chunk(changes_chunk, context)
-            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
-        if forever:
-            if context.changes_seen and change:
+                processing_time = self.process_with_error_handling(change)
+                self._record_change_in_datadog(change, processing_time)
                 self._update_checkpoint(change, context)
+        if changes_chunk:
+            self._batch_process_with_error_handling(changes_chunk)
+            self._update_checkpoint(changes_chunk[-1], context)
 
     def _batch_process_with_error_handling(self, changes_chunk):
         """
@@ -216,6 +207,10 @@ class ConstructedPillow:
             for change in chunk:
                 self.process_with_error_handling(change, processor)
 
+        pillow_logging.info(
+            '[%s %s] Processing %s changes',
+            self.pillow_id, self.process_num, len(changes_chunk),
+        )
         for processor in self.batch_processors:
             if not changes_chunk:
                 return set(), 0
@@ -228,13 +223,9 @@ class ConstructedPillow:
                 except Exception as ex:
                     notify_exception(
                         None,
-                        "{pillow_name} Error in processing changes chunk: {ex}".format(
-                            pillow_name=self.get_name(),
-                            ex=ex
-                        ),
-                        details={
-                            'change_ids': [c.id for c in changes_chunk]
-                        })
+                        f"[{self.pillow_id} {self.process_num}] Error in processing changes chunk: {ex}",
+                        details={'change_ids': [c.id for c in changes_chunk]},
+                    )
                     self._record_batch_exception_in_datadog(processor)
                     # fall back to processing one by one
                     reprocess_serially(changes_chunk, processor)
@@ -266,9 +257,7 @@ class ConstructedPillow:
             try:
                 handle_pillow_error(self, change, ex)
             except Exception as e:
-                notify_exception(None, 'processor error in pillow {} {}'.format(
-                    self.get_name(), e,
-                ))
+                notify_exception(None, f'[{self.pillow_id} {self.process_num}] processor error: {e}')
                 raise
         if is_success:
             self._record_change_success_in_datadog(change)
@@ -354,6 +343,15 @@ class ConstructedPillow:
             'commcare.change_feed.changes.count', change,
             processing_time=processing_time, add_case_type_tag=True
         )
+
+    def _record_timeout_in_datadog(self):
+        name = self.pillow_id
+        for tp in self.change_feed.topic_partitions:
+            tags = {'pillow_name': name, 'topic': _topic_for_ddog(tp)}
+            metrics_gauge('commcare.change_feed.change_lag', 0, tags=tags,
+                          multiprocess_mode=MPM_MAX)
+        metrics_gauge('commcare.change_feed.chunked.max_change_lag', 0,
+                      tags={'pillow_name': name}, multiprocess_mode=MPM_MAX)
 
     def _record_batch_exception_in_datadog(self, processor):
         metrics_counter(
@@ -443,8 +441,9 @@ class ChangeEventHandler(metaclass=ABCMeta):
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError, path_from_object
 
-    pillow_logging.exception("[%s] Error on change: %s, %s" % (
+    pillow_logging.exception("[%s %s] Error on change: %s, %s" % (
         pillow.get_name(),
+        pillow.process_num,
         change['id'],
         exception,
     ))

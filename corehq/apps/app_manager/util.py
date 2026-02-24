@@ -3,11 +3,10 @@ import logging
 import os
 import re
 import uuid
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 from copy import deepcopy
 
 from django.core.cache import cache
-from django.db.models import Max
 from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -18,15 +17,14 @@ from couchdbkit.exceptions import DocTypeError
 
 from dimagi.utils.couch import CriticalSection
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
-    AUTO_SELECT_USERCASE,
     CALCULATED_SORT_FIELD_RX,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
     MOBILE_UCR_V1_ALL_REFERENCES,
     MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
@@ -152,7 +150,7 @@ def generate_xmlns():
     return str(uuid.uuid4()).upper()
 
 
-def save_xform(app, form, xml):
+def save_xform(app, form, xml, mapping_diff=None):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render().decode('utf-8')
@@ -166,6 +164,9 @@ def save_xform(app, form, xml):
     except XFormException:
         pass
     else:
+        if mapping_diff:
+            form.actions = form.actions.with_updates({}, mapping_diff)
+
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
         uid = generate_xmlns()
         tag_xmlns = xform.data_node.tag_xmlns
@@ -206,11 +207,10 @@ CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 
-def is_valid_case_type(case_type, module):
+def is_valid_case_type(case_type):
     """
     Returns ``True`` if ``case_type`` is valid for ``module``
 
-    >>> from corehq.apps.app_manager.const import USERCASE_TYPE
     >>> from corehq.apps.app_manager.models import Module, AdvancedModule
     >>> is_valid_case_type('foo', Module())
     True
@@ -222,15 +222,9 @@ def is_valid_case_type(case_type, module):
     False
     >>> is_valid_case_type(None, Module())
     False
-    >>> is_valid_case_type(USERCASE_TYPE, Module())
-    False
-    >>> is_valid_case_type(USERCASE_TYPE, AdvancedModule())
-    True
     """
-    from corehq.apps.app_manager.models import AdvancedModule
     matches_regex = bool(_case_type_regex.match(case_type or ''))
-    prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
-    return matches_regex and prevent_usercase_type
+    return matches_regex
 
 
 def module_case_hierarchy_has_circular_reference(module):
@@ -242,9 +236,8 @@ def module_case_hierarchy_has_circular_reference(module):
         return True
 
 
-def is_usercase_in_use(domain_name):
-    domain_obj = Domain.get_by_name(domain_name) if domain_name else None
-    return domain_obj and domain_obj.usercase_enabled
+def domain_has_usercase_access(domain):
+    return domain_has_privilege(domain, privileges.USERCASE) if domain else False
 
 
 def get_settings_values(app):
@@ -369,19 +362,9 @@ def actions_use_usercase(actions):
             or ('usercase_preload' in actions and actions['usercase_preload'].preload))
 
 
-def advanced_actions_use_usercase(actions):
-    return any(c.auto_select and c.auto_select.mode == AUTO_SELECT_USERCASE for c in actions.load_update_cases)
-
-
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
-        domain_obj = Domain.get_by_name(domain_name, strict=True)
-        if not domain_obj:  # copying domains passes in an id before name is saved
-            domain_obj = Domain.get(domain_name)
-        if not domain_obj.usercase_enabled:
-            domain_obj.usercase_enabled = True
-            domain_obj.save()
-            create_usercases.delay(domain_name)
+        create_usercases.delay(domain_name)
 
 
 def prefix_usercase_properties(properties):
@@ -583,18 +566,34 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
     extracts out info about columns that are added as only sort fields and columns added as both
     sort and display fields
     """
-    sort_elements = OrderedDict((s.field, (s, i + 1)) for i, s in enumerate(sort_elements))
+    sort_elements_by_calculation = {}
+    sort_elements_by_field = {}
+
+    for index, sort_element in enumerate(sort_elements):
+        # Assertion added for enforcing architecture decision & not for ensuring user behavior
+        # This should ideally never be false
+        assert (sort_element.field or sort_element.sort_calculation)
+
+        # If there is a field present we use that so we can club it with the display property in Suite file.
+        # This is true for sort elements sorting by display properties and legacy elements that had both
+        # field and sort calculation even for sort calculations.
+        # The order here is not functionally relevant and does not impact sorting indices/order.
+        if sort_element.field:
+            sort_elements_by_field[sort_element.field] = (sort_element, index + 1)
+        elif sort_element.sort_calculation:
+            sort_elements_by_calculation[sort_element.sort_calculation] = (sort_element, index + 1)
+
     sort_columns = {}
     for column in detail_columns:
-        sort_element, order = sort_elements.pop(column.field, (None, None))
+        sort_element, order = sort_elements_by_field.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)
 
     # pull out sort elements that refer to calculated columns
-    for field in list(sort_elements):
+    for field in list(sort_elements_by_field):
         match = re.match(CALCULATED_SORT_FIELD_RX, field)
         if match:
-            element, element_order = sort_elements.pop(field)
+            element, element_order = sort_elements_by_field.pop(field)
             column_index = int(match.group(1))
             try:
                 column = detail_columns[column_index]
@@ -608,8 +607,13 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
 
     sort_only_elements = [
         SortOnlyElement(field, element, element_order)
-        for field, (element, element_order) in sort_elements.items()
+        for field, (element, element_order) in sort_elements_by_field.items()
     ]
+
+    sort_only_elements.extend([
+        SortOnlyElement(element.field, element, element_order)
+        for sort_calculation, (element, element_order) in sort_elements_by_calculation.items()
+    ])
     return sort_only_elements, sort_columns
 
 
@@ -668,17 +672,6 @@ def get_form_source_download_url(xform):
     ])
 
 
-@quickcache(['domain', 'profile_id'], timeout=24 * 60 * 60)
-def get_latest_enabled_build_for_profile(domain, profile_id):
-    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
-    latest_enabled_build = (LatestEnabledBuildProfiles.objects.
-                            filter(build_profile_id=profile_id, active=True)
-                            .order_by('-version')
-                            .first())
-    if latest_enabled_build:
-        return get_app(domain, latest_enabled_build.build_id)
-
-
 @quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
 def get_latest_app_release_by_location(domain, location_id, app_id):
     """
@@ -721,18 +714,6 @@ def expire_get_latest_app_release_by_location_cache(app_release_by_location):
     for loc in location_and_descendants:
         get_latest_app_release_by_location.clear(app_release_by_location.domain, loc.location_id,
                                           app_release_by_location.app_id)
-
-
-@quickcache(['app_id'], timeout=24 * 60 * 60)
-def get_latest_enabled_versions_per_profile(app_id):
-    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
-    # a dict with each profile id mapped to its latest enabled version number, if present
-    return {
-        build_profile['build_profile_id']: build_profile['version__max']
-        for build_profile in
-        LatestEnabledBuildProfiles.objects.filter(app_id=app_id, active=True).values('build_profile_id').annotate(
-            Max('version'))
-    }
 
 
 def get_app_id_from_form_unique_id(domain, form_unique_id):

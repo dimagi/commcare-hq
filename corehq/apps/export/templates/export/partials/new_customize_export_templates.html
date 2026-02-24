@@ -54,16 +54,23 @@
       </div>
       <!-- /ko -->
 
-      {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
-      <div id="select-geo-property" class="mb-3" hidden>
+      {% if has_geojson_export_access %}
+      <div id="select-geo-property" class="mb-3 d-none">
         <label class="form-label" for="geo-property-select">
-          {% trans 'Select geo property' %}
+          {% trans 'GPS case property' %}
         </label>
         <select
           id="geo-property-select"
           class="control form-control"
           data-bind="options: $parent.geoProperties, value: table.selected_geo_property">
         </select>
+        <div class="text-danger" data-bind="if: $parent.geoPropertyError()">
+          {% blocktrans %}
+            No case properties have the data type "GPS". To select a GPS case
+            property here, use the Data Dictionary to set the data type of one
+            or more case properties to "GPS".
+          {% endblocktrans %}
+        </div>
       </div>
       {% endif %}
 

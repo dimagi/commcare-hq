@@ -1,24 +1,14 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_and_alpine";
+import 'reports/js/bootstrap5/base';
 import $ from "jquery";
 import { multiCheckboxSelectionHandler } from "integration/js/checkbox_selection_handler";
 import htmx from 'htmx.org';
 
 function updateVerifyButton(selectedIds) {
     const $verifyBtn = $('#verify-selected-btn');
-    const $verifyAll = $verifyBtn.find('span:first');
-    const $verifySelected = $verifyBtn.find('span:last');
 
     let verifyBtnVals = JSON.parse($verifyBtn.attr('hx-vals'));
-    if (selectedIds.length > 0) {
-        $verifyAll.addClass('d-none');
-        $verifySelected.removeClass('d-none');
-        verifyBtnVals['verify_all'] = false;
-    } else {
-        $verifyAll.removeClass('d-none');
-        $verifySelected.addClass('d-none');
-        verifyBtnVals['verify_all'] = true;
-    }
     verifyBtnVals['selected_ids'] = selectedIds;
     $verifyBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
 }

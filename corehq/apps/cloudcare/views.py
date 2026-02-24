@@ -43,8 +43,7 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_current_app_doc,
-    get_build_doc_by_build_id,
+    get_app_doc,
 )
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
@@ -58,7 +57,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
-    get_latest_build_for_web_apps,
+    can_user_access_web_app,
     get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
     get_web_apps_available_to_user,
@@ -77,14 +76,13 @@ from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
     waf_allow,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
-from corehq.apps.integration.util import integration_contexts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import get_complete_username
-from corehq.apps.users.views import BaseUserSettingsView, ListRolesView
+from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.users.views.role import ListRolesView
 from corehq.util.metrics import metrics_counter, metrics_histogram
 
 
@@ -95,8 +93,6 @@ def default(request, domain):
 
 @location_safe
 class FormplayerMain(View):
-
-    preview = False
     urlname = 'formplayer_main'
 
     @xframe_options_sameorigin
@@ -107,27 +103,15 @@ class FormplayerMain(View):
     def dispatch(self, request, *args, **kwargs):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
-    def fetch_app_fn(self):
-        return get_latest_build_for_web_apps
-
-    def make_specific_build_fetcher(self, original_app_id, build_id):
-        def get_build_or_latest(domain, username, app_id):
-            if original_app_id == app_id:
-                return get_build_doc_by_build_id(build_id)
-
-            return self.fetch_app_fn()(domain, username, app_id)
-
-        return get_build_or_latest
-
     def get_web_apps_for_user(self, domain, user, app_id=None, build_id=None):
         if app_id and build_id:
-            fetch_app_fn = self.make_specific_build_fetcher(app_id, build_id)
-        else:
-            fetch_app_fn = self.fetch_app_fn()
+            if can_user_access_web_app(domain, user, app_id):
+                build = get_app_doc(domain, build_id)
+                if build.get('cloudcare_enabled'):
+                    return [_format_app_doc(build)]
+            return []
 
-        apps = get_web_apps_available_to_user(
-            domain, user, is_preview=self.preview, fetch_app_fn=fetch_app_fn
-        )
+        apps = get_web_apps_available_to_user(domain, user)
         apps = [_format_app_doc(app) for app in apps]
         return sorted(apps, key=lambda app: app['name'].lower())
 
@@ -233,7 +217,6 @@ class FormplayerMain(View):
             "formplayer_url": get_formplayer_url(for_js=True),
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
             "lang_code_name_mapping": lang_code_name_mapping,
@@ -242,19 +225,6 @@ class FormplayerMain(View):
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
-
-
-class FormplayerMainPreview(FormplayerMain):
-
-    preview = True
-    urlname = 'formplayer_main_preview'
-
-    def fetch_app_fn(self):
-        return self.wrap_get_current_app_doc
-
-    def wrap_get_current_app_doc(self, domain, username, app_id):
-        # ignore username as it is only here to confirm to fetch_app_fn signature
-        return get_current_app_doc(domain, app_id)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -274,7 +244,6 @@ class PreviewAppView(TemplateView):
             'formplayer_url': get_formplayer_url(for_js=True),
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
-            "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": has_geocoder_privs(request.domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         })
@@ -578,13 +547,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         if not build_id:
             return _fail(_("No corresponding application found in this project."))
 
-    restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
-    force_login_as = (not toggles.SMART_LINKS_FOR_WEB_USERS.enabled(domain)
-                      and not restore_as_user.is_commcare_user())
-    if force_login_as and not can_use_restore_as(request):
-        return _fail(_("This user cannot access this link."))
-
-    state = {"appId": build_id, "forceLoginAs": force_login_as}
+    state = {"appId": build_id}
     if endpoint_id is not None:
         state.update({
             "endpointId": endpoint_id,

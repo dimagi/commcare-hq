@@ -1,0 +1,52 @@
+{% load i18n %}
+
+<div
+  class="modal fade hq-add-new-module-modal"
+  id="add-new-module-modal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="add-new-module"
+>
+  <div class="modal-dialog modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-title">
+          {% trans "Create a New Menu" %}
+        </h4>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="row row-cols-sm-2 g-4">
+          {% include 'app_manager/partials/module_options/bootstrap5/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
+          {% include 'app_manager/partials/module_options/bootstrap5/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
+          {% if show_biometric %}
+            {% include 'app_manager/partials/module_options/bootstrap5/module_option_biometrics.html' with module_type="biometrics" icon_class="fcc fcc-app-biometrics" %}
+          {% endif %}
+          {% if show_advanced %}
+            {% include 'app_manager/partials/module_options/bootstrap5/module_option_advanced.html' with module_type="advanced" icon_class="fa fa-flask" %}
+          {% endif %}
+          {% if show_report_modules %}
+            {% include 'app_manager/partials/module_options/bootstrap5/module_option_report.html' with module_type="report" icon_class="fa-regular fa-chart-bar" %}
+          {% endif %}
+          {% if show_shadow_modules %}
+            {% include 'app_manager/partials/module_options/bootstrap5/module_option_shadow.html' with module_type="shadow" icon_class="fa-regular fa-moon" %}
+          {% endif %}
+          {% if show_shadow_module_v1 %}
+            {% include 'app_manager/partials/module_options/bootstrap5/module_option_shadow_v1.html' with module_type="shadow-v1" icon_class="fa-regular fa-moon" %}
+          {% endif %}
+          {% if show_training_modules %}
+            {% include 'app_manager/partials/module_options/bootstrap5/module_option_training.html' with module_type="training" icon_class="fa fa-graduation-cap" %}
+          {% endif %}
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center text-secondary">
+        {% trans "Please note you will not be able to change menu type later." %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,19 @@
+--- 
++++ 
+@@ -2,10 +2,13 @@
+ 
+ <div id="langs" class="appnav-language-select">
+   <label for="app-language-select-nav">{% trans "Language" %}</label>
+-  <select name="lang" class="form-control input-sm">
++  <select
++    name="lang"
++    id="app-language-select-nav"
++    class="float-end rounded-1 p-0"
++  >
+     {% for lang in app_langs %}
+-      <option value="{{ lang }}"
+-              {% if lang == langs.0 %}selected=""{% endif %}>
++      <option value="{{ lang }}" {% if lang == langs.0 %}selected=""{% endif %}>
+         {% if lang == app_langs.0 %}*{% endif %}
+         {{ lang }}
+       </option>

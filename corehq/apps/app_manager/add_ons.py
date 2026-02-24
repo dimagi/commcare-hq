@@ -4,10 +4,10 @@ from django.utils.translation import gettext_lazy as _
 
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from corehq import feature_previews, toggles
+from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, all_app_manager_add_ons_enabled
 from corehq.privileges import CHILD_CASES, LOOKUP_TABLES
 
 
@@ -175,14 +175,12 @@ _ADD_ONS = {
 _LAYOUT = [
     {
         "slug": "case_management",
-        "collapse": False,
         "name": _("Case Management"),
         "description": _("Build more complex workflows"),
         "slugs": ["conditional_form_actions", "empty_case_lists", "subcases"],
     },
     {
         "slug": "mobile",
-        "collapse": True,
         "name": _("Mobile Experience"),
         "description": _("Improve the user experience of your mobile workers"),
         "slugs": [
@@ -195,14 +193,12 @@ _LAYOUT = [
     },
     {
         "slug": "xpath",
-        "collapse": True,
         "name": _("Calculations"),
         "description": _("Add logic to your app with XPath expressions"),
         "slugs": ["display_conditions", "conditional_enum", "calc_xpaths", "advanced_itemsets"],
     },
     {
         "slug": "efficiency",
-        "collapse": True,
         "name": _("App Building Efficiency"),
         "description": _("Tools to help build your apps faster"),
         "slugs": ["case_detail_overwrite"],
@@ -221,8 +217,8 @@ def show(slug, request, app, module=None, form=None):
     if not add_on.has_privilege(request) and add_on.upgrade_text is None:
         return False
 
-    # Show if flag to enable all toggles is on
-    if toggles.ENABLE_ALL_ADD_ONS.enabled_for_request(request):
+    # Show if setting to enable all add-ons is on
+    if all_app_manager_add_ons_enabled(app.domain):
         return True
 
     if _grandfathered(slug, app):

@@ -232,7 +232,7 @@ class ApiAuthTest(SimpleTestCase, AuthTestMixin):
         self._do_auth_test('bearer myToken', 'corehq.apps.domain.decorators.login_or_oauth2_ex')
 
     def test_api_auth_basic(self):
-        self._do_auth_test('basic user:pass', 'corehq.apps.domain.decorators.login_or_basic_ex')
+        self._do_auth_test('basic user:pass', 'corehq.apps.domain.decorators.login_or_basic_or_api_key_ex')
 
     def test_api_auth_digest(self):
         self._do_auth_test('digest user:pass', 'corehq.apps.domain.decorators.login_or_digest_ex')

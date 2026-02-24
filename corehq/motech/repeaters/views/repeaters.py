@@ -58,6 +58,10 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
                     repeater.count_State[State.Empty.name]
                     + repeater.count_State[State.Success.name]
                 )
+                repeater.count_State['ErrorGeneratingPayloadOrRejected'] = (
+                    repeater.count_State[State.ErrorGeneratingPayload.name]
+                    + repeater.count_State[State.PayloadRejected.name]
+                )
             return repeaters
 
         return [

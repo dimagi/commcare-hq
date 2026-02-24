@@ -1,0 +1,29 @@
+.hq-add-new-module-modal {
+  .modal-body {
+    max-height: 400px;
+  }
+}
+
+.new-module-option {
+  .card-body {
+    color: $gray-700;
+  }
+
+  &:hover {
+    .card {
+      border-color: $call-to-action-mid;
+    }
+
+    .card-header {
+      color: $call-to-action-mid;
+    }
+
+    [class*="fa-"] {
+      color: $call-to-action-mid;
+    }
+  }
+
+  .card .card-body [class*="fa-"] {
+    font-size: 3.2rem;
+  }
+}

@@ -4,36 +4,36 @@
 
 {% block title %}{% trans "Case Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
 
-{% js_entry_b3 'app_manager/js/summary/case_summary' %}
+{% js_entry 'app_manager/js/summary/case_summary' %}
 
 {% block content_extra %}
   <div class="ko-template" id="case-summary-header">
     {% initial_page_data 'case_metadata' case_metadata %}
     {% registerurl 'app_case_summary' domain '---' %}
-    <div class="page-header" style="margin-top: 0;">
+    <div class="mt-3 mb-4">
       <h3>
         <i class="fcc fcc-fd-external-case"></i>
-        {% trans "Case Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
-        <a class="btn btn-default" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
+        {% trans "Case Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-select" data-bind="value: firstAppId"></select>
+        <a class="btn btn-outline-primary" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
       </h3>
       <div class="row">
-        <div class="col-xs-3">
+        <div class="col-sm-3">
           <search-box data-apply-bindings="false"
                       params="value: query,
                               action: onQuery,
                               immediate: true,
                               placeholder: queryLabel"></search-box>
         </div>
-        <div class="col-xs-9">
-          <div class="btn-toolbar pull-right" role="toolbar">
+        <div class="col-sm-9">
+          <div class="btn-toolbar float-end" role="toolbar">
             <!-- ko template: 'label-id-toggle' --><!-- /ko -->
             <div class="btn-group btn-group-separated" role="group" >
-              <button type="button" class="btn btn-default"
+              <button type="button" class="btn btn-outline-primary"
                       data-bind="click: toggleConditions, css: { active : showConditions }">
                 <i class="fa fa-sitemap"></i>
                 &nbsp;{% trans "Show Conditions" %}
               </button>
-              <button type="button" class="btn btn-default"
+              <button type="button" class="btn btn-outline-primary"
                       data-bind="click: toggleCalculations, css: { active : showCalculations }">
                 <i class="fa fa-calculator"></i>
                 &nbsp;{% trans "Show Calculations" %}
@@ -56,39 +56,39 @@
     {% endif %}
 
     <div class="row">
-      <div class="col-sm-12">
+      <div class="col-md-12">
         <!-- ko foreach: caseTypes -->
-        <div class="panel panel-appmanager" data-bind="visible: isVisible">
-          <div class="panel-heading">
-            <h4 class="panel-title panel-title-nolink">
+        <div class="card panel-appmanager" data-bind="visible: isVisible">
+          <div class="card-header">
+            <h4 class="card-title card-title-nolink mt-2">
               <i class="fcc fcc-fd-external-case"></i>
               <!-- ko text: name --><!-- /ko -->
             </h4>
           </div>
-          <div class="panel-body">
-            <div class="well case-relationships">
+          <div class="card-body">
+            <div class="card case-relationships pt-3 px-2">
               <div class="row">
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <strong>{% trans "Relationships:" %}</strong>
                   <ul class="fa-ul" data-bind="foreach: relationshipList">
                     <li>
-                      <span class="label label-primary" data-bind="text: relationship"></span>
+                      <span class="badge text-bg-primary" data-bind="text: relationship"></span>
                       <!-- ko text: caseType --><!-- /ko -->
                     </li>
                   </ul>
                 </div>
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <strong>{% trans "Opened by:" %}</strong>
                   <div data-bind="template: {name: 'opened-closed-by', data: openedByList }"></div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-lg-4">
                   <strong>{% trans "Closed by:" %}</strong>
                   <div data-bind="template: {name: 'opened-closed-by', data: closedByList }"></div>
                 </div>
               </div>
               <!-- ko if:has_errors -->
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-lg-6">
                   {% trans "Problems:" %}
                   <ul>
                     <li data-bind="visible: error, text: error"></li>
@@ -104,7 +104,7 @@
               </div>
               <!-- /ko -->
             </div>
-            <table class="case-properties table">
+            <table class="table case-properties mt-3">
               <thead>
               <tr>
                 <th>{% trans "Case Property" %}</th>
@@ -135,10 +135,10 @@
                   <!-- /ko -->
                 </td>
                 <td>
-                  {% include 'app_manager/partials/load_save_questions.html' with questions='load_questions' %}
+                  {% include 'app_manager/partials/bootstrap5/load_save_questions.html' with questions='load_questions' %}
                 </td>
                 <td>
-                  {% include 'app_manager/partials/load_save_questions.html' with questions='save_questions' %}
+                  {% include 'app_manager/partials/bootstrap5/load_save_questions.html' with questions='save_questions' %}
                 </td>
                 <!-- ko if: !$index() -->
                 <td>

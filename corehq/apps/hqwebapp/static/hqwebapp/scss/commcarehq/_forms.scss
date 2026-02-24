@@ -12,8 +12,19 @@
   flex-shrink: initial;
 }
 
-.row > div > .form-check:first-child,
-.row > div > .input-group > .form-check:first-child {
+.field-control-offset {
+  @extend .offset-sm-4,
+    .offset-md-3,
+    .offset-lg-2,
+    .col-12,
+    .col-sm-8,
+    .col-md-9,
+    .col-lg-10;
+  padding-left: ($grid-gutter-width - $spacer) / 2;
+}
+
+.row > div > .form-check,
+.row > div > .input-group > .form-check {
   padding-top: add($input-padding-y, $input-border-width);
   margin-bottom: 0;
 }
@@ -41,7 +52,7 @@ p.help-block {
 
 legend {
   border-bottom: 1px solid $border-color;
-  padding-bottom: $spacer * .25;
+  padding-bottom: $spacer * 0.25;
   margin-bottom: $spacer * 1.25;
 }
 

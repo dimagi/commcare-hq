@@ -223,7 +223,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     self.format_date(user.last_login),
                     last_accessed_domain,
                     _('Active User'),
-                    str(domain_membership.is_active)
+                    str(domain_membership.is_active),
                 ]
                 + self.domain_properties(domain_obj))
         for invite in Invitation.by_domain(domain_obj.name):
@@ -234,7 +234,8 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     invite.get_role_name(),
                     'N/A',
                     'N/A',
-                    _('Invited')
+                    _('Invited'),
+                    'N/A',
                 ]
                 + self.domain_properties(domain_obj))
         return rows

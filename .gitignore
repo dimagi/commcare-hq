@@ -7,10 +7,12 @@
 /localsettings*
 /loadtest/test_scripts/localsettings.py
 !localsettings.example.py
+/.claude/*.local.json
 .settings/
 .project
 .pydevproject
 .idea
+.zed
 xforms/
 /artifacts/
 /data/

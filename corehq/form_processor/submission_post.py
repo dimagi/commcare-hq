@@ -458,28 +458,33 @@ class SubmissionPost(object):
                     unfinished_submission_stub.submission_saved()
 
                 with self.timing_context("post_save_actions"):
-                    self.do_post_save_actions(case_db, xforms, case_stock_result)
+                    self.do_post_save_actions(case_db, xforms, case_stock_result,
+                                              timing_context=self.timing_context)
         except PostSaveError:
             return "Error performing post save operations"
 
     @staticmethod
     @tracer.wrap(name='submission.post_save_actions')
-    def do_post_save_actions(case_db, xforms, case_stock_result):
+    def do_post_save_actions(case_db, xforms, case_stock_result, *, timing_context=None):
+        timing_context = timing_context or TimingContext()
         instance = xforms[0]
         case_db.clear_changed()
         try:
             case_stock_result.stock_result.finalize()
 
-            SubmissionPost.index_case_search(instance, case_stock_result.case_models)
+            with timing_context("index_case_search"):
+                SubmissionPost.index_case_search(instance, case_stock_result.case_models)
 
-            SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
+            with timing_context("_fire_post_save_signals"):
+                SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models, timing_context)
 
-            close_extension_cases(
-                case_db,
-                case_stock_result.case_models,
-                "SubmissionPost-%s-close_extensions" % instance.form_id,
-                instance.last_sync_token
-            )
+            with timing_context("close_extension_cases"):
+                close_extension_cases(
+                    case_db,
+                    case_stock_result.case_models,
+                    "SubmissionPost-%s-close_extensions" % instance.form_id,
+                    instance.last_sync_token
+                )
         except PostSaveError:
             raise
         except Exception:
@@ -549,15 +554,17 @@ class SubmissionPost(object):
         return self.run().response
 
     @staticmethod
-    def _fire_post_save_signals(instance, cases):
+    def _fire_post_save_signals(instance, cases, timing_context):
         from corehq.form_processor.signals import sql_case_post_save
         error_message = "Error occurred during form submission post save (%s)"
         error_details = {'domain': instance.domain, 'form_id': instance.form_id}
-        results = successful_form_received.send_robust(None, xform=instance)
+        with timing_context(f"successful_form_received.send_robust {instance.form_id}"):
+            results = successful_form_received.send_robust(None, xform=instance)
         has_errors = log_signal_errors(results, error_message, error_details)
 
         for case in cases:
-            results = sql_case_post_save.send_robust(case.__class__, case=case)
+            with timing_context(f"sql_case_post_save.send_robust {case.case_id}"):
+                results = sql_case_post_save.send_robust(case.__class__, case=case)
             has_errors |= log_signal_errors(results, error_message, error_details)
         if has_errors:
             raise PostSaveError

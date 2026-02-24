@@ -1,0 +1,32 @@
+{% load i18n %}
+<p>
+  {% blocktrans %}
+    Dear {{ domain }} administrator,
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Your subscription will pause {{ ending_on }} In case you would like to
+    renew, please select auto-renewal <a href="{{ subscription_url }}">here</a>.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Please reach out to {{ invoicing_contact_email }} if you have any questions.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Best regards,
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    The CommCare Team
+  {% endblocktrans %}<br />
+  {{ base_url }}
+</p>
