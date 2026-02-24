@@ -115,9 +115,9 @@ scripts/pr-failures.sh [pr_number]  # uses current branch if omitted
 
 - **migrations.lock** — If you wrote a migration instead of generating one,
   run `./manage.py makemigrations --lock-update` to update the lock file.
-- **CouchDB is legacy** — prefer PostgreSQL/SQL for new data models
-- **Knockout.js is legacy** — prefer HTMX or Alpine.js for new frontend code
-- **Bootstrap 3 is legacy** — prefer Bootstrap 5; both coexist in the codebase
+- **CouchDB is legacy** — Use PostgreSQL for new data models
+- **Knockout.js is legacy** — Prefer HTMX or Alpine.js for new frontend code
+- **Bootstrap 3 is legacy** — Prefer Bootstrap 5; both coexist in the codebase
 
 ## Version Control
 
