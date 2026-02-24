@@ -120,8 +120,8 @@
           {% else %}
             {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
           {% endif %}
-          <select  {# todo B5: css-select-form-control #}
-            class="form-control"
+          <select
+            class="form-select"
             id="case-action-select"
             data-bind="optstr: [
                                {
