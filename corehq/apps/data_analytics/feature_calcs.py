@@ -7,10 +7,17 @@ from django.db.models import Q
 from dimagi.utils.couch.cache import cache_core
 
 from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
+from corehq.apps.app_manager.util import actions_use_usercase
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.data_cleaning.models import BulkEditSession
+from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.locations.models import LocationType
 from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.sso.models import TrustedIdentityProvider
 
 from .metric_registry import MetricDef
 
@@ -191,12 +198,66 @@ def calc_has_case_deduplication(domain_context):
     ).exists()
 
 
-def _not_implemented(field_name):
-    def _stub(ctx):
-        raise NotImplementedError(
-            f'{field_name} calculation not yet implemented'
-        )
-    return _stub
+# User & Security Feature metric calculations
+
+def calc_mobile_user_groups(domain_context):
+    """Count mobile user groups."""
+    return len(Group.by_domain(domain_context.domain))
+
+
+def calc_has_user_case_management(domain_context):
+    """Check if any form uses user case management."""
+    for app in domain_context.apps:
+        for module in app.get_modules():
+            for form in module.get_forms():
+                if (
+                    hasattr(form, 'actions')
+                    and actions_use_usercase(form.actions)
+                ):
+                    return True
+    return False
+
+
+def calc_has_organization(domain_context):
+    """Check if domain has an organization structure (locations)."""
+    return LocationType.objects.filter(
+        domain=domain_context.domain
+    ).exists()
+
+
+def calc_user_profiles(domain_context):
+    """Count user profiles defined."""
+    definition = CustomDataFieldsDefinition.get(
+        domain_context.domain,
+        'UserFields',
+    )
+    if definition:
+        return len(definition.get_profiles())
+    return 0
+
+
+def calc_has_2fa_required(domain_context):
+    """Check if domain requires two-factor authentication."""
+    return bool(getattr(domain_context.domain_obj, 'two_factor_auth', False))
+
+
+def calc_has_shortened_timeout(domain_context):
+    """Check if domain has shortened inactivity timeout."""
+    return bool(getattr(domain_context.domain_obj, 'secure_sessions', False))
+
+
+def calc_has_strong_passwords(domain_context):
+    """Check if domain requires strong mobile passwords."""
+    return bool(
+        getattr(domain_context.domain_obj, 'strong_mobile_passwords', False)
+    )
+
+
+def calc_has_sso(domain_context):
+    """Check if domain has SSO configured."""
+    return TrustedIdentityProvider.objects.filter(
+        domain=domain_context.domain
+    ).exists()
 
 
 FEATURE_METRICS = [
@@ -247,26 +308,20 @@ FEATURE_METRICS = [
 
     # User & Security Features
     MetricDef('mobile_user_groups', 'cp_n_mobile_user_groups',
-              _not_implemented('mobile_user_groups'), is_boolean=False),
+              calc_mobile_user_groups, is_boolean=False),
     MetricDef('has_user_case_management',
               'cp_has_user_case_management',
-              _not_implemented('has_user_case_management')),
+              calc_has_user_case_management),
     MetricDef('has_organization', 'cp_has_organization',
-              _not_implemented('has_organization')),
+              calc_has_organization),
     MetricDef('user_profiles', 'cp_n_user_profiles',
-              _not_implemented('user_profiles'), is_boolean=False),
+              calc_user_profiles, is_boolean=False),
     MetricDef('has_2fa_required', 'cp_has_2fa_required',
-              _not_implemented('has_2fa_required')),
+              calc_has_2fa_required),
     MetricDef('has_shortened_timeout', 'cp_has_shortened_timeout',
-              _not_implemented('has_shortened_timeout')),
+              calc_has_shortened_timeout),
     MetricDef('has_strong_passwords', 'cp_has_strong_passwords',
-              _not_implemented('has_strong_passwords')),
-    MetricDef('has_data_dictionary', 'cp_has_data_dictionary',
-              _not_implemented('has_data_dictionary')),
+              calc_has_strong_passwords),
     MetricDef('has_sso', 'cp_has_sso',
-              _not_implemented('has_sso')),
-    MetricDef('bulk_case_editing_sessions',
-              'cp_n_bulk_case_editing_sessions',
-              _not_implemented('bulk_case_editing_sessions'),
-              is_boolean=False),
+              calc_has_sso),
 ]
