@@ -1,7 +1,16 @@
 """
 Feature usage metric calculations (monthly collection).
 """
+from django.conf import settings
+from django.db.models import Q
+
+from dimagi.utils.couch.cache import cache_core
+
 from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.saved_reports.models import ReportConfig
 
 from .metric_registry import MetricDef
 
@@ -88,6 +97,100 @@ def calc_has_custom_branding(domain_context):
     return False
 
 
+# Data & Export Feature metric calculations
+
+def calc_has_data_dictionary(domain_context):
+    """Check if domain has configured data dictionary entries."""
+    case_types = CaseType.objects.filter(domain=domain_context.domain)
+    if not case_types.exists():
+        return False
+    return case_types.exclude(name='').exclude(name__isnull=True).exists()
+
+
+def calc_form_exports(domain_context):
+    """Count of form data exports."""
+    return len(domain_context.form_exports)
+
+
+def calc_case_exports_only(domain_context):
+    """Count of case data exports (excluding form exports)."""
+    return len(domain_context.case_exports)
+
+
+def calc_scheduled_exports(domain_context):
+    """Count of scheduled (daily saved) data exports."""
+    all_exports = domain_context.form_exports + domain_context.case_exports
+    return sum(
+        1 for e in all_exports
+        if getattr(e, 'is_daily_saved_export', False)
+    )
+
+
+def calc_has_excel_dashboard(domain_context):
+    """Check if domain has Tableau/Excel dashboard integrations."""
+    return TableauVisualization.objects.filter(
+        domain=domain_context.domain
+    ).exists()
+
+
+def calc_case_list_explorer_reports(domain_context):
+    """Count saved case list explorer reports.
+
+    ReportConfig is a CouchDB document so we query the Couch view
+    for all configs in the domain and count those with the matching slug.
+    """
+    db = ReportConfig.get_db()
+    key = ['name slug', domain_context.domain]
+    rows = cache_core.cached_view(
+        db,
+        'reportconfig/configs_by_domain',
+        reduce=False,
+        include_docs=False,
+        startkey=key,
+        endkey=key + [{}],
+        stale=settings.COUCH_STALE_QUERY,
+    )
+    return sum(
+        1 for row in rows
+        if len(row['key']) >= 4 and row['key'][3] == 'case_list_explorer'
+    )
+
+
+def calc_det_configs(domain_context):
+    """Count exports with Data Export Tool config enabled."""
+    all_exports = domain_context.form_exports + domain_context.case_exports
+    return sum(
+        1 for e in all_exports
+        if getattr(e, 'show_det_config_download', False)
+    )
+
+
+def calc_odata_feeds(domain_context):
+    """Count OData feed configurations."""
+    all_exports = domain_context.form_exports + domain_context.case_exports
+    return sum(
+        1 for e in all_exports
+        if getattr(e, 'is_odata_config', False)
+    )
+
+
+def calc_linked_domains(domain_context):
+    """Count linked project spaces."""
+    return DomainLink.objects.filter(
+        Q(master_domain=domain_context.domain)
+        | Q(linked_domain=domain_context.domain)
+    ).count()
+
+
+def calc_has_case_deduplication(domain_context):
+    """Check if domain has at least one deduplication rule."""
+    return AutomaticUpdateRule.objects.filter(
+        domain=domain_context.domain,
+        workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        deleted=False,
+    ).exists()
+
+
 def _not_implemented(field_name):
     def _stub(ctx):
         raise NotImplementedError(
@@ -118,26 +221,29 @@ FEATURE_METRICS = [
               calc_has_custom_branding),
 
     # Data & Export Features
+    MetricDef('has_data_dictionary', 'cp_has_data_dictionary',
+              calc_has_data_dictionary),
     MetricDef('form_exports', 'cp_n_form_exports',
-              _not_implemented('form_exports'), is_boolean=False),
+              # Slow (fetch & cache domain_context.form_exports)
+              calc_form_exports, is_boolean=False),
     MetricDef('case_exports_only', 'cp_n_case_exports_only',
-              _not_implemented('case_exports_only'), is_boolean=False),
+              # Slow (fetch & cache domain_context.case_exports)
+              calc_case_exports_only, is_boolean=False),
     MetricDef('scheduled_exports', 'cp_n_scheduled_exports',
-              _not_implemented('scheduled_exports'), is_boolean=False),
+              calc_scheduled_exports, is_boolean=False),
     MetricDef('has_excel_dashboard', 'cp_has_excel_dashboard',
-              _not_implemented('has_excel_dashboard')),
+              calc_has_excel_dashboard),
     MetricDef('case_list_explorer_reports',
               'cp_n_case_list_explorer_reports',
-              _not_implemented('case_list_explorer_reports'),
-              is_boolean=False),
+              calc_case_list_explorer_reports, is_boolean=False),
     MetricDef('det_configs', 'cp_n_det_configs',
-              _not_implemented('det_configs'), is_boolean=False),
+              calc_det_configs, is_boolean=False),
     MetricDef('odata_feeds', 'cp_n_odata_feeds',
-              _not_implemented('odata_feeds'), is_boolean=False),
+              calc_odata_feeds, is_boolean=False),
     MetricDef('linked_domains', 'cp_n_linked_domains',
-              _not_implemented('linked_domains'), is_boolean=False),
+              calc_linked_domains, is_boolean=False),
     MetricDef('has_case_deduplication', 'cp_has_case_deduplication',
-              _not_implemented('has_case_deduplication')),
+              calc_has_case_deduplication),
 
     # User & Security Features
     MetricDef('mobile_user_groups', 'cp_n_mobile_user_groups',
