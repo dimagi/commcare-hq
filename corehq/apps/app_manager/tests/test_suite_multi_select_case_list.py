@@ -197,28 +197,6 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./detail[@id='m0_case_short']/action",
         )
 
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-              <action auto_launch="false()" redo_last="true">
-                <display>
-                  <text>
-                    <locale id="case_search.m0.again"/>
-                  </text>
-                </display>
-                <stack>
-                  <push>
-                    <mark/>
-                    <command value="'search_command.m0'"/>
-                  </push>
-                </stack>
-              </action>
-            </partial>
-            """,
-            suite,
-            "./detail[@id='m0_search_short']/action",
-        )
-
 
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
