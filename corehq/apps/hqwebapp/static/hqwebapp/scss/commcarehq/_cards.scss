@@ -99,3 +99,15 @@
   }
 
 }
+
+// todo B5: considering renaming this because case actions is too generic
+.card-case-actions {
+  background-color: lighten($cc-dark-cool-accent-hi, 3);
+  > .card-header {
+    background-color: $cc-dark-cool-accent-mid;
+    color: white;
+    .text-muted {
+      color: $cc-dark-cool-accent-hi;
+    }
+  }
+}

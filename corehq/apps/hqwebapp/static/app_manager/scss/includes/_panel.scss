@@ -118,6 +118,7 @@
   }
 }
 
+// todo B5: This has been migrated to _cards.scss to preserve the legacy styles. Can be removed after finish migration for app_manager.
 .panel-case-actions {
   background-color: lighten($cc-dark-cool-accent-hi, 3);
   > .panel-heading {
