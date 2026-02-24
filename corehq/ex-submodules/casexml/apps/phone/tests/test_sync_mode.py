@@ -32,11 +32,9 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice, get_restore_config
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -59,14 +57,14 @@ class BaseSyncTest(TestCase):
         super(BaseSyncTest, cls).setUpClass()
         cls.project = Domain(name=TEST_DOMAIN_NAME)
         cls.project.save()
+        cls.addClassCleanup(cls.project.delete)
         cls.user = create_restore_user(
             cls.project.name,
             USERNAME,
         )
+        cls.addClassCleanup(cls.user._couch_user.delete, cls.project.name, deleted_by=None)
         cls.user_id = cls.user.user_id
         # this creates the initial blank sync token in the database
-        cls.addClassCleanup(delete_all_users)
-        cls.addClassCleanup(delete_all_domains)
 
     def setUp(self):
         super(BaseSyncTest, self).setUp()
@@ -1223,6 +1221,7 @@ class MultiUserSyncTest(BaseSyncTest):
             cls.project.name,
             username=OTHER_USERNAME,
         )
+        cls.addClassCleanup(cls.other_user._couch_user.delete, cls.project.name, deleted_by=None)
         cls.shared_group = Group(
             domain=cls.project.name,
             name='shared_group',
@@ -1747,6 +1746,7 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
             cls.project.name,
             username=OTHER_USERNAME,
         )
+        cls.addClassCleanup(cls.other_user._couch_user.delete, cls.project.name, deleted_by=None)
 
     def _create_extension(self):
         host = CaseStructure(case_id='host',
@@ -1951,6 +1951,7 @@ class TestUpdatesToSynclog(BaseSyncTest):
             cls.project.name,
             username=OTHER_USERNAME,
         )
+        cls.addClassCleanup(cls.other_user._couch_user.delete, cls.project.name, deleted_by=None)
 
     def _create_cases(self):
         """

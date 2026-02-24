@@ -1629,12 +1629,12 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-CLEAR_MOBILE_WORKER_DATA = StaticToggle(
-    'clear_mobile_worker_data',
-    "Allows a web user to clear mobile workers' data",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-)
+# CLEAR_MOBILE_WORKER_DATA = StaticToggle(
+#     'clear_mobile_worker_data',
+#     "Allows a web user to clear mobile workers' data",
+#     TAG_DEPRECATED,
+#     [NAMESPACE_DOMAIN],
+# )
 
 SKIP_REMOVE_INDICES = StaticToggle(
     'skip_remove_indices',
@@ -1781,12 +1781,12 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
 )
 
 
-RELEASE_BUILDS_PER_PROFILE = StaticToggle(
-    'release_builds_per_profile',
-    'Do not release builds for all app profiles by default. Then manage via Source files view',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-)
+# RELEASE_BUILDS_PER_PROFILE = StaticToggle(
+#     'release_builds_per_profile',
+#     'Do not release builds for all app profiles by default. Then manage via Source files view',
+#     TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+# )
 
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
@@ -2729,13 +2729,13 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     description='The project logo replaces the CommCare logo.',
 )
 
-VELLUM_CASE_MICRO_IMAGE = StaticToggle(
-    slug='case_micro_image',
-    label='Add case micro images to case list',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Add a micro image to cases in the case list.'
-)
+# VELLUM_CASE_MICRO_IMAGE = StaticToggle(
+#     slug='case_micro_image',
+#     label='Add case micro images to case list',
+#     tag=TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Add a micro image to cases in the case list.'
+# )
 
 SUPPORT_GEO_JSON_EXPORT = FrozenPrivilegeToggle(
     privileges.GEOJSON_EXPORT,
@@ -2763,13 +2763,14 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
 )
 
 
-SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
-    slug='support_road_network_disbursement_algorithm',
-    label='Add Road Network disbursement algorithm on geospatial settings page',
-    tag=TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
-)
+# DEPRECATED: Road Network Algorithm feature removed (Feb 2026)
+# SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+#     slug='support_road_network_disbursement_algorithm',
+#     label='Add Road Network disbursement algorithm on geospatial settings page',
+#     tag=TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN],
+#     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+# )
 
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'ush_restore_file_location_case_sync_restriction',

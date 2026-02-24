@@ -39,7 +39,6 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
-    ClearCommCareUsers,
     CommCareUserAccountConfirmedView,
     CommCareUserConfirmAccountViewByEmailView,
     CommCareUserPasswordResetView,
@@ -195,7 +194,7 @@ urlpatterns = [
         name=ConfirmTurnOffDemoModeView.urlname
     ),
     url(r'^commcare/delete/$', DeleteCommCareUsers.as_view(), name=DeleteCommCareUsers.urlname),
-    url(r'^commcare/clear/$', ClearCommCareUsers.as_view(), name=ClearCommCareUsers.urlname),
+
     url(r'^commcare/lookup/$', CommCareUsersLookup.as_view(), name=CommCareUsersLookup.urlname),
     url(
         r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$',
