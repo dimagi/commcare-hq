@@ -45,7 +45,7 @@ jobs:
       id: db-cache
       uses: actions/cache@v4
       with:
-        path: .test-db-cache/test_db.dump
+        path: /tmp/test_db.dump
         key: test-db-v1-${{ hashFiles('**/migrations/**/*.py') }}
     - name: Run tests
       env:

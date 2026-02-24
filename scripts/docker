@@ -318,7 +318,7 @@ if [ "$CMD" == "test" ]; then
     docker images
 
     # Restore cached test database if available (saves ~200s of schema setup)
-    DB_DUMP=.test-db-cache/test_db.dump
+    DB_DUMP=/tmp/test_db.dump
     RESTORED_DB=false
     if [ -f "$DB_DUMP" ]; then
         echo "Restoring test database from cache..."
@@ -345,7 +345,6 @@ if [ "$CMD" == "test" ]; then
     # Cache the test database for future runs if we didn't restore from cache
     if [ "$RESTORED_DB" = "false" ] && [ ! -f "$DB_DUMP" ]; then
         echo "Dumping test database for cache..."
-        mkdir -p .test-db-cache
         docker compose up -d postgres
         if docker compose exec -T postgres pg_dump -U commcarehq -Fc test_commcarehq > "$DB_DUMP"; then
             echo "Test database dump created ($(wc -c < "$DB_DUMP") bytes)."
