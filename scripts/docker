@@ -239,6 +239,7 @@ export JS_SETUP="${JS_SETUP:-no}"
 export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
 export DIVIDED_WE_RUN="$DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
+export FORCE_DB_SETUP="${FORCE_DB_SETUP:-}"
 export STRIPE_PRIVATE_KEY="$STRIPE_PRIVATE_KEY"
 export TRAVIS="$TRAVIS"
 export TRAVIS_BRANCH="$TRAVIS_BRANCH"
@@ -333,6 +334,10 @@ if [ "$CMD" == "test" ]; then
             && docker compose exec -T postgres pg_restore -U commcarehq -d test_commcarehq --no-owner < "$DB_DUMP"; then
             echo "Test database restored successfully."
             RESTORED_DB=true
+            # Tell reusedb.py to run setup_databases (for CouchDB etc.)
+            # even though the SQL database already exists. With keepdb=True,
+            # SQL setup is fast since tables already exist from the restore.
+            export FORCE_DB_SETUP=1
         else
             echo "WARNING: Failed to restore test database, falling back to normal setup."
             rm -f "$DB_DUMP"

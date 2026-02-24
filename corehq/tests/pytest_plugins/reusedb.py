@@ -249,7 +249,8 @@ class DeferredDatabaseContext:
 @unit_testing_only
 @contextmanager
 def couch_sql_context(config):
-    if config.skip_setup_for_reuse_db and sql_databases_ok():
+    if config.skip_setup_for_reuse_db and sql_databases_ok() \
+            and not os.environ.get("FORCE_DB_SETUP"):
         if config.reuse_db == "migrate":
             call_command('migrate_multi', interactive=False)
         if config.reuse_db == "flush":
