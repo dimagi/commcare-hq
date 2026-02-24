@@ -82,14 +82,12 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             is_global=True,
             hq_api_id=SQLMachBackend.get_api_id()
         )
-        cls.mach_backend.save()
 
         cls.http_backend = SQLHttpBackend(
             name='HTTP',
             is_global=True,
             hq_api_id=SQLHttpBackend.get_api_id()
         )
-        cls.http_backend.save()
 
         cls.telerivet_backend = SQLTelerivetBackend(
             name='TELERIVET',
@@ -97,152 +95,133 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             hq_api_id=SQLTelerivetBackend.get_api_id()
         )
         cls.telerivet_backend.set_extra_fields(webhook_secret='telerivet-webhook-secret')
-        cls.telerivet_backend.save()
 
         cls.test_backend = SQLTestSMSBackend(
             name='TEST',
             is_global=True,
             hq_api_id=SQLTestSMSBackend.get_api_id()
         )
-        cls.test_backend.save()
 
         cls.grapevine_backend = SQLGrapevineBackend(
             name='GRAPEVINE',
             is_global=True,
             hq_api_id=SQLGrapevineBackend.get_api_id()
         )
-        cls.grapevine_backend.save()
 
         cls.turn_backend = SQLTurnWhatsAppBackend(
             name='TURN',
             is_global=True,
             hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
         )
-        cls.turn_backend.save()
 
         cls.twilio_backend = SQLTwilioBackend(
             name='TWILIO',
             is_global=True,
             hq_api_id=SQLTwilioBackend.get_api_id()
         )
-        cls.twilio_backend.save()
 
         cls.megamobile_backend = SQLMegamobileBackend(
             name='MEGAMOBILE',
             is_global=True,
             hq_api_id=SQLMegamobileBackend.get_api_id()
         )
-        cls.megamobile_backend.save()
 
         cls.smsgh_backend = SQLSMSGHBackend(
             name='SMSGH',
             is_global=True,
             hq_api_id=SQLSMSGHBackend.get_api_id()
         )
-        cls.smsgh_backend.save()
 
         cls.apposit_backend = SQLAppositBackend(
             name='APPOSIT',
             is_global=True,
             hq_api_id=SQLAppositBackend.get_api_id()
         )
-        cls.apposit_backend.save()
 
         cls.sislog_backend = SQLSislogBackend(
             name='SISLOG',
             is_global=True,
             hq_api_id=SQLSislogBackend.get_api_id()
         )
-        cls.sislog_backend.save()
 
         cls.yo_backend = SQLYoBackend(
             name='YO',
             is_global=True,
             hq_api_id=SQLYoBackend.get_api_id()
         )
-        cls.yo_backend.save()
 
         cls.push_backend = PushBackend(
             name='PUSH',
             is_global=True,
             hq_api_id=PushBackend.get_api_id()
         )
-        cls.push_backend.save()
 
         cls.vertext_backend = VertexBackend(
             name="VERTEX",
             is_global=True,
             hq_api_id=VertexBackend.get_api_id()
         )
-        cls.vertext_backend.save()
 
         cls.start_enterprise_backend = StartEnterpriseBackend(
             name="START_ENT",
             is_global=True,
             hq_api_id=StartEnterpriseBackend.get_api_id()
         )
-        cls.start_enterprise_backend.save()
 
         cls.ivory_coast_mtn_backend = IvoryCoastMTNBackend(
             name="IVORY_COAST_MTN",
             is_global=True,
             hq_api_id=IvoryCoastMTNBackend.get_api_id()
         )
-        cls.ivory_coast_mtn_backend.save()
 
         cls.airtel_tcl_backend = AirtelTCLBackend(
             name='AIRTEL_TCL',
             is_global=True,
             hq_api_id=AirtelTCLBackend.get_api_id()
         )
-        cls.airtel_tcl_backend.save()
 
         cls.trumpia_backend = TrumpiaBackend(
             name='TRUMPIA',
             is_global=True,
             hq_api_id=TrumpiaBackend.get_api_id()
         )
-        cls.trumpia_backend.save()
 
         cls.infobip_backend = InfobipBackend(
             name='INFOBIP',
             is_global=True,
             hq_api_id=InfobipBackend.get_api_id()
         )
-        cls.infobip_backend.save()
 
         cls.pinpoint_backend = PinpointBackend(
             name='PINPOINT',
             is_global=True,
             hq_api_id=PinpointBackend.get_api_id()
         )
-        cls.pinpoint_backend.save()
+        SQLMobileBackend.objects.bulk_create([
+            cls.mach_backend, cls.http_backend, cls.telerivet_backend,
+            cls.test_backend, cls.grapevine_backend, cls.turn_backend,
+            cls.twilio_backend, cls.megamobile_backend, cls.smsgh_backend,
+            cls.apposit_backend, cls.sislog_backend, cls.yo_backend,
+            cls.push_backend, cls.vertext_backend, cls.start_enterprise_backend,
+            cls.ivory_coast_mtn_backend, cls.airtel_tcl_backend,
+            cls.trumpia_backend, cls.infobip_backend, cls.pinpoint_backend,
+        ])
 
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscriptions()
 
         cls.domain_obj.delete()
-        cls.mach_backend.delete()
-        cls.http_backend.delete()
-        cls.telerivet_backend.delete()
-        cls.test_backend.delete()
-        cls.grapevine_backend.delete()
-        cls.twilio_backend.delete()
-        cls.turn_backend.delete()
-        cls.megamobile_backend.delete()
-        cls.smsgh_backend.delete()
-        cls.apposit_backend.delete()
-        cls.sislog_backend.delete()
-        cls.yo_backend.delete()
-        cls.push_backend.delete()
-        cls.vertext_backend.delete()
-        cls.start_enterprise_backend.delete()
-        cls.ivory_coast_mtn_backend.delete()
-        cls.airtel_tcl_backend.delete()
-        cls.trumpia_backend.delete()
-        cls.infobip_backend.delete()
-        cls.pinpoint_backend.delete()
+        SQLMobileBackend.objects.filter(pk__in=[
+            cls.mach_backend.pk, cls.http_backend.pk, cls.telerivet_backend.pk,
+            cls.test_backend.pk, cls.grapevine_backend.pk, cls.turn_backend.pk,
+            cls.twilio_backend.pk, cls.megamobile_backend.pk, cls.smsgh_backend.pk,
+            cls.apposit_backend.pk, cls.sislog_backend.pk, cls.yo_backend.pk,
+            cls.push_backend.pk, cls.vertext_backend.pk,
+            cls.start_enterprise_backend.pk, cls.ivory_coast_mtn_backend.pk,
+            cls.airtel_tcl_backend.pk, cls.trumpia_backend.pk,
+            cls.infobip_backend.pk, cls.pinpoint_backend.pk,
+        ]).delete()
         clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
