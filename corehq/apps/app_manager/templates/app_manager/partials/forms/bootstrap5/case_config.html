@@ -254,24 +254,22 @@
                 <div class="card-header h5">
                   {% trans "Case List Configuration" %}
                 </div>
-                <div class="card-body form-inline">  {# todo B5: css-form-inline #}
-                  {% trans "This Form opens a Child Case in the Case List" %}&nbsp;
-                  <span
-                    class="form-group"  {# todo B5: css-form-group #}
-                    data-bind="css: {'has-warning': !case_type()}"
-                  >
-                    <select  {# todo B5: css-select-form-control #}
-                      class="form-control"
+                <div class="card-body d-flex align-items-start gap-3">
+                  <span class="pt-2">{% trans "This Form opens a Child Case in the Case List" %}</span>
+                  <div class="flex-grow-1" style="max-width: fit-content;">
+                    <select
+                      class="form-select"
                       {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
                       data-bind="options: $parent.caseTypes,
-                                       optionsText: $parent.getCaseTypeLabel,
-                                       value: case_type,
-                                       optionsCaption: 'Choose a Module...'"
+                                  optionsText: $parent.getCaseTypeLabel,
+                                  value: case_type,
+                                  optionsCaption: 'Choose a Module...',
+                                  css: {'is-invalid': !case_type()}"
                     ></select>
-                    <span class="help-block" data-bind="visible: !case_type()">
+                    <span class="invalid-feedback" data-bind="visible: !case_type()">
                       {% trans "Required" %}
                     </span>
-                  </span>
+                  </div>
                 </div>
               </div>
               <div data-bind="template: 'case-config:case-transaction'"></div>
