@@ -9,16 +9,17 @@
     ></span>
   </label>
   <div id="form-workflow" class="col-md-4 commcare-feature" data-since-version="2.10">
-    <div class="row mb-3" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">  {# todo B5: css-has-error #}
+    <div class="row mb-3">
       <select name="post_form_workflow" class="form-select" data-bind="
                 optstr: workflowOptions(),
                 value: workflow,
                 staticSelect2: {},
+                css: {'is-invalid': hasError()},
                 "></select>
-      <div data-bind="visible: hasError" class="help-block">
+      <div class="invalid-feedback" data-bind="visible: hasError()">
         {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
       </div>
-      <span class="help-block" data-bind="visible: hasWarning">
+      <span class="text-warning" data-bind="visible: hasWarning()">
         {% blocktrans %}
           The end of form navigation specified here will override the end of registration
           action in the menu(s) where this form is a case list registration form.
