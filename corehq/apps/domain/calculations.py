@@ -20,25 +20,14 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
-from corehq.apps.export.dbaccessors import (
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
-from corehq.apps.fixtures.models import LookupTable
-from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
-from corehq.apps.hqmedia.models import ApplicationMediaMixin
-from corehq.apps.locations.models import LocationType
-from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
+from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.users.dbaccessors import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, UserRole
-from corehq.apps.users.role_utils import get_custom_roles_for_domain
-from corehq.apps.users.util import WEIRD_USER_IDS
+from corehq.apps.users.models import CouchUser
 from corehq.messaging.scheduling.util import domain_has_reminders
-from corehq.motech.repeaters.models import Repeater
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 
@@ -339,88 +328,3 @@ def all_domain_stats():
         "web_users": webuser_counts,
         "commcare_users": commcare_counts,
     }
-
-
-def total_distinct_users(domain):
-    """
-    Get total number of users who've ever submitted a form in a domain.
-    """
-    query = FormES().domain(domain).user_aggregation()
-    terms = {
-        user_id for user_id in query.run().aggregations.user.keys
-        if user_id not in WEIRD_USER_IDS
-    }
-    user_ids = terms.intersection(set(CouchUser.ids_by_domain(domain)))
-    return len(user_ids)
-
-
-def num_telerivet_backends(domain):
-    from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-    backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
-    return len([b for b in backends if isinstance(b, SQLTelerivetBackend)])
-
-
-def use_domain_security_settings(domain_obj):
-    return any([
-        getattr(domain_obj, attr, False)
-        for attr in ['two_factor_auth', 'secure_sessions', 'strong_mobile_passwords']
-    ])
-
-
-def num_custom_roles(domain):
-    return len(get_custom_roles_for_domain(domain))
-
-
-def num_location_restricted_roles(domain):
-    roles = [r for r in UserRole.objects.get_by_domain(domain)
-             if not r.permissions.access_all_locations]
-    return len(roles)
-
-
-def num_case_sharing_loc_types(domain):
-    loc_types = [l_type for l_type in LocationType.objects.by_domain(domain) if l_type.shares_cases]
-    return len(loc_types)
-
-
-def num_case_sharing_groups(domain):
-    groups = [g for g in Group.by_domain(domain) if g.case_sharing]
-    return len(groups)
-
-
-def num_repeaters(domain):
-    return Repeater.objects.filter(domain=domain).count()
-
-
-def _get_domain_exports(domain):
-    return get_form_exports_by_domain(domain) + get_case_exports_by_domain(domain)
-
-
-def num_deid_exports(domain):
-    return len([e for e in _get_domain_exports(domain) if e.is_safe])
-
-
-def num_exports(domain):
-    return len(_get_domain_exports(domain))
-
-
-def num_saved_exports(domain):
-    return len([e for e in _get_domain_exports(domain)
-                if hasattr(e, "is_daily_saved_export") and e.is_daily_saved_export])
-
-
-def num_lookup_tables(domain):
-    return LookupTable.objects.by_domain(domain).count()
-
-
-def has_domain_icon(domain_obj):
-    return domain_obj.has_custom_logo
-
-
-def num_apps_with_icon(domain):
-    apps = _get_domain_apps(domain)
-    return len([a for a in apps if isinstance(a, ApplicationMediaMixin) and a.logo_refs])
-
-
-def num_apps_with_multi_languages(domain):
-    apps = _get_domain_apps(domain)
-    return len([a for a in apps if len(a.langs) > 1])

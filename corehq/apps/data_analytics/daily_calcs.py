@@ -18,36 +18,31 @@ from corehq.apps.domain.calculations import (
     forms,
     forms_in_last,
     get_300th_form_submission_received,
-    has_domain_icon,
     inactive_cases_in_last,
     last_form_submission,
-    num_apps_with_icon,
-    num_apps_with_multi_languages,
-    num_case_sharing_groups,
-    num_case_sharing_loc_types,
-    num_custom_roles,
-    num_deid_exports,
-    num_exports,
-    num_location_restricted_roles,
-    num_lookup_tables,
-    num_repeaters,
-    num_saved_exports,
-    num_telerivet_backends,
     sms,
     sms_in_in_last,
     sms_in_last,
     sms_in_last_bool,
     sms_out_in_last,
-    total_distinct_users,
-    use_domain_security_settings,
 )
+from corehq.apps.es.forms import FormES
 from corehq.apps.export.dbaccessors import get_export_count_by_domain
+from corehq.apps.fixtures.models import LookupTable
+from corehq.apps.groups.models import Group
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.locations.models import LocationType
+from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from corehq.apps.userreports.util import (
     number_of_report_builder_reports,
     number_of_ucr_reports,
 )
+from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.role_utils import get_custom_roles_for_domain
+from corehq.apps.users.util import WEIRD_USER_IDS
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+from corehq.motech.repeaters.models import Repeater
 
 from .metric_registry import MetricDef
 
@@ -73,7 +68,14 @@ def _calc_active_cases(ctx):
 
 
 def _calc_users_with_submission(ctx):
-    return total_distinct_users(ctx.domain)
+    """Get total number of users who've ever submitted a form in a domain."""
+    query = FormES().domain(ctx.domain).user_aggregation()
+    terms = {
+        user_id for user_id in query.run().aggregations.user.keys
+        if user_id not in WEIRD_USER_IDS
+    }
+    user_ids = terms.intersection(set(CouchUser.ids_by_domain(ctx.domain)))
+    return len(user_ids)
 
 
 def _calc_inactive_cases(ctx):
@@ -201,15 +203,22 @@ def _calc_usercases_30d(ctx):
 
 
 def _calc_telerivet(ctx):
-    return num_telerivet_backends(ctx.domain)
+    backends = SQLMobileBackend.get_domain_backends(
+        SQLMobileBackend.SMS,
+        ctx.domain,
+    )
+    return len([b for b in backends if isinstance(b, SQLTelerivetBackend)])
 
 
 def _calc_security_settings(ctx):
-    return use_domain_security_settings(ctx.domain_obj)
+    return any(
+        getattr(ctx.domain_obj, attr, False)
+        for attr in ['two_factor_auth', 'secure_sessions', 'strong_mobile_passwords']
+    )
 
 
 def _calc_custom_roles(ctx):
-    return num_custom_roles(ctx.domain)
+    return len(get_custom_roles_for_domain(ctx.domain))
 
 
 def _calc_has_locations(ctx):
@@ -217,31 +226,37 @@ def _calc_has_locations(ctx):
 
 
 def _calc_loc_restricted_roles(ctx):
-    return num_location_restricted_roles(ctx.domain)
+    roles = [r for r in UserRole.objects.get_by_domain(ctx.domain)
+             if not r.permissions.access_all_locations]
+    return len(roles)
 
 
 def _calc_case_sharing_locs(ctx):
-    return num_case_sharing_loc_types(ctx.domain)
+    return len([lt for lt in LocationType.objects.by_domain(ctx.domain)
+                if lt.shares_cases])
 
 
 def _calc_case_sharing_groups(ctx):
-    return num_case_sharing_groups(ctx.domain)
+    return len([g for g in Group.by_domain(ctx.domain) if g.case_sharing])
 
 
 def _calc_repeaters(ctx):
-    return num_repeaters(ctx.domain)
+    return Repeater.objects.filter(domain=ctx.domain).count()
 
 
 def _calc_case_exports(ctx):
-    return num_exports(ctx.domain)
+    return len(ctx.form_exports + ctx.case_exports)
 
 
 def _calc_deid_exports(ctx):
-    return num_deid_exports(ctx.domain)
+    return len([e for e in ctx.form_exports + ctx.case_exports if e.is_safe])
 
 
 def _calc_saved_exports(ctx):
-    return num_saved_exports(ctx.domain)
+    return len([
+        e for e in ctx.form_exports + ctx.case_exports
+        if hasattr(e, "is_daily_saved_export") and e.is_daily_saved_export
+    ])
 
 
 def _calc_rb_reports(ctx):
@@ -253,15 +268,16 @@ def _calc_ucrs(ctx):
 
 
 def _calc_lookup_tables(ctx):
-    return num_lookup_tables(ctx.domain)
+    return LookupTable.objects.by_domain(ctx.domain).count()
 
 
 def _calc_project_icon(ctx):
-    return has_domain_icon(ctx.domain_obj)
+    return ctx.domain_obj.has_custom_logo
 
 
 def _calc_apps_with_icon(ctx):
-    return num_apps_with_icon(ctx.domain)
+    return len([a for a in ctx.apps
+                if isinstance(a, ApplicationMediaMixin) and a.logo_refs])
 
 
 def _calc_apps(ctx):
@@ -269,7 +285,7 @@ def _calc_apps(ctx):
 
 
 def _calc_apps_multi_lang(ctx):
-    return num_apps_with_multi_languages(ctx.domain)
+    return len([a for a in ctx.apps if len(a.langs) > 1])
 
 
 def _calc_custom_exports(ctx):
