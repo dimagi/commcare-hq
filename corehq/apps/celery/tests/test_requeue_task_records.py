@@ -35,41 +35,37 @@ class TestRequeueTaskRecords(TestCase):
 
     # --- argument validation ---
 
-    def test_no_filter_raises_error(self):
-        with pytest.raises(CommandError):
-            self._requeue_task_records()
-
     def test_invalid_start_raises_error(self):
         with pytest.raises(CommandError):
-            self._requeue_task_records(requeue_all=True, start='not-a-date')
+            self._requeue_task_records(start='not-a-date')
 
     def test_invalid_end_raises_error(self):
         with pytest.raises(CommandError):
-            self._requeue_task_records(requeue_all=True, end='not-a-date')
+            self._requeue_task_records(end='not-a-date')
 
     # --- dry run ---
 
     def test_dry_run_does_not_requeue(self):
         make_record()
-        self._requeue_task_records(requeue_all=True)
+        self._requeue_task_records()
         self.mock_task.apply_async.assert_not_called()
 
     # --- requeue behaviour ---
 
     def test_no_matching_records(self):
-        out, _ = self._requeue_task_records(requeue_all=True, commit=True)
+        out, _ = self._requeue_task_records(commit=True)
         assert 'No matching' in out
         self.mock_task.apply_async.assert_not_called()
 
     def test_requeue_all(self):
         make_record()
         make_record()
-        self._requeue_task_records(requeue_all=True, commit=True)
+        self._requeue_task_records(commit=True)
         assert self.mock_task.apply_async.call_count == 2
 
     def test_task_id_is_preserved_on_requeue(self):
         record = make_record()
-        self._requeue_task_records(requeue_all=True, commit=True)
+        self._requeue_task_records(commit=True)
         self.mock_task.apply_async.assert_called_once_with(
             args=[], kwargs={}, task_id=str(record.task_id)
         )
@@ -78,7 +74,7 @@ class TestRequeueTaskRecords(TestCase):
         args = [1, 'hello']
         kwargs = {'key': 'value'}
         record = make_record(args=args, kwargs=kwargs)
-        self._requeue_task_records(requeue_all=True, commit=True)
+        self._requeue_task_records(commit=True)
         self.mock_task.apply_async.assert_called_once_with(
             args=args, kwargs=kwargs, task_id=str(record.task_id)
         )
@@ -107,7 +103,7 @@ class TestRequeueTaskRecords(TestCase):
             recent_record = make_record()
 
         cutoff = (timezone.now() - datetime.timedelta(days=1)).isoformat()
-        self._requeue_task_records(requeue_all=True, start=cutoff, commit=True)
+        self._requeue_task_records(start=cutoff, commit=True)
 
         self.mock_task.apply_async.assert_called_once_with(
             args=[], kwargs={}, task_id=str(recent_record.task_id)
@@ -123,7 +119,7 @@ class TestRequeueTaskRecords(TestCase):
         make_record(date_created=recent)
 
         cutoff = (timezone.now() - datetime.timedelta(days=1)).isoformat()
-        self._requeue_task_records(requeue_all=True, end=cutoff, commit=True)
+        self._requeue_task_records(end=cutoff, commit=True)
 
         self.mock_task.apply_async.assert_called_once_with(
             args=[], kwargs={}, task_id=str(old_record.task_id)
@@ -134,14 +130,14 @@ class TestRequeueTaskRecords(TestCase):
     def test_unregistered_task_is_skipped(self):
         make_record(name='unregistered.task')
         self.mock_app.tasks = {}
-        _, err = self._requeue_task_records(requeue_all=True, commit=True)
+        _, err = self._requeue_task_records(commit=True)
         self.mock_task.apply_async.assert_not_called()
         assert 'not registered' in err
 
     def test_requeue_error_is_reported(self):
         make_record()
         self.mock_task.apply_async.side_effect = Exception("broker down")
-        _, err = self._requeue_task_records(requeue_all=True, commit=True)
+        _, err = self._requeue_task_records(commit=True)
         assert 'broker down' in err
 
 

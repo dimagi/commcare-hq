@@ -13,28 +13,23 @@ class Command(BaseCommand):
     Examples::
 
         # Dry run (no changes made)
-        $ python manage.py requeue_task_records --all
+        $ python manage.py requeue_task_records
         $ python manage.py requeue_task_records --task-name myapp.tasks.my_task
         $ python manage.py requeue_task_records --start 2025-01-01T00:00:00
 
         # Actually requeue
-        $ python manage.py requeue_task_records --all --commit
+        $ python manage.py requeue_task_records --commit
     """
 
     help = (
         "Requeue TaskRecord objects into the Celery broker. "
-        "Use --task-name to filter which records to requeue, "
+        "Runs as a dry run by default. Use --commit to requeue"
+        "All records will be requeued if no options are provied. "
+        "Use --task-name to filter by task, and/or "
         "--start and --end to specify a date created time window, "
-        "or --all to requeue every record. Runs as a dry run by default."
     )
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--all',
-            action='store_true',
-            dest='requeue_all',
-            help="Requeue all TaskRecord objects",
-        )
         parser.add_argument(
             '--task-name',
             help=(
@@ -65,12 +60,7 @@ class Command(BaseCommand):
             ),
         )
 
-    def handle(self, requeue_all, task_name, start, end, commit, **options):
-        if not any([requeue_all, task_name, start, end]):
-            raise CommandError(
-                "Specify --all, --start, --end, or --task-name."
-            )
-
+    def handle(self, task_name, start, end, commit, **options):
         start_dt = self._parse_datetime(start, '--start')
         end_dt = self._parse_datetime(end, '--end')
 
