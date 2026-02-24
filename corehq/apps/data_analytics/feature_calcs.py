@@ -1,7 +1,91 @@
 """
 Feature usage metric calculations (monthly collection).
 """
+from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
+
 from .metric_registry import MetricDef
+
+
+# Application Feature metric calculations
+
+def calc_has_multimedia(domain_context):
+    """Check if any app uses multimedia (images, audio, video)."""
+    return any(
+        bool(getattr(a, 'multimedia_map', {}))
+        for a in domain_context.apps
+    )
+
+
+def calc_has_case_management(domain_context):
+    """Check if any app has a case list menu (offline case management)."""
+    for app in domain_context.apps:
+        for module in app.get_modules():
+            if getattr(module, 'case_type', ''):
+                return True
+    return False
+
+
+def calc_has_eof_navigation(domain_context):
+    """Check if any form has non-default end-of-form navigation."""
+    for app in domain_context.apps:
+        for module in app.get_modules():
+            for form in module.get_forms():
+                workflow = getattr(
+                    form,
+                    'post_form_workflow',
+                    WORKFLOW_DEFAULT,
+                )
+                if workflow != WORKFLOW_DEFAULT:
+                    return True
+    return False
+
+
+def calc_has_web_apps(domain_context):
+    """Check if any app has Web Apps (cloudcare) enabled."""
+    return any(
+        getattr(a, 'cloudcare_enabled', False)
+        for a in domain_context.apps
+    )
+
+
+def calc_has_app_profiles(domain_context):
+    """Check if any app has build profiles configured."""
+    return any(
+        bool(getattr(a, 'build_profiles', {}))
+        for a in domain_context.apps
+    )
+
+
+def calc_has_save_to_case(domain_context):
+    """Check if any form has save-to-case actions configured."""
+    for app in domain_context.apps:
+        for module in app.get_modules():
+            for form in module.get_forms():
+                actions = getattr(form, 'actions', None)
+                if not actions:
+                    continue
+                update = getattr(actions, 'update_case', None)
+                if update and getattr(update, 'update', {}):
+                    return True
+                open_case = getattr(actions, 'open_case', None)
+                if open_case and getattr(open_case, 'name_update', None):
+                    return True
+    return False
+
+
+def calc_bulk_case_editing_sessions(domain_context):
+    """Count bulk case editing sessions."""
+    return BulkEditSession.objects.filter(domain=domain_context.domain).count()
+
+
+def calc_has_custom_branding(domain_context):
+    """Check for custom branding: domain logo or app logos."""
+    if domain_context.domain_obj.has_custom_logo:
+        return True
+    for app in domain_context.apps:
+        if getattr(app, 'logo_refs', None):
+            return True
+    return False
 
 
 def _not_implemented(field_name):
@@ -15,19 +99,23 @@ def _not_implemented(field_name):
 FEATURE_METRICS = [
     # Application Features
     MetricDef('has_multimedia', 'cp_has_multimedia',
-              _not_implemented('has_multimedia')),
+              # Slow (fetch & cache domain_context.apps)
+              calc_has_multimedia),
     MetricDef('has_case_management', 'cp_has_case_management',
-              _not_implemented('has_case_management')),
+              calc_has_case_management),
     MetricDef('has_eof_navigation', 'cp_has_eof_navigation',
-              _not_implemented('has_eof_navigation')),
+              calc_has_eof_navigation),
     MetricDef('has_web_apps', 'cp_has_web_apps',
-              _not_implemented('has_web_apps')),
+              calc_has_web_apps),
     MetricDef('has_app_profiles', 'cp_has_app_profiles',
-              _not_implemented('has_app_profiles')),
+              calc_has_app_profiles),
     MetricDef('has_save_to_case', 'cp_has_save_to_case',
-              _not_implemented('has_save_to_case')),
+              calc_has_save_to_case),
+    MetricDef('bulk_case_editing_sessions',
+              'cp_n_bulk_case_editing_sessions',
+              calc_bulk_case_editing_sessions, is_boolean=False),
     MetricDef('has_custom_branding', 'cp_has_custom_branding',
-              _not_implemented('has_custom_branding')),
+              calc_has_custom_branding),
 
     # Data & Export Features
     MetricDef('form_exports', 'cp_n_form_exports',
