@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+
 from functools import cached_property
 from typing import Any, Callable, Literal
 
@@ -94,5 +94,4 @@ def compute_daily_metrics_for_domain(domain_obj, all_stats):
         if metric.field_name not in _MODEL_MANAGED_FIELDS:
             metrics_dict[metric.field_name] = metric.calc_fn(ctx)
     metrics_dict['domain'] = domain_obj.name
-    metrics_dict['last_modified'] = datetime.now(tz=timezone.utc)
     return metrics_dict
