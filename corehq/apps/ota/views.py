@@ -402,13 +402,13 @@ def heartbeat(request, domain, app_build_id):
     build_profile_id = request.GET.get('build_profile_id', '')
     master_app_id = app_id
     try:
-        info = GlobalAppConfig.get_latest_version_info(domain, app_id, build_profile_id)
+        info = GlobalAppConfig.get_latest_version_info(domain, app_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
         app = get_app_cached(domain, app_build_id)
         notify_exception(request, 'Received an invalid heartbeat request')
         master_app_id = app.origin_id if app else None
-        info = GlobalAppConfig.get_latest_version_info(domain, app.origin_id, build_profile_id)
+        info = GlobalAppConfig.get_latest_version_info(domain, app.origin_id)
 
     info["app_id"] = app_id
     if master_app_id:

@@ -1,16 +1,33 @@
 #!/bin/bash
 # Show test failures for a GitHub Actions CI run on a PR.
-# Usage: scripts/pr-failures.sh <pr_number>
+# Usage: scripts/pr-failures.sh [<pr_number>]
+# If no PR number is given, uses the current branch's open PR.
 
 set -euo pipefail
 
-PR=${1:?Usage: scripts/pr-failures.sh <pr_number>}
-REPO="dimagi/commcare-hq"
+if ! command -v gh &>/dev/null; then
+    echo "Error: 'gh' (GitHub CLI) is not installed." >&2
+    echo "Install it from https://cli.github.com/" >&2
+    exit 1
+fi
 
-FAILED=$(gh pr checks "$PR" --repo "$REPO" 2>/dev/null | awk -F'\t' '$2 == "fail"') || true
+PR=${1:-}
+REPO=$(gh repo view --json nameWithOwner -q ".nameWithOwner")
+
+gh_exit=0
+if [[ -n "$PR" ]]; then
+    FAILED=$(gh pr checks "$PR" --repo "$REPO" | awk -F'\t' '$2 == "fail"') || gh_exit=$?
+else
+    FAILED=$(gh pr checks | awk -F'\t' '$2 == "fail"') || gh_exit=$?
+fi
+
+# Non-zero exit + no tab-separated output = real gh error (already printed to stderr)
+if [[ $gh_exit -ne 0 && -z "$FAILED" ]]; then
+    exit 1
+fi
 
 if [[ -z "$FAILED" ]]; then
-    echo "No failed checks for PR #$PR."
+    echo "No failed checks${PR:+ for PR #$PR}."
     exit 0
 fi
 

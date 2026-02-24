@@ -39,31 +39,6 @@
           "></select-toggle>
       </p>
     </li>
-    {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
-    <li>
-      <p>
-        {% trans "Download only translations eligible for Transifex?" %}
-      </p>
-      <p>
-        <select-toggle
-          data-apply-bindings="false"
-          params="
-            value: skipBlacklisted,
-            id: 'skip_blacklisted',
-            options: [
-              {
-                id: 'true',
-                text: '{% trans_html_attr 'Only Transifex references' %}',
-              },
-              {
-                id: 'false',
-                text: '{% trans_html_attr 'All translations' %}',
-              },
-            ],
-          "></select-toggle>
-      </p>
-    </li>
-    {% endif %}
   {% endif %}
 {% endblock %}
 

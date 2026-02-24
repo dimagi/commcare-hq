@@ -1400,7 +1400,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/964.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-#| msgid "Case Name"
 msgid "Case Management"
 msgstr "إدارة الحالات"
 
@@ -3920,7 +3919,6 @@ msgstr ""
 "تحظر الرسائل من عنواننا (<%- fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Web Users</strong> &mdash; invite new web users, manage account "
 "settings, remove membership"
@@ -3929,17 +3927,14 @@ msgstr ""
 "الحساب، إزالة العضوية"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Mobile Workers"
 msgstr "تعديل وعرض العاملين على الأجهزة المحمولة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
 msgstr "عرض فقط العاملين على الأجهزة المحمولة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
 "configuration for web users"
@@ -3948,17 +3943,14 @@ msgstr ""
 "لمستخدمي الويب"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View tableau configuration for web users"
 msgstr "تعديل وعرض إعدادات Tableau لمستخدمي الويب"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only tableau configuration for web users"
 msgstr "عرض فقط إعدادات Tableau لمستخدمي الويب"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings, deactivate or delete mobile workers."
@@ -3967,61 +3959,50 @@ msgstr ""
 "إدارة إعدادات الحساب، إلغاء تفعيل أو حذف العاملين على الأجهزة المحمولة."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Web Users"
 msgstr "تعديل وعرض مستخدمي الويب"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Users"
 msgstr "عرض فقط مستخدمي الويب"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "<strong>Groups</strong> &mdash; manage groups of mobile workers"
 msgstr ""
 "<strong>المجموعات</strong> &mdash; إدارة مجموعات العاملين على الأجهزة "
 "المحمولة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Groups"
 msgstr "تعديل وعرض المجموعات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Groups"
 msgstr "عرض فقط مجموعات الويب"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing group membership (requires edit groups)."
 msgstr "السماح بتغيير عضوية المجموعة (يتطلب تعديل المجموعات)."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Locations</strong> &mdash; manage locations in the Organization's "
 "Hierarchy"
 msgstr "<strong>المواقع</strong> &mdash; إدارة المواقع في هيكلية المؤسسة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Locations"
 msgstr "تعديل وعرض المواقع"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Web Locations"
 msgstr "عرض فقط مواقع الويب"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing workers at a location."
 msgstr "السماح بتغيير العاملين في الموقع."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Data Dictionary</strong> &mdash; manage case properties within "
 "CommCare HQ"
@@ -4029,17 +4010,14 @@ msgstr ""
 "<strong>قاموس البيانات</strong> &mdash; إدارة خصائص الحالات ضمن CommCare HQ"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data Dictionary"
 msgstr "تعديل وعرض قاموس البيانات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Data Dictionary"
 msgstr "عرض فقط قاموس البيانات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
@@ -4048,23 +4026,19 @@ msgstr ""
 " إعادة تعيين الحالات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data"
 msgstr "تعديل وعرض البيانات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Messaging</strong> &mdash; configure and send conditional alerts"
 msgstr "<strong>الرسائل</strong> &mdash; إعداد وإرسال التنبيهات الشرطية"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access Messaging"
 msgstr "الوصول إلى الرسائل"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
 " data. Specific APIs may require additional permissions."
@@ -4074,12 +4048,10 @@ msgstr ""
 "الواجهات أذونات إضافية."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access APIs"
 msgstr "الوصول إلى واجهات برمجة التطبيقات (APIs)"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Applications</strong> &mdash; modify or view the structure and "
 "configuration of all applications."
@@ -4088,17 +4060,14 @@ msgstr ""
 "التطبيقات."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Apps"
 msgstr "تعديل وعرض التطبيقات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Applications"
 msgstr "تطبيقات للعرض فقط"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile "
 "worker roles &amp; permissions (only Admins can edit roles)"
@@ -4107,12 +4076,10 @@ msgstr ""
 " والعاملين على الأجهزة المحمولة (فقط المسؤولون يمكنهم تعديل الأدوار)"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View Roles and Permissions"
 msgstr "عرض الأدوار والصلاحيات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Dropzone</strong> &mdash; Upload and download files from the file "
 "Dropzone"
@@ -4120,17 +4087,14 @@ msgstr ""
 "<strong>منطقة الإسقاط</strong> &mdash; رفع وتنزيل الملفات من منطقة الإسقاط"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & Download files from the Dropzone "
 msgstr "تعديل وتنزيل الملفات من منطقة الإسقاط"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Dropzone"
 msgstr "منطقة الإسقاط للعرض فقط"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Manage Shared Exports</strong> &mdash; access and edit the content "
 "and structure of shared exports"
@@ -4139,7 +4103,6 @@ msgstr ""
 "الصادرات المشتركة وتعديله"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking "
 "events and users"
@@ -4147,12 +4110,10 @@ msgstr ""
 "<strong>تتبع الحضور</strong> &mdash; تنسيق فعاليات تتبع الحضور والمستخدمين"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
 msgstr "تعديل فعاليات تتبع الحضور"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
 "associated with this project"
@@ -4161,188 +4122,122 @@ msgstr ""
 "بهذا المشروع"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View CommCare Analytics"
 msgstr "تعديل وعرض تحليلات CommCare"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only CommCare Analytics"
 msgstr "تحليلات CommCare للعرض فقط"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Enterprise Release Management"
 msgstr "إدارة الإصدارات المؤسسية"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Multi-Environment Release Management"
 msgstr "إدارة الإصدارات متعددة البيئات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Project Spaces"
 msgstr "مساحات المشاريع المرتبطة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to configure linked project spaces"
 msgstr "السماح للدور بتكوين مساحات المشاريع المرتبطة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Linked Configurations"
 msgstr "الإعدادات المرتبطة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to edit linked configurations on this project space"
 msgstr "السماح للدور بتعديل الإعدادات المرتبطة في مساحة المشروع هذه"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Reports"
 msgstr "إنشاء وتعديل التقارير"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit reports in report builder."
 msgstr "السماح للدور بإنشاء وتعديل التقارير في منشئ التقارير."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Custom Web Reports"
 msgstr "إنشاء وتعديل تقارير الويب المخصصة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit custom web reports."
 msgstr "السماح للدور بإنشاء وتعديل تقارير الويب المخصصة."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Create and Edit Configurable Reports"
 msgstr "إنشاء وتعديل التقارير القابلة للتكوين"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to create and edit configurable reports."
 msgstr "السماح للدور بإنشاء وتعديل التقارير القابلة للتكوين."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All CommCare Reports"
 msgstr "الوصول إلى جميع تقارير CommCare"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Reports"
 msgstr "الوصول إلى جميع التقارير"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid ""
 "Allow role to view all CommCare reports. Excludes embedded Tableau reports"
 msgstr ""
 "السماح للدور بعرض جميع تقارير CommCare. لا يشمل تقارير Tableau المدمجة"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all reports."
 msgstr "السماح للدور بالوصول إلى جميع التقارير."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Download and Email Reports"
 msgstr "تنزيل وإرسال التقارير عبر البريد الإلكتروني"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to download and email report data."
 msgstr "السماح للدور بتنزيل بيانات التقارير وإرسالها عبر البريد الإلكتروني."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
 msgstr "الوصول إلى جميع تقارير Tableau"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all embedded Tableau reports."
 msgstr "السماح للدور بالوصول إلى جميع تقارير Tableau المدمجة."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Use Web Apps for online data entry"
 msgstr "استخدام تطبيقات الويب لإدخال البيانات عبر الإنترنت"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#| msgid "Select a Report..."
 msgid "Select which web apps..."
 msgstr "اختر تطبيقات الويب..."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Manage Registries"
 msgstr "إدارة السجلات"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Select which registries the role can manage:"
 msgstr "حدد السجلات التي يمكن للدور إدارتها:"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "View Registry Data"
 msgstr "عرض بيانات السجل"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "Select which registry data the role can view:"
 msgstr "حدد بيانات السجل التي يمكن للدور عرضها:"
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#: corehq/apps/users/static/users/js/roles.js
 msgid "An error occurred, please try again."
 msgstr "حدث خطأ، يرجى المحاولة مرة أخرى."
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "No Access"
-msgstr "لا يوجد وصول"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Access All"
-msgstr "وصول كامل"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Limited Access"
-msgstr "وصول محدود"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which items the role can access:"
-msgstr "حدد العناصر التي يمكن للدور الوصول إليها:"
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Select which web apps the role has access to:"
-msgstr "حدد تطبيقات الويب التي يمكن للدور الوصول إليها:"
-
-#: corehq/apps/users/static/users/js/roles.js
-#, javascript-format
-msgid "Select at least one item from the list for \"%s\""
-msgstr "يرجى اختيار عنصر واحد على الأقل من القائمة لـ \"%s\""
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "Edit Role: "
-msgstr "تعديل الدور: "
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "View Role: "
-msgstr "عرض الدور: "
-
-#: corehq/apps/users/static/users/js/roles.js
-msgid "New Role"
-msgstr "دور جديد"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Delete Role: "
@@ -4563,6 +4458,34 @@ msgstr "فشل! الاستجابة هي: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
+
+#~ msgid "No Access"
+#~ msgstr "لا يوجد وصول"
+
+#~ msgid "Access All"
+#~ msgstr "وصول كامل"
+
+#~ msgid "Limited Access"
+#~ msgstr "وصول محدود"
+
+#~ msgid "Select which items the role can access:"
+#~ msgstr "حدد العناصر التي يمكن للدور الوصول إليها:"
+
+#~ msgid "Select which web apps the role has access to:"
+#~ msgstr "حدد تطبيقات الويب التي يمكن للدور الوصول إليها:"
+
+#, javascript-format
+#~ msgid "Select at least one item from the list for \"%s\""
+#~ msgstr "يرجى اختيار عنصر واحد على الأقل من القائمة لـ \"%s\""
+
+#~ msgid "Edit Role: "
+#~ msgstr "تعديل الدور: "
+
+#~ msgid "View Role: "
+#~ msgstr "عرض الدور: "
+
+#~ msgid "New Role"
+#~ msgstr "دور جديد"
 
 #~ msgid "\n"
 #~ msgstr "\n"

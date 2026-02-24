@@ -1,5 +1,4 @@
 import haversine
-import requests
 import pulp
 import copy
 
@@ -26,10 +25,8 @@ class Parameters:
 
         self.min_cases_per_user = config.min_cases_per_user or 0
         self.max_case_distance = config.max_case_distance
-
-        if config.supports_travel_mode:
-            max_travel_time_secs = config.max_case_travel_time * 60 if config.max_case_travel_time else None
-            self.max_case_travel_time_seconds = max_travel_time_secs
+        # Road Network Algorithm (which supported travel time) has been removed
+        self.max_case_travel_time_seconds = None
 
 
 class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
@@ -181,57 +178,3 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
             return False
 
         return True
-
-
-class RoadNetworkSolver(RadialDistanceSolver):
-    """
-    Solves user-case location assignment based on driving distance
-    """
-
-    def calculate_distance_matrix(self, config):
-        # Todo; support more than Mapbox limit by chunking
-        if len(self.user_locations + self.case_locations) > 25:
-            raise Exception("This is more than Mapbox matrix API limit (25)")
-
-        coordinates = ';'.join([
-            f'{float(loc["lon"])},{float(loc["lat"])}'
-            for loc in self.user_locations + self.case_locations]
-        )
-        sources_count = len(self.user_locations)
-        destinations_count = len(self.case_locations)
-
-        sources = ";".join(map(str, list(range(sources_count))))
-        destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
-
-        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/{config.travel_mode}/{coordinates}'
-
-        if config.max_case_travel_time:
-            annotations = "distance,duration"
-        else:
-            annotations = "distance"
-
-        params = {
-            'sources': sources,
-            'destinations': destinations,
-            'annotations': annotations,
-            'access_token': config.plaintext_api_token,
-        }
-
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-
-        return self.sanitize_response(response.json())
-
-    def sanitize_response(self, response):
-        distances_km = self._convert_m_to_km(response['distances'])
-        durations_sec = response.get('durations', None)
-        return distances_km, durations_sec
-
-    @staticmethod
-    def _convert_m_to_km(distances_m):
-        distances_km = []
-        for row in distances_m:
-            distances_km.append(
-                [value_m / 1000 for value_m in row]
-            )
-        return distances_km

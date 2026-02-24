@@ -312,8 +312,7 @@ def _get_vellum_plugins(domain, form, module, options):
     privileges.
     """
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
-    if (toggles.COMMTRACK.enabled(domain)
-            or toggles.NON_COMMTRACK_LEDGERS.enabled(domain)):
+    if toggles.COMMTRACK.enabled(domain):
         vellum_plugins.append("commtrack")
     if "caseManagement" in options:
         vellum_plugins.append("caseManagement")

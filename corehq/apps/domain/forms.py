@@ -26,7 +26,6 @@ from django.forms.fields import (
     Field,
     ImageField,
     IntegerField,
-    SelectMultiple,
 )
 from django.forms.widgets import Select
 from django.template.loader import render_to_string
@@ -84,7 +83,6 @@ from corehq.apps.app_manager.const import (
     AMPLIFIES_YES,
 )
 from corehq.apps.app_manager.dbaccessors import (
-    get_app,
     get_apps_in_domain,
     get_brief_apps_in_domain,
     get_version_build_id,
@@ -94,7 +92,6 @@ from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
     CredentialApplication,
-    LatestEnabledBuildProfiles,
     RemoteApp,
 )
 from corehq.apps.callcenter.views import (
@@ -114,7 +111,6 @@ from corehq.apps.domain.models import (
     AppManagerDomainSettings,
     AppReleaseModeSetting,
     OperatorCallLimitSettings,
-    SMSAccountConfirmationSettings,
     all_restricted_ucr_expressions,
 )
 from corehq.apps.hqmedia.models import (
@@ -141,7 +137,6 @@ from corehq.toggles import (
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
-    TWO_STAGE_USER_PROVISIONING_BY_SMS,
     USE_LOGO_IN_SYSTEM_EMAILS,
 )
 from corehq.util.global_request import get_request
@@ -465,16 +460,6 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
-    confirmation_link_expiry = IntegerField(
-        label=gettext_lazy("Account confirmation link expiry"),
-        required=True,
-        help_text=gettext_lazy(
-            """
-            Default time (in days) for which account confirmation link will be valid.
-            """
-        )
-    )
-
     operator_call_limit = IntegerField(
         label=gettext_lazy("Call limit"),
         required=True,
@@ -483,12 +468,6 @@ class DomainGlobalSettingsForm(forms.Form):
             Limit on number of calls allowed to an operator for each call type.
             """
         )
-    )
-
-    confirmation_sms_project_name = CharField(
-        label=gettext_lazy("Confirmation SMS project name"),
-        required=True,
-        help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
     release_mode_visibility = BooleanField(
@@ -606,7 +585,6 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['connect_messaging_channel_name']
 
         self._handle_call_limit_visibility()
-        self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
         self._handle_enable_all_add_ons()
         self._handle_orphan_case_alerts_setting_value()
@@ -671,22 +649,6 @@ class DomainGlobalSettingsForm(forms.Form):
         if COMMCARE_CONNECT.enabled(self.domain):
             extra_fields.append('connect_messaging_channel_name')
         return extra_fields
-
-    def _handle_account_confirmation_by_sms_settings(self):
-        if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
-            del self.fields['confirmation_link_expiry']
-            del self.fields['confirmation_sms_project_name']
-        else:
-            settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
-            min_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
-            max_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
-            self.fields['confirmation_link_expiry'].initial = settings_obj.confirmation_link_expiry_time
-            self._add_range_validation_to_integer_input(
-                "confirmation_link_expiry", min_value_expiry, max_value_expiry
-            )
-            project_max_length = SMSAccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
-            self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
-            self.fields['confirmation_sms_project_name'].max_length = project_max_length
 
     def _handle_call_limit_visibility(self):
         if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
@@ -759,10 +721,6 @@ class DomainGlobalSettingsForm(forms.Form):
             self.system_emails_logo_enabled,
             _("Logo for systems emails exceeds {} MB size limit").format(upload_size_limit)
         )
-
-    def clean_confirmation_link_expiry(self):
-        data = self.cleaned_data['confirmation_link_expiry']
-        return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
 
     def clean_operator_call_limit(self):
         data = self.cleaned_data['operator_call_limit']
@@ -859,13 +817,6 @@ class DomainGlobalSettingsForm(forms.Form):
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
 
-    def _save_account_confirmation_settings(self, domain):
-        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(domain.name):
-            settings = SMSAccountConfirmationSettings.get_settings(domain.name)
-            settings.project_name = self.cleaned_data.get('confirmation_sms_project_name')
-            settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
-            settings.save()
-
     def _save_release_mode_setting(self, domain):
         setting_obj = AppReleaseModeSetting.get_settings(domain=domain.name)
         if self.cleaned_data.get("release_mode_visibility") != setting_obj.is_visible:
@@ -908,7 +859,6 @@ class DomainGlobalSettingsForm(forms.Form):
             messages.error(request, _('Unable to save logo: {}').format(err))
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
-        self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
         self._save_enable_all_add_ons_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
@@ -2879,140 +2829,6 @@ class ManageReleasesByLocationForm(forms.Form):
         except ValidationError as e:
             return False, ','.join(e.messages)
         return True, None
-
-
-class BaseManageReleasesByAppProfileForm(forms.Form):
-    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=True)
-    version = forms.IntegerField(label=gettext_lazy('Version'), required=False, widget=Select(choices=[]))
-
-    def __init__(self, request, domain, *args, **kwargs):
-        self.request = request
-        self.domain = domain
-        super(BaseManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
-        self.fields['app_id'].choices = self.app_id_choices()
-        self.helper = HQFormHelper()
-        self.helper.form_tag = False
-
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                "",
-                *self.form_fields()
-            ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    *self._buttons()
-                )
-            )
-        )
-
-    def app_id_choices(self):
-        choices = [(None, _('Select Application'))]
-        for app in get_brief_apps_in_domain(self.domain):
-            choices.append((app.id, app.name))
-        return choices
-
-    def form_fields(self):
-        return [
-            crispy.Field('app_id', css_class="hqwebapp-select2 app-id-search-select"),
-            crispy.Field('version', css_class='version-input'),
-        ]
-
-    @staticmethod
-    def _buttons():
-        raise NotImplementedError
-
-
-class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
-    app_build_profile_id = forms.ChoiceField(label=gettext_lazy("Build Profile"), choices=(),
-                                             required=False)
-    status = forms.ChoiceField(label=gettext_lazy("Status"),
-                               choices=(
-                                   ('', gettext_lazy('Select Status')),
-                                   ('active', gettext_lazy('Active')),
-                                   ('inactive', gettext_lazy('Inactive'))),
-                               required=False)
-
-    def __init__(self, request, domain, *args, **kwargs):
-        super(SearchManageReleasesByAppProfileForm, self).__init__(request, domain, *args, **kwargs)
-        if request.GET.get('app_id'):
-            self.fields['app_id'].initial = request.GET.get('app_id')
-        if request.GET.get('status'):
-            self.fields['status'].initial = request.GET.get('status')
-
-    def form_fields(self):
-        form_fields = super(SearchManageReleasesByAppProfileForm, self).form_fields()
-        form_fields.extend([
-            crispy.Field('app_build_profile_id', css_class="hqwebapp-select2 app-build-profile-id-select"),
-            crispy.Field('status', id='status-input')
-        ])
-        return form_fields
-
-    @staticmethod
-    def _buttons():
-        return [
-            crispy.Button('search', gettext_lazy("Search"), data_bind="click: search",
-                          css_class='btn-primary'),
-            crispy.Button('clear', gettext_lazy("Clear"), data_bind="click: clear"),
-        ]
-
-
-class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
-    build_profile_id = forms.CharField(label=gettext_lazy('Build Profile'),
-                                       required=True, widget=SelectMultiple(choices=[]),)
-
-    def save(self):
-        success_messages = []
-        error_messages = []
-        for build_profile_id in self.cleaned_data['build_profile_id']:
-            try:
-                LatestEnabledBuildProfiles.update_status(self.build, build_profile_id,
-                                                         active=True)
-                success_messages.append(_('Restriction for profile {profile} set successfully.').format(
-                    profile=self.build.build_profiles[build_profile_id]['name'],
-                ))
-            except ValidationError as e:
-                error_messages.append(_('Restriction for profile {profile} failed: {message}').format(
-                    profile=self.build.build_profiles[build_profile_id]['name'],
-                    message=', '.join(e.messages)
-                ))
-        return error_messages, success_messages
-
-    @cached_property
-    def build(self):
-        return get_app(self.domain, self.version_build_id)
-
-    @cached_property
-    def version_build_id(self):
-        app_id = self.cleaned_data['app_id']
-        version = self.cleaned_data['version']
-        return get_version_build_id(self.domain, app_id, version)
-
-    def form_fields(self):
-        form_fields = super(CreateManageReleasesByAppProfileForm, self).form_fields()
-        form_fields.extend([
-            crispy.Field('build_profile_id', id='build-profile-id-input')
-        ])
-        return form_fields
-
-    @staticmethod
-    def _buttons():
-        return [Submit('submit', gettext_lazy("Add New Restriction"), css_class='btn-primary')]
-
-    def clean(self):
-        if self.cleaned_data.get('version'):
-            try:
-                self.version_build_id
-            except BuildNotFoundException as e:
-                self.add_error('version', e)
-
-    def clean_build_profile_id(self):
-        return self.data.getlist('build_profile_id')
-
-    def clean_version(self):
-        # ensure value is present for a post request
-        if not self.cleaned_data.get('version'):
-            self.add_error('version', _("Please select version"))
-        return self.cleaned_data.get('version')
 
 
 class DomainAlertForm(forms.Form):

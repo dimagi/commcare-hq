@@ -14,6 +14,7 @@ def serial_task(
     queue='background_queue',
     ignore_result=True,
     serializer=None,
+    durable=False,
 ):
     """
     Define a task to be executed one at a time.  If another serial_task with
@@ -52,6 +53,7 @@ def serial_task(
             ignore_result=ignore_result,
             default_retry_delay=default_retry_delay,
             max_retries=max_retries,
+            durable=durable,
             **task_kwargs,
         )
         @wraps(fn)

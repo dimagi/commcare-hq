@@ -893,22 +893,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return 50000
 
 
-class TransferDomainRequest(models.Model):
-    active = models.BooleanField(default=True, blank=True)
-    request_time = models.DateTimeField(null=True, blank=True)
-    request_ip = models.CharField(max_length=80, null=True, blank=True)
-    confirm_time = models.DateTimeField(null=True, blank=True)
-    confirm_ip = models.CharField(max_length=80, null=True, blank=True)
-    transfer_guid = models.CharField(max_length=32, null=True, blank=True)
-
-    domain = models.CharField(max_length=256)
-    from_username = models.CharField(max_length=80)
-    to_username = models.CharField(max_length=80)
-
-    class Meta(object):
-        app_label = 'domain'
-
-
 class DomainAuditRecordEntry(models.Model):
     domain = models.TextField(unique=True, db_index=True)
     cp_n_downloads_custom_exports = models.BigIntegerField(default=0)

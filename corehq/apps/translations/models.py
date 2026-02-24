@@ -2,15 +2,12 @@ from collections import defaultdict
 
 from django.contrib import admin
 from django.db import models
-from django.urls import reverse
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.motech.const import ALGO_AES_CBC
 from corehq.motech.utils import (
     b64_aes_cbc_decrypt,
     b64_aes_cbc_encrypt,
 )
-from corehq.util.quickcache import quickcache
 
 
 class SMSTranslations(models.Model):
@@ -117,47 +114,6 @@ class TransifexBlacklist(models.Model):
         )
         # app and module omitted to avoid hitting database
         # app_id and module_id omitted because they are unfriendly
-
-    @classmethod
-    def translations_with_names(cls, domain):
-        blacklisted = TransifexBlacklist.objects.filter(domain=domain).all().values()
-        apps_modules_by_id = get_apps_modules_by_id(domain)
-        ret = []
-        for trans in blacklisted:
-            r = trans.copy()
-            app = apps_modules_by_id.get(trans['app_id'])
-            module = app['modules'].get(trans['module_id']) if app else None
-            r['app_name'] = app['name'] if app else trans['app_id']
-            r['module_name'] = module['name'] if module else trans['module_id']
-            r['delete_url'] = reverse('delete_translation_blacklist', args=[domain, trans['id']])
-
-            ret.append(r)
-        return ret
-
-
-@quickcache(['domain'])
-def get_apps_modules_by_id(domain):
-    """
-    Return a dictionary of {
-        <app id>: {
-            'name': <app name>,
-            'modules': {
-                <module id>: {'name': <module name>}
-            }
-        }
-    }
-    """
-    apps = {}
-    for app_id in get_app_ids_in_domain(domain):
-        app = get_app(domain, app_id)
-        modules = {}
-        for module in app.get_modules():
-            modules[module.unique_id] = {'name': module.default_name(app)}
-        apps[app_id] = {
-            'name': app.name,
-            'modules': modules
-        }
-    return apps
 
 
 class TransifexOrganization(models.Model):
