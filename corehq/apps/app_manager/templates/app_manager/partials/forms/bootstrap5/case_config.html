@@ -5,8 +5,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <a href="#" class="btn-close" data-bs-dismiss="modal">×</a>  {# todo B5: css-close #}
         <h4 class="modal-title">{% trans "Remove Child Case?" %}</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p>{% trans "Are you sure you want to remove this Child Case?" %}</p>
@@ -30,11 +30,9 @@
 
 <script type="text/html" id="case-config:case-transaction">
   {% if add_ons.conditional_form_actions %}
-  <div class="card panel-appmanager" data-bind="visible: allow.condition()">  {# todo B5: css-panel #}
-    <div class="card-header">
-      <h4 class="card-title card-title-nolink">
+  <div class="card mb-3" data-bind="visible: allow.condition()">
+    <div class="card-header h5">
         {% trans "Open Case Condition" %}
-      </h4>
     </div>
     <div class="card-body">
       <div
@@ -48,15 +46,13 @@
   {% endif %}
 
   <div
-    class="card panel-appmanager case-properties wide-select2s"  {# todo B5: css-panel #}
+    class="card mb-3 case-properties wide-select2s"
     data-bind='template: { name: "case-config:case-transaction:case-properties" }'
   ></div>
 
-  <div class="card panel-appmanager">  {# todo B5: css-panel #}
-    <div class="card-header">
-      <h4 class="card-title card-title-nolink">
-        {% trans "Close Condition" %}
-      </h4>
+  <div class="card mb-3">
+    <div class="card-header h5">
+      {% trans "Close Condition" %}
     </div>
     <div class="card-body">
       <label>
@@ -87,9 +83,9 @@
   <div data-bind="saveButton: saveButton"></div>
 
   <div data-bind="with: caseConfigViewModel">
-    <div class="card panel-appmanager">  {# todo B5: css-panel #}
-      <div class="card-header">
-        <h4 class="card-title card-title-nolink">{% trans "Cases" %}</h4>
+    <div class="card mb-3">
+      <div class="card-header h5">
+        {% trans "Cases" %}
       </div>
       <div class="card-body">
         <div class="container-fluid">
@@ -152,7 +148,7 @@
     {% if form.source %}
       <!--ko if: actionType() === 'update' -->
       {% if module_loads_registry_case %}
-        <div class="card panel-appmanager">  {# todo B5: css-panel #}
+        <div class="card mb-3">
           <div class="card-body">
             <p>
               {% blocktrans trimmed %}
@@ -169,7 +165,7 @@
           </div>
         </div>
       {% elif module_is_multi_select %}
-        <div class="card panel-appmanager">  {# todo B5: css-panel #}
+        <div class="card mb-3">
           <div class="card-body">
             <p>
               {% blocktrans trimmed %}
@@ -257,11 +253,9 @@
               {% endif %}
             </div>
             <div class="card-body">
-              <div class="card panel-appmanager">  {# todo B5: css-panel #}
-                <div class="card-header">
-                  <h4 class="card-title card-title-nolink">
-                    {% trans "Case List Configuration" %}
-                  </h4>
+              <div class="card mb-3">
+                <div class="card-header h5">
+                  {% trans "Case List Configuration" %}
                 </div>
                 <div class="card-body form-inline">  {# todo B5: css-form-inline #}
                   {% trans "This Form opens a Child Case in the Case List" %}&nbsp;
