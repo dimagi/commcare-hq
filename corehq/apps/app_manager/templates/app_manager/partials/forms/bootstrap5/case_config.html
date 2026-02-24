@@ -231,23 +231,23 @@
 
         <div data-bind="foreach: subcases">
           <div class="card panel-appmanager panel-case-actions">  {# todo B5: css-panel #}
-            <div class="card-header h5">
+            <div class="card-header h5 d-flex align-items-center">
               <i class="fa fa-check"></i>
               {% trans "This Form opens a Child Case in the Case List" %}:&nbsp;
               <span
                 data-bind="text: $parent.getCaseTypeLabel(case_type())"
               ></span>
-            </div>
-            <div class="panel-case-actions-actions">
-              {% if add_ons_privileges.subcases %}
-                <a
-                  href="#"
-                  class="case-action-remove btn btn-purple"
-                  data-bind="openModal: 'remove-subcase-modal-template'"
-                >
-                  <i class="fa-regular fa-trash-can"></i>
-                </a>
-              {% endif %}
+              <div class="ms-auto">
+                {% if add_ons_privileges.subcases %}
+                  <a
+                    href="#"
+                    class="case-action-remove btn btn-purple"
+                    data-bind="openModal: 'remove-subcase-modal-template'"
+                  >
+                    <i class="fa-regular fa-trash-can"></i>
+                  </a>
+                {% endif %}
+              </div>
             </div>
             <div class="card-body">
               <div class="card mb-3">
