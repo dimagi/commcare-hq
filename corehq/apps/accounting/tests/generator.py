@@ -8,6 +8,7 @@ from unittest import mock
 from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
+from memoized import memoized
 
 from nose.tools import nottest
 
@@ -55,6 +56,7 @@ def bootstrap_accounting():
 
 @unit_testing_only
 @nottest
+@memoized  # run once per test runner
 def bootstrap_test_software_plan_versions():
     ensure_plans(BOOTSTRAP_CONFIG_TESTING, verbose=False, apps=apps)
 
