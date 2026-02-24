@@ -55,6 +55,9 @@ uv sync
 ```bash
 # Run tests with database reuse for faster execution
 pytest --reusedb=1 path/to/test.py
+
+# If tests fail due to schema changes, reset the test DB:
+pytest --reusedb=reset path/to/test.py
 ```
 
 Use `pytest-unmagic` for explicit test fixtures (see `CODE_STANDARDS.md`).
@@ -79,6 +82,9 @@ ruff check --select I --fix path/to/file.py
 # Format Python code
 ruff format path/to/file.py
 
+# Format HTML templates
+npx prettier --write path/to/template.html
+
 # Format Markdown files
 npx prettier --write path/to/file.md
 ```
@@ -102,11 +108,13 @@ Refer to the `docs/js-guide/` directory for the JavaScript Guide
 
 ```bash
 # Fetch PR test failures
-scripts/pr-failures.sh <pr_number>
+scripts/pr-failures.sh [pr_number]  # uses current branch if omitted
 ```
 
 ## Gotchas
 
+- **migrations.lock** — after adding a migration, run
+  `./manage.py makemigrations --lock-update` to update the lock file
 - **CouchDB is legacy** — prefer PostgreSQL/SQL for new data models
 - **Knockout.js is legacy** — prefer HTMX or Alpine.js for new frontend code
 - **Bootstrap 3 is legacy** — prefer Bootstrap 5; both coexist in the codebase
