@@ -7,6 +7,7 @@ import pytest
 from django.core.management import CommandError, call_command
 from django.test import TestCase
 from django.utils import timezone
+from time_machine import travel
 
 from corehq.apps.celery.models import TaskRecord
 
@@ -100,8 +101,10 @@ class TestRequeueTaskRecords(TestCase):
     def test_filter_by_start(self):
         old = timezone.now() - datetime.timedelta(days=2)
         recent = timezone.now() - datetime.timedelta(hours=1)
-        make_record(date_created=old)
-        recent_record = make_record(date_created=recent)
+        with travel(old, tick=False):
+            make_record()
+        with travel(recent, tick=False):
+            recent_record = make_record()
 
         cutoff = (timezone.now() - datetime.timedelta(days=1)).isoformat()
         self._requeue_task_records(requeue_all=True, start=cutoff, commit=True)
@@ -113,7 +116,10 @@ class TestRequeueTaskRecords(TestCase):
     def test_filter_by_end(self):
         old = timezone.now() - datetime.timedelta(days=2)
         recent = timezone.now() - datetime.timedelta(hours=1)
-        old_record = make_record(date_created=old)
+        with travel(old, tick=False):
+            old_record = make_record()
+        with travel(recent, tick=False):
+            make_record()
         make_record(date_created=recent)
 
         cutoff = (timezone.now() - datetime.timedelta(days=1)).isoformat()
@@ -145,9 +151,4 @@ def make_record(name=TASK_NAME, args=None, kwargs=None, date_created=None):
         args=kombu_json.dumps(args or []),
         kwargs=kombu_json.dumps(kwargs or {}),
     )
-    if date_created is not None:
-        TaskRecord.objects.filter(task_id=record.task_id).update(
-            date_created=date_created
-        )
-        record.refresh_from_db()
     return record
