@@ -231,14 +231,12 @@
 
         <div data-bind="foreach: subcases">
           <div class="card panel-appmanager panel-case-actions">  {# todo B5: css-panel #}
-            <div class="card-header">
-              <h4 class="card-title card-title-nolink form-inline">  {# todo B5: css-form-inline #}
-                <i class="fa fa-check"></i>
-                {% trans "This Form opens a Child Case in the Case List" %}:&nbsp;
-                <span
-                  data-bind="text: $parent.getCaseTypeLabel(case_type())"
-                ></span>
-              </h4>
+            <div class="card-header h5">
+              <i class="fa fa-check"></i>
+              {% trans "This Form opens a Child Case in the Case List" %}:&nbsp;
+              <span
+                data-bind="text: $parent.getCaseTypeLabel(case_type())"
+              ></span>
             </div>
             <div class="panel-case-actions-actions">
               {% if add_ons_privileges.subcases %}
