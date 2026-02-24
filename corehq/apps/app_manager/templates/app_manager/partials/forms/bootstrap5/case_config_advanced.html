@@ -492,17 +492,17 @@
 <div id="case-config-ko">
   <div data-bind="saveButton: saveButton"></div>
   <div data-bind="with: caseConfigViewModel">
-    <div class="btn-group" data-bind="visible: actionOptions().length">
-      <button type="button" class="btn btn-purple dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">  {# todo B5: css-dropdown #}
+    <div class="dropdown" data-bind="visible: actionOptions().length">
+      <button type="button" class="btn btn-purple dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <i class="fa fa-plus"></i>
-        <span>{% trans "Add Action" %}</span> <span class="caret"></span>
+        <span>{% trans "Add Action" %}</span>
       </button>
       <ul class="dropdown-menu" role="menu" data-bind="foreach: actionOptions">
         <!-- ko if: value === 'separator' -->
-        <li class="divider"></li>
+        <li class="dropdown-divider"></li>
         <!-- /ko -->
         <!-- ko ifnot: value === 'separator' -->
-        <li><a href="#" data-bind="click: $parent.addFormAction, text: display"></a></li>
+        <li><a class="dropdown-item" href="#" data-bind="click: $parent.addFormAction, text: display"></a></li>
         <!-- /ko -->
       </ul>
     </div>
