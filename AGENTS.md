@@ -125,11 +125,9 @@ scripts/pr-failures.sh [pr_number]  # uses current branch if omitted
 - When creating a new branch, each author has a prefix they use. Use the
   prefix the author has used most on local git branches, or else their
   initials (from `git config user.name`).
-- When changes are ready to be committed, the changes should be broken into
-  logical steps to make reviewing easier. Each step should be staged with a
-  suggested commit message that summarizes the step.
-- The AI Assistant should leave it to the developer to commit the staged
-  changes, and to sign the commit if applicable.
+- Commit work in logical chunks rather than one large commit. Group related
+  changes together (e.g. a new module with its tests, a migration with its
+  model changes) so that each commit is self-contained and reviewable.
 - When creating PRs, always create them as drafts with the "DON'T REVIEW
   YET" label, and always use the GitHub PR template.
 - When adding PR descriptions, avoid restating the code diff. Focus on
