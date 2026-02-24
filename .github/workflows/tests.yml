@@ -45,7 +45,7 @@ jobs:
       id: db-cache
       uses: actions/cache@v4
       with:
-        path: artifacts/test_db.dump
+        path: .test-db-cache/test_db.dump
         key: test-db-v1-${{ hashFiles('**/migrations/**/*.py') }}
     - name: Run tests
       env:
@@ -80,7 +80,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v5
       with:
-        name: test-artifacts-${{ matrix.TEST }}-${{ matrix.DIVIDED_WE_RUN || 'all' }}
+        name: test-artifacts
         path: artifacts
         if-no-files-found: ignore
         retention-days: 7
