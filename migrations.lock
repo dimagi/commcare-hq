@@ -706,7 +706,6 @@ integration
  0014_kycconfig_passing_threshold
  0015_kycconfig_connection_settings_and_more
  0016_kycconfig_stores_full_name
- 0017_drop_tables_for_removed_toggles
 ip_access
  0001_initial
 ivr
@@ -738,7 +737,6 @@ linked_domain
  0022_alter_domainlinkhistory_model
  0023_alter_domainlinkhistory_model
  0024_alter_domainlinkhistory_model
- 0025_alter_domainlinkhistory_model_choices
 locations
  0001_initial
  0002_auto_20160420_2105

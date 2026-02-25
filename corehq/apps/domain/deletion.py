@@ -406,6 +406,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'domain'),  # TODO
     ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain', audit_action=AuditAction.AUDIT),
     ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
+    ModelDeletion('integration', 'DialerSettings', 'domain'),
+    ModelDeletion('integration', 'GaenOtpServerSettings', 'domain'),
+    ModelDeletion('integration', 'HmacCalloutSettings', 'domain'),
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
     ModelDeletion('integration', 'KycConfig', 'domain'),
     ModelDeletion('integration', 'MoMoConfig', 'domain'),
