@@ -1,0 +1,19 @@
+--- 
++++ 
+@@ -1,16 +0,0 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
+-{% block filter_content %}
+-  <input
+-    id="{{ css_id }}"
+-    name="{{ slug }}"
+-    type="time"
+-    class="form-control"
+-    value="{{ default }}"
+-  />
+-  {% if help_inline %}
+-    <p class="help-block">
+-      <i class="fa fa-info-circle"></i>
+-      {{ help_inline }}
+-    </p>
+-  {% endif %}
+-{% endblock %}
