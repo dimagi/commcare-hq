@@ -245,7 +245,7 @@
 
 <script type="text/html" id="auto-select:case-type">
   {% trans "Expected Case Type" %}
-  <input type="text" class="form-control" data-bind="value: $parent.case_type" />
+  <input type="text" class="form-control w-auto" data-bind="value: $parent.case_type" />
   <span class="hq-help-template"
         data-title="{% trans "Expected Case Type" %}"
         data-content="{% blocktrans %}This is used for case property suggestions and when creating case indexes but
@@ -257,49 +257,50 @@
 </script>
 
 <script type="text/html" id="auto-select:raw">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "Raw Config" %}:</strong>&nbsp;&nbsp;
+  <strong>{% trans "Raw Config" %}:</strong>
+  <div class="d-flex align-items-center gap-1">
     {% trans "XPath function" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
+    <input type="text" class="form-control w-auto" data-bind="value: value_key" />&nbsp;&nbsp;
     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
   </div>
 </script>
 
 <script type="text/html" id="auto-select:user">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "User Data Config" %}:</strong>&nbsp;&nbsp;
+  <strong>{% trans "User Data Config" %}:</strong>
+  <div class="d-flex align-items-center gap-1">
     {% trans "User data key" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
+    <input type="text" class="form-control w-auto" data-bind="value: value_key" />&nbsp;&nbsp;
     <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
   </div>
 </script>
 
 <script type="text/html" id="auto-select:case">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "Case Index Config" %}:</strong>&nbsp;&nbsp;
-    {% trans "Case containing index" %}
-    <select class="form-select" data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
-            value: value_source">
-    </select>&nbsp;&nbsp;
-    {% trans "Index name" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
-    <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
-  </div>
+    <strong>{% trans "Case Index Config" %}:</strong>
+    <div class="d-flex align-items-center gap-1">
+      {% trans "Case containing index" %}
+      <select class="form-select w-auto" data-bind="optstr: $parent.caseConfig.caseConfigViewModel.getCaseTags('auto-select', $parent),
+              value: value_source">
+      </select>&nbsp;&nbsp;
+      {% trans "Index name" %}
+      <input type="text" class="form-control w-auto" data-bind="value: value_key" />&nbsp;&nbsp;
+      <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
+    </div>
 </script>
 
 <script type="text/html" id="auto-select:fixture">
-  <div class="card well-sm">  {# todo B5: css-well #}
-    <strong>{% trans "Lookup Table Config" %}:</strong>&nbsp;&nbsp;
-    {% trans "Lookup Table Tag" %}
-    <input type="text" class="form-control" data-bind="value: value_source" />&nbsp;&nbsp;
-    {% trans "Table Field" %}
-    <input type="text" class="form-control" data-bind="value: value_key" />&nbsp;&nbsp;
-    <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
-  </div>
+    <strong>{% trans "Lookup Table Config" %}:</strong>
+    <div class="d-flex align-items-center gap-1">
+      {% trans "Lookup Table Tag" %}
+      <input type="text" class="form-control w-auto" data-bind="value: value_source" />&nbsp;&nbsp;
+      {% trans "Table Field" %}
+      <input type="text" class="form-control w-auto" data-bind="value: value_key" />&nbsp;&nbsp;
+      <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
+    </div>
 </script>
 
 <script type="text/html" id="auto-select:usercase">
 </script>
+
 <script type="text/html" id="case-config:case-action-auto-select">
   <div class="card-header clickable" data-bs-toggle="collapse"
        data-bind="attr: {href: '#' + actionType + $index()}">
