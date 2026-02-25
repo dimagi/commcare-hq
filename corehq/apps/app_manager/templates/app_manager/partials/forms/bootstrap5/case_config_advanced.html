@@ -69,11 +69,11 @@
             </label>
           </div>
           <!-- ko if: show_product_stock_var -->
-          <div class="form-group">  {# todo B5: css-form-group #}
-            <label class="col-md-2 form-label">
+          <div class="row mb-3">
+            <label class="field-label col-form-label">
               {% trans "Only show products for program" %}
             </label>
-            <div class="col-md-4">
+            <div class="field-control">
               <select class="form-select" data-bind="optstr: $root.programs, value: product_program"></select>
             </div>
           </div>
@@ -82,30 +82,26 @@
         {% endif %}
 
         <!-- ko if:  !auto_select && $index() > 0 -->
-        <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">  {# todo B5: css-form-group #}
-          <label class="col-md-2">
-          </label>
-          <div class="col-md-4">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" data-bind="checked: subcase"/>
-              <label class="form-check-label">
-                {% trans "This case is a subcase of the previous case" %}
-              </label>
-            </div>
-            <span class="help-block" data-bind="text: validate_subcase"></span>
+        <div class="row mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" data-bind="checked: subcase, css: {'is-invalid': validate_subcase()}"/>
+            <label class="form-check-label">
+              {% trans "This case is a subcase of the previous case" %}
+            </label>
           </div>
+          <span class="invalid-feedback" data-bind="text: validate_subcase"></span>
         </div>
-        <div class="form-group" data-bind="visible: subcase">  {# todo B5: css-form-group #}
-          <label class="form-label col-md-2">
+        <div class="row mb-3" data-bind="visible: subcase">
+          <label class="field-label col-form-label">
             {% trans "Parent reference ID" %}
           </label>
-          <div class="col-md-4">
+          <div class="field-control">
             <input type="text" class="form-control" data-bind="value: case_index.reference_id"/>
           </div>
         </div>
-        <div class="form-group">  {# todo B5: css-form-group #}
-          <label class="form-label col-md-2">{% trans "Relationship" %}</label>
-          <div class="col-md-4">
+        <div class="row mb-3">
+          <label class="field-label col-form-label">{% trans "Relationship" %}</label>
+          <div class="field-control">
             <select class="form-select"
                     data-bind="options: relationshipTypes,
                                                optionsCaption: 'Child case or extension case?',
