@@ -4,11 +4,9 @@ from django.test import SimpleTestCase
 
 import casexml.apps.phone.utils as mod
 from casexml.apps.case.mock import CaseStructure
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_ledgers, delete_all_xforms
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from casexml.apps.stock.mock import Balance, Entry, Transfer
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.util.test_utils import flag_enabled
 
 
 class TestUtils(SimpleTestCase):
@@ -32,17 +30,12 @@ class TestUtils(SimpleTestCase):
         self.assertEqual(num, 1)
 
 
-@flag_enabled('NON_COMMTRACK_LEDGERS')
 class MockDeviceLedgersTest(BaseSyncTest, TestXmlMixin):
     def setUp(self):
         super(MockDeviceLedgersTest, self).setUp()
+        self.project.commtrack_enabled = True
+        self.project.save()
         self._create_ledgers()
-
-    def tearDown(self):
-        delete_all_ledgers()
-        delete_all_cases()
-        delete_all_xforms()
-        super(MockDeviceLedgersTest, self).tearDown()
 
     def _create_ledgers(self):
         case_type = 'case'
