@@ -79,7 +79,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_languages,
     get_apps_in_domain,
-    get_build_by_version,
     get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
@@ -138,8 +137,6 @@ from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
     get_correct_app_class,
     get_latest_app_release_by_location,
-    get_latest_enabled_build_for_profile,
-    get_latest_enabled_versions_per_profile,
     is_remote_app,
     domain_has_usercase_access,
     module_loads_registry_case,
@@ -6327,7 +6324,7 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    def get_latest_app_version(self, build_profile_id):
+    def get_latest_app_version(self):
         self.app  # noqa validate app
         if self.app_prompt == "off":
             return {}
@@ -6341,27 +6338,21 @@ class GlobalAppConfig(models.Model):
                     return {}
                 else:
                     version = self.app.version
-                    if build_profile_id:
-                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
-                        if latest:
-                            version = latest.version
                     return {"value": version, "force": force}
 
     @classmethod
-    @quickcache(['domain', 'app_id', 'build_profile_id'])
-    def get_latest_version_info(cls, domain, app_id, build_profile_id):
+    @quickcache(['domain', 'app_id'])
+    def get_latest_version_info(cls, domain, app_id):
         config = GlobalAppConfig.by_app_id(domain, app_id)
         return {
             "latest_apk_version": config.get_latest_apk_version(),
-            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
+            "latest_ccz_version": config.get_latest_app_version(),
         }
 
     def clear_version_caches(self):
-        build_profile_ids = [''] + list(self.app.build_profiles.keys())
-        for build_profile_id in build_profile_ids:
-            GlobalAppConfig.get_latest_version_info.clear(
-                GlobalAppConfig, self.domain, self.app_id, build_profile_id
-            )
+        GlobalAppConfig.get_latest_version_info.clear(
+            GlobalAppConfig, self.domain, self.app_id
+        )
 
 
 class AppReleaseByLocation(models.Model):
@@ -6454,85 +6445,6 @@ class LatestEnabledBuildProfiles(models.Model):
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
         GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_caches()
-        self.expire_cache(self.domain)
-
-    @property
-    def build(self):
-        if not hasattr(self, '_build'):
-            self._build = get_build_by_version(self.domain, self.app_id, self.version)['value']
-        return self._build
-
-    def clean(self):
-        if self.active:
-            if not self.build['is_released']:
-                raise ValidationError({
-                    'version': _("Version {} not released. Can not enable profiles for unreleased versions"
-                                 ).format(self.build['version'])
-                })
-            latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
-                app_id=self.build['copy_of'],
-                build_profile_id=self.build_profile_id
-            )
-            if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
-                raise ValidationError({
-                    'version': _("Latest version available for this profile is {}, which is "
-                                 "higher than this version. Disable any higher versions first."
-                                 ).format(latest_enabled_build_profile.version)})
-
-    @classmethod
-    def update_status(cls, build, build_profile_id, active):
-        """
-        create a new object or just set the status of an existing one for an app
-        build and build profile to the status passed
-        :param active: to be set as active, True/False
-        """
-        app_id = build.copy_of
-        build_id = build.get_id
-        version = build.version
-        try:
-            build_profile = LatestEnabledBuildProfiles.objects.get(
-                app_id=app_id,
-                version=version,
-                build_profile_id=build_profile_id,
-                build_id=build_id
-            )
-        except cls.DoesNotExist:
-            build_profile = LatestEnabledBuildProfiles(
-                app_id=app_id,
-                version=version,
-                build_profile_id=build_profile_id,
-                build_id=build_id,
-                domain=build.domain
-            )
-        # assign it to avoid re-fetching during validations
-        build_profile._build = build
-        build_profile.activate() if active else build_profile.deactivate()
-
-    def activate(self):
-        self.active = True
-        self.full_clean()
-        self.save()
-
-    def deactivate(self):
-        self.active = False
-        self.full_clean()
-        self.save()
-
-    @classmethod
-    def for_app_and_profile(cls, app_id, build_profile_id):
-        return cls.objects.filter(
-            app_id=app_id,
-            build_profile_id=build_profile_id,
-            active=True
-        ).order_by('-version').first()
-
-    def expire_cache(self, domain):
-        get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
-        get_latest_enabled_versions_per_profile.clear(self.app_id)
-
-    def to_json(self, app_names):
-        from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
-        return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
 
 
 class ApplicationReleaseLog(models.Model):

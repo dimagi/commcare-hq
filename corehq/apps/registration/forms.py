@@ -17,15 +17,19 @@ from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
 from corehq.apps.analytics.tasks import track_workflow_noop
+from corehq.apps.custom_data_fields.edit_entity import (
+    add_prefix,
+    get_prefixed,
+    with_prefix,
+)
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
-from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed, with_prefix
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.models import TableauUser
-from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
+from corehq.apps.users.forms import BaseTableauUserForm, SelectUserLocationForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -554,17 +558,6 @@ class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
         self.fields['email'].widget.attrs['readonly'] = 'readonly'
 
 
-class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
-    """
-    For Mobile Workers to confirm their accounts using SMS.
-    """
-    email = forms.CharField(widget=forms.HiddenInput(), required=False)
-
-    # Email address is enforced blank for mobile workers who confirm by SMS.
-    def clean_email(self):
-        return ""
-
-
 class AdminInvitesUserForm(SelectUserLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
@@ -677,7 +670,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
 
-        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        from corehq.apps.registration.validation import (
+            AdminInvitesUserFormValidator,
+        )
         error = AdminInvitesUserFormValidator.validate_email(self.domain, email, bool(self.invite))
         if error:
             raise forms.ValidationError(error)
@@ -706,7 +701,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 cleaned_data['profile'] = profile_id
             cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
 
-        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        from corehq.apps.registration.validation import (
+            AdminInvitesUserFormValidator,
+        )
         error = AdminInvitesUserFormValidator.validate_parameters(
             self.domain,
             self.request.couch_user,

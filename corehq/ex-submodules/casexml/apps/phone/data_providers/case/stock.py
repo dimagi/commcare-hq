@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
 
-from corehq import toggles
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from memoized import memoized
@@ -13,8 +12,7 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 
 
 def get_stock_payload(project, stock_settings, case_stub_list):
-    uses_ledgers = project.commtrack_enabled or toggles.NON_COMMTRACK_LEDGERS.enabled(project.name)
-    if project and not uses_ledgers:
+    if project and not project.commtrack_enabled:
         return
 
     generator = StockPayloadGenerator(project.name, stock_settings, case_stub_list)

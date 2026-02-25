@@ -432,7 +432,6 @@ DOMAIN_DELETE_OPERATIONS = [
     PartitionedModelDeletion('scheduling_partitioned', 'CaseAlertScheduleInstance', 'domain'),
     PartitionedModelDeletion('scheduling_partitioned', 'CaseTimedScheduleInstance', 'domain'),
     PartitionedModelDeletion('scheduling_partitioned', 'TimedScheduleInstance', 'domain'),
-    ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
     ModelDeletion('export', 'DeIdHash', 'domain'),
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
