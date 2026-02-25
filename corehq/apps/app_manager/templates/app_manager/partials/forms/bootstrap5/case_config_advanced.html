@@ -206,34 +206,30 @@
         <div class="card-body">
           <div class="form-inline" data-bind="css: {'has-warning': validate()}">  {# todo B5: css-form-inline #}
 
-            <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex justify-content-start align-items-center mb-3 gap-1">  {# todo B5: css-form-group reviewed#}
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
-              <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
-            </div>
-            &nbsp;
-            <strong>(</strong>
-            <div class="form-group">  {# todo B5: css-form-group #}
+              <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
+              &nbsp;
+              <strong>(</strong>
               <label>{% trans "Case Type" %}</label>
-              <select class="form-select" data-bind="
+              <select class="form-select w-auto" data-bind="
                               options: caseConfig.caseTypes,
                               value: case_type,
                               optionsCaption: 'Choose a Case Type...'
                           "></select>
-            </div>
-            <!-- ko if: actionType == 'load'-->
-            &nbsp;{% trans "from" %}
-            <div class="form-group">  {# todo B5: css-form-group #}
+                          <!-- ko if: actionType == 'load'-->
+              &nbsp;{% trans "from" %}
               &nbsp;
               <label><i class="fa-solid fa-list-check"></i> {% trans "Case List" %}</label>
-              <select class="form-select" data-bind="optstr: available_modules,
+              <select class="form-select w-auto" data-bind="optstr: available_modules,
                               optstrValue: 'id',
                               optstrText: 'module_name',
                               value: details_module">
               </select>
+              <!-- /ko -->
+              <strong>)</strong><br />
+              <span class="help-block" data-bind="text: validate"></span>
             </div>
-            <!-- /ko -->
-            <strong>)</strong><br />
-            <span class="help-block" data-bind="text: validate"></span>
           </div>
           <div class="alert alert-warning" data-bind="visible: !case_type">
             {% trans "Please select a case type." %}
