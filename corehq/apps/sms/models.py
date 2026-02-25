@@ -7,12 +7,13 @@ from uuid import uuid4
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.utils.encoding import force_str
-from django.utils.translation import gettext_lazy, gettext_noop, gettext as _
+from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 import jsonfield
 
 from dimagi.utils.couch import CriticalSection
-from django.utils.functional import cached_property
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.locations.models import SQLLocation
