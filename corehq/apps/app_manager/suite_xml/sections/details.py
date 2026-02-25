@@ -398,30 +398,24 @@ class DetailContributor(SectionContributor):
         in_search = module_loads_registry_case(module) or "search" in detail_id
 
         # don't add search again action in split screen
-        if in_search and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(module.get_app().domain):
+        if in_search:
             return None
 
         action_kwargs = DetailContributor._get_action_kwargs(module, in_search)
-        if in_search:
-            search_label = module.search_config.search_again_label
-        else:
-            search_label = module.search_config.search_label
 
+        search_label = module.search_config.search_label
         if module.get_app().enable_localized_menu_media:
             action = LocalizedAction(
                 menu_locale_id=(
-                    id_strings.case_search_again_locale(module) if in_search
-                    else id_strings.case_search_locale(module)
+                    id_strings.case_search_locale(module)
                 ),
                 media_image=search_label.uses_image(build_profile_id=build_profile_id),
                 media_audio=search_label.uses_audio(build_profile_id=build_profile_id),
                 image_locale_id=(
-                    id_strings.case_search_again_icon_locale(module) if in_search
-                    else id_strings.case_search_icon_locale(module)
+                    id_strings.case_search_icon_locale(module)
                 ),
                 audio_locale_id=(
-                    id_strings.case_search_again_audio_locale(module) if in_search
-                    else id_strings.case_search_audio_locale(module)
+                    id_strings.case_search_audio_locale(module)
                 ),
                 stack=Stack(),
                 for_action_menu=True,
@@ -431,8 +425,7 @@ class DetailContributor(SectionContributor):
             action = Action(
                 display=Display(
                     text=Text(locale_id=(
-                        id_strings.case_search_again_locale(module) if in_search
-                        else id_strings.case_search_locale(module)
+                        id_strings.case_search_locale(module)
                     )),
                     media_image=search_label.default_media_image,
                     media_audio=search_label.default_media_audio
