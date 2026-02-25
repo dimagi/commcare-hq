@@ -10,6 +10,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_analytics.feature_calcs import FEATURE_METRICS
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
@@ -199,9 +200,9 @@ def get_domains_to_update():
     queue='background_queue',
 )
 def collect_feature_metrics():
-    """Monthly task to collect feature usage metrics for all domains."""
-    domains = _get_active_domain_names()
-    for chunk in chunked(domains, 5000):
+    """Monthly task to collect feature usage metrics for domains on Standard Plan and higher."""
+    domains = _iter_domain_names_standard_and_higher()
+    for chunk in chunked(domains, 600):
         collect_feature_metrics_for_domains.delay(chunk)
 
 
@@ -239,10 +240,16 @@ def _collect_feature_metrics_for_domain(domain_name):
         )
 
 
-def _get_active_domain_names():
-    is_domain_active = filters.term('is_active', True)
-    return list(
-        DomainES().filter(is_domain_active)
-        .terms_aggregation('name.exact', 'domain')
-        .size(0).run().aggregations.domain.keys
-    )
+def _iter_domain_names_standard_and_higher():
+    standard_and_higher = [
+        SoftwarePlanEdition.STANDARD,
+        SoftwarePlanEdition.PRO,
+        SoftwarePlanEdition.ADVANCED,
+        SoftwarePlanEdition.ENTERPRISE,
+        SoftwarePlanEdition.RESELLER,
+        SoftwarePlanEdition.MANAGED_HOSTING,
+    ]
+    return Subscription.visible_objects.filter(
+        is_active=True,
+        plan_version__plan__edition__in=standard_and_higher,
+    ).values_list('subscriber__domain', flat=True).distinct()
