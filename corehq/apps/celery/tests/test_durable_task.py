@@ -77,13 +77,13 @@ class TestDurableTaskApplyAsync(TestCase):
         result = durable_task_with_args.delay(test_uuid, test_data=test_data)
         record = TaskRecord.objects.get(task_id=result.task_id)
 
-        assert kombu_json.loads(record.args) == [test_uuid]
-        assert kombu_json.loads(record.kwargs) == {'test_data': test_data}
+        assert record.args == [test_uuid]
+        assert record.kwargs == {'test_data': test_data}
 
     def test_existing_record_is_updated_on_retry(self):
         task_id = str(uuid.uuid4())
         TaskRecord.objects.create(
-            task_id=task_id, name=durable_task_with_args.__name__, args='["abc123"]', kwargs='{}'
+            task_id=task_id, name=durable_task_with_args.__name__, args=['abc123'], kwargs={}
         )
         self.mock_apply_async.return_value = MockAsyncResult(task_id=task_id, state=celery_states.PENDING)
 
@@ -93,8 +93,8 @@ class TestDurableTaskApplyAsync(TestCase):
         durable_task_with_args.apply_async(task_id=task_id, args=retry_args, kwargs=retry_kwargs)
 
         record = TaskRecord.objects.get(task_id=task_id)
-        assert kombu_json.loads(record.args) == retry_args
-        assert kombu_json.loads(record.kwargs) == retry_kwargs
+        assert record.args == retry_args
+        assert record.kwargs == retry_kwargs
 
 
 class TestDurableTaskAfterReturn(TestCase):
@@ -130,6 +130,41 @@ class TestDurableTaskAfterReturn(TestCase):
             delete_task_record(task_id=task_id, state=unready_state)
             mock_notify.assert_called()
         TaskRecord.objects.get(task_id=task_id)  # should not raise
+
+
+class TestDurableTaskArgSerialization(TestCase):
+    """
+    Tests serialization of args/kwargs through the TaskRecord JSONField.
+    """
+
+    def test_special_types_survive_field_round_trip(self):
+        # The KombuJSONEncoder/Decoder on the field transparently handle
+        # kombu special types (UUID, datetime) when native Python objects
+        # are stored directly — no manual serialization needed.
+        test_uuid = uuid.uuid4()
+        test_datetime = datetime.datetime(2025, 10, 31, 11, 5)
+        record = TaskRecord.objects.create(
+            name='test.task',
+            args=[test_uuid],
+            kwargs={'created': test_datetime},
+        )
+        record.refresh_from_db()
+        assert record.args == [test_uuid]
+        assert record.kwargs == {'created': test_datetime}
+
+    def test_kombu_preserialized_args_are_doubly_encoded(self):
+        record = TaskRecord.objects.create(
+            name='test.task',
+            args=kombu_json.dumps([1, 'hello']),
+            kwargs=kombu_json.dumps({}),
+        )
+        record.refresh_from_db()
+        # A proper JSONField should return a list, but double-encoding means
+        # we get a str back instead.
+        assert isinstance(record.args, str), (
+            "record.args should be a str (double-encoded), not "
+            f"{type(record.args).__name__}"
+        )
 
 
 class TestDurableTaskMisc(TestCase):
