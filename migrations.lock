@@ -267,6 +267,7 @@ case_search
  0016_csqlfixtureexpression_user_data_criteria
 celery
  0001_taskrecord
+ 0002_taskrecord_kombu_serialization
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
