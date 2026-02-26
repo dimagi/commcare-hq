@@ -216,6 +216,33 @@ DOMAIN_METRICS_TO_PROPERTIES_MAP = {
     'usercases_modified_in_last_30_days': 'cp_n_30_day_user_cases',
     'users_with_submission': 'cp_n_users_submitted_form',
     'web_users': 'cp_n_web_users',
+    # Feature Usage Metrics
+    'has_multimedia': 'cp_has_multimedia',
+    'has_case_management': 'cp_has_case_management',
+    'has_eof_navigation': 'cp_has_eof_navigation',
+    'has_web_apps': 'cp_has_web_apps',
+    'has_app_profiles': 'cp_has_app_profiles',
+    'has_save_to_case': 'cp_has_save_to_case',
+    'has_custom_branding': 'cp_has_custom_branding',
+    'form_exports': 'cp_n_form_exports',
+    'case_exports_only': 'cp_n_case_exports_only',
+    'scheduled_exports': 'cp_n_scheduled_exports',
+    'has_excel_dashboard': 'cp_has_excel_dashboard',
+    'case_list_explorer_reports': 'cp_n_case_list_explorer_reports',
+    'det_configs': 'cp_n_det_configs',
+    'odata_feeds': 'cp_n_odata_feeds',
+    'linked_domains': 'cp_n_linked_domains',
+    'has_case_deduplication': 'cp_has_case_deduplication',
+    'mobile_user_groups': 'cp_n_mobile_user_groups',
+    'has_user_case_management': 'cp_has_user_case_management',
+    'has_organization': 'cp_has_organization',
+    'user_profiles': 'cp_n_user_profiles',
+    'has_2fa_required': 'cp_has_2fa_required',
+    'has_shortened_timeout': 'cp_has_shortened_timeout',
+    'has_strong_passwords': 'cp_has_strong_passwords',
+    'has_data_dictionary': 'cp_has_data_dictionary',
+    'has_sso': 'cp_has_sso',
+    'bulk_case_editing_sessions': 'cp_n_bulk_case_editing_sessions',
 }
 
 
@@ -296,6 +323,42 @@ class DomainMetrics(models.Model):
     custom_exports = models.IntegerField()
     deid_exports = models.IntegerField()
     saved_exports = models.IntegerField()
+
+    # Feature Usage Metrics (collected monthly on the 28th)
+    # -- Application Features --
+    has_multimedia = models.BooleanField(null=True, default=None)
+    has_case_management = models.BooleanField(null=True, default=None)
+    has_eof_navigation = models.BooleanField(null=True, default=None)
+    has_web_apps = models.BooleanField(null=True, default=None)
+    has_app_profiles = models.BooleanField(null=True, default=None)
+    has_save_to_case = models.BooleanField(null=True, default=None)
+    has_custom_branding = models.BooleanField(null=True, default=None)
+
+    # -- Data & Export Features --
+    form_exports = models.IntegerField(null=True, default=None)
+    # The existing `case_exports` field incorrectly includes both form
+    # and case exports (it maps to num_exports() which sums both).
+    # This field properly tracks only case exports.
+    case_exports_only = models.IntegerField(null=True, default=None)
+    scheduled_exports = models.IntegerField(null=True, default=None)
+    has_excel_dashboard = models.BooleanField(null=True, default=None)
+    case_list_explorer_reports = models.IntegerField(null=True, default=None)
+    det_configs = models.IntegerField(null=True, default=None)
+    odata_feeds = models.IntegerField(null=True, default=None)
+    linked_domains = models.IntegerField(null=True, default=None)
+    has_case_deduplication = models.BooleanField(null=True, default=None)
+
+    # -- User & Security Features --
+    mobile_user_groups = models.IntegerField(null=True, default=None)
+    has_user_case_management = models.BooleanField(null=True, default=None)
+    has_organization = models.BooleanField(null=True, default=None)
+    user_profiles = models.IntegerField(null=True, default=None)
+    has_2fa_required = models.BooleanField(null=True, default=None)
+    has_shortened_timeout = models.BooleanField(null=True, default=None)
+    has_strong_passwords = models.BooleanField(null=True, default=None)
+    has_data_dictionary = models.BooleanField(null=True, default=None)
+    has_sso = models.BooleanField(null=True, default=None)
+    bulk_case_editing_sessions = models.IntegerField(null=True, default=None)
 
     # Calculated properties
     @property
