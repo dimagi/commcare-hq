@@ -73,6 +73,7 @@ from corehq.messaging.scheduling.const import (
     ALLOWED_CSS_PROPERTIES,
     ALLOWED_HTML_ATTRIBUTES,
     ALLOWED_HTML_TAGS,
+    CONNECT_INCOMPATIBLE_RECIPIENT_TYPES,
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
     VISIT_WINDOW_START,
@@ -2309,9 +2310,18 @@ class ScheduleForm(Form):
     def clean_recipient_types(self):
         content = self.data.get(f'{self.prefix}-content')
         recipient_types = self.cleaned_data.get('recipient_types')
-        is_connect_message = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
-        if is_connect_message and recipient_types != [ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER]:
-            raise ValidationError(_("Connect Messages can only be sent to users."))
+        is_connect_content = content in (self.CONTENT_CONNECT_MESSAGE, self.CONTENT_CONNECT_SURVEY)
+        if is_connect_content and recipient_types:
+            recipient_type_choices = dict(self.fields['recipient_types'].choices)
+            incompatible_types = [
+                recipient_type_choices.get(recipient_type)
+                for recipient_type in recipient_types
+                if recipient_type in CONNECT_INCOMPATIBLE_RECIPIENT_TYPES
+            ]
+            if incompatible_types:
+                raise ValidationError(_(
+                    "The following recipient type(s) are not supported for Connect Messages: {types}"
+                ).format(types=', '.join(incompatible_types)))
         return recipient_types
 
     def clean_user_group_recipients(self):
@@ -3778,7 +3788,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean(self):
         recipient_types = self.cleaned_data.get('recipient_types')
-        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
+        if recipient_types and CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
             if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
                 raise ValidationError(_("Email case property can only be used with Email content"))
 
