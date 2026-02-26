@@ -31,9 +31,9 @@ function getUpdateMultiDiff(original, incoming) {
     const updates = {};
 
     const allKeys = new Set([...Object.keys(original), ...Object.keys(incoming)]);
-    const baseline = Object.fromEntries(Object.entries(original).map(([key, items]) => {
-        [key, items.map(omitDocType)];
-    }));
+    const baseline = Object.fromEntries(
+        Object.entries(original).map(([key, items]) => [key, items.map(omitDocType)]),
+    );
 
     allKeys.forEach(key => {
         if (Object.hasOwn(baseline, key) && Object.hasOwn(incoming, key)) {
