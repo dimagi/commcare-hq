@@ -1,7 +1,8 @@
 #!/bin/bash
 # Show test failures for a GitHub Actions CI run on a PR.
-# Usage: scripts/pr-failures.sh [<pr_number>]
+# Usage: scripts/pr-failures.sh [<pr_number> [<repo>]]
 # If no PR number is given, uses the current branch's open PR.
+# If no repo is given, uses the current directory's repo.
 
 set -euo pipefail
 
@@ -12,7 +13,7 @@ if ! command -v gh &>/dev/null; then
 fi
 
 PR=${1:-}
-REPO=$(gh repo view --json nameWithOwner -q ".nameWithOwner")
+REPO=${2:-$(gh repo view --json nameWithOwner -q ".nameWithOwner")}
 
 gh_exit=0
 if [[ -n "$PR" ]]; then
