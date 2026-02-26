@@ -19,7 +19,7 @@ from corehq.util.metrics.load_counters import case_load_counter
 logger = logging.getLogger(__name__)
 
 
-@task(bind=True, queue='case_import_queue')
+@task(bind=True, queue='case_import_queue', durable=True)
 def commit_data_cleaning(self, bulk_edit_session_id):
     if not _claim_bulk_edit_session_for_task(self, bulk_edit_session_id):
         return []
