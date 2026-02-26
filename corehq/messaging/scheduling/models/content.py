@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 
 import jsonfield as old_jsonfield
 
-from corehq.apps.users.models import ConnectIDUserLink
+from corehq.apps.users.models import ConnectIDUserLink, CommCareUser
 from dimagi.utils.logging import notify_error
 from dimagi.utils.modules import to_function
 
@@ -622,6 +622,11 @@ class ConnectMessageContent(Content):
             self,
             case_id=None,
         )
+
+        if not isinstance(recipient, CommCareUser):
+            logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_SUPPORTED)
+            return
+
         message = self.get_translation_from_message_dict(
             domain_obj,
             self.message,
@@ -661,6 +666,10 @@ class ConnectMessageSurveyContent(SurveyContent):
             self,
             case_id=self.case.case_id if self.case else None,
         )
+
+        if not isinstance(recipient, CommCareUser):
+            logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_SUPPORTED)
+            return
 
         connect_number = ConnectMessagingNumber(recipient)
 
