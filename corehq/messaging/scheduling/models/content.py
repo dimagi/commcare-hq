@@ -624,7 +624,7 @@ class ConnectMessageContent(Content):
         )
 
         if not isinstance(recipient, CommCareUser):
-            logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_SUPPORTED)
+            logged_subevent.error(MessagingEvent.ERROR_USER_NOT_SUPPORTED)
             return
 
         message = self.get_translation_from_message_dict(
@@ -668,7 +668,7 @@ class ConnectMessageSurveyContent(SurveyContent):
         )
 
         if not isinstance(recipient, CommCareUser):
-            logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_SUPPORTED)
+            logged_subevent.error(MessagingEvent.ERROR_USER_NOT_SUPPORTED)
             return
 
         connect_number = ConnectMessagingNumber(recipient)
