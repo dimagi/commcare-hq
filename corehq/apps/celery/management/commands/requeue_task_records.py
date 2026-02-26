@@ -1,4 +1,3 @@
-import kombu.utils.json as kombu_json
 from celery import current_app
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.dateparse import parse_datetime
@@ -111,8 +110,8 @@ class Command(BaseCommand):
                 failed += 1
                 continue
 
-            args = kombu_json.loads(record.args)
-            kwargs = kombu_json.loads(record.kwargs)
+            args = record.args
+            kwargs = record.kwargs
             try:
                 task.apply_async(
                     args=args, kwargs=kwargs, task_id=str(record.task_id)

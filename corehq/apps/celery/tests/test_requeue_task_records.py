@@ -2,7 +2,6 @@ import datetime
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
-import kombu.utils.json as kombu_json
 import pytest
 from django.core.management import CommandError, call_command
 from django.test import TestCase
@@ -141,10 +140,10 @@ class TestRequeueTaskRecords(TestCase):
         assert 'broker down' in err
 
 
-def make_record(name=TASK_NAME, args=None, kwargs=None, date_created=None):
+def make_record(name=TASK_NAME, args=[], kwargs={}, date_created=None):
     record = TaskRecord.objects.create(
         name=name,
-        args=kombu_json.dumps(args or []),
-        kwargs=kombu_json.dumps(kwargs or {}),
+        args=args,
+        kwargs=kwargs,
     )
     return record
