@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 
 import jsonfield as old_jsonfield
 
+from corehq.apps.users.models import ConnectIDUserLink, CommCareUser
 from dimagi.utils.logging import notify_error
 from dimagi.utils.modules import to_function
 
@@ -621,14 +622,22 @@ class ConnectMessageContent(Content):
             self,
             case_id=None,
         )
+
+        if not isinstance(recipient, CommCareUser):
+            logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_SUPPORTED)
+            return
+
         message = self.get_translation_from_message_dict(
             domain_obj,
             self.message,
             recipient.get_language_code()
         )
         connect_number = ConnectMessagingNumber(recipient)
-
-        send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
+        try:
+            send_message_to_verified_number(connect_number, message, logged_subevent=logged_subevent)
+        except ConnectIDUserLink.DoesNotExist:
+            logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND)
+            return
 
 
 class ConnectMessageSurveyContent(SurveyContent):
@@ -658,6 +667,10 @@ class ConnectMessageSurveyContent(SurveyContent):
             case_id=self.case.case_id if self.case else None,
         )
 
+        if not isinstance(recipient, CommCareUser):
+            logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_SUPPORTED)
+            return
+
         connect_number = ConnectMessagingNumber(recipient)
 
         with self.get_critical_section(recipient):
@@ -670,16 +683,20 @@ class ConnectMessageSurveyContent(SurveyContent):
                 logged_subevent.error(MessagingEvent.ERROR_NO_CASE_GIVEN)
                 return
 
-            session, responses = self.start_smsforms_session(
-                logged_event.domain,
-                recipient,
-                case_id,
-                connect_number.phone_number,
-                logged_subevent,
-                self.get_workflow(logged_event),
-                app,
-                form
-            )
+            try:
+                session, responses = self.start_smsforms_session(
+                    logged_event.domain,
+                    recipient,
+                    case_id,
+                    connect_number.phone_number,
+                    logged_subevent,
+                    self.get_workflow(logged_event),
+                    app,
+                    form
+                )
+            except ConnectIDUserLink.DoesNotExist:
+                logged_subevent.error(MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND)
+                return
 
             if session:
                 logged_subevent.xforms_session = session
