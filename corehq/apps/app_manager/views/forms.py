@@ -336,7 +336,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                case_update_diff = _get_case_update_diff(request, form)
+                case_update_diff = _get_case_mapping_diff(request, form)
                 save_xform(app, form, xform, case_update_diff)
             else:
                 raise Exception("You didn't select a form to upload")
@@ -530,7 +530,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    case_update_diff = _get_case_update_diff(request, form)
+    case_update_diff = _get_case_mapping_diff(request, form)
 
     try:
         xml = save_xform(app, form, xml.encode('utf-8'), case_update_diff)
@@ -553,15 +553,15 @@ def apply_patch(patch, text):
     return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
 
 
-def _get_case_update_diff(request, form):
-    update_diff = None
+def _get_case_mapping_diff(request, form):
+    case_mapping_diff = None
     has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     if has_vellum_case_mapping and 'mapping_diff' in request.POST:
-        update_diff = FormActionsDiff.from_json(
+        case_mapping_diff = FormActionsDiff.from_json(
             json.loads(request.POST['mapping_diff']),
             is_registration=form.is_registration_form(),
         )
-    return update_diff
+    return case_mapping_diff
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
