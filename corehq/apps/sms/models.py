@@ -1114,6 +1114,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
     ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
     FILTER_MISMATCH = 'FILTER_MISMATCH'
+    ERROR_CONNECT_USER_NOT_FOUND = 'CONNECT_USER_NOT_FOUND'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1170,7 +1171,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
         ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
-        FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
+        FILTER_MISMATCH: gettext_noop("Recipient did not match filters:"),
+        ERROR_CONNECT_USER_NOT_FOUND: gettext_noop("Connect user not found for recipient."),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
