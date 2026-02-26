@@ -75,6 +75,8 @@ class SessionDetailsView(View):
             domains.update(EnterprisePermissions.get_domains(member_domain))
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
+        # This is being released, add here until formplayer references are removed:
+        enabled_toggles.add('SPLIT_SCREEN_CASE_SEARCH')
         enabled_previews = previews_enabled_for_domain(domain)
         end_time = datetime.now()
         metrics_histogram("commcare.session_details.processing_time",

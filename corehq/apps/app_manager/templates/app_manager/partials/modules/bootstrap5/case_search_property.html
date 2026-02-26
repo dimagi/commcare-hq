@@ -72,8 +72,8 @@
                     <div class="col-sm-12 col-md-9">
                       <select class="form-select" data-bind="value: appearance">
                         <option value="">{% trans "Text" %}</option>
-                        {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-                          {# limit to USH since datepicker and checkbox are only available on web apps #}  {# todo B5: css-checkbox #}
+                        {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+                          {# limit to advanced since datepicker and checkbox are only available on web apps #}  {# todo B5: css-checkbox #}
                           {% if js_options.has_lookup_tables %}
                           <option value="checkbox">{% trans "Checkbox" %}</option>  {# todo B5: css-checkbox #}
                           {% endif %}
@@ -103,16 +103,14 @@
                       </div>
                   </div>
                 {% endif %}
-                {% if js_options.default_value_expression_enabled %}
-                  <div class="form-group">  {# todo B5: css-form-group #}
-                    <label class="form-label col-sm-12 col-md-3">
-                      {% trans "Allow searching for blank values" %}
-                    </label>
-                    <div class="col-sm-12 col-md-9">
-                      <input type="checkbox" data-bind="checked: allowBlankValue"/>  {# todo B5: css-checkbox #}
-                    </div>
+                <div class="form-group">  {# todo B5: css-form-group #}
+                  <label class="form-label col-sm-12 col-md-3">
+                    {% trans "Allow searching for blank values" %}
+                  </label>
+                  <div class="col-sm-12 col-md-9">
+                    <input type="checkbox" data-bind="checked: allowBlankValue"/>  {# todo B5: css-checkbox #}
                   </div>
-                {% endif %}
+                </div>
               </fieldset>
               {% if js_options.search_prompt_appearance_enabled %}
               <fieldset data-bind="visible: appearanceFinal() == 'fixture' || appearanceFinal() == 'checkbox'">  {# todo B5: css-checkbox #}
@@ -165,26 +163,26 @@
                     <fieldset>
                       <legend>{% trans "Advanced Options" %}</legend>
                       {% if js_options.has_geocoder_privs %}
-                        <div data-bind="visible: ['', 'fixture', 'checkbox'].indexOf(appearanceFinal()) !== -1 ">  {# todo B5: css-checkbox #}
-                          <div class="form-group" data-bind="visible: appearanceFinal() !== 'checkbox'">  {# todo B5: css-checkbox, css-form-group #}
-                            <label class="form-label col-sm-12 col-md-3">
-                              {% trans "Geocoder Receiver Expression" %}
-                            </label>
-                            <div class="col-sm-12 col-md-9">
-                              <input class="form-control" type="text" data-bind="value: receiverExpression"/>
-                            </div>
-                          </div>
-                          <div class="form-group">  {# todo B5: css-form-group #}
-                            <label class="form-label col-sm-12 col-md-3">
-                              {% trans "Hide in Search Screen" %}
-                            </label>
-                            <div class="col-sm-12 col-md-9">
-                              <input type="checkbox" data-bind="checked: hidden" />  {# todo B5: css-checkbox #}
-                            </div>
+                        <div class="form-group" data-bind="visible: ['', 'fixture'].indexOf(appearanceFinal()) !== -1 "> {# todo B5: css-checkbox, css-form-group #}
+                          <label class="form-label col-sm-12 col-md-3">
+                            {% trans "Geocoder Receiver Expression" %}
+                          </label>
+                          <div class="col-sm-12 col-md-9">
+                            <input class="form-control" type="text" data-bind="value: receiverExpression"/>
                           </div>
                         </div>
                       {% endif %}
-                      {% if js_options.ush_case_claim_2_53 %}
+                      {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+                        <div class="form-group" data-bind="visible: ['', 'fixture', 'checkbox'].indexOf(appearanceFinal()) !== -1"> {# todo B5: css-form-group #}
+                          <label class="form-label col-sm-12 col-md-3">
+                            {% trans "Hide in Search Screen" %}
+                          </label>
+                          <div class="col-sm-12 col-md-9">
+                            <input type="checkbox" data-bind="checked: hidden" />  {# todo B5: css-checkbox #}
+                          </div>
+                        </div>
+                      {% endif %}
+                      {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
                         <div class="form-group">  {# todo B5: css-form-group #}
                           <label class="form-label col-sm-12 col-md-3">
                             {% trans "Exclude From Search Filters" %}
@@ -193,41 +191,41 @@
                             <input type="checkbox" data-bind="checked: exclude"/>  {# todo B5: css-checkbox #}
                           </div>
                         </div>
-                        <div data-bind="ifnot: hidden() || appearanceFinal() === 'address'">
-                          <div class="form-group">  {# todo B5: css-form-group #}
-                            <label class="form-label col-sm-12 col-md-3">
-                              {% trans "Required" %}
-                            </label>
-                            <div class="col-sm-12 col-md-9">
-                              <textarea class="form-control vertical-resize" data-bind="value: requiredTest" placeholder="true()"></textarea>
-                            </div>
-                          </div>
-                          <div class="form-group" data-bind="visible: requiredTest">  {# todo B5: css-form-group #}
-                              <label class="form-label col-sm-12 col-md-3">
-                                  {% trans "Required Message" %}
-                              </label>
-                              <div class="col-sm-12 col-md-9">
-                                  <textarea class="form-control vertical-resize" data-bind="value: requiredText"></textarea>
-                              </div>
-                          </div>
-                          <div class="form-group">  {# todo B5: css-form-group #}
-                            <label class="form-label col-sm-12 col-md-3">
-                              {% trans "Validation Condition" %}
-                            </label>
-                            <div class="col-sm-12 col-md-9">
-                              <textarea class="form-control vertical-resize" data-bind="value: validationTest" placeholder="true()"></textarea>
-                            </div>
-                          </div>
-                          <div class="form-group" data-bind="visible: validationTest">  {# todo B5: css-form-group #}
-                            <label class="form-label col-sm-12 col-md-3">
-                              {% trans "Validation Message" %}
-                            </label>
-                            <div class="col-sm-12 col-md-9">
-                              <textarea class="form-control vertical-resize" data-bind="value: validationText"></textarea>
-                            </div>
+                      {% endif %}
+                      <div data-bind="ifnot: hidden() || appearanceFinal() === 'address'">
+                        <div class="form-group">  {# todo B5: css-form-group #}
+                          <label class="form-label col-sm-12 col-md-3">
+                            {% trans "Required" %}
+                          </label>
+                          <div class="col-sm-12 col-md-9">
+                            <textarea class="form-control vertical-resize" data-bind="value: requiredTest" placeholder="true()"></textarea>
                           </div>
                         </div>
-                      {% endif %}
+                        <div class="form-group" data-bind="visible: requiredTest">  {# todo B5: css-form-group #}
+                            <label class="form-label col-sm-12 col-md-3">
+                                {% trans "Required Message" %}
+                            </label>
+                            <div class="col-sm-12 col-md-9">
+                                <textarea class="form-control vertical-resize" data-bind="value: requiredText"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">  {# todo B5: css-form-group #}
+                          <label class="form-label col-sm-12 col-md-3">
+                            {% trans "Validation Condition" %}
+                          </label>
+                          <div class="col-sm-12 col-md-9">
+                            <textarea class="form-control vertical-resize" data-bind="value: validationTest" placeholder="true()"></textarea>
+                          </div>
+                        </div>
+                        <div class="form-group" data-bind="visible: validationTest">  {# todo B5: css-form-group #}
+                          <label class="form-label col-sm-12 col-md-3">
+                            {% trans "Validation Message" %}
+                          </label>
+                          <div class="col-sm-12 col-md-9">
+                            <textarea class="form-control vertical-resize" data-bind="value: validationText"></textarea>
+                          </div>
+                        </div>
+                      </div>
                     </fieldset>
                 {% endif %}
               {% endif %}
