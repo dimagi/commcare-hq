@@ -93,7 +93,7 @@
     "devDependencies": {
         "chai": "4.3.6",
         "colors": "1.4.0",
-        "eslint": "8.15.0",
+        "eslint": "10.0.2",
         "grunt": "1.5.3",
         "grunt-cli": "1.4.3",
         "grunt-contrib-watch": "1.1.0",
