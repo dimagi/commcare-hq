@@ -1,7 +1,6 @@
 ---
 name: jira-ticket
 description: Create a SAAS Jira ticket. Just describe what you're working on and it handles the rest.
-disable-model-invocation: true
 argument-hint: <describe the work>
 ---
 
