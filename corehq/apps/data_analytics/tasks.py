@@ -252,5 +252,6 @@ def _iter_domain_names_standard_and_higher():
     ]
     return Subscription.visible_objects.filter(
         is_active=True,
+        account__is_customer_billing_account=True,
         plan_version__plan__edition__in=standard_and_higher,
     ).values_list('subscriber__domain', flat=True).distinct()
