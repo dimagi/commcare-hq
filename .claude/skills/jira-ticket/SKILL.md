@@ -166,3 +166,4 @@ Whether to include a description depends on how much detail the user provided:
    - Otherwise, get current user via `atlassianUserInfo` (for self-assignment).
    - Search for active sprints.
 3. Craft a clean **summary**...
+4. After creating the ticket, respond with the full ticket URL so it is clickable in the terminal: `https://dimagi.atlassian.net/browse/SAAS-XXXXX`
