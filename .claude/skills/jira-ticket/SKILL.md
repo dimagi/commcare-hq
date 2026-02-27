@@ -158,6 +158,16 @@ Whether to include a description depends on how much detail the user provided:
   - Links, error messages, or context
 - Keep descriptions concise. Don't pad with boilerplate.
 
+## Status
+
+When a ticket is assigned to the current (active) sprint, transition it to **Prioritized** after creation unless otherwise specified:
+
+1. Call `getTransitionsForJiraIssue` on the newly created ticket to get available transitions.
+2. Find the transition whose name is `"Prioritized"` and use its `id`.
+3. Call `transitionJiraIssue` with that transition ID.
+
+If the ticket is placed in the backlog (no sprint), skip this step — leave it in the default status.
+
 ## Steps
 
 1. Parse `$ARGUMENTS` to extract: summary, description details, issue type, effort, priority, assignee, epic, and sprint intent.
