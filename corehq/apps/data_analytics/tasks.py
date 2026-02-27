@@ -221,16 +221,18 @@ def _collect_feature_metrics_for_domain(domain_name):
         existing = DomainMetrics.objects.filter(
             domain=domain_name,
         ).first()
-        updates = collect_metrics_for_domain(
-            domain_obj,
-            FEATURE_METRICS,
-            existing,
-        )
-        if updates:
-            DomainMetrics.objects.update_or_create(
-                domain=domain_name,
-                defaults=updates,
+        if existing:
+            # We are unable to create DomainMetrics instances, because
+            # daily metrics fields are NOT NULL without default values.
+            updates = collect_metrics_for_domain(
+                domain_obj,
+                FEATURE_METRICS,
+                existing,
             )
+            if updates:
+                DomainMetrics.objects.filter(
+                    domain=domain_name
+                ).update(**updates)
     except Exception as e:
         notify_exception(
             None,

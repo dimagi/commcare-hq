@@ -120,13 +120,12 @@ class TestCollectFeatureMetrics(SimpleTestCase):
         mock_get_by_name.return_value = domain_obj
 
         with patch(f'{self.TASKS_PATH}.DomainMetrics') as MockMetrics:
-            MockMetrics.objects.filter.return_value.first.return_value = None
+            MockMetrics.objects.filter.return_value.first.return_value = MagicMock()
             _collect_feature_metrics_for_domain('test-domain')
 
         mock_collect.assert_called_once()
-        MockMetrics.objects.update_or_create.assert_called_once_with(
-            domain='test-domain',
-            defaults={'has_multimedia': True},
+        MockMetrics.objects.filter.return_value.update.assert_called_once_with(
+            has_multimedia=True,
         )
 
     @patch(f'{TASKS_PATH}.collect_metrics_for_domain')
@@ -138,10 +137,25 @@ class TestCollectFeatureMetrics(SimpleTestCase):
         mock_get_by_name.return_value = domain_obj
 
         with patch(f'{self.TASKS_PATH}.DomainMetrics') as MockMetrics:
+            MockMetrics.objects.filter.return_value.first.return_value = MagicMock()
+            _collect_feature_metrics_for_domain('test-domain')
+
+        MockMetrics.objects.filter.return_value.update.assert_not_called()
+
+    @patch(f'{TASKS_PATH}.collect_metrics_for_domain')
+    @patch('corehq.apps.domain.models.Domain.get_by_name')
+    def test_skips_when_no_existing_metrics(self, mock_get_by_name, mock_collect):
+        # If no DomainMetrics row exists yet, skip — we cannot create one
+        # because daily metric fields are NOT NULL without default values.
+        domain_obj = MagicMock()
+        domain_obj.name = 'test-domain'
+        mock_get_by_name.return_value = domain_obj
+
+        with patch(f'{self.TASKS_PATH}.DomainMetrics') as MockMetrics:
             MockMetrics.objects.filter.return_value.first.return_value = None
             _collect_feature_metrics_for_domain('test-domain')
 
-        MockMetrics.objects.update_or_create.assert_not_called()
+        mock_collect.assert_not_called()
 
     @patch('corehq.apps.domain.models.Domain.get_by_name')
     def test_skips_when_domain_not_found(self, mock_get_by_name):
