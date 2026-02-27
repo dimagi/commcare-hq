@@ -28,6 +28,7 @@ def _make_ctx(apps=None, domain_attrs=None):
 
 def _make_app_with_modules(modules):
     app = MagicMock()
+    app.is_remote_app.return_value = False
     app.get_modules.return_value = modules
     app.multimedia_map = {}
     app.cloudcare_enabled = False
@@ -47,12 +48,14 @@ class TestCalcHasMultimedia(SimpleTestCase):
 
     def test_true_when_app_has_multimedia(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.multimedia_map = {'image.png': {'path': '/img.png'}}
         ctx = _make_ctx(apps=[app])
         assert calc_has_multimedia(ctx) is True
 
     def test_false_when_no_multimedia(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.multimedia_map = {}
         ctx = _make_ctx(apps=[app])
         assert calc_has_multimedia(ctx) is False
@@ -121,12 +124,14 @@ class TestCalcHasWebApps(SimpleTestCase):
 
     def test_true_when_cloudcare_enabled(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.cloudcare_enabled = True
         ctx = _make_ctx(apps=[app])
         assert calc_has_web_apps(ctx) is True
 
     def test_false_when_cloudcare_disabled(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.cloudcare_enabled = False
         ctx = _make_ctx(apps=[app])
         assert calc_has_web_apps(ctx) is False
@@ -140,12 +145,14 @@ class TestCalcHasAppProfiles(SimpleTestCase):
 
     def test_true_when_build_profiles_exist(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.build_profiles = {'profile1': {'langs': ['en']}}
         ctx = _make_ctx(apps=[app])
         assert calc_has_app_profiles(ctx) is True
 
     def test_false_when_no_build_profiles(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.build_profiles = {}
         ctx = _make_ctx(apps=[app])
         assert calc_has_app_profiles(ctx) is False
@@ -226,6 +233,7 @@ class TestCalcHasCustomBranding(SimpleTestCase):
 
     def test_true_when_app_has_logo_refs(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.logo_refs = {'hq_logo_android_home': 'path/to/logo.png'}
         ctx = _make_ctx(
             apps=[app],
@@ -235,6 +243,7 @@ class TestCalcHasCustomBranding(SimpleTestCase):
 
     def test_false_when_no_branding(self):
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.logo_refs = {}
         ctx = _make_ctx(
             apps=[app],

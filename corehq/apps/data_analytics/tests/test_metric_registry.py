@@ -57,11 +57,25 @@ class TestDomainContext(SimpleTestCase):
     def test_apps_cached(self):
         domain_obj = MagicMock()
         domain_obj.name = 'test-domain'
-        domain_obj.applications.return_value = ['app1', 'app2']
+        app1, app2 = MagicMock(), MagicMock()
+        app1.is_remote_app.return_value = False
+        app2.is_remote_app.return_value = False
+        domain_obj.applications.return_value = [app1, app2]
         ctx = DomainContext(domain_obj)
         _ = ctx.apps
         _ = ctx.apps  # second access
         domain_obj.applications.assert_called_once()
+
+    def test_excludes_remote_apps(self):
+        domain_obj = MagicMock()
+        domain_obj.name = 'test-domain'
+        remote_app = MagicMock()
+        remote_app.is_remote_app.return_value = True
+        local_app = MagicMock()
+        local_app.is_remote_app.return_value = False
+        domain_obj.applications.return_value = [remote_app, local_app]
+        ctx = DomainContext(domain_obj)
+        assert ctx.apps == [local_app]
 
     def test_domain_name(self):
         domain_obj = MagicMock()

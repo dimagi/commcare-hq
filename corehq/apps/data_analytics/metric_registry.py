@@ -32,7 +32,10 @@ class DomainContext:
 
     @cached_property
     def apps(self):
-        return self.domain_obj.applications()
+        return [
+            app for app in self.domain_obj.applications()
+            if not app.is_remote_app()
+        ]
 
     @cached_property
     def form_exports(self):

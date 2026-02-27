@@ -49,6 +49,7 @@ class TestCalcHasUserCaseManagement(SimpleTestCase):
         module = MagicMock()
         module.get_forms.return_value = [form]
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.get_modules.return_value = [module]
         ctx = _make_ctx(apps=[app])
         assert calc_has_user_case_management(ctx) is True
@@ -61,6 +62,7 @@ class TestCalcHasUserCaseManagement(SimpleTestCase):
         module = MagicMock()
         module.get_forms.return_value = [form]
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.get_modules.return_value = [module]
         ctx = _make_ctx(apps=[app])
         assert calc_has_user_case_management(ctx) is False
@@ -75,6 +77,7 @@ class TestCalcHasUserCaseManagement(SimpleTestCase):
         module = MagicMock()
         module.get_forms.return_value = [form]
         app = MagicMock()
+        app.is_remote_app.return_value = False
         app.get_modules.return_value = [module]
         ctx = _make_ctx(apps=[app])
         assert calc_has_user_case_management(ctx) is False
