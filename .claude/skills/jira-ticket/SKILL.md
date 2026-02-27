@@ -1,7 +1,6 @@
 ---
 name: jira-ticket
 description: Create a SAAS Jira ticket. Just describe what you're working on and it handles the rest.
-disable-model-invocation: true
 argument-hint: <describe the work>
 ---
 
@@ -159,6 +158,16 @@ Whether to include a description depends on how much detail the user provided:
   - Links, error messages, or context
 - Keep descriptions concise. Don't pad with boilerplate.
 
+## Status
+
+When a ticket is assigned to the current (active) sprint, transition it to **Prioritized** after creation unless otherwise specified:
+
+1. Call `getTransitionsForJiraIssue` on the newly created ticket to get available transitions.
+2. Find the transition whose name is `"Prioritized"` and use its `id`.
+3. Call `transitionJiraIssue` with that transition ID.
+
+If the ticket is placed in the backlog (no sprint), skip this step — leave it in the default status.
+
 ## Steps
 
 1. Parse `$ARGUMENTS` to extract: summary, description details, issue type, effort, priority, assignee, epic, and sprint intent.
@@ -167,3 +176,4 @@ Whether to include a description depends on how much detail the user provided:
    - Otherwise, get current user via `atlassianUserInfo` (for self-assignment).
    - Search for active sprints.
 3. Craft a clean **summary**...
+4. After creating the ticket, respond with the full ticket URL so it is clickable in the terminal: `https://dimagi.atlassian.net/browse/SAAS-XXXXX`
