@@ -1,4 +1,4 @@
-
+from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 
 # Constants to describe the start, end, and actual due date of a
 # visit window in a scheduler module.
@@ -126,3 +126,13 @@ ALLOWED_CSS_PROPERTIES = {
 
 MAX_IMAGE_UPLOAD_SIZE = 1024 * 1024  # 1MB
 VALID_EMAIL_IMAGE_MIMETYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
+# Recipient types that never resolve to a CommCareUser and are therefore
+# incompatible with Connect Messages / Connect Surveys.
+CONNECT_INCOMPATIBLE_RECIPIENT_TYPES = {
+    ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
+    CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
+    CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+    CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES,
+    CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
+}

@@ -1,20 +1,23 @@
 import json
+
 from django.contrib import messages
-from django.http import (
-    Http404,
-    JsonResponse,
-)
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy, gettext as _, ngettext
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, ngettext
 from django.views.decorators.http import require_POST
+
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
+from corehq.apps.cloudcare.dbaccessors import (
+    get_application_access_for_domain,
+    get_cloudcare_apps,
+)
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -25,10 +28,16 @@ from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.analytics import get_role_user_count
 from corehq.apps.users.decorators import require_can_view_roles
 from corehq.apps.users.exceptions import InvalidRequestException
-from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
+from corehq.apps.users.landing_pages import (
+    get_allowed_landing_pages,
+    validate_landing_page,
+)
 from corehq.apps.users.models import HqPermissions
-from corehq.apps.users.models_role import UserRole, StaticRole
-from corehq.apps.users.views import BaseRoleAccessView, _commcare_analytics_roles_options
+from corehq.apps.users.models_role import StaticRole, UserRole
+from corehq.apps.users.views import (
+    BaseRoleAccessView,
+    _commcare_analytics_roles_options,
+)
 from corehq.util.view_utils import json_error
 
 
@@ -318,10 +327,6 @@ class EditRoleView(RoleContextMixin, BaseRoleAccessView):
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain)
                 or toggles.DHIS2_INTEGRATION.enabled(self.domain)
                 or toggles.GENERIC_INBOUND_API.enabled(self.domain)
-            ),
-            'attendance_tracking_privilege': (
-                toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-                and domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
             ),
             'has_report_builder_access': has_report_builder_access(self.request),
             'data_file_download_enabled':

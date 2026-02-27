@@ -21,7 +21,7 @@ from corehq.apps.es.users import (
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.export import TableExportMixin
-from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
+from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView, HtmxInvalidPageRedirectMixin
 from corehq.apps.integration.kyc.filters import KycVerificationStatusFilter, PhoneNumberFilter
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import (
@@ -110,11 +110,16 @@ class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_kyc_report_access, name='dispatch')
-class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin):
+class KycVerificationTableView(
+    HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin
+):
     urlname = 'kyc_verify_table'
     table_class = KycVerifyTable
     report_title = _('KYC Report')
     exclude_columns_in_export = ('verify_select', 'verify_btn')
+
+    def get_host_url(self):
+        return reverse('kyc_verify', args=(self.request.domain,))
 
     @cached_property
     def kyc_config(self):
