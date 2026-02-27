@@ -163,43 +163,31 @@ class TestCalcHasAppProfiles(SimpleTestCase):
 
 
 class TestCalcHasSaveToCase(SimpleTestCase):
+    """Save To Case is a Vellum question type that writes data to a case
+    from inside a repeat group. It is detected via
+    form.get_save_to_case_updates(), which returns a non-empty dict
+    when Save To Case questions are present.
+    """
 
-    def test_true_when_form_has_update_case(self):
-        actions = MagicMock()
-        actions.update_case.update = {'prop': '/data/value'}
-        actions.open_case.name_update = None
+    def test_true_when_form_has_save_to_case(self):
         form = MagicMock()
-        form.actions = actions
+        form.get_save_to_case_updates.return_value = {'patient': {'name', 'dob'}}
         module = _make_module(forms=[form])
         app = _make_app_with_modules([module])
         ctx = _make_ctx(apps=[app])
         assert calc_has_save_to_case(ctx) is True
 
-    def test_true_when_form_has_open_case(self):
-        actions = MagicMock()
-        actions.update_case.update = {}
-        actions.open_case.name_update = '/data/name'
+    def test_false_when_save_to_case_updates_empty(self):
         form = MagicMock()
-        form.actions = actions
-        module = _make_module(forms=[form])
-        app = _make_app_with_modules([module])
-        ctx = _make_ctx(apps=[app])
-        assert calc_has_save_to_case(ctx) is True
-
-    def test_false_when_no_actions(self):
-        form = MagicMock()
-        form.actions = None
+        form.get_save_to_case_updates.return_value = {}
         module = _make_module(forms=[form])
         app = _make_app_with_modules([module])
         ctx = _make_ctx(apps=[app])
         assert calc_has_save_to_case(ctx) is False
 
-    def test_false_when_no_updates(self):
-        actions = MagicMock()
-        actions.update_case.update = {}
-        actions.open_case.name_update = None
-        form = MagicMock()
-        form.actions = actions
+    def test_false_when_form_has_no_get_save_to_case_updates(self):
+        # Some form types (e.g. shadow forms) may not have this method
+        form = MagicMock(spec=[])
         module = _make_module(forms=[form])
         app = _make_app_with_modules([module])
         ctx = _make_ctx(apps=[app])

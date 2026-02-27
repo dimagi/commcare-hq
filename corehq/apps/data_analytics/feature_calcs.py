@@ -73,19 +73,20 @@ def calc_has_app_profiles(domain_context):
 
 
 def calc_has_save_to_case(domain_context):
-    """Check if any form has save-to-case actions configured."""
+    """Check if any form uses the Save To Case feature.
+
+    Save To Case is a Vellum question type that writes form data to a
+    case from inside a repeat group, targeting a case type by reference
+    rather than the form's primary case.  It is stored on the form as
+    case_references_data and is distinct from ordinary open_case /
+    update_case actions.
+    """
     for app in domain_context.apps:
         for module in app.get_modules():
             for form in module.get_forms():
-                actions = getattr(form, 'actions', None)
-                if not actions:
-                    continue
-                update = getattr(actions, 'update_case', None)
-                if update and getattr(update, 'update', {}):
-                    return True
-                open_case = getattr(actions, 'open_case', None)
-                if open_case and getattr(open_case, 'name_update', None):
-                    return True
+                if getattr(form, 'get_save_to_case_updates', None):
+                    if form.get_save_to_case_updates():
+                        return True
     return False
 
 
