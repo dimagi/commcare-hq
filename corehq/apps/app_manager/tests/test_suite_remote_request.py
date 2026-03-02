@@ -216,8 +216,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertEqual(config.get_relevant(config.case_session_var, multi_select=True),
                          "($case_id != '') and (double(now()) mod 2 = 0)")
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request(self):
         """
         Suite should include remote-request if searching is configured
@@ -229,8 +227,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./remote-request[1]"
         )
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request_custom_detail(self):
         """Remote requests for modules with custom details point to the custom detail
         """
@@ -238,8 +234,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('USH_SEARCH_FILTER')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite',
            lambda _: None)
     def test_duplicate_remote_request(self):
