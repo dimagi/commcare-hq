@@ -1,4 +1,4 @@
-from django.urls import include, re_path as url
+from django.urls import re_path as url
 
 from corehq.apps.userreports.reports.view import (
     DownloadUCRStatusView,
@@ -90,5 +90,4 @@ urlpatterns = [
         choice_list_api, name='choice_list_api'),
     url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
     url(r'^data_source_evaluator/$', evaluate_data_source, name='data_source_evaluator'),
-    url(r'^aggregate/', include('corehq.apps.aggregate_ucrs.urls')),
 ]

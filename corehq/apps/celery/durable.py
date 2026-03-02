@@ -1,9 +1,6 @@
-import kombu.utils.json as kombu_json
 from celery import Task
 from celery import states as celery_states
 from dimagi.utils.logging import notify_error
-
-from corehq.apps.celery.models import TaskRecord
 
 
 class DurableTask(Task):
@@ -23,13 +20,15 @@ class DurableTask(Task):
             )
 
     def apply_async(self, args=None, kwargs=None, **opts):
+        from corehq.apps.celery.models import TaskRecord
+
         if not self.durable:
             return super().apply_async(args=args, kwargs=kwargs, **opts)
 
         defaults = {
             'name': self.name,
-            'args': kombu_json.dumps(args),
-            'kwargs': kombu_json.dumps(kwargs),
+            'args': args or [],
+            'kwargs': kwargs or {},
         }
         existing_task_id = opts.pop('task_id', None)
         is_retry = existing_task_id is not None
@@ -59,6 +58,8 @@ class DurableTask(Task):
 
 
 def delete_task_record(task_id, state):
+    from corehq.apps.celery.models import TaskRecord
+
     if state in [celery_states.SUCCESS, celery_states.FAILURE]:
         TaskRecord.objects.filter(task_id=task_id).delete()
     else:
