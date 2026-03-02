@@ -139,7 +139,10 @@ class AppManagerTasksTest(TestCase):
         factory.app.save()
         self.addCleanup(factory.app.delete)
 
-        with patch('corehq.apps.app_manager.tasks.get_app') as get_app:
+        with (
+            patch('corehq.apps.app_manager.tasks.get_app') as get_app,
+            patch('corehq.apps.data_cleaning.utils.cases.clear_caches_case_data_cleaning'),
+        ):
             get_app.return_value = factory.app
             refresh_data_dictionary_from_app(self.domain, factory.app.get_id)
 
