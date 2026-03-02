@@ -216,8 +216,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertEqual(config.get_relevant(config.case_session_var, multi_select=True),
                          "($case_id != '') and (double(now()) mod 2 = 0)")
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request(self):
         """
         Suite should include remote-request if searching is configured
@@ -229,17 +227,21 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./remote-request[1]"
         )
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
-    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request_custom_detail(self):
         """Remote requests for modules with custom details point to the custom detail
         """
         self.module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
         suite = self.app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
+        self.assertXmlPartialEqual("""
+        <partial>
+            <datum id="search_case_id"
+                   nodeset="instance('results')/results/case[@case_type='case'][not(commcare_is_related_case=true())]"
+                   value="./@case_id"
+                   detail-confirm="m0_case_long"
+                   detail-select="m0_case_short"/>
+        </partial>
+        """, suite, "./remote-request[1]/session/datum")
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('USH_SEARCH_FILTER')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite',
            lambda _: None)
     def test_duplicate_remote_request(self):
@@ -290,7 +292,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     @flag_enabled('USH_SEARCH_FILTER')
     def test_case_search_filter(self):
         search_filter = "rating > 3"
@@ -309,8 +311,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             suite.xpath(ref_path)[0]
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('USH_SEARCH_FILTER')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_additional_types(self):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
@@ -318,12 +319,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = parse_normalize(suite_xml, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]{}".format(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}']{}".format(
                 RESULTS_INSTANCE,
                 RESULTS_INSTANCE,
                 self.module.case_type,
                 another_case_type,
-                self.module.search_config.search_filter,
                 EXCLUDE_RELATED_CASES_FILTER
             ),
             suite.xpath(ref_path)[0]
@@ -339,7 +339,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./remote-request[1]/session/query/data[@key='case_type']"
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_additional_types__shadow_module(self):
         shadow_module = self.app.add_module(ShadowModule.new_module("shadow", "en"))
         shadow_module.source_module_id = self.module.get_or_create_unique_id()
@@ -387,29 +387,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual(condition, suite.xpath('./detail[1]/action/@relevant')[0])
 
-    def test_case_search_auto_launch_off(self):
-        self.module.search_config.auto_launch = True
-        suite = self.app.create_suite()
-        expected = """
-        <partial>
-          <action auto_launch="false()" redo_last="false">
-            <display>
-              <text>
-                <locale id="case_search.m0"/>
-              </text>
-            </display>
-            <stack>
-              <push>
-                <mark/>
-                <command value="'search_command.m0'"/>
-              </push>
-            </stack>
-          </action>
-        </partial>
-        """
-        self.assertXmlPartialEqual(expected, suite, "./detail[1]/action")
-
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_case_search_auto_launch(self):
         self.module.search_config.auto_launch = True
         suite = self.app.create_suite()
@@ -799,7 +776,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             f"./remote-request[1]/instance[@id='{instance_id}']",
         )
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled("CASE_SEARCH_ADVANCED")
     def test_prompt_default_value(self):
         """Setting the default to "default_value"
         """

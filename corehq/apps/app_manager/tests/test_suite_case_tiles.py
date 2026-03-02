@@ -511,7 +511,6 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             "detail[@id='m0_case_short']/no_items_text[1]",
         )
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_case_tile_with_case_search(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 

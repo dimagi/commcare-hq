@@ -170,7 +170,6 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         self.assertTrue(shadow_module.is_multi_select())
         del self.factory.app.modules[shadow_module.id]
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_multi_select_case_list_auto_launch(self):
         self.module.search_config.auto_launch = True
         suite = self.factory.app.create_suite()
