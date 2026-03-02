@@ -1,4 +1,3 @@
-import kombu.utils.json as kombu_json
 from celery import Task
 from celery import states as celery_states
 from dimagi.utils.logging import notify_error
@@ -28,8 +27,8 @@ class DurableTask(Task):
 
         defaults = {
             'name': self.name,
-            'args': kombu_json.dumps(args),
-            'kwargs': kombu_json.dumps(kwargs),
+            'args': args or [],
+            'kwargs': kwargs or {},
         }
         existing_task_id = opts.pop('task_id', None)
         is_retry = existing_task_id is not None

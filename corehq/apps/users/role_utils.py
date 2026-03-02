@@ -1,4 +1,4 @@
-from corehq.apps.users.models import UserRole, HqPermissions
+from corehq.apps.users.models import HqPermissions, UserRole
 from corehq.apps.users.permissions import COMMCARE_ANALYTICS_USER_ROLES
 
 
@@ -9,7 +9,6 @@ class UserRolePresets:
     FIELD_IMPLEMENTER = "Field Implementer"
     BILLING_ADMIN = "Billing Admin"
     MOBILE_WORKER = "Mobile Worker Default"
-    ATTENDANCE_COORDINATOR = "Attendance Coordinator"
 
     INITIAL_ROLES = {
         READ_ONLY: lambda: HqPermissions(view_reports=True, download_reports=True),
@@ -33,23 +32,7 @@ class UserRolePresets:
                                              access_all_locations=True),
     }
 
-    PRIVILEGED_ROLES = {
-        # ATTENDANCE_COORDINATOR is not a custom role. It is only
-        # available to domains on higher subscription plans.
-        ATTENDANCE_COORDINATOR: lambda: HqPermissions(
-            manage_attendance_tracking=True,
-            edit_groups=True,
-            view_groups=True,
-            edit_users_in_groups=True,
-            edit_data=True,
-            edit_apps=True,
-            view_apps=True,
-            access_web_apps=True,
-            edit_reports=True,
-            download_reports=True,
-            view_reports=True
-        )
-    }
+    PRIVILEGED_ROLES = {}
 
 
 def _get_default_roles():
@@ -73,15 +56,6 @@ def archive_custom_roles_for_domain(domain):
     for role in custom_roles:
         role.is_archived = True
         role.save()
-
-
-def archive_attendance_coordinator_role_for_domain(domain):
-    """Archive the Attendance Coordinator for `domain`"""
-    role = UserRole.objects.filter(name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=domain).first()
-    if not role:
-        return
-    role.is_archived = True
-    role.save()
 
 
 def unarchive_roles_for_domain(domain):
@@ -111,22 +85,6 @@ def initialize_domain_with_default_roles(domain):
             permissions=permissions_fn(),
             is_commcare_user_default=role_name is UserRolePresets.MOBILE_WORKER,
         )
-
-
-def enable_attendance_coordinator_role_for_domain(domain):
-    role = UserRole.objects.filter(name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=domain).first()
-    if not role:
-        role_name = UserRolePresets.ATTENDANCE_COORDINATOR
-        UserRole.create(
-            domain,
-            role_name,
-            permissions=UserRolePresets.PRIVILEGED_ROLES[role_name]()
-        )
-        return
-
-    if role.is_archived:
-        role.is_archived = False
-        role.save()
 
 
 def get_commcare_analytics_access_for_user_domain(couch_user, domain):

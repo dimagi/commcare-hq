@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
+
 from field_audit.models import AuditAction
 
 from dimagi.utils.chunked import chunked
@@ -25,8 +26,9 @@ from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import (
+    estimate_partitioned_row_count,
     get_db_aliases_for_partitioned_query,
-    paginate_query_across_partitioned_databases, estimate_partitioned_row_count,
+    paginate_query_across_partitioned_databases,
 )
 from corehq.util.log import with_progress_bar
 from settings import HQ_ACCOUNT_ROOT
@@ -404,9 +406,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'domain'),  # TODO
     ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain', audit_action=AuditAction.AUDIT),
     ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
-    ModelDeletion('integration', 'DialerSettings', 'domain'),
-    ModelDeletion('integration', 'GaenOtpServerSettings', 'domain'),
-    ModelDeletion('integration', 'HmacCalloutSettings', 'domain'),
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
     ModelDeletion('integration', 'KycConfig', 'domain'),
     ModelDeletion('integration', 'MoMoConfig', 'domain'),
@@ -502,8 +501,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),
-    ModelDeletion('events', 'Event', 'domain'),
-    ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
     ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),

@@ -1,6 +1,6 @@
 /*!
 
- diff v3.4.0
+ diff v3.2.0
 
 Software License Agreement (BSD License)
 
