@@ -1,18 +1,20 @@
 from datetime import datetime
+from unittest.mock import MagicMock, patch
 
 from django.db.models import BooleanField, DateTimeField, IntegerField
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from time_machine import travel
 
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.data_analytics.models import DomainMetrics
-from corehq.apps.data_analytics.tasks import get_domains_to_update
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import domain_adapter, form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.tests.utils import create_form_for_test
+
+from ..models import DomainMetrics
+from ..tasks import _collect_feature_metrics_for_domain, get_domains_to_update
 
 
 @es_test(requires=[domain_adapter, form_adapter], setup_class=True)
@@ -103,3 +105,61 @@ class TestGetDomainsToUpdate(TestCase):
         self.addCleanup(domain_metrics.delete)
         if last_modified:
             DomainMetrics.objects.filter(domain=domain).update(last_modified=last_modified)
+
+
+class TestCollectFeatureMetrics(SimpleTestCase):
+
+    TASKS_PATH = 'corehq.apps.data_analytics.tasks'
+
+    @patch(f'{TASKS_PATH}.collect_metrics_for_domain')
+    @patch('corehq.apps.domain.models.Domain.get_by_name')
+    def test_updates_domain_metrics(self, mock_get_by_name, mock_collect):
+        mock_collect.return_value = {'has_multimedia': True}
+        domain_obj = MagicMock()
+        domain_obj.name = 'test-domain'
+        mock_get_by_name.return_value = domain_obj
+
+        with patch(f'{self.TASKS_PATH}.DomainMetrics') as MockMetrics:
+            MockMetrics.objects.filter.return_value.first.return_value = MagicMock()
+            _collect_feature_metrics_for_domain('test-domain')
+
+        mock_collect.assert_called_once()
+        MockMetrics.objects.filter.return_value.update.assert_called_once_with(
+            has_multimedia=True,
+        )
+
+    @patch(f'{TASKS_PATH}.collect_metrics_for_domain')
+    @patch('corehq.apps.domain.models.Domain.get_by_name')
+    def test_skips_when_no_updates(self, mock_get_by_name, mock_collect):
+        mock_collect.return_value = {}
+        domain_obj = MagicMock()
+        domain_obj.name = 'test-domain'
+        mock_get_by_name.return_value = domain_obj
+
+        with patch(f'{self.TASKS_PATH}.DomainMetrics') as MockMetrics:
+            MockMetrics.objects.filter.return_value.first.return_value = MagicMock()
+            _collect_feature_metrics_for_domain('test-domain')
+
+        MockMetrics.objects.filter.return_value.update.assert_not_called()
+
+    @patch(f'{TASKS_PATH}.collect_metrics_for_domain')
+    @patch('corehq.apps.domain.models.Domain.get_by_name')
+    def test_skips_when_no_existing_metrics(self, mock_get_by_name, mock_collect):
+        # If no DomainMetrics row exists yet, skip — we cannot create one
+        # because daily metric fields are NOT NULL without default values.
+        domain_obj = MagicMock()
+        domain_obj.name = 'test-domain'
+        mock_get_by_name.return_value = domain_obj
+
+        with patch(f'{self.TASKS_PATH}.DomainMetrics') as MockMetrics:
+            MockMetrics.objects.filter.return_value.first.return_value = None
+            _collect_feature_metrics_for_domain('test-domain')
+
+        mock_collect.assert_not_called()
+
+    @patch('corehq.apps.domain.models.Domain.get_by_name')
+    def test_skips_when_domain_not_found(self, mock_get_by_name):
+        mock_get_by_name.return_value = None
+
+        # Should not raise
+        _collect_feature_metrics_for_domain('nonexistent-domain')
