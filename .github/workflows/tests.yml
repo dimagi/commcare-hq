@@ -16,9 +16,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - {TEST: python, DIVIDED_WE_RUN: '05'}
-        - {TEST: python, DIVIDED_WE_RUN: '6a'}
-        - {TEST: python, DIVIDED_WE_RUN: 'bf'}
+        - {TEST: python, DIVIDED_WE_RUN: '03'}
+        - {TEST: python, DIVIDED_WE_RUN: '47'}
+        - {TEST: python, DIVIDED_WE_RUN: '8b'}
+        - {TEST: python, DIVIDED_WE_RUN: 'cf'}
         - {TEST: python-sharded-and-javascript}
     env:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -56,6 +57,7 @@ jobs:
         --divided-we-run=${{ matrix.DIVIDED_WE_RUN }}
         --showlocals
         --max-test-time=29
+        --durations=50
         -p no:cacheprovider
     - name: "Codecov upload"
       env:

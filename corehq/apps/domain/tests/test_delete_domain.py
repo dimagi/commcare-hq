@@ -505,6 +505,7 @@ class TestDeleteDomain(TestCase):
 
     def test_cloudcare(self):
         for domain_name in [self.domain.name, self.domain2.name]:
+            get_application_access_for_domain.clear(domain_name)
             get_application_access_for_domain(domain_name)
 
         self.domain.delete()

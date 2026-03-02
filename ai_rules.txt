@@ -1,8 +1,0 @@
-When creating PRs, always create them as drafts and always use the GitHub PR template.
-
-When adding template descriptions, avoid verbally restating the code diff. Focus on useful context for the reviewer.
-
-When committing new changes, always commit on a branch.
-
-When creating a new branch, each author has a prefix they use. Use the prefix the author has used most
-on local git branches or else their initials (from `git config user.name`).

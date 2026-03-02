@@ -10,12 +10,14 @@
     {% if table.container_id %}
       id="{{ table.container_id }}"
     {% endif %}
-    {% block table-container-attrs %}{% endblock %}
+    {% block table-container-attrs %}
+    {% endblock %}
   >
-
     {% block before_table %}{% endblock %}
 
-    {% block table %}{{ block.super }}{% endblock table %}
+    <div class="table-responsive">
+      {% block table %}{{ block.super }}{% endblock table %}
+    </div>
 
     {% if table.page.paginator.count == 0 %}
       {% block no_results_table %}
@@ -46,10 +48,11 @@
                 {% for p in table.paginator.paging_options %}
                   <option
                     value="{{ p }}"
-                    {% if p == table.paginator.per_page %} selected{% endif %}
+                    {% if p == table.paginator.per_page %}selected{% endif %}
                   >
                     {% blocktrans %}
-                      {{ p }} per page
+                      {{ p }}
+                      per page
                     {% endblocktrans %}
                   </option>
                 {% endfor %}
@@ -63,9 +66,10 @@
           {% if table.page and table.paginator.num_pages > 1 %}
             <nav aria-label="Table navigation">
               <ul class="pagination">
-
                 {% block pagination.previous %}
-                  <li class="previous page-item{% if not table.page.has_previous %} disabled{% endif %}">
+                  <li
+                    class="previous page-item{% if not table.page.has_previous %} disabled{% endif %}"
+                  >
                     <a
                       class="page-link"
                       {% if table.page.has_previous %}
@@ -82,7 +86,9 @@
                 {% if table.page.has_previous or table.page.has_next %}
                   {% block pagination.range %}
                     {% for p in table.page|table_page_range:table.paginator %}
-                      <li class="page-item{% if table.page.number == p %} active{% endif %}">
+                      <li
+                        class="page-item{% if table.page.number == p %} active{% endif %}"
+                      >
                         <a
                           class="page-link"
                           {% if p != '...' %}
@@ -97,7 +103,9 @@
                 {% endif %}
 
                 {% block pagination.next %}
-                  <li class="next page-item{% if not table.page.has_next %} disabled{% endif %}">
+                  <li
+                    class="next page-item{% if not table.page.has_next %} disabled{% endif %}"
+                  >
                     <a
                       class="page-link"
                       {% if table.page.has_next %}
@@ -110,7 +118,6 @@
                     </a>
                   </li>
                 {% endblock pagination.next %}
-
               </ul>
             </nav>
           {% endif %}
@@ -119,7 +126,6 @@
     </div>
 
     {% block after_table %}{% endblock %}
-
   </div>
 {% endblock table-wrapper %}
 

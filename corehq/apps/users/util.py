@@ -17,16 +17,15 @@ from casexml.apps.case.const import (
     ARCHIVED_CASE_OWNER_ID,
     UNOWNED_EXTENSION_OWNER_ID,
 )
+# SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.users.exceptions import ModifyUserStatusException
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
-
-# SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
-from dimagi.utils.couch.bulk import get_docs
-from dimagi.utils.parsing import json_format_datetime
 
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
@@ -249,8 +248,7 @@ def user_location_data(location_ids):
     return ' '.join(location_ids)
 
 
-def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, fcm_token=None,
-                       fcm_token_timestamp=None, save=True):
+def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
     from corehq.apps.users.models import CommCareUser
 
     updated = False
@@ -261,8 +259,6 @@ def update_device_meta(user, device_id, commcare_version=None, device_app_meta=N
                 device_id,
                 commcare_version=commcare_version,
                 device_app_meta=device_app_meta,
-                fcm_token=fcm_token,
-                fcm_token_timestamp=fcm_token_timestamp
             )
             if save and updated:
                 user.save(fire_signals=False)
@@ -367,8 +363,8 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     :param for_domain_required_for_log: set to False to allow domain less log for specific changes
     :param bulk_upload_record_id: ID of bulk upload record if changed via bulk upload
     """
-    from corehq.apps.users.models import UserHistory
     from corehq.apps.users.model_log import UserModelAction
+    from corehq.apps.users.models import UserHistory
 
     action = action or UserModelAction.UPDATE
     fields_changed = fields_changed or {}
@@ -463,8 +459,8 @@ def bulk_auto_deactivate_commcare_users(user_ids, domain):
     :param user_ids: list of user IDs
     :param domain: name of domain user IDs belong to
     """
-    from corehq.apps.users.models import UserHistory, CommCareUser
     from corehq.apps.users.model_log import UserModelAction
+    from corehq.apps.users.models import CommCareUser, UserHistory
 
     last_modified = json_format_datetime(datetime.datetime.utcnow())
     user_docs_to_bulk_save = []
