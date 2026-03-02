@@ -95,7 +95,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.form = self.module.forms[0]
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_search_data_registry(self, *args):
         suite = self.app.create_suite()
 
@@ -152,7 +151,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlHasXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlHasXpath(suite, "./detail[@id='m0_search_long']")
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_search_data_registry_additional_registry_query(self, *args):
         base_xpath = "instance('registry')/results/case[@case_id=instance('commcaresession')/session/data/case_id]"
         self.module.search_config.additional_case_types = ["other_case"]
@@ -398,7 +396,6 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.shadow_module = self.app.modules[1]
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_suite(self, *args):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(
@@ -412,7 +409,6 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             "./remote-request[2]"
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
