@@ -232,7 +232,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         """
         self.module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
         suite = self.app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
+        self.assertXmlPartialEqual("""
+        <partial>
+            <datum id="search_case_id"
+                   nodeset="instance('results')/results/case[@case_type='case'][not(commcare_is_related_case=true())]"
+                   value="./@case_id"
+                   detail-confirm="m0_case_long"
+                   detail-select="m0_case_short"/>
+        </partial>
+        """, suite, "./remote-request[1]/session/datum")
 
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite',
            lambda _: None)
