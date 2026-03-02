@@ -14,6 +14,7 @@ from ..utils.export import (
     AuditWindowQuery,
     ForeignKeyAccessError,
     get_all_log_events,
+    get_date_range_where,
     get_domain_first_access_times,
     get_foreign_names,
     navigation_events_by_user,
@@ -199,3 +200,99 @@ def patch_window_size(size):
         qry = AuditWindowQuery("ignored")
         assert qry.window_size == size, f"patch failed ({qry.window_size})"
         yield
+
+
+class TestGetDateRangeWhere(AuditcareTest):
+    """Test get_date_range_where with various date/datetime inputs."""
+
+    def test_with_datetime_objects(self):
+        start = datetime(2021, 2, 5, 9, 30)
+        end = datetime(2021, 2, 15, 17, 45)
+        where = get_date_range_where(start, end)
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 9, 30))
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 15, 17, 45))
+
+    def test_with_date_objects(self):
+        from datetime import date
+        start = date(2021, 2, 5)
+        end = date(2021, 2, 15)
+        where = get_date_range_where(start, end)
+        # Date objects should be converted to datetime at start of day
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
+        # End date should be inclusive (add 1 day for lt)
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
+    def test_with_string_dates(self):
+        start = "2021-02-05"
+        end = "2021-02-15"
+        where = get_date_range_where(start, end)
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
+        # String dates should have 1 day added for inclusive behavior
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
+    def test_with_none_start(self):
+        end = datetime(2021, 2, 15, 17, 45)
+        where = get_date_range_where(None, end)
+        self.assertNotIn("event_date__gt", where)
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 15, 17, 45))
+
+    def test_with_none_end(self):
+        start = datetime(2021, 2, 5, 9, 30)
+        where = get_date_range_where(start, None)
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 9, 30))
+        self.assertNotIn("event_date__lt", where)
+
+    def test_with_both_none(self):
+        where = get_date_range_where(None, None)
+        self.assertEqual(where, {})
+
+    def test_with_midnight_datetime_as_end(self):
+        """Datetime at midnight should be treated as a date (inclusive of full day)."""
+        start = datetime(2021, 2, 5)  # midnight
+        end = datetime(2021, 2, 15)  # midnight
+        where = get_date_range_where(start, end)
+        # End at midnight should add 1 day to include the full day
+        self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
+        self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
+
+class TestNavigationEventsWithDatetime(AuditcareTest):
+    """Test navigation queries with datetime objects for time-based filtering."""
+
+    username = "datetime_test@test.com"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # Create events at different times on the same day
+        cls.event_times = [
+            datetime(2021, 2, 15, 8, 0),   # 08:00
+            datetime(2021, 2, 15, 12, 0),  # 12:00
+            datetime(2021, 2, 15, 16, 0),  # 16:00
+            datetime(2021, 2, 15, 20, 0),  # 20:00
+        ]
+        headers = {"REQUEST_METHOD": "GET"}
+        NavigationEventAudit.objects.bulk_create([
+            NavigationEventAudit(
+                user=cls.username,
+                event_date=event_time,
+                headers=headers
+            )
+            for event_time in cls.event_times
+        ])
+
+    def test_filter_by_time_range(self):
+        # Filter for events between 10:00 and 18:00 on 2021-02-15
+        start = datetime(2021, 2, 15, 10, 0)
+        end = datetime(2021, 2, 15, 18, 0)
+        events = list(navigation_events_by_user(
+            self.username, start_date=start, end_date=end
+        ))
+        event_times = [e.event_date for e in events]
+        # Should only include 12:00 and 16:00 events
+        self.assertEqual(len(events), 2)
+        self.assertIn(datetime(2021, 2, 15, 12, 0), event_times)
+        self.assertIn(datetime(2021, 2, 15, 16, 0), event_times)
+        # Should not include 08:00 or 20:00
+        self.assertNotIn(datetime(2021, 2, 15, 8, 0), event_times)
+        self.assertNotIn(datetime(2021, 2, 15, 20, 0), event_times)
