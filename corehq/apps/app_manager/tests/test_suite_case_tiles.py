@@ -557,7 +557,6 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             "detail[@id='m0_case_short']/action[2]",
         )
 
-
     def test_case_tile_with_sorting(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module("my_module", "person")

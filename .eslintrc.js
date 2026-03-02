@@ -37,6 +37,8 @@ module.exports = {
         "describe": false,
         "beforeEach": false,
         "afterEach": false,
+        "before": false,
+        "after": false,
         "nv": false,
         "d3": false,
     },

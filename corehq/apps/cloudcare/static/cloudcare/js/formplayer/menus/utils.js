@@ -1,6 +1,5 @@
 import _ from "underscore";
 import Backbone from "backbone";
-import toggles from "hqwebapp/js/toggles";
 import noopMetrics from "analytix/js/noopMetrics";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import constants from "cloudcare/js/formplayer/constants";
