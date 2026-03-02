@@ -445,7 +445,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
-    exports_use_elasticsearch = BooleanProperty(default=False)
 
     # For domains that have been migrated to a different environment
     redirect_url = StringProperty()
@@ -891,22 +890,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
         # https://manage.dimagi.com/default.asp?274299
         return 50000
-
-
-class TransferDomainRequest(models.Model):
-    active = models.BooleanField(default=True, blank=True)
-    request_time = models.DateTimeField(null=True, blank=True)
-    request_ip = models.CharField(max_length=80, null=True, blank=True)
-    confirm_time = models.DateTimeField(null=True, blank=True)
-    confirm_ip = models.CharField(max_length=80, null=True, blank=True)
-    transfer_guid = models.CharField(max_length=32, null=True, blank=True)
-
-    domain = models.CharField(max_length=256)
-    from_username = models.CharField(max_length=80)
-    to_username = models.CharField(max_length=80)
-
-    class Meta(object):
-        app_label = 'domain'
 
 
 class DomainAuditRecordEntry(models.Model):

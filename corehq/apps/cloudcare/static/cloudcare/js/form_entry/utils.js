@@ -81,7 +81,6 @@ module.initialRender = function (formJSON, resourceMap, $div) {
  * @param {function} clearCallBack - function to call back after clearing the input
  * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
  * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
- * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
  * @param {boolean} useBoundingBox - use default locations bbox to filter results. Defaults to false. (optional)
  * @param {string} responseDataTypes - set Mapbox's data type response https://docs.mapbox.com/api/search/geocoding/#data-types (optional)
 */
@@ -91,12 +90,10 @@ module.renderMapboxInput = function ({
     clearCallBack,
     inputOnKeyDown,
     showGeolocationButton = false,
-    geolocateOnLoad = false,
     useBoundingBox = false,
     responseDataTypes = 'address',
 }) {
     showGeolocationButton = showGeolocationButton || toggles.toggleEnabled('GEOCODER_MY_LOCATION_BUTTON');
-    geolocateOnLoad = geolocateOnLoad || toggles.toggleEnabled('GEOCODER_AUTOLOAD_USER_LOCATION');
     var setProximity = toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
     var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
     var geocoder = new MapboxGeocoder({
@@ -143,10 +140,6 @@ module.renderMapboxInput = function ({
             liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
         }
     });
-
-    if (geolocateOnLoad) {
-        geocoder._geolocateUser();
-    }
 };
 
 /**

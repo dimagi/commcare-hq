@@ -31,62 +31,51 @@ function getUpdateMultiDiff(original, incoming) {
     const updates = {};
 
     const allKeys = new Set([...Object.keys(original), ...Object.keys(incoming)]);
-    const normalizedOriginal = {};
-    Object.entries(original).forEach(([key, updateList]) => {
-        normalizedOriginal[key] = updateList.map(update => normalizeUpdateObject(update));
-    });
-
+    const baseline = Object.fromEntries(
+        Object.entries(original).map(([key, items]) => [key, items.map(omitDocType)]),
+    );
 
     allKeys.forEach(key => {
-        // If the question is part of the incoming updates, then it is either an addition or an update
-        if (!(key in normalizedOriginal)) {
-            incoming[key].forEach(update => {
-                additions[key] = additions[key] || [];
-                additions[key].push(update);
-            });
-        } else if (key in incoming) {
-            incoming[key].forEach(update => {
-                const originalMatch = normalizedOriginal[key].find(
-                    original => update.question_path === original.question_path);
-                if (!originalMatch) {
+        if (Object.hasOwn(baseline, key) && Object.hasOwn(incoming, key)) {
+            incoming[key].forEach(item => {
+                const match = baseline[key].find(q => q.question_path === item.question_path);
+                if (!match) {
                     additions[key] = additions[key] || [];
-                    additions[key].push(update);
-                } else if (originalMatch.update_mode !== update.update_mode) {
+                    additions[key].push(item);
+                } else if (match.update_mode !== item.update_mode) {
                     updates[key] = updates[key] || [];
-                    updates[key].push(update);
+                    updates[key].push(item);
                 }
             });
-        }
-
-        // If the question is missing from the incoming updates, then it is a deletion
-        if (!(key in incoming)) {
-            normalizedOriginal[key].forEach(update => {
-                deletions[key] = deletions[key] || [];
-                deletions[key].push(update);
-            });
-        } else if (key in normalizedOriginal) {
-            normalizedOriginal[key].forEach(original => {
-                if (!incoming[key].find(update => update.question_path === original.question_path)) {
+            baseline[key].forEach(item => {
+                if (!incoming[key].find(q => q.question_path === item.question_path)) {
                     deletions[key] = deletions[key] || [];
-                    deletions[key].push(original);
+                    deletions[key].push(item);
                 }
+            });
+        } else if (Object.hasOwn(incoming, key)) {  // not in baseline
+            incoming[key].forEach(item => {
+                additions[key] = additions[key] || [];
+                additions[key].push(item);
+            });
+        } else {  // key in baseline, not in incoming
+            baseline[key].forEach(item => {
+                deletions[key] = deletions[key] || [];
+                deletions[key].push(item);
             });
         }
     });
 
-    let diff = {};
+    const diff = {};
     if (Object.keys(additions).length) {
-        diff['add'] = additions;
+        diff.add = additions;
     }
-
     if (Object.keys(deletions).length) {
-        diff['delete'] = deletions;
+        diff.delete = deletions;
     }
-
     if (Object.keys(updates).length) {
-        diff['update'] = updates;
+        diff.update = updates;
     }
-
     return diff;
 }
 
@@ -111,7 +100,7 @@ function getNameDiff(original, updated) {
     return result;
 }
 
-function normalizeUpdateObject(updateObject) {
+function omitDocType(updateObject) {
     // The server sends the raw data from couch that includes keys not used in our javascript representation.
     // Ideally, the server would strip would these values for us, but because that doesn't happen,
     // remove these extraneous keys here

@@ -103,13 +103,6 @@ module.getFieldFormats = function () {
         });
     }
 
-    if (toggles.toggleEnabled('VELLUM_CASE_MICRO_IMAGE')) {
-        formats.push({
-            value: "image",
-            label: gettext('Image'),
-        });
-    }
-
     return formats;
 };
 
