@@ -1019,7 +1019,7 @@ USH_SEARCH_FILTER = StaticToggle(
     "USH Specific toggle to use Search Filter in case search options.",
     TAG_DEPRECATED,
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+    parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
 USH_INLINE_SEARCH = StaticToggle(

@@ -290,7 +290,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     @flag_enabled('USH_SEARCH_FILTER')
     def test_case_search_filter(self):
         search_filter = "rating > 3"
