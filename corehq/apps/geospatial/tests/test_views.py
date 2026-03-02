@@ -196,23 +196,8 @@ class GeoConfigViewTestClass(TestCase):
                 case_property='prop1',
                 user_property='prop2',
                 extra_data={
-                    'selected_disbursement_algorithm': GeoConfig.ROAD_NETWORK_ALGORITHM
+                    'selected_disbursement_algorithm': 'road_network_algorithm'
                 },
-            )
-        )
-        config = GeoConfig.objects.get(domain=self.domain)
-        self.assertEqual(config.selected_disbursement_algorithm, GeoConfig.RADIAL_ALGORITHM)
-
-    @flag_enabled('MICROPLANNING')
-    @flag_enabled('SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM')
-    def test_config_update__road_network_algorithm_ff_enabled(self):
-        self._make_post(
-            self.construct_data(
-                case_property='prop1',
-                user_property='prop2',
-                extra_data={
-                    'selected_disbursement_algorithm': GeoConfig.RADIAL_ALGORITHM,
-                }
             )
         )
         config = GeoConfig.objects.get(domain=self.domain)

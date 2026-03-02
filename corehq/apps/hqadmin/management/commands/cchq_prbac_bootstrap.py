@@ -198,9 +198,6 @@ class Command(BaseCommand):
              name='File Dropzone',
              description='Offer hosting and sharing data files for downloading '
                          'from a secure dropzone'),
-        Role(slug=privileges.ATTENDANCE_TRACKING,
-             name='Attendance Tracking',
-             description='Supports using CommCare HQ for attendance tracking'),
         Role(slug=privileges.REGEX_FIELD_VALIDATION,
              name='Regular Field Validation',
              description='Regular field validation for custom data fields'),

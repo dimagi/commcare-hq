@@ -73,7 +73,7 @@ from corehq.apps.domain.dbaccessors import (
     domain_or_deleted_domain_exists,
 )
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
-from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import case_adapter, case_search_adapter, form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
@@ -500,6 +500,7 @@ class TestDeleteDomain(TestCase):
 
     def test_cloudcare(self):
         for domain_name in [self.domain.name, self.domain2.name]:
+            get_application_access_for_domain.clear(domain_name)
             get_application_access_for_domain(domain_name)
 
         self.domain.delete()
@@ -628,21 +629,6 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(CaseRuleAction.objects.filter(rule__domain=self.domain2.name).count(), 1)
         self.assertEqual(CaseRuleCriteria.objects.count(), 1)
         self.assertEqual(CaseRuleCriteria.objects.filter(rule__domain=self.domain2.name).count(), 1)
-
-    def _assert_domain_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            TransferDomainRequest.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_delete_domain(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            TransferDomainRequest.objects.create(domain=domain_name, to_username='to', from_username='from')
-            self._assert_domain_counts(domain_name, 1)
-
-        self.domain.delete()
-
-        self._assert_domain_counts(self.domain.name, 0)
-        self._assert_domain_counts(self.domain2.name, 1)
 
     def _assert_export_counts(self, domain_name, count):
         self._assert_queryset_count([

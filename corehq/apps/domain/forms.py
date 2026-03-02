@@ -111,7 +111,6 @@ from corehq.apps.domain.models import (
     AppManagerDomainSettings,
     AppReleaseModeSetting,
     OperatorCallLimitSettings,
-    SMSAccountConfirmationSettings,
     all_restricted_ucr_expressions,
 )
 from corehq.apps.hqmedia.models import (
@@ -134,11 +133,9 @@ from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.util import generate_mobile_username
 from corehq.toggles import (
     COMMCARE_CONNECT,
-    EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
-    TWO_STAGE_USER_PROVISIONING_BY_SMS,
     USE_LOGO_IN_SYSTEM_EMAILS,
 )
 from corehq.util.global_request import get_request
@@ -462,16 +459,6 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
-    confirmation_link_expiry = IntegerField(
-        label=gettext_lazy("Account confirmation link expiry"),
-        required=True,
-        help_text=gettext_lazy(
-            """
-            Default time (in days) for which account confirmation link will be valid.
-            """
-        )
-    )
-
     operator_call_limit = IntegerField(
         label=gettext_lazy("Call limit"),
         required=True,
@@ -480,12 +467,6 @@ class DomainGlobalSettingsForm(forms.Form):
             Limit on number of calls allowed to an operator for each call type.
             """
         )
-    )
-
-    confirmation_sms_project_name = CharField(
-        label=gettext_lazy("Confirmation SMS project name"),
-        required=True,
-        help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
     release_mode_visibility = BooleanField(
@@ -536,16 +517,6 @@ class DomainGlobalSettingsForm(forms.Form):
             about locations that owns cases and only have one assigned mobile worker.
             This helps prevent situations where cases are being orphaned by moving
             the only assigned mobile worker out of the location owning that cases.
-            """
-        )
-    )
-
-    exports_use_elasticsearch = BooleanField(
-        label=gettext_lazy("Use elasticsearch when fetching apps for exports"),
-        required=False,
-        help_text=gettext_lazy(
-            """
-            (Internal) Fetches apps using elasticsearch instead of couch in exports
             """
         )
     )
@@ -603,16 +574,10 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['connect_messaging_channel_name']
 
         self._handle_call_limit_visibility()
-        self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
         self._handle_enable_all_add_ons()
         self._handle_orphan_case_alerts_setting_value()
         self._handle_opt_out_of_data_sharing_setting_value()
-
-        if not EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
-            del self.fields['exports_use_elasticsearch']
-        else:
-            self._handle_exports_use_elasticsearch_setting_value()
 
         checkbox_fields = [
             hqcrispy.CheckboxField('release_mode_visibility'),
@@ -663,27 +628,9 @@ class DomainGlobalSettingsForm(forms.Form):
             ])
         if MOBILE_UCR.enabled(self.domain):
             extra_fields.append('mobile_ucr_sync_interval')
-        if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
-            extra_fields.append('exports_use_elasticsearch')
         if COMMCARE_CONNECT.enabled(self.domain):
             extra_fields.append('connect_messaging_channel_name')
         return extra_fields
-
-    def _handle_account_confirmation_by_sms_settings(self):
-        if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
-            del self.fields['confirmation_link_expiry']
-            del self.fields['confirmation_sms_project_name']
-        else:
-            settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
-            min_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
-            max_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
-            self.fields['confirmation_link_expiry'].initial = settings_obj.confirmation_link_expiry_time
-            self._add_range_validation_to_integer_input(
-                "confirmation_link_expiry", min_value_expiry, max_value_expiry
-            )
-            project_max_length = SMSAccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
-            self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
-            self.fields['confirmation_sms_project_name'].max_length = project_max_length
 
     def _handle_call_limit_visibility(self):
         if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
@@ -709,9 +656,6 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_orphan_case_alerts_setting_value(self):
         self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
-
-    def _handle_exports_use_elasticsearch_setting_value(self):
-        self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
 
     def _handle_opt_out_of_data_sharing_setting_value(self):
         self.fields['opt_out_of_data_sharing'].initial = not self.project.internal.can_use_data
@@ -756,10 +700,6 @@ class DomainGlobalSettingsForm(forms.Form):
             self.system_emails_logo_enabled,
             _("Logo for systems emails exceeds {} MB size limit").format(upload_size_limit)
         )
-
-    def clean_confirmation_link_expiry(self):
-        data = self.cleaned_data['confirmation_link_expiry']
-        return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
 
     def clean_operator_call_limit(self):
         data = self.cleaned_data['operator_call_limit']
@@ -856,13 +796,6 @@ class DomainGlobalSettingsForm(forms.Form):
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
 
-    def _save_account_confirmation_settings(self, domain):
-        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(domain.name):
-            settings = SMSAccountConfirmationSettings.get_settings(domain.name)
-            settings.project_name = self.cleaned_data.get('confirmation_sms_project_name')
-            settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
-            settings.save()
-
     def _save_release_mode_setting(self, domain):
         setting_obj = AppReleaseModeSetting.get_settings(domain=domain.name)
         if self.cleaned_data.get("release_mode_visibility") != setting_obj.is_visible:
@@ -884,9 +817,6 @@ class DomainGlobalSettingsForm(forms.Form):
     def _save_opt_out_of_data_sharing_setting(self, domain):
         domain.update_internal(can_use_data=not self.cleaned_data.get("opt_out_of_data_sharing"))
 
-    def _save_exports_use_elasticsearch(self, domain):
-        domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", True)
-
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -905,13 +835,10 @@ class DomainGlobalSettingsForm(forms.Form):
             messages.error(request, _('Unable to save logo: {}').format(err))
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
-        self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
         self._save_enable_all_add_ons_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
         self._save_opt_out_of_data_sharing_setting(domain)
-        if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
-            self._save_exports_use_elasticsearch(domain)
         domain.save()
         return True
 

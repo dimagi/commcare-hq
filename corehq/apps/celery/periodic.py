@@ -1,4 +1,4 @@
-from celery import Task
+from corehq.apps.celery.durable import DurableTask
 
 """
 @periodic_task has been removed from celery>=5.0.0.
@@ -10,7 +10,7 @@ See:
 """
 
 
-class PeriodicTask(Task):
+class PeriodicTask(DurableTask):
 
     @classmethod
     def on_bound(cls, app):
