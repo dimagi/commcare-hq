@@ -125,7 +125,6 @@ pro_v1 = standard_v2 + [
     privileges.LITE_RELEASE_MANAGEMENT,
     privileges.LOADTEST_USERS,
     privileges.DATA_FILE_DOWNLOAD,
-    privileges.ATTENDANCE_TRACKING,
     privileges.REGEX_FIELD_VALIDATION,
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,

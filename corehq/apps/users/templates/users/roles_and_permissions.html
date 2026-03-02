@@ -91,9 +91,6 @@
             {% if request|toggle_enabled:"DATA_REGISTRY" %}
               <th class="text-center">{% trans "Data Registries" %}</th>
             {% endif %}
-            {% if request|request_has_privilege:"ATTENDANCE_TRACKING" and request|toggle_enabled:"ATTENDANCE_TRACKING" %}
-              <th class="text-center">{% trans "Attendance Tracking" %}</th>
-            {% endif %}
             <th>{% trans "Actions" %}</th>
             {% if is_managed_by_upstream_domain %}
               <th></th>
@@ -263,16 +260,6 @@
                     ><br />
                   </span>
                 </div>
-              </td>
-            {% endif %}
-            {% if request|request_has_privilege:"ATTENDANCE_TRACKING" and request|toggle_enabled:"ATTENDANCE_TRACKING" %}
-              <td class="text-center">
-                <div
-                  data-bind="visible: permissions.manage_attendance_tracking,
-                             permissionIcon: {
-                               manage: permissions.manage_attendance_tracking,
-                             }"
-                ></div>
               </td>
             {% endif %}
             <td>

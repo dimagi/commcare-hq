@@ -228,9 +228,6 @@ class BaseUserConfigReportsView(BaseDomainView):
             'data_sources': get_datasources_for_domain(self.domain, include_static=True),
             'use_updated_ucr_naming': toggle_enabled(self.request, toggles.UCR_UPDATED_NAMING)
         })
-        if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
-            from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-            context['aggregate_data_sources'] = AggregateTableDefinition.objects.filter(domain=self.domain)
         return context
 
     @property
