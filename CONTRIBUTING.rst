@@ -46,10 +46,11 @@ pylint
     It requires some configuration, but this is the most comprehensive python linter
     out there and can provide some useful feedback.
 
-isort
-    This will organize the imports in the file you're editing according to the
-    ``.isort.cfg`` in the root of the repository.  See how to run this from within
-    your editor `here <https://github.com/pycqa/isort/wiki/isort-Plugins>`_
+ruff
+    Ruff is used for formatting Python code and sorting imports. Run
+    ``ruff format path/to/file.py`` to format a file, or
+    ``ruff check --select I --fix path/to/file.py`` to sort imports.
+    Commit formatting and import-sorting changes separately from logic changes.
 
 ./manage.py show_urls
     Provided by ``django-extensions``, this outputs a list of all URL paths used in the

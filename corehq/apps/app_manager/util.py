@@ -7,7 +7,6 @@ from collections import namedtuple
 from copy import deepcopy
 
 from django.core.cache import cache
-from django.db.models import Max
 from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -673,17 +672,6 @@ def get_form_source_download_url(xform):
     ])
 
 
-@quickcache(['domain', 'profile_id'], timeout=24 * 60 * 60)
-def get_latest_enabled_build_for_profile(domain, profile_id):
-    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
-    latest_enabled_build = (LatestEnabledBuildProfiles.objects.
-                            filter(build_profile_id=profile_id, active=True)
-                            .order_by('-version')
-                            .first())
-    if latest_enabled_build:
-        return get_app(domain, latest_enabled_build.build_id)
-
-
 @quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
 def get_latest_app_release_by_location(domain, location_id, app_id):
     """
@@ -726,40 +714,6 @@ def expire_get_latest_app_release_by_location_cache(app_release_by_location):
     for loc in location_and_descendants:
         get_latest_app_release_by_location.clear(app_release_by_location.domain, loc.location_id,
                                           app_release_by_location.app_id)
-
-
-@quickcache(['app_id'], timeout=24 * 60 * 60)
-def get_latest_enabled_versions_per_profile(app_id):
-    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
-    # a dict with each profile id mapped to its latest enabled version number, if present
-    return {
-        build_profile['build_profile_id']: build_profile['version__max']
-        for build_profile in
-        LatestEnabledBuildProfiles.objects.filter(app_id=app_id, active=True).values('build_profile_id').annotate(
-            Max('version'))
-    }
-
-
-def get_app_id_from_form_unique_id(domain, form_unique_id):
-    """
-    Do not use. This is here to support migrations and temporary cose for *removing*
-    the constraint that form ids be lgobally unique. It will stop working as more
-    duplicated form unique ids appear.
-    """
-    return _get_app_ids_by_form_unique_id(domain).get(form_unique_id)
-
-
-@quickcache(['domain'], timeout=1 * 60 * 60)
-def _get_app_ids_by_form_unique_id(domain):
-    apps = get_apps_in_domain(domain, include_remote=False)
-    app_ids = {}
-    for app in apps:
-        for module in app.modules:
-            for form in module.get_forms():
-                if form.unique_id in app_ids:
-                    raise AppManagerException("Could not identify app for form {}".format(form.unique_id))
-                app_ids[form.unique_id] = app.get_id
-    return app_ids
 
 
 def extract_instance_id_from_nodeset_ref(nodeset):
