@@ -20,7 +20,7 @@ module.exports = [
                 ...globals.browser,
                 ...globals.es2015,
 
-                // https://eslint.org/docs/latest/use/configure/language-options#specifying-globals
+                // https://eslint.org/docs/latest/use/configure/language-options#specify-globals
                 // "readonly" replaces false, "writable" replaces true
                 "define": "readonly",
                 "hqDefine": "readonly",
