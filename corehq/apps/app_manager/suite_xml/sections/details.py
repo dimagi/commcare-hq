@@ -457,7 +457,7 @@ class DetailContributor(SectionContributor):
 
     @staticmethod
     def _get_auto_launch_expression(module, in_search):
-        allow_auto_launch = toggles.USH_CASE_CLAIM_UPDATES.enabled(module.get_app().domain) and not in_search
+        allow_auto_launch = not in_search
         auto_launch_expression = "false()"
         if allow_auto_launch and module.search_config.auto_launch:
             if module.is_multi_select():
