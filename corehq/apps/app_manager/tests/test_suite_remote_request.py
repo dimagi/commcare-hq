@@ -309,8 +309,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             suite.xpath(ref_path)[0]
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
-    @flag_enabled('USH_SEARCH_FILTER')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_additional_types(self):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
@@ -318,12 +317,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = parse_normalize(suite_xml, to_string=False)
         ref_path = './remote-request[1]/session/datum/@nodeset'
         self.assertEqual(
-            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}'][{}]{}".format(
+            "instance('{}')/{}/case[@case_type='{}' or @case_type='{}']{}".format(
                 RESULTS_INSTANCE,
                 RESULTS_INSTANCE,
                 self.module.case_type,
                 another_case_type,
-                self.module.search_config.search_filter,
                 EXCLUDE_RELATED_CASES_FILTER
             ),
             suite.xpath(ref_path)[0]
@@ -339,7 +337,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./remote-request[1]/session/query/data[@key='case_type']"
         )
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('CASE_SEARCH_ADVANCED')
     def test_additional_types__shadow_module(self):
         shadow_module = self.app.add_module(ShadowModule.new_module("shadow", "en"))
         shadow_module.source_module_id = self.module.get_or_create_unique_id()

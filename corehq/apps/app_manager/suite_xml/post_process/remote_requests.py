@@ -236,7 +236,7 @@ class RemoteRequestFactory(object):
             long_detail_id = 'search_long'
 
         nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
-        if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
+        if toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
             additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
