@@ -146,11 +146,11 @@ class InvoiceReminder(UnpaidInvoiceAction):
 
         if invoice.account.auto_pay_enabled:
             subject = _(
-                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} days"
+                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} day"
             ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
         else:
             subject = _(
-                "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
+                "Your CommCare Billing Statement for {account_name} is due in {num_days} day"
             ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
 
         send_HTML_email(
