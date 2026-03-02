@@ -422,15 +422,14 @@ class ApplicationDataRMIHelper(object):
         forms = []
         unknown_forms = []
 
-        for f in get_exports_by_form(self.domain, use_es=self.domain_object.exports_use_elasticsearch):
+        for f in get_exports_by_form(self.domain):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
                 continue
             if 'app' in form:
                 form['has_app'] = True
                 forms.append(form)
-            elif not self.domain_object.exports_use_elasticsearch:
-                # If the elasticsearch toggle is on, we don't care about forms without apps
+            else:
                 app_id = f['key'][1] or ''
                 form['app'] = {
                     'id': app_id

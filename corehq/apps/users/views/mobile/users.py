@@ -62,11 +62,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES, UserES
-from corehq.apps.events.models import (
-    get_attendee_case_type,
-    mobile_worker_attendees_enabled,
-)
-from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
@@ -796,12 +791,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 errors=', '.join(all_errors)
             )}
         couch_user = self._build_commcare_user()
-        if (
-            domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
-            and toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-            and mobile_worker_attendees_enabled(self.domain)
-        ):
-            self.create_attendee_for_user(couch_user)
 
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
@@ -812,17 +801,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'success': True,
             'user_id': couch_user.userID,
         }
-
-    def create_attendee_for_user(self, commcare_user):
-        """Creates a case for commcare_user to be used for attendance tracking"""
-        create_attendee_for_user(
-            commcare_user,
-            case_type=get_attendee_case_type(self.domain),
-            domain=self.domain,
-            xform_user_id=self.couch_user.user_id,
-            xform_device_id='MobileWorkerListView.'
-                            'create_attendee_for_commcare_user',
-        )
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
@@ -1317,60 +1295,6 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
-
-
-@method_decorator([toggles.CLEAR_MOBILE_WORKER_DATA.required_decorator()], name='dispatch')
-class ClearCommCareUsers(DeleteCommCareUsers):
-    urlname = 'clear_commcare_users'
-    page_title = gettext_noop('Bulk Clear')
-    template_name = 'users/bootstrap3/bulk_clear.html'
-
-    def post(self, request, *args, **kwargs):
-        usernames = self._get_usernames(request)
-        if not usernames:
-            return self.get(request, *args, **kwargs)
-
-        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
-        usernames_not_found = self._get_usernames_not_found(request, user_docs_by_id, usernames)
-
-        if usernames_not_found:
-            messages.error(request, _("""
-                No users cleared. Please address the above issue(s) and re-upload your updated file.
-            """))
-        else:
-            self._clear_users_data(request, user_docs_by_id)
-
-        return self.get(request, *args, **kwargs)
-
-    def _clear_users_data(self, request, user_docs_by_id):
-        from corehq.apps.hqwebapp.tasks import send_mail_async
-        from corehq.apps.users.model_log import UserModelAction
-
-        cleared_count = 0
-        for user_id, doc in user_docs_by_id.items():
-            user = CommCareUser.wrap(doc)
-            user.delete_user_data()
-
-            log_user_change(
-                by_domain=self.domain,
-                for_domain=self.domain,
-                couch_user=user,
-                changed_by_user=request.couch_user,
-                changed_via="web",
-                action=UserModelAction.CLEAR
-            )
-
-            cleared_count += 1
-        if cleared_count:
-            messages.success(request, f"{cleared_count} user(s) cleared.")
-
-        send_mail_async.delay(
-            subject=f"Mobile Worker Clearing Complete - {self.domain}",
-            message=f"The mobile workers have been cleared successfully for the project '{self.domain}'.",
-            recipient_list=[self.request.couch_user.get_email()],
-            domain=self.domain,
-            use_domain_gateway=True,
-        )
 
 
 @method_decorator(require_can_edit_commcare_users, name='dispatch')
