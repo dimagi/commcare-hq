@@ -549,29 +549,6 @@ Alpine.data('initRole', (roleJson) => {
                 },
                 {
                     get showOption() {
-                        return initialPageData.get("attendance_tracking_privilege");
-                    },
-                    get editPermission() {
-                        return self.role.permissions.manage_attendance_tracking;
-                    },
-                    set editPermission(value) {
-                        self.role.permissions.manage_attendance_tracking = value;
-                    },
-                    viewPermission: null,
-                    text: gettext("<strong>Attendance Tracking</strong> &mdash; Coordinate attendance tracking events and users"),
-                    showEditCheckbox: true,
-                    editCheckboxLabel: "edit-attenance-tracking-checkbox",
-                    showViewCheckbox: false,
-                    viewCheckboxLabel: "view-attenance-tracking-checkbox",
-                    screenReaderEditAndViewText: gettext("Edit Attendance Tracking Events"),
-                    screenReaderViewOnlyText: gettext("Edit Attendance Tracking Events"),
-                    showAllowCheckbox: false,
-                    allowCheckboxText: null,
-                    allowCheckboxId: null,
-                    allowCheckboxPermission: null,
-                },
-                {
-                    get showOption() {
                         return toggles.toggleEnabled("SUPERSET_ANALYTICS");
                     },
                     get editPermission() {

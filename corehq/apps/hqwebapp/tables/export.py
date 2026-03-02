@@ -114,7 +114,7 @@ class TableExportMixin(TableExportConfig, SingleTableMixin):
         """
         Can be overridden to provide additional context for the export.
         """
-        return Context()
+        return Context({"exporting": True})
 
     def trigger_export(self, recipient_list=None, subject=None):
         self._validate_export_dependencies()

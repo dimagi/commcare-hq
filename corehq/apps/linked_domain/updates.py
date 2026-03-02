@@ -436,7 +436,7 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
         overwrite_action = _('Sync & Overwrite') if is_pull else _('Push & Overwrite')
         error_messages = []
         if failed_default_updates:
-            conflicting_names = ', '.join(['"{}"'.format(name) for name in failed_default_updates])
+            conflicting_names = ', '.join(['"{}"'.format(name) for name in sorted(failed_default_updates)])
             error_messages.append(_(
                 'Failed to {sync_action} the following default roles due to matching (same name but different'
                 ' permissions) unlinked roles in this downstream project space: {conflicting_role_names}.'
@@ -444,7 +444,7 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
                 ' to overwrite and link the matching ones.'
             ).format(sync_action=action, conflicting_role_names=conflicting_names, overwrite_btn=overwrite_action))
         if failed_custom_updates:
-            conflicting_names = ', '.join(['"{}"'.format(name) for name in failed_custom_updates])
+            conflicting_names = ', '.join(['"{}"'.format(name) for name in sorted(failed_custom_updates)])
             error_messages.append(_(
                 'Failed to {sync_action} the following custom roles due to matching (same name) unlinked roles in'
                 ' this downstream project space: {conflicting_role_names}. Please edit the roles to resolve the'

@@ -716,28 +716,6 @@ def expire_get_latest_app_release_by_location_cache(app_release_by_location):
                                           app_release_by_location.app_id)
 
 
-def get_app_id_from_form_unique_id(domain, form_unique_id):
-    """
-    Do not use. This is here to support migrations and temporary cose for *removing*
-    the constraint that form ids be lgobally unique. It will stop working as more
-    duplicated form unique ids appear.
-    """
-    return _get_app_ids_by_form_unique_id(domain).get(form_unique_id)
-
-
-@quickcache(['domain'], timeout=1 * 60 * 60)
-def _get_app_ids_by_form_unique_id(domain):
-    apps = get_apps_in_domain(domain, include_remote=False)
-    app_ids = {}
-    for app in apps:
-        for module in app.modules:
-            for form in module.get_forms():
-                if form.unique_id in app_ids:
-                    raise AppManagerException("Could not identify app for form {}".format(form.unique_id))
-                app_ids[form.unique_id] = app.get_id
-    return app_ids
-
-
 def extract_instance_id_from_nodeset_ref(nodeset):
     # note: for simplicity, this only returns the first instance ref in the event there are multiple.
     # if that's ever a problem this method could be changed in the future to return a list
