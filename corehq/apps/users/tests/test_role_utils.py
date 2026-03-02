@@ -1,21 +1,24 @@
 from django.test import TestCase
 
-from corehq.apps.users.models import HqPermissions, UserRole, WebUser, PermissionInfo
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import (
+    HqPermissions,
+    PermissionInfo,
+    UserRole,
+    WebUser,
+)
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_SQL_LAB,
+    COMMCARE_ANALYTICS_USER_ROLES,
+)
 from corehq.apps.users.role_utils import (
     UserRolePresets,
     archive_custom_roles_for_domain,
+    get_commcare_analytics_access_for_user_domain,
     get_custom_roles_for_domain,
     initialize_domain_with_default_roles,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
-    enable_attendance_coordinator_role_for_domain,
-    archive_attendance_coordinator_role_for_domain,
-    get_commcare_analytics_access_for_user_domain,
-)
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.permissions import (
-    COMMCARE_ANALYTICS_SQL_LAB,
-    COMMCARE_ANALYTICS_USER_ROLES,
 )
 
 
@@ -103,22 +106,6 @@ class RoleUtilsTests(TestCase):
         initialize_domain_with_default_roles(self.domain)
         roles = get_custom_roles_for_domain(self.domain)
         self.assertEqual([role.name for role in roles], ["role1"])
-
-    def test_enable_attendance_coordinator_role_for_domain(self):
-        self.addCleanup(self._delete_presets)
-        initialize_domain_with_default_roles(self.domain)
-
-        domain_roles = [role.name for role in UserRole.objects.get_by_domain(self.domain)]
-        self.assertFalse(UserRolePresets.ATTENDANCE_COORDINATOR in domain_roles)
-        enable_attendance_coordinator_role_for_domain(self.domain)
-        domain_roles = [role.name for role in UserRole.objects.get_by_domain(self.domain)]
-        self.assertTrue(UserRolePresets.ATTENDANCE_COORDINATOR in domain_roles)
-
-    def test_archive_attendance_coordinator_role_for_domain(self):
-        self.addCleanup(self._delete_presets)
-        initialize_domain_with_default_roles(self.domain)
-        enable_attendance_coordinator_role_for_domain(self.domain)
-        archive_attendance_coordinator_role_for_domain(domain=self.domain)
 
     def _delete_presets(self):
         for role in UserRole.objects.get_by_domain(self.domain):
