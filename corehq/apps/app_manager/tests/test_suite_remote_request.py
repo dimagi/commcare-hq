@@ -799,7 +799,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             f"./remote-request[1]/instance[@id='{instance_id}']",
         )
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled("CASE_SEARCH_ADVANCED")
     def test_prompt_default_value(self):
         """Setting the default to "default_value"
         """
