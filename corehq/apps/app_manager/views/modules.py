@@ -240,7 +240,6 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 domain_has_privilege(app.domain, privileges.GEOCODER)
                 and toggles.CASE_SEARCH_ADVANCED.enabled(app.domain)
             ),
-            'ush_case_claim_2_53': app.ush_case_claim_2_53,
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
