@@ -348,7 +348,7 @@ class FormAction(UpdateableDocument):
             yield path
 
     @classmethod
-    def get_action_properties(self, action):
+    def get_action_properties(cls, action):
         action_properties = action.properties()
         if 'name_path' in action_properties and action.name_path:
             yield 'name', action.name_path
