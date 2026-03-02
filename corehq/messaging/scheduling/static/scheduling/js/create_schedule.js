@@ -273,8 +273,6 @@ var CreateScheduleViewModel = function (initialValues, select2UserRecipients,
 
     self.content.subscribe(function (newValue) {
         if (newValue === 'connect_message' || newValue === 'connect_survey') {
-            self.recipient_types(['CommCareUser']);
-            $('#id_schedule-recipient_types').val(['CommCareUser']).trigger('change');
             self.user_recipients.value('');
             $('#id_schedule-user_recipients').val(null).trigger('change');
         }

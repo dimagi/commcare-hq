@@ -252,7 +252,6 @@ Request & Response Details
         "edit_web_users": false,
         "limited_login_as": false,
         "login_as_all_users": false,
-        "manage_attendance_tracking": false,
         "manage_data_registry": false,
         "manage_data_registry_list": [],
         "manage_domain_alerts": false,

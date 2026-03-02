@@ -3,7 +3,8 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime, date, timezone as tz
+from datetime import date, datetime
+from datetime import timezone as tz
 from hashlib import sha1
 from typing import List
 from uuid import uuid4
@@ -15,13 +16,13 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import connection, models, router, IntegrityError
+from django.db import IntegrityError, connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.translation import override as override_language
 from django.utils.translation import gettext as _
+from django.utils.translation import override as override_language
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -30,8 +31,9 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
-from casexml.apps.phone.restore_caching import get_loadtest_factor_for_restore_cache_key
-from corehq.form_processor.models import XFormInstance
+from casexml.apps.phone.restore_caching import (
+    get_loadtest_factor_for_restore_cache_key,
+)
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -57,6 +59,8 @@ from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -72,6 +76,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.mobile_auth.utils import generate_aes_key
 from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
@@ -84,20 +89,20 @@ from corehq.apps.users.tasks import (
     undelete_system_forms,
 )
 from corehq.apps.users.util import (
+    bulk_auto_deactivate_commcare_users,
     filter_by_app,
-    log_user_change,
+    is_dimagi_email,
     log_invitation_change,
+    log_user_change,
     user_display_string,
     user_location_data,
     username_to_user_id,
-    bulk_auto_deactivate_commcare_users,
-    is_dimagi_email,
 )
 from corehq.const import INVITATION_CHANGE_VIA_WEB, USER_CHANGE_VIA_WEB
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.models import CommCareCase
-from corehq.motech.utils import b64_aes_cbc_encrypt, b64_aes_cbc_decrypt
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.motech.utils import b64_aes_cbc_decrypt, b64_aes_cbc_encrypt
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
@@ -105,17 +110,13 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
 from .models_role import (  # noqa
+    Permission,
     RoleAssignableBy,
     RolePermission,
-    Permission,
     StaticRole,
     UserRole,
 )
 from .user_data import SQLUserData  # noqa
-from corehq import toggles, privileges
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.mobile_auth.utils import generate_aes_key
-
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -234,7 +235,7 @@ class HqPermissions(DocumentSchema):
     manage_data_registry_list = StringListProperty(default=[])
     view_data_registry_contents = BooleanProperty(default=False)
     view_data_registry_contents_list = StringListProperty(default=[])
-    manage_attendance_tracking = BooleanProperty(default=False)
+    manage_attendance_tracking = BooleanProperty(default=False)  # no longer used
 
     manage_domain_alerts = BooleanProperty(default=False)
 
@@ -586,7 +587,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []
-            from corehq.apps.reports.util import get_tableau_groups_by_ids, update_tableau_user
+            from corehq.apps.reports.util import (
+                get_tableau_groups_by_ids,
+                update_tableau_user,
+            )
             update_tableau_user(domain=domain, username=self.username, role=tableau_role,
                                 groups=get_tableau_groups_by_ids(tableau_group_ids, domain),
                                 blocking_exception=False)
@@ -911,8 +915,6 @@ class DeviceIdLastUsed(DocumentSchema):
     last_used = DateTimeProperty()
     commcare_version = StringProperty()
     app_meta = SchemaListProperty(DeviceAppMeta)
-    fcm_token = StringProperty()
-    fcm_token_timestamp = DateTimeProperty()
 
     def update_meta(self, commcare_version=None, app_meta=None):
         if commcare_version:
@@ -939,10 +941,6 @@ class DeviceIdLastUsed(DocumentSchema):
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
-
-    def update_fcm_token(self, fcm_token, fcm_token_timestamp):
-        self.fcm_token = fcm_token
-        self.fcm_token_timestamp = fcm_token_timestamp
 
 
 class LastSubmission(DocumentSchema):
@@ -1192,9 +1190,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def get_user_session_data(self, domain):
         from corehq.apps.custom_data_fields.models import (
-            SYSTEM_PREFIX,
-            COMMCARE_USER_TYPE_KEY,
             COMMCARE_USER_TYPE_DEMO,
+            COMMCARE_USER_TYPE_KEY,
+            SYSTEM_PREFIX,
         )
 
         session_data = self.get_user_data(domain).to_dict()
@@ -1317,8 +1315,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         Returns information about the status of each of this user's phone numbers.
         requesting_user - The user that is requesting this information (from a view)
         """
-        from corehq.apps.sms.models import PhoneNumber
         from corehq.apps.hqwebapp.doc_info import get_object_url
+        from corehq.apps.sms.models import PhoneNumber
 
         phone_entries = self.get_phone_entries()
 
@@ -1625,7 +1623,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if fire_signals:
             self.fire_signals()
             if not self.to_be_deleted():
-                from corehq.apps.callcenter.tasks import sync_usercases_if_applicable
+                from corehq.apps.callcenter.tasks import (
+                    sync_usercases_if_applicable,
+                )
                 if not domains_to_sync_usercase:
                     domains_to_sync_usercase = getattr(self, 'domains', [])
                 # We need to sync to domains the user is leaving so that usercase is closed
@@ -1721,9 +1721,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_permission(domain, 'login_as_all_users')
             or self.has_permission(domain, 'limited_login_as')
         )
-
-    def can_manage_events(self, domain):
-        return self.has_permission(domain, 'manage_attendance_tracking')
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
@@ -1827,7 +1824,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return super(CommCareUser, cls).wrap(data)
 
     def _is_demo_user_cached_value_is_stale(self):
-        from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
+        from corehq.apps.users.dbaccessors import (
+            get_practice_mode_mobile_workers,
+        )
         cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
         if cached_demo_users is not Ellipsis:
             cached_is_demo_user = any(user['_id'] == self._id for user in cached_demo_users)
@@ -1836,7 +1835,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return False
 
     def clear_quickcache_for_user(self):
-        from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
+        from corehq.apps.users.dbaccessors import (
+            get_practice_mode_mobile_workers,
+        )
         self.get_usercase_id.clear(self)
         get_loadtest_factor_for_restore_cache_key.clear(self.domain, self.user_id)
 
@@ -1856,6 +1857,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
+
         # clear demo restore objects if any
         delete_demo_restore_for_user(self)
 
@@ -2035,7 +2037,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import (
+            unset_practice_mode_configured_apps,
+        )
         unset_practice_mode_configured_apps(self.domain, self.get_id)
 
         return deletion_id, deletion_date
@@ -2053,18 +2057,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self, domain=None):
         from corehq.apps.groups.models import Group
-        from corehq.apps.events.models import (
-            get_user_case_sharing_groups_for_events,
-        )
 
         groups = self._get_case_sharing_groups_for_locations(self.domain)
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
-
-        has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
-        # Temporary toggle that will be removed once the feature is released
-        has_at_toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-        if has_at_privilege and has_at_toggle_enabled:
-            groups += get_user_case_sharing_groups_for_events(self)
         return groups
 
     def get_reporting_groups(self):
@@ -2272,7 +2267,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
-            LinkedSupplyPointNotFoundError
+            LinkedSupplyPointNotFoundError,
         )
 
         if supply_point:
@@ -2366,8 +2361,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = self.get_usercase()
         return case.case_id if case else None
 
-    def update_device_id_last_used(self, device_id, when=None, commcare_version=None, device_app_meta=None,
-                                   fcm_token=None, fcm_token_timestamp=None):
+    def update_device_id_last_used(self, device_id, when=None, commcare_version=None, device_app_meta=None):
         """
         Sets the last_used date for the device to be the current time
         Does NOT save the user object.
@@ -2401,14 +2395,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 meta = self.last_device.get_last_used_app_meta()
                 self.last_device.app_meta = [meta] if meta else []
                 save_user = True
-            if fcm_token and fcm_token_timestamp:
-                if not device.fcm_token_timestamp or fcm_token_timestamp > device.fcm_token_timestamp:
-                    device.update_fcm_token(fcm_token, fcm_token_timestamp)
-                    save_user = True
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
-            if fcm_token and fcm_token_timestamp:
-                device.update_fcm_token(fcm_token, fcm_token_timestamp)
             device.update_meta(commcare_version, device_app_meta)
             self.devices.append(device)
             self.last_device = device
@@ -2425,9 +2413,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for device in self.devices:
             if device.device_id == device_id:
                 return device
-
-    def get_devices_fcm_tokens(self):
-        return [device.fcm_token for device in self.devices if device.fcm_token]
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -3075,7 +3060,7 @@ class UserReportingMetadataStaging(models.Model):
     @classmethod
     def add_heartbeat(cls, domain, user_id, app_id, build_id, sync_date, device_id,
                       app_version, num_unsent_forms, num_quarantined_forms,
-                      commcare_version, build_profile_id, fcm_token):
+                      commcare_version, build_profile_id):
         params = {
             'domain': domain,
             'user_id': user_id,
@@ -3088,7 +3073,6 @@ class UserReportingMetadataStaging(models.Model):
             'num_quarantined_forms': num_quarantined_forms,
             'commcare_version': commcare_version,
             'build_profile_id': build_profile_id,
-            'fcm_token': fcm_token
         }
         with connection.cursor() as cursor:
             cursor.execute(f"""
@@ -3097,13 +3081,13 @@ class UserReportingMetadataStaging(models.Model):
                     build_id,
                     sync_date, device_id,
                     app_version, num_unsent_forms, num_quarantined_forms,
-                    commcare_version, build_profile_id, last_heartbeat, fcm_token
+                    commcare_version, build_profile_id, last_heartbeat
                 ) VALUES (
                     %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(sync_date)s, %(device_id)s,
                     %(app_version)s, %(num_unsent_forms)s, %(num_quarantined_forms)s,
-                    %(commcare_version)s, %(build_profile_id)s, CLOCK_TIMESTAMP(), %(fcm_token)s
+                    %(commcare_version)s, %(build_profile_id)s, CLOCK_TIMESTAMP()
                 )
                 ON CONFLICT (domain, user_id, app_id)
                 DO UPDATE SET
@@ -3116,14 +3100,14 @@ class UserReportingMetadataStaging(models.Model):
                     num_quarantined_forms = EXCLUDED.num_quarantined_forms,
                     commcare_version = EXCLUDED.commcare_version,
                     build_profile_id = EXCLUDED.build_profile_id,
-                    last_heartbeat = CLOCK_TIMESTAMP(),
-                    fcm_token = EXCLUDED.fcm_token
+                    last_heartbeat = CLOCK_TIMESTAMP()
                 WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbeat
                 """, params)
 
     def process_record(self, user):
-        from corehq.pillows.synclog import mark_last_synclog
         from pillowtop.processors.form import mark_latest_submission
+
+        from corehq.pillows.synclog import mark_last_synclog
 
         save = False
         if not user or user.is_deleted():
@@ -3154,7 +3138,7 @@ class UserReportingMetadataStaging(models.Model):
                 self.domain, user, self.app_id, self.build_id,
                 self.sync_date, latest_build_date, self.device_id, device_app_meta,
                 commcare_version=self.commcare_version, build_profile_id=self.build_profile_id,
-                fcm_token=self.fcm_token, fcm_token_timestamp=self.last_heartbeat, save_user=False
+                save_user=False
             )
         if save:
             # update_django_user=False below is an optimization that allows us to update the CouchUser
@@ -3423,7 +3407,9 @@ class ConnectIDUserLink(models.Model):
     @cached_property
     def messaging_channel(self):
         # inline to prevent circular import
-        from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
+        from corehq.messaging.smsbackends.connectid.backend import (
+            ConnectBackend,
+        )
 
         if self.channel_id is None:
             ConnectBackend().create_channel(self)
