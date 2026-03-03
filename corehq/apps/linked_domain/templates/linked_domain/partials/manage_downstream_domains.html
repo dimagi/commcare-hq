@@ -13,18 +13,18 @@
     <button type="button"
             class="btn btn-primary"
             id="add-downstream-domain"
-            data-toggle="modal"
-            data-target="#new-downstream-domain-modal"
+            data-bs-toggle="modal"
+            data-bs-target="#new-downstream-domain-modal"
             data-bind="click: addDownstreamProjectSpace"
     >
       <i class="fa fa-plus"></i> {% trans "Add Downstream Project Space" %}
     </button>
     <div class="spacer"></div>
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">{% trans 'Downstream Project Spaces' %}</h3>
+    <div class="card ">  {# todo B5: css-panel #}
+      <div class="card-header">
+        <h3 class="card-title">{% trans 'Downstream Project Spaces' %}</h3>
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <search-box data-apply-bindings="false"
                   params="value: query,
                           action: filter,
@@ -43,7 +43,7 @@
             <td><a data-bind="attr: {'href': downstreamUrl}, text: downstreamDomain"></a></td>
             <td data-bind="text: lastUpdate"></td>
             <td>
-              <button type="button" class="btn btn-danger" data-toggle="modal" data-bind="attr: {'data-target': '#remove-link-modal-' + $index()}">
+              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bind="attr: {'data-bs-target': '#remove-link-modal-' + $index()}">
                 <i class="fa-regular fa-trash-can"></i>
                 {% trans 'Remove Link' %}
               </button>
@@ -51,7 +51,7 @@
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
                       <h4 class="modal-title">{% trans 'Remove Project Space Link' %}</h4>
                     </div>
                     <div class="modal-body">
@@ -67,8 +67,8 @@
                       </p>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                      <button type="button" class="btn btn-danger" data-bind="click: $root.deleteLink.bind($data)" data-dismiss="modal">{% trans 'Remove' %}</button>
+                      <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+                      <button type="button" class="btn btn-outline-danger" data-bind="click: $root.deleteLink.bind($data)" data-bs-dismiss="modal">{% trans 'Remove' %}</button>
                     </div>
                   </div>
                 </div>
