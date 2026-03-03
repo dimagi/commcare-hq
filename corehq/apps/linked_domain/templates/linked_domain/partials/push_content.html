@@ -6,8 +6,14 @@
     <h3>{% trans "Push Content" %}</h3>
     <p>
       {% blocktrans %}
-        Select which content you would like to push to the specified downstream project spaces.<br/>
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pushing content with Linked Project Spaces.
+        Select which content you would like to push to the specified downstream
+        project spaces.<br />
+        <a
+          href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces"
+          target="_blank"
+          >Learn more</a
+        >
+        about pushing content with Linked Project Spaces.
       {% endblocktrans %}
     </p>
     <div class="spacer"></div>
@@ -17,18 +23,26 @@
           {% trans "Content" %}
         </label>
         <div class="field-control">
-          <select multiple class="form-select" id="model-multiselect"
-                  data-bind="selectedOptions: modelsToPush,
+          <select
+            multiple
+            class="form-select"
+            id="model-multiselect"
+            data-bind="selectedOptions: modelsToPush,
                              multiselect: {
                                  properties: {
                                     selectableHeaderTitle: '{% trans_html_attr "All content" %}',
                                     selectedHeaderTitle: '{% trans_html_attr "Content to push" %}',
                                     searchItemTitle: '{% trans_html_attr "Search content" %}',
                                  }
-                            }">
+                            }"
+          >
             {% for model in view_data.view_models_to_push %}
-              <option value="{% html_attr model %}" {% if not model.is_linkable %} disabled {% endif %}>
-                {{ model.name }} {% if not model.is_linkable %}({% trans 'unlinkable'%}){% endif %}
+              <option
+                value="{% html_attr model %}"
+                {% if not model.is_linkable %}disabled{% endif %}
+              >
+                {{ model.name }}
+                {% if not model.is_linkable %}({% trans 'unlinkable' %}){% endif %}
               </option>
             {% endfor %}
           </select>
@@ -39,20 +53,35 @@
           {% trans "Project Spaces" %}
         </label>
         <div class="field-control">
-          <select multiple class="form-select" id="domain-multiselect"
-                  data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect">
-          </select>
+          <select
+            multiple
+            class="form-select"
+            id="domain-multiselect"
+            data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect"
+          ></select>
           <div class="spacer"></div>
           <p data-bind="visible: shouldShowSelectedMRMDomain">
             <i class="fa fa-info-circle" aria-hidden="true"></i>
             {% blocktrans %}
-              The selected project can only be pushed individually. See <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Linked Project Spaces</a> documentation for more information.
+              The selected project can only be pushed individually. See
+              <a
+                href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces"
+                target="_blank"
+                >Linked Project Spaces</a
+              >
+              documentation for more information.
             {% endblocktrans %}
           </p>
           <p data-bind="visible: shouldShowSelectedERMDomain">
             <i class="fa fa-info-circle" aria-hidden="true"></i>
             {% blocktrans %}
-              Disabled project spaces can only be pushed individually. See <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Linked Project Spaces</a> documentation for more information.
+              Disabled project spaces can only be pushed individually. See
+              <a
+                href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces"
+                target="_blank"
+                >Linked Project Spaces</a
+              >
+              documentation for more information.
             {% endblocktrans %}
           </p>
         </div>
@@ -63,7 +92,12 @@
         </label>
         <div class="field-control">
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="build-apps" data-bind="checked: buildAppsOnPush" />
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="build-apps"
+              data-bind="checked: buildAppsOnPush"
+            />
             <label class="form-check-label" for="build-apps">
               {% trans "Create and release new build for apps" %}
             </label>
@@ -71,13 +105,32 @@
         </div>
       </div>
       <div class="form-actions">
-        <div class="offset-md-3 offset-lg-2 controls col-md-9 col-lg-8 col-xl-6">
-          <button type="button" class="btn btn-primary" data-bind="click: pushContent, enable: enablePushButton">
-            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_NORMAL"></i>
+        <div
+          class="offset-md-3 offset-lg-2 controls col-md-9 col-lg-8 col-xl-6"
+        >
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bind="click: pushContent, enable: enablePushButton"
+          >
+            <i
+              class="fa fa-refresh fa-spin icon-refresh icon-spin"
+              data-bind="visible: pushType() === PUSH_TYPE_NORMAL"
+            ></i>
             {% trans "Push Content" %}
           </button>
-          <button type="button" class="btn btn-outline-primary" id="overwrite-btn" data-bs-toggle="modal" data-bs-target="#push-warning-dialog" data-bind="enable: enablePushButton">
-            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_OVERWRITE"></i>
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            id="overwrite-btn"
+            data-bs-toggle="modal"
+            data-bs-target="#push-warning-dialog"
+            data-bind="enable: enablePushButton"
+          >
+            <i
+              class="fa fa-refresh fa-spin icon-refresh icon-spin"
+              data-bind="visible: pushType() === PUSH_TYPE_OVERWRITE"
+            ></i>
             {% trans "Push & Overwrite Matches" %}
           </button>
         </div>
@@ -87,8 +140,13 @@
   <div data-bind="if: !canPush()">
     <p>
       {% blocktrans %}
-        You have no linked project spaces that allow you to push data.<br/>
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pushing content with Linked Project Spaces.
+        You have no linked project spaces that allow you to push data.<br />
+        <a
+          href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces"
+          target="_blank"
+          >Learn more</a
+        >
+        about pushing content with Linked Project Spaces.
       {% endblocktrans %}
     </p>
   </div>
