@@ -252,8 +252,12 @@ def _iter_domain_names_standard_and_higher():
         SoftwarePlanEdition.RESELLER,
         SoftwarePlanEdition.MANAGED_HOSTING,
     ]
+    dimagi_only = 'Dimagi Only CommCare Enterprise'  # value based on
+    # corehq/apps/accounting/bootstrap/utils.py::_ensure_product_rate
+
     return Subscription.visible_objects.filter(
         is_active=True,
-        account__is_customer_billing_account=True,
         plan_version__plan__edition__in=standard_and_higher,
+    ).exclude(
+        plan_version__plan__name__startswith=dimagi_only,
     ).values_list('subscriber__domain', flat=True).distinct()
