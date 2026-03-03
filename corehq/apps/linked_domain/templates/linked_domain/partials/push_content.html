@@ -12,12 +12,12 @@
     </p>
     <div class="spacer"></div>
     <form class="form-horizontal">
-      <div class="form-group">
-        <label class="col-sm-3 col-md-2 control-label">
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="col-md-3 col-lg-2 form-label">
           {% trans "Content" %}
         </label>
-        <div class="col-sm-9 col-md-10 controls">
-          <select multiple class="form-control" id="model-multiselect"
+        <div class="col-md-9 col-lg-10 controls">
+          <select multiple class="form-select" id="model-multiselect"
                   data-bind="selectedOptions: modelsToPush,
                              multiselect: {
                                  properties: {
@@ -34,12 +34,12 @@
           </select>
         </div>
       </div>
-      <div class="form-group">
-        <label class="col-sm-3 col-md-2 control-label">
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="col-md-3 col-lg-2 form-label">
           {% trans "Project Spaces" %}
         </label>
-        <div class="col-sm-9 col-md-10 controls">
-          <select multiple class="form-control" id="domain-multiselect"
+        <div class="col-md-9 col-lg-10 controls">
+          <select multiple class="form-select" id="domain-multiselect"
                   data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect">
           </select>
           <div class="spacer"></div>
@@ -57,24 +57,24 @@
           </p>
         </div>
       </div>
-      <div class="form-group">
-        <label class="col-sm-3 col-md-2 control-label" for="build-apps">
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="col-md-3 col-lg-2 form-label" for="build-apps">
           {% trans "Rebuild Applications" %}
         </label>
-        <div class="col-sm-9 col-md-10 controls">
-          <label class="checkbox">
-            <input type="checkbox" data-bind="checked: buildAppsOnPush" />
+        <div class="col-md-9 col-lg-10 controls">
+          <label class="checkbox">  {# todo B5: css-checkbox #}
+            <input type="checkbox" data-bind="checked: buildAppsOnPush" />  {# todo B5: css-checkbox #}
             {% trans "Create and release new build for apps" %}
           </label>
         </div>
       </div>
       <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+        <div class="offset-md-3 offset-lg-2 controls col-md-9 col-lg-8 col-xl-6">
           <button type="button" class="btn btn-primary" data-bind="click: pushContent, enable: enablePushButton">
             <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_NORMAL"></i>
             {% trans "Push Content" %}
           </button>
-          <button type="button" class="btn btn-default" id="overwrite-btn" data-toggle="modal" data-target="#push-warning-dialog" data-bind="enable: enablePushButton">
+          <button type="button" class="btn btn-outline-primary" id="overwrite-btn" data-bs-toggle="modal" data-bs-target="#push-warning-dialog" data-bind="enable: enablePushButton">
             <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_OVERWRITE"></i>
             {% trans "Push & Overwrite Matches" %}
           </button>
