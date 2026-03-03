@@ -128,11 +128,11 @@ var DomainLinksViewModel = function (data) {
 
     // Tab Content Statuses
     self.manageTabActiveStatus = ko.computed(function () {
-        return self.isUpstreamDomain() && !window.location.hash ? "in active" : "";
+        return self.isUpstreamDomain() && !window.location.hash ? "show active" : "";
     });
 
     self.pullTabActiveStatus = ko.computed(function () {
-        return self.isOnlyDownstreamDomain() ? "in active" : "";
+        return self.isOnlyDownstreamDomain() ? "show active" : "";
     });
 
     self.showGetStarted = ko.computed(function () {
@@ -223,13 +223,6 @@ var DomainLinksViewModel = function (data) {
         }).fail(function () {
             alertUser.alert_user(gettext('Something unexpected happened.\n' +
                 'Please try again, or report an issue if the problem persists.'), 'danger');
-        }).always(function () {
-            // fix for b3
-            $('body').removeClass('modal-open');
-            var $modalBackdrop = $('.modal-backdrop');
-            if ($modalBackdrop) {
-                $modalBackdrop.remove();
-            }
         });
     };
 
@@ -527,7 +520,7 @@ var GettingStartedViewModel = function (data) {
     self.upstreamDomains = ko.observableArray(sortedUpstreamDomains);
 
     self.upstreamButtonClass = ko.computed(function () {
-        return self.upstreamDomains().length > 0 ? "btn-default" : "btn-primary";
+        return self.upstreamDomains().length > 0 ? "btn-outline-primary" : "btn-primary";
     });
 
     self.goToUpstream = function (data) {
