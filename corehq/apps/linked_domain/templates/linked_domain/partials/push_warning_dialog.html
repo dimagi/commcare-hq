@@ -5,7 +5,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
                 <h4 class="modal-title">{% trans 'Push & Overwrite Matches?' %}</h4>
             </div>
             <div class="modal-body">
@@ -16,8 +16,8 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                <button type="button" class="btn btn-primary" data-bind="click: pushAndOverwrite" data-dismiss="modal">{% trans 'Push & Overwrite Matches' %}</button>
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+                <button type="button" class="btn btn-primary" data-bind="click: pushAndOverwrite" data-bs-dismiss="modal">{% trans 'Push & Overwrite Matches' %}</button>
             </div>
         </div>
     </div>
