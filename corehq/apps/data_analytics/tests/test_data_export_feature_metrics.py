@@ -29,10 +29,7 @@ def _make_ctx(form_exports=None, case_exports=None):
 
 
 def _make_export(**kwargs):
-    export = MagicMock()
-    for k, v in kwargs.items():
-        setattr(export, k, v)
-    return export
+    return kwargs
 
 
 class TestCalcHasDataDictionary(SimpleTestCase):

@@ -127,10 +127,9 @@ def calc_case_exports_only(domain_context):
 
 def calc_scheduled_exports(domain_context):
     """Count of scheduled (daily saved) data exports."""
-    all_exports = domain_context.form_exports + domain_context.case_exports
     return sum(
-        1 for e in all_exports
-        if getattr(e, 'is_daily_saved_export', False)
+        e.get('is_daily_saved_export', False)
+        for e in domain_context.form_exports + domain_context.case_exports
     )
 
 
@@ -166,19 +165,17 @@ def calc_case_list_explorer_reports(domain_context):
 
 def calc_det_configs(domain_context):
     """Count exports with Data Export Tool config enabled."""
-    all_exports = domain_context.form_exports + domain_context.case_exports
     return sum(
-        1 for e in all_exports
-        if getattr(e, 'show_det_config_download', False)
+        e.get('show_det_config_download', False)
+        for e in domain_context.form_exports + domain_context.case_exports
     )
 
 
 def calc_odata_feeds(domain_context):
     """Count OData feed configurations."""
-    all_exports = domain_context.form_exports + domain_context.case_exports
     return sum(
-        1 for e in all_exports
-        if getattr(e, 'is_odata_config', False)
+        e.get('is_odata_config', False)
+        for e in domain_context.form_exports + domain_context.case_exports
     )
 
 

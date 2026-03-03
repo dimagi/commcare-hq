@@ -249,14 +249,17 @@ def _calc_case_exports(ctx):
 
 
 def _calc_deid_exports(ctx):
-    return len([e for e in ctx.form_exports + ctx.case_exports if e.is_safe])
+    return sum(
+        e.get('is_deidentified', False)
+        for e in ctx.form_exports + ctx.case_exports
+    )
 
 
 def _calc_saved_exports(ctx):
-    return len([
-        e for e in ctx.form_exports + ctx.case_exports
-        if hasattr(e, "is_daily_saved_export") and e.is_daily_saved_export
-    ])
+    return sum(
+        e.get('is_daily_saved_export', False)
+        for e in ctx.form_exports + ctx.case_exports
+    )
 
 
 def _calc_rb_reports(ctx):

@@ -4,10 +4,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, Callable, Literal
 
-from corehq.apps.export.dbaccessors import (
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
+from corehq.apps.export.dbaccessors import get_brief_exports
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +36,11 @@ class DomainContext:
 
     @cached_property
     def form_exports(self):
-        return get_form_exports_by_domain(self.domain)
+        return get_brief_exports(self.domain, 'form')
 
     @cached_property
     def case_exports(self):
-        return get_case_exports_by_domain(self.domain)
+        return get_brief_exports(self.domain, 'case')
 
 
 def get_metrics_registry():
