@@ -12,10 +12,10 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.export.utils import is_dashboard_feed
 from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.locations.models import LocationType
-from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.sso.models import TrustedIdentityProvider
 
@@ -134,10 +134,11 @@ def calc_scheduled_exports(domain_context):
 
 
 def calc_has_excel_dashboard(domain_context):
-    """Check if domain has Tableau/Excel dashboard integrations."""
-    return TableauVisualization.objects.filter(
-        domain=domain_context.domain
-    ).exists()
+    """Returns True if domain has created an Excel dashboard feed"""
+    for export in domain_context.form_exports + domain_context.case_exports:
+        if is_dashboard_feed(export):
+            return True
+    return False
 
 
 def calc_case_list_explorer_reports(domain_context):

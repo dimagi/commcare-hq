@@ -103,17 +103,22 @@ class TestCalcScheduledExports(SimpleTestCase):
 
 class TestCalcHasExcelDashboard(SimpleTestCase):
 
-    @patch('corehq.apps.reports.models.TableauVisualization.objects')
-    def test_true_when_visualization_exists(self, mock_manager):
-        mock_manager.filter.return_value.exists.return_value = True
-        ctx = _make_ctx(form_exports=[], case_exports=[])
+    def test_true_when_dashboard_feed_exists(self):
+        export = _make_export(
+            is_daily_saved_export=True,
+            export_format='html',
+            is_odata_config=False,
+        )
+        ctx = _make_ctx(form_exports=[export], case_exports=[])
         assert calc_has_excel_dashboard(ctx) is True
-        mock_manager.filter.assert_called_once_with(domain='test')
 
-    @patch('corehq.apps.reports.models.TableauVisualization.objects')
-    def test_false_when_no_visualizations(self, mock_manager):
-        mock_manager.filter.return_value.exists.return_value = False
-        ctx = _make_ctx(form_exports=[], case_exports=[])
+    def test_false_when_no_dashboard_feed(self):
+        export = _make_export(
+            is_daily_saved_export=True,
+            export_format='html',
+            is_odata_config=True,
+        )
+        ctx = _make_ctx(form_exports=[export], case_exports=[])
         assert calc_has_excel_dashboard(ctx) is False
 
 
