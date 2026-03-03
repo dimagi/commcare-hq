@@ -255,7 +255,8 @@ def calc_has_strong_passwords(domain_context):
 def calc_has_sso(domain_context):
     """Check if domain has SSO configured."""
     return TrustedIdentityProvider.objects.filter(
-        domain=domain_context.domain
+        domain=domain_context.domain,
+        identity_provider__is_active=True,
     ).exists()
 
 
