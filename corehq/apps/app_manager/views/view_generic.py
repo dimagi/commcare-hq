@@ -377,7 +377,7 @@ def _get_specific_media(
             module
             and hasattr(module, 'search_config')
             and module.uses_media()
-            and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+            and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain)
         ):
             specific_media.extend([
                 {
