@@ -212,16 +212,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.teardown_subscriptions()
 
         cls.domain_obj.delete()
-        SQLMobileBackend.objects.filter(pk__in=[
-            cls.mach_backend.pk, cls.http_backend.pk, cls.telerivet_backend.pk,
-            cls.test_backend.pk, cls.grapevine_backend.pk, cls.turn_backend.pk,
-            cls.twilio_backend.pk, cls.megamobile_backend.pk, cls.smsgh_backend.pk,
-            cls.apposit_backend.pk, cls.sislog_backend.pk, cls.yo_backend.pk,
-            cls.push_backend.pk, cls.vertext_backend.pk,
-            cls.start_enterprise_backend.pk, cls.ivory_coast_mtn_backend.pk,
-            cls.airtel_tcl_backend.pk, cls.trumpia_backend.pk,
-            cls.infobip_backend.pk, cls.pinpoint_backend.pk,
-        ]).delete()
         clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
