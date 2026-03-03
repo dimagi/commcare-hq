@@ -24,11 +24,11 @@ class Command(BaseCommand):
     def _domain_uses_advanced_feature(domain_name):
         csc = CaseSearchConfig.objects.get_or_none(pk=domain_name)
         return (
+            # USH Specific toggle to making case search user input available to other parts of the app.
             toggles.USH_INLINE_SEARCH.enabled(domain_name)
-            or toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(domain_name)
-            or (csc and csc.synchronous_web_apps)
-            or (csc and csc.ignore_patterns.exists())
-            or (csc and csc.sync_cases_on_form_entry)
+            or (csc and csc.synchronous_web_apps)  # Synchronous Web Apps Submissions
+            or (csc and csc.ignore_patterns.exists())  # Remove Special Characters
+            or (csc and csc.sync_cases_on_form_entry)  # Sync before entering form
         )
 
     @staticmethod
@@ -40,33 +40,48 @@ class Command(BaseCommand):
             properties = search_config.get('properties', [])
             default_properties = search_config.get('default_properties', [])
 
+            # _xpath_query
             usage_found |= any([
                 p.get('property') == '_xpath_query'
                 for p in default_properties
             ])
+            # Mobile Report Dropdown
             usage_found |= any([
                 p.get('input_', '') in ['select', 'select1']
                 and p.get('itemset', {}).get('instance_id', '').startswith('commcare-reports:')
                 for p in properties
             ])
+            # Checkbox selections
             usage_found |= any([
                 p.get('input_', '') == 'checkbox'
                 and p.get('itemset', {}).get('instance_id', '').startswith('item-list:')
                 for p in properties
             ])
+            # Geocoder Widget
             usage_found |= any([
                 p.get('input_') is None
                 and p.get('appearance') == 'address'
                 for p in properties
             ])
+            # Default Value Expressions
+            usage_found |= any([
+                bool(p.get('default_value'))
+                for p in properties
+            ])
+            # Clearing search terms resets search results
             usage_found |= search_config.get('search_on_clear', False)
+            # Hide Property on Search Screen / Exclude from Search Filters
             usage_found |= any([
                 p.get('hidden', False) or p.get('exclude', False)
                 for p in properties
             ])
+            # Case property with additional case id to add to results
             usage_found |= bool(search_config.get('custom_related_case_property'))
-            usage_found |= bool(search_config.get('instance_name'))
+            usage_found |= bool(search_config.get('instance_name'))  # Custom search input instance name
+            # Custom Search Sort Properties
             usage_found |= bool(len(search_config.get('custom_sort_properties', [])))
+            # Multiple Select Case List / Auto-select case search results
+            usage_found |= m.get('case_details', {}).get('short', {}).get('multi_select', False)
 
             if usage_found:
                 break
@@ -76,7 +91,7 @@ class Command(BaseCommand):
     @staticmethod
     def _domain_uses_deprecated_feature(domain_name):
         return (
-            toggles.WEBAPPS_STICKY_SEARCH.enabled(domain_name)
+            toggles.WEBAPPS_STICKY_SEARCH.enabled(domain_name)  # Sticky Search
         )
 
     @staticmethod
@@ -87,10 +102,12 @@ class Command(BaseCommand):
             search_config = m.get('search_config', {})
 
             auto_launch = search_config.get('auto_launch', False)
-            # See More" and "Normal Case List"
-            usage_found |= not auto_launch
+            # Normal Navigation / See More - only if case search is actually configured
+            usage_found |= bool(search_config.get('properties')) and not auto_launch
 
-            usage_found |= bool(search_config.get('additional_relevant'))
+            usage_found |= bool(search_config.get('command_label'))  # Label for searching
+            usage_found |= bool(search_config.get('additional_relevant'))  # Claim condition
+            # USH Specific toggle to use Search Filter in case search options.
             usage_found |= bool(search_config.get('search_filter'))
 
             if usage_found:
@@ -108,12 +125,14 @@ class Command(BaseCommand):
             default_properties = search_config.get('default_properties', [])
 
             csql_fns = [
-                "ancestor-exists",
-                "subcase-exists",
-                "subcase-count",
-                "parent/"
+                "ancestor-exists",  # CSQL Expression: ancestor-exists
+                "subcase-exists",   # CSQL Expression: subcase-exists
+                "subcase-count",    # CSQL Expression: subcase-count
+                "parent/"           # Related properties
             ]
 
+            # CSQL Expression: ancestor-exists / subcase-exists / subcase-count
+            # Related properties (via xpath_query)
             usage_found |= any([
                 p.get('property') == '_xpath_query'
                 and p.get('defaultValue')
@@ -121,8 +140,10 @@ class Command(BaseCommand):
                 for p in default_properties
             ])
 
-            usage_found |= any([p['name'].startswith('parent/') for p in properties])
+            usage_found |= any([p['name'].startswith('parent/') for p in properties])  # Related properties
+            # Related properties
             usage_found |= any([p.get('property', '').startswith('parent/') for p in default_properties])
+            # Include related cases in search results
             usage_found |= search_config.get('include_all_related_cases', False)
 
             if usage_found:
