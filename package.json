@@ -81,7 +81,7 @@
         "signature_pad": "^5.0.4",
         "sortablejs": "^1.15.6",
         "style-loader": "^4.0.0",
-        "underscore": "1.13.1",
+        "underscore": "1.13.8",
         "url-polyfill": "1.1.10",
         "webpack": "5.104.1",
         "webpack-cli": "5.1.4",
