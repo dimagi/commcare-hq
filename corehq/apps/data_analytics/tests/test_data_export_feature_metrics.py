@@ -34,27 +34,17 @@ def _make_export(**kwargs):
 
 class TestCalcHasDataDictionary(SimpleTestCase):
 
-    @patch('corehq.apps.data_dictionary.models.CaseType.objects')
-    def test_false_when_no_case_types(self, mock_ct_manager):
-        mock_ct_manager.filter.return_value.exists.return_value = False
+    @patch('corehq.apps.data_dictionary.models.CaseProperty.objects')
+    def test_false_when_no_typed_case_properties_exist(self, mock_cp_manager):
+        mock_cp_manager.filter.return_value.exclude.return_value.exists.return_value = False
         ctx = _make_ctx()
         assert calc_has_data_dictionary(ctx) is False
 
-    @patch('corehq.apps.data_dictionary.models.CaseType.objects')
-    def test_true_when_case_type_has_name(self, mock_ct_manager):
-        qs = mock_ct_manager.filter.return_value
-        qs.exists.return_value = True
-        qs.exclude.return_value.exclude.return_value.exists.return_value = True
+    @patch('corehq.apps.data_dictionary.models.CaseProperty.objects')
+    def test_true_when_case_property_has_type(self, mock_cp_manager):
+        mock_cp_manager.filter.return_value.exclude.return_value.exists.return_value = True
         ctx = _make_ctx()
         assert calc_has_data_dictionary(ctx) is True
-
-    @patch('corehq.apps.data_dictionary.models.CaseType.objects')
-    def test_false_when_all_case_type_names_empty(self, mock_ct_manager):
-        qs = mock_ct_manager.filter.return_value
-        qs.exists.return_value = True
-        qs.exclude.return_value.exclude.return_value.exists.return_value = False
-        ctx = _make_ctx()
-        assert calc_has_data_dictionary(ctx) is False
 
 
 class TestCalcFormExports(SimpleTestCase):

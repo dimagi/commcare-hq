@@ -10,7 +10,7 @@ from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_cleaning.models import BulkEditSession
-from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.export.utils import is_dashboard_feed
 from corehq.apps.groups.models import Group
@@ -108,11 +108,12 @@ def calc_has_custom_branding(domain_context):
 # Data & Export Feature metric calculations
 
 def calc_has_data_dictionary(domain_context):
-    """Check if domain has configured data dictionary entries."""
-    case_types = CaseType.objects.filter(domain=domain_context.domain)
-    if not case_types.exists():
-        return False
-    return case_types.exclude(name='').exclude(name__isnull=True).exists()
+    """Check if domain has used data typing in data dictionary."""
+    return CaseProperty.objects.filter(
+        case_type__domain=domain_context.domain,
+    ).exclude(
+        data_type=CaseProperty.DataType.UNDEFINED
+    ).exists()
 
 
 def calc_form_exports(domain_context):
