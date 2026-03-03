@@ -1,6 +1,5 @@
 import tempfile
 
-from corehq import toggles
 from corehq.apps.app_manager.models import LinkedApplication
 
 
@@ -23,13 +22,5 @@ def update_app_translations_from_trans_dict(app, new_trans):
     else:
         current_trans_dicts = [app.translations]
 
-    if toggles.PARTIAL_UI_TRANSLATIONS.enabled(app.domain):
-        for lang in new_trans:
-            for current_translation_dict in current_trans_dicts:
-                if lang in current_translation_dict:
-                    current_translation_dict[lang].update(new_trans[lang])
-                else:
-                    current_translation_dict[lang] = new_trans[lang]
-    else:
-        for current_translation_dict in current_trans_dicts:
-            current_translation_dict.update(new_trans)
+    for current_translation_dict in current_trans_dicts:
+        current_translation_dict.update(new_trans)

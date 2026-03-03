@@ -650,12 +650,11 @@ $(function () {
             const openCase = o.open_case || {};
             self.open_case = {
                 condition: openCase.condition || DEFAULT_CONDITION_ALWAYS,
-                name_update: openCase.name_update || DEFAULT_UPDATE_ALWAYS,
                 name_update_multi: openCase.name_update_multi || [DEFAULT_UPDATE_ALWAYS],
             };
             const updateCase = o.update_case || {};
             self.update_case = {
-                update: updateCase.update || {},
+                update: updateCase.update || {},  // for to_usercase_transaction
                 update_multi: updateCase.update_multi || {},
             };
             self.case_preload = {
@@ -691,7 +690,7 @@ $(function () {
 
             var requiredProperties = (caseConfig.requires() === 'none' &&
                 caseConfig.actions.open_case.condition.type !== "never" &&
-                !o.update_case.update.name) ? nameProperties : [];
+                !o.update_case.update_multi.name) ? nameProperties : [];
             var caseProperties = caseConfigUtils.propertyMultiDictToArray(
                 requiredProperties,
                 self.update_case.update_multi,

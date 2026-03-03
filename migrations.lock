@@ -267,6 +267,7 @@ case_search
  0016_csqlfixtureexpression_user_data_criteria
 celery
  0001_taskrecord
+ 0002_taskrecord_kombu_serialization
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -455,6 +456,7 @@ domain
  0017_appmanagerdomainsettings
  0018_enable_all_add_ons
  0019_remove_usercase_enabled_field
+ 0020_delete_transferdomainrequest
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -488,17 +490,6 @@ es
  0015_add_user_domain_memberships
  0016_add_new_index_for_cc_perf
  0017_add_is_account_confirmed
-events
- 0001_add_events_model
- 0002_attendancetrackingconfig
- 0003_event_attendance_taker_ids
- 0004_event_id_case_id
- 0005_rename_alter_event__attendance_taker_ids
- 0006_remove_end_date_constraint
- 0007_alter_event_attendee_list_status
- 0008_alter_event__case_id
- 0009_attendeemodel
- 0010_event_location
 experiments
  0001_initial
 export
@@ -663,6 +654,7 @@ geospatial
  0007_geoconfig_max_case_distance_and_more
  0008_geoconfig_flag_assigned_cases
  0009_geoconfig_api_key_cbc_encryption
+ 0010_remove_road_network_algorithm
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -714,7 +706,9 @@ integration
  0013_kycconfig_phone_number_field
  0014_kycconfig_passing_threshold
  0015_kycconfig_connection_settings_and_more
- 0016_momoconfig_provider
+ 0016_kycconfig_stores_full_name
+ 0017_drop_tables_for_removed_toggles
+ 0018_momoconfig_provider
 ip_access
  0001_initial
 ivr
@@ -746,6 +740,7 @@ linked_domain
  0022_alter_domainlinkhistory_model
  0023_alter_domainlinkhistory_model
  0024_alter_domainlinkhistory_model
+ 0025_alter_domainlinkhistory_model_choices
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -794,6 +789,8 @@ motech
  0017_connectionsettings_use_aes_cbc_encryption
  0018_openmrsimporter_use_aes_cbc_encryption
  0019_connectionsettings_custom_headers
+ 0020_alter_connectionsettings_increase_max_url_lengths
+ 0021_alter_requestlog_request_url
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -934,6 +931,7 @@ repeaters
  0019_connectformrepeater
  0020_repeater_extra_backoff_codes
  0021_alter_repeatrecord_state_and_more
+ 0022_delete_cowin_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803

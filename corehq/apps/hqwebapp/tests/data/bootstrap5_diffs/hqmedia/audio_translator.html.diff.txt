@@ -28,26 +28,10 @@
            <option></option>
            {% for lang in app.langs %}
              {% if lang != app.default_language %}
-@@ -48,12 +48,12 @@
+@@ -47,7 +47,7 @@
+         </select>
        </div>
      </div>
-     {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
--      <div class="form-group">
--        <label class="{% css_label_class %} control-label">
-+      <div class="form-group">  {# todo B5: css-form-group #}
-+        <label class="{% css_label_class %} form-label">
-           {% trans "Transifex" %}
-         </label>
-         <div class="{% css_field_class %} controls">
--          <select-toggle data-apply-bindings="true"
-+          <select-toggle data-apply-bindings="true"  {# todo B5: css-select-form-control #}
-                          params="
-                            name: 'skip_blacklisted',
-                            options: [
-@@ -70,7 +70,7 @@
-         </div>
-       </div>
-     {% endif %}
 -    <div class="form-group">
 +    <div class="form-group">  {# todo B5: css-form-group #}
        <div class="{% css_action_class %} controls">

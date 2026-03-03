@@ -9,27 +9,24 @@
 >
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <!-- B5 TODO: Replace inline styles with B5 utility classes -->
-      <div class="modal-header" style="border-bottom: 1px solid lightgray;">  {# todo B5: inline-style #}
-        <button
-          type="button"
-          class="btn-close"  {# todo B5: css-close #}
-          data-bs-dismiss="modal"
-          aria-label="{% trans 'Close' %}"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
+      <div class="modal-header">
         <h4 class="modal-title">
           <i class="fa-solid fa-list-check"></i> {% trans "Case List" %}
         </h4>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="{% trans 'Close' %}"
+        ></button>
       </div>
       <div class="modal-body">
         <p class="lead">
           {% trans "Please define a case type for your case list." %}
         </p>
-        <div class="form-horizontal" style="margin-top: 30px;">  {# todo B5: inline-style #}
-          <div class="form-group">  {# todo B5: css-form-group #}
-            <label class="form-label col-md-3">
+        <div class="mt-3">
+          <div class="row mb-3">
+            <label for="new-case-type-dropdown" class="col-form-label col-md-3">
               {% trans "Case Type" %}
               {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
                 <span
@@ -45,18 +42,17 @@
                 ></span>
               {% endif %}
             </label>
-            <div class="col-md-6">
-              <select  {# todo B5: css-select-form-control #}
-                class="form-control"
+            <div class="col-md">
+              <select
+                class="form-select"
                 id="new-case-type-dropdown"
                 name="new-case-type-dropdown"
               >
                 <option value=""></option>
               </select>
               <div
-                class="help-block"
+                class="help-block text-danger d-none"
                 id="new-case-type-error"
-                style="display: none;"  {# todo B5: inline-style #}
               ></div>
               <div class="help-block" id="new-case-type-help">
                 {% trans "* You can change the Case Type later by going to the menu settings page" %}

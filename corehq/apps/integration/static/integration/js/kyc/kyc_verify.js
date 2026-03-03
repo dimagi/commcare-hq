@@ -7,19 +7,8 @@ import htmx from 'htmx.org';
 
 function updateVerifyButton(selectedIds) {
     const $verifyBtn = $('#verify-selected-btn');
-    const $verifyAll = $verifyBtn.find('span:first');
-    const $verifySelected = $verifyBtn.find('span:last');
 
     let verifyBtnVals = JSON.parse($verifyBtn.attr('hx-vals'));
-    if (selectedIds.length > 0) {
-        $verifyAll.addClass('d-none');
-        $verifySelected.removeClass('d-none');
-        verifyBtnVals['verify_all'] = false;
-    } else {
-        $verifyAll.removeClass('d-none');
-        $verifySelected.addClass('d-none');
-        verifyBtnVals['verify_all'] = true;
-    }
     verifyBtnVals['selected_ids'] = selectedIds;
     $verifyBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
 }
@@ -39,8 +28,12 @@ $(document).on('htmx:afterRequest', function (event) {
             updateVerifyButton([]);
         } else if (method === 'post') {
             const endpoint = requestPath + window.location.search;
-            $('#kyc-verify-table').text('');
-            htmx.ajax('get', endpoint, {target: '#kyc-verify-table', indicator: '#kyc-loader'});
+            // The timeout is to allow the verification request enough time to update the affected cases in ES before
+            // doing a refresh
+            setTimeout(() => {
+                $('#kyc-verify-table').text('');
+                htmx.ajax('get', endpoint, {target: '#kyc-verify-table', indicator: '#kyc-loader'});
+            }, 3000);
         }
     }
 });

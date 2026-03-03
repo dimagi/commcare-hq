@@ -28,30 +28,24 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 
 
-def upload_fixture_file(domain, filename, replace, task=None, skip_orm=False):
+def upload_fixture_file(domain, filename, replace, task=None):
     """
     should only ever be called after the same file has been validated
     using validate_fixture_file_format
     """
     workbook = get_workbook(filename)
-    return _run_upload(domain, workbook, replace, task, skip_orm)
+    return _run_upload(domain, workbook, replace, task)
 
 
-def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
+def _run_upload(domain, workbook, replace=False, task=None):
     """Run lookup table upload
 
     Performs only deletes and/or inserts on table, row, and ownership
     records to optimize database interactions.
-
-    Upload with `skip_orm=True` is faster than the default with the
-    following trade-off: it does not support fixture ownership. All
-    fixtures must be global.
     """
     def process_table(table, new_table, old_table):
         def process_row(row, new_row, old_row):
             update_progress(table)
-            if skip_orm:
-                return  # fast upload does not do ownership
             owners.process(
                 workbook,
                 old_owners.get(row.id, []),
@@ -63,13 +57,12 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
 
         old_rows = list(LookupTableRow.objects.iter_rows(domain, tag=table.tag))
         sort_keys = {r.id.hex: r.sort_key for r in old_rows}
-        if not skip_orm:
-            old_owners = defaultdict(list)
-            for owner in LookupTableRowOwner.objects.filter(
-                domain=domain,
-                row_id__in=list(sort_keys),
-            ):
-                old_owners[owner.row_id].append(owner)
+        old_owners = defaultdict(list)
+        for owner in LookupTableRowOwner.objects.filter(
+            domain=domain,
+            row_id__in=list(sort_keys),
+        ):
+            old_owners[owner.row_id].append(owner)
 
         row_key_ = row_key
         if table is new_table:
@@ -98,14 +91,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             flush(tables, rows, owners)
 
     result = FixtureUploadResult()
-    if skip_orm:
-        # TODO remove when SKIP_ORM_FIXTURE_UPLOAD feature toggle is removed
-        non_globals = [s.table_id for s in workbook.get_all_type_sheets() if not s.is_global]
-        if non_globals:
-            result.errors.append(non_global_error(non_globals[0]))
-            return result
-    else:
-        owner_ids = load_owner_ids(workbook.get_owners(), domain)
+    owner_ids = load_owner_ids(workbook.get_owners(), domain)
     result.number_of_fixtures, update_progress = setup_progress(task, workbook)
     old_tables = list(LookupTable.objects.by_domain(domain))
     tables = Mutation()
@@ -234,12 +220,6 @@ def setup_progress(task, workbook):
         total_rows = 1
 
     return total_tables, update_progress
-
-
-def non_global_error(tag):
-    return _("type {lookup_table_name} is not defined as global").format(
-        lookup_table_name=tag
-    )
 
 
 def table_key(table):

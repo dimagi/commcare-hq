@@ -25,11 +25,6 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
     CaseProperty
 )
-from corehq.apps.integration.models import (
-    DialerSettings,
-    GaenOtpServerSettings,
-    HmacCalloutSettings,
-)
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
@@ -47,9 +42,6 @@ from corehq.apps.linked_domain.const import (
     MODEL_REPORT,
     MODEL_ROLES,
     MODEL_DATA_DICTIONARY,
-    MODEL_DIALER_SETTINGS,
-    MODEL_OTP_SETTINGS,
-    MODEL_HMAC_CALLOUT_SETTINGS,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS,
 )
 from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
@@ -68,12 +60,6 @@ from corehq.apps.linked_domain.local_accessors import \
 from corehq.apps.linked_domain.local_accessors import \
     get_tableau_server_and_visualizations as local_get_tableau_server_and_visualizations
 from corehq.apps.linked_domain.local_accessors import \
-    get_dialer_settings as local_get_dialer_settings
-from corehq.apps.linked_domain.local_accessors import \
-    get_otp_settings as local_get_otp_settings
-from corehq.apps.linked_domain.local_accessors import \
-    get_hmac_callout_settings as local_get_hmac_callout_settings
-from corehq.apps.linked_domain.local_accessors import \
     get_auto_update_rules as local_get_auto_update_rules
 from corehq.apps.linked_domain.local_accessors import \
     get_auto_update_rule as local_get_auto_update_rule
@@ -91,12 +77,6 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_data_dictionary as remote_get_data_dictionary
 from corehq.apps.linked_domain.remote_accessors import \
     get_tableau_server_and_visualizations as remote_get_tableau_server_and_visualizations
-from corehq.apps.linked_domain.remote_accessors import \
-    get_dialer_settings as remote_get_dialer_settings
-from corehq.apps.linked_domain.remote_accessors import \
-    get_otp_settings as remote_get_otp_settings
-from corehq.apps.linked_domain.remote_accessors import \
-    get_hmac_callout_settings as remote_get_hmac_callout_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.ucr import update_linked_ucr
@@ -131,9 +111,6 @@ def update_model_type(domain_link, model_type, model_detail=None, is_pull=False,
         MODEL_CASE_SEARCH: update_case_search_config,
         MODEL_REPORT: update_linked_ucr,
         MODEL_DATA_DICTIONARY: update_data_dictionary,
-        MODEL_DIALER_SETTINGS: update_dialer_settings,
-        MODEL_OTP_SETTINGS: update_otp_settings,
-        MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
         MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: update_tableau_server_and_visualizations,
         MODEL_UCR_EXPRESSION: update_linked_ucr_expression,
@@ -459,7 +436,7 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
         overwrite_action = _('Sync & Overwrite') if is_pull else _('Push & Overwrite')
         error_messages = []
         if failed_default_updates:
-            conflicting_names = ', '.join(['"{}"'.format(name) for name in failed_default_updates])
+            conflicting_names = ', '.join(['"{}"'.format(name) for name in sorted(failed_default_updates)])
             error_messages.append(_(
                 'Failed to {sync_action} the following default roles due to matching (same name but different'
                 ' permissions) unlinked roles in this downstream project space: {conflicting_role_names}.'
@@ -467,7 +444,7 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
                 ' to overwrite and link the matching ones.'
             ).format(sync_action=action, conflicting_role_names=conflicting_names, overwrite_btn=overwrite_action))
         if failed_custom_updates:
-            conflicting_names = ', '.join(['"{}"'.format(name) for name in failed_custom_updates])
+            conflicting_names = ', '.join(['"{}"'.format(name) for name in sorted(failed_custom_updates)])
             error_messages.append(_(
                 'Failed to {sync_action} the following custom roles due to matching (same name) unlinked roles in'
                 ' this downstream project space: {conflicting_role_names}. Please edit the roles to resolve the'
@@ -644,53 +621,6 @@ def update_tableau_server_and_visualizations(domain_link, is_pull=False, overwri
         vis.view_url = master_vis['view_url']
         vis.title = master_vis['title']
         vis.save()
-
-
-def update_dialer_settings(domain_link, is_pull=False, overwrite=False):
-    if domain_link.is_remote:
-        master_results = remote_get_dialer_settings(domain_link)
-    else:
-        master_results = local_get_dialer_settings(domain_link.master_domain)
-
-    model, created = DialerSettings.objects.get_or_create(domain=domain_link.linked_domain)
-
-    model.domain = domain_link.linked_domain
-    model.aws_instance_id = master_results['aws_instance_id']
-    model.is_enabled = master_results['is_enabled']
-    model.dialer_page_header = master_results['dialer_page_header']
-    model.dialer_page_subheader = master_results['dialer_page_subheader']
-    model.save()
-
-
-def update_otp_settings(domain_link, is_pull=False, overwrite=False):
-    if domain_link.is_remote:
-        master_results = remote_get_otp_settings(domain_link)
-    else:
-        master_results = local_get_otp_settings(domain_link.master_domain)
-
-    model, created = GaenOtpServerSettings.objects.get_or_create(domain=domain_link.linked_domain)
-
-    model.domain = domain_link.linked_domain
-    model.is_enabled = master_results['is_enabled']
-    model.server_url = master_results['server_url']
-    model.auth_token = master_results['auth_token']
-    model.save()
-
-
-def update_hmac_callout_settings(domain_link, is_pull=False, overwrite=False):
-    if domain_link.is_remote:
-        master_results = remote_get_hmac_callout_settings(domain_link)
-    else:
-        master_results = local_get_hmac_callout_settings(domain_link.master_domain)
-
-    model, created = HmacCalloutSettings.objects.get_or_create(domain=domain_link.linked_domain)
-
-    model.domain = domain_link.linked_domain
-    model.destination_url = master_results['destination_url']
-    model.is_enabled = master_results['is_enabled']
-    model.api_key = master_results['api_key']
-    model.api_secret = master_results['api_secret']
-    model.save()
 
 
 def update_auto_update_rule(domain_link, id, is_pull=False, overwrite=False):

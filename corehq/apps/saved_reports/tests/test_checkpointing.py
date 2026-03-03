@@ -1,6 +1,7 @@
 import datetime
 
 from django.test import TestCase
+from time_machine import travel
 
 from corehq.apps.saved_reports.models import (
     ReportNotification,
@@ -15,21 +16,23 @@ from corehq.apps.saved_reports.tests.test_scheduled_reports import (
 
 
 class ScheduledReportsCheckpointTest(TestCase):
-    def tearDown(self):
-        delete_all_report_notifications()
-        ScheduledReportsCheckpoint.objects.all().delete()
+    def setUp(self):
+        self.addCleanup(delete_all_report_notifications)
+        self.addCleanup(ScheduledReportsCheckpoint.objects.all().delete)
 
     def test_checkpoint_created(self):
         point_1 = datetime.datetime(2019, 3, 22, 22, 46, 0, 439979)
         point_2 = datetime.datetime(2019, 3, 22, 23, 1, 38, 363898)
         self.assertEqual(len(ScheduledReportsCheckpoint.objects.all()), 0)
 
-        create_records_for_scheduled_reports(fake_now_for_tests=point_1)
+        with travel(point_1, tick=False):
+            create_records_for_scheduled_reports()
         self.assertEqual(len(ScheduledReportsCheckpoint.objects.all()), 1)
         checkpoint_1 = ScheduledReportsCheckpoint.get_latest()
         self.assertEqual(checkpoint_1.end_datetime, point_1)
 
-        create_records_for_scheduled_reports(fake_now_for_tests=point_2)
+        with travel(point_2, tick=False):
+            create_records_for_scheduled_reports()
         self.assertEqual(len(ScheduledReportsCheckpoint.objects.all()), 2)
         checkpoint_2 = ScheduledReportsCheckpoint.get_latest()
         self.assertEqual(checkpoint_2.start_datetime, point_1)
@@ -58,12 +61,14 @@ class ScheduledReportsCheckpointTest(TestCase):
             ('monthly day off', False, ReportNotification(hour=22, minute=0, day=20, interval='monthly')),
         ]
 
-        create_records_for_scheduled_reports(fake_now_for_tests=point_1)
+        with travel(point_1, tick=False):
+            create_records_for_scheduled_reports()
 
         for _, _, report in test_cases:
             report.save()
 
-        report_ids = create_records_for_scheduled_reports(fake_now_for_tests=point_2)
+        with travel(point_2, tick=False):
+            report_ids = create_records_for_scheduled_reports()
 
         for description, should_fire, report in test_cases:
             if should_fire:

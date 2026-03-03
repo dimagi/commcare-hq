@@ -78,7 +78,7 @@ if ($releaseLogsTab.length) {
 var o = {
     currentAppVersion: initialPageData.get('app_version') || -1,
     recipient_contacts: initialPageData.get('sms_contacts'),
-    download_modal_id: '#download-zip-modal',
+    downloadModalId: '#download-zip-modal',
     latestReleasedVersion: initialPageData.get('latestReleasedVersion'),
     upstreamBriefs: initialPageData.get('upstream_briefs'),
     upstreamUrl: initialPageData.get('upstream_url'),
@@ -119,14 +119,12 @@ if (el.length) {
 // Build profiles
 var $profilesTab = $('#profiles-tab');
 if ($profilesTab.length) {
-    var latestEnabledVersions = initialPageData.get('latest_version_for_build_profiles');
     languageProfiles.setProfileUrl(initialPageData.get('application_profile_url'));
     var appLangs = initialPageData.get('langs');
     var appProfiles = initialPageData.get('build_profiles');
     var enablePracticeUsers = initialPageData.get('enable_practice_users');
     var practiceUsers = initialPageData.get('practice_users');
-    var profileManager = languageProfiles.profileManager(appProfiles, appLangs, enablePracticeUsers, practiceUsers,
-        latestEnabledVersions);
+    var profileManager = languageProfiles.profileManager(appProfiles, appLangs, enablePracticeUsers, practiceUsers);
     $profilesTab.koApplyBindings(profileManager);
 }
 
