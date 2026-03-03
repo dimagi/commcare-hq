@@ -12,11 +12,11 @@
     </p>
     <div class="spacer"></div>
     <form class="form-horizontal">
-      <div class="form-group">  {# todo B5: css-form-group #}
-        <label class="col-md-3 col-lg-2 form-label">
+      <div class="row mb-3">
+        <label class="col-form-label field-label">
           {% trans "Content" %}
         </label>
-        <div class="col-md-9 col-lg-10 controls">
+        <div class="field-control">
           <select multiple class="form-select" id="model-multiselect"
                   data-bind="selectedOptions: modelsToPush,
                              multiselect: {
@@ -34,11 +34,11 @@
           </select>
         </div>
       </div>
-      <div class="form-group">  {# todo B5: css-form-group #}
-        <label class="col-md-3 col-lg-2 form-label">
+      <div class="row mb-3">
+        <label class="col-form-label field-label">
           {% trans "Project Spaces" %}
         </label>
-        <div class="col-md-9 col-lg-10 controls">
+        <div class="field-control">
           <select multiple class="form-select" id="domain-multiselect"
                   data-bind="selectedOptions: domainsToPush, multiselect: domainMultiselect">
           </select>
@@ -57,15 +57,17 @@
           </p>
         </div>
       </div>
-      <div class="form-group">  {# todo B5: css-form-group #}
-        <label class="col-md-3 col-lg-2 form-label" for="build-apps">
+      <div class="row mb-3">
+        <label class="col-form-label field-label" for="build-apps">
           {% trans "Rebuild Applications" %}
         </label>
-        <div class="col-md-9 col-lg-10 controls">
-          <label class="checkbox">  {# todo B5: css-checkbox #}
-            <input type="checkbox" data-bind="checked: buildAppsOnPush" />  {# todo B5: css-checkbox #}
-            {% trans "Create and release new build for apps" %}
-          </label>
+        <div class="field-control">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="build-apps" data-bind="checked: buildAppsOnPush" />
+            <label class="form-check-label" for="build-apps">
+              {% trans "Create and release new build for apps" %}
+            </label>
+          </div>
         </div>
       </div>
       <div class="form-actions">

@@ -11,7 +11,7 @@
       {% endblocktrans %}
     </p>
 
-    <div class="card ">  {# todo B5: css-panel #}
+    <div class="card">
       <div class="card-header">
         <h3 class="card-title">{% trans 'Linked Content' %}</h3>
       </div>
@@ -33,7 +33,7 @@
           <tr>
             <td data-bind="text: name"></td>
             <td data-bind="text: lastUpdate"></td>
-            <td data-bind="css: {'has-error': error}">  {# todo B5: css-has-error #}
+            <td>
               <button class="btn btn-outline-danger" data-bind="visible: showUpdate() && !update_url, click: update">
                 <i class="fa fa-refresh"></i> {% trans "Sync" %}
               </button>
@@ -44,8 +44,8 @@
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
                       <h4 class="modal-title">{% trans 'Sync & Overwrite Matches?' %}</h4>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'></button>
                     </div>
                     <div class="modal-body">
                       <p>
@@ -70,7 +70,7 @@
               <button class="btn btn-outline-danger" data-bind="visible: error, click: resetStatus">
                 <i class="fa fa-times"></i> {% trans "Error" %}
               </button>
-              <span class="help-block" data-bind="visible: error, text: error"></span>
+              <span class="text-danger" data-bind="visible: error, text: error"></span>
               <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
             </td>
           </tr>
