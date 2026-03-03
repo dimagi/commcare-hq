@@ -159,6 +159,9 @@
   "integration": {
     "is_complete": true
   },
+  "linked_domain": {
+    "is_complete": true
+  },
   "locations": {
     "is_complete": true
   },
