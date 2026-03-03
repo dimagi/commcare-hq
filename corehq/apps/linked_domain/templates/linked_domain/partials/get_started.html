@@ -17,7 +17,7 @@
   <div class="spacer"></div>
   <div class="row">
     <!-- ko if: upstreamDomains().length > 0 -->
-      <div class="col-sm-6">
+      <div class="col-md-6">
         <h4>{% trans "Link to an existing upstream project space" %}</h4>
         <p>
           {% blocktrans %}
@@ -40,7 +40,7 @@
         <!-- /ko -->
       </div>
     <!-- /ko -->
-    <div class="col-sm-6">
+    <div class="col-md-6">
       <h4>{% trans "Make this an upstream project space" %}</h4>
       <p>
         {% blocktrans %}
@@ -52,8 +52,8 @@
               class="btn"
               data-bind="class: upstreamButtonClass"
               id="add-downstream-domain"
-              data-toggle="modal"
-              data-target="#new-downstream-domain-modal">
+              data-bs-toggle="modal"
+              data-bs-target="#new-downstream-domain-modal">
         {% trans "Link Downstream Project Spaces" %}
       </button>
     </div>
