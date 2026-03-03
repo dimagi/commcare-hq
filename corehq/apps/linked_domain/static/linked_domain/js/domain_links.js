@@ -3,7 +3,7 @@ import RMI from "jquery.rmi/jquery.rmi";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import _ from "underscore";
 import ko from "knockout";
-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
+import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import multiselectUtils from "hqwebapp/js/multiselect_utils";
 import noopMetrics from "analytix/js/noopMetrics";
 import "hqwebapp/js/components/pagination";
