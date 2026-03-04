@@ -26,7 +26,7 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestOdataAuth, cls).setUpClass()
+        super().setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
         cls.setup_sso_user()
@@ -53,7 +53,7 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
     @classmethod
     def tearDownClass(cls):
         cls._teardown_accounting()
-        super(TestOdataAuth, cls).tearDownClass()
+        super().tearDownClass()
 
     def test_success(self):
         response = self._execute_query(self._get_correct_credentials())
