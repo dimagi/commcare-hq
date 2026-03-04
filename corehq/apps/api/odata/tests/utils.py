@@ -37,6 +37,7 @@ class OdataTestMixin(object):
         cls.addClassCleanup(cls.domain.delete)
         cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password', None, None)
         cls._setup_user_permissions()
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
         cls.app_id = '1234'
         cls.instance = cls.get_instance(cls.domain.name)
         cls.instance.save()
@@ -49,14 +50,14 @@ class OdataTestMixin(object):
     def _setup_accounting(cls):
         call_command('cchq_prbac_bootstrap')
         cls.account, _ = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by='')
+        cls.addClassCleanup(cls.account.delete)
         plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED)
         cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan_version)
+        cls.addClassCleanup(cls.subscription.delete)
 
     @classmethod
     def _teardown_accounting(cls):
         SubscriptionAdjustment.objects.all().delete()
-        cls.subscription.delete()
-        cls.account.delete()
 
     @classmethod
     def _setup_user_permissions(cls):

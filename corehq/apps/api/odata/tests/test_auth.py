@@ -37,18 +37,18 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
         cls.idp.is_active = True
         cls.idp.login_enforcement_type = LoginEnforcementType.GLOBAL
         cls.idp.save()
+        cls.addClassCleanup(cls.idp.delete)
         cls.sso_email_domain = AuthenticatedEmailDomain.objects.create(
             email_domain='ssocompany.com',
             identity_provider=cls.idp,
         )
+        cls.addClassCleanup(cls.sso_email_domain.delete)
         cls.sso_user = cls.web_user.create(
             cls.domain.name, 'odata-sso-user@ssocompany.com', 'sso-password', None, None
         )
         cls.sso_user.set_role(cls.domain.name, 'admin')
         cls.sso_user.save()
         cls.addClassCleanup(cls.sso_user.delete, cls.domain.name, deleted_by=None)
-        cls.addClassCleanup(cls.sso_email_domain.delete)
-        cls.addClassCleanup(cls.idp.delete)
 
     @classmethod
     def tearDownClass(cls):
