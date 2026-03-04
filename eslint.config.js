@@ -6,7 +6,7 @@ const globals = require('globals');
 
 module.exports = [
     {
-        ignores: ['**/vellum/src/*.js', '**/_design/**/*.js', 'eslint/**', 'eslint.config.js'],
+        ignores: ['corehq/apps/app_manager/static/app_manager/js/vellum/**', '**/_design/**/*.js', 'eslint/**', 'eslint.config.js'],
     },
 
     js.configs.recommended,
