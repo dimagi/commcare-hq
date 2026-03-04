@@ -10,6 +10,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.accounting.const import COMMCARE_PRODUCT_TYPE, DIMAGI_ONLY
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_analytics.feature_calcs import FEATURE_METRICS
@@ -252,12 +253,11 @@ def _iter_domain_names_standard_and_higher():
         SoftwarePlanEdition.RESELLER,
         SoftwarePlanEdition.MANAGED_HOSTING,
     ]
-    dimagi_only = 'Dimagi Only CommCare Enterprise'  # value based on
-    # corehq/apps/accounting/bootstrap/utils.py::_ensure_product_rate
+    plan_name = f'{DIMAGI_ONLY} {COMMCARE_PRODUCT_TYPE} {SoftwarePlanEdition.ENTERPRISE}'
 
     return Subscription.visible_objects.filter(
         is_active=True,
         plan_version__plan__edition__in=standard_and_higher,
     ).exclude(
-        plan_version__plan__name__startswith=dimagi_only,
+        plan_version__plan__name__startswith=plan_name,
     ).values_list('subscriber__domain', flat=True).distinct()
