@@ -34338,10 +34338,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                      %(p)s per page\n"
-#| "                    "
 msgid ""
 "\n"
 "                      %(p)s\n"
@@ -35084,24 +35080,35 @@ msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Successfully verified %(success_count)s records for payments! Updated\n"
+#| "      status will reflect shortly.\n"
+#| "    "
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s rows!\n"
+"      Successfully verified %(success_count)s rows! Updated status will\n"
+"      reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      تم التحقق بنجاح من %(success_count)s صفوف!\n"
+"      تم التحقق بنجاح من %(success_count)s صف! سيتم تحديث الحالة قريبًا.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Failed to verify %(failure_count)s rows!\n"
+#| "    "
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s rows!\n"
+"      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
+"      shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      فشل التحقق من %(failure_count)s صفوف!\n"
+"      فشل التحقق من %(failure_count)s صف! سيتم تحديث الحالة قريبًا.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -35156,13 +35163,19 @@ msgstr ""
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Successfully verified %(success_count)s records for payments! Updated\n"
+#| "      status will reflect shortly.\n"
+#| "    "
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments! Updated status\n"
+"      will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      فشل التحقق من %(failure_count)s سجل للمدفوعات!\n"
+"      فشل التحقق من %(failure_count)s سجل للمدفوعات! سيتم تحديث الحالة قريبًا.\n"
 "    "
 
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
@@ -39797,7 +39810,6 @@ msgid "Optional. Leave blank to use default (midnight)."
 msgstr "اختياري. اتركه فارغًا لاستخدام الافتراضي (منتصف الليل)."
 
 #: corehq/apps/reports/filters/simple.py
-#| msgid "Leave blank to fetch full project"
 msgid "Optional. Leave blank to include the full day."
 msgstr "اختياري. اتركه فارغًا لتضمين اليوم بالكامل."
 
@@ -44375,6 +44387,19 @@ msgstr "لم يتم العثور على رموز FCM للمستلم."
 #: corehq/apps/sms/models.py
 msgid "Recipient did not match filters:"
 msgstr "لم يطابق المستلم عوامل التصفية:"
+
+#: corehq/apps/sms/models.py
+#| msgid "No FCM tokens found for recipient."
+msgid "Connect user not found for recipient."
+msgstr "لم يتم العثور على مستخدم Connect للمستلم."
+
+#: corehq/apps/sms/models.py
+msgid ""
+"Only Mobile workers with Connect accounts are supported as recipients for "
+"Connect Message and Surveys."
+msgstr ""
+"يتم دعم العاملين الميدانيين الذين لديهم حسابات Connect فقط كمستلمين لرسائل "
+"واستبيانات Connect."
 
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
@@ -51051,11 +51076,6 @@ msgstr "إرسال بريد إلكتروني للتأكيد"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              email to this account?\n"
-#| "                            "
 msgid ""
 "\n"
 "                            Would you like to send the account confirmation\n"
@@ -51069,12 +51089,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent an email with instructions\n"
-#| "                              to set a password and be able to login to this\n"
-#| "                              project.\n"
-#| "                            "
 msgid ""
 "\n"
 "                            The user will be sent an email with instructions to\n"
@@ -53611,16 +53625,6 @@ msgstr "تاريخ آخر تكرار:"
 #: corehq/messaging/scheduling/forms.py
 msgid ""
 "\n"
-"                            Connect Messages can only be sent to users who have a PersonalID account.\n"
-"                        "
-msgstr ""
-"\n"
-"                            يمكن إرسال رسائل Connect فقط إلى المستخدمين الذين لديهم حساب PersonalID.\n"
-"                        "
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"\n"
 "                            The \"Case's Parent Case\" Recipient setting only works for Parent / Child relationships,\n"
 "                            not Parent / Extension or Host / Extension relationships.\n"
 "                        "
@@ -53682,8 +53686,12 @@ msgstr ""
 "المستخدمين مرة أخرى."
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Messages can only be sent to users."
-msgstr "يمكن إرسال رسائل Connect فقط إلى المستخدمين."
+#, python-brace-format
+#| msgid "'{}' recipient types are not supported for Push Notifications"
+msgid ""
+"The following recipient type(s) are not supported for Connect Messages: "
+"{types}"
+msgstr "أنواع المستلمين التالية غير مدعومة لرسائل Connect: {types}"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please specify the groups(s) or deselect user groups as recipients"
@@ -54019,9 +54027,6 @@ msgstr ""
 "الإلكتروني"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "Push Notifications is no longer available on this environment. Please "
-#| "contact Administrator."
 msgid ""
 "Push Notifications is no longer available. Please contact Administrator."
 msgstr "إشعارات الدفع لم تعد متوفرة. يرجى التواصل مع المسؤول."
@@ -58198,6 +58203,38 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
 
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Successfully verified %(success_count)s rows!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      تم التحقق بنجاح من %(success_count)s صفوف!\n"
+#~ "    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Failed to verify %(failure_count)s records for payments!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      فشل التحقق من %(failure_count)s سجل للمدفوعات!\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
+#~ "                        "
+#~ msgstr ""
+#~ "\n"
+#~ "                            يمكن إرسال رسائل Connect فقط إلى المستخدمين الذين لديهم حساب PersonalID.\n"
+#~ "                        "
+
+#~ msgid "Connect Messages can only be sent to users."
+#~ msgstr "يمكن إرسال رسائل Connect فقط إلى المستخدمين."
+
 #~ msgid "no table"
 #~ msgstr "لا يوجد جدول"
 
@@ -59349,9 +59386,6 @@ msgstr "أدخل JSON صالحًا"
 #~ "Push Notifications is not available for your project. Please contact "
 #~ "Administrator."
 #~ msgstr "إشعارات الدفع غير متوفرة لمشروعك. يرجى التواصل مع المسؤول."
-
-#~ msgid "'{}' recipient types are not supported for Push Notifications"
-#~ msgstr "أنواع المستلمين '{}' غير مدعومة لإشعارات الدفع"
 
 #~ msgid "Application Testing"
 #~ msgstr "اختبار التطبيق"

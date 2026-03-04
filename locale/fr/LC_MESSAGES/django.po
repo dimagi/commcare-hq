@@ -31053,7 +31053,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s rows!\n"
+"      Successfully verified %(success_count)s rows! Updated status will\n"
+"      reflect shortly.\n"
 "    "
 msgstr ""
 
@@ -31061,7 +31062,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s rows!\n"
+"      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
+"      shortly.\n"
 "    "
 msgstr ""
 
@@ -31113,7 +31115,9 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments! Updated "
+"status\n"
+"      will reflect shortly.\n"
 "    "
 msgstr ""
 
@@ -39497,6 +39501,16 @@ msgstr ""
 msgid "Recipient did not match filters:"
 msgstr ""
 
+#: corehq/apps/sms/models.py
+msgid "Connect user not found for recipient."
+msgstr ""
+
+#: corehq/apps/sms/models.py
+msgid ""
+"Only Mobile workers with Connect accounts are supported as recipients for "
+"Connect Message and Surveys."
+msgstr ""
+
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 msgid "Phone Prefix"
@@ -47664,14 +47678,6 @@ msgstr ""
 #: corehq/messaging/scheduling/forms.py
 msgid ""
 "\n"
-"                            Connect Messages can only be sent to users who "
-"have a PersonalID account.\n"
-"                        "
-msgstr ""
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"\n"
 "                            The \"Case's Parent Case\" Recipient setting "
 "only works for Parent / Child relationships,\n"
 "                            not Parent / Extension or Host / Extension "
@@ -47727,7 +47733,10 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Messages can only be sent to users."
+#, python-brace-format
+msgid ""
+"The following recipient type(s) are not supported for Connect Messages: "
+"{types}"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
