@@ -14,8 +14,8 @@ from ..feature_calcs import FEATURE_METRICS
 from ..metric_registry import (
     DomainContext,
     MetricDef,
+    collect_daily_metrics_for_domain,
     collect_metrics_for_domain,
-    compute_daily_metrics_for_domain,
     get_metrics_by_schedule,
     get_metrics_registry,
 )
@@ -266,10 +266,10 @@ class DomainCalculatedPropertiesTest(BaseCalculatedPropertiesTest):
 
     def test_calculated_properties_are_serializable(self):
         stats = all_domain_stats()
-        metrics = compute_daily_metrics_for_domain(self.domain, stats)
+        metrics = collect_daily_metrics_for_domain(self.domain, stats)
         json.dumps(metrics)
 
     def test_domain_does_not_have_project_icon(self):
         stats = all_domain_stats()
-        metrics = compute_daily_metrics_for_domain(self.domain, stats)
+        metrics = collect_daily_metrics_for_domain(self.domain, stats)
         self.assertFalse(metrics['has_project_icon'])

@@ -82,8 +82,9 @@ def collect_metrics_for_domain(domain_obj, metrics, existing_metrics=None):
     return updates
 
 
-def compute_daily_metrics_for_domain(domain_obj, all_stats):
-    """Compute all daily metrics for a domain as a dict for DomainMetrics.
+def collect_daily_metrics_for_domain(domain_obj, all_stats):
+    """
+    Collects all daily metrics for a domain as a dict for DomainMetrics.
 
     Returns dict of {field_name: value} suitable for update_or_create().
     """
