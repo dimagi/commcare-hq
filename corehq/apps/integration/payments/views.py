@@ -93,7 +93,7 @@ require_payments_report_access = require_permission(
 
 @location_safe
 @method_decorator(use_bootstrap5, name='dispatch')
-@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
     urlname = 'payments_verify'
@@ -118,7 +118,7 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 
 @location_safe
 @method_decorator(login_and_domain_required, name='dispatch')
-@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationTableView(
     HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin
@@ -332,7 +332,7 @@ class PaymentsVerificationTableView(
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
-@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
 class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
     section_name = _("Data")

@@ -35,6 +35,7 @@ From the response, extract:
 | CVE ID | `security_advisory.cve_id` (may be null) |
 | Patched version | `security_vulnerability.first_patched_version.identifier` |
 | Summary/description | `security_advisory.summary` |
+| Alert URL | `html_url` (use this as the GitHub link; falls back to the original `$ARGUMENTS` URL if absent) |
 
 **Ecosystem mapping:**
 
@@ -134,8 +135,10 @@ Assume no epic.
    argument that contains all the relevant information:
 
    ```
-   /jira-ticket <formatted_summary>. Component: Data Privacy / Security. <priority>. Platform sprint. Description — Package: <package>, Patched version: <patched_version> or later, Ecosystem: <py|js>, CVE: <CVE-ID> (<cve_url>), GitHub alert: <original_url>. <advisory_summary>. Fix: upgrade <package> to <patched_version> or later in the relevant dependency file.<if epic:  Epic: <SAAS-key>.>
+   /jira-ticket <formatted_summary>. Component: Data Privacy / Security. <priority>. Platform sprint. Description — Package: <package>, Patched version: <patched_version> or later, Ecosystem: <py|js>, CVE: <CVE-ID> (<cve_url>), GitHub alert: <alert_html_url>. <advisory_summary>. Fix: upgrade <package> to <patched_version> or later in the relevant dependency file.<if epic:  Epic: <SAAS-key>.>
    ```
+
+   **Always include the GitHub alert URL** (`html_url` from the API response, or the original `$ARGUMENTS` URL as fallback) in the description. This is required so the ticket links back to the Dependabot alert.
 
    The `/jira-ticket` skill will handle assignee lookup, sprint resolution, and
    ticket creation.

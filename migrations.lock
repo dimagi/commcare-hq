@@ -708,6 +708,7 @@ integration
  0015_kycconfig_connection_settings_and_more
  0016_kycconfig_stores_full_name
  0017_drop_tables_for_removed_toggles
+ 0018_momoconfig_provider
 ip_access
  0001_initial
 ivr
@@ -1230,6 +1231,7 @@ sso
  0006_add_new_fields_in_identityprovider
  0007_add_multi_view_api_fields
  0008_alter_identityprovider_idp_type
+ 0009_identityprovider_require_api_key_for_api_access
 start_enterprise
  0001_initial
 stock
