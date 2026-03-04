@@ -21,6 +21,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.export.exceptions import ExportTooLargeException
+from corehq.apps.export.utils import is_dashboard_feed
 from corehq.apps.export.views.download import DownloadDETSchemaView
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
@@ -446,9 +447,7 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
     def _should_appear_in_list(self, export):
-        return (export['is_daily_saved_export']
-                and export['export_format'] == "html"
-                and not export['is_odata_config'])
+        return is_dashboard_feed(export)
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
