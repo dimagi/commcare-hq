@@ -108,6 +108,7 @@ class SSOApiAuthenticationTest(AuthenticationTestBase):
         cls.idp = sso_generator.create_idp('sso-api-test', cls.account)
         cls.idp.is_active = True
         cls.idp.login_enforcement_type = LoginEnforcementType.GLOBAL
+        cls.idp.require_api_key_for_api_access = True
         cls.idp.save()
         AuthenticatedEmailDomain.objects.create(
             email_domain='ssocompany.com',

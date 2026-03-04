@@ -36,6 +36,7 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
         cls.idp = sso_generator.create_idp('odata-sso-test', cls.account)
         cls.idp.is_active = True
         cls.idp.login_enforcement_type = LoginEnforcementType.GLOBAL
+        cls.idp.require_api_key_for_api_access = True
         cls.idp.save()
         cls.addClassCleanup(cls.idp.delete)
         cls.sso_email_domain = AuthenticatedEmailDomain.objects.create(

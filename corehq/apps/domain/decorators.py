@@ -549,7 +549,7 @@ def _sso_required(request):
     username = couch_user.username if couch_user else None
     if username:
         idp = IdentityProvider.get_required_identity_provider(username)
-        if idp:
+        if idp and idp.require_api_key_for_api_access:
             return True
     return False
 
