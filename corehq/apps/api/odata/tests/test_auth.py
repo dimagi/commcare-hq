@@ -52,7 +52,6 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls._teardownclass()
         cls._teardown_accounting()
         super(TestOdataAuth, cls).tearDownClass()
 
