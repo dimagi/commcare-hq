@@ -372,14 +372,10 @@ $l-shaped-line: "\f00b";
 
 .appnav-menu .btn-langcode-preprocessed {
   background-color: darken($cc-bg, 10);
-  border: none;
   color: lighten($cc-text, 10);
   vertical-align: top;
-  font-size: 0.5625rem;
   margin-top: -1px;
   margin-right: 1px;
-  padding-bottom: 3px;
-  line-height: 0.625rem;
 }
 
 .appnav-section-name {

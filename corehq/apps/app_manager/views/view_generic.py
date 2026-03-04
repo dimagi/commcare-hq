@@ -129,14 +129,13 @@ def view_generic(
         template = get_module_template(request.user, module)
         context.update(get_module_view_context(request, app, module, lang))
     else:
+        set_bootstrap_version5()
         template = 'app_manager/app_view_settings.html'
         context.update(get_app_view_context(request, app))
 
         if release_manager:
-            template = 'app_manager/bootstrap3/app_view_release_manager.html'
+            template = 'app_manager/app_view_release_manager.html'
             context.update(get_releases_context(request, domain, app_id))
-        else:
-            set_bootstrap_version5()
 
         context['is_app_settings_page'] = not release_manager
 

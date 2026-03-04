@@ -7,6 +7,7 @@
 /localsettings*
 /loadtest/test_scripts/localsettings.py
 !localsettings.example.py
+/.claude/*.local.json
 .settings/
 .project
 .pydevproject
@@ -22,7 +23,6 @@ bad/
 *.log*
 /CommCare.ja*
 startover.sh
-celery.db
 tmp.sh
 /requirements/local.in
 /requirements/local*.txt
@@ -60,9 +60,12 @@ ptop*.json
 /coverage-report
 /coverage-js
 
+# Celery
+/celery.db
+/celerybeat-schedule*
+
 # Sphinx
 docs/_build
-celerybeat-schedule
 
 # compiled translations
 /locale/*/*/*.mo

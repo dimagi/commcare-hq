@@ -15,7 +15,10 @@ from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.export import TableExportMixin
-from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
+from corehq.apps.hqwebapp.tables.pagination import (
+    HtmxInvalidPageRedirectMixin,
+    SelectablePaginatedTableView,
+)
 from corehq.apps.integration.kyc.models import KycConfig
 from corehq.apps.integration.payments.const import (
     PaymentProperties,
@@ -117,7 +120,9 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
-class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin):
+class PaymentsVerificationTableView(
+    HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin
+):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
     report_title = _('Payments Verification Report')
@@ -125,6 +130,9 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     VERIFICATION_ROWS_LIMIT = 100
     REVERT_VERIFICATION_ROWS_LIMIT = 100
+
+    def get_host_url(self):
+        return reverse('payments_verify', args=(self.request.domain,))
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)

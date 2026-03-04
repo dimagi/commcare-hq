@@ -1,6 +1,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
+import { Modal } from "bootstrap5";
 import google from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
 import downloadAsyncModal from "app_manager/js/bootstrap5/download_async_modal";
@@ -202,8 +203,8 @@ function savedAppModel(appData, releasesMain) {
         return self.short_odk_url();
     };
 
-    self.download_application_zip = function (multimediaOnly, buildProfile) {
-        releasesMain.download_application_zip(
+    self.downloadApplicationZip = function (multimediaOnly, buildProfile) {
+        releasesMain.downloadApplicationZip(
             self.id(), multimediaOnly, buildProfile, self.download_targeted_version(),
         );
     };
@@ -222,13 +223,12 @@ function savedAppModel(appData, releasesMain) {
     };
 
     self.handleScanModal = function () {
-
         // Hide the main deploy modal, then re-open
         // it when the scan barcode modal is closed
-        var $deployModal = $('.modal.fade.in');
-        $deployModal.modal('hide');  /* todo B5: js-modal */
+        const deployModal = Modal.getOrCreateInstance('.modal.fade.show');
+        deployModal.hide();
         $('body').one("hide.bs.modal", function () {
-            $deployModal.modal({ show: true });  /* todo B5: js-modal */
+            deployModal.show();
         });
     };
 
@@ -267,8 +267,8 @@ function releasesMainModel(o) {
     self.showReleaseOperations = ko.observable(true);
     self.depCaseTypes = ko.observableArray();
 
-    self.download_modal = $(self.options.download_modal_id);
-    self.async_downloader = asyncDownloader(self.download_modal);
+    self.downloadModalId = self.options.downloadModalId;
+    self.asyncDownloader = asyncDownloader($(self.downloadModalId));
     self.savedApps.subscribe(() => {
         self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
     });
@@ -284,7 +284,7 @@ function releasesMainModel(o) {
         }
     });
 
-    self.download_application_zip = function (appId, multimediaOnly, buildProfile, downloadTargetedVersion) {
+    self.downloadApplicationZip = function (appId, multimediaOnly, buildProfile, downloadTargetedVersion) {
         var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
         var url = self.reverse(urlSlug, appId);
         var params = {};
@@ -293,17 +293,14 @@ function releasesMainModel(o) {
         if (buildProfile) {
             params.profile = buildProfile;
         }
-        self.async_downloader.generateDownload(url, params);
-        // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
-        // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
-        $('.modal.fade.in').modal('hide');  /* todo B5: js-modal */
-        try {
-            self.download_modal.modal({show: true});  /* todo B5: js-modal */
-        } catch (e) {
-            // do nothing. this error only shows up in mocha tests when run
-            // via grunt rather than the browser due to how the DOM is
-            // interpreted. this runs fine in the browser.
+        self.asyncDownloader.generateDownload(url, params);
+        // Hide the open modal so they don't overlap
+        const openModal = Modal.getInstance('.modal.fade.show');
+        if (openModal) {
+            openModal.hide();
         }
+        const downloadModal = Modal.getOrCreateInstance(self.downloadModalId);
+        downloadModal.show();
     };
 
     self.buildButtonEnabled = ko.computed(function () {
@@ -401,7 +398,7 @@ function releasesMainModel(o) {
 
     self.toggleRelease = function (savedApp, event) {
         self.releaseErrorMessage(null);
-        $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
+        $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('d-none');
         var isReleased = savedApp.is_released();
         var savedAppId = savedApp.id();
         if (savedApp.is_released() !== 'pending') {
@@ -419,18 +416,18 @@ function releasesMainModel(o) {
                 success: function (data) {
                     if (data.error) {
                         self.releaseErrorMessage(data.error);
-                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('d-none');
                         savedApp.is_released(isReleased);
                     } else {
                         savedApp.is_released(data.is_released);
                         self.latestReleasedVersion(data.latest_released_version);
-                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('d-none');
                         self.options.appReleaseLogs && self.options.appReleaseLogs.goToPage(1);
                     }
                 },
                 error: function () {
                     savedApp.is_released('error');
-                    $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                    $(event.currentTarget).parent().prev('.js-release-waiting').addClass('d-none');
                 },
             });
         }

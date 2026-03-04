@@ -19,8 +19,8 @@ from corehq.util.metrics import metrics_counter
 
 def verify_users(kyc_users, config, verified_by):
     # TODO: An endpoint to verify a group of users does not seem to be
-    #       available using Chenosis. If we have to do this with
-    #       multiple calls, consider using Celery gevent workers.
+    #       available using Chenosis or Orange Cameroon.
+    #       Consider using Celery gevent workers.
     results = {}
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)

@@ -422,7 +422,7 @@
    display: block;
    font-weight: bold;
    position: relative;
-@@ -335,51 +346,44 @@
+@@ -335,51 +346,40 @@
      padding-top: 14px;
      padding-bottom: 13px;
      display: block;
@@ -471,18 +471,16 @@
  
  .appnav-menu .btn-langcode-preprocessed {
 -  background-color: darken(@cc-bg, 10);
-+  background-color: darken($cc-bg, 10);
-   border: none;
+-  border: none;
 -  color: lighten(@cc-text, 10);
++  background-color: darken($cc-bg, 10);
 +  color: lighten($cc-text, 10);
    vertical-align: top;
 -  font-size: 9px;
-+  font-size: 0.5625rem;
    margin-top: -1px;
    margin-right: 1px;
-   padding-bottom: 3px;
+-  padding-bottom: 3px;
 -  line-height: 10px;
-+  line-height: 0.625rem;
  }
  
  .appnav-section-name {
@@ -491,7 +489,7 @@
    color: white;
    padding: 10px 15px;
    margin: 0;
-@@ -392,9 +396,9 @@
+@@ -392,9 +392,9 @@
    position: relative;
    span {
      display: block;
@@ -503,7 +501,7 @@
    }
    .appnav-primary-icon {
      margin-top: 2px;
-@@ -413,16 +417,16 @@
+@@ -413,16 +413,16 @@
  }
  
  .appnav-toggle-label {
@@ -524,7 +522,7 @@
      word-break: break-word;
    }
    a {
-@@ -432,31 +436,33 @@
+@@ -432,31 +432,33 @@
        &:hover {
          color: white;
          cursor: move;

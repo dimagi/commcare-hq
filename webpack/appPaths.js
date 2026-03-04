@@ -22,6 +22,7 @@ const nonStandardAppPaths = {
     "telerivet": path.resolve(MESSAGING_PATH, 'smsbackends', 'telerivet'),
     // the path itself is standard, but the app has no templates so getStandardAppPaths filters it out
     "smsbillables": path.resolve(APPS_PATH, 'smsbillables'),
+    "translations": path.resolve(APPS_PATH, 'translations'),
     // motech apps:
     "dhis2": path.resolve(MOTECH_PATH, 'dhis2'),
     "generic_inbound": path.resolve(MOTECH_PATH, 'generic_inbound'),

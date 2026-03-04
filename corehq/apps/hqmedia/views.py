@@ -527,8 +527,7 @@ class MultimediaAudioTranslatorFileView(BaseMultimediaTemplateView):
         lang = request.GET.get('lang')
         if lang:
             from corehq.apps.hqmedia.view_helpers import download_audio_translator_files
-            eligible_for_transifex_only = request.GET.get('skip_blacklisted', "false") == "true"
-            files = download_audio_translator_files(self.domain, self.app, lang, eligible_for_transifex_only)
+            files = download_audio_translator_files(self.domain, self.app, lang)
             zip_in_memory = io.BytesIO()
             with zipfile.ZipFile(zip_in_memory, "w", zipfile.ZIP_DEFLATED) as zip_content:
                 for filename, workbook in files.items():
