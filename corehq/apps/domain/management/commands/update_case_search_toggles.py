@@ -27,6 +27,11 @@ class Command(BaseCommand):
             help="Show which features triggered each toggle",
             action='store_true',
         )
+        parser.add_argument(
+            '--domains',
+            help="Comma-separated list of domains to process instead of all SYNC_SEARCH_CASE_CLAIM domains",
+            type=lambda s: [d.strip() for d in s.split(',')],
+        )
 
     @staticmethod
     def _get_case_list_modules(app_doc):
@@ -190,7 +195,7 @@ class Command(BaseCommand):
         if dry_run:
             self.stdout.write("DRY RUN - No toggles will be set\n")
 
-        domains = toggles.SYNC_SEARCH_CASE_CLAIM.get_enabled_domains()
+        domains = options['domains'] or toggles.SYNC_SEARCH_CASE_CLAIM.get_enabled_domains()
         for domain_name in domains:
             advanced_reasons = Command._domain_uses_advanced_feature(domain_name)
             if advanced_reasons:
