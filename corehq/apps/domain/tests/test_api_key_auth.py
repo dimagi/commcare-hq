@@ -128,6 +128,15 @@ class SSOApiAuthenticationTest(AuthenticationTestBase):
         res = self.call_api(request)
         assert res.status_code == 200
 
+    def test_sso_user_with_basic_auth_and_api_key_succeeds(self):
+        request = self.factory.get('/myapi/')
+        encoded = base64.b64encode(
+            f"{self.sso_username}:{self.sso_api_key}".encode('utf-8')
+        ).decode('utf-8')
+        request.META['HTTP_AUTHORIZATION'] = f"basic {encoded}"
+        res = self.call_api(request)
+        assert res.status_code == 200
+
     def test_sso_user_with_basic_auth_is_rejected(self):
         request = self.factory.get('/myapi/')
         encoded = base64.b64encode(

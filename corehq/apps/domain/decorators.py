@@ -535,6 +535,7 @@ def sso_check(view_func, api_key):
             if (
                 not api_key
                 and domain_obj
+                and not getattr(request, 'api_key_authenticated', False)
                 and _sso_required(request)
             ):
                 return JsonResponse(SSO_AUTH_FAIL_RESPONSE, status=401)
