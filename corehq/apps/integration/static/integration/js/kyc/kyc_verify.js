@@ -28,8 +28,12 @@ $(document).on('htmx:afterRequest', function (event) {
             updateVerifyButton([]);
         } else if (method === 'post') {
             const endpoint = requestPath + window.location.search;
-            $('#kyc-verify-table').text('');
-            htmx.ajax('get', endpoint, {target: '#kyc-verify-table', indicator: '#kyc-loader'});
+            // The timeout is to allow the verification request enough time to update the affected cases in ES before
+            // doing a refresh
+            setTimeout(() => {
+                $('#kyc-verify-table').text('');
+                htmx.ajax('get', endpoint, {target: '#kyc-verify-table', indicator: '#kyc-loader'});
+            }, 3000);
         }
     }
 });

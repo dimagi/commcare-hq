@@ -601,6 +601,7 @@ class SurveyContent(Content):
             return None, None, None, None
 
         return app, module, form, form_requires_input(form)
+
     def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
             app, form):
         # Close all currently open sessions

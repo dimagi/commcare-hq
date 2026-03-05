@@ -235,7 +235,7 @@ class HqPermissions(DocumentSchema):
     manage_data_registry_list = StringListProperty(default=[])
     view_data_registry_contents = BooleanProperty(default=False)
     view_data_registry_contents_list = StringListProperty(default=[])
-    manage_attendance_tracking = BooleanProperty(default=False)
+    manage_attendance_tracking = BooleanProperty(default=False)  # no longer used
 
     manage_domain_alerts = BooleanProperty(default=False)
 
@@ -1722,9 +1722,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             or self.has_permission(domain, 'limited_login_as')
         )
 
-    def can_manage_events(self, domain):
-        return self.has_permission(domain, 'manage_attendance_tracking')
-
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
@@ -2059,19 +2056,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
 
     def get_case_sharing_groups(self, domain=None):
-        from corehq.apps.events.models import (
-            get_user_case_sharing_groups_for_events,
-        )
         from corehq.apps.groups.models import Group
 
         groups = self._get_case_sharing_groups_for_locations(self.domain)
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
-
-        has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
-        # Temporary toggle that will be removed once the feature is released
-        has_at_toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
-        if has_at_privilege and has_at_toggle_enabled:
-            groups += get_user_case_sharing_groups_for_events(self)
         return groups
 
     def get_reporting_groups(self):

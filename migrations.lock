@@ -267,6 +267,7 @@ case_search
  0016_csqlfixtureexpression_user_data_criteria
 celery
  0001_taskrecord
+ 0002_taskrecord_kombu_serialization
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -340,6 +341,7 @@ data_analytics
  0010_maltrow_last_run_date
  0011_domainmetrics
  0012_update_domainmetrics_fields
+ 0013_domainmetrics_bulk_case_editing_sessions_and_more
 data_cleaning
  0001_initial
  0002_update_fields_and_ordering
@@ -489,17 +491,6 @@ es
  0015_add_user_domain_memberships
  0016_add_new_index_for_cc_perf
  0017_add_is_account_confirmed
-events
- 0001_add_events_model
- 0002_attendancetrackingconfig
- 0003_event_attendance_taker_ids
- 0004_event_id_case_id
- 0005_rename_alter_event__attendance_taker_ids
- 0006_remove_end_date_constraint
- 0007_alter_event_attendee_list_status
- 0008_alter_event__case_id
- 0009_attendeemodel
- 0010_event_location
 experiments
  0001_initial
 export
@@ -717,6 +708,8 @@ integration
  0014_kycconfig_passing_threshold
  0015_kycconfig_connection_settings_and_more
  0016_kycconfig_stores_full_name
+ 0017_drop_tables_for_removed_toggles
+ 0018_momoconfig_provider
 ip_access
  0001_initial
 ivr
@@ -748,6 +741,7 @@ linked_domain
  0022_alter_domainlinkhistory_model
  0023_alter_domainlinkhistory_model
  0024_alter_domainlinkhistory_model
+ 0025_alter_domainlinkhistory_model_choices
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -1239,6 +1233,7 @@ sso
  0006_add_new_fields_in_identityprovider
  0007_add_multi_view_api_fields
  0008_alter_identityprovider_idp_type
+ 0009_identityprovider_require_api_key_for_api_access
 start_enterprise
  0001_initial
 stock
