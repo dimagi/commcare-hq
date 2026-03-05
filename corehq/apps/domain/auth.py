@@ -238,6 +238,7 @@ class ApiKeyFallbackBackend(object):
 
             for key in keys_qs:
                 if key.plaintext_key == password:
+                    request.api_key_authenticated = True
                     request.skip_two_factor_check = True
                     return user
             return None
