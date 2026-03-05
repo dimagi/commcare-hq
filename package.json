@@ -38,7 +38,7 @@
         "datatables.net-bs5": "1.13.8",
         "datatables.net-fixedcolumns-bs5": "4.3.0",
         "detectrtc": "1.4.0",
-        "dompurify": "3.3.1",
+        "dompurify": "3.3.2",
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
         "exports-loader": "5.0.0",
         "fast-levenshtein": "3.0.0",
