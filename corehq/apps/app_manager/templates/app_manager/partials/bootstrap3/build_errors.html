@@ -454,6 +454,22 @@
               in form
               {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
+            {% case "save_to_case_missing_case_type" %}
+            <strong>Save to Case question is missing a case type.</strong>
+            Please add the "case_type" property mapping for
+            "{{ error.case_tag }}"
+            {% if not not_actual_build %}
+              in form
+              {% include "app_manager/partials/form_error_message.html" %}
+            {% endif %}
+            {% case "save_to_case_missing_case_name" %}
+            <strong>Save to Case question is missing a case name.</strong>
+            Please add the "case_name" property mapping for
+            "{{ error.case_tag }}"
+            {% if not not_actual_build %}
+              in form
+              {% include "app_manager/partials/form_error_message.html" %}
+            {% endif %}
             {% case "path error" %}
             {% if error.path %}
               The case management

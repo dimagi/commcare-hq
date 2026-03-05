@@ -1149,6 +1149,18 @@ class IndexedFormBaseValidator(FormBaseValidator):
 
         return errors
 
+    def check_save_to_case_references(self):
+        errors = []
+        save_references = self.form.case_references_data.get_save_references()
+        for save_ref in save_references:
+            if save_ref.create:
+                if 'case_type' not in save_ref.properties:
+                    errors.append({'type': 'save_to_case_missing_case_type', 'case_tag': save_ref.path})
+                if 'case_name' not in save_ref.properties:
+                    errors.append({'type': 'save_to_case_missing_case_name', 'case_tag': save_ref.path})
+
+        return errors
+
 
 class FormValidator(IndexedFormBaseValidator):
     def check_actions(self):
@@ -1164,6 +1176,7 @@ class FormValidator(IndexedFormBaseValidator):
         if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
                 and not self.form.actions.open_case.has_name_update():
             errors.append({'type': 'case_name required'})
+        errors.extend(self.check_save_to_case_references())
 
         errors.extend(self.check_case_properties(
             all_names=self.form.actions.all_property_names(),
@@ -1315,6 +1328,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
                 all_names=action.get_property_names(),
                 case_tag=action.case_tag
             ))
+
+        errors.extend(self.check_save_to_case_references())
 
         if self.form.form_filter:
             # Replace any dots with #case, which doesn't make for valid xpath
