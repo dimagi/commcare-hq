@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from corehq.apps.accounting.const import (
     DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
@@ -145,12 +146,16 @@ class InvoiceReminder(UnpaidInvoiceAction):
             account_name = invoice.get_domain()
 
         if invoice.account.auto_pay_enabled:
-            subject = _(
-                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} day"
+            subject = ngettext(
+                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} day",
+                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} days",
+                DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
             ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
         else:
-            subject = _(
-                "Your CommCare Billing Statement for {account_name} is due in {num_days} day"
+            subject = ngettext(
+                "Your CommCare Billing Statement for {account_name} is due in {num_days} day",
+                "Your CommCare Billing Statement for {account_name} is due in {num_days} days",
+                DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
             ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
 
         send_HTML_email(
