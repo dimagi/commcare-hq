@@ -66,7 +66,14 @@ If breaking changes affect HQ's usage, make the necessary code changes alongside
 
 ## Step 6: Make the upgrade
 
-**Python** — update the version in each `requirements/*.txt` file that pins it. Keep the existing pin style (`==` stays `==`, `>=` stays `>=`). Do not run `pip install`.
+**Python** — run:
+```bash
+uv lock --upgrade-package <package>
+```
+or if not the latest
+```bash
+uv lock --upgrade-package <package>==<version>
+```
 
 **JavaScript** — update `package.json`, then run:
 ```bash
