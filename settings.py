@@ -374,7 +374,7 @@ HQ_APPS = (
     'corehq.tabs',
     'soil',
     'phonelog',
-    'pillowtop',
+    'corehq.apps.pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
