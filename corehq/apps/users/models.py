@@ -107,7 +107,7 @@ from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
-from corehq.util.view_utils import absolute_reverse
+from corehq.util.view_utils import absolute_reverse, get_request
 
 from .models_role import (  # noqa
     Permission,
@@ -2432,8 +2432,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         )
 
     def is_global_admin(self):
-        # override this function to pass global admin rights off to django
-        return self.is_superuser
+        return self.is_superuser and not getattr(get_request(), '_auth_method_restricts_superuser_access', False)
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
