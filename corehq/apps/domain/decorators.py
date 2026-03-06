@@ -246,6 +246,7 @@ def _oauth2_check(scopes):
         valid, r = oauthlib_core.verify_request(request, scopes=scopes)
         if valid:
             request.user = r.user
+            request._auth_method_restricts_superuser_access = True
             return True
 
     def real_decorator(view):
