@@ -1,16 +1,5 @@
-
-
-class DocumentNotFoundError(Exception):
-    pass
-
-
-class DocumentDeletedError(DocumentNotFoundError):
-    pass
-
-
-class DocumentMissingError(DocumentNotFoundError):
-    pass
-
-
-class DocumentMismatchError(Exception):
-    pass
+"""Shim: pillowtop.dao.exceptions has moved to corehq.apps.pillowtop.dao.exceptions."""
+import sys
+import importlib
+_module = importlib.import_module('corehq.apps.pillowtop.dao.exceptions')
+sys.modules[__name__] = _module

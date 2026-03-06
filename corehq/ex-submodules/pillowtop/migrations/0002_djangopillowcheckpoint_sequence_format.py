@@ -1,17 +1,5 @@
-from django.db import models, migrations
-
-
-class Migration(migrations.Migration):
-
-    dependencies = [
-        ('pillowtop', '0001_initial'),
-    ]
-
-    operations = [
-        migrations.AddField(
-            model_name='djangopillowcheckpoint',
-            name='sequence_format',
-            field=models.CharField(default='text', max_length=20, choices=[('text', 'text'), ('json', 'json')]),
-            preserve_default=True,
-        ),
-    ]
+"""Shim: pillowtop.migrations.0002_djangopillowcheckpoint_sequence_format has moved to corehq.apps.pillowtop.migrations.0002_djangopillowcheckpoint_sequence_format."""
+import sys
+import importlib
+_module = importlib.import_module('corehq.apps.pillowtop.migrations.0002_djangopillowcheckpoint_sequence_format')
+sys.modules[__name__] = _module

@@ -1,14 +1,5 @@
-import itertools
-
-from pillowtop.reindexer.change_providers.interface import ChangeProvider
-
-
-class CompositeChangeProvider(ChangeProvider):
-    """Change Provider of Change Providers
-    """
-
-    def __init__(self, change_providers):
-        self.change_providers = change_providers
-
-    def iter_all_changes(self, start_from=None):
-        return itertools.chain(*[change_provider.iter_all_changes() for change_provider in self.change_providers])
+"""Shim: pillowtop.reindexer.change_providers.composite has moved to corehq.apps.pillowtop.reindexer.change_providers.composite."""
+import sys
+import importlib
+_module = importlib.import_module('corehq.apps.pillowtop.reindexer.change_providers.composite')
+sys.modules[__name__] = _module

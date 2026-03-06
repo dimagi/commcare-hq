@@ -1,4 +1,5 @@
-
-CHECKPOINT_FREQUENCY = 100
-CHECKPOINT_MIN_WAIT = 300
-DEFAULT_PROCESSOR_CHUNK_SIZE = 10
+"""Shim: pillowtop.const has moved to corehq.apps.pillowtop.const."""
+import sys
+import importlib
+_module = importlib.import_module('corehq.apps.pillowtop.const')
+sys.modules[__name__] = _module

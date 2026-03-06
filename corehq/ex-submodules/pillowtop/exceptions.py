@@ -1,20 +1,5 @@
-
-
-class PillowtopCheckpointReset(Exception):
-    pass
-
-
-class PillowNotFoundError(Exception):
-    pass
-
-
-class PillowtopIndexingError(Exception):
-    pass
-
-
-class PillowConfigError(Exception):
-    pass
-
-
-class BulkDocException(Exception):
-    pass
+"""Shim: pillowtop.exceptions has moved to corehq.apps.pillowtop.exceptions."""
+import sys
+import importlib
+_module = importlib.import_module('corehq.apps.pillowtop.exceptions')
+sys.modules[__name__] = _module

@@ -1,5 +1,5 @@
-import logging
-
-
-pillow_logging = logging.getLogger("pillowtop")
-pillow_logging.setLevel(logging.INFO)  # todo: this should be done explicitly in settings
+"""Shim: pillowtop.logger has moved to corehq.apps.pillowtop.logger."""
+import sys
+import importlib
+_module = importlib.import_module('corehq.apps.pillowtop.logger')
+sys.modules[__name__] = _module
