@@ -2,7 +2,7 @@ import json
 
 from django.test import SimpleTestCase, TestCase, override_settings
 
-from pillowtop import get_all_pillow_instances
+from corehq.apps.pillowtop import get_all_pillow_instances
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.hqadmin.utils import check_for_rewind

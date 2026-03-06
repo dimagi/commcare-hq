@@ -1,5 +1,5 @@
 from django.test import override_settings, SimpleTestCase, TestCase
-from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
+from corehq.apps.pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpoint
 from corehq.apps.pillowtop.exceptions import PillowNotFoundError
 from corehq.apps.pillowtop.feed.mock import RandomChangeFeed

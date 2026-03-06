@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from pillowtop import get_pillow_by_name, get_all_pillow_instances
+from corehq.apps.pillowtop import get_pillow_by_name, get_all_pillow_instances
 
 
 class Command(BaseCommand):

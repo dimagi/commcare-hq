@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 import sys
-from pillowtop import get_pillow_by_name, get_all_pillow_configs
+from corehq.apps.pillowtop import get_pillow_by_name
 
 
 class Command(BaseCommand):

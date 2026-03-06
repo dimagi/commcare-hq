@@ -2,7 +2,7 @@ import json
 
 from django.core.management import BaseCommand, CommandError
 
-from pillowtop import get_pillow_by_name
+from corehq.apps.pillowtop import get_pillow_by_name
 
 
 class Command(BaseCommand):
