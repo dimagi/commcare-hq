@@ -376,12 +376,34 @@ class ConditionalCaseUpdate(DocumentSchema):
 
 
 class UpdateCaseAction(FormAction):
-    # `update` is the "official" version, while `update_multi` is intended as a way
-    # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
-    # buildable state, where `update` is specified, or conflicts are waiting to be resolved, where
-    # `update_multi` will hold the updates.
     update = SchemaDictProperty(ConditionalCaseUpdate)
     update_multi = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+    conflicts = SchemaDictProperty(SchemaListProperty(ConditionalCaseUpdate))
+
+    @classmethod
+    def wrap(cls, data):
+        # Can be removed after all test projects that used
+        # FORMBUILDER_SAVE_TO_CASE toggle no longer need to track
+        # legacy conflicts in update_multi
+
+        def _exclude(ccu, ccus):
+            exclude_path = ccu.get('question_path')
+            return [c for c in ccus if c['question_path'] != exclude_path]
+
+        multi = data.pop('update_multi', None)
+        if multi:
+            assert not data.get('conflicts')
+            update = data.get('update') or {}
+            if update:
+                # should never happen, indicates a bug in legacy multi logic
+                data['conflicts'] = {
+                    key: _exclude(update.get(key) or {}, items)
+                    for key, items in multi
+                }
+            else:
+                data['update'] = {key: items[0] for key, items in multi.items() if items}
+                data['conflicts'] = {key: items[1:] for key, items in multi.items() if len(items) > 1}
+        return super().wrap(data)
 
     def make_multi(self):
         '''
@@ -582,13 +604,28 @@ class OpenReferralAction(UpdateReferralAction):
 
 class OpenCaseAction(FormAction):
 
-    # `name_update` is the "official" version, while `name_update_multi` is intended as a way
-    # to allow the user to resolve conflicts. They should not be used together. Either the action is in a
-    # buildable state, where `name_update` is specified, or conflicts are waiting to be resolved, where
-    # `name_update_multi` will hold the updates.
     name_update = SchemaProperty(ConditionalCaseUpdate)
     name_update_multi = SchemaListProperty(ConditionalCaseUpdate)
+    conflicts = SchemaListProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        # Can be removed after all test projects that used
+        # FORMBUILDER_SAVE_TO_CASE toggle no longer need to track
+        # legacy conflicts in name_update_multi
+        multi = data.pop('name_update_multi', None)
+        if multi:
+            assert not data.get('conflicts')
+            update = data.get('name_update') or {}
+            if update and update.get('question_path'):
+                # should never happen, indicates a bug in legacy multi logic
+                exclude_path = update.get('question_path')
+                data['conflicts'] = [x for x in multi if x['question_path'] != exclude_path]
+            else:
+                data['name_update'] = multi[0]
+                data['conflicts'] = multi[1:]
+        return super().wrap(data)
 
     _NAME_UPDATE_MULTI_FIELD_NAME = 'name_update_multi'
 
