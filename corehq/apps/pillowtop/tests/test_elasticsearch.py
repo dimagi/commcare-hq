@@ -109,9 +109,9 @@ class TestSendToElasticsearch(SimpleTestCase):
     def _send_to_es_mock_errors(self, exception, retries):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
 
-        with mock.patch("pillowtop.processors.elastic._propagate_failure", return_value=False), \
-             mock.patch("pillowtop.processors.elastic._retries", return_value=retries), \
-             mock.patch("pillowtop.processors.elastic._sleep_between_retries"), \
+        with mock.patch("corehq.apps.pillowtop.processors.elastic._propagate_failure", return_value=False), \
+             mock.patch("corehq.apps.pillowtop.processors.elastic._retries", return_value=retries), \
+             mock.patch("corehq.apps.pillowtop.processors.elastic._sleep_between_retries"), \
              mock.patch.object(self.adapter, 'index') as doc_adapter, \
              capture_log_output("pillowtop") as log:
             doc_adapter.side_effect = exception

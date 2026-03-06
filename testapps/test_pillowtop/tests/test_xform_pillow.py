@@ -208,7 +208,7 @@ class XFormPillowTest(TestCase):
 
     def test_form_pillow_error_in_form_metadata(self):
         self.assertEqual(0, PillowError.objects.filter(pillow=self.pillow_id).count())
-        with patch('pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:
+        with patch('corehq.apps.pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:
             mark_latest_submission.side_effect = ResourceConflict('couch sucks')
             case_id, case_name = self._create_form_and_sync_to_es()
 

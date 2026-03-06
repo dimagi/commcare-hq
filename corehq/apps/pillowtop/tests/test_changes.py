@@ -112,9 +112,9 @@ class TestCouchChangeFeed(SimpleTestCase):
         feed = CouchChangeFeed(Mock())
         changes = []
         with (
-            patch('pillowtop.feed.couch.ChangesStream', fake_changes_stream),
-            patch("pillowtop.feed.couch.change_from_couch_row", lambda chg, **kw: chg['value']),
-            patch("pillowtop.feed.couch.populate_change_metadata", lambda val, *a: val),
+            patch('corehq.apps.pillowtop.feed.couch.ChangesStream', fake_changes_stream),
+            patch("corehq.apps.pillowtop.feed.couch.change_from_couch_row", lambda chg, **kw: chg['value']),
+            patch("corehq.apps.pillowtop.feed.couch.populate_change_metadata", lambda val, *a: val),
         ):
             for change in feed.iter_changes(since=None, forever=True):
                 changes.append(change)
