@@ -43,7 +43,7 @@ class PillowtopRetryAllPillowsTests(TestCase):
             exc_class_string = 'builtins.Exception'
         else:
             exc_class = DocumentMissingError
-            exc_class_string = 'pillowtop.dao.exceptions.DocumentMissingError'
+            exc_class_string = 'corehq.apps.pillowtop.dao.exceptions.DocumentMissingError'
 
         pillow.process_change = MagicMock(side_effect=exc_class(pillow.pillow_id))
         doc = self._get_random_doc()
