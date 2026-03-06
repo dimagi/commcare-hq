@@ -3,7 +3,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.users.models import CommCareUser, CouchUser
 
-from pillowtop.processors.form import mark_latest_submission
+from corehq.apps.pillowtop.processors.form import mark_latest_submission
 
 
 class MarkLatestSubmissionTest(TestCase):

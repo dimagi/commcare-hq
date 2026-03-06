@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
-from pillowtop.reindexer.change_providers.form import SqlDomainXFormChangeProvider
+from corehq.apps.pillowtop.reindexer.change_providers.form import SqlDomainXFormChangeProvider
 
 
 class TestSqlDomainFormChangeProvider(TestCase):

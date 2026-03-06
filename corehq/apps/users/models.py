@@ -3105,7 +3105,7 @@ class UserReportingMetadataStaging(models.Model):
                 """, params)
 
     def process_record(self, user):
-        from pillowtop.processors.form import mark_latest_submission
+        from corehq.apps.pillowtop.processors.form import mark_latest_submission
 
         from corehq.pillows.synclog import mark_last_synclog
 

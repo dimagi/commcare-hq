@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from casexml.apps.phone.document_store import SyncLogDocumentStore
-from pillowtop.dao.couch import CouchDocumentStore
+from corehq.apps.pillowtop.dao.couch import CouchDocumentStore
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore

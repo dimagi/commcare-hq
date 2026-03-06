@@ -1,4 +1,4 @@
-from pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.logger import pillow_logging
 
 from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import IndexSettingsKey

@@ -3,10 +3,10 @@ import sys
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.run_pillowtop import run_pillow_by_name, start_pillows
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.run_pillowtop import run_pillow_by_name, start_pillows
 
-from pillowtop.utils import (
+from corehq.apps.pillowtop.utils import (
     get_all_pillow_instances,
     get_all_pillow_configs,
     get_pillow_config_from_setting,

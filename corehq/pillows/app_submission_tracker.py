@@ -9,11 +9,11 @@ from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
-from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
+from corehq.apps.pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from corehq.apps.pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 
 def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerPillow',

@@ -1,5 +1,5 @@
 from django.db import migrations
-from pillowtop.utils import change_checkpoint_id
+from corehq.apps.pillowtop.utils import change_checkpoint_id
 
 
 class Migration(migrations.Migration):

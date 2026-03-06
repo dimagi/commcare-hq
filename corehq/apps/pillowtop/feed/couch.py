@@ -1,7 +1,7 @@
 from couchdbkit import ChangesStream
-from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.feed.interface import ChangeFeed, Change
-from pillowtop.utils import force_seq_int
+from corehq.apps.pillowtop.dao.couch import CouchDocumentStore
+from corehq.apps.pillowtop.feed.interface import ChangeFeed, Change
+from corehq.apps.pillowtop.utils import force_seq_int
 
 TIMEOUT = 10_000  # 10 seconds in ms
 

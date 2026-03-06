@@ -3,8 +3,8 @@ from unittest.mock import patch
 from corehq.apps.es.transient_util import doc_adapter_from_index_name
 from corehq.util.es.elasticsearch import TransportError
 
-from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.pillow import interface
+from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpoint
+from corehq.apps.pillowtop.pillow import interface
 
 
 TEST_ES_MAPPING = {
@@ -48,8 +48,8 @@ class FakeConstructedPillow(interface.ConstructedPillow):
 
 
 def make_fake_constructed_pillow(pillow_id, checkpoint_id):
-    from pillowtop.feed.mock import RandomChangeFeed
-    from pillowtop.processors import LoggingProcessor
+    from corehq.apps.pillowtop.feed.mock import RandomChangeFeed
+    from corehq.apps.pillowtop.processors import LoggingProcessor
 
     pillow = FakeConstructedPillow(
         name=pillow_id,

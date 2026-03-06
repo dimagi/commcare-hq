@@ -5,8 +5,8 @@ from django.core.management.base import BaseCommand
 
 from corehq.util.es.elasticsearch import IndicesClient, SnapshotClient
 
-from pillowtop.models import str_to_kafka_seq
-from pillowtop.utils import get_all_pillow_instances
+from corehq.apps.pillowtop.models import str_to_kafka_seq
+from corehq.apps.pillowtop.utils import get_all_pillow_instances
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.elastic import get_es_new

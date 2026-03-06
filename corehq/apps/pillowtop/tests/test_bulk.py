@@ -3,10 +3,10 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from pillowtop.feed.interface import Change, ChangeMeta
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
+from corehq.apps.pillowtop.feed.interface import Change, ChangeMeta
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor
+from corehq.apps.pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.apps.es.cases import case_adapter

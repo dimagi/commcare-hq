@@ -2,15 +2,15 @@ from abc import ABCMeta, abstractmethod
 
 from corehq.util.es.elasticsearch import BulkIndexError, TransportError
 
-from pillowtop.es_utils import (
+from corehq.apps.pillowtop.es_utils import (
     initialize_index_and_mapping,
     set_index_normal_settings,
     set_index_reindex_settings,
 )
-from pillowtop.feed.interface import Change
-from pillowtop.logger import pillow_logging
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.utils import ErrorCollector, build_bulk_payload
+from corehq.apps.pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.utils import ErrorCollector, build_bulk_payload
 
 from corehq.apps.change_feed.document_types import is_deletion
 from corehq.util.argparse_types import date_type

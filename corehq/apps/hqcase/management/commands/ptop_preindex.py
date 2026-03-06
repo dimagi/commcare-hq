@@ -22,7 +22,7 @@ from corehq.pillows.user import add_demo_user_to_user_index
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.log import get_traceback_string
 from corehq.apps.es.index.settings import IndexSettingsKey
-from pillowtop.reindexer.reindexer import ReindexerFactory
+from corehq.apps.pillowtop.reindexer.reindexer import ReindexerFactory
 
 
 def get_reindex_commands(hq_index_name):

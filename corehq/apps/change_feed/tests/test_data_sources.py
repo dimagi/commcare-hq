@@ -7,8 +7,8 @@ from decorator import contextmanager
 
 from casexml.apps.phone.document_store import SyncLogDocumentStore
 from dimagi.utils.couch.database import get_db
-from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.apps.pillowtop.dao.couch import CouchDocumentStore
+from corehq.apps.pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.data_sources import get_document_store

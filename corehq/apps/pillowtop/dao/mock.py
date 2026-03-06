@@ -1,5 +1,5 @@
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.dao.interface import DocumentStore
+from corehq.apps.pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.apps.pillowtop.dao.interface import DocumentStore
 
 
 class MockDocumentStore(DocumentStore):

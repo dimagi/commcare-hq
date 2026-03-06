@@ -1,5 +1,5 @@
 import uuid
-from pillowtop.feed.interface import ChangeFeed, Change
+from corehq.apps.pillowtop.feed.interface import ChangeFeed, Change
 
 
 class MockChangeFeed(ChangeFeed):

@@ -2,9 +2,9 @@ import json
 from django.core.management.base import BaseCommand
 from django.db.models import Min
 
-from pillowtop.models import KafkaCheckpoint
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import get_pillow_by_name
+from corehq.apps.pillowtop.models import KafkaCheckpoint
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop.utils import get_pillow_by_name
 
 
 PILLOW_REORG_MAPPING = {

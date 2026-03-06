@@ -1,8 +1,8 @@
 """
 This file contains stuff for publishing and reading changes for UCR.
 """
-from pillowtop.dao.django import DjangoDocumentStore
-from pillowtop.feed.interface import ChangeMeta
+from corehq.apps.pillowtop.dao.django import DjangoDocumentStore
+from corehq.apps.pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer

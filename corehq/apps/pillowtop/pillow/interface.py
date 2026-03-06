@@ -14,11 +14,11 @@ from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka import TopicPartition
-from pillowtop.const import CHECKPOINT_MIN_WAIT
-from pillowtop.dao.exceptions import DocumentMissingError
-from pillowtop.utils import force_seq_int
-from pillowtop.exceptions import PillowtopCheckpointReset
-from pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.const import CHECKPOINT_MIN_WAIT
+from corehq.apps.pillowtop.dao.exceptions import DocumentMissingError
+from corehq.apps.pillowtop.utils import force_seq_int
+from corehq.apps.pillowtop.exceptions import PillowtopCheckpointReset
+from corehq.apps.pillowtop.logger import pillow_logging
 
 
 def _topic_for_ddog(topic):
@@ -284,7 +284,7 @@ class ConstructedPillow:
         return self._normalize_sequence(sequence)
 
     def _normalize_sequence(self, sequence):
-        from pillowtop.feed.couch import CouchChangeFeed
+        from corehq.apps.pillowtop.feed.couch import CouchChangeFeed
 
         if not isinstance(sequence, dict):
             if not isinstance(self.change_feed, CouchChangeFeed):

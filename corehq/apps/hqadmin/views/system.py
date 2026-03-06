@@ -14,8 +14,8 @@ import requests
 from requests.exceptions import HTTPError
 
 from dimagi.utils.couch.database import is_bigcouch
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import (
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop.utils import (
     get_all_pillows_json,
     get_pillow_config_by_name,
     get_pillow_json,

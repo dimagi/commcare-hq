@@ -2,7 +2,7 @@ from django.conf import settings
 
 from celery.schedules import crontab
 
-from pillowtop.utils import get_all_pillows_json
+from corehq.apps.pillowtop.utils import get_all_pillows_json
 
 from corehq.apps.celery import periodic_task
 from corehq.util.metrics import metrics_gauge

@@ -4,10 +4,10 @@ from django.conf import settings
 from django.db import transaction
 from kafka import TopicPartition
 
-from pillowtop.exceptions import PillowtopCheckpointReset
-from pillowtop.logger import pillow_logging
-from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
-from pillowtop.pillow.interface import ChangeEventHandler
+from corehq.apps.pillowtop.exceptions import PillowtopCheckpointReset
+from corehq.apps.pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
+from corehq.apps.pillowtop.pillow.interface import ChangeEventHandler
 
 MAX_CHECKPOINT_DELAY = 300
 DELAY_SENTINEL = object()

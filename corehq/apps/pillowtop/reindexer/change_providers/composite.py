@@ -1,6 +1,6 @@
 import itertools
 
-from pillowtop.reindexer.change_providers.interface import ChangeProvider
+from corehq.apps.pillowtop.reindexer.change_providers.interface import ChangeProvider
 
 
 class CompositeChangeProvider(ChangeProvider):

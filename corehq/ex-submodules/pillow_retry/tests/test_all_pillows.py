@@ -6,8 +6,8 @@ from unittest.mock import MagicMock
 
 from pillow_retry.models import PillowError
 from pillowtop import get_all_pillow_configs
-from pillowtop.dao.exceptions import DocumentMissingError
-from pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.dao.exceptions import DocumentMissingError
+from corehq.apps.pillowtop.feed.interface import Change
 
 
 class ExceptionA(Exception):

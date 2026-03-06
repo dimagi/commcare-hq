@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 
-from pillowtop.utils import get_pillow_by_name
+from corehq.apps.pillowtop.utils import get_pillow_by_name
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.domain.shortcuts import create_domain

@@ -2,11 +2,11 @@ import logging
 
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.cache.cache_core import GenerationCache
-from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.feed.couch import CouchChangeFeed
-from pillowtop.models import DjangoPillowCheckpoint
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
+from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpoint
+from corehq.apps.pillowtop.feed.couch import CouchChangeFeed
+from corehq.apps.pillowtop.models import DjangoPillowCheckpoint
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import PillowProcessor
 
 from corehq.util.couchdb_management import couch_config
 

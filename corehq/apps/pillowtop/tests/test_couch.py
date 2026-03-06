@@ -1,7 +1,7 @@
 from couchdbkit import Database
 from django.conf import settings
 from django.test import TestCase
-from pillowtop.couchdb import CachedCouchDB
+from corehq.apps.pillowtop.couchdb import CachedCouchDB
 
 
 class CachedCouchDbTest(TestCase):

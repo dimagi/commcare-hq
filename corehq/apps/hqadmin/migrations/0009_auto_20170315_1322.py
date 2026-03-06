@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-from pillowtop.utils import safe_force_seq_int
+from corehq.apps.pillowtop.utils import safe_force_seq_int
 
 
 def set_seq_int(apps, schema_editor):

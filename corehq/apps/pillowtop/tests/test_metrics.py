@@ -3,8 +3,8 @@ import uuid
 from django.test import SimpleTestCase, override_settings
 
 from corehq.util.metrics.tests.utils import capture_metrics
-from pillowtop.feed.interface import Change, ChangeMeta
-from pillowtop.tests.test_import_pillows import FakePillow
+from corehq.apps.pillowtop.feed.interface import Change, ChangeMeta
+from corehq.apps.pillowtop.tests.test_import_pillows import FakePillow
 
 
 class TestPillowMetrics(SimpleTestCase):

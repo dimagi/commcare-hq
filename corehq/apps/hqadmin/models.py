@@ -7,8 +7,8 @@ from datetime import date, datetime
 from django.db import DEFAULT_DB_ALIAS, models
 
 from dimagi.ext.couchdbkit import *
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import (
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop.utils import (
     get_all_pillow_instances,
     get_pillow_by_name,
     safe_force_seq_int,

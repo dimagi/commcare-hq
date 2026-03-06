@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 from django.core.management import BaseCommand
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from pillowtop.models import str_to_kafka_seq, KafkaCheckpoint
-from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.utils import get_pillow_by_name
+from corehq.apps.pillowtop.models import str_to_kafka_seq, KafkaCheckpoint
+from corehq.apps.pillowtop.processors.elastic import ElasticProcessor
+from corehq.apps.pillowtop.utils import get_pillow_by_name
 
 
 def get_active_pillows(pillows):

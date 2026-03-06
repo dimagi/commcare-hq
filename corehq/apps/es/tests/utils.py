@@ -6,8 +6,8 @@ from inspect import isclass
 
 import pytest
 
-from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.tests.utils import get_pillow_doc_adapter
+from corehq.apps.pillowtop.es_utils import initialize_index_and_mapping
+from corehq.apps.pillowtop.tests.utils import get_pillow_doc_adapter
 
 from corehq.apps.es.client import ElasticMultiplexAdapter
 from corehq.apps.es.migration_operations import CreateIndex

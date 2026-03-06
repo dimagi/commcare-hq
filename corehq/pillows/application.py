@@ -1,9 +1,9 @@
-from pillowtop.checkpoints.manager import (
+from corehq.apps.pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.reindexer import (
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import ElasticProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import (
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
 )

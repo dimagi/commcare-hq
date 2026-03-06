@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from pillowtop.utils import get_pillow_config_from_setting
+from corehq.apps.pillowtop.utils import get_pillow_config_from_setting
 
 
 class PillowConfigTest(SimpleTestCase):

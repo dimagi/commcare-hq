@@ -7,7 +7,7 @@ def pytest_sessionstart():
     from corehq.form_processor.tests.utils import patch_testcase_databases
     from corehq.util.es.testing import patch_es_user_signals
     from corehq.util.test_utils import patch_foreign_value_caches
-    from pillowtop.tests.utils import pillow_connection_cleanup_patch
+    from corehq.apps.pillowtop.tests.utils import pillow_connection_cleanup_patch
 
     patch_unittest_TestCase_doClassCleanup()
     patch_django_test_case()

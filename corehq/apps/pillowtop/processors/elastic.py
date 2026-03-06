@@ -8,9 +8,9 @@ from dimagi.utils.logging import notify_error
 
 from corehq.apps.es.case_search import multiplex_to_adapter
 from corehq.apps.es.const import HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
-from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
-from pillowtop.logger import pillow_logging
-from pillowtop.utils import (
+from corehq.apps.pillowtop.exceptions import BulkDocException, PillowtopIndexingError
+from corehq.apps.pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.utils import (
     ErrorCollector,
     build_bulk_payload,
     bulk_fetch_changes_docs,

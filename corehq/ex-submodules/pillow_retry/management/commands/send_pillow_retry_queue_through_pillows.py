@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from pillow_retry.api import _process_kafka_change
 from pillow_retry.models import PillowError
 from pillowtop import get_pillow_by_name
-from pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.producer import ChangeProducer

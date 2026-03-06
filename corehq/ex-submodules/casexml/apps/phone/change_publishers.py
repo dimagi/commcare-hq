@@ -1,5 +1,5 @@
 from corehq.apps.change_feed.producer import producer
-from pillowtop.feed.interface import ChangeMeta
+from corehq.apps.pillowtop.feed.interface import ChangeMeta
 
 
 def publish_synclog_saved(synclog):

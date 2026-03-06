@@ -6,13 +6,13 @@ from datetime import datetime
 
 from django.conf import settings
 
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.exceptions import PillowConfigError
-from pillowtop.logger import pillow_logging
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import BulkPillowProcessor
-from pillowtop.utils import (
+from corehq.apps.pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.exceptions import PillowConfigError
+from corehq.apps.pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import BulkPillowProcessor
+from corehq.apps.pillowtop.utils import (
     bulk_fetch_changes_docs,
     ensure_document_exists,
     ensure_matched_revisions,

@@ -1,5 +1,5 @@
-from pillowtop.logger import pillow_logging
-from pillowtop.processors.interface import BulkPillowProcessor, PillowProcessor
+from corehq.apps.pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.processors.interface import BulkPillowProcessor, PillowProcessor
 
 
 class NoopProcessor(PillowProcessor):

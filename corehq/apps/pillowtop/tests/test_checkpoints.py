@@ -1,10 +1,10 @@
 from django.test import SimpleTestCase, override_settings, TestCase
 import time
 from memoized import memoized
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_or_create_checkpoint
-from pillowtop.checkpoints.util import get_machine_id
-from pillowtop.exceptions import PillowtopCheckpointReset
-from pillowtop.models import DjangoPillowCheckpoint
+from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpoint, get_or_create_checkpoint
+from corehq.apps.pillowtop.checkpoints.util import get_machine_id
+from corehq.apps.pillowtop.exceptions import PillowtopCheckpointReset
+from corehq.apps.pillowtop.models import DjangoPillowCheckpoint
 
 
 class PillowCheckpointTest(SimpleTestCase):

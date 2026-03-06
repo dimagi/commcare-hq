@@ -26,16 +26,16 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchforms.geopoint import GeoPoint
 from jsonobject.exceptions import BadValueError
-from pillowtop.checkpoints.manager import (
+from corehq.apps.pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.reindexer.change_providers.case import (
+from corehq.apps.pillowtop.es_utils import initialize_index_and_mapping
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor
+from corehq.apps.pillowtop.reindexer.change_providers.case import (
     get_domain_case_change_provider,
 )
-from pillowtop.reindexer.reindexer import (
+from corehq.apps.pillowtop.reindexer.reindexer import (
     PillowChangeProviderReindexer,
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,

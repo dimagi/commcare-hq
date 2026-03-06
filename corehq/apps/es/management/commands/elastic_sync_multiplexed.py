@@ -24,8 +24,8 @@ from corehq.apps.es.transient_util import (
 )
 from corehq.apps.es.utils import check_task_progress
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.utils import get_all_pillow_instances
+from corehq.apps.pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from corehq.apps.pillowtop.utils import get_all_pillow_instances
 
 logger = logging.getLogger('elastic_sync_multiplexed')
 

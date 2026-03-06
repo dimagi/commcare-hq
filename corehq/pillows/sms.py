@@ -1,10 +1,10 @@
-from pillowtop.checkpoints.manager import (
+from corehq.apps.pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.reindexer.reindexer import (
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import (
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
 )

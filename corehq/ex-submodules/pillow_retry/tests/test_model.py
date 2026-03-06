@@ -8,12 +8,12 @@ from six.moves import range
 from pillow_retry.api import process_pillow_retry
 from pillow_retry import const
 from pillow_retry.models import PillowError
-from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.feed.couch import change_from_couch_row
-from pillowtop.feed.interface import Change, ChangeMeta
-from pillowtop.feed.mock import RandomChangeFeed
-from pillowtop.processors import PillowProcessor
-from pillowtop.tests.utils import make_fake_constructed_pillow, FakeConstructedPillow
+from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpoint
+from corehq.apps.pillowtop.feed.couch import change_from_couch_row
+from corehq.apps.pillowtop.feed.interface import Change, ChangeMeta
+from corehq.apps.pillowtop.feed.mock import RandomChangeFeed
+from corehq.apps.pillowtop.processors import PillowProcessor
+from corehq.apps.pillowtop.tests.utils import make_fake_constructed_pillow, FakeConstructedPillow
 
 
 def get_ex_tb(message, ex_class=None):

@@ -6,11 +6,11 @@ from corehq.apps.es import UserES
 from corehq.apps.es.users import user_adapter
 from corehq.apps.es.groups import group_adapter
 from corehq.pillows.group import get_group_to_elasticsearch_processor
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
-from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory
+from corehq.apps.pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import PillowProcessor
+from corehq.apps.pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from corehq.apps.pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory
 
 
 class GroupsToUsersProcessor(PillowProcessor):

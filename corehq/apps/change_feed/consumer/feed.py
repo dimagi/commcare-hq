@@ -8,9 +8,9 @@ from kafka import KafkaConsumer, TopicPartition
 
 from corehq.form_processor.document_stores import UnexpectedBackend
 from dimagi.utils.logging import notify_error
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
-from pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
-from pillowtop.models import kafka_seq_to_str
+from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+from corehq.apps.pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
+from corehq.apps.pillowtop.models import kafka_seq_to_str
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore

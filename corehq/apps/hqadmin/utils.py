@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 
 import requests
 
-from pillowtop.utils import force_seq_int
+from corehq.apps.pillowtop.utils import force_seq_int
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.blobs import CODES, get_blob_db

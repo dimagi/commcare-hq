@@ -3,10 +3,10 @@ from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase
 
-from pillowtop.dao.mock import MockDocumentStore
-from pillowtop.feed.couch import CouchChangeFeed, TIMEOUT, change_from_couch_row
-from pillowtop.feed.interface import Change
-from pillowtop.feed.mock import RandomChangeFeed, MockChangeFeed
+from corehq.apps.pillowtop.dao.mock import MockDocumentStore
+from corehq.apps.pillowtop.feed.couch import CouchChangeFeed, TIMEOUT, change_from_couch_row
+from corehq.apps.pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.feed.mock import RandomChangeFeed, MockChangeFeed
 
 
 class TestCouchChange(SimpleTestCase):

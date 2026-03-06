@@ -8,7 +8,7 @@ from dimagi.utils.logging import notify_exception
 from corehq.sql_db.connections import cleanup_connections
 
 from pillowtop import get_all_pillow_instances
-from pillowtop.utils import get_pillow_by_name
+from corehq.apps.pillowtop.utils import get_pillow_by_name
 
 
 def run_pillow_by_name(

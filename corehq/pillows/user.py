@@ -7,13 +7,13 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.util.quickcache import quickcache
 from corehq.util.doc_processor.couch import CouchDocumentProvider
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import ElasticProcessor, PillowProcessor
-from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from pillowtop.reindexer.reindexer import ReindexerFactory
+from corehq.apps.pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from corehq.apps.pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from corehq.apps.pillowtop.pillow.interface import ConstructedPillow
+from corehq.apps.pillowtop.processors import ElasticProcessor, PillowProcessor
+from corehq.apps.pillowtop.processors.elastic import BulkElasticProcessor
+from corehq.apps.pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from corehq.apps.pillowtop.reindexer.reindexer import ReindexerFactory
 
 
 def update_unknown_user_from_form_if_necessary(doc_dict):

@@ -9,8 +9,8 @@ from django.db.models.aggregates import Count
 from jsonfield.fields import JSONField
 
 from pillow_retry import const
-from pillowtop.feed.couch import change_from_couch_row
-from pillowtop.feed.interface import ChangeMeta
+from corehq.apps.pillowtop.feed.couch import change_from_couch_row
+from corehq.apps.pillowtop.feed.interface import ChangeMeta
 
 ERROR_MESSAGE_LENGTH = 512
 

@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from testil import Config
 
-from pillowtop.exceptions import PillowtopCheckpointReset
+from corehq.apps.pillowtop.exceptions import PillowtopCheckpointReset
 
 from ..pillow.interface import ConstructedPillow
 

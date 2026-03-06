@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 
 from django.test import TestCase
 
-from pillowtop.feed.couch import get_current_seq
-from pillowtop.tests.utils import FakeConstructedPillow
+from corehq.apps.pillowtop.feed.couch import get_current_seq
+from corehq.apps.pillowtop.tests.utils import FakeConstructedPillow
 
 from corehq.util.couchdb_management import couch_config
 
@@ -41,9 +41,9 @@ class ChangeFeedDbTest(TestCase):
 
 
 def _make_couch_pillow(couch_db):
-    from pillowtop.feed.couch import CouchChangeFeed
-    from pillowtop.processors import LoggingProcessor
-    from pillowtop.checkpoints.manager import PillowCheckpoint
+    from corehq.apps.pillowtop.feed.couch import CouchChangeFeed
+    from corehq.apps.pillowtop.processors import LoggingProcessor
+    from corehq.apps.pillowtop.checkpoints.manager import PillowCheckpoint
 
     pillow = FakeConstructedPillow(
         name='fake-couch-pillow',

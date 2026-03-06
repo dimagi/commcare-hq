@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from corehq.sql_db.util import handle_connection_failure, get_all_db_aliases
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.apps.pillowtop.dao.exceptions import DocumentNotFoundError
 
 
 class ChangeMeta(jsonobject.JsonObject):

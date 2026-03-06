@@ -8,12 +8,12 @@ from django.conf import settings
 from django.db import migrations
 
 from dimagi.utils.modules import to_function
-from pillowtop.dao.exceptions import (
+from corehq.apps.pillowtop.dao.exceptions import (
     DocumentMismatchError,
     DocumentMissingError,
 )
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.logger import pillow_logging
+from corehq.apps.pillowtop.exceptions import PillowNotFoundError
+from corehq.apps.pillowtop.logger import pillow_logging
 
 from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.apps.es.client import BulkActionItem
@@ -40,7 +40,7 @@ def get_all_pillow_instances():
 
 
 def get_couch_pillow_instances():
-    from pillowtop.feed.couch import CouchChangeFeed
+    from corehq.apps.pillowtop.feed.couch import CouchChangeFeed
     return [
         pillow for pillow in get_all_pillow_instances()
         if isinstance(pillow.get_change_feed(), CouchChangeFeed)
@@ -194,7 +194,7 @@ def get_pillow_json(pillow_config, consumer=None):
         offsets = pillow.get_change_feed().get_latest_offsets_json()
 
     def _seq_to_int(checkpoint, seq):
-        from pillowtop.models import kafka_seq_to_str
+        from corehq.apps.pillowtop.models import kafka_seq_to_str
         if _is_kafka(checkpoint):
             return json.loads(kafka_seq_to_str(seq))
         else:
@@ -369,7 +369,7 @@ def _changes_to_list(change_items):
 
 def change_checkpoint_id(old_id, new_id):
     """Django migration which clones Kafka checkpoints to a new ID"""
-    from pillowtop.models import KafkaCheckpoint
+    from corehq.apps.pillowtop.models import KafkaCheckpoint
 
     @skip_on_fresh_install
     def _change_checkpoint_id(*args, **kwargs):

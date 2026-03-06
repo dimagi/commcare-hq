@@ -7,9 +7,9 @@ from corehq.apps.es.client import BulkActionItem
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.models import CommCareCase
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.feed.interface import Change
-from pillowtop.utils import build_bulk_payload, ensure_document_exists
+from corehq.apps.pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.apps.pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.utils import build_bulk_payload, ensure_document_exists
 
 
 class TestEnsureDocumentExists(TestCase):

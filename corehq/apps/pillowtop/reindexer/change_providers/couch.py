@@ -1,8 +1,8 @@
 from copy import copy
 from corehq.util.couch_helpers import paginate_view
-from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.feed.interface import Change
-from pillowtop.reindexer.change_providers.interface import ChangeProvider
+from corehq.apps.pillowtop.dao.couch import CouchDocumentStore
+from corehq.apps.pillowtop.feed.interface import Change
+from corehq.apps.pillowtop.reindexer.change_providers.interface import ChangeProvider
 
 
 class CouchViewChangeProvider(ChangeProvider):

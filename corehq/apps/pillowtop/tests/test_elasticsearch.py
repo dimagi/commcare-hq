@@ -3,7 +3,7 @@ from unittest import mock
 
 from django.test import SimpleTestCase
 
-from pillowtop.processors.elastic import send_to_elasticsearch
+from corehq.apps.pillowtop.processors.elastic import send_to_elasticsearch
 
 from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test

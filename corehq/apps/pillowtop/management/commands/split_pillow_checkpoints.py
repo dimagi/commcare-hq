@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Max
 
 from pillowtop import get_pillow_by_name
-from pillowtop.models import KafkaCheckpoint
+from corehq.apps.pillowtop.models import KafkaCheckpoint
 
 logger = logging.getLogger('__name__')
 
