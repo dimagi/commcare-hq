@@ -434,16 +434,14 @@
             Case Update uses reserved word "{{ error.word }}"
             {% if error.case_tag %}for action "{{ error.case_tag }}"{% endif %}
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "update_case word illegal" %}
             Case Update "{{ error.word }}" should start with a letter and only
             contain letters, numbers, '-', and '_'
             {% if error.case_tag %}for action "{{ error.case_tag }}"{% endif %}
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "case_name required" %}
             <strong>Every case must have a name.</strong> Please specify a value
@@ -451,33 +449,29 @@
             properties"
             {% if error.case_tag %}for action "{{ error.case_tag }}"{% endif %}
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "save_to_case_missing_case_type" %}
             {% blocktrans with case_tag=error.case_tag %}
-            <strong>Save to Case question is missing a case type.</strong>
-            Please add the "case_type" property mapping for "{{ case_tag }}"
+              <strong>Save to Case question is missing a case type.</strong>
+              Please add the "case_type" property mapping for "{{ case_tag }}"
             {% endblocktrans %}
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "save_to_case_missing_case_name" %}
             {% blocktrans with case_tag=error.case_tag %}
-            <strong>Save to Case question is missing a case name.</strong>
-            Please add the "case_name" property mapping for "{{ case_tag }}"
+              <strong>Save to Case question is missing a case name.</strong>
+              Please add the "case_name" property mapping for "{{ case_tag }}"
             {% endblocktrans %}
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "path error" %}
             {% if error.path %}
               The case management
               {% if "VISIT_SCHEDULER" in toggles %}or visit scheduler{% endif %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
               references a question that no longer exists: "{{ error.path }}".
               It is likely that this question has been renamed or deleted.
               Please update or delete this question reference before you make a
@@ -487,8 +481,8 @@
               {% if "VISIT_SCHEDULER" in toggles %}or visit scheduler{% endif %}
               in the
               form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
-              is missing a question. Please choose a question from the dropdown  {# todo B5: css-dropdown #}
-              next to the case property.
+              is missing a question. Please choose a question from the dropdown
+              {# todo B5: css-dropdown #} next to the case property.
             {% endif %}
             {% case "multimedia case property not supported" %}
             {% blocktrans with path=error.path %}
@@ -505,58 +499,50 @@
             A subcase is referencing a parent case tag that does not exist:
             "{{ error.case_tag }}"
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "missing relationship question" %}
             A subcase's index relationship with parent case tag
             "{{ error.case_tag }}" is determined by a question, but no question
             is specified.
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "subcase repeat context" %}
             The subcase "{{ error.case_tag }}" is in a different repeat context
             to its parent "{{ error.parent_tag }}"
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "auto select key" %}
             The auto-select case action is missing the "{{ error.key_name }}"
             value
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "auto select source" %}
             The auto-select case action is missing the "{{ error.source_name }}"
             value
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "auto select case ref" %}
             The case tag referenced in the auto-select expression of
             "{{ error.case_tag }}" was not found
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "no case type in action" %}
             The form action "{{ error.case_tag }}" does not have a case type
             selected
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
             {% case "filtering without case" %}
             The form has filtering enabled but no cases are being loaded
             (excluding auto-loaded cases)
             {% if not not_actual_build %}
-              in
-              {% include "app_manager/partials/form_error_message.html" %}
+              in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}.
             {% case "invalid case xpath reference" %}
             {% if error.form %}
@@ -566,8 +552,9 @@
                 but cases are not available for this form. Please either remove
                 the case reference or (1) make sure that the case list is set to
                 display the case list first and then form, and (2) make sure
-                that all forms in this case list update or btn-close a case (which  {# todo B5: css-close #}
-                means registration forms must go in a different case list).
+                that all forms in this case list update or btn-close a case
+                (which {# todo B5: css-close #} means registration forms must go
+                in a different case list).
               {% endblocktrans %}
             {% else %}
               {% blocktrans %}
@@ -575,8 +562,9 @@
                 are not available. Please either remove the case reference or
                 (1) make sure that the case list is set to display the case list
                 first and then form, and (2) make sure that all forms in this
-                case list update or btn-close a case (which means registration forms  {# todo B5: css-close #}
-                must go in a different case list).
+                case list update or btn-close a case (which means registration
+                forms {# todo B5: css-close #} must go in a different case
+                list).
               {% endblocktrans %}
             {% endif %}
             {% case "practice user config error" %}
@@ -656,8 +644,11 @@
               <code>{{ column.header|trans:langs }}</code>.
             {% endblocktrans %}
             {% case "conflicting questions" %}
-              Multiple questions are attempting to save to case property "{{ error.property }}"
-              {% if not not_actual_build %}in {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+            Multiple questions are attempting to save to case property
+            "{{ error.property }}"
+            {% if not not_actual_build %}
+              in {% include "app_manager/partials/form_error_message.html" %}
+            {% endif %}
             {% case "error" %}
               Details: {{ error.message }}
             {% else %}
