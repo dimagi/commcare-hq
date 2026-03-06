@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from .exceptions import MissingPropertyMapException
 from .models import ConditionalCaseUpdate
 
@@ -38,28 +40,67 @@ def merge_case_mappings(diff, form_actions):
 
 
 def _merge(diff, action):
+    diff = _convert_update_to_delete_plus_add(diff)
     update = action.update
+    conflicts = action.conflicts
+    delete_missing = defaultdict(set)
+
     for prop, questions in diff.get('delete', {}).items():
         for question in questions:
-            if update[prop].question_path == question['question_path']:
-                del update[prop]
-
-    for prop, questions in diff.get('update', {}).items():
-        for question in questions:
-            if update[prop].question_path == question['question_path']:
-                update[prop] = ConditionalCaseUpdate(question)
-            else:
-                raise MissingPropertyMapException
+            if not _drop(prop, question['question_path'], update, conflicts):
+                delete_missing[prop].add(question['question_path'])
 
     for prop, questions in diff.get('add', {}).items():
         for question in questions:
             ccu = ConditionalCaseUpdate(question)
-            if prop not in update or not update[prop].question_path:
+            if ccu.question_path in delete_missing[prop]:
+                raise MissingPropertyMapException
+            elif prop not in update or not update[prop].question_path:
                 update[prop] = ccu
             elif update[prop].question_path == ccu.question_path:
                 update[prop] = ccu
             else:
-                action.conflicts[prop].append(ccu)
+                conflicts[prop].append(ccu)
+
+
+def _drop(prop, path, update, conflicts):
+    if prop in update and update[prop].question_path == path:
+        if conflicts.get(prop):
+            if len(conflicts[prop]) == 1:
+                update[prop] = conflicts.pop(prop)[0]
+            else:
+                update[prop] = conflicts[prop].pop(0)
+        else:
+            del update[prop]
+        return True
+    found = [i for i, question in enumerate(conflicts.get(prop, []))
+             if question.question_path == path]
+    if found:
+        if len(conflicts[prop]) == 1:
+            del conflicts[prop]
+        else:
+            del conflicts[prop][found[0]]
+    return found
+
+
+def _convert_update_to_delete_plus_add(diff):
+    """update => delete + add
+
+    For backward compatibility with legacy 'update' key in diff, which
+    is no longer supported by the merge algorithm. This can be removed
+    when all clients (Vellum and case_config_ui.js) have been updated to
+    not use the 'update' key.
+    """
+    if diff.get('update'):
+        diff = diff.copy()
+        delete = diff['delete'] = diff['delete'].copy() if 'delete' in diff else {}
+        add = diff['add'] = diff['add'].copy() if 'add' in diff else {}
+        for key, questions in diff.pop('update').items():
+            delete[key] = delete[key].copy() if key in delete else []
+            delete[key].extend(questions)
+            add[key] = add[key].copy() if key in add else []
+            add[key].extend(questions)
+    return diff
 
 
 class _UpdateCaseAdapter:
@@ -86,19 +127,34 @@ class _NameUpdateAdapter:
 
     def __delitem__(self, key):
         _check_name(key)
-        if self.action.conflicts:
-            self.action.name_update = self.action.conflicts.pop(0)
-        else:
-            self.action.name_update = ConditionalCaseUpdate()
+        assert not self.action.conflicts
+        self.action.name_update = ConditionalCaseUpdate()
 
 
 class _NameConflictsAdapter:
     def __init__(self, action):
         self.action = action
 
+    def __contains__(self, key):
+        _check_name(key)
+        return bool(self.action.conflicts)
+
     def __getitem__(self, key):
         _check_name(key)
         return self.action.conflicts
+
+    def __delitem__(self, key):
+        _check_name(key)
+        del self.action.conflicts[:]
+
+    def get(self, key, default=None):
+        _check_name(key)
+        return self.action.conflicts
+
+    def pop(self, key):
+        _check_name(key)
+        result, self.action.conflicts = self.action.conflicts, []
+        return result
 
 
 def _check_name(key):
