@@ -117,8 +117,8 @@ class PillowRetryTestCase(TestCase):
         # current_attempt < const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         date = datetime.utcnow()
         for i in range(0, 5):
-            error = create_error(_change(id=i), attempts=i+1)
-            error.date_next_attempt = date.replace(day=i+1)
+            error = create_error(_change(id=i), attempts=i + 1)
+            error.date_next_attempt = date.replace(day=i + 1)
             error.save()
 
         errors = PillowError.get_errors_to_process(

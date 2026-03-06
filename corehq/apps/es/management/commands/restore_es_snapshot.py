@@ -37,8 +37,8 @@ class Command(BaseCommand):
         date = self.get_date(days_ago)
         indices = self.get_indices(indices)
         confirm = input("This command will close the following es indices to reads and writes "
-                            "for its duration: {}. Are you sure "
-                            "you wish to continue? (y/n)".format(indices))
+                        "for its duration: {}. Are you sure "
+                        "you wish to continue? (y/n)".format(indices))
         if confirm.lower() != "y":
             return
         pillows = input("Have you stopped all pillows? (y/n)")
@@ -48,7 +48,7 @@ class Command(BaseCommand):
         client = self.get_client_and_close_indices(es, indices)
         try:
             self.restore_snapshot(es, date, indices)
-        except:
+        except Exception:
             client.open(indices)
         self.rewind_pillows(date)
 

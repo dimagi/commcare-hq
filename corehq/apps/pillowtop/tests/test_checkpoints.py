@@ -87,4 +87,3 @@ class PillowCheckpointDbTest(TestCase):
         self.checkpoint.touch(min_interval=0)
         timestamp_back = self.checkpoint.get_or_create_wrapped().timestamp
         self.assertNotEqual(timestamp_back, timestamp)
-

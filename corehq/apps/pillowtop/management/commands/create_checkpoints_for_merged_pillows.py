@@ -79,7 +79,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         confirm = input(
             """
-            Please make sure you have read https://dimagi.github.io/commcare-cloud/changelog/0007-reorganize-pillows.html.
+            Please make sure you have read https://dimagi.github.io/commcare-cloud/changelog/0007-reorganize-pillows.html.  # noqa: E501
 
             Have you stopped all the to be merged pillows and added new pillows
             to this environment's app-processes.yml? y/N?
@@ -125,7 +125,8 @@ class Command(BaseCommand):
     def _create_checkpoints(self, checkpoint_id_mapping, skip_check):
         for new_checkpoint_id, (old_checkpoint_ids, new_topics) in checkpoint_id_mapping.items():
             print("\nCalculating checkpoints for {}\n".format(new_checkpoint_id))
-            old_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=old_checkpoint_ids, topic__in=new_topics)
+            old_checkpoints = KafkaCheckpoint.objects.filter(  # noqa: E501
+                checkpoint_id__in=old_checkpoint_ids, topic__in=new_topics)
             topic_partitions = old_checkpoints.values('topic', 'partition').distinct()
             print("\t### Current checkpoints ###")
             print("\tcheckpoint, topic, partition, offset")

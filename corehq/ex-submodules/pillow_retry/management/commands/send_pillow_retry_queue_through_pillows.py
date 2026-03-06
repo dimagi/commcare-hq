@@ -28,7 +28,7 @@ class Command(BaseCommand):
             raise CommandError(f"Unknown pillow: {pillow_name}")
 
         if not isinstance(pillow.get_change_feed(), KafkaChangeFeed):
-            raise CommandError(f"Only Kafka pillows are supported")
+            raise CommandError("Only Kafka pillows are supported")
 
         self.count = 0
         self.start = time.time()

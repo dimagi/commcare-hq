@@ -6,7 +6,9 @@ from kafka import TopicPartition
 
 from corehq.apps.pillowtop.exceptions import PillowtopCheckpointReset
 from corehq.apps.pillowtop.logger import pillow_logging
-from corehq.apps.pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
+from corehq.apps.pillowtop.models import (
+    DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
+)
 from corehq.apps.pillowtop.pillow.interface import ChangeEventHandler
 
 MAX_CHECKPOINT_DELAY = 300

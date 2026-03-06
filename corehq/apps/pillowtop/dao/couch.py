@@ -2,7 +2,7 @@ import six
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from .interface import DocumentStore
-from corehq.apps.pillowtop.dao.exceptions import DocumentMissingError, DocumentDeletedError, DocumentNotFoundError
+from corehq.apps.pillowtop.dao.exceptions import DocumentMissingError, DocumentDeletedError
 
 
 ID_CHUNK_SIZE = 10000

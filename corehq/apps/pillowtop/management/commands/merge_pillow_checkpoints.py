@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
         existing_checkpoints = list(
             KafkaCheckpoint.objects.filter(checkpoint_id=to_checkpoint)
-                .values('checkpoint_id').annotate(Max('last_modified'))
+            .values('checkpoint_id').annotate(Max('last_modified'))
         )
         if existing_checkpoints:
             print(f'{to_checkpoint} already exists:')
@@ -64,7 +64,7 @@ class Command(BaseCommand):
         )
         if number_nonstandard_checkpoints > 0:
             logger.error(
-                f'Not all checkpoints have the same topics and partitions specified. '
+                'Not all checkpoints have the same topics and partitions specified. '
                 'Aborting pillow merging'
             )
             sys.exit(2)

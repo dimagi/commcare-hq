@@ -5,8 +5,6 @@ import attr
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCase
 from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.apps.pillowtop.checkpoints.manager import KafkaPillowCheckpoint

@@ -1,4 +1,3 @@
-from collections import namedtuple
 from functools import lru_cache
 
 from corehq.apps.pillowtop.checkpoints.manager import (

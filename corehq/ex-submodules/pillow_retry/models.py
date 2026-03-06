@@ -1,11 +1,7 @@
-import json
 import traceback
 from datetime import datetime, timedelta
-from dateutil.parser import parse
-from django.conf import settings
 import math
 from django.db import models
-from django.db.models.aggregates import Count
 from jsonfield.fields import JSONField
 
 from pillow_retry import const
@@ -18,10 +14,10 @@ ERROR_MESSAGE_LENGTH = 512
 def _get_extra_args(limit, reduce, skip):
     extra_args = dict()
     if not reduce and limit is not None:
-            extra_args.update(
-                limit=limit,
-                skip=skip
-            )
+        extra_args.update(
+            limit=limit,
+            skip=skip
+        )
     return extra_args
 
 
@@ -78,8 +74,8 @@ class PillowError(models.Model):
 
     def has_next_attempt(self):
         return self.current_attempt == 0 or (
-            self.total_attempts <= const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF and
-            self.current_attempt <= const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
+            self.total_attempts <= const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
+            and self.current_attempt <= const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         )
 
     @classmethod
@@ -131,15 +127,16 @@ class PillowError(models.Model):
         query = PillowError.objects \
             .filter(date_next_attempt__lte=utcnow) \
             .filter(
-                models.Q(current_attempt=0) |
-                (models.Q(total_attempts__lte=multi_attempts_cutoff) & models.Q(current_attempt__lte=max_attempts))
+                models.Q(current_attempt=0)
+                | (models.Q(total_attempts__lte=multi_attempts_cutoff)
+                   & models.Q(current_attempt__lte=max_attempts))
             )
 
         # temporarily disable queuing of ConfigurableReportKafkaPillow errors
         query = query.filter(~models.Q(pillow='corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow'))
 
         if limit is not None:
-            return query[skip:skip+limit]
+            return query[skip:skip + limit]
         else:
             return query
 
