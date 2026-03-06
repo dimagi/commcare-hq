@@ -27,7 +27,7 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
     """App pillow
 
     Processors:
-      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.BulkElasticProcessor`
     """
     assert pillow_id == 'ApplicationToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, app_adapter.index_name, [topics.APP])

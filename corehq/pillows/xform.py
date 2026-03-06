@@ -103,7 +103,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     """XForm change processor that sends form data to Elasticsearch
 
     Processors:
-      - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.ElasticProcessor`
     """
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, form_adapter.index_name, FORM_TOPICS)
@@ -144,10 +144,10 @@ def get_xform_pillow(
     Processors:
       - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
             - (disabled when skip_ucr=True)
-      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.BulkElasticProcessor`
       - :py:class:`corehq.pillows.user.UnknownUsersProcessor`
             - (disabled when RUN_UNKNOWN_USER_PILLOW=False)
-      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor`
+      - :py:class:`corehq.apps.pillowtop.form.FormSubmissionMetadataTrackerProcessor`
             - (disabled when RUN_FORM_META_PILLOW=False)
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """

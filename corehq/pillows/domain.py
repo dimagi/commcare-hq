@@ -14,7 +14,7 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_
     """Domain pillow to replicate documents to ES
 
     Processors:
-      - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.ElasticProcessor`
     """
     assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, domain_adapter.index_name, [topics.DOMAIN])

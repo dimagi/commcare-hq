@@ -25,7 +25,7 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
     """SMS Pillow
 
     Processors:
-      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:class:`corehq.apps.pillowtop.processors.elastic.BulkElasticProcessor`
     """
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, sms_adapter.index_name, [topics.SMS])

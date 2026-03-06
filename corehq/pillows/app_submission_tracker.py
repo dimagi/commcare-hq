@@ -23,7 +23,7 @@ def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadat
     as having submissions.
 
         Processors:
-          - :py:class:`pillowtop.processors.form.FormSubmissionMetadataTrackerProcessor`
+          - :py:class:`corehq.apps.pillowtop.processors.form.FormSubmissionMetadataTrackerProcessor`
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     change_feed = KafkaChangeFeed(
