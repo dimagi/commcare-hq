@@ -1,3 +1,4 @@
+from .exceptions import MissingPropertyMapException
 from .models import ConditionalCaseUpdate
 
 
@@ -40,25 +41,40 @@ def _merge(diff, action):
     update = action.update
     for prop, questions in diff.get('delete', {}).items():
         for question in questions:
-            del update[prop]
+            if update[prop].question_path == question['question_path']:
+                del update[prop]
 
     for prop, questions in diff.get('update', {}).items():
         for question in questions:
-            update[prop] = ConditionalCaseUpdate(question)
+            if update[prop].question_path == question['question_path']:
+                update[prop] = ConditionalCaseUpdate(question)
+            else:
+                raise MissingPropertyMapException
 
     for prop, questions in diff.get('add', {}).items():
         for question in questions:
-            update[prop] = ConditionalCaseUpdate(question)
+            ccu = ConditionalCaseUpdate(question)
+            if prop not in update or not update[prop].question_path:
+                update[prop] = ccu
+            elif update[prop].question_path == ccu.question_path:
+                update[prop] = ccu
+            else:
+                action.conflicts[prop].append(ccu)
 
 
 class _UpdateCaseAdapter:
     def __init__(self, action):
         self.update = _NameUpdateAdapter(action)
+        self.conflicts = _NameConflictsAdapter(action)
 
 
 class _NameUpdateAdapter:
     def __init__(self, action):
         self.action = action
+
+    def __contains__(self, key):
+        _check_name(key)
+        return True
 
     def __getitem__(self, key):
         _check_name(key)
@@ -70,7 +86,19 @@ class _NameUpdateAdapter:
 
     def __delitem__(self, key):
         _check_name(key)
-        self.action.name_update = None
+        if self.action.conflicts:
+            self.action.name_update = self.action.conflicts.pop(0)
+        else:
+            self.action.name_update = ConditionalCaseUpdate()
+
+
+class _NameConflictsAdapter:
+    def __init__(self, action):
+        self.action = action
+
+    def __getitem__(self, key):
+        _check_name(key)
+        return self.action.conflicts
 
 
 def _check_name(key):

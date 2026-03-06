@@ -177,87 +177,86 @@ class OpenCaseActionTests(SimpleTestCase):
         }
 
 
-class OpenCaseAction_ApplyUpdates_Tests(SimpleTestCase):
-    def test_no_changes(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+class OpenCaseActionApplyDiffTests(SimpleTestCase):
 
-        action.apply_updates({}, OpenCaseDiff({}))
+    def test_no_changes(self):
+        actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': 'name'}}))
+
+        merge_case_mappings({}, actions)
+        action = actions.open_case
 
         assert action.name_update.question_path == 'name'
 
     def test_name_update(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+        actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': 'name'}}))
 
-        action.apply_updates({}, OpenCaseDiff({'add': [{'question_path': 'new_name'}]}))
+        diff = {'open_case': {'add': [{'question_path': 'new_name'}]}}
+        merge_case_mappings(diff, actions)
+        action = actions.open_case
 
-        multi_paths = [update.question_path for update in action.name_update_multi]
+        multi_paths = [update.question_path for update in [action.name_update] + action.conflicts]
         assert multi_paths == ['name', 'new_name']
 
-    def test_with_conditional_update(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
-
-        update_condition_dict = {'condition': {'type': 'if', 'question': 'name', 'answer': 'bob', 'operator': '='}}
-        action.apply_updates(update_condition_dict, OpenCaseDiff({}))
-
-        assert action.condition.type == 'if'
-        assert action.condition.question == 'name'
-        assert action.condition.answer == 'bob'
-        assert action.condition.operator == '='
-
-    def test_ignores_direct_name_update(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
-
-        action.apply_updates({'name_update': {'question_path': 'name2'}}, OpenCaseDiff({}))
-
-        assert action.name_update.question_path == 'name'
-
-    def test_ignores_direct_name_update_multi(self):
-        action = OpenCaseAction({'name_update': {'question_name': 'name'}})
-
-        action.apply_updates({'name_update_multi': [{'question_path': 'name2'}]}, OpenCaseDiff({}))
-
-        assert action.name_update_multi == []
-
-    def test_with_invalid_key_raises_exception(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
-        with pytest.raises(InvalidPropertyException):
-            action.apply_updates({'invalid_property': {}}, OpenCaseDiff({}))
-
     def test_conflicting_name_addition_is_overwritten(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name', 'update_mode': 'always'}})
+        actions = FormActions(open_case=OpenCaseAction({
+            'name_update': {'question_path': 'name', 'update_mode': 'always'},
+        }))
 
-        action.apply_updates({}, OpenCaseDiff({'add': [{'question_path': 'name', 'update_mode': 'edit'}]}))
+        diff = {'open_case': {'add': [{'question_path': 'name', 'update_mode': 'edit'}]}}
+        merge_case_mappings(diff, actions)
+        action = actions.open_case
 
         assert action.name_update.question_path == 'name'
         assert action.name_update.update_mode == 'edit'
 
-    def test_apply_updates_remove_name(self):
-        action = OpenCaseAction({'name_update_multi': [{'question_path': 'name1'}, {'question_path': 'name2'}]})
+    def test_merge_case_mappings_remove_name(self):
+        actions = FormActions(open_case=OpenCaseAction.wrap({
+            'name_update_multi': [{'question_path': 'name1'}, {'question_path': 'name2'}]
+        }))
 
-        action.apply_updates({}, OpenCaseDiff({'delete': [{'question_path': 'name1'}]}))
-
-        assert action.name_update.question_path == 'name2'
-
-    def test_apply_updates_remove_name_does_nothing_when_name_is_absent(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name2'}})
-
-        action.apply_updates({}, OpenCaseDiff({'delete': [{'question_path': 'name1'}]}))
+        diff = {'open_case': {'delete': [{'question_path': 'name1'}]}}
+        merge_case_mappings(diff, actions)
+        action = actions.open_case
 
         assert action.name_update.question_path == 'name2'
 
-    def test_apply_updates_update_name(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+    def test_merge_case_mappings_remove_name_does_nothing_when_name_is_absent(self):
+        actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': 'name2'}}))
 
-        action.apply_updates({}, OpenCaseDiff({'update': [{'question_path': 'name', 'update_mode': 'edit'}]}))
+        diff = {'open_case': {'delete': [{'question_path': 'name1'}]}}
+        merge_case_mappings(diff, actions)
+        action = actions.open_case
+
+        assert action.name_update.question_path == 'name2'
+
+    def test_merge_case_mappings_update_mode(self):
+        actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': 'name'}}))
+
+        diff = {'open_case': {'update': [{'question_path': 'name', 'update_mode': 'edit'}]}}
+        merge_case_mappings(diff, actions)
+        action = actions.open_case
 
         assert action.name_update.update_mode == 'edit'
 
-    def test_apply_updates_updating_missing_name_raises_error(self):
-        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+    def test_merge_case_mappings_updating_missing_name_raises_error(self):
+        actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': 'name'}}))
 
         with pytest.raises(MissingPropertyMapException):
-            diff = OpenCaseDiff({'update': [{'question_path': 'missing_name', 'update_mode': 'edit'}]})
-            action.apply_updates({}, diff)
+            diff = {'open_case': {'update': [{'question_path': 'missing_name', 'update_mode': 'edit'}]}}
+            merge_case_mappings(diff, actions)
+
+    def test_merge_case_mappings_remove_conflicted_name(self):
+        actions = FormActions(open_case=OpenCaseAction({
+            'name_update': {'question_path': 'name1'},
+            'conflicts': [{'question_path': 'name2'}],
+        }))
+
+        diff = {'open_case': {'delete': [{'question_path': 'name1'}]}}
+        merge_case_mappings(diff, actions)
+        action = actions.open_case
+
+        assert action.name_update.question_path == 'name2'
+        assert not action.conflicts
 
 
 class UpdateCaseActionTests(SimpleTestCase):
