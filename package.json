@@ -118,6 +118,7 @@
         "grunt": "^1.2.0",
         "js-yaml": "^3.14.2",
         "lodash": "^4.17.19",
+        "markdown-it": "^14.1.1",
         "mem": "^4.0.0",
         "minimist": "^1.2.6",
         "minimatch": "^3.1.3",
