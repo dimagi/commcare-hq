@@ -94,6 +94,7 @@ export default {
                 key: caseName,
                 required: false,
                 save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
+                conflictingDelete: conditionalCaseUpdate.conflicting_delete,
             }));
         });
 
@@ -129,7 +130,11 @@ export default {
                     extraDict[key].push({question_path: path, update_mode: updateMode});
                 } else {
                     propertyDict[key] = propertyDict[key] || [];
-                    propertyDict[key].push({question_path: path, update_mode: updateMode});
+                    propertyDict[key].push({
+                        question_path: path,
+                        update_mode: updateMode,
+                        conflicting_delete: caseProperty.conflictingDelete,
+                    });
                 }
             }
         });
