@@ -57,6 +57,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.form_action_diff import (
     from_combined_diff,
+    get_case_mappings,
     make_multi,
     update_form_actions,
 )
@@ -448,6 +449,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     app.save(resp)
     if ajax:
+        _add_case_management_data(resp, form, request)
         return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
@@ -540,6 +542,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
+    _add_case_management_data(response_json, form, request)
     return JsonResponse(response_json)
 
 
@@ -564,6 +567,14 @@ def _get_xform_conflict_response(form, sha1_checksum):
     if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
         return json_response({'status': 'conflict', 'xform': form_xml})
     return None
+
+
+def _add_case_management_data(response_json, form, request):
+    """Allow clients to immediately display concurrent edit conflict warnings"""
+    if toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request):
+        response_json['caseManagement'] = {
+            "mappings": get_case_mappings(form.actions),
+        }
 
 
 @require_GET
