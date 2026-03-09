@@ -1,10 +1,16 @@
 import datetime
 from decimal import Decimal
+from unittest.mock import Mock
 
 import pytest
 import sqlalchemy
 
-from corehq.apps.project_db.populate import upsert_case
+from corehq.apps.project_db.populate import (
+    case_to_row_dict,
+    coerce_to_date,
+    coerce_to_number,
+    upsert_case,
+)
 from corehq.apps.project_db.schema import build_table_for_case_type
 from corehq.apps.project_db.table_manager import create_tables, get_project_db_engine
 
@@ -194,3 +200,159 @@ class TestUpsertCaseTypeCoercion:
 
         row = self._select_case('tc-005')
         assert row['prop_dob_date'] == datetime.date(1990, 5, 20)
+
+
+# --- Coercion unit tests (no DB needed) ---
+
+
+class TestCoerceToDate:
+
+    def test_iso_date(self):
+        assert coerce_to_date('2024-03-15') == datetime.date(2024, 3, 15)
+
+    def test_iso_datetime(self):
+        assert coerce_to_date('2024-03-15T10:30:00') == datetime.date(2024, 3, 15)
+
+    def test_none(self):
+        assert coerce_to_date(None) is None
+
+    def test_empty_string(self):
+        assert coerce_to_date('') is None
+
+    def test_invalid_string(self):
+        assert coerce_to_date('not-a-date') is None
+
+    def test_partial_date(self):
+        assert coerce_to_date('2024-13-01') is None
+
+
+class TestCoerceToNumber:
+
+    def test_integer_string(self):
+        assert coerce_to_number('42') == Decimal('42')
+
+    def test_decimal_string(self):
+        assert coerce_to_number('3.14') == Decimal('3.14')
+
+    def test_negative(self):
+        assert coerce_to_number('-7.5') == Decimal('-7.5')
+
+    def test_none(self):
+        assert coerce_to_number(None) is None
+
+    def test_empty_string(self):
+        assert coerce_to_number('') is None
+
+    def test_invalid_string(self):
+        assert coerce_to_number('abc') is None
+
+    def test_whitespace(self):
+        assert coerce_to_number('  ') is None
+
+
+# --- Case adapter unit tests (no DB needed) ---
+
+
+def _make_case(case_json=None, live_indices=None, **fields):
+    case = Mock()
+    case.case_id = fields.get('case_id', 'abc123')
+    case.owner_id = fields.get('owner_id', 'owner1')
+    case.name = fields.get('name', 'Test Case')
+    case.opened_on = fields.get('opened_on', '2025-01-01')
+    case.closed_on = fields.get('closed_on', None)
+    case.modified_on = fields.get('modified_on', '2025-06-01')
+    case.closed = fields.get('closed', False)
+    case.external_id = fields.get('external_id', '')
+    case.server_modified_on = fields.get('server_modified_on', '2025-06-01')
+    case.case_json = case_json or {}
+    case.live_indices = live_indices or []
+    return case
+
+
+def _make_index(identifier, referenced_id):
+    index = Mock()
+    index.identifier = identifier
+    index.referenced_id = referenced_id
+    return index
+
+
+class TestCaseToRowDict:
+
+    def test_fixed_fields_extracted(self):
+        case = _make_case(
+            case_id='abc123',
+            owner_id='owner1',
+            name='My Case',
+            opened_on='2025-01-01',
+            closed_on='2025-03-01',
+            modified_on='2025-06-01',
+            closed=True,
+            external_id='ext-1',
+            server_modified_on='2025-06-02',
+        )
+        result = case_to_row_dict(case)
+
+        assert result['case_id'] == 'abc123'
+        assert result['owner_id'] == 'owner1'
+        assert result['case_name'] == 'My Case'
+        assert result['opened_on'] == '2025-01-01'
+        assert result['closed_on'] == '2025-03-01'
+        assert result['modified_on'] == '2025-06-01'
+        assert result['closed'] is True
+        assert result['external_id'] == 'ext-1'
+        assert result['server_modified_on'] == '2025-06-02'
+
+    def test_dynamic_properties_from_case_json(self):
+        case = _make_case(case_json={'color': 'red', 'size': 'large'})
+        result = case_to_row_dict(case)
+
+        assert result['color'] == 'red'
+        assert result['size'] == 'large'
+
+    def test_indices_extracted(self):
+        indices = [
+            _make_index('parent', 'parent-case-id'),
+            _make_index('host', 'host-case-id'),
+        ]
+        case = _make_case(live_indices=indices)
+        result = case_to_row_dict(case)
+
+        assert result['indices'] == {
+            'parent': 'parent-case-id',
+            'host': 'host-case-id',
+        }
+
+    def test_empty_case_json_no_extra_keys(self):
+        case = _make_case(case_json={})
+        result = case_to_row_dict(case)
+
+        expected_keys = {
+            'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
+            'modified_on', 'closed', 'external_id', 'server_modified_on',
+            'indices',
+        }
+        assert set(result.keys()) == expected_keys
+
+    def test_no_live_indices_gives_empty_dict(self):
+        case = _make_case(live_indices=[])
+        result = case_to_row_dict(case)
+
+        assert result['indices'] == {}
+
+    def test_case_json_collision_does_not_overwrite_fixed_fields(self):
+        case = _make_case(
+            case_id='real-id',
+            owner_id='real-owner',
+            case_json={
+                'case_id': 'fake-id',
+                'owner_id': 'fake-owner',
+                'indices': 'should-be-ignored',
+                'safe_key': 'kept',
+            },
+        )
+        result = case_to_row_dict(case)
+
+        assert result['case_id'] == 'real-id'
+        assert result['owner_id'] == 'real-owner'
+        assert result['indices'] == {}
+        assert result['safe_key'] == 'kept'

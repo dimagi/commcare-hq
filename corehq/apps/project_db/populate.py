@@ -1,6 +1,7 @@
-from sqlalchemy.dialects.postgresql import insert
+import datetime
+from decimal import Decimal, InvalidOperation
 
-from corehq.apps.project_db.coerce import coerce_to_date, coerce_to_number
+from sqlalchemy.dialects.postgresql import insert
 
 FIXED_COLUMNS = {
     'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
@@ -34,6 +35,73 @@ def upsert_case(engine, table, case_data):
         conn.execute(stmt)
 
 
+def case_to_row_dict(case):
+    """Convert a CommCareCase instance to a dict suitable for ``upsert_case``.
+
+    Extracts fixed fields, dynamic properties from ``case_json``, and
+    index references from ``live_indices``.
+    """
+    row = {
+        'case_id': case.case_id,
+        'owner_id': case.owner_id,
+        'case_name': case.name,
+        'opened_on': case.opened_on,
+        'closed_on': case.closed_on,
+        'modified_on': case.modified_on,
+        'closed': case.closed,
+        'external_id': case.external_id,
+        'server_modified_on': case.server_modified_on,
+    }
+    for key, value in case.case_json.items():
+        if key not in _RESERVED_KEYS:
+            row[key] = value
+    row['indices'] = {
+        index.identifier: index.referenced_id
+        for index in case.live_indices
+    }
+    return row
+
+
+def coerce_to_date(value):
+    """Parse a date string, returning a ``datetime.date`` or ``None``.
+
+    Accepts ISO format: ``YYYY-MM-DD`` or ``YYYY-MM-DDTHH:MM:SS``.
+    Returns ``None`` for invalid, empty, or ``None`` input.
+    """
+    if not value:
+        return None
+    try:
+        return datetime.date.fromisoformat(value[:10])
+    except (ValueError, TypeError):
+        return None
+
+
+def coerce_to_number(value):
+    """Parse a numeric string, returning a ``Decimal`` or ``None``.
+
+    Returns ``None`` for invalid, empty, or ``None`` input.
+    """
+    if not value or not str(value).strip():
+        return None
+    try:
+        return Decimal(value)
+    except (InvalidOperation, TypeError):
+        return None
+
+
+# --- Private helpers ---
+
+# Keys in case_json that must never overwrite fixed fields or the
+# 'indices' key assembled from live_indices.
+_RESERVED_KEYS = FIXED_COLUMNS | {'indices'}
+
+# Maps typed column suffixes to their coercion functions.
+_TYPED_COERCIONS = {
+    '_date': coerce_to_date,
+    '_numeric': coerce_to_number,
+}
+
+
 def _build_values_dict(case_data, table_columns):
     """Map case_data keys to table column names, skipping unknown columns."""
     values = {}
@@ -51,13 +119,6 @@ def _build_values_dict(case_data, table_columns):
                 values[col_name] = value
                 _set_typed_columns(values, col_name, value, table_columns)
     return values
-
-
-# Maps typed column suffixes to their coercion functions.
-_TYPED_COERCIONS = {
-    '_date': coerce_to_date,
-    '_numeric': coerce_to_number,
-}
 
 
 def _set_typed_columns(values, col_name, raw_value, table_columns):

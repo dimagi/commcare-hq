@@ -2,22 +2,47 @@ import re
 
 from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text
 
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.userreports.util import get_table_name
-
-_VALID_NAME_RE = re.compile(r'^[a-zA-Z0-9_-]+$')
 
 PROJECT_DB_TABLE_PREFIX = 'projectdb_'
 
 
-def get_project_db_table_name(domain, case_type):
-    """Generate a PostgreSQL table name for a project DB case type table.
+def build_tables_for_domain(metadata, domain, relationships_by_type=None):
+    """Build SQLAlchemy Tables for all active case types in a domain.
 
-    Uses the same hashing/truncation strategy as UCR tables to ensure
-    names are unique, deterministic, and within Postgres's 63-char limit.
+    Reads the data dictionary (CaseType and CaseProperty models) and
+    produces a corresponding SQLAlchemy Table for each non-deprecated
+    case type.
+
+    :param metadata: SQLAlchemy MetaData instance
+    :param domain: CommCare project domain
+    :param relationships_by_type: optional dict mapping case type name
+        to a list of (identifier, referenced_case_type) tuples
+    :returns: dict mapping case type name to SQLAlchemy Table
     """
-    return get_table_name(
-        domain, case_type, max_length=63, prefix=PROJECT_DB_TABLE_PREFIX,
+    if relationships_by_type is None:
+        relationships_by_type = {}
+
+    case_types = CaseType.objects.filter(
+        domain=domain, is_deprecated=False,
     )
+
+    tables = {}
+    for case_type in case_types:
+        properties = list(
+            CaseProperty.objects.filter(
+                case_type=case_type, deprecated=False,
+            ).values_list('name', 'data_type')
+        )
+        relationships = relationships_by_type.get(case_type.name, [])
+        tables[case_type.name] = build_table_for_case_type(
+            metadata, domain, case_type.name,
+            properties=properties,
+            relationships=relationships,
+        )
+
+    return tables
 
 
 def build_table_for_case_type(metadata, domain, case_type,
@@ -57,6 +82,19 @@ def build_table_for_case_type(metadata, domain, case_type,
     return table
 
 
+def get_project_db_table_name(domain, case_type):
+    """Generate a PostgreSQL table name for a project DB case type table.
+
+    Uses the same hashing/truncation strategy as UCR tables to ensure
+    names are unique, deterministic, and within Postgres's 63-char limit.
+    """
+    return get_table_name(
+        domain, case_type, max_length=63, prefix=PROJECT_DB_TABLE_PREFIX,
+    )
+
+
+# --- Private helpers ---
+
 # Maps data types that get an additional typed column to their
 # (SQLAlchemy type, column name suffix) pairs.
 # These keys must match CaseProperty.DataType enum values
@@ -66,6 +104,8 @@ _TYPED_COLUMN_EXTRAS = {
     'number': (Numeric, '_numeric'),
 }
 
+_VALID_NAME_RE = re.compile(r'^[a-zA-Z0-9_-]+$')
+
 
 def _validate_name(name, label):
     """Reject names containing characters other than alphanumeric, underscores, and hyphens."""
@@ -74,18 +114,6 @@ def _validate_name(name, label):
             f"Invalid {label} name {name!r}: "
             "only alphanumeric characters, underscores, and hyphens are allowed"
         )
-
-
-def _build_relationship_columns(relationships):
-    """Build Column objects for case relationship indices.
-
-    Each relationship gets a Text column named ``idx_<identifier>``.
-    No ForeignKey constraints are added because the async change feed
-    does not guarantee write order across case types.
-    """
-    for identifier, _ct in relationships:
-        _validate_name(identifier, 'relationship')
-    return [Column(f'idx_{identifier}', Text) for identifier, _ct in relationships]
 
 
 def _build_property_columns(properties):
@@ -103,3 +131,15 @@ def _build_property_columns(properties):
             sa_type, suffix = _TYPED_COLUMN_EXTRAS[data_type]
             columns.append(Column(f'{col_name}{suffix}', sa_type))
     return columns
+
+
+def _build_relationship_columns(relationships):
+    """Build Column objects for case relationship indices.
+
+    Each relationship gets a Text column named ``idx_<identifier>``.
+    No ForeignKey constraints are added because the async change feed
+    does not guarantee write order across case types.
+    """
+    for identifier, _ct in relationships:
+        _validate_name(identifier, 'relationship')
+    return [Column(f'idx_{identifier}', Text) for identifier, _ct in relationships]
