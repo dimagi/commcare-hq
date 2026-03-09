@@ -8,13 +8,15 @@ FIXED_COLUMNS = {
     'modified_on', 'closed', 'external_id', 'server_modified_on',
 }
 
+PROPERTY_PREFIX = 'prop.'
+
 
 def upsert_case(engine, table, case_data):
     """Insert or update a single case row in a project DB table.
 
     ``case_data`` is a dict with:
     - Fixed field keys (``case_id``, ``owner_id``, etc.) passed through directly
-    - Case property keys (without ``prop_`` prefix) mapped to ``prop_<key>`` columns
+    - Dynamic properties namespaced as ``prop.<name>`` (mapped to ``prop_<name>`` columns)
     - An ``indices`` key mapping identifiers to referenced case IDs
 
     On conflict on ``case_id``, only the columns present in ``case_data``
@@ -38,8 +40,9 @@ def upsert_case(engine, table, case_data):
 def case_to_row_dict(case):
     """Convert a CommCareCase instance to a dict suitable for ``upsert_case``.
 
-    Extracts fixed fields, dynamic properties from ``case_json``, and
-    index references from ``live_indices``.
+    Extracts fixed fields, dynamic properties (namespaced under
+    ``prop.``) from ``case_json``, and index references from
+    ``live_indices``.
     """
     row = {
         'case_id': case.case_id,
@@ -53,8 +56,7 @@ def case_to_row_dict(case):
         'server_modified_on': case.server_modified_on,
     }
     for key, value in case.case_json.items():
-        if key not in _RESERVED_KEYS:
-            row[key] = value
+        row[f'{PROPERTY_PREFIX}{key}'] = value
     row['indices'] = {
         index.identifier: index.referenced_id
         for index in case.live_indices
@@ -91,10 +93,6 @@ def coerce_to_number(value):
 
 # --- Private helpers ---
 
-# Keys in case_json that must never overwrite fixed fields or the
-# 'indices' key assembled from live_indices.
-_RESERVED_KEYS = FIXED_COLUMNS | {'indices'}
-
 # Maps typed column suffixes to their coercion functions.
 _TYPED_COERCIONS = {
     '_date': coerce_to_date,
@@ -103,7 +101,13 @@ _TYPED_COERCIONS = {
 
 
 def _build_values_dict(case_data, table_columns):
-    """Map case_data keys to table column names, skipping unknown columns."""
+    """Map case_data keys to table column names, skipping unknown columns.
+
+    Keys are expected in three forms:
+    - Fixed fields: bare names like ``case_id``, ``owner_id``
+    - Properties: namespaced as ``prop.<name>``, mapped to ``prop_<name>`` columns
+    - Indices: a single ``indices`` key with a dict value
+    """
     values = {}
     for key, value in case_data.items():
         if key == 'indices':
@@ -111,13 +115,14 @@ def _build_values_dict(case_data, table_columns):
                 col_name = f'idx_{identifier}'
                 if col_name in table_columns:
                     values[col_name] = referenced_id
-        elif key in FIXED_COLUMNS:
-            values[key] = value
-        else:
-            col_name = f'prop_{key}'
+        elif key.startswith(PROPERTY_PREFIX):
+            prop_name = key[len(PROPERTY_PREFIX):]
+            col_name = f'prop_{prop_name}'
             if col_name in table_columns:
                 values[col_name] = value
                 _set_typed_columns(values, col_name, value, table_columns)
+        elif key in FIXED_COLUMNS:
+            values[key] = value
     return values
 
 

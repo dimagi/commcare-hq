@@ -48,7 +48,7 @@ class TestUpsertCase:
             'case_id': 'case-001',
             'owner_id': 'owner-1',
             'case_name': 'Test Patient',
-            'first_name': 'Alice',
+            'prop.first_name': 'Alice',
         }
 
         upsert_case(self.engine, self.table, case_data)
@@ -64,7 +64,7 @@ class TestUpsertCase:
             'case_id': 'case-002',
             'owner_id': 'owner-1',
             'case_name': 'Original Name',
-            'first_name': 'Bob',
+            'prop.first_name': 'Bob',
         }
         upsert_case(self.engine, self.table, case_data)
 
@@ -72,7 +72,7 @@ class TestUpsertCase:
             'case_id': 'case-002',
             'owner_id': 'owner-1',
             'case_name': 'Updated Name',
-            'first_name': 'Robert',
+            'prop.first_name': 'Robert',
         }
         upsert_case(self.engine, self.table, updated_data)
 
@@ -96,7 +96,7 @@ class TestUpsertCase:
         case_data = {
             'case_id': 'case-004',
             'owner_id': 'owner-1',
-            'unknown_prop': 'should be skipped',
+            'prop.unknown_prop': 'should be skipped',
         }
 
         upsert_case(self.engine, self.table, case_data)
@@ -151,7 +151,7 @@ class TestUpsertCaseTypeCoercion:
         upsert_case(self.engine, self.table, {
             'case_id': 'tc-001',
             'owner_id': 'owner-1',
-            'dob': '1990-05-20',
+            'prop.dob': '1990-05-20',
         })
 
         row = self._select_case('tc-001')
@@ -162,7 +162,7 @@ class TestUpsertCaseTypeCoercion:
         upsert_case(self.engine, self.table, {
             'case_id': 'tc-002',
             'owner_id': 'owner-1',
-            'age': '34',
+            'prop.age': '34',
         })
 
         row = self._select_case('tc-002')
@@ -173,7 +173,7 @@ class TestUpsertCaseTypeCoercion:
         upsert_case(self.engine, self.table, {
             'case_id': 'tc-003',
             'owner_id': 'owner-1',
-            'dob': 'not-a-date',
+            'prop.dob': 'not-a-date',
         })
 
         row = self._select_case('tc-003')
@@ -184,7 +184,7 @@ class TestUpsertCaseTypeCoercion:
         upsert_case(self.engine, self.table, {
             'case_id': 'tc-004',
             'owner_id': 'owner-1',
-            'age': 'abc',
+            'prop.age': 'abc',
         })
 
         row = self._select_case('tc-004')
@@ -195,7 +195,7 @@ class TestUpsertCaseTypeCoercion:
         upsert_case(self.engine, self.table, {
             'case_id': 'tc-005',
             'owner_id': 'owner-1',
-            'dob': '1990-05-20T14:30:00',
+            'prop.dob': '1990-05-20T14:30:00',
         })
 
         row = self._select_case('tc-005')
@@ -306,8 +306,8 @@ class TestCaseToRowDict:
         case = _make_case(case_json={'color': 'red', 'size': 'large'})
         result = case_to_row_dict(case)
 
-        assert result['color'] == 'red'
-        assert result['size'] == 'large'
+        assert result['prop.color'] == 'red'
+        assert result['prop.size'] == 'large'
 
     def test_indices_extracted(self):
         indices = [
@@ -339,15 +339,16 @@ class TestCaseToRowDict:
 
         assert result['indices'] == {}
 
-    def test_case_json_collision_does_not_overwrite_fixed_fields(self):
+    def test_case_json_keys_cannot_collide_with_fixed_fields(self):
+        """The prop. prefix ensures case_json keys never collide with
+        fixed fields or the indices key."""
         case = _make_case(
             case_id='real-id',
             owner_id='real-owner',
             case_json={
                 'case_id': 'fake-id',
                 'owner_id': 'fake-owner',
-                'indices': 'should-be-ignored',
-                'safe_key': 'kept',
+                'indices': 'a-value',
             },
         )
         result = case_to_row_dict(case)
@@ -355,4 +356,7 @@ class TestCaseToRowDict:
         assert result['case_id'] == 'real-id'
         assert result['owner_id'] == 'real-owner'
         assert result['indices'] == {}
-        assert result['safe_key'] == 'kept'
+        # The case_json values are namespaced, so they coexist safely
+        assert result['prop.case_id'] == 'fake-id'
+        assert result['prop.owner_id'] == 'fake-owner'
+        assert result['prop.indices'] == 'a-value'

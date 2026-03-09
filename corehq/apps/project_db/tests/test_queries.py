@@ -11,20 +11,23 @@ from corehq.apps.project_db.table_manager import create_tables, get_project_db_e
 DOMAIN = 'test-queries'
 
 HOUSEHOLDS = [
-    {'case_id': 'hh-0', 'owner_id': 'owner-1', 'district': 'Kamuli', 'village': 'Village A'},
-    {'case_id': 'hh-1', 'owner_id': 'owner-1', 'district': 'Kamuli', 'village': 'Village B'},
-    {'case_id': 'hh-2', 'owner_id': 'owner-1', 'district': 'Jinja', 'village': 'Village C'},
+    {'case_id': 'hh-0', 'owner_id': 'owner-1',
+     'prop.district': 'Kamuli', 'prop.village': 'Village A'},
+    {'case_id': 'hh-1', 'owner_id': 'owner-1',
+     'prop.district': 'Kamuli', 'prop.village': 'Village B'},
+    {'case_id': 'hh-2', 'owner_id': 'owner-1',
+     'prop.district': 'Jinja', 'prop.village': 'Village C'},
 ]
 
 PATIENTS = [
-    {'case_id': 'pt-0', 'owner_id': 'owner-1', 'first_name': 'Alice', 'dob': '2020-01-15',
-     'age': '5', 'indices': {'parent': 'hh-0'}},
-    {'case_id': 'pt-1', 'owner_id': 'owner-1', 'first_name': 'Bob', 'dob': '2018-06-01',
-     'age': '7', 'indices': {'parent': 'hh-0'}},
-    {'case_id': 'pt-2', 'owner_id': 'owner-1', 'first_name': 'Carol', 'dob': '2022-03-10',
-     'age': '3', 'indices': {'parent': 'hh-1'}},
-    {'case_id': 'pt-3', 'owner_id': 'owner-1', 'first_name': 'Dan', 'dob': '2015-11-20',
-     'age': '10', 'indices': {'parent': 'hh-2'}},
+    {'case_id': 'pt-0', 'owner_id': 'owner-1', 'prop.first_name': 'Alice',
+     'prop.dob': '2020-01-15', 'prop.age': '5', 'indices': {'parent': 'hh-0'}},
+    {'case_id': 'pt-1', 'owner_id': 'owner-1', 'prop.first_name': 'Bob',
+     'prop.dob': '2018-06-01', 'prop.age': '7', 'indices': {'parent': 'hh-0'}},
+    {'case_id': 'pt-2', 'owner_id': 'owner-1', 'prop.first_name': 'Carol',
+     'prop.dob': '2022-03-10', 'prop.age': '3', 'indices': {'parent': 'hh-1'}},
+    {'case_id': 'pt-3', 'owner_id': 'owner-1', 'prop.first_name': 'Dan',
+     'prop.dob': '2015-11-20', 'prop.age': '10', 'indices': {'parent': 'hh-2'}},
 ]
 
 
