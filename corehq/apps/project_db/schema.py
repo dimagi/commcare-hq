@@ -8,7 +8,7 @@ from corehq.apps.userreports.util import get_table_name
 PROJECT_DB_TABLE_PREFIX = 'projectdb_'
 
 
-def build_tables_for_domain(metadata, domain, relationships_by_type=None):
+def build_tables_for_domain(metadata, domain):
     """Build SQLAlchemy Tables for all active case types in a domain.
 
     Reads the data dictionary (CaseType and CaseProperty models) and
@@ -17,13 +17,8 @@ def build_tables_for_domain(metadata, domain, relationships_by_type=None):
 
     :param metadata: SQLAlchemy MetaData instance
     :param domain: CommCare project domain
-    :param relationships_by_type: optional dict mapping case type name
-        to a list of (identifier, referenced_case_type) tuples
     :returns: dict mapping case type name to SQLAlchemy Table
     """
-    if relationships_by_type is None:
-        relationships_by_type = {}
-
     case_types = CaseType.objects.filter(
         domain=domain, is_deprecated=False,
     )
@@ -35,30 +30,25 @@ def build_tables_for_domain(metadata, domain, relationships_by_type=None):
                 case_type=case_type, deprecated=False,
             ).values_list('name', 'data_type')
         )
-        relationships = relationships_by_type.get(case_type.name, [])
         tables[case_type.name] = build_table_for_case_type(
             metadata, domain, case_type.name,
             properties=properties,
-            relationships=relationships,
         )
 
     return tables
 
 
-def build_table_for_case_type(metadata, domain, case_type,
-                              properties=None, relationships=None):
+def build_table_for_case_type(metadata, domain, case_type, properties=None):
     """Build a SQLAlchemy Table for a case type with fixed case columns.
 
     :param metadata: SQLAlchemy MetaData instance
     :param domain: CommCare project domain
     :param case_type: case type name
     :param properties: list of (name, data_type) tuples for dynamic columns
-    :param relationships: list of (identifier, referenced_case_type) tuples
     :returns: SQLAlchemy Table
     """
     table_name = get_project_db_table_name(domain, case_type)
     property_columns = _build_property_columns(properties or [])
-    relationship_columns = _build_relationship_columns(relationships or [])
     table = Table(
         table_name,
         metadata,
@@ -72,13 +62,9 @@ def build_table_for_case_type(metadata, domain, case_type,
         Column('external_id', Text),
         Column('server_modified_on', DateTime(timezone=True)),
         *property_columns,
-        *relationship_columns,
     )
     Index(f'ix_{table_name}_owner_id', table.c['owner_id'])
     Index(f'ix_{table_name}_modified_on', table.c['modified_on'])
-    for identifier, _case_type in (relationships or []):
-        col_name = f'idx_{identifier}'
-        Index(f'ix_{table_name}_{col_name}', table.c[col_name])
     return table
 
 
@@ -131,15 +117,3 @@ def _build_property_columns(properties):
             sa_type, suffix = _TYPED_COLUMN_EXTRAS[data_type]
             columns.append(Column(f'{col_name}{suffix}', sa_type))
     return columns
-
-
-def _build_relationship_columns(relationships):
-    """Build Column objects for case relationship indices.
-
-    Each relationship gets a Text column named ``idx_<identifier>``.
-    No ForeignKey constraints are added because the async change feed
-    does not guarantee write order across case types.
-    """
-    for identifier, _ct in relationships:
-        _validate_name(identifier, 'relationship')
-    return [Column(f'idx_{identifier}', Text) for identifier, _ct in relationships]

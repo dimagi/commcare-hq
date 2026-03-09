@@ -17,7 +17,6 @@ def upsert_case(engine, table, case_data):
     ``case_data`` is a dict with:
     - Fixed field keys (``case_id``, ``owner_id``, etc.) passed through directly
     - Dynamic properties namespaced as ``prop.<name>`` (mapped to ``prop_<name>`` columns)
-    - An ``indices`` key mapping identifiers to referenced case IDs
 
     On conflict on ``case_id``, only the columns present in ``case_data``
     are updated — columns not included in the dict are left unchanged.
@@ -40,9 +39,8 @@ def upsert_case(engine, table, case_data):
 def case_to_row_dict(case):
     """Convert a CommCareCase instance to a dict suitable for ``upsert_case``.
 
-    Extracts fixed fields, dynamic properties (namespaced under
-    ``prop.``) from ``case_json``, and index references from
-    ``live_indices``.
+    Extracts fixed fields and dynamic properties (namespaced under
+    ``prop.``) from ``case_json``.
     """
     row = {
         'case_id': case.case_id,
@@ -57,10 +55,6 @@ def case_to_row_dict(case):
     }
     for key, value in case.case_json.items():
         row[f'{PROPERTY_PREFIX}{key}'] = value
-    row['indices'] = {
-        index.identifier: index.referenced_id
-        for index in case.live_indices
-    }
     return row
 
 
@@ -103,19 +97,13 @@ _TYPED_COERCIONS = {
 def _build_values_dict(case_data, table_columns):
     """Map case_data keys to table column names, skipping unknown columns.
 
-    Keys are expected in three forms:
+    Keys are expected in two forms:
     - Fixed fields: bare names like ``case_id``, ``owner_id``
     - Properties: namespaced as ``prop.<name>``, mapped to ``prop_<name>`` columns
-    - Indices: a single ``indices`` key with a dict value
     """
     values = {}
     for key, value in case_data.items():
-        if key == 'indices':
-            for identifier, referenced_id in value.items():
-                col_name = f'idx_{identifier}'
-                if col_name in table_columns:
-                    values[col_name] = referenced_id
-        elif key.startswith(PROPERTY_PREFIX):
+        if key.startswith(PROPERTY_PREFIX):
             prop_name = key[len(PROPERTY_PREFIX):]
             col_name = f'prop_{prop_name}'
             if col_name in table_columns:

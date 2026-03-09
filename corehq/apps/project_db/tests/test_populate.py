@@ -26,7 +26,6 @@ class TestUpsertCase:
         self.table = build_table_for_case_type(
             self.metadata, DOMAIN, 'patient',
             properties=[('first_name', 'plain')],
-            relationships=[('parent', 'household')],
         )
         create_tables(self.engine, self.metadata)
 
@@ -80,18 +79,6 @@ class TestUpsertCase:
         assert row['case_name'] == 'Updated Name'
         assert row['prop_first_name'] == 'Robert'
 
-    def test_index_column_populated(self):
-        case_data = {
-            'case_id': 'case-003',
-            'owner_id': 'owner-1',
-            'indices': {'parent': 'hh-001'},
-        }
-
-        upsert_case(self.engine, self.table, case_data)
-
-        row = self._select_case('case-003')
-        assert row['idx_parent'] == 'hh-001'
-
     def test_unknown_properties_are_ignored(self):
         case_data = {
             'case_id': 'case-004',
@@ -103,18 +90,6 @@ class TestUpsertCase:
 
         row = self._select_case('case-004')
         assert row['case_id'] == 'case-004'
-
-    def test_unknown_indices_are_ignored(self):
-        case_data = {
-            'case_id': 'case-005',
-            'owner_id': 'owner-1',
-            'indices': {'host': 'host-001'},
-        }
-
-        upsert_case(self.engine, self.table, case_data)
-
-        row = self._select_case('case-005')
-        assert row['case_id'] == 'case-005'
 
 
 @pytest.mark.django_db
@@ -130,7 +105,6 @@ class TestUpsertCaseTypeCoercion:
                 ('dob', 'date'),
                 ('age', 'number'),
             ],
-            relationships=[('parent', 'household')],
         )
         create_tables(self.engine, self.metadata)
 
@@ -253,7 +227,7 @@ class TestCoerceToNumber:
 # --- Case adapter unit tests (no DB needed) ---
 
 
-def _make_case(case_json=None, live_indices=None, **fields):
+def _make_case(case_json=None, **fields):
     case = Mock()
     case.case_id = fields.get('case_id', 'abc123')
     case.owner_id = fields.get('owner_id', 'owner1')
@@ -265,15 +239,7 @@ def _make_case(case_json=None, live_indices=None, **fields):
     case.external_id = fields.get('external_id', '')
     case.server_modified_on = fields.get('server_modified_on', '2025-06-01')
     case.case_json = case_json or {}
-    case.live_indices = live_indices or []
     return case
-
-
-def _make_index(identifier, referenced_id):
-    index = Mock()
-    index.identifier = identifier
-    index.referenced_id = referenced_id
-    return index
 
 
 class TestCaseToRowDict:
@@ -309,19 +275,6 @@ class TestCaseToRowDict:
         assert result['prop.color'] == 'red'
         assert result['prop.size'] == 'large'
 
-    def test_indices_extracted(self):
-        indices = [
-            _make_index('parent', 'parent-case-id'),
-            _make_index('host', 'host-case-id'),
-        ]
-        case = _make_case(live_indices=indices)
-        result = case_to_row_dict(case)
-
-        assert result['indices'] == {
-            'parent': 'parent-case-id',
-            'host': 'host-case-id',
-        }
-
     def test_empty_case_json_no_extra_keys(self):
         case = _make_case(case_json={})
         result = case_to_row_dict(case)
@@ -329,34 +282,24 @@ class TestCaseToRowDict:
         expected_keys = {
             'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
             'modified_on', 'closed', 'external_id', 'server_modified_on',
-            'indices',
         }
         assert set(result.keys()) == expected_keys
 
-    def test_no_live_indices_gives_empty_dict(self):
-        case = _make_case(live_indices=[])
-        result = case_to_row_dict(case)
-
-        assert result['indices'] == {}
-
     def test_case_json_keys_cannot_collide_with_fixed_fields(self):
         """The prop. prefix ensures case_json keys never collide with
-        fixed fields or the indices key."""
+        fixed fields."""
         case = _make_case(
             case_id='real-id',
             owner_id='real-owner',
             case_json={
                 'case_id': 'fake-id',
                 'owner_id': 'fake-owner',
-                'indices': 'a-value',
             },
         )
         result = case_to_row_dict(case)
 
         assert result['case_id'] == 'real-id'
         assert result['owner_id'] == 'real-owner'
-        assert result['indices'] == {}
         # The case_json values are namespaced, so they coexist safely
         assert result['prop.case_id'] == 'fake-id'
         assert result['prop.owner_id'] == 'fake-owner'
-        assert result['prop.indices'] == 'a-value'

@@ -156,52 +156,6 @@ class TestBuildTableForCaseType:
         # 9 fixed + 4 raw text + 1 date + 1 numeric = 15
         assert len(table.columns) == 15
 
-    def test_parent_relationship_adds_idx_column(self):
-        table = build_table_for_case_type(
-            self.metadata, 'test-domain', 'child',
-            relationships=[('parent', 'parent_type')],
-        )
-        col = table.c['idx_parent']
-        assert isinstance(col.type, sqlalchemy.Text)
-
-    def test_multiple_relationships_add_all_columns(self):
-        table = build_table_for_case_type(
-            self.metadata, 'test-domain', 'child2',
-            relationships=[
-                ('parent', 'parent_type'),
-                ('host', 'host_type'),
-            ],
-        )
-        column_names = {col.name for col in table.columns}
-        assert {'idx_parent', 'idx_host'} <= column_names
-
-    def test_relationship_columns_have_no_foreign_keys(self):
-        table = build_table_for_case_type(
-            self.metadata, 'test-domain', 'child3',
-            relationships=[('parent', 'parent_type')],
-        )
-        assert len(table.foreign_keys) == 0
-
-    def test_relationship_columns_have_indexes(self):
-        table = build_table_for_case_type(
-            self.metadata, 'test-domain', 'child4',
-            relationships=[('parent', 'parent_type')],
-        )
-        index_columns = set()
-        for index in table.indexes:
-            for col in index.columns:
-                index_columns.add(col.name)
-        assert 'idx_parent' in index_columns
-
-    def test_relationship_index_naming(self):
-        table = build_table_for_case_type(
-            self.metadata, 'test-domain', 'child5',
-            relationships=[('parent', 'parent_type')],
-        )
-        index_names = {idx.name for idx in table.indexes}
-        expected_name = f'ix_{table.name}_idx_parent'
-        assert expected_name in index_names
-
     def test_owner_id_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
         assert f'ix_{self.table.name}_owner_id' in index_names
@@ -230,27 +184,13 @@ class TestNameValidation:
                 properties=[(name, 'plain')],
             )
 
-    @pytest.mark.parametrize('name', [
-        'has space',
-        'semi;colon',
-        'quote"mark',
-    ])
-    def test_invalid_relationship_name_raises(self, name):
-        with pytest.raises(ValueError, match='Invalid relationship name'):
-            build_table_for_case_type(
-                self.metadata, 'test-domain', f'val_rel_{name[:4]}',
-                relationships=[(name, 'some_type')],
-            )
-
     def test_valid_names_with_hyphens_and_underscores(self):
         table = build_table_for_case_type(
             self.metadata, 'test-domain', 'val_ok',
             properties=[('my-prop_1', 'plain')],
-            relationships=[('my-rel_2', 'some_type')],
         )
         column_names = {col.name for col in table.columns}
         assert 'prop_my-prop_1' in column_names
-        assert 'idx_my-rel_2' in column_names
 
 
 SCHEMA_GEN_DOMAIN = 'test-schema-gen'
@@ -321,52 +261,6 @@ class TestBuildTablesForDomain:
         column_names = {col.name for col in table.columns}
         assert 'prop_active_prop' in column_names
         assert 'prop_old_prop' not in column_names
-
-    def test_relationships_produce_idx_columns(self):
-        CaseType.objects.create(domain=SCHEMA_GEN_DOMAIN, name='child')
-
-        metadata = sqlalchemy.MetaData()
-        tables = build_tables_for_domain(
-            metadata, SCHEMA_GEN_DOMAIN,
-            relationships_by_type={
-                'child': [('parent', 'parent_type')],
-            },
-        )
-
-        table = tables['child']
-        column_names = {col.name for col in table.columns}
-        assert 'idx_parent' in column_names
-
-    def test_multiple_relationships_produce_multiple_idx_columns(self):
-        CaseType.objects.create(domain=SCHEMA_GEN_DOMAIN, name='referral')
-
-        metadata = sqlalchemy.MetaData()
-        tables = build_tables_for_domain(
-            metadata, SCHEMA_GEN_DOMAIN,
-            relationships_by_type={
-                'referral': [
-                    ('parent', 'patient'),
-                    ('host', 'facility'),
-                ],
-            },
-        )
-
-        table = tables['referral']
-        column_names = {col.name for col in table.columns}
-        assert 'idx_parent' in column_names
-        assert 'idx_host' in column_names
-
-    def test_no_relationships_no_idx_columns(self):
-        CaseType.objects.create(domain=SCHEMA_GEN_DOMAIN, name='standalone')
-
-        metadata = sqlalchemy.MetaData()
-        tables = build_tables_for_domain(metadata, SCHEMA_GEN_DOMAIN)
-
-        table = tables['standalone']
-        idx_columns = [
-            col.name for col in table.columns if col.name.startswith('idx_')
-        ]
-        assert idx_columns == []
 
     def test_does_not_include_other_domains(self):
         CaseType.objects.create(domain='other-domain', name='person')
