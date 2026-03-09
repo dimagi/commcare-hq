@@ -1,6 +1,10 @@
+import re
+
 from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text
 
 from corehq.apps.userreports.util import get_table_name
+
+_VALID_NAME_RE = re.compile(r'^[a-zA-Z0-9_-]+$')
 
 PROJECT_DB_TABLE_PREFIX = 'projectdb_'
 
@@ -59,6 +63,15 @@ _TYPED_COLUMN_EXTRAS = {
 }
 
 
+def _validate_name(name, label):
+    """Reject names containing characters other than alphanumeric, underscores, and hyphens."""
+    if not _VALID_NAME_RE.match(name):
+        raise ValueError(
+            f"Invalid {label} name {name!r}: "
+            "only alphanumeric characters, underscores, and hyphens are allowed"
+        )
+
+
 def _build_relationship_columns(relationships):
     """Build Column objects for case relationship indices.
 
@@ -66,6 +79,8 @@ def _build_relationship_columns(relationships):
     No ForeignKey constraints are added because the async change feed
     does not guarantee write order across case types.
     """
+    for identifier, _ct in relationships:
+        _validate_name(identifier, 'relationship')
     return [Column(f'idx_{identifier}', Text) for identifier, _ct in relationships]
 
 
@@ -77,6 +92,7 @@ def _build_property_columns(properties):
     """
     columns = []
     for name, data_type in properties:
+        _validate_name(name, 'property')
         col_name = f'prop_{name}'
         columns.append(Column(col_name, Text))
         if data_type in _TYPED_COLUMN_EXTRAS:

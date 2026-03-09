@@ -90,3 +90,22 @@ def test_no_live_indices_gives_empty_dict():
     result = case_to_row_dict(case)
 
     assert result['indices'] == {}
+
+
+def test_case_json_collision_does_not_overwrite_fixed_fields():
+    case = _make_case(
+        case_id='real-id',
+        owner_id='real-owner',
+        case_json={
+            'case_id': 'fake-id',
+            'owner_id': 'fake-owner',
+            'indices': 'should-be-ignored',
+            'safe_key': 'kept',
+        },
+    )
+    result = case_to_row_dict(case)
+
+    assert result['case_id'] == 'real-id'
+    assert result['owner_id'] == 'real-owner'
+    assert result['indices'] == {}
+    assert result['safe_key'] == 'kept'

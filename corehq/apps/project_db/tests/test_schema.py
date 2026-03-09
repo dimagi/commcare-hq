@@ -1,3 +1,4 @@
+import pytest
 import sqlalchemy
 
 from corehq.apps.project_db.schema import (
@@ -198,3 +199,45 @@ class TestBuildTableForCaseType:
         index_names = {idx.name for idx in table.indexes}
         expected_name = f'ix_{table.name}_idx_parent'
         assert expected_name in index_names
+
+
+class TestNameValidation:
+
+    def setup_method(self):
+        self.metadata = sqlalchemy.MetaData()
+
+    @pytest.mark.parametrize('name', [
+        'has space',
+        'semi;colon',
+        'quote"mark',
+        'paren(s)',
+        'eq=ual',
+    ])
+    def test_invalid_property_name_raises(self, name):
+        with pytest.raises(ValueError, match='Invalid property name'):
+            build_table_for_case_type(
+                self.metadata, 'test-domain', f'val_prop_{name[:4]}',
+                properties=[(name, 'plain')],
+            )
+
+    @pytest.mark.parametrize('name', [
+        'has space',
+        'semi;colon',
+        'quote"mark',
+    ])
+    def test_invalid_relationship_name_raises(self, name):
+        with pytest.raises(ValueError, match='Invalid relationship name'):
+            build_table_for_case_type(
+                self.metadata, 'test-domain', f'val_rel_{name[:4]}',
+                relationships=[(name, 'some_type')],
+            )
+
+    def test_valid_names_with_hyphens_and_underscores(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'val_ok',
+            properties=[('my-prop_1', 'plain')],
+            relationships=[('my-rel_2', 'some_type')],
+        )
+        column_names = {col.name for col in table.columns}
+        assert 'prop_my-prop_1' in column_names
+        assert 'idx_my-rel_2' in column_names
