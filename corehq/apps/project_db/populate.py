@@ -16,7 +16,9 @@ def upsert_case(engine, table, case_data):
     - Case property keys (without ``prop_`` prefix) mapped to ``prop_<key>`` columns
     - An ``indices`` key mapping identifiers to referenced case IDs
 
-    On conflict on ``case_id``, all non-PK columns are updated.
+    On conflict on ``case_id``, only the columns present in ``case_data``
+    are updated — columns not included in the dict are left unchanged.
+    Callers should include all fields for a full upsert.
     """
     table_columns = set(table.c.keys())
     values = _build_values_dict(case_data, table_columns)

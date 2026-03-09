@@ -49,6 +49,8 @@ def build_table_for_case_type(metadata, domain, case_type,
         *property_columns,
         *relationship_columns,
     )
+    Index(f'ix_{table_name}_owner_id', table.c['owner_id'])
+    Index(f'ix_{table_name}_modified_on', table.c['modified_on'])
     for identifier, _case_type in (relationships or []):
         col_name = f'idx_{identifier}'
         Index(f'ix_{table_name}_{col_name}', table.c[col_name])
@@ -57,6 +59,8 @@ def build_table_for_case_type(metadata, domain, case_type,
 
 # Maps data types that get an additional typed column to their
 # (SQLAlchemy type, column name suffix) pairs.
+# These keys must match CaseProperty.DataType enum values
+# from corehq/apps/data_dictionary/models.py.
 _TYPED_COLUMN_EXTRAS = {
     'date': (Date, '_date'),
     'number': (Numeric, '_numeric'),

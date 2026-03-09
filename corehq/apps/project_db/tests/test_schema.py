@@ -200,6 +200,14 @@ class TestBuildTableForCaseType:
         expected_name = f'ix_{table.name}_idx_parent'
         assert expected_name in index_names
 
+    def test_owner_id_has_index(self):
+        index_names = {idx.name for idx in self.table.indexes}
+        assert f'ix_{self.table.name}_owner_id' in index_names
+
+    def test_modified_on_has_index(self):
+        index_names = {idx.name for idx in self.table.indexes}
+        assert f'ix_{self.table.name}_modified_on' in index_names
+
 
 class TestNameValidation:
 

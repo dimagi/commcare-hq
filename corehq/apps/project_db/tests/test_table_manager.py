@@ -116,3 +116,28 @@ class TestEvolveTable:
 
         columns = {c['name'] for c in sa_inspect(self.engine).get_columns(table2.name)}
         assert 'prop_village' in columns
+
+    def test_evolve_adds_relationship_column_and_index(self):
+        metadata = sqlalchemy.MetaData()
+        self._build_and_track(
+            metadata, 'test-domain', 'evolve3',
+            properties=[('name', 'plain')],
+        )
+        create_tables(self.engine, metadata)
+
+        # Evolve with a new relationship
+        metadata2 = sqlalchemy.MetaData()
+        table2 = build_table_for_case_type(
+            metadata2, 'test-domain', 'evolve3',
+            properties=[('name', 'plain')],
+            relationships=[('parent', 'household')],
+        )
+
+        evolve_table(self.engine, table2)
+
+        inspector = sa_inspect(self.engine)
+        columns = {c['name'] for c in inspector.get_columns(table2.name)}
+        assert 'idx_parent' in columns
+
+        index_names = {idx['name'] for idx in inspector.get_indexes(table2.name)}
+        assert f'ix_{table2.name}_idx_parent' in index_names

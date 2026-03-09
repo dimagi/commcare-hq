@@ -22,16 +22,23 @@ def create_tables(engine, metadata):
 
 
 def evolve_table(engine, table):
-    """Add columns present in ``table`` but missing from the database.
+    """Add columns and indexes present in ``table`` but missing from the database.
 
-    This is append-only: columns that exist in the database but not in
-    ``table`` are left in place (never dropped).
+    This is append-only: columns and indexes that exist in the database
+    but not in ``table`` are left in place (never dropped).
     """
     inspector = inspect(engine)
     existing_columns = {col['name'] for col in inspector.get_columns(table.name)}
     new_columns = [col for col in table.columns if col.name not in existing_columns]
 
-    if not new_columns:
+    existing_indexes = {
+        idx['name'] for idx in inspector.get_indexes(table.name)
+    }
+    new_indexes = [
+        idx for idx in table.indexes if idx.name not in existing_indexes
+    ]
+
+    if not new_columns and not new_indexes:
         return
 
     with engine.begin() as conn:
@@ -39,4 +46,9 @@ def evolve_table(engine, table):
             col_type = column.type.compile(dialect=engine.dialect)
             conn.execute(sqlalchemy.text(
                 f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'
+            ))
+        for index in new_indexes:
+            col_names = ', '.join(f'"{col.name}"' for col in index.columns)
+            conn.execute(sqlalchemy.text(
+                f'CREATE INDEX "{index.name}" ON "{table.name}" ({col_names})'
             ))
