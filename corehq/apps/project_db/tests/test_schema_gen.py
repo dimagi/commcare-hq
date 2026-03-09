@@ -73,6 +73,52 @@ class TestBuildTablesForDomain:
         assert 'prop_active_prop' in column_names
         assert 'prop_old_prop' not in column_names
 
+    def test_relationships_produce_idx_columns(self):
+        CaseType.objects.create(domain=DOMAIN, name='child')
+
+        metadata = sqlalchemy.MetaData()
+        tables = build_tables_for_domain(
+            metadata, DOMAIN,
+            relationships_by_type={
+                'child': [('parent', 'parent_type')],
+            },
+        )
+
+        table = tables['child']
+        column_names = {col.name for col in table.columns}
+        assert 'idx_parent' in column_names
+
+    def test_multiple_relationships_produce_multiple_idx_columns(self):
+        CaseType.objects.create(domain=DOMAIN, name='referral')
+
+        metadata = sqlalchemy.MetaData()
+        tables = build_tables_for_domain(
+            metadata, DOMAIN,
+            relationships_by_type={
+                'referral': [
+                    ('parent', 'patient'),
+                    ('host', 'facility'),
+                ],
+            },
+        )
+
+        table = tables['referral']
+        column_names = {col.name for col in table.columns}
+        assert 'idx_parent' in column_names
+        assert 'idx_host' in column_names
+
+    def test_no_relationships_no_idx_columns(self):
+        CaseType.objects.create(domain=DOMAIN, name='standalone')
+
+        metadata = sqlalchemy.MetaData()
+        tables = build_tables_for_domain(metadata, DOMAIN)
+
+        table = tables['standalone']
+        idx_columns = [
+            col.name for col in table.columns if col.name.startswith('idx_')
+        ]
+        assert idx_columns == []
+
     def test_does_not_include_other_domains(self):
         CaseType.objects.create(domain='other-domain', name='person')
 
