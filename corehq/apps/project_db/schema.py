@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Table, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Table, Text
 
 from corehq.apps.userreports.util import get_table_name
 
@@ -23,11 +23,12 @@ def build_table_for_case_type(metadata, domain, case_type,
     :param metadata: SQLAlchemy MetaData instance
     :param domain: CommCare project domain
     :param case_type: case type name
-    :param properties: reserved for future use (dynamic property columns)
+    :param properties: list of (name, data_type) tuples for dynamic columns
     :param relationships: reserved for future use (relationship columns)
     :returns: SQLAlchemy Table
     """
     table_name = get_project_db_table_name(domain, case_type)
+    property_columns = _build_property_columns(properties or [])
     return Table(
         table_name,
         metadata,
@@ -40,4 +41,29 @@ def build_table_for_case_type(metadata, domain, case_type,
         Column('closed', Boolean),
         Column('external_id', Text),
         Column('server_modified_on', DateTime(timezone=True)),
+        *property_columns,
     )
+
+
+# Maps data types that get an additional typed column to their
+# (SQLAlchemy type, column name suffix) pairs.
+_TYPED_COLUMN_EXTRAS = {
+    'date': (Date, '_date'),
+    'number': (Numeric, '_numeric'),
+}
+
+
+def _build_property_columns(properties):
+    """Build Column objects for dynamic case properties.
+
+    Every property gets a raw Text column named ``prop_<name>``.
+    ``date`` and ``number`` properties get an additional typed column.
+    """
+    columns = []
+    for name, data_type in properties:
+        col_name = f'prop_{name}'
+        columns.append(Column(col_name, Text))
+        if data_type in _TYPED_COLUMN_EXTRAS:
+            sa_type, suffix = _TYPED_COLUMN_EXTRAS[data_type]
+            columns.append(Column(f'{col_name}{suffix}', sa_type))
+    return columns

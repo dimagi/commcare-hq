@@ -92,17 +92,63 @@ class TestBuildTableForCaseType:
                 f"Column {col_name} should have timezone=True"
             )
 
-    def test_accepts_unused_properties_param(self):
+    def test_plain_property_adds_text_column(self):
         table = build_table_for_case_type(
             self.metadata, 'test-domain', 'household',
-            properties=[{'name': 'age', 'type': 'number'}],
+            properties=[('village', 'plain')],
         )
-        # For now, properties are ignored; table has only fixed columns
-        assert {col.name for col in table.columns} == set(FIXED_COLUMNS)
+        col = table.c['prop_village']
+        assert isinstance(col.type, sqlalchemy.Text)
 
-    def test_accepts_unused_relationships_param(self):
+    def test_plain_property_adds_one_column_only(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'household2',
+            properties=[('village', 'plain')],
+        )
+        column_names = {col.name for col in table.columns}
+        assert column_names == set(FIXED_COLUMNS) | {'prop_village'}
+
+    def test_date_property_adds_text_and_date_columns(self):
         table = build_table_for_case_type(
             self.metadata, 'test-domain', 'visit',
-            relationships=[{'case_type': 'person', 'identifier': 'parent'}],
+            properties=[('dob', 'date')],
         )
-        assert {col.name for col in table.columns} == set(FIXED_COLUMNS)
+        assert isinstance(table.c['prop_dob'].type, sqlalchemy.Text)
+        assert isinstance(table.c['prop_dob_date'].type, sqlalchemy.Date)
+
+    def test_number_property_adds_text_and_numeric_columns(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'visit2',
+            properties=[('age', 'number')],
+        )
+        assert isinstance(table.c['prop_age'].type, sqlalchemy.Text)
+        assert isinstance(table.c['prop_age_numeric'].type, sqlalchemy.Numeric)
+
+    def test_select_property_adds_one_column_only(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'visit3',
+            properties=[('status', 'select')],
+        )
+        column_names = {col.name for col in table.columns}
+        assert column_names == set(FIXED_COLUMNS) | {'prop_status'}
+
+    def test_undefined_property_adds_one_column_only(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'visit4',
+            properties=[('misc', '')],
+        )
+        column_names = {col.name for col in table.columns}
+        assert column_names == set(FIXED_COLUMNS) | {'prop_misc'}
+
+    def test_multiple_properties_correct_column_count(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'visit5',
+            properties=[
+                ('village', 'plain'),
+                ('dob', 'date'),
+                ('age', 'number'),
+                ('status', 'select'),
+            ],
+        )
+        # 9 fixed + 4 raw text + 1 date + 1 numeric = 15
+        assert len(table.columns) == 15
