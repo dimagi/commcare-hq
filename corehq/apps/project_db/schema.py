@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Table, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text
 
 from corehq.apps.userreports.util import get_table_name
 
@@ -24,12 +24,13 @@ def build_table_for_case_type(metadata, domain, case_type,
     :param domain: CommCare project domain
     :param case_type: case type name
     :param properties: list of (name, data_type) tuples for dynamic columns
-    :param relationships: reserved for future use (relationship columns)
+    :param relationships: list of (identifier, referenced_case_type) tuples
     :returns: SQLAlchemy Table
     """
     table_name = get_project_db_table_name(domain, case_type)
     property_columns = _build_property_columns(properties or [])
-    return Table(
+    relationship_columns = _build_relationship_columns(relationships or [])
+    table = Table(
         table_name,
         metadata,
         Column('case_id', Text, primary_key=True),
@@ -42,7 +43,12 @@ def build_table_for_case_type(metadata, domain, case_type,
         Column('external_id', Text),
         Column('server_modified_on', DateTime(timezone=True)),
         *property_columns,
+        *relationship_columns,
     )
+    for identifier, _case_type in (relationships or []):
+        col_name = f'idx_{identifier}'
+        Index(f'ix_{table_name}_{col_name}', table.c[col_name])
+    return table
 
 
 # Maps data types that get an additional typed column to their
@@ -51,6 +57,16 @@ _TYPED_COLUMN_EXTRAS = {
     'date': (Date, '_date'),
     'number': (Numeric, '_numeric'),
 }
+
+
+def _build_relationship_columns(relationships):
+    """Build Column objects for case relationship indices.
+
+    Each relationship gets a Text column named ``idx_<identifier>``.
+    No ForeignKey constraints are added because the async change feed
+    does not guarantee write order across case types.
+    """
+    return [Column(f'idx_{identifier}', Text) for identifier, _ct in relationships]
 
 
 def _build_property_columns(properties):

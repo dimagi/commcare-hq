@@ -152,3 +152,49 @@ class TestBuildTableForCaseType:
         )
         # 9 fixed + 4 raw text + 1 date + 1 numeric = 15
         assert len(table.columns) == 15
+
+    def test_parent_relationship_adds_idx_column(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'child',
+            relationships=[('parent', 'parent_type')],
+        )
+        col = table.c['idx_parent']
+        assert isinstance(col.type, sqlalchemy.Text)
+
+    def test_multiple_relationships_add_all_columns(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'child2',
+            relationships=[
+                ('parent', 'parent_type'),
+                ('host', 'host_type'),
+            ],
+        )
+        column_names = {col.name for col in table.columns}
+        assert {'idx_parent', 'idx_host'} <= column_names
+
+    def test_relationship_columns_have_no_foreign_keys(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'child3',
+            relationships=[('parent', 'parent_type')],
+        )
+        assert len(table.foreign_keys) == 0
+
+    def test_relationship_columns_have_indexes(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'child4',
+            relationships=[('parent', 'parent_type')],
+        )
+        index_columns = set()
+        for index in table.indexes:
+            for col in index.columns:
+                index_columns.add(col.name)
+        assert 'idx_parent' in index_columns
+
+    def test_relationship_index_naming(self):
+        table = build_table_for_case_type(
+            self.metadata, 'test-domain', 'child5',
+            relationships=[('parent', 'parent_type')],
+        )
+        index_names = {idx.name for idx in table.indexes}
+        expected_name = f'ix_{table.name}_idx_parent'
+        assert expected_name in index_names
