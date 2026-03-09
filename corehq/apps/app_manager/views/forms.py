@@ -336,8 +336,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                case_update_diff = _get_case_mapping_diff(request, form)
-                save_xform(app, form, xform, case_update_diff)
+                case_mapping_diff = _get_case_mapping_diff(request, form)
+                save_xform(app, form, xform, case_mapping_diff)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -530,10 +530,10 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    case_update_diff = _get_case_mapping_diff(request, form)
+    case_mapping_diff = _get_case_mapping_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'), case_update_diff)
+        xml = save_xform(app, form, xml.encode('utf-8'), case_mapping_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
