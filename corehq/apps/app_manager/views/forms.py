@@ -232,8 +232,8 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     old_load_from_form = form.actions.load_from_form
 
     actions_json = json.loads(request.POST['actions'])
-    update_diff = json.loads(request.POST['update_diff']) if 'update_diff' in request.POST else {}
-    update_form_actions(form.actions, actions_json, update_diff)
+    diff = json.loads(request.POST['case_mapping_diff']) if 'case_mapping_diff' in request.POST else {}
+    update_form_actions(form.actions, actions_json, diff)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
