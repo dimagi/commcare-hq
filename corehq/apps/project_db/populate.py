@@ -1,5 +1,7 @@
 from sqlalchemy.dialects.postgresql import insert
 
+from corehq.apps.project_db.coerce import coerce_to_date, coerce_to_number
+
 FIXED_COLUMNS = {
     'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
     'modified_on', 'closed', 'external_id', 'server_modified_on',
@@ -45,4 +47,20 @@ def _build_values_dict(case_data, table_columns):
             col_name = f'prop_{key}'
             if col_name in table_columns:
                 values[col_name] = value
+                _set_typed_columns(values, col_name, value, table_columns)
     return values
+
+
+# Maps typed column suffixes to their coercion functions.
+_TYPED_COERCIONS = {
+    '_date': coerce_to_date,
+    '_numeric': coerce_to_number,
+}
+
+
+def _set_typed_columns(values, col_name, raw_value, table_columns):
+    """If typed companion columns exist, coerce and set their values."""
+    for suffix, coerce_fn in _TYPED_COERCIONS.items():
+        typed_col = f'{col_name}{suffix}'
+        if typed_col in table_columns:
+            values[typed_col] = coerce_fn(raw_value)
