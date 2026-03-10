@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# ruff: noqa: E266, F405
+# ruff: noqa
 
 import inspect
 from collections import defaultdict
