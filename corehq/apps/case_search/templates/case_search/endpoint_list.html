@@ -1,0 +1,10 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% block page_content %}
+  <div id="endpoint-list">
+    {% for ep in endpoints %}
+      <div>{{ ep.name }}</div>
+      {% empty %}
+      <p>No endpoints configured.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

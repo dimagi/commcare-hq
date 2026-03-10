@@ -2,8 +2,8 @@ import json
 import re
 from io import BytesIO
 
-from django.http import Http404, HttpResponse
-from django.shortcuts import render
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
@@ -16,6 +16,16 @@ from corehq.apps.case_search.forms import (
     CSQLFixtureExpressionForm,
     UserDataCriteriaForm,
     CSQLFixtureFilterForm,
+)
+from corehq.apps.case_search.endpoint_capability import get_capability
+from corehq.apps.case_search.endpoint_service import (
+    FilterSpecValidationError,
+    create_endpoint,
+    deactivate_endpoint,
+    get_endpoint,
+    get_version,
+    list_endpoints,
+    save_new_version,
 )
 from corehq.apps.case_search.models import (
     CSQLFixtureExpression,
@@ -208,3 +218,150 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
             form.save()
             return HttpResponse(form.render())
         raise AssertionError("The user shouldn't be able to submit an invalid form")
+
+
+@method_decorator([
+    use_bootstrap5,
+    toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+], name='dispatch')
+class CaseSearchEndpointsView(BaseProjectDataView):
+    urlname = 'case_search_endpoints'
+    page_title = 'Case Search Endpoints'
+    template_name = 'case_search/endpoint_list.html'
+
+    @property
+    def page_context(self):
+        return {
+            'endpoints': list_endpoints(self.domain),
+        }
+
+
+@method_decorator([
+    use_bootstrap5,
+    toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+], name='dispatch')
+class CaseSearchEndpointNewView(BaseProjectDataView):
+    urlname = 'case_search_endpoint_new'
+    page_title = 'New Case Search Endpoint'
+    template_name = 'case_search/endpoint_edit.html'
+
+    @property
+    def page_context(self):
+        return {
+            'capability': get_capability(self.domain),
+            'endpoint': None,
+            'current_version': None,
+            'mode': 'create',
+        }
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        try:
+            endpoint = create_endpoint(
+                domain=self.domain,
+                name=data['name'],
+                target_type=data['target_type'],
+                target_name=data['target_name'],
+                parameters=data['parameters'],
+                query=data['query'],
+            )
+        except FilterSpecValidationError as e:
+            return JsonResponse({'errors': e.errors}, status=400)
+        return JsonResponse({
+            'id': endpoint.id,
+            'redirect': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
+        })
+
+
+@method_decorator([
+    use_bootstrap5,
+    toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+], name='dispatch')
+class CaseSearchEndpointEditView(BaseProjectDataView):
+    urlname = 'case_search_endpoint_edit'
+    page_title = 'Edit Case Search Endpoint'
+    template_name = 'case_search/endpoint_edit.html'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.kwargs['endpoint_id']])
+
+    @property
+    def page_context(self):
+        endpoint = get_endpoint(self.domain, self.kwargs['endpoint_id'])
+        return {
+            'capability': get_capability(self.domain),
+            'endpoint': endpoint,
+            'current_version': endpoint.current_version,
+            'mode': 'edit',
+        }
+
+    def post(self, request, *args, **kwargs):
+        endpoint = get_endpoint(self.domain, self.kwargs['endpoint_id'])
+        data = json.loads(request.body)
+        try:
+            version = save_new_version(
+                endpoint,
+                parameters=data['parameters'],
+                query=data['query'],
+            )
+        except FilterSpecValidationError as e:
+            return JsonResponse({'errors': e.errors}, status=400)
+        return JsonResponse({
+            'version_number': version.version_number,
+            'redirect': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
+        })
+
+
+@method_decorator([
+    use_bootstrap5,
+    toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+], name='dispatch')
+class CaseSearchEndpointVersionView(BaseProjectDataView):
+    urlname = 'case_search_endpoint_version'
+    page_title = 'Endpoint Version'
+    template_name = 'case_search/endpoint_edit.html'
+
+    @property
+    def page_url(self):
+        return reverse(
+            self.urlname,
+            args=[self.domain, self.kwargs['endpoint_id'], self.kwargs['version_number']],
+        )
+
+    @property
+    def page_context(self):
+        endpoint = get_endpoint(self.domain, self.kwargs['endpoint_id'])
+        version = get_version(endpoint, int(self.kwargs['version_number']))
+        return {
+            'capability': get_capability(self.domain),
+            'endpoint': endpoint,
+            'current_version': version,
+            'mode': 'readonly',
+        }
+
+
+@method_decorator([
+    use_bootstrap5,
+    toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+], name='dispatch')
+class CaseSearchEndpointDeactivateView(BaseProjectDataView):
+    urlname = 'case_search_endpoint_deactivate'
+
+    def post(self, request, *args, **kwargs):
+        endpoint = get_endpoint(self.domain, self.kwargs['endpoint_id'])
+        deactivate_endpoint(endpoint)
+        return redirect(
+            reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
+        )
+
+
+@method_decorator([
+    use_bootstrap5,
+    toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+], name='dispatch')
+class CaseSearchCapabilityView(BaseProjectDataView):
+    urlname = 'case_search_capability'
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(get_capability(self.domain))
