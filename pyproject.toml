@@ -234,3 +234,16 @@ line-length = 79
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 115
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["F403"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["E501", "E303"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/**" = ["E", "F", "W"]
