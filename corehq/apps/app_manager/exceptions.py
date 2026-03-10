@@ -227,18 +227,6 @@ class FormActionsDiffException(Exception):
         return _("Form Actions Diff failed to be applied successfully")
 
 
-class InvalidPropertyException(FormActionsDiffException):
-    FORMAT_STRING = "Invalid key found: {}"
-
-    def __init__(self, invalid_property):
-        self.invalid_property = invalid_property
-        message = self.FORMAT_STRING.format(self.invalid_property)
-        super().__init__(message)
-
-    def get_user_message(self):
-        return _(self.FORMAT_STRING).format(self.invalid_property)
-
-
 class MissingPropertyMapException(FormActionsDiffException):
     FORMAT_STRING = "The following mappings were not found: {}"
 
@@ -262,30 +250,6 @@ class MissingPropertyMapException(FormActionsDiffException):
             format_string = "The following mappings were not found: {}"
         else:
             format_string = "Missing properties were not found"
-
-        if translate:
-            format_string = _(format_string)
-
-        return format_string.format(joined_mappings)
-
-
-class DiffConflictException(Exception):
-    def __init__(self, *conflicting_mappings):
-        self.conflicting_mappings = conflicting_mappings
-        message = self._get_message()
-        super().__init__(message)
-
-    def get_user_message(self):
-        return self._get_message(translate=True)
-
-    def _get_message(self, translate=False):
-        joined_mappings = ""
-        format_string = ""
-        if self.conflicting_mappings:
-            joined_mappings = ', '.join(self.conflicting_mappings)
-            format_string = "The following mappings were affected by multiple actions: {}"
-        else:
-            format_string = "No conflicting mappings specified"
 
         if translate:
             format_string = _(format_string)
