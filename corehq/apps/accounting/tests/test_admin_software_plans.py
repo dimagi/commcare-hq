@@ -155,6 +155,7 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         self.assertEqual(new_subscription1.funding_source, FundingSource.CLIENT)
         self.assertFalse(new_subscription1.skip_auto_downgrade)
         self.assertEqual(new_subscription1.skip_auto_downgrade_reason, '')
+        self.assertIsNone(new_subscription1.date_end)
 
         new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
         self.assertEqual(new_subscription2.plan_version, self.newest_version)
@@ -170,6 +171,7 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         self.assertEqual(new_subscription2.funding_source, FundingSource.EXTERNAL)
         self.assertTrue(new_subscription2.skip_auto_downgrade)
         self.assertEqual(new_subscription2.skip_auto_downgrade_reason, "test skip auto downgrade")
+        self.assertEqual(new_subscription2.date_end, old_subscription2.date_end)
 
 
 class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
