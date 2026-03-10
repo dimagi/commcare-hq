@@ -1,44 +1,7 @@
 from django.test import SimpleTestCase
 from django.utils import translation
 from corehq.apps.translations.tests.utils import custom_translations, CUSTOM_LANGUAGE
-from corehq.apps.app_manager.exceptions import (
-    DiffConflictException,
-    MissingPropertyMapException,
-    InvalidPropertyException
-)
-
-
-class InvalidPropertyExceptionTests(SimpleTestCase):
-    def test_constructor(self):
-        exception = InvalidPropertyException('test_property')
-        self.assertEqual(exception.invalid_property, 'test_property')
-        self.assertEqual(str(exception), 'Invalid key found: test_property')
-
-    @custom_translations({'Invalid key found: {}': 'Translated: {}'})
-    def test_translation(self):
-        exception = InvalidPropertyException('test_property')
-
-        with translation.override(CUSTOM_LANGUAGE):
-            assert exception.get_user_message() == 'Translated: test_property'
-
-
-class DiffConflictExceptionTests(SimpleTestCase):
-    def test_with_specified_conflicts(self):
-        exception = DiffConflictException('a', 'b', 'c')
-        self.assertEqual(list(exception.conflicting_mappings), ['a', 'b', 'c'])
-        self.assertEqual(str(exception), 'The following mappings were affected by multiple actions: a, b, c')
-
-    def test_with_nothing_specified(self):
-        exception = DiffConflictException()
-        self.assertEqual(list(exception.conflicting_mappings), [])
-        self.assertEqual(str(exception), "No conflicting mappings specified")
-
-    @custom_translations({'The following mappings were affected by multiple actions: {}': 'Translated: {}'})
-    def test_translation(self):
-        exception = DiffConflictException('a', 'b', 'c')
-
-        with translation.override(CUSTOM_LANGUAGE):
-            assert exception.get_user_message() == 'Translated: a, b, c'
+from corehq.apps.app_manager.exceptions import MissingPropertyMapException
 
 
 class MissingPropertyMapExceptionTests(SimpleTestCase):
