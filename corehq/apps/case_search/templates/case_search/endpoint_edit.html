@@ -1,6 +1,129 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+
 {% block page_content %}
-  <div id="endpoint-edit">
-    <p>Query builder placeholder (mode: {{ mode }})</p>
+  <div class="container" x-data="endpointEditor()" x-init="init()">
+    {% if mode == 'create' %}
+      <h2>{% trans "New Case Search Endpoint" %}</h2>
+      <div class="mb-3">
+        <label class="form-label">{% trans "Name" %}</label>
+        <input type="text" class="form-control" x-model="endpointName" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{% trans "Target Type" %}</label>
+        <select class="form-select" x-model="targetType">
+          <option value="project_db">Project DB</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{% trans "Case Type" %}</label>
+        <select class="form-select" x-model="targetName">
+          <template x-for="ct in capability.case_types" :key="ct.name">
+            <option :value="ct.name" x-text="ct.name"></option>
+          </template>
+        </select>
+      </div>
+    {% else %}
+      <h2>
+        {{ endpoint.name }}
+        {% if mode == 'readonly' %}
+          <span class="badge bg-secondary"
+            >v{{ current_version.version_number }} (read-only)</span
+          >
+        {% endif %}
+      </h2>
+    {% endif %}
+    {% include "case_search/partials/query_builder.html" %}
+
+    <template x-if="validationErrors.length > 0">
+      <div class="alert alert-danger mt-3">
+        <strong>{% trans "Validation errors:" %}</strong>
+        <ul class="mb-0">
+          <template x-for="err in validationErrors" :key="err">
+            <li x-text="err"></li>
+          </template>
+        </ul>
+      </div>
+    </template>
+
+    {% if mode != 'readonly' %}
+      <div class="mt-3">
+        <button class="btn btn-primary" @click="validationErrors = []; save()">
+          {% if mode == 'create' %}
+            {% trans "Create Endpoint" %}
+          {% else %}
+            {% trans "Save New Version" %}
+          {% endif %}
+        </button>
+        <a
+          href="{% url 'case_search_endpoints' domain %}"
+          class="btn btn-outline-secondary"
+        >
+          {% trans "Cancel" %}
+        </a>
+      </div>
+    {% endif %}
   </div>
+
+  {{ capability|json_script:"capability-data" }}
+  {{ current_version.parameters|default_if_none:"[]"|json_script:"parameters-data" }}
+  {{ current_version.query|default_if_none:"{}"|json_script:"query-data" }}
+  {{ endpoint.target_name|default:""|json_script:"target-name-data" }}
+
+  <script>
+    document.addEventListener("alpine:init", () => {
+      Alpine.data("endpointEditor", () => ({
+        mode: "{{ mode }}",
+        endpointName: "",
+        targetType: "project_db",
+        targetName: "",
+        validationErrors: [],
+        capability: JSON.parse(
+          document.getElementById("capability-data").textContent,
+        ),
+        parameters: JSON.parse(
+          document.getElementById("parameters-data").textContent,
+        ),
+        filterTree: JSON.parse(
+          document.getElementById("query-data").textContent,
+        ),
+
+        init() {
+          this.targetName = JSON.parse(
+            document.getElementById("target-name-data").textContent,
+          );
+        },
+
+        save() {
+          const payload = {
+            parameters: this.parameters,
+            query: this.filterTree,
+          };
+          if (this.mode === "create") {
+            payload.name = this.endpointName;
+            payload.target_type = this.targetType;
+            payload.target_name = this.targetName;
+          }
+          fetch(window.location.pathname, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken":
+                document.querySelector("[name=csrfmiddlewaretoken]")?.value ||
+                document.cookie.match(/csrftoken=([^;]+)/)?.[1],
+            },
+            body: JSON.stringify(payload),
+          })
+            .then((r) => r.json().then((data) => ({ status: r.status, data })))
+            .then(({ status, data }) => {
+              if (status === 400 && data.errors) {
+                this.validationErrors = data.errors;
+              } else if (data.redirect) {
+                window.location.href = data.redirect;
+              }
+            });
+        },
+      }));
+    });
+  </script>
 {% endblock %}
