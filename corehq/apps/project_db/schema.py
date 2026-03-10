@@ -81,10 +81,14 @@ def build_table_for_case_type(metadata, domain, case_type, properties=None):
         Column('closed', Boolean),
         Column('external_id', Text),
         Column('server_modified_on', DateTime(timezone=True)),
+        Column('parent_id', Text),
+        Column('host_id', Text),
         *property_columns,
     )
     Index(f'ix_{table_name}_owner_id', table.c['owner_id'])
     Index(f'ix_{table_name}_modified_on', table.c['modified_on'])
+    Index(f'ix_{table_name}_parent_id', table.c['parent_id'])
+    Index(f'ix_{table_name}_host_id', table.c['host_id'])
     return table
 
 

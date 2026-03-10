@@ -19,6 +19,8 @@ FIXED_COLUMNS = {
     'closed': (sqlalchemy.Boolean, False),
     'external_id': (sqlalchemy.Text, False),
     'server_modified_on': (sqlalchemy.DateTime, False),
+    'parent_id': (sqlalchemy.Text, False),
+    'host_id': (sqlalchemy.Text, False),
 }
 
 
@@ -154,8 +156,8 @@ class TestBuildTableForCaseType:
                 ('status', 'select'),
             ],
         )
-        # 9 fixed + 4 raw text + 1 date + 1 numeric = 15
-        assert len(table.columns) == 15
+        # 11 fixed + 4 raw text + 1 date + 1 numeric = 17
+        assert len(table.columns) == 17
 
     def test_owner_id_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
@@ -164,6 +166,20 @@ class TestBuildTableForCaseType:
     def test_modified_on_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
         assert f'ix_{self.table.name}_modified_on' in index_names
+
+    def test_parent_id_has_index(self):
+        index_names = {idx.name for idx in self.table.indexes}
+        assert f'ix_{self.table.name}_parent_id' in index_names
+
+    def test_host_id_has_index(self):
+        index_names = {idx.name for idx in self.table.indexes}
+        assert f'ix_{self.table.name}_host_id' in index_names
+
+    def test_parent_id_is_nullable(self):
+        assert self.table.c.parent_id.nullable is True
+
+    def test_host_id_is_nullable(self):
+        assert self.table.c.host_id.nullable is True
 
 
 class TestNameValidation:
