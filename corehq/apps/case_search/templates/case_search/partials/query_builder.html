@@ -1,1 +1,57 @@
-{# Query builder partial — stub, implemented in Task 9 #}
+{# Standalone query builder partial — reusable, no endpoint context #}
+{# Expects parent Alpine scope: capability, parameters, filterTree, targetName, mode #}
+{% load i18n %}
+
+<div class="card mb-3">
+  <div class="card-header">{% trans "Parameters" %}</div>
+  <div class="card-body">
+    <template x-for="(param, idx) in parameters" :key="idx">
+      <div class="row mb-2 align-items-center">
+        <div class="col-5">
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="{% trans 'Parameter name' %}"
+            x-model="param.name"
+            :disabled="mode === 'readonly'"
+          />
+        </div>
+        <div class="col-4">
+          <select
+            class="form-select form-select-sm"
+            x-model="param.type"
+            :disabled="mode === 'readonly'"
+          >
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="date">Date</option>
+          </select>
+        </div>
+        <div class="col-3" x-show="mode !== 'readonly'">
+          <button
+            class="btn btn-sm btn-outline-danger"
+            @click="parameters.splice(idx, 1)"
+          >
+            &times;
+          </button>
+        </div>
+      </div>
+    </template>
+    <button
+      class="btn btn-sm btn-outline-primary"
+      x-show="mode !== 'readonly'"
+      @click="parameters.push({name: '', type: 'text'})"
+    >
+      {% trans "+ Add Parameter" %}
+    </button>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">{% trans "Filters" %}</div>
+  <div class="card-body">
+    <div x-data="filterGroup(filterTree)">
+      {% include "case_search/partials/_filter_group.html" %}
+    </div>
+  </div>
+</div>

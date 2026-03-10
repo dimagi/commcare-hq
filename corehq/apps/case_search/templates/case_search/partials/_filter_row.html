@@ -1,0 +1,115 @@
+{# Single filter condition row (component node) #}
+{# Expects: child (component node), idx, node (parent), and parent scope: capability, parameters, targetName, mode #}
+{% load i18n %}
+
+<div class="row g-2 align-items-center">
+  <!-- Field selector -->
+  <div class="col-3">
+    <select
+      class="form-select form-select-sm"
+      x-model="child.field"
+      :disabled="mode === 'readonly'"
+    >
+      <option value="">{% trans "— field —" %}</option>
+      <template
+        x-for="f in (capability.case_types.find(ct => ct.name === targetName)?.fields || [])"
+        :key="f.name"
+      >
+        <option :value="f.name" x-text="f.name"></option>
+      </template>
+    </select>
+  </div>
+
+  <!-- Operation selector -->
+  <div class="col-3">
+    <select
+      class="form-select form-select-sm"
+      x-model="child.component"
+      :disabled="mode === 'readonly'"
+    >
+      <option value="">{% trans "— operation —" %}</option>
+      <template
+        x-for="op in (capability.case_types.find(ct => ct.name === targetName)?.fields.find(f => f.name === child.field)?.operations || [])"
+        :key="op"
+      >
+        <option :value="op" x-text="op.replace(/_/g, ' ')"></option>
+      </template>
+    </select>
+  </div>
+
+  <!-- Input slots — iterates component schema for multi-slot support -->
+  <div class="col-4" x-show="child.component !== 'is_empty'">
+    <template
+      x-for="slot in (capability.component_schemas?.[child.component] || [])"
+      :key="slot.name"
+    >
+      <div class="input-group input-group-sm mb-1">
+        <span
+          class="input-group-text"
+          x-text="slot.name"
+          x-show="(capability.component_schemas?.[child.component] || []).length > 1"
+          style="min-width: 60px; font-size: 0.75rem"
+        ></span>
+        <select
+          class="form-select form-select-sm"
+          :disabled="mode === 'readonly'"
+          x-model="(child.inputs[slot.name] ??= {type: 'constant'}).type"
+          style="max-width: 90px"
+        >
+          <option value="constant">{% trans "Value" %}</option>
+          <option value="parameter">{% trans "Param" %}</option>
+          <option value="auto_value">{% trans "Auto" %}</option>
+        </select>
+
+        <!-- Constant input -->
+        <template x-if="child.inputs[slot.name]?.type === 'constant'">
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            x-model="child.inputs[slot.name].value"
+            :disabled="mode === 'readonly'"
+          />
+        </template>
+
+        <!-- Parameter reference -->
+        <template x-if="child.inputs[slot.name]?.type === 'parameter'">
+          <select
+            class="form-select form-select-sm"
+            x-model="child.inputs[slot.name].ref"
+            :disabled="mode === 'readonly'"
+          >
+            <template x-for="p in parameters" :key="p.name">
+              <option :value="p.name" x-text="p.name"></option>
+            </template>
+          </select>
+        </template>
+
+        <!-- Auto value reference -->
+        <template x-if="child.inputs[slot.name]?.type === 'auto_value'">
+          <select
+            class="form-select form-select-sm"
+            x-model="child.inputs[slot.name].ref"
+            :disabled="mode === 'readonly'"
+          >
+            <template
+              x-for="av in Object.values(capability.auto_values || {}).flat()"
+              :key="av.ref"
+            >
+              <option :value="av.ref" x-text="av.label"></option>
+            </template>
+          </select>
+        </template>
+      </div>
+    </template>
+  </div>
+
+  <!-- Remove condition -->
+  <div class="col-2" x-show="mode !== 'readonly'">
+    <button
+      class="btn btn-sm btn-outline-danger"
+      @click="node.children.splice(idx, 1)"
+    >
+      &times;
+    </button>
+  </div>
+</div>
