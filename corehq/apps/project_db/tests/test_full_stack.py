@@ -5,7 +5,7 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.project_db.populate import case_to_row_dict, upsert_case
 from corehq.apps.project_db.schema import build_tables_for_domain
 from corehq.apps.project_db.table_manager import create_tables, get_project_db_engine
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
 DOMAIN = 'test-full-stack'
 
@@ -23,41 +23,82 @@ class TestFullStack:
             table.drop(self.engine, checkfirst=True)
 
     def test_full_stack(self):
-        # 1. Set up data dictionary
-        dd_ct = CaseType.objects.create(domain=DOMAIN, name='patient')
-        CaseProperty.objects.create(case_type=dd_ct, name='village', data_type='plain')
-        CaseProperty.objects.create(case_type=dd_ct, name='dob', data_type='date')
+        self._create_data_dictionary()
+        tables = self._build_and_create_tables()
+        self._populate_household(tables['household'])
+        self._populate_patient(tables['patient'])
+        self._verify_single_table_query(tables['patient'])
+        self._verify_parent_join(tables['patient'], tables['household'])
 
-        # 2. Build schema from data dictionary and create table
-        metadata = sqlalchemy.MetaData()
-        tables = build_tables_for_domain(metadata, DOMAIN)
-        table = tables['patient']
-        self._tables.append(table)
-        create_tables(self.engine, metadata)
-
-        # 3. Populate from a CommCareCase
-        commcare_case = CommCareCase(
-            case_id='case-001',
-            owner_id='owner-1',
-            name='Test Patient',
-            opened_on='2025-01-15',
-            modified_on='2025-06-01',
-            server_modified_on='2025-06-01',
-            case_json={'village': 'Brookfield', 'dob': '1990-05-20'},
+    def _create_data_dictionary(self):
+        dd_household = CaseType.objects.create(domain=DOMAIN, name='household')
+        CaseProperty.objects.create(
+            case_type=dd_household, name='district', data_type='plain',
+        )
+        dd_patient = CaseType.objects.create(domain=DOMAIN, name='patient')
+        CaseProperty.objects.create(
+            case_type=dd_patient, name='dob', data_type='date',
         )
 
-        row_dict = case_to_row_dict(commcare_case)
-        upsert_case(self.engine, table, row_dict)
+    def _build_and_create_tables(self):
+        metadata = sqlalchemy.MetaData()
+        tables = build_tables_for_domain(metadata, DOMAIN)
+        self._tables.extend(tables.values())
+        create_tables(self.engine, metadata)
+        return tables
 
-        # 4. Query and verify
+    def _populate_household(self, table):
+        household = CommCareCase(
+            case_id='hh-001',
+            owner_id='owner-1',
+            name='The Smiths',
+            modified_on='2025-06-01',
+            server_modified_on='2025-06-01',
+            case_json={'district': 'Kamuli'},
+        )
+        upsert_case(self.engine, table, case_to_row_dict(household))
+
+    def _populate_patient(self, table):
+        patient = CommCareCase(
+            case_id='pt-001',
+            owner_id='owner-1',
+            name='Alice Smith',
+            modified_on='2025-06-01',
+            server_modified_on='2025-06-01',
+            case_json={'dob': '1990-05-20'},
+        )
+        patient.cached_indices = [
+            CommCareCaseIndex(
+                identifier='parent',
+                referenced_id='hh-001',
+                referenced_type='household',
+                relationship_id=CommCareCaseIndex.CHILD,
+            ),
+        ]
+        upsert_case(self.engine, table, case_to_row_dict(patient))
+
+    def _verify_single_table_query(self, patient_table):
         with self.engine.begin() as conn:
-            result = conn.execute(
-                table.select().where(table.c.case_id == 'case-001')
-            )
-            row = dict(result.fetchone())
-
-        assert row['case_id'] == 'case-001'
-        assert row['case_name'] == 'Test Patient'
-        assert row['prop_village'] == 'Brookfield'
+            row = dict(conn.execute(
+                patient_table.select().where(
+                    patient_table.c.case_id == 'pt-001',
+                )
+            ).fetchone())
+        assert row['case_name'] == 'Alice Smith'
         assert row['prop_dob'] == '1990-05-20'
         assert row['prop_dob_date'] is not None
+        assert row['parent_id'] == 'hh-001'
+
+    def _verify_parent_join(self, patient_table, household_table):
+        query = (
+            sqlalchemy.select([patient_table.c.case_name])
+            .select_from(patient_table.join(
+                household_table,
+                patient_table.c.parent_id == household_table.c.case_id,
+            ))
+            .where(household_table.c.prop_district == 'Kamuli')
+        )
+        with self.engine.begin() as conn:
+            rows = conn.execute(query).fetchall()
+        assert len(rows) == 1
+        assert rows[0].case_name == 'Alice Smith'
