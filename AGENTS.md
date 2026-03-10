@@ -9,8 +9,7 @@ for AI coding assistants. For coding standards and best practices, see
 - Backend: Python, Django
 - Python dependency management: uv
 - Testing: pytest
-- Linting: Flake8
-- Formatting & import sorting: Ruff
+- Linting, formatting, & import sorting: Ruff
 - Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy), Bootstrap 5
   (Bootstrap 3 for legacy code)
 - JavaScript bundling & dependency management: Webpack, Yarn
@@ -31,7 +30,7 @@ for AI coding assistants. For coding standards and best practices, see
 ## Common Commands
 
 **Activate the virtualenv** before running any commands to ensure tools
-like `flake8`, `pytest`, and `manage.py` are available:
+like `ruff`, `pytest`, and `manage.py` are available:
 
 ```bash
 source .venv/bin/activate
@@ -67,7 +66,7 @@ Notable markers: `es_test` (Elasticsearch), `sharded` (shard DBs), `slow`.
 
 ```bash
 # Python linting
-flake8 path/to/file.py
+ruff check path/to/file.py
 
 # JavaScript linting
 npx eslint path/to/file.js
