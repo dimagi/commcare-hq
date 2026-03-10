@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from corehq.apps.case_search.endpoint_capability import get_capability
 from corehq.apps.case_search.endpoint_service import (
     create_endpoint,
     deactivate_endpoint,
@@ -7,7 +8,9 @@ from corehq.apps.case_search.endpoint_service import (
     get_version,
     list_endpoints,
     save_new_version,
+    validate_filter_spec,
 )
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
@@ -159,3 +162,155 @@ class TestDeactivateEndpoint(TestCase):
         save_new_version(endpoint, SAMPLE_PARAMS, EMPTY_QUERY)
         deactivate_endpoint(endpoint)
         self.assertEqual(endpoint.versions.count(), 2)
+
+
+class TestValidateFilterSpec(TestCase):
+
+    def setUp(self):
+        self.case_type = CaseType.objects.create(
+            domain=DOMAIN, name='patient',
+        )
+        CaseProperty.objects.create(
+            case_type=self.case_type,
+            name='province',
+            data_type=CaseProperty.DataType.PLAIN,
+        )
+        CaseProperty.objects.create(
+            case_type=self.case_type,
+            name='dob',
+            data_type=CaseProperty.DataType.DATE,
+        )
+        self.capability = get_capability(DOMAIN)
+
+    def test_valid_simple_spec(self):
+        spec = {
+            'type': 'and',
+            'children': [{
+                'type': 'component',
+                'component': 'exact_match',
+                'field': 'province',
+                'inputs': {
+                    'value': {'type': 'constant', 'value': 'ON'},
+                },
+            }],
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertEqual(errors, [])
+
+    def test_valid_date_range_spec(self):
+        spec = {
+            'type': 'component',
+            'component': 'date_range',
+            'field': 'dob',
+            'inputs': {
+                'start': {'type': 'constant', 'value': '2000-01-01'},
+                'end': {'type': 'auto_value', 'ref': 'today()'},
+            },
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertEqual(errors, [])
+
+    def test_invalid_root_type(self):
+        spec = {'type': 'invalid'}
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertTrue(any('type' in e.lower() for e in errors))
+
+    def test_unknown_field(self):
+        spec = {
+            'type': 'component',
+            'component': 'exact_match',
+            'field': 'nonexistent',
+            'inputs': {
+                'value': {'type': 'constant', 'value': 'x'},
+            },
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertTrue(any('nonexistent' in e for e in errors))
+
+    def test_incompatible_component_for_field(self):
+        spec = {
+            'type': 'component',
+            'component': 'date_range',
+            'field': 'province',  # text field, date_range is not valid
+            'inputs': {
+                'start': {'type': 'constant', 'value': '2000-01-01'},
+                'end': {'type': 'constant', 'value': '2020-01-01'},
+            },
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertTrue(any('date_range' in e for e in errors))
+
+    def test_missing_required_input_slot(self):
+        spec = {
+            'type': 'component',
+            'component': 'date_range',
+            'field': 'dob',
+            'inputs': {
+                'start': {'type': 'constant', 'value': '2000-01-01'},
+                # 'end' missing
+            },
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertTrue(any('end' in e for e in errors))
+
+    def test_parameter_ref_must_exist(self):
+        spec = {
+            'type': 'component',
+            'component': 'exact_match',
+            'field': 'province',
+            'inputs': {
+                'value': {'type': 'parameter', 'ref': 'missing_param'},
+            },
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertTrue(any('missing_param' in e for e in errors))
+
+    def test_parameter_ref_valid(self):
+        spec = {
+            'type': 'component',
+            'component': 'exact_match',
+            'field': 'province',
+            'inputs': {
+                'value': {'type': 'parameter', 'ref': 'search_province'},
+            },
+        }
+        params = [{'name': 'search_province', 'type': 'text'}]
+        errors = validate_filter_spec(spec, params, 'patient', self.capability)
+        self.assertEqual(errors, [])
+
+    def test_invalid_auto_value_ref(self):
+        spec = {
+            'type': 'component',
+            'component': 'exact_match',
+            'field': 'province',
+            'inputs': {
+                'value': {'type': 'auto_value', 'ref': 'nonexistent()'},
+            },
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertTrue(any('nonexistent' in e for e in errors))
+
+    def test_nested_and_or(self):
+        spec = {
+            'type': 'and',
+            'children': [
+                {
+                    'type': 'or',
+                    'children': [{
+                        'type': 'component',
+                        'component': 'exact_match',
+                        'field': 'province',
+                        'inputs': {
+                            'value': {'type': 'constant', 'value': 'ON'},
+                        },
+                    }],
+                },
+            ],
+        }
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertEqual(errors, [])
+
+    def test_empty_children_allowed(self):
+        spec = {'type': 'and', 'children': []}
+        errors = validate_filter_spec(spec, [], 'patient', self.capability)
+        self.assertEqual(errors, [])
