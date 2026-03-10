@@ -227,7 +227,14 @@ class TestCoerceToNumber:
 # --- Case adapter unit tests (no DB needed) ---
 
 
-def _make_case(case_json=None, **fields):
+def _make_index(identifier, referenced_id):
+    index = Mock()
+    index.identifier = identifier
+    index.referenced_id = referenced_id
+    return index
+
+
+def _make_case(case_json=None, live_indices=None, **fields):
     case = Mock()
     case.case_id = fields.get('case_id', 'abc123')
     case.owner_id = fields.get('owner_id', 'owner1')
@@ -239,6 +246,7 @@ def _make_case(case_json=None, **fields):
     case.external_id = fields.get('external_id', '')
     case.server_modified_on = fields.get('server_modified_on', '2025-06-01')
     case.case_json = case_json or {}
+    case.live_indices = live_indices or []
     return case
 
 
@@ -282,8 +290,48 @@ class TestCaseToRowDict:
         expected_keys = {
             'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
             'modified_on', 'closed', 'external_id', 'server_modified_on',
+            'parent_id', 'host_id',
         }
         assert set(result.keys()) == expected_keys
+
+    def test_parent_index_extracted(self):
+        case = _make_case(live_indices=[
+            _make_index('parent', 'parent-case-001'),
+        ])
+        result = case_to_row_dict(case)
+        assert result['parent_id'] == 'parent-case-001'
+        assert result['host_id'] is None
+
+    def test_host_index_extracted(self):
+        case = _make_case(live_indices=[
+            _make_index('host', 'host-case-001'),
+        ])
+        result = case_to_row_dict(case)
+        assert result['host_id'] == 'host-case-001'
+        assert result['parent_id'] is None
+
+    def test_both_indices_extracted(self):
+        case = _make_case(live_indices=[
+            _make_index('parent', 'parent-case-001'),
+            _make_index('host', 'host-case-001'),
+        ])
+        result = case_to_row_dict(case)
+        assert result['parent_id'] == 'parent-case-001'
+        assert result['host_id'] == 'host-case-001'
+
+    def test_no_indices_gives_none(self):
+        case = _make_case()
+        result = case_to_row_dict(case)
+        assert result['parent_id'] is None
+        assert result['host_id'] is None
+
+    def test_non_standard_index_not_captured(self):
+        case = _make_case(live_indices=[
+            _make_index('custom_rel', 'other-case-001'),
+        ])
+        result = case_to_row_dict(case)
+        assert result['parent_id'] is None
+        assert result['host_id'] is None
 
     def test_case_json_keys_cannot_collide_with_fixed_fields(self):
         """The prop. prefix ensures case_json keys never collide with

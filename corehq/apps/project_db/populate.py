@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 FIXED_COLUMNS = {
     'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
     'modified_on', 'closed', 'external_id', 'server_modified_on',
+    'parent_id', 'host_id',
 }
 
 PROPERTY_PREFIX = 'prop.'
@@ -39,8 +40,9 @@ def upsert_case(engine, table, case_data):
 def case_to_row_dict(case):
     """Convert a CommCareCase instance to a dict suitable for ``upsert_case``.
 
-    Extracts fixed fields and dynamic properties (namespaced under
-    ``prop.``) from ``case_json``.
+    Extracts fixed fields, dynamic properties (namespaced under
+    ``prop.``) from ``case_json``, and ``parent_id``/``host_id``
+    from ``live_indices``.
     """
     row = {
         'case_id': case.case_id,
@@ -52,6 +54,8 @@ def case_to_row_dict(case):
         'closed': case.closed,
         'external_id': case.external_id,
         'server_modified_on': case.server_modified_on,
+        'parent_id': _get_index_ref(case, 'parent'),
+        'host_id': _get_index_ref(case, 'host'),
     }
     for key, value in case.case_json.items():
         row[f'{PROPERTY_PREFIX}{key}'] = value
@@ -120,3 +124,11 @@ def _set_typed_columns(values, col_name, raw_value, table_columns):
         typed_col = f'{col_name}{suffix}'
         if typed_col in table_columns:
             values[typed_col] = coerce_fn(raw_value)
+
+
+def _get_index_ref(case, identifier):
+    """Return the referenced_id for a case index, or None."""
+    for index in case.live_indices:
+        if index.identifier == identifier:
+            return index.referenced_id
+    return None
