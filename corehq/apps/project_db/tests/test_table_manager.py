@@ -19,18 +19,15 @@ class TestCreateTables:
 
     def setup_method(self):
         self.engine = get_project_db_engine()
-        self._created_tables = []
+        self._tables = []
 
     def teardown_method(self):
-        with self.engine.begin() as conn:
-            for table_name in self._created_tables:
-                conn.execute(sqlalchemy.text(
-                    f'DROP TABLE IF EXISTS "{table_name}"'
-                ))
+        for table in self._tables:
+            table.drop(self.engine, checkfirst=True)
 
     def _build_and_track(self, metadata, domain, case_type, **kwargs):
         table = build_table_for_case_type(metadata, domain, case_type, **kwargs)
-        self._created_tables.append(table.name)
+        self._tables.append(table)
         return table
 
     def test_create_table(self):
@@ -62,18 +59,15 @@ class TestEvolveTable:
 
     def setup_method(self):
         self.engine = get_project_db_engine()
-        self._created_tables = []
+        self._tables = []
 
     def teardown_method(self):
-        with self.engine.begin() as conn:
-            for table_name in self._created_tables:
-                conn.execute(sqlalchemy.text(
-                    f'DROP TABLE IF EXISTS "{table_name}"'
-                ))
+        for table in self._tables:
+            table.drop(self.engine, checkfirst=True)
 
     def _build_and_track(self, metadata, domain, case_type, **kwargs):
         table = build_table_for_case_type(metadata, domain, case_type, **kwargs)
-        self._created_tables.append(table.name)
+        self._tables.append(table)
         return table
 
     def test_add_new_column(self):

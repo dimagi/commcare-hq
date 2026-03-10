@@ -1,11 +1,31 @@
 import re
 
+import sqlalchemy
 from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.userreports.util import get_table_name
 
 PROJECT_DB_TABLE_PREFIX = 'projectdb_'
+
+
+def get_case_table_schema(domain, case_type):
+    """Reflect a project DB table from PostgreSQL, or return ``None``.
+
+    :param domain: CommCare project domain
+    :param case_type: case type name
+    :returns: SQLAlchemy Table reflected from the database, or ``None``
+        if the table does not exist
+    """
+    from corehq.apps.project_db.table_manager import get_project_db_engine
+
+    table_name = get_project_db_table_name(domain, case_type)
+    engine = get_project_db_engine()
+    metadata = sqlalchemy.MetaData()
+    try:
+        return Table(table_name, metadata, autoload_with=engine)
+    except sqlalchemy.exc.NoSuchTableError:
+        return None
 
 
 def build_tables_for_domain(metadata, domain):

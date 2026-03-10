@@ -5,6 +5,7 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.project_db.schema import (
     build_table_for_case_type,
     build_tables_for_domain,
+    get_case_table_schema,
     get_project_db_table_name,
 )
 
@@ -269,3 +270,35 @@ class TestBuildTablesForDomain:
         tables = build_tables_for_domain(metadata, SCHEMA_GEN_DOMAIN)
 
         assert 'person' not in tables
+
+
+@pytest.mark.django_db
+class TestGetCaseTableSchema:
+
+    def setup_method(self):
+        from corehq.apps.project_db.table_manager import get_project_db_engine
+        self.engine = get_project_db_engine()
+        self._tables = []
+
+    def teardown_method(self):
+        for table in self._tables:
+            table.drop(self.engine, checkfirst=True)
+
+    def test_returns_none_when_table_does_not_exist(self):
+        result = get_case_table_schema('test-domain', 'nonexistent')
+        assert result is None
+
+    def test_reflects_live_schema(self):
+        from corehq.apps.project_db.table_manager import create_tables
+
+        metadata = sqlalchemy.MetaData()
+        table = build_table_for_case_type(
+            metadata, 'test-domain', 'patient',
+            properties=[('color', 'plain')],
+        )
+        self._tables.append(table)
+        create_tables(self.engine, metadata)
+
+        schema = get_case_table_schema('test-domain', 'patient')
+        col_names = {c.name for c in schema.columns}
+        assert 'prop_color' in col_names
