@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# flake8: noqa: E266, F405
+# ruff: noqa: E266, F405
 
 import inspect
 from collections import defaultdict

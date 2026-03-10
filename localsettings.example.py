@@ -1,4 +1,4 @@
-# flake8: noqa: E266, F405
+# ruff: noqa: E266, F405
 from dev_settings import *
 
 ####### Database config #######
