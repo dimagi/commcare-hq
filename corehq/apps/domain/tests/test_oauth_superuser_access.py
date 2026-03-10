@@ -1,14 +1,20 @@
-from django.test import RequestFactory, SimpleTestCase
-from unittest.mock import patch, MagicMock
+from django.test import RequestFactory
 
 from corehq.apps.domain.decorators import _oauth2_check
 from corehq.apps.users.models import WebUser
 from corehq.util.global_request.api import set_request
+from unittest.mock import MagicMock, patch
 
 
 def _make_superuser():
     user = WebUser()
     user.is_superuser = True
+    return user
+
+
+def _make_non_superuser():
+    user = WebUser()
+    user.is_superuser = False
     return user
 
 
@@ -32,27 +38,29 @@ def _simulate_non_oauth_request():
     return RequestFactory().get('/')
 
 
-class TestSuperuserIsGlobalAdminByAuthMethod(SimpleTestCase):
+class TestSuperuserIsGlobalAdminByAuthMethod:
     """Superusers should be global admins for session-based requests,
     but NOT for OAuth-authenticated requests."""
 
-    def setUp(self):
-        self.addCleanup(set_request, None)
+    def setup_method(self):
+        set_request(None)
 
     def test_superuser_is_global_admin_for_non_oauth_request(self):
         set_request(_simulate_non_oauth_request())
-        self.assertTrue(_make_superuser().is_global_admin())
+        assert _make_superuser().is_global_admin()
 
     def test_superuser_is_not_global_admin_for_oauth_request(self):
         set_request(_simulate_oauth_request())
-        self.assertFalse(_make_superuser().is_global_admin())
+        assert not _make_superuser().is_global_admin()
 
     def test_non_superuser_is_not_global_admin_for_non_oauth_request(self):
         set_request(_simulate_non_oauth_request())
-        user = WebUser()
-        user.is_superuser = False
-        self.assertFalse(user.is_global_admin())
+        assert not _make_non_superuser().is_global_admin()
+
+    def test_non_superuser_is_not_global_admin_for_oauth_request(self):
+        set_request(_simulate_oauth_request())
+        assert not _make_non_superuser().is_global_admin()
 
     def test_superuser_is_global_admin_when_no_request(self):
         set_request(None)
-        self.assertTrue(_make_superuser().is_global_admin())
+        assert _make_superuser().is_global_admin()
