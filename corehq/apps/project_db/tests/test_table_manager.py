@@ -91,6 +91,29 @@ class TestEvolveTable:
         assert 'prop__age' in columns
         assert 'prop__age__numeric' in columns
 
+    def test_add_new_index(self):
+        metadata = sqlalchemy.MetaData()
+        table = self._build_and_track(
+            metadata, 'test-domain', 'evolve-idx',
+            properties=[('name', 'plain')],
+        )
+        create_tables(self.engine, metadata)
+
+        # Build a new definition and add an extra index
+        metadata2 = sqlalchemy.MetaData()
+        table2 = build_table_for_case_type(
+            metadata2, 'test-domain', 'evolve-idx',
+            properties=[('name', 'plain')],
+        )
+        sqlalchemy.Index(f'ix_{table2.name}_case_name', table2.c['case_name'])
+
+        evolve_table(self.engine, table2)
+
+        index_names = {
+            idx['name'] for idx in sa_inspect(self.engine).get_indexes(table2.name)
+        }
+        assert f'ix_{table2.name}_case_name' in index_names
+
     def test_evolve_does_not_drop_columns(self):
         metadata = sqlalchemy.MetaData()
         self._build_and_track(

@@ -185,6 +185,7 @@ class TestNameValidation:
         self.metadata = sqlalchemy.MetaData()
 
     @pytest.mark.parametrize('name', [
+        '',
         'has space',
         'semi;colon',
         'quote"mark',
