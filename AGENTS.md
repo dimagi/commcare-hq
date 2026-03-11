@@ -115,6 +115,16 @@ scripts/pr-failures.sh [pr_number]  # uses current branch if omitted
 
 - **migrations.lock** — If you wrote a migration instead of generating one,
   run `./manage.py makemigrations --lock-update` to update the lock file.
+- **New domain-scoped models** — Any new model with a `domain` field (or
+  reachable via FK to a domain) must be registered in two places or CI will
+  fail:
+  - `corehq/apps/dump_reload/sql/dump.py` — add a
+    `FilteredModelIteratorBuilder` entry so the model is included in domain
+    data exports.
+  - `corehq/apps/domain/deletion.py` — add a `ModelDeletion` entry so the
+    model is cleaned up when a domain is deleted.
+  Use `SimpleFilter('domain')` for direct domain fields, or
+  `SimpleFilter('parent__domain')` for FK traversal.
 - **CouchDB is legacy** — Use PostgreSQL for new data models
 - **Knockout.js is legacy** — Prefer HTMX or Alpine.js for new frontend code
 - **Bootstrap 3 is legacy** — Prefer Bootstrap 5; both coexist in the codebase
