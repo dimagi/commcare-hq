@@ -28,12 +28,9 @@ FIXED_COLUMN_NAMES = frozenset(name for name, _, _ in FIXED_COLUMNS)
 
 
 def get_case_table_schema(domain, case_type):
-    """Reflect a project DB table from PostgreSQL, or return ``None``.
+    """Construct a SQLAlchemy ``Table`` schema by reflection
 
-    :param domain: CommCare project domain
-    :param case_type: case type name
-    :returns: SQLAlchemy Table reflected from the database, or ``None``
-        if the table does not exist
+    This inspects the DB to get the schema for a case type table in the ProjectDB
     """
     from corehq.apps.project_db.table_manager import get_project_db_engine
 
