@@ -105,35 +105,7 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         cls.newest_version.save()
 
     def test_that_upgrade_occurs(self):
-        old_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
-        self.assertEqual(old_subscription1.plan_version, self.first_version)
-        self.assertEqual(old_subscription1.salesforce_contract_id, '')
-        self.assertFalse(old_subscription1.do_not_invoice)
-        self.assertEqual(old_subscription1.no_invoice_reason, '')
-        self.assertFalse(old_subscription1.do_not_email_invoice)
-        self.assertFalse(old_subscription1.do_not_email_reminder)
-        self.assertFalse(old_subscription1.auto_generate_credits)
-        self.assertFalse(old_subscription1.skip_invoicing_if_no_feature_charges)
-        self.assertEqual(old_subscription1.service_type, SubscriptionType.IMPLEMENTATION)
-        self.assertEqual(old_subscription1.pro_bono_status, ProBonoStatus.NO)
-        self.assertEqual(old_subscription1.funding_source, FundingSource.CLIENT)
-        self.assertFalse(old_subscription1.skip_auto_downgrade)
-        self.assertEqual(old_subscription1.skip_auto_downgrade_reason, '')
-
         old_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-        self.assertEqual(old_subscription2.plan_version, self.first_version)
-        self.assertEqual(old_subscription2.salesforce_contract_id, "salesforce-id-test")
-        self.assertTrue(old_subscription2.do_not_invoice)
-        self.assertEqual(old_subscription2.no_invoice_reason, "test no invoice")
-        self.assertTrue(old_subscription2.do_not_email_invoice)
-        self.assertTrue(old_subscription2.do_not_email_reminder)
-        self.assertTrue(old_subscription2.auto_generate_credits)
-        self.assertTrue(old_subscription2.skip_invoicing_if_no_feature_charges)
-        self.assertEqual(old_subscription2.service_type, SubscriptionType.SANDBOX)
-        self.assertEqual(old_subscription2.pro_bono_status, ProBonoStatus.DISCOUNTED)
-        self.assertEqual(old_subscription2.funding_source, FundingSource.EXTERNAL)
-        self.assertTrue(old_subscription2.skip_auto_downgrade)
-        self.assertEqual(old_subscription2.skip_auto_downgrade_reason, "test skip auto downgrade")
 
         upgrade_subscriptions_to_latest_plan_version(
             self.first_version,
@@ -142,34 +114,36 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         )
 
         new_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
-        self.assertEqual(new_subscription1.plan_version, self.newest_version)
-        self.assertEqual(new_subscription1.salesforce_contract_id, '')
-        self.assertFalse(new_subscription1.do_not_invoice)
-        self.assertEqual(new_subscription1.no_invoice_reason, '')
-        self.assertFalse(new_subscription1.do_not_email_invoice)
-        self.assertFalse(new_subscription1.do_not_email_reminder)
-        self.assertFalse(new_subscription1.auto_generate_credits)
-        self.assertFalse(new_subscription1.skip_invoicing_if_no_feature_charges)
-        self.assertEqual(new_subscription1.service_type, SubscriptionType.IMPLEMENTATION)
-        self.assertEqual(new_subscription1.pro_bono_status, ProBonoStatus.NO)
-        self.assertEqual(new_subscription1.funding_source, FundingSource.CLIENT)
-        self.assertFalse(new_subscription1.skip_auto_downgrade)
-        self.assertEqual(new_subscription1.skip_auto_downgrade_reason, '')
+        assert new_subscription1.plan_version == self.newest_version
+        assert new_subscription1.salesforce_contract_id == ''
+        assert new_subscription1.date_end is None
+        assert not new_subscription1.do_not_invoice
+        assert new_subscription1.no_invoice_reason == ''
+        assert not new_subscription1.do_not_email_invoice
+        assert not new_subscription1.do_not_email_reminder
+        assert not new_subscription1.auto_generate_credits
+        assert not new_subscription1.skip_invoicing_if_no_feature_charges
+        assert new_subscription1.service_type == SubscriptionType.IMPLEMENTATION
+        assert new_subscription1.pro_bono_status == ProBonoStatus.NO
+        assert new_subscription1.funding_source == FundingSource.CLIENT
+        assert not new_subscription1.skip_auto_downgrade
+        assert new_subscription1.skip_auto_downgrade_reason == ''
 
         new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-        self.assertEqual(new_subscription2.plan_version, self.newest_version)
-        self.assertEqual(new_subscription2.salesforce_contract_id, "salesforce-id-test")
-        self.assertTrue(new_subscription2.do_not_invoice)
-        self.assertEqual(new_subscription2.no_invoice_reason, "test no invoice")
-        self.assertTrue(new_subscription2.do_not_email_invoice)
-        self.assertTrue(new_subscription2.do_not_email_reminder)
-        self.assertTrue(new_subscription2.auto_generate_credits)
-        self.assertTrue(new_subscription2.skip_invoicing_if_no_feature_charges)
-        self.assertEqual(new_subscription2.service_type, SubscriptionType.SANDBOX)
-        self.assertEqual(new_subscription2.pro_bono_status, ProBonoStatus.DISCOUNTED)
-        self.assertEqual(new_subscription2.funding_source, FundingSource.EXTERNAL)
-        self.assertTrue(new_subscription2.skip_auto_downgrade)
-        self.assertEqual(new_subscription2.skip_auto_downgrade_reason, "test skip auto downgrade")
+        assert new_subscription2.plan_version == self.newest_version
+        assert new_subscription2.salesforce_contract_id == "salesforce-id-test"
+        assert new_subscription2.date_end == old_subscription2.date_end
+        assert new_subscription2.do_not_invoice
+        assert new_subscription2.no_invoice_reason == "test no invoice"
+        assert new_subscription2.do_not_email_invoice
+        assert new_subscription2.do_not_email_reminder
+        assert new_subscription2.auto_generate_credits
+        assert new_subscription2.skip_invoicing_if_no_feature_charges
+        assert new_subscription2.service_type == SubscriptionType.SANDBOX
+        assert new_subscription2.pro_bono_status == ProBonoStatus.DISCOUNTED
+        assert new_subscription2.funding_source == FundingSource.EXTERNAL
+        assert new_subscription2.skip_auto_downgrade
+        assert new_subscription2.skip_auto_downgrade_reason == "test skip auto downgrade"
 
 
 class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
