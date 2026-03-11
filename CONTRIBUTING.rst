@@ -45,10 +45,6 @@ ruff
     ``ruff check --select I --fix path/to/file.py`` to sort imports.
     Commit formatting and import-sorting changes separately from logic changes.
 
-pylint
-    It requires some configuration, but this is the most comprehensive python linter
-    out there and can provide some useful feedback.
-
 ./manage.py show_urls
     Provided by ``django-extensions``, this outputs a list of all URL paths used in the
     project. Pipe the output to ``grep`` to easily find what view handles a particular URL.

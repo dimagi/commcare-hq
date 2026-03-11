@@ -13,7 +13,7 @@ reviews:
       - Use well-established libraries for security and authentication whenever possible.
       - External system integrations should follow best practices for handling secrets.
       - Documentation should be close to the relevant code and use reStructuredText with autodoc.
-      - Developers use tools like `ruff`, `pylint`, and `django-extensions` for better development practices.
+      - Developers use tools like `ruff` and `django-extensions` for better development practices.
       - Requirements updates should be managed through `pyproject.toml` and `uv.lock` files.
 
     path_instructions:
