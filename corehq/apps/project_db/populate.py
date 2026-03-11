@@ -3,13 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.dialects.postgresql import insert
 
-from corehq.apps.project_db.schema import SEP
-
-FIXED_COLUMNS = {
-    'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
-    'modified_on', 'closed', 'external_id', 'server_modified_on',
-    'parent_id', 'host_id',
-}
+from corehq.apps.project_db.schema import FIXED_COLUMN_NAMES, SEP
 
 PROPERTY_PREFIX = 'prop.'
 
@@ -115,7 +109,7 @@ def _build_values_dict(case_data, table_columns):
             if col_name in table_columns:
                 values[col_name] = value
                 _set_typed_columns(values, col_name, value, table_columns)
-        elif key in FIXED_COLUMNS:
+        elif key in FIXED_COLUMN_NAMES:
             values[key] = value
     return values
 

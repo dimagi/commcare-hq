@@ -8,6 +8,24 @@ from corehq.apps.userreports.util import get_table_name
 
 PROJECT_DB_TABLE_PREFIX = 'projectdb_'
 
+# Columns present on every project DB table, in order.
+# Each entry is (name, type, column_kwargs).
+FIXED_COLUMNS = (
+    ('case_id', Text, {'primary_key': True}),
+    ('owner_id', Text, {'nullable': False}),
+    ('case_name', Text, {}),
+    ('opened_on', DateTime(timezone=True), {}),
+    ('closed_on', DateTime(timezone=True), {}),
+    ('modified_on', DateTime(timezone=True), {}),
+    ('closed', Boolean, {}),
+    ('external_id', Text, {}),
+    ('server_modified_on', DateTime(timezone=True), {}),
+    ('parent_id', Text, {}),
+    ('host_id', Text, {}),
+)
+
+FIXED_COLUMN_NAMES = frozenset(name for name, _, _ in FIXED_COLUMNS)
+
 
 def get_case_table_schema(domain, case_type):
     """Reflect a project DB table from PostgreSQL, or return ``None``.
@@ -69,20 +87,12 @@ def build_table_for_case_type(metadata, domain, case_type, properties=None):
     """
     table_name = get_project_db_table_name(domain, case_type)
     property_columns = _build_property_columns(properties or [])
+    fixed_columns = [Column(name, col_type, **kwargs)
+                     for name, col_type, kwargs in FIXED_COLUMNS]
     table = Table(
         table_name,
         metadata,
-        Column('case_id', Text, primary_key=True),
-        Column('owner_id', Text, nullable=False),
-        Column('case_name', Text),
-        Column('opened_on', DateTime(timezone=True)),
-        Column('closed_on', DateTime(timezone=True)),
-        Column('modified_on', DateTime(timezone=True)),
-        Column('closed', Boolean),
-        Column('external_id', Text),
-        Column('server_modified_on', DateTime(timezone=True)),
-        Column('parent_id', Text),
-        Column('host_id', Text),
+        *fixed_columns,
         *property_columns,
     )
     Index(f'ix_{table_name}_owner_id', table.c['owner_id'])

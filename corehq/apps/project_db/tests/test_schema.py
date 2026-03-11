@@ -3,24 +3,21 @@ import sqlalchemy
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.project_db.schema import (
+    FIXED_COLUMNS,
     build_table_for_case_type,
     build_tables_for_domain,
     get_case_table_schema,
     get_project_db_table_name,
 )
 
-FIXED_COLUMNS = {
-    'case_id': (sqlalchemy.Text, True),   # (type, is_primary_key)
-    'owner_id': (sqlalchemy.Text, False),
-    'case_name': (sqlalchemy.Text, False),
-    'opened_on': (sqlalchemy.DateTime, False),
-    'closed_on': (sqlalchemy.DateTime, False),
-    'modified_on': (sqlalchemy.DateTime, False),
-    'closed': (sqlalchemy.Boolean, False),
-    'external_id': (sqlalchemy.Text, False),
-    'server_modified_on': (sqlalchemy.DateTime, False),
-    'parent_id': (sqlalchemy.Text, False),
-    'host_id': (sqlalchemy.Text, False),
+# Derive test expectations from the canonical FIXED_COLUMNS definition.
+# Maps column name to (expected_sqlalchemy_type, is_primary_key).
+# FIXED_COLUMNS entries mix classes (Text) and instances (DateTime(timezone=True)),
+# so we normalize: classes pass through, instances yield their type.
+FIXED_COLUMN_EXPECTATIONS = {
+    name: (col_type if isinstance(col_type, type) else type(col_type),
+           kwargs.get('primary_key', False))
+    for name, col_type, kwargs in FIXED_COLUMNS
 }
 
 
@@ -71,10 +68,10 @@ class TestBuildTableForCaseType:
 
     def test_has_all_fixed_columns(self):
         column_names = {col.name for col in self.table.columns}
-        assert column_names == set(FIXED_COLUMNS)
+        assert column_names == set(FIXED_COLUMN_EXPECTATIONS)
 
     def test_column_types(self):
-        for col_name, (expected_type, _) in FIXED_COLUMNS.items():
+        for col_name, (expected_type, _) in FIXED_COLUMN_EXPECTATIONS.items():
             col = self.table.c[col_name]
             assert isinstance(col.type, expected_type), (
                 f"Column {col_name}: expected {expected_type}, "
@@ -112,7 +109,7 @@ class TestBuildTableForCaseType:
             properties=[('village', 'plain')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMNS) | {'prop__village'}
+        assert column_names == set(FIXED_COLUMN_EXPECTATIONS) | {'prop__village'}
 
     def test_date_property_adds_text_and_date_columns(self):
         table = build_table_for_case_type(
@@ -136,7 +133,7 @@ class TestBuildTableForCaseType:
             properties=[('status', 'select')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMNS) | {'prop__status'}
+        assert column_names == set(FIXED_COLUMN_EXPECTATIONS) | {'prop__status'}
 
     def test_undefined_property_adds_one_column_only(self):
         table = build_table_for_case_type(
@@ -144,7 +141,7 @@ class TestBuildTableForCaseType:
             properties=[('misc', '')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMNS) | {'prop__misc'}
+        assert column_names == set(FIXED_COLUMN_EXPECTATIONS) | {'prop__misc'}
 
     def test_multiple_properties_correct_column_count(self):
         table = build_table_for_case_type(
@@ -156,8 +153,8 @@ class TestBuildTableForCaseType:
                 ('status', 'select'),
             ],
         )
-        # 11 fixed + 4 raw text + 1 date + 1 numeric = 17
-        assert len(table.columns) == 17
+        # fixed + 4 raw text + 1 date + 1 numeric
+        assert len(table.columns) == len(FIXED_COLUMNS) + 6
 
     def test_owner_id_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
