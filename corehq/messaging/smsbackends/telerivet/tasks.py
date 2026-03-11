@@ -25,7 +25,7 @@ CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
 
 
-@task(queue=CELERY_QUEUE, ignore_result=True)
+@task(queue=CELERY_QUEUE, ignore_result=True, durable=True)
 def process_incoming_message(*args, **kwargs):
     try:
         from corehq.messaging.smsbackends.telerivet.views import (
@@ -34,7 +34,7 @@ def process_incoming_message(*args, **kwargs):
         fields = {a: kwargs[a] for (a, b) in TELERIVET_INBOUND_FIELD_MAP}
         log = IncomingRequest(**fields)
         log.save()
-    except Exception as e:
+    except Exception:
         notify_exception(None, "Could not save Telerivet log entry")
         pass
 

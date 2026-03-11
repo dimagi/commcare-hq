@@ -10,15 +10,22 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.accounting.const import COMMCARE_PRODUCT_TYPE, DIMAGI_ONLY
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.data_analytics.feature_calcs import FEATURE_METRICS
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.data_analytics.malt_generator import generate_malt
+from corehq.apps.data_analytics.metric_registry import (
+    collect_daily_metrics_for_domain,
+    collect_metrics_for_domain,
+)
 from corehq.apps.data_analytics.models import DomainMetrics
 from corehq.apps.data_analytics.util import (
     last_month_datespan,
     last_month_dict,
 )
-from corehq.apps.domain.calculations import all_domain_stats, domain_metrics
+from corehq.apps.domain.calculations import all_domain_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES, FormES, filters
 from corehq.util.log import send_HTML_email
@@ -29,7 +36,7 @@ logger = get_task_logger(__name__)
 
 
 @periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=1, minute=0, day_of_month='2'),
-               acks_late=True, ignore_result=True)
+               acks_late=True, ignore_result=True, durable=True)
 def build_last_month_MALT():
     last_month = last_month_dict()
     domains = Domain.get_all_names()
@@ -48,7 +55,7 @@ def update_current_MALT():
 
 
 @periodic_task(queue=settings.CELERY_PERIODIC_QUEUE, run_every=crontab(hour=1, minute=0, day_of_month='3'),
-               acks_late=True, ignore_result=True)
+               acks_late=True, ignore_result=True, durable=True)
 def build_last_month_GIR():
     last_month = last_month_datespan()
     try:
@@ -142,7 +149,7 @@ def update_domain_metrics_for_domains(domains):
 def _update_or_create_domain_metrics(domain, all_stats):
     try:
         domain_obj = Domain.get_by_name(domain)
-        metrics_dict = domain_metrics(domain_obj, domain_obj['_id'], all_stats)
+        metrics_dict = collect_daily_metrics_for_domain(domain_obj, all_stats)
         metrics, __ = DomainMetrics.objects.update_or_create(
             defaults=metrics_dict,
             domain=domain_obj.name,
@@ -187,3 +194,70 @@ def get_domains_to_update():
     ).values_list('domain', flat=True)
 
     return set(active_domains) - set(domains_up_to_date)
+
+
+@periodic_task(
+    run_every=crontab(hour="22", minute="0", day_of_month="28"),
+    queue='background_queue',
+)
+def collect_feature_metrics():
+    """Monthly task to collect feature usage metrics for domains on Standard Plan and higher."""
+    domains = _iter_domain_names_standard_and_higher()
+    for chunk in chunked(domains, 600):
+        collect_feature_metrics_for_domains.delay(chunk)
+
+
+@task(queue='background_queue')
+def collect_feature_metrics_for_domains(domains):
+    for domain_name in domains:
+        _collect_feature_metrics_for_domain(domain_name)
+
+
+def _collect_feature_metrics_for_domain(domain_name):
+    try:
+        domain_obj = Domain.get_by_name(domain_name)
+        if not domain_obj:
+            return
+
+        existing = DomainMetrics.objects.filter(
+            domain=domain_name,
+        ).first()
+        if existing:
+            # We are unable to create DomainMetrics instances, because
+            # daily metrics fields are NOT NULL without default values.
+            updates = collect_metrics_for_domain(
+                domain_obj,
+                FEATURE_METRICS,
+                existing,
+            )
+            if updates:
+                DomainMetrics.objects.filter(
+                    domain=domain_name
+                ).update(**updates)
+    except Exception as e:
+        notify_exception(
+            None,
+            message=(
+                f'Failed to collect feature metrics for '
+                f'{domain_name}: {e}'
+            ),
+        )
+
+
+def _iter_domain_names_standard_and_higher():
+    standard_and_higher = [
+        SoftwarePlanEdition.STANDARD,
+        SoftwarePlanEdition.PRO,
+        SoftwarePlanEdition.ADVANCED,
+        SoftwarePlanEdition.ENTERPRISE,
+        SoftwarePlanEdition.RESELLER,
+        SoftwarePlanEdition.MANAGED_HOSTING,
+    ]
+    plan_name = f'{DIMAGI_ONLY} {COMMCARE_PRODUCT_TYPE} {SoftwarePlanEdition.ENTERPRISE}'
+
+    return Subscription.visible_objects.filter(
+        is_active=True,
+        plan_version__plan__edition__in=standard_and_higher,
+    ).exclude(
+        plan_version__plan__name__startswith=plan_name,
+    ).values_list('subscriber__domain', flat=True).distinct()
