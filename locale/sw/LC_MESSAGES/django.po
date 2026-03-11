@@ -9582,6 +9582,34 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"              <strong>Save to Case question is missing a case type.</strong>\n"
+"              Please add the \"case_type\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>Swali la Hifadhi kwa Kesi halina aina ya kesi.</strong>\n"
+"              Tafadhali ongeza ramani ya sifa ya \"case_type\" kwa \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
+"              <strong>Save to Case question is missing a case name.</strong>\n"
+"              Please add the \"case_name\" property mapping for \"%(case_tag)s\"\n"
+"            "
+msgstr ""
+"\n"
+"              <strong>Swali la Hifadhi kwa Kesi halina jina la kesi.</strong>\n"
+"              Tafadhali ongeza ramani ya sifa ya \"case_name\" kwa \"%(case_tag)s\"\n"
+"            "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#, python-format
+msgid ""
+"\n"
 "              Multimedia case property \"%(path)s\" is not supported on apps on\n"
 "              or before v2.5.\n"
 "            "
@@ -10132,6 +10160,16 @@ msgstr "Hapana asante, niondoke hapa"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                Your form display condition for form\n"
+#| "                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
+#| "                but cases are not available for this form. Please either remove\n"
+#| "                the case reference or (1) make sure that the case list is set to\n"
+#| "                display the case list first and then form, and (2) make sure\n"
+#| "                that all forms in this case list update or btn-close a case (which  \n"
+#| "                means registration forms must go in a different case list).\n"
+#| "              "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -10139,36 +10177,47 @@ msgid ""
 "                but cases are not available for this form. Please either remove\n"
 "                the case reference or (1) make sure that the case list is set to\n"
 "                display the case list first and then form, and (2) make sure\n"
-"                that all forms in this case list update or btn-close a case (which  \n"
-"                means registration forms must go in a different case list).\n"
+"                that all forms in this case list update or btn-close a case\n"
+"                (which  means registration forms must go\n"
+"                in a different case list).\n"
 "              "
 msgstr ""
 "\n"
 "                Masharti yako ya kuonyesha fomu kwa fomu\n"
 "                <a href=\"%(form_url)s\">%(form_name)s</a> yanarejelea kesi,\n"
 "                lakini kesi hazipatikani kwa fomu hii. Tafadhali ondoa\n"
-"                rejea ya kesi au (1) hakikisha kwamba orodha ya kesi imewekwa\n"
-"                kuonyesha orodha ya kesi kwanza kisha fomu, na (2) hakikisha\n"
-"                kwamba fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi (ambayo\n"
-"                inamaanisha fomu za usajili lazima ziwe kwenye orodha tofauti ya kesi).\n"
+"                rejeleo la kesi au (1) hakikisha kuwa orodha ya kesi imewekwa kuonyesha orodha ya kesi kwanza kisha fomu, na (2) hakikisha\n"
+"                kuwa fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi\n"
+"                (ambayo inamaanisha fomu za usajili lazima ziwe\n"
+"                kwenye orodha tofauti ya kesi).\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
+#| msgid ""
+#| "\n"
+#| "                You have a display condition which refers to a case, but cases\n"
+#| "                are not available. Please either remove the case reference or\n"
+#| "                (1) make sure that the case list is set to display the case list\n"
+#| "                first and then form, and (2) make sure that all forms in this\n"
+#| "                case list update or btn-close a case (which means registration forms  \n"
+#| "                must go in a different case list).\n"
+#| "              "
 msgid ""
 "\n"
 "                You have a display condition which refers to a case, but cases\n"
 "                are not available. Please either remove the case reference or\n"
 "                (1) make sure that the case list is set to display the case list\n"
 "                first and then form, and (2) make sure that all forms in this\n"
-"                case list update or btn-close a case (which means registration forms  \n"
-"                must go in a different case list).\n"
+"                case list update or btn-close a case (which means registration\n"
+"                forms  must go in a different case\n"
+"                list).\n"
 "              "
 msgstr ""
 "\n"
 "                Una sharti la kuonyesha linalorejelea kesi, lakini kesi\n"
-"                hazipatikani. Tafadhali ondoa rejea ya kesi au\n"
-"                (1) hakikisha kwamba orodha ya kesi imewekwa kuonyesha orodha ya kesi\n"
-"                kwanza kisha fomu, na (2) hakikisha kwamba fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi (ambayo inamaanisha fomu za usajili lazima ziwe kwenye orodha tofauti ya kesi).\n"
+"                hazipatikani. Tafadhali ondoa rejeleo la kesi au\n"
+"                (1) hakikisha kuwa orodha ya kesi imewekwa kuonyesha orodha ya kesi\n"
+"                kwanza kisha fomu, na (2) hakikisha kuwa fomu zote kwenye orodha hii ya kesi zinasasisha au kufunga kesi (ambayo inamaanisha fomu za usajili lazima ziwe kwenye orodha tofauti ya kesi).\n"
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/custom_icon.html
@@ -23082,6 +23131,27 @@ msgstr "Usajili wa Sasa"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Your subscription is currently paused because you have\n"
+#| "            <a href=\"%(url_statements)s\">past-due invoices</a>.\n"
+#| "          "
+msgid ""
+"\n"
+"            For more information on Subscription Management & Billing, please\n"
+"            see the\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Help Site</a>.\n"
+"          "
+msgstr ""
+"\n"
+"            Kwa maelezo zaidi kuhusu Usimamizi wa Usajili na Malipo, tafadhali\n"
+"            angalia\n"
+"            <a href=\"%(help_url)s\" target=\"_blank\">Tovuti ya Msaada</a>.\n"
+"          "
+
+#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
+#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #: corehq/apps/domain/views/accounting.py
 #: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
 msgid "Plan"
@@ -31804,7 +31874,8 @@ msgstr ""
 msgid "Confirm the username"
 msgstr "Thibitisha jina la mtumiaji"
 
-#: corehq/apps/hqadmin/forms.py corehq/apps/integration/payments/filters.py
+#: corehq/apps/hqadmin/forms.py corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/payments/filters.py
 msgid "Verified by"
 msgstr "Imethibitishwa na"
 
@@ -34916,10 +34987,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                      %(p)s per page\n"
-#| "                    "
 msgid ""
 "\n"
 "                      %(p)s\n"
@@ -35105,17 +35172,17 @@ msgid "Module ID"
 msgstr "Kitambulisho cha Moduli"
 
 #: corehq/apps/integration/kyc/filters.py
-#: corehq/apps/integration/kyc/tables.py
-#: corehq/apps/integration/payments/tables.py
-msgid "KYC Status"
-msgstr "Hali ya KYC"
-
-#: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
 #: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
 #: corehq/apps/userreports/reports/filters/factory.py
 msgid "Show all"
 msgstr "Onyesha zote"
+
+#: corehq/apps/integration/kyc/filters.py
+#: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
+msgid "KYC Status"
+msgstr "Hali ya KYC"
 
 #: corehq/apps/integration/kyc/filters.py
 #: corehq/apps/integration/payments/filters.py
@@ -35146,6 +35213,7 @@ msgstr ""
 " sehemu moja badala ya sehemu tofauti za jina la kwanza na la mwisho."
 
 #: corehq/apps/integration/kyc/forms.py
+#: corehq/apps/integration/payments/forms.py
 msgid "Provider"
 msgstr "Mtoa Huduma"
 
@@ -35502,6 +35570,15 @@ msgstr "Sandbox"
 msgid "Live"
 msgstr "Moja kwa Moja"
 
+#: corehq/apps/integration/payments/models.py
+msgid "MTN Money"
+msgstr "MTN Money"
+
+#: corehq/apps/integration/payments/models.py
+#| msgid "Orange Cameroon KYC"
+msgid "Orange Cameroon Money"
+msgstr "Orange Cameroon Money"
+
 #: corehq/apps/integration/payments/services.py
 msgid "Payment request failed"
 msgstr "Ombi la malipo limekosa kufanikiwa"
@@ -35523,6 +35600,11 @@ msgid "Only payments with '{}' set to 'true' are eligible for verification."
 msgstr ""
 "Ni malipo tu yenye '{}' imewekwa kuwa 'true' ndiyo yanayostahili "
 "kuthibitishwa."
+
+#: corehq/apps/integration/payments/services.py
+#| msgid "Unsupported Report"
+msgid "Unsupported payment provider"
+msgstr "Mtoa huduma wa malipo asiyesaidiwa"
 
 #: corehq/apps/integration/payments/services.py
 msgid "Invalid payee details"
@@ -35675,24 +35757,35 @@ msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Successfully verified %(success_count)s records for payments! Updated\n"
+#| "      status will reflect shortly.\n"
+#| "    "
 msgid ""
 "\n"
-"      Successfully verified %(success_count)s rows!\n"
+"      Successfully verified %(success_count)s rows! Updated status will\n"
+"      reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Safu %(success_count)s zimethibitishwa kwa mafanikio!\n"
+"      Mistari %(success_count)s imethibitishwa kwa mafanikio! Hali iliyosasishwa itaonekana hivi karibuni.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Failed to verify %(failure_count)s rows!\n"
+#| "    "
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s rows!\n"
+"      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
+"      shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Imeshindwa kuthibitisha safu %(failure_count)s!\n"
+"      Imeshindwa kuthibitisha mistari %(failure_count)s! Hali iliyosasishwa itaonekana hivi karibuni.\n"
 "    "
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -35749,13 +35842,19 @@ msgstr ""
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Successfully verified %(success_count)s records for payments! Updated\n"
+#| "      status will reflect shortly.\n"
+#| "    "
 msgid ""
 "\n"
-"      Failed to verify %(failure_count)s records for payments!\n"
+"      Failed to verify %(failure_count)s records for payments! Updated status\n"
+"      will reflect shortly.\n"
 "    "
 msgstr ""
 "\n"
-"      Imeshindikana kuthibitisha rekodi %(failure_count)s za malipo!\n"
+"      Imeshindwa kuthibitisha rekodi %(failure_count)s za malipo! Hali iliyosasishwa itaonekana hivi karibuni.\n"
 "    "
 
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
@@ -40489,7 +40588,6 @@ msgid "Optional. Leave blank to use default (midnight)."
 msgstr "Hiari. Acha wazi kutumia chaguo-msingi (saa sita usiku)."
 
 #: corehq/apps/reports/filters/simple.py
-#| msgid "Leave blank to fetch full project"
 msgid "Optional. Leave blank to include the full day."
 msgstr "Hiari. Acha wazi kujumuisha siku nzima."
 
@@ -45119,6 +45217,19 @@ msgstr "Hakuna tokeni za FCM zilizopatikana kwa mpokeaji."
 #: corehq/apps/sms/models.py
 msgid "Recipient did not match filters:"
 msgstr "Mpokeaji hakukidhi vichujio:"
+
+#: corehq/apps/sms/models.py
+#| msgid "No FCM tokens found for recipient."
+msgid "Connect user not found for recipient."
+msgstr "Mtumiaji wa Connect hakupatikana kwa mpokeaji."
+
+#: corehq/apps/sms/models.py
+msgid ""
+"Only Mobile workers with Connect accounts are supported as recipients for "
+"Connect Message and Surveys."
+msgstr ""
+"Ni Wafanyakazi wa Simu tu wenye akaunti za Connect wanaosaidiwa kama "
+"wapokeaji wa Ujumbe na Utafiti wa Connect."
 
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
@@ -51952,11 +52063,6 @@ msgstr "Tuma Barua Pepe ya Uthibitisho"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              Would you like to send the account confirmation\n"
-#| "                              email to this account?\n"
-#| "                            "
 msgid ""
 "\n"
 "                            Would you like to send the account confirmation\n"
@@ -51970,12 +52076,6 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#| msgid ""
-#| "\n"
-#| "                              The user will be sent an email with instructions\n"
-#| "                              to set a password and be able to login to this\n"
-#| "                              project.\n"
-#| "                            "
 msgid ""
 "\n"
 "                            The user will be sent an email with instructions to\n"
@@ -54557,16 +54657,6 @@ msgstr "Tarehe ya tukio la mwisho:"
 #: corehq/messaging/scheduling/forms.py
 msgid ""
 "\n"
-"                            Connect Messages can only be sent to users who have a PersonalID account.\n"
-"                        "
-msgstr ""
-"\n"
-"                            Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji walio na akaunti ya PersonalID.\n"
-"                        "
-
-#: corehq/messaging/scheduling/forms.py
-msgid ""
-"\n"
 "                            The \"Case's Parent Case\" Recipient setting only works for Parent / Child relationships,\n"
 "                            not Parent / Extension or Host / Extension relationships.\n"
 "                        "
@@ -54630,8 +54720,13 @@ msgstr ""
 "chagua tena mtumiaji/watumiaji."
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Connect Messages can only be sent to users."
-msgstr "Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji."
+#, python-brace-format
+#| msgid "'{}' recipient types are not supported for Push Notifications"
+msgid ""
+"The following recipient type(s) are not supported for Connect Messages: "
+"{types}"
+msgstr ""
+"Aina zifuatazo za wapokeaji hazisaidiwi kwa Ujumbe wa Connect: {types}"
 
 #: corehq/messaging/scheduling/forms.py
 msgid "Please specify the groups(s) or deselect user groups as recipients"
@@ -54976,9 +55071,6 @@ msgstr ""
 "Sifa ya kesi ya barua pepe inaweza kutumika tu na maudhui ya Barua Pepe"
 
 #: corehq/messaging/scheduling/forms.py
-#| msgid ""
-#| "Push Notifications is no longer available on this environment. Please "
-#| "contact Administrator."
 msgid ""
 "Push Notifications is no longer available. Please contact Administrator."
 msgstr ""
@@ -59219,6 +59311,38 @@ msgstr "Safu zinazohitajika ni {column_names}"
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
 
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Successfully verified %(success_count)s rows!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Safu %(success_count)s zimethibitishwa kwa mafanikio!\n"
+#~ "    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      Failed to verify %(failure_count)s records for payments!\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Imeshindikana kuthibitisha rekodi %(failure_count)s za malipo!\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "                            Connect Messages can only be sent to users who have a PersonalID account.\n"
+#~ "                        "
+#~ msgstr ""
+#~ "\n"
+#~ "                            Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji walio na akaunti ya PersonalID.\n"
+#~ "                        "
+
+#~ msgid "Connect Messages can only be sent to users."
+#~ msgstr "Ujumbe wa Connect unaweza kutumwa tu kwa watumiaji."
+
 #~ msgid "no table"
 #~ msgstr "hakuna jedwali"
 
@@ -60405,9 +60529,6 @@ msgstr "Weka JSON halali"
 #~ msgstr ""
 #~ "Arifa za Kusukuma hazipatikani kwa mradi wako. Tafadhali wasiliana na "
 #~ "Msimamizi."
-
-#~ msgid "'{}' recipient types are not supported for Push Notifications"
-#~ msgstr "Aina za wapokeaji '{}' haziruhusiwi kwa Arifa za Kusukuma"
 
 #~ msgid "Application Testing"
 #~ msgstr "Upimaji wa Programu"
