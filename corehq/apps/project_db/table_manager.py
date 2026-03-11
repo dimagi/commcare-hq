@@ -1,7 +1,8 @@
-import sqlalchemy
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
 from sqlalchemy import inspect
 
-from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 
 
 def get_project_db_engine():
@@ -31,24 +32,17 @@ def evolve_table(engine, table):
     existing_columns = {col['name'] for col in inspector.get_columns(table.name)}
     new_columns = [col for col in table.columns if col.name not in existing_columns]
 
-    existing_indexes = {
-        idx['name'] for idx in inspector.get_indexes(table.name)
-    }
-    new_indexes = [
-        idx for idx in table.indexes if idx.name not in existing_indexes
-    ]
+    existing_indexes = {idx['name'] for idx in inspector.get_indexes(table.name)}
+    new_indexes = [idx for idx in table.indexes if idx.name not in existing_indexes]
 
     if not new_columns and not new_indexes:
         return
 
     with engine.begin() as conn:
+        op = Operations(MigrationContext.configure(conn))
         for column in new_columns:
-            col_type = column.type.compile(dialect=engine.dialect)
-            conn.execute(sqlalchemy.text(
-                f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'
-            ))
+            col = column.copy()
+            col.table = None
+            op.add_column(table.name, col)
         for index in new_indexes:
-            col_names = ', '.join(f'"{col.name}"' for col in index.columns)
-            conn.execute(sqlalchemy.text(
-                f'CREATE INDEX "{index.name}" ON "{table.name}" ({col_names})'
-            ))
+            index.create(bind=conn)

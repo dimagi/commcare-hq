@@ -38,7 +38,7 @@ def get_case_table_schema(domain, case_type):
     engine = get_project_db_engine()
     metadata = sqlalchemy.MetaData()
     try:
-        return Table(table_name, metadata, autoload_with=engine)
+        return Table(table_name, metadata, autoload=True, autoload_with=engine)
     except sqlalchemy.exc.NoSuchTableError:
         return None
 
