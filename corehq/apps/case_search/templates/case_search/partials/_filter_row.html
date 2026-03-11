@@ -92,7 +92,7 @@
             :disabled="mode === 'readonly'"
           >
             <template
-              x-for="av in Object.values(capability.auto_values || {}).flat()"
+              x-for="av in (capability.auto_values[capability.case_types.find(ct => ct.name === targetName)?.fields.find(f => f.name === child.field)?.type] || [])"
               :key="av.ref"
             >
               <option :value="av.ref" x-text="av.label"></option>

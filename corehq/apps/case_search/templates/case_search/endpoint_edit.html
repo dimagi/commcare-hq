@@ -1,8 +1,10 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
+{% js_entry 'case_search/js/endpoint_edit' %}
 
 {% block page_content %}
-  <div class="container" x-data="endpointEditor()" x-init="init()">
+  <div class="container" x-data="endpointEditor">
     {% if mode == 'create' %}
       <h2>{% trans "New Case Search Endpoint" %}</h2>
       <div class="mb-3">
@@ -28,7 +30,7 @@
         {{ endpoint.name }}
         {% if mode == 'readonly' %}
           <span class="badge bg-secondary"
-            >v{{ current_version.version_number }} (read-only)</span
+            >v{{ version_number }} (read-only)</span
           >
         {% endif %}
       </h2>
@@ -65,65 +67,9 @@
     {% endif %}
   </div>
 
+  {{ mode|json_script:"endpoint-mode-data" }}
   {{ capability|json_script:"capability-data" }}
-  {{ current_version.parameters|default_if_none:"[]"|json_script:"parameters-data" }}
-  {{ current_version.query|default_if_none:"{}"|json_script:"query-data" }}
-  {{ endpoint.target_name|default:""|json_script:"target-name-data" }}
-
-  <script>
-    document.addEventListener("alpine:init", () => {
-      Alpine.data("endpointEditor", () => ({
-        mode: "{{ mode }}",
-        endpointName: "",
-        targetType: "project_db",
-        targetName: "",
-        validationErrors: [],
-        capability: JSON.parse(
-          document.getElementById("capability-data").textContent,
-        ),
-        parameters: JSON.parse(
-          document.getElementById("parameters-data").textContent,
-        ),
-        filterTree: JSON.parse(
-          document.getElementById("query-data").textContent,
-        ),
-
-        init() {
-          this.targetName = JSON.parse(
-            document.getElementById("target-name-data").textContent,
-          );
-        },
-
-        save() {
-          const payload = {
-            parameters: this.parameters,
-            query: this.filterTree,
-          };
-          if (this.mode === "create") {
-            payload.name = this.endpointName;
-            payload.target_type = this.targetType;
-            payload.target_name = this.targetName;
-          }
-          fetch(window.location.pathname, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken":
-                document.querySelector("[name=csrfmiddlewaretoken]")?.value ||
-                document.cookie.match(/csrftoken=([^;]+)/)?.[1],
-            },
-            body: JSON.stringify(payload),
-          })
-            .then((r) => r.json().then((data) => ({ status: r.status, data })))
-            .then(({ status, data }) => {
-              if (status === 400 && data.errors) {
-                this.validationErrors = data.errors;
-              } else if (data.redirect) {
-                window.location.href = data.redirect;
-              }
-            });
-        },
-      }));
-    });
-  </script>
+  {{ initial_parameters|json_script:"parameters-data" }}
+  {{ initial_query|json_script:"query-data" }}
+  {{ initial_target_name|json_script:"target-name-data" }}
 {% endblock %}

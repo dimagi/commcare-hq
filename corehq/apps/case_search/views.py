@@ -250,8 +250,10 @@ class CaseSearchEndpointNewView(BaseProjectDataView):
         return {
             'capability': get_capability(self.domain),
             'endpoint': None,
-            'current_version': None,
             'mode': 'create',
+            'initial_parameters': [],
+            'initial_query': {'type': 'and', 'children': []},
+            'initial_target_name': '',
         }
 
     def post(self, request, *args, **kwargs):
@@ -289,11 +291,14 @@ class CaseSearchEndpointEditView(BaseProjectDataView):
     @property
     def page_context(self):
         endpoint = get_endpoint(self.domain, self.kwargs['endpoint_id'])
+        version = endpoint.current_version
         return {
             'capability': get_capability(self.domain),
             'endpoint': endpoint,
-            'current_version': endpoint.current_version,
             'mode': 'edit',
+            'initial_parameters': version.parameters if version else [],
+            'initial_query': version.query if version else {'type': 'and', 'children': []},
+            'initial_target_name': endpoint.target_name,
         }
 
     def post(self, request, *args, **kwargs):
@@ -336,8 +341,11 @@ class CaseSearchEndpointVersionView(BaseProjectDataView):
         return {
             'capability': get_capability(self.domain),
             'endpoint': endpoint,
-            'current_version': version,
             'mode': 'readonly',
+            'version_number': version.version_number,
+            'initial_parameters': version.parameters,
+            'initial_query': version.query,
+            'initial_target_name': endpoint.target_name,
         }
 
 

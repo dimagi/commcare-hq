@@ -50,7 +50,7 @@
 <div class="card mb-3">
   <div class="card-header">{% trans "Filters" %}</div>
   <div class="card-body">
-    <div x-data="filterGroup(filterTree)">
+    <div x-data="{ node: filterTree }">
       {% include "case_search/partials/_filter_group.html" %}
     </div>
   </div>
