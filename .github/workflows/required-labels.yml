@@ -1,7 +1,7 @@
 name: Labels
 
 on:
-  pull_request:
+  pull_request_target:  # safe as long as we do not check out and run code from the branch to be merged
     branches:
       - master
     types: [labeled, unlabeled, opened, reopened]
