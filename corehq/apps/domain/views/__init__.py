@@ -1,4 +1,4 @@
-# flake8: noqa: F401
+# ruff: noqa: F401
 from corehq.apps.domain.views.accounting import (
     BaseCardView,
     BaseStripePaymentView,

@@ -68,13 +68,13 @@ module.exports = [
             "no-throw-literal": ["error"],
             "no-unneeded-ternary": ["error"],
             "no-unused-vars": ["error", {argsIgnorePattern: "^_", varsIgnorePattern: "^_"}],
-            "no-whitespace-before-property": ["error"], // match flake8 E201 and E211
+            "no-whitespace-before-property": ["error"], // match ruff E201 and E211
             "one-var-declaration-per-line": ["error"],
             "semi": ["error", "always"],
             "space-before-function-paren": ["error", {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
             "space-before-blocks": ["error"],
             "space-in-parens": ["error", "never"],
-            "space-infix-ops": ["error"],   // match flake8 E225
+            "space-infix-ops": ["error"],   // match ruff E225
             "strict": ["warn", "global"],
         },
     },
