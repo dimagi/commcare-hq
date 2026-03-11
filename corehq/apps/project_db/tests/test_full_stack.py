@@ -85,8 +85,8 @@ class TestFullStack:
                 )
             ).fetchone())
         assert row['case_name'] == 'Alice Smith'
-        assert row['prop_dob'] == '1990-05-20'
-        assert row['prop_dob_date'] is not None
+        assert row['prop__dob'] == '1990-05-20'
+        assert row['prop__dob__date'] is not None
         assert row['parent_id'] == 'hh-001'
 
     def _verify_parent_join(self, patient_table, household_table):
@@ -96,7 +96,7 @@ class TestFullStack:
                 household_table,
                 patient_table.c.parent_id == household_table.c.case_id,
             ))
-            .where(household_table.c.prop_district == 'Kamuli')
+            .where(household_table.c.prop__district == 'Kamuli')
         )
         with self.engine.begin() as conn:
             rows = conn.execute(query).fetchall()

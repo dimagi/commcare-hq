@@ -103,7 +103,7 @@ class TestBuildTableForCaseType:
             self.metadata, 'test-domain', 'household',
             properties=[('village', 'plain')],
         )
-        col = table.c['prop_village']
+        col = table.c['prop__village']
         assert isinstance(col.type, sqlalchemy.Text)
 
     def test_plain_property_adds_one_column_only(self):
@@ -112,23 +112,23 @@ class TestBuildTableForCaseType:
             properties=[('village', 'plain')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMNS) | {'prop_village'}
+        assert column_names == set(FIXED_COLUMNS) | {'prop__village'}
 
     def test_date_property_adds_text_and_date_columns(self):
         table = build_table_for_case_type(
             self.metadata, 'test-domain', 'visit',
             properties=[('dob', 'date')],
         )
-        assert isinstance(table.c['prop_dob'].type, sqlalchemy.Text)
-        assert isinstance(table.c['prop_dob_date'].type, sqlalchemy.Date)
+        assert isinstance(table.c['prop__dob'].type, sqlalchemy.Text)
+        assert isinstance(table.c['prop__dob__date'].type, sqlalchemy.Date)
 
     def test_number_property_adds_text_and_numeric_columns(self):
         table = build_table_for_case_type(
             self.metadata, 'test-domain', 'visit2',
             properties=[('age', 'number')],
         )
-        assert isinstance(table.c['prop_age'].type, sqlalchemy.Text)
-        assert isinstance(table.c['prop_age_numeric'].type, sqlalchemy.Numeric)
+        assert isinstance(table.c['prop__age'].type, sqlalchemy.Text)
+        assert isinstance(table.c['prop__age__numeric'].type, sqlalchemy.Numeric)
 
     def test_select_property_adds_one_column_only(self):
         table = build_table_for_case_type(
@@ -136,7 +136,7 @@ class TestBuildTableForCaseType:
             properties=[('status', 'select')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMNS) | {'prop_status'}
+        assert column_names == set(FIXED_COLUMNS) | {'prop__status'}
 
     def test_undefined_property_adds_one_column_only(self):
         table = build_table_for_case_type(
@@ -144,7 +144,7 @@ class TestBuildTableForCaseType:
             properties=[('misc', '')],
         )
         column_names = {col.name for col in table.columns}
-        assert column_names == set(FIXED_COLUMNS) | {'prop_misc'}
+        assert column_names == set(FIXED_COLUMNS) | {'prop__misc'}
 
     def test_multiple_properties_correct_column_count(self):
         table = build_table_for_case_type(
@@ -207,7 +207,7 @@ class TestNameValidation:
             properties=[('my-prop_1', 'plain')],
         )
         column_names = {col.name for col in table.columns}
-        assert 'prop_my-prop_1' in column_names
+        assert 'prop__my-prop_1' in column_names
 
 
 SCHEMA_GEN_DOMAIN = 'test-schema-gen'
@@ -257,9 +257,9 @@ class TestBuildTablesForDomain:
 
         table = tables['patient']
         column_names = {col.name for col in table.columns}
-        assert 'prop_village' in column_names
-        assert 'prop_dob' in column_names
-        assert 'prop_dob_date' in column_names
+        assert 'prop__village' in column_names
+        assert 'prop__dob' in column_names
+        assert 'prop__dob__date' in column_names
 
     def test_deprecated_properties_excluded(self):
         ct = CaseType.objects.create(domain=SCHEMA_GEN_DOMAIN, name='visit')
@@ -276,8 +276,8 @@ class TestBuildTablesForDomain:
 
         table = tables['visit']
         column_names = {col.name for col in table.columns}
-        assert 'prop_active_prop' in column_names
-        assert 'prop_old_prop' not in column_names
+        assert 'prop__active_prop' in column_names
+        assert 'prop__old_prop' not in column_names
 
     def test_does_not_include_other_domains(self):
         CaseType.objects.create(domain='other-domain', name='person')
@@ -317,4 +317,4 @@ class TestGetCaseTableSchema:
 
         schema = get_case_table_schema('test-domain', 'patient')
         col_names = {c.name for c in schema.columns}
-        assert 'prop_color' in col_names
+        assert 'prop__color' in col_names

@@ -88,8 +88,8 @@ class TestEvolveTable:
         evolve_table(self.engine, table2)
 
         columns = {c['name'] for c in sa_inspect(self.engine).get_columns(table2.name)}
-        assert 'prop_age' in columns
-        assert 'prop_age_numeric' in columns
+        assert 'prop__age' in columns
+        assert 'prop__age__numeric' in columns
 
     def test_evolve_does_not_drop_columns(self):
         metadata = sqlalchemy.MetaData()
@@ -109,4 +109,4 @@ class TestEvolveTable:
         evolve_table(self.engine, table2)
 
         columns = {c['name'] for c in sa_inspect(self.engine).get_columns(table2.name)}
-        assert 'prop_village' in columns
+        assert 'prop__village' in columns

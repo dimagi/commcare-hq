@@ -56,7 +56,7 @@ class TestUpsertCase:
         assert row['case_id'] == 'case-001'
         assert row['owner_id'] == 'owner-1'
         assert row['case_name'] == 'Test Patient'
-        assert row['prop_first_name'] == 'Alice'
+        assert row['prop__first_name'] == 'Alice'
 
     def test_upsert_updates_existing_case(self):
         case_data = {
@@ -77,7 +77,7 @@ class TestUpsertCase:
 
         row = self._select_case('case-002')
         assert row['case_name'] == 'Updated Name'
-        assert row['prop_first_name'] == 'Robert'
+        assert row['prop__first_name'] == 'Robert'
 
     def test_unknown_properties_are_ignored(self):
         case_data = {
@@ -129,8 +129,8 @@ class TestUpsertCaseTypeCoercion:
         })
 
         row = self._select_case('tc-001')
-        assert row['prop_dob'] == '1990-05-20'
-        assert row['prop_dob_date'] == datetime.date(1990, 5, 20)
+        assert row['prop__dob'] == '1990-05-20'
+        assert row['prop__dob__date'] == datetime.date(1990, 5, 20)
 
     def test_number_property_coerced(self):
         upsert_case(self.engine, self.table, {
@@ -140,8 +140,8 @@ class TestUpsertCaseTypeCoercion:
         })
 
         row = self._select_case('tc-002')
-        assert row['prop_age'] == '34'
-        assert row['prop_age_numeric'] == Decimal('34')
+        assert row['prop__age'] == '34'
+        assert row['prop__age__numeric'] == Decimal('34')
 
     def test_invalid_date_sets_typed_column_to_none(self):
         upsert_case(self.engine, self.table, {
@@ -151,8 +151,8 @@ class TestUpsertCaseTypeCoercion:
         })
 
         row = self._select_case('tc-003')
-        assert row['prop_dob'] == 'not-a-date'
-        assert row['prop_dob_date'] is None
+        assert row['prop__dob'] == 'not-a-date'
+        assert row['prop__dob__date'] is None
 
     def test_invalid_number_sets_typed_column_to_none(self):
         upsert_case(self.engine, self.table, {
@@ -162,8 +162,8 @@ class TestUpsertCaseTypeCoercion:
         })
 
         row = self._select_case('tc-004')
-        assert row['prop_age'] == 'abc'
-        assert row['prop_age_numeric'] is None
+        assert row['prop__age'] == 'abc'
+        assert row['prop__age__numeric'] is None
 
     def test_datetime_string_coerced_to_date(self):
         upsert_case(self.engine, self.table, {
@@ -173,7 +173,7 @@ class TestUpsertCaseTypeCoercion:
         })
 
         row = self._select_case('tc-005')
-        assert row['prop_dob_date'] == datetime.date(1990, 5, 20)
+        assert row['prop__dob__date'] == datetime.date(1990, 5, 20)
 
 
 # --- Coercion unit tests (no DB needed) ---

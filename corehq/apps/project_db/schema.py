@@ -109,9 +109,11 @@ def get_project_db_table_name(domain, case_type):
 # (SQLAlchemy type, column name suffix) pairs.
 # These keys must match CaseProperty.DataType enum values
 # from corehq/apps/data_dictionary/models.py.
+SEP = '__'
+
 _TYPED_COLUMN_EXTRAS = {
-    'date': (Date, '_date'),
-    'number': (Numeric, '_numeric'),
+    'date': (Date, 'date'),
+    'number': (Numeric, 'numeric'),
 }
 
 _VALID_NAME_RE = re.compile(r'^[a-zA-Z0-9_-]+$')
@@ -129,15 +131,15 @@ def _validate_name(name, label):
 def _build_property_columns(properties):
     """Build Column objects for dynamic case properties.
 
-    Every property gets a raw Text column named ``prop_<name>``.
+    Every property gets a raw Text column named ``prop__<name>``.
     ``date`` and ``number`` properties get an additional typed column.
     """
     columns = []
     for name, data_type in properties:
         _validate_name(name, 'property')
-        col_name = f'prop_{name}'
+        col_name = f'prop{SEP}{name}'
         columns.append(Column(col_name, Text))
         if data_type in _TYPED_COLUMN_EXTRAS:
             sa_type, suffix = _TYPED_COLUMN_EXTRAS[data_type]
-            columns.append(Column(f'{col_name}{suffix}', sa_type))
+            columns.append(Column(f'{col_name}{SEP}{suffix}', sa_type))
     return columns

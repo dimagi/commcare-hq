@@ -3,6 +3,8 @@ from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.dialects.postgresql import insert
 
+from corehq.apps.project_db.schema import SEP
+
 FIXED_COLUMNS = {
     'case_id', 'owner_id', 'case_name', 'opened_on', 'closed_on',
     'modified_on', 'closed', 'external_id', 'server_modified_on',
@@ -17,7 +19,7 @@ def upsert_case(engine, table, case_data):
 
     ``case_data`` is a dict with:
     - Fixed field keys (``case_id``, ``owner_id``, etc.) passed through directly
-    - Dynamic properties namespaced as ``prop.<name>`` (mapped to ``prop_<name>`` columns)
+    - Dynamic properties namespaced as ``prop.<name>`` (mapped to ``prop__<name>`` columns)
 
     On conflict on ``case_id``, only the columns present in ``case_data``
     are updated — columns not included in the dict are left unchanged.
@@ -93,8 +95,8 @@ def coerce_to_number(value):
 
 # Maps typed column suffixes to their coercion functions.
 _TYPED_COERCIONS = {
-    '_date': coerce_to_date,
-    '_numeric': coerce_to_number,
+    'date': coerce_to_date,
+    'numeric': coerce_to_number,
 }
 
 
@@ -103,13 +105,13 @@ def _build_values_dict(case_data, table_columns):
 
     Keys are expected in two forms:
     - Fixed fields: bare names like ``case_id``, ``owner_id``
-    - Properties: namespaced as ``prop.<name>``, mapped to ``prop_<name>`` columns
+    - Properties: namespaced as ``prop.<name>``, mapped to ``prop__<name>`` columns
     """
     values = {}
     for key, value in case_data.items():
         if key.startswith(PROPERTY_PREFIX):
             prop_name = key[len(PROPERTY_PREFIX):]
-            col_name = f'prop_{prop_name}'
+            col_name = f'prop{SEP}{prop_name}'
             if col_name in table_columns:
                 values[col_name] = value
                 _set_typed_columns(values, col_name, value, table_columns)
@@ -121,7 +123,7 @@ def _build_values_dict(case_data, table_columns):
 def _set_typed_columns(values, col_name, raw_value, table_columns):
     """If typed companion columns exist, coerce and set their values."""
     for suffix, coerce_fn in _TYPED_COERCIONS.items():
-        typed_col = f'{col_name}{suffix}'
+        typed_col = f'{col_name}{SEP}{suffix}'
         if typed_col in table_columns:
             values[typed_col] = coerce_fn(raw_value)
 
