@@ -459,7 +459,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/bootstrap3/basic.html"
-LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
+LOGIN_TEMPLATE = "login_and_password/bootstrap5/login.html"
+LOGIN_TEMPLATE_B3 = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -2067,6 +2068,7 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
+    'login_template_b3': LOGIN_TEMPLATE_B3,
     'original_template': BASE_ASYNC_TEMPLATE,
 }
 
