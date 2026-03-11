@@ -1,7 +1,3 @@
-/*
-    This file uses AMD because it is ultimately imported by Vellum,
-    which is still on AMD.
-*/
 import google from "analytix/js/google";
 import noopMetrics from "analytix/js/noopMetrics";
 
