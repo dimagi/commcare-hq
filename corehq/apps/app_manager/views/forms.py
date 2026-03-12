@@ -437,7 +437,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         set_session_endpoint(form, raw_endpoint_id, app)
 
     if should_edit('access_hidden_forms'):
-        form.respect_relevancy = not ('true' in request.POST.getlist('access_hidden_forms'))
+        form.respect_relevancy = 'true' not in request.POST.getlist('access_hidden_forms')
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
