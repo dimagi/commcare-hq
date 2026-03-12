@@ -722,16 +722,14 @@ $(function () {
                     }
                 },
             }, caseConfig, true);
-            _.delay(function () {
-                x.allow = {
-                    condition: ko.computed(function () {
-                        return caseConfig.caseConfigViewModel.actionType() === 'open';
-                    }),
-                    repeats: function () {
-                        return false;
-                    },
-                };
-            });
+            x.allow = {
+                condition: ko.pureComputed(function () {
+                    return caseConfig.caseConfigViewModel.actionType() === 'open';
+                }),
+                repeats: function () {
+                    return false;
+                },
+            };
             return x;
         },
         from_case_transaction: function (caseTransaction, opensCase) {
