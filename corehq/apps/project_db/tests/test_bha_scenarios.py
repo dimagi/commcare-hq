@@ -580,45 +580,37 @@ class TestBHAScenarios(TestCase):
         """Search and Admit: find clients in the central registry.
 
         Fetch all clients who are enrolled in the central registry and
-        whose status is not "pending", along with any alias records they
-        may have. Clients without aliases are still included (LEFT JOIN).
+        whose status is not "pending", searching by first name across
+        both client and alias records.
 
-        Each result row pairs a client with one of their aliases (or
-        NULLs if the client has no aliases). A single client may appear
-        in multiple rows if they have multiple aliases.
+        Alias matching uses an EXISTS subquery rather than a JOIN, so
+        each client appears exactly once regardless of how many aliases
+        they have.
 
         The base filters are:
         - The client must be in the central registry
         - The client must not have a "pending" status
+        - The first name must match on either the client or an alias
         """
         rows = self._execute(f"""
             SELECT
-                c.case_id          AS client_case_id,
-                c.prop__first_name AS first_name,
-                c.prop__last_name  AS last_name,
-                a.case_id          AS alias_case_id,
-                a.prop__first_name AS alias_first_name,
-                a.prop__last_name  AS alias_last_name
+                c.case_name AS client_name
             FROM "{self._table('client')}" c
-            LEFT JOIN "{self._table('alias')}" a ON c.case_id = a.parent_id
             WHERE c.prop__central_registry = 'yes'
               AND c.prop__current_status != 'pending'
-            ORDER BY c.case_id, a.case_id
+              AND (
+                c.prop__first_name = 'Maria'
+                OR EXISTS (
+                    SELECT 1 FROM "{self._table('alias')}" a
+                    WHERE a.parent_id = c.case_id
+                      AND a.prop__first_name = 'Maria'
+                )
+              )
+            ORDER BY c.case_name
         """)
 
-        # Maria (2 aliases) and James (2 aliases) are in the registry
-        # and not pending. Sarah is registry but pending. David and Lisa
-        # are not in the registry.
-        client_ids = {r['client_case_id'] for r in rows}
-        assert client_ids == {'client-001', 'client-002'}
-
-        # Maria appears twice (once per alias), James appears twice
-        assert len(rows) == 4
-
-        # Verify alias data is joined correctly
-        maria_rows = [r for r in rows if r['client_case_id'] == 'client-001']
-        alias_names = {r['alias_last_name'] for r in maria_rows}
-        assert alias_names == {'Rodriguez', 'Garcia'}
+        # Maria Garcia is the only match — one row, no duplicates.
+        assert [r['client_name'] for r in rows] == ['Maria Garcia']
 
     def test_search_my_clients(self):
         """Search My Clients: find clients at a specific clinic.
@@ -635,9 +627,7 @@ class TestBHAScenarios(TestCase):
         """
         rows = self._execute(f"""
             SELECT DISTINCT
-                c.case_id              AS client_case_id,
-                c.prop__first_name     AS first_name,
-                c.prop__last_name      AS last_name,
+                c.case_name            AS client_name,
                 s.prop__current_status AS service_status,
                 s.prop__admission_date AS admission_date
             FROM "{self._table('client')}" c
@@ -645,14 +635,16 @@ class TestBHAScenarios(TestCase):
             INNER JOIN "{self._table('service')}" s ON c.case_id = s.parent_id
             WHERE s.prop__clinic_case_id = 'clinic-001'
               AND c.prop__central_registry = 'yes'
-            ORDER BY c.case_id
+            ORDER BY c.case_name
         """)
 
         # Maria and James both have service episodes at clinic-001 and
         # are in the registry. David has a service at clinic-002 only.
         # Sarah has no services. Lisa has no services.
-        client_ids = {r['client_case_id'] for r in rows}
-        assert client_ids == {'client-001', 'client-002'}
+        self.assertCountEqual(
+            [r['client_name'] for r in rows],
+            ['Maria Garcia', 'James Wilson'],
+        )
 
     def test_search_beds(self):
         """Search Beds: find available capacity at clinics.
@@ -687,15 +679,14 @@ class TestBHAScenarios(TestCase):
             ORDER BY cap.case_id
         """)
 
-        # cap-001 through cap-005 are active at open clinics.
+        # Capacity cases cap-001 through cap-005 are active at open clinics.
         # cap-006 is closed (status = 'closed'), so it's excluded.
-        # No capacities exist at clinic-003 (which is also closed).
-        capacity_ids = {r['capacity_case_id'] for r in rows}
-        assert capacity_ids == {'cap-001', 'cap-002', 'cap-003', 'cap-004', 'cap-005'}
-
-        # Verify clinic name is joined correctly
-        cap_001 = next(r for r in rows if r['capacity_case_id'] == 'cap-001')
-        assert cap_001['clinic_name'] == 'Sunrise Recovery Center'
+        # No capacities exist at Westside Wellness (Closed)
+        assert len(rows) == 5
+        self.assertCountEqual(
+            [r['clinic_name'] for r in rows],
+            ['Sunrise Recovery Center'] * 3 + ['Harbor Health Clinic'] * 2,
+        )
 
     def test_incoming_referrals(self):
         """Incoming Referrals: find referrals sent to the user's clinic.
@@ -716,11 +707,9 @@ class TestBHAScenarios(TestCase):
         """
         rows = self._execute(f"""
             SELECT
-                r.case_id                          AS referral_case_id,
+                c.case_name                        AS client_name,
                 r.prop__current_status             AS referral_status,
                 r.prop__referrer_name              AS referrer_name,
-                c.prop__first_name                 AS client_first_name,
-                c.prop__last_name                  AS client_last_name,
                 clinic.case_name                   AS referring_clinic_name
             FROM "{self._table('referral')}" r
             LEFT JOIN "{self._table('client')}" c ON r.parent_id = c.case_id
@@ -729,17 +718,19 @@ class TestBHAScenarios(TestCase):
             WHERE r.prop__send_to_destination_clinic != 'no'
               AND r.prop__destination_clinic_case_id = 'clinic-001'
               AND r.prop__current_status IN ('open', 'info_requested')
-            ORDER BY r.case_id
+            ORDER BY c.case_name
         """)
 
-        # ref-001 (open, to clinic-001) and ref-002 (info_requested,
-        # to clinic-001) match. ref-003 goes to clinic-002. ref-004
-        # is off-platform (send_to_destination_clinic = 'no').
-        referral_ids = [r['referral_case_id'] for r in rows]
-        assert referral_ids == ['ref-001', 'ref-002']
+        # Maria's referral (open) and James's referral (info_requested)
+        # are both destined for clinic-001. David's referral goes to
+        # clinic-002. Lisa's referral is off-platform.
+        self.assertCountEqual(
+            [r['client_name'] for r in rows],
+            ['Maria Garcia', 'James Wilson'],
+        )
 
-        # Verify client and referring clinic are joined
-        assert rows[0]['client_first_name'] == 'Maria'
-        assert rows[0]['referring_clinic_name'] == 'Harbor Health Clinic'
-        assert rows[1]['client_first_name'] == 'James'
-        assert rows[1]['referrer_name'] == 'Dr. Patel'
+        # Verify referring clinic is joined correctly
+        maria_row = next(r for r in rows if r['client_name'] == 'Maria Garcia')
+        assert maria_row['referring_clinic_name'] == 'Harbor Health Clinic'
+        james_row = next(r for r in rows if r['client_name'] == 'James Wilson')
+        assert james_row['referrer_name'] == 'Dr. Patel'
