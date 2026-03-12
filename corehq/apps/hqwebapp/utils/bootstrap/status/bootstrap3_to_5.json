@@ -111,6 +111,7 @@
       "admin/sms_rates.html",
       "admin/sms_settings.html",
       "confirm_billing_info.html",
+      "error.html",
       "internal_calculations.html",
       "internal_settings.html",
       "update_billing_contact_info.html"
