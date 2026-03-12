@@ -103,6 +103,12 @@ yarn build
 
 Refer to the `docs/js-guide/` directory for the JavaScript Guide
 
+### Frontend Style
+
+Refer to the `corehq/apps/styleguide/` app (run locally at `/a/styleguide/`) for the
+UI Style Guide — Bootstrap 5 conventions, button patterns, accessibility requirements,
+and HTML/template guidelines for new frontend code.
+
 ### Debugging
 
 ```bash
