@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-from .exceptions import MissingPropertyMapException
 from .models import ConditionalCaseUpdate
 
 
@@ -9,11 +8,11 @@ def get_case_mappings(actions):
 
     :returns: {'<case property>': [{'question_path': ...}, ...], ...}
     """
-    def to_json(obj):
+    def to_json(obj, **extra):
         json = obj.to_json()
         if 'doc_type' in json:
             del json['doc_type']
-        return json
+        return json | extra
 
     data = {}
     if actions.open_case:
@@ -25,6 +24,9 @@ def get_case_mappings(actions):
             prop: [to_json(u) for u in [update] + conflicts.get(prop, [])]
             for prop, update in actions.update_case.update.items()
         })
+        # concurrent delete + change -> conflict with no update
+        for prop in conflicts.keys() - actions.update_case.update.keys():
+            data[prop] = [to_json(q, conflicting_delete=True) for q in conflicts[prop]]
     return data
 
 
@@ -56,9 +58,12 @@ def make_multi(actions_json):
     update_case = data.get('update_case')
     if update_case and 'update' in update_case:
         update_case = data['update_case'] = update_case.copy()
-        update_case['update_multi'] = {k: [v] for k, v in update_case.pop('update').items()}
+        multi = update_case['update_multi'] = {k: [v] for k, v in update_case.pop('update').items()}
+        conflict = {'conflicting_delete': True}
         for key, values in update_case.pop('conflicts', {}).items():
-            update_case['update_multi'].setdefault(key, []).extend(values)
+            if key not in multi:
+                values = [v | conflict for v in values]
+            multi.setdefault(key, []).extend(values)
     return data
 
 
@@ -110,6 +115,13 @@ def _set_raw_values(obj, data, recurse_on=()):
 def merge_case_mappings(diff, form_actions):
     """Apply open/update case diffs to form actions
 
+    The merge algorithm is designed so a diff can always be applied,
+    regardless form action state, including conflicting changes that
+    occur after a snapshot is taken for editing. Conflicts may need to
+    be resolved by a user before a new app build can be made, but
+    well-structured inputs should never cause this function to raise an
+    error.
+
     :param diff: dict. Example:
         {
             "open_case": {
@@ -153,12 +165,14 @@ def _merge(diff, action):
             if not _drop(prop, question['question_path'], update, conflicts):
                 delete_missing[prop].add(question['question_path'])
 
-    missing = []
     for prop, questions in diff.get('add', {}).items():
         for question in questions:
             ccu = ConditionalCaseUpdate(question)
             if ccu.question_path in delete_missing[prop]:
-                missing.append({'case_property': prop, 'question_path': question['question_path']})
+                # concurrent delete + change -> conflict with no update
+                # HACK JsonDict.setdefault has a bug, does not return newly set value
+                conflicts.setdefault(prop, [])
+                conflicts[prop].append(ccu)
             elif prop not in update or not update[prop].question_path:
                 update[prop] = ccu
             elif update[prop].question_path == ccu.question_path:
@@ -167,9 +181,6 @@ def _merge(diff, action):
                 # HACK JsonDict.setdefault has a bug, does not return newly set value
                 conflicts.setdefault(prop, [])
                 conflicts[prop].append(ccu)
-
-    if missing:
-        raise MissingPropertyMapException(*missing)
 
 
 def _drop(prop, path, update, conflicts):
