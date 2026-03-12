@@ -290,7 +290,7 @@ class TestBuildTablesForDomain:
 class TestGetCaseTableSchema:
 
     def setup_method(self):
-        from corehq.apps.project_db.table_manager import get_project_db_engine
+        from corehq.apps.project_db.schema import get_project_db_engine
         self.engine = get_project_db_engine()
         self._tables = []
 
@@ -303,7 +303,7 @@ class TestGetCaseTableSchema:
         assert result is None
 
     def test_reflects_live_schema(self):
-        from corehq.apps.project_db.table_manager import create_tables
+        from corehq.apps.project_db.schema import create_tables
 
         metadata = sqlalchemy.MetaData()
         table = build_table_for_case_type(

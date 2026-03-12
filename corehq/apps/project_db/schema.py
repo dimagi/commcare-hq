@@ -1,10 +1,13 @@
 import re
 
 import sqlalchemy
-from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
+from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text, inspect
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 
 PROJECT_DB_TABLE_PREFIX = 'projectdb_'
 
@@ -32,8 +35,6 @@ def get_case_table_schema(domain, case_type):
 
     This inspects the DB to get the schema for a case type table in the ProjectDB
     """
-    from corehq.apps.project_db.table_manager import get_project_db_engine
-
     table_name = get_project_db_table_name(domain, case_type)
     engine = get_project_db_engine()
     metadata = sqlalchemy.MetaData()
@@ -150,3 +151,49 @@ def _build_property_columns(properties):
             sa_type, suffix = _TYPED_COLUMN_EXTRAS[data_type]
             columns.append(Column(f'{col_name}{SEP}{suffix}', sa_type))
     return columns
+
+
+# --- Engine and DDL management ---
+
+
+def get_project_db_engine():
+    """Return a SQLAlchemy engine for project DB tables.
+
+    Currently uses the default Django database. This will later switch
+    to a dedicated ``'project_db'`` engine ID.
+    """
+    return connection_manager.get_engine(DEFAULT_ENGINE_ID)
+
+
+def create_tables(engine, metadata):
+    """Create all tables in ``metadata`` that don't yet exist.
+
+    Uses ``checkfirst=True`` so existing tables are left untouched.
+    """
+    metadata.create_all(bind=engine, checkfirst=True)
+
+
+def evolve_table(engine, table):
+    """Add columns and indexes present in ``table`` but missing from the database.
+
+    This is append-only: columns and indexes that exist in the database
+    but not in ``table`` are left in place (never dropped).
+    """
+    inspector = inspect(engine)
+    existing_columns = {col['name'] for col in inspector.get_columns(table.name)}
+    new_columns = [col for col in table.columns if col.name not in existing_columns]
+
+    existing_indexes = {idx['name'] for idx in inspector.get_indexes(table.name)}
+    new_indexes = [idx for idx in table.indexes if idx.name not in existing_indexes]
+
+    if not new_columns and not new_indexes:
+        return
+
+    with engine.begin() as conn:
+        op = Operations(MigrationContext.configure(conn))
+        for column in new_columns:
+            col = column.copy()
+            col.table = None
+            op.add_column(table.name, col)
+        for index in new_indexes:
+            index.create(bind=conn)

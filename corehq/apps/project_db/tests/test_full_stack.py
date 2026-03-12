@@ -4,7 +4,7 @@ import sqlalchemy
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.project_db.populate import case_to_row_dict, upsert_case
 from corehq.apps.project_db.schema import build_tables_for_domain
-from corehq.apps.project_db.table_manager import create_tables, get_project_db_engine
+from corehq.apps.project_db.schema import create_tables, get_project_db_engine
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
 DOMAIN = 'test-full-stack'

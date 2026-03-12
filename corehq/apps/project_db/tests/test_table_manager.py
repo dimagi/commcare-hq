@@ -3,7 +3,7 @@ import sqlalchemy
 from sqlalchemy import inspect as sa_inspect
 
 from corehq.apps.project_db.schema import build_table_for_case_type
-from corehq.apps.project_db.table_manager import (
+from corehq.apps.project_db.schema import (
     create_tables,
     evolve_table,
     get_project_db_engine,

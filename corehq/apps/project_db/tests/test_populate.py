@@ -12,7 +12,7 @@ from corehq.apps.project_db.populate import (
     upsert_case,
 )
 from corehq.apps.project_db.schema import build_table_for_case_type
-from corehq.apps.project_db.table_manager import create_tables, get_project_db_engine
+from corehq.apps.project_db.schema import create_tables, get_project_db_engine
 
 DOMAIN = 'test-populate'
 
