@@ -182,6 +182,19 @@
         </text>
       </template>
     </field>
+    <action auto_launch="false()" redo_last="true">
+      <display>
+        <text>
+          <locale id="case_search.m0.again"/>
+        </text>
+      </display>
+      <stack>
+        <push>
+          <mark/>
+          <command value="'search_command.m0'"/>
+        </push>
+      </stack>
+    </action>
   </detail>
   <detail id="m0_search_long">
     <title>
@@ -297,6 +310,19 @@
         </text>
       </sort>
     </field>
+    <action auto_launch="false()" redo_last="true">
+      <display>
+        <text>
+          <locale id="case_search.m1.again"/>
+        </text>
+      </display>
+      <stack>
+        <push>
+          <mark/>
+          <command value="'search_command.m1'"/>
+        </push>
+      </stack>
+    </action>
   </detail>
   <detail id="m1_search_long">
     <title>

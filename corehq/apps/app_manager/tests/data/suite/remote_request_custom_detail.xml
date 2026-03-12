@@ -4,21 +4,19 @@
           relevant="(count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0) and (instance('groups')/groups/group)">
       <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
     </post>
-    <command id="search_command.{module_id}">
+    <command id="search_command.m0">
       <display>
         <text>
-          <locale id="case_search.{module_id}"/>
+          <locale id="case_search.m0"/>
         </text>
       </display>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <instance id="groups" src="jr://fixture/user-groups"/>
-    <instance id="item-list:moons" src="jr://fixture/item-list:moons"/>
     <instance id="item-list:trees" src="jr://fixture/item-list:trees"/>
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <instance id="locations" src="jr://fixture/locations"/>
-    <instance id="reports" src="jr://fixture/commcare:reports"/>
     <instance id="results" src="jr://instance/remote/results"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/123/"
@@ -28,7 +26,7 @@
              template="case">
         <title>
           <text>
-            <locale id="case_search.{module_id}.inputs"/>
+            <locale id="case_search.m0.inputs"/>
           </text>
         </title>
         <data key="case_type" ref="'case'"/>
@@ -37,21 +35,21 @@
         <prompt key="name">
           <display>
             <text>
-              <locale id="search_property.{module_id}.name"/>
+              <locale id="search_property.m0.name"/>
             </text>
           </display>
         </prompt>
         <prompt key="dob" input="date">
           <display>
             <text>
-              <locale id="search_property.{module_id}.dob"/>
+              <locale id="search_property.m0.dob"/>
             </text>
           </display>
         </prompt>
         <prompt key="consent" input="checkbox">
           <display>
             <text>
-              <locale id="search_property.{module_id}.consent"/>
+              <locale id="search_property.m0.consent"/>
             </text>
           </display>
         </prompt>
@@ -59,8 +57,8 @@
       <datum id="search_case_id"
              nodeset="instance('results')/results/case[@case_type='case'][name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name][not(commcare_is_related_case=true())]"
              value="./@case_id"
-             detail-confirm="{module_id}_search_long"
-             detail-select="{module_id}_search_short"/>
+             detail-confirm="m0_case_long"
+             detail-select="m0_case_short"/>
     </session>
     <stack>
       <push>

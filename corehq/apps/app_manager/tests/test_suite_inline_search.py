@@ -530,6 +530,7 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
         self.module = self.app.modules[0]
         self.shadow_module = self.app.modules[1]
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_suite(self):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(
@@ -538,6 +539,7 @@ class InlineSearchShadowModuleTest(SimpleTestCase, SuiteMixin):
             "./entry[2]"
         )
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_additional_types(self):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
