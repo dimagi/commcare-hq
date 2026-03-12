@@ -41,6 +41,72 @@ def from_combined_diff(combined_diff, *, is_registration):
     return diff
 
 
+def make_multi(actions_json):
+    """Convert FormActions JSON to case_config_ui.js structure
+
+    Each ConditionalCaseUpdate and related conflicts are merged into a
+    "multi" list, which is easier to use in front end code.
+    """
+    data = actions_json.copy()
+    open_case = data.get('open_case')
+    if open_case and 'name_update' in open_case:
+        open_case = data['open_case'] = open_case.copy()
+        open_case['name_update_multi'] = [open_case.pop('name_update')]
+        open_case['name_update_multi'].extend(open_case.pop('conflicts', []))
+    update_case = data.get('update_case')
+    if update_case and 'update' in update_case:
+        update_case = data['update_case'] = update_case.copy()
+        update_case['update_multi'] = {k: [v] for k, v in update_case.pop('update').items()}
+        for key, values in update_case.pop('conflicts', {}).items():
+            update_case['update_multi'].setdefault(key, []).extend(values)
+    return data
+
+
+def update_form_actions(form_actions, actions_json, case_mapping_diff):
+    """Update FormActions with values from actions_json and case_mapping_diff
+
+    Accepts JSON data from case_config_ui.js
+
+    :param form_actions: FormActions object, will be mutated.
+    :param actions_json: dict as produced by `make_multi`.
+    :param case_mapping_diff: dict - see `merge_case_mappings`.
+    :raises: AttributeError if `actions_json` contains unknown
+        properties. This should not happen unless there is a bug in the
+        code or a request had an unexpected format (user modified?).
+    :raises: KeyError - see `merge_case_mappings`.
+    """
+    unmulti_json = _drop_multi_updates(actions_json)
+    _set_raw_values(form_actions, unmulti_json, {'update_case', 'open_case'})
+    if case_mapping_diff:
+        merge_case_mappings(case_mapping_diff, form_actions)
+
+
+def _drop_multi_updates(multi_json):
+    # Near opposite of make_multi: case_config_ui.js JSON -> FormActions structure
+    data = multi_json.copy()
+    open_case = data.get('open_case')
+    if open_case:
+        open_case = data['open_case'] = open_case.copy()
+        for key in ['name_update_multi', 'name_update', 'conflicts']:
+            open_case.pop(key, None)
+    update_case = data.get('update_case')
+    if update_case:
+        update_case = data['update_case'] = update_case.copy()
+        for key in ['update_multi', 'update', 'conflicts']:
+            update_case.pop(key, None)
+    return data
+
+
+def _set_raw_values(obj, data, recurse_on=()):
+    for attr, value in data.items():
+        if attr not in obj:
+            raise AttributeError(f"invalid property: {attr}")
+        if attr in recurse_on:
+            _set_raw_values(getattr(obj, attr), value)
+        else:
+            obj.set_raw_value(attr, value)
+
+
 def merge_case_mappings(diff, form_actions):
     """Apply open/update case diffs to form actions
 
