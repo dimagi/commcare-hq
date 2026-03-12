@@ -1206,16 +1206,19 @@ class FormValidator(IndexedFormBaseValidator):
         update_case = self.form.actions.update_case
 
         if open_case.conflicts:
-            errors.append(self._get_property_conflict_error('name'))
+            errors.append(self._get_error('name', 'conflicting questions'))
 
         for key, items in update_case.conflicts.items():
             if items:
-                errors.append(self._get_property_conflict_error(key))
+                if key in update_case.update:
+                    errors.append(self._get_error(key, 'conflicting questions'))
+                else:
+                    errors.append(self._get_error(key, 'conflicting delete'))
 
         return errors
 
-    def _get_property_conflict_error(self, property_name):
-        return {'type': 'conflicting questions', 'property': property_name}
+    def _get_error(self, property_name, error_type):
+        return {'type': error_type, 'property': property_name}
 
     @time_method()
     def extended_build_validation(self, xml_valid):

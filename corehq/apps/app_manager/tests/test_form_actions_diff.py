@@ -3,7 +3,6 @@ from copy import deepcopy
 import pytest
 from django.test import SimpleTestCase
 
-from ..exceptions import MissingPropertyMapException
 from ..form_action_diff import (
     _convert_update_to_delete_plus_add,
     from_combined_diff,
@@ -82,9 +81,10 @@ class OpenCaseActionApplyDiffTests(SimpleTestCase):
     def test_merge_case_mappings_updating_missing_name_raises_error(self):
         actions = FormActions(open_case=OpenCaseAction({'name_update': {'question_path': 'name'}}))
 
-        with pytest.raises(MissingPropertyMapException):
-            diff = {'open_case': {'update': [{'question_path': 'missing_name', 'update_mode': 'edit'}]}}
-            merge_case_mappings(diff, actions)
+        diff = {'open_case': {'update': [{'question_path': 'missing_name', 'update_mode': 'edit'}]}}
+        merge_case_mappings(diff, actions)
+
+        assert [c.question_path for c in actions.open_case.conflicts] == ['missing_name']
 
     def test_merge_case_mappings_remove_conflicted_name(self):
         actions = FormActions(open_case=OpenCaseAction({
@@ -261,48 +261,34 @@ class UpdateCaseActionApplyDiffTests(SimpleTestCase):
 
         assert actions.update['one'].update_mode == 'edit'
 
-    def test_updating_a_missing_property_raises_error(self):
-        # If a property was deleted by a different session, updating it shouldn't restore it
+    def test_updating_a_missing_property_adds_a_conflict(self):
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': 'question_one'},
         }})
         form_actions = FormActions(update_case=actions)
 
-        with pytest.raises(MissingPropertyMapException):
-            merge_case_mappings({'update_case': {
-                'update': {'two': [{'question_path': 'question_two', 'update_mode': 'edit'}]}
-            }}, form_actions)
+        merge_case_mappings({'update_case': {
+            'update': {'two': [{'question_path': 'question_two', 'update_mode': 'edit'}]}
+        }}, form_actions)
 
-    def test_updating_a_missing_question_raises_error(self):
+        assert 'two' not in actions.update
+        assert [c.question_path for c in actions.conflicts['two']] == ['question_two']
+
+    def test_updating_a_missing_question_adds_a_conflict(self):
         # If the specific mapping was deleted by a different session, updating it shouldn't restore it
         actions = UpdateCaseAction({'update': {
             'one': {'question_path': 'question_one'}
         }})
         form_actions = FormActions(update_case=actions)
 
-        with pytest.raises(MissingPropertyMapException):
-            merge_case_mappings({'update_case': {
-                'update': {
-                    'one': [{'question_path': 'question_two', 'update_mode': 'edit'}]
-                }
-            }}, form_actions)
+        merge_case_mappings({'update_case': {
+            'update': {
+                'one': [{'question_path': 'question_two', 'update_mode': 'edit'}]
+            }
+        }}, form_actions)
 
-    def test_missing_property_exception_contains_all_missing_properties(self):
-        actions = UpdateCaseAction({'update': {}})
-        form_actions = FormActions(update_case=actions)
-
-        with pytest.raises(MissingPropertyMapException) as context:
-            merge_case_mappings({'update_case': {
-                'update': {
-                    'one': [{'question_path': 'question_one', 'update_mode': 'always'}],
-                    'two': [{'question_path': 'question_two', 'update_mode': 'edit'}],
-                }
-            }}, form_actions)
-
-        assert list(context.value.missing_mappings) == [
-            {'case_property': 'one', 'question_path': 'question_one'},
-            {'case_property': 'two', 'question_path': 'question_two'}
-        ]
+        assert actions.update['one'].question_path == 'question_one'
+        assert [c.question_path for c in actions.conflicts['one']] == ['question_two']
 
     def test_delete_conflict(self):
         actions = UpdateCaseAction({'conflicts': {'one': [{'question_path': 'question_one'}]}})
@@ -384,6 +370,7 @@ class FormActionsTests(SimpleTestCase):
                 },
                 'conflicts': {
                     'one': [{'question_path': '/B/'}, {'question_path': '/D/'}],
+                    'three': [{'question_path': '/E/'}],
                 }
             },
         })
@@ -400,7 +387,31 @@ class FormActionsTests(SimpleTestCase):
                 {'question_path': '/B/', 'update_mode': 'always'},
                 {'question_path': '/D/', 'update_mode': 'always'},
             ],
-            'two': [{'question_path': '/C/', 'update_mode': 'always'}]
+            'two': [{'question_path': '/C/', 'update_mode': 'always'}],
+            'three': [
+                {'question_path': '/E/', 'update_mode': 'always', 'conflicting_delete': True},
+            ],
+        }
+
+    def test_get_case_mappings_with_conflicts_and_concurrent_delete(self):
+        actions = FormActions({
+            'open_case': {'name_update': {'question_path': 'name'}},
+            'update_case': {
+                'update': {},
+                'conflicts': {
+                    'one': [{'question_path': '/A/'}, {'question_path': '/B/'}],
+                }
+            },
+        })
+
+        json = get_case_mappings(actions)
+
+        assert json == {
+            'name': [{'question_path': 'name', 'update_mode': 'always'}],
+            'one': [
+                {'question_path': '/A/', 'update_mode': 'always', 'conflicting_delete': True},
+                {'question_path': '/B/', 'update_mode': 'always', 'conflicting_delete': True},
+            ],
         }
 
     def test_merge_case_mappings_raises_on_unrecognized_key(self):
@@ -499,6 +510,35 @@ class FormActionsTests(SimpleTestCase):
         assert actions.update_case.update['one'].question_path == 'one'
         assert actions.update_case.update['one'].update_mode == 'edit'
         assert not actions.update_case.conflicts
+
+    def test_merge_case_mappings_with_double_deletion(self):
+        # a scenario that would have previously caused DiffConflictException
+        # delete + update => delete + delete + add (conflicting delete)
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        merge_case_mappings({
+            'update_case': {
+                'delete': {'one': [
+                    {'question_path': 'one'},
+                    {'question_path': 'one', 'update_mode': 'edit'},
+                ]},
+                'add': {'one': [
+                    {'question_path': 'one', 'update_mode': 'edit'}
+                ]},
+            },
+        }, actions)
+
+        assert 'one' not in actions.update_case.update
+        conflict, = actions.update_case.conflicts['one']
+        assert conflict.question_path == 'one'
+        assert conflict.update_mode == 'edit'
 
     def test_update_form_actions_with_conditional_update(self):
         action = OpenCaseAction({'name_update': {'question_path': 'name'}})
@@ -691,6 +731,7 @@ class TestMultiTools(SimpleTestCase):
                 'conflicts': {
                     'one': [{'question_path': 'other_one'}],
                     'two': [{'question_path': 'other_two'}],
+                    'three': [{'question_path': 'three'}],
                 },
             },
             'usercase_update': {
@@ -719,10 +760,39 @@ class TestMultiTools(SimpleTestCase):
                     _Subdict({'question_path': 'two'}),
                     _Subdict({'question_path': 'other_two'}),
                 ],
+                'three': [
+                    _Subdict({'question_path': 'three', 'conflicting_delete': True}),
+                ]
             },
         })
         assert 'usercase_update' in multi
         assert multi['usercase_update'].get('update')
+        assert actions_json == snapshot, 'actions_json should not be mutated'
+
+    def test_make_multi_with_conflicts_and_concurrent_delete(self):
+        actions_json = FormActions({
+            'update_case': {
+                'update': {},
+                'conflicts': {
+                    'one': [
+                        {'question_path': 'two'},
+                        {'question_path': 'other_two'},
+                    ],
+                },
+            },
+        }).to_json()
+        snapshot = deepcopy(actions_json)
+
+        multi = make_multi(actions_json)
+
+        assert multi['update_case'] == _Subdict({
+            'update_multi': {
+                'one': [
+                    _Subdict({'question_path': 'two', 'conflicting_delete': True}),
+                    _Subdict({'question_path': 'other_two', 'conflicting_delete': True}),
+                ]
+            },
+        })
         assert actions_json == snapshot, 'actions_json should not be mutated'
 
     def test_unmake_multi(self):
@@ -774,6 +844,6 @@ class _Subdict(dict):
             return super().__eq__(other)
         # ignore key/value pairs in other but not in self
         for key, value in self.items():
-            if value != other[key]:
+            if key not in other or value != other[key]:
                 return False
         return True
