@@ -159,32 +159,34 @@ def _merge(diff, action):
     update = action.update
     conflicts = action.conflicts
     delete_missing = defaultdict(set)
+    delete_changed = defaultdict(dict)
 
     for prop, questions in diff.get('delete', {}).items():
         for question in questions:
-            if not _drop(prop, question['question_path'], update, conflicts):
-                delete_missing[prop].add(question['question_path'])
+            path = question['question_path']
+            dropped = _drop(prop, path, update, conflicts)
+            if not dropped:
+                delete_missing[prop].add(path)
+            elif dropped.update_mode != question.get('update_mode', 'always'):
+                delete_changed[prop][path] = dropped
 
     for prop, questions in diff.get('add', {}).items():
         for question in questions:
-            ccu = ConditionalCaseUpdate(question)
-            if ccu.question_path in delete_missing[prop]:
-                # concurrent delete + change -> conflict with no update
-                # HACK JsonDict.setdefault has a bug, does not return newly set value
-                conflicts.setdefault(prop, [])
-                conflicts[prop].append(ccu)
-            elif prop not in update or not update[prop].question_path:
-                update[prop] = ccu
-            elif update[prop].question_path == ccu.question_path:
-                update[prop] = ccu
-            else:
-                # HACK JsonDict.setdefault has a bug, does not return newly set value
-                conflicts.setdefault(prop, [])
-                conflicts[prop].append(ccu)
+            is_missing = question['question_path'] in delete_missing[prop]
+            _add_question(prop, question, update, conflicts, is_missing)
+
+    for prop, question_map in delete_changed.items():
+        conflicted_paths = {q.question_path for q in conflicts.get(prop, [])}
+        for ccu in question_map.values():
+            if ccu.question_path not in conflicted_paths:
+                # concurrent change + delete -> conflict with no update
+                # note order: changed in session A then deleted in session B
+                _add_item(prop, ccu, conflicts)
 
 
 def _drop(prop, path, update, conflicts):
     if prop in update and update[prop].question_path == path:
+        dropped = update[prop]
         if conflicts.get(prop):
             if len(conflicts[prop]) == 1:
                 update[prop] = conflicts.pop(prop)[0]
@@ -192,15 +194,35 @@ def _drop(prop, path, update, conflicts):
                 update[prop] = conflicts[prop].pop(0)
         else:
             del update[prop]
-        return True
+        return dropped
     found = [i for i, question in enumerate(conflicts.get(prop, []))
              if question.question_path == path]
     if found:
-        if len(conflicts[prop]) == 1:
+        dropped = conflicts[prop].pop(found[0])
+        if not conflicts[prop]:
             del conflicts[prop]
-        else:
-            del conflicts[prop][found[0]]
-    return found
+        return dropped
+    return None
+
+
+def _add_question(prop, question, update, conflicts, is_missing):
+    ccu = ConditionalCaseUpdate(question)
+    if is_missing:
+        # concurrent delete + change -> conflict with no update
+        # note order: deleted in session A then changed in session B
+        _add_item(prop, ccu, conflicts)
+    elif prop not in update or not update[prop].question_path:
+        update[prop] = ccu
+    elif update[prop].question_path == ccu.question_path:
+        update[prop] = ccu
+    else:
+        _add_item(prop, ccu, conflicts)
+
+
+def _add_item(key, item, dict_of_lists):
+    # HACK JsonDict.setdefault has a bug, does not return newly set value
+    dict_of_lists.setdefault(key, [])
+    dict_of_lists[key].append(item)
 
 
 def _convert_update_to_delete_plus_add(diff):
