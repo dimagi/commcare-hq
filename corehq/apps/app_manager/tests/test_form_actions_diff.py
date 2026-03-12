@@ -540,6 +540,49 @@ class FormActionsTests(SimpleTestCase):
         assert conflict.question_path == 'one'
         assert conflict.update_mode == 'edit'
 
+    def test_merge_case_mappings_with_conflicting_delete(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one', 'update_mode': 'always'},
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        merge_case_mappings({
+            'update_case': {
+                'delete': {'one': [
+                    {'question_path': 'one', 'update_mode': 'edit'},
+                ]},
+            },
+        }, actions)
+
+        assert 'one' not in actions.update_case.update
+        conflict, = actions.update_case.conflicts['one']
+        assert conflict.question_path == 'one'
+        assert conflict.update_mode == 'always'
+
+    def test_merge_case_mappings_already_deleted(self):
+        actions = FormActions({
+            'update_case': {
+                'update': {
+                    'two': {'question_path': 'two'},
+                }
+            }
+        })
+
+        merge_case_mappings({
+            'update_case': {
+                'delete': {'one': [
+                    {'question_path': 'one', 'update_mode': 'edit'},
+                ]},
+            },
+        }, actions)
+
+        assert 'one' not in actions.update_case.update
+        assert 'one' not in actions.update_case.conflicts
+
     def test_update_form_actions_with_conditional_update(self):
         action = OpenCaseAction({'name_update': {'question_path': 'name'}})
         form_actions = FormActions(open_case=action)
