@@ -1,12 +1,12 @@
 import $ from "jquery";
 import ko from "knockout";
-import constants from "hqwebapp/js/constants";
+import { EMAIL_VALIDATION_REGEX } from "hqwebapp/js/constants";
 import "knockout-validation/dist/knockout.validation.min";  // needed for ko.validation
 
 ko.validation.rules['emailRFC2822'] = {
     validator: function (val) {
         if (val === undefined || val.length === 0) {return true;}  // do separate validation for required
-        var re = constants.EMAIL_VALIDATION_REGEX;
+        var re = EMAIL_VALIDATION_REGEX;
         return re.test(val || '') && val.indexOf(' ') < 0;
     },
     message: gettext("Not a valid email"),
