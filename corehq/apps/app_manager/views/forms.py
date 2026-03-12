@@ -50,12 +50,15 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
-    FormActionsDiffException,
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
 )
-from corehq.apps.app_manager.form_action_diff import from_combined_diff
+from corehq.apps.app_manager.form_action_diff import (
+    from_combined_diff,
+    make_multi,
+    update_form_actions,
+)
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
@@ -68,7 +71,6 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
-    FormActionsDiff,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
@@ -230,11 +232,9 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    try:
-        form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
-    except FormActionsDiffException as e:
-        return HttpResponseBadRequest(e.get_user_message())
+    actions_json = json.loads(request.POST['actions'])
+    update_diff = json.loads(request.POST['update_diff']) if 'update_diff' in request.POST else {}
+    update_form_actions(form.actions, actions_json, update_diff)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -249,12 +249,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
-
-
-def _get_updates(existing_actions, data, allow_conflicts):
-    updates = json.loads(data['actions'])
-    update_diff = FormActionsDiff(json.loads(data['update_diff']) if 'update_diff' in data else {})
-    return existing_actions.with_updates(updates, update_diff, allow_conflicts)
 
 
 @waf_allow('XSS_BODY')
@@ -897,10 +891,8 @@ def get_form_view_context(
                 'schedule_options': schedule_options,
             })
     else:
-        # TODO: figure out a cleaner method
-        form.actions.make_multi()
         case_config_options.update({
-            'actions': form.actions,
+            'actions': make_multi(form.actions.to_json()),
             'allowUsercase': allow_usercase,
             'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
             'valid_index_names': valid_index_names,
