@@ -251,7 +251,7 @@ class PreviewAppView(TemplateView):
 
 def has_geocoder_privs(domain):
     return (
-        toggles.CASE_SEARCH_ADVANCED.enabled(domain)
+        toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
         and domain_has_privilege(domain, privileges.GEOCODER)
     )
 

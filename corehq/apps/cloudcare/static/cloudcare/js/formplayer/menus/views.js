@@ -1011,7 +1011,9 @@ const CaseListView = Marionette.CollectionView.extend({
     continueAction: function () {
         FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
         if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-            noopMetrics.track.event('Completed Case Search');
+            noopMetrics.track.event('Completed Case Search', {
+                'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+            });
         }
     },
 
@@ -1259,6 +1261,7 @@ const CaseListView = Marionette.CollectionView.extend({
             isMultiSelect: false,
             mapAvailable: this.mapAvailable,
             sidebarEnabled: this.options.sidebarEnabled,
+            splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
             smallScreenEnabled: this.smallScreenEnabled,
             triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
@@ -1691,7 +1694,9 @@ const CaseDetailFooterView = Marionette.View.extend({
         } else {
             FormplayerFrontend.trigger("menu:select", this.caseId);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
-                noopMetrics.track.event('Completed Case Search');
+                noopMetrics.track.event('Completed Case Search', {
+                    'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                });
             }
         }
     },
@@ -1776,6 +1781,7 @@ const PersistentMenuView = Marionette.View.extend({
         $('#persistent-menu-region').removeClass('d-none');
         this.sidebarEnabled = options.sidebarEnabled;
         this.menuExpanded;
+        this.splitScreenToggleEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
         this.offcanvas = 'offcanvas';
         this.collapse = 'collapse';
         this.containerCollapseClasses = this.collapse + ' position-relative';
@@ -1902,7 +1908,7 @@ const PersistentMenuView = Marionette.View.extend({
             persistentMenuContainer.addClass('border-top');
         }
 
-        if (!sessionStorage.getItem('handledDefaultClosed')) {
+        if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
             self.hideMenu();
             self.unlockMenu();
             self.flipArrowRight();
