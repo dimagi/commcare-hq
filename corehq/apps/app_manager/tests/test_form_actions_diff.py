@@ -12,6 +12,9 @@ from ..form_action_diff import (
     from_combined_diff,
     get_case_mappings,
     merge_case_mappings,
+    make_multi,
+    update_form_actions,
+    _drop_multi_updates,
 )
 from ..models import (
     FormActions, UpdateCaseAction, OpenCaseAction, OpenCaseDiff, UpdateCaseDiff, FormActionsDiff
@@ -800,6 +803,86 @@ class FormActionsTests(SimpleTestCase):
         assert actions.update_case.update['one'].update_mode == 'edit'
         assert not actions.update_case.conflicts
 
+    def test_update_form_actions_with_conditional_update(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+        form_actions = FormActions(open_case=action)
+        actions_json = {
+            'open_case': {'condition': {'type': 'if', 'question': 'name', 'answer': 'bob', 'operator': '='}}
+        }
+
+        update_form_actions(form_actions, actions_json, {})
+
+        assert action.condition.type == 'if'
+        assert action.condition.question == 'name'
+        assert action.condition.answer == 'bob'
+        assert action.condition.operator == '='
+
+    def test_update_form_actions_ignores_direct_name_update(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+        form_actions = FormActions(open_case=action)
+        actions_json = {'open_case': {'name_update': {'question_path': 'name2'}}}
+
+        update_form_actions(form_actions, actions_json, {})
+
+        assert action.name_update.question_path == 'name'
+        assert not action.conflicts
+
+    def test_update_form_actions_ignores_direct_name_update_multi(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+        form_actions = FormActions(open_case=action)
+        actions_json = {'open_case': {'name_update_multi': [{'question_path': 'name2'}]}}
+
+        update_form_actions(form_actions, actions_json, {})
+
+        assert action.name_update.question_path == 'name'
+        assert not action.conflicts
+
+    def test_update_form_actions_with_invalid_key_raises_exception(self):
+        action = OpenCaseAction({'name_update': {'question_path': 'name'}})
+        form_actions = FormActions(open_case=action)
+        actions_json = {"open_case": {'invalid_property': {}}}
+
+        with pytest.raises(AttributeError):
+            update_form_actions(form_actions, actions_json, {})
+
+    def test_update_form_actions_ignores_direct_updates(self):
+        actions = UpdateCaseAction({'update': {'one': {'question_path': 'one'}}})
+        form_actions = FormActions(update_case=actions)
+        actions_json = {'update_case': {'update': {'one': {'question_path': 'two'}}}}
+
+        update_form_actions(form_actions, actions_json, {})
+
+        assert actions.update['one'].question_path == 'one'
+        assert not actions.conflicts
+
+    def test_update_form_actions_ignores_direct_update_multi(self):
+        actions = UpdateCaseAction({'update': {'one': {'question_path': 'one'}}})
+        form_actions = FormActions(update_case=actions)
+        actions_json = {'update_case': {'update_multi': {'one': {'question_path': 'two'}}}}
+
+        update_form_actions(form_actions, actions_json, {})
+
+        assert actions.update['one'].question_path == 'one'
+        assert not actions.conflicts
+
+    def test_update_form_actions_updates_condition(self):
+        actions = UpdateCaseAction()
+        form_actions = FormActions(update_case=actions)
+        actions_json = {'update_case': {'condition': {'type': 'never'}}}
+
+        update_form_actions(form_actions, actions_json, {})
+
+        assert actions.condition.type == 'never'
+
+    def test_update_form_actions_with_other_updates(self):
+        # i.e. not open_case or update_case
+        form_actions = FormActions()
+        close_case_update = {'close_case': {'condition': {'type': 'never'}}}
+
+        update_form_actions(form_actions, close_case_update, {})
+
+        assert form_actions.close_case.condition.type == 'never'
+
 
 class OpenCaseDiffTests(SimpleTestCase):
     def test_construction_with_all_values(self):
@@ -1020,3 +1103,107 @@ class CombinedDiffTests(SimpleTestCase):
             'delete': {'other': [{'question_path': 'six'}]},
         }
         assert combined_diff == snapshot, 'combined_diff should not be mutated'
+
+
+class TestMultiTools(SimpleTestCase):
+
+    def test_make_multi(self):
+        actions_json = FormActions({
+            'open_case': {
+                'name_update': {'question_path': 'form_name'},
+                'conflicts': [{'question_path': 'other_name'}],
+            },
+            'update_case': {
+                'update': {
+                    'one': {'question_path': 'one'},
+                    'two': {'question_path': 'two'},
+                },
+                'conflicts': {
+                    'one': [{'question_path': 'other_one'}],
+                    'two': [{'question_path': 'other_two'}],
+                },
+            },
+            'usercase_update': {
+                'update': {
+                    'one': {'question_path': 'test_path'},
+                },
+            },
+        }).to_json()
+        snapshot = deepcopy(actions_json)
+
+        multi = make_multi(actions_json)
+
+        assert multi['open_case'] == _Subdict({
+            'name_update_multi': [
+                _Subdict({'question_path': 'form_name'}),
+                _Subdict({'question_path': 'other_name'}),
+            ],
+        })
+        assert multi['update_case'] == _Subdict({
+            'update_multi': {
+                'one': [
+                    _Subdict({'question_path': 'one'}),
+                    _Subdict({'question_path': 'other_one'}),
+                ],
+                'two': [
+                    _Subdict({'question_path': 'two'}),
+                    _Subdict({'question_path': 'other_two'}),
+                ],
+            },
+        })
+        assert 'usercase_update' in multi
+        assert multi['usercase_update'].get('update')
+        assert actions_json == snapshot, 'actions_json should not be mutated'
+
+    def test_unmake_multi(self):
+        input_json = {
+            'open_case': {
+                'external_id': '0000',
+                'name_update_multi': [
+                    {'question_path': 'form_name'},
+                    {'question_path': 'other_name'},
+                ],
+                'name_update': {},
+                'conflicts': [],
+            },
+            'update_case': {
+                'condition': {'type': 'never'},
+                'update_multi': {
+                    'one': [{'question_path': 'one'}, {'question_path': 'other_one'}],
+                    'two': [{'question_path': 'two'}, {'question_path': 'other_two'}],
+                },
+                'update': {},
+                'conflicts': {},
+            },
+            'usercase_update': {
+                'update': {
+                    'one': {'question_path': 'test_path'},
+                },
+            },
+        }
+        snapshot = deepcopy(input_json)
+
+        output_json = _drop_multi_updates(input_json)
+
+        assert output_json == {
+            'open_case': {'external_id': '0000'},
+            'update_case': {'condition': {'type': 'never'}},
+            'usercase_update': {
+                'update': {
+                    'one': {'question_path': 'test_path'},
+                },
+            },
+        }
+        assert input_json == snapshot, 'input json should not be modified'
+
+
+class _Subdict(dict):
+
+    def __eq__(self, other):
+        if not isinstance(other, dict):
+            return super().__eq__(other)
+        # ignore key/value pairs in other but not in self
+        for key, value in self.items():
+            if value != other[key]:
+                return False
+        return True
