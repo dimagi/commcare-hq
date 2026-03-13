@@ -355,7 +355,7 @@ $(function () {
             self.case_name = _(self.case_properties()).find(function (p) {
                 return p.key() === 'name' && p.required();
             }).path;
-        } catch (e) {
+        } catch {
             self.case_name = null;
         }
 
