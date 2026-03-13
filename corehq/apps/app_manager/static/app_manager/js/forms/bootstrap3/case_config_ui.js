@@ -100,7 +100,12 @@ $(function () {
                         // can generate a correct diff
                         self.baseline = getBaseline(data.actions);
                         self.actions = filterActions(data.actions);
-                        self.caseConfigViewModel(caseConfigViewModel(self));
+                        self.suspendTextBindingChanges = true;
+                        try {
+                            self.caseConfigViewModel(caseConfigViewModel(self));
+                        } finally {
+                            self.suspendTextBindingChanges = false;
+                        }
 
                         if (_(data.propertiesMap).has(self.caseType)) {
                             noopMetrics.track.event("Saved question as a Case Property", {
@@ -167,7 +172,9 @@ $(function () {
             return caseConfigUtils.getAnswers(self.questions(), condition);
         };
 
+        self.suspendTextBindingChanges = false;
         self.change = function () {
+            if (self.suspendTextBindingChanges) { return; }
             self.saveButton.fire('change');
             self.forceRefreshTextchangeBinding(self.home);
             const property = ko.dataFor($(this).closest(".case-property-mapping")[0]);
