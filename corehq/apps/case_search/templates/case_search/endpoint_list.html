@@ -51,8 +51,9 @@
               <a
                 href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
                 class="btn btn-sm btn-outline-primary me-1"
-                aria-label="{% blocktrans with name=endpoint.name %}Edit
-                {{ name }}{% endblocktrans %}"
+                aria-label="{% blocktrans with name=endpoint.name %}
+                  Edit {{ name }}
+                {% endblocktrans %}"
               >
                 {% trans "Edit" %}
               </a>
@@ -66,8 +67,9 @@
                   <button
                     type="submit"
                     class="btn btn-sm btn-outline-danger"
-                    aria-label="{% blocktrans with name=endpoint.name %}Deactivate
-                    {{ name }}{% endblocktrans %}"
+                    aria-label="{% blocktrans with name=endpoint.name %}
+                      Deactivate {{ name }}
+                    {% endblocktrans %}"
                   >
                     {% trans "Deactivate" %}
                   </button>

@@ -72,10 +72,14 @@ class CaseSearchEndpointNewView(CaseSearchEndpointMixin, BaseProjectDataView):
 
     @property
     def parent_pages(self):
-        return [{
-            'title': CaseSearchEndpointsView.page_title,
-            'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
-        }]
+        return [
+            {
+                'title': CaseSearchEndpointsView.page_title,
+                'url': reverse(
+                    CaseSearchEndpointsView.urlname, args=[self.domain]
+                ),
+            }
+        ]
 
     @property
     def page_context(self):
@@ -124,12 +128,14 @@ class CaseSearchEndpointNewView(CaseSearchEndpointMixin, BaseProjectDataView):
             parameters=parameters,
             query=query,
         )
-        return JsonResponse({
-            'redirect': reverse(
-                CaseSearchEndpointEditView.urlname,
-                args=[self.domain, endpoint.id],
-            ),
-        })
+        return JsonResponse(
+            {
+                'redirect': reverse(
+                    CaseSearchEndpointEditView.urlname,
+                    args=[self.domain, endpoint.id],
+                ),
+            }
+        )
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
@@ -140,14 +146,20 @@ class CaseSearchEndpointEditView(CaseSearchEndpointMixin, BaseProjectDataView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.kwargs['endpoint_id']])
+        return reverse(
+            self.urlname, args=[self.domain, self.kwargs['endpoint_id']]
+        )
 
     @property
     def parent_pages(self):
-        return [{
-            'title': CaseSearchEndpointsView.page_title,
-            'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
-        }]
+        return [
+            {
+                'title': CaseSearchEndpointsView.page_title,
+                'url': reverse(
+                    CaseSearchEndpointsView.urlname, args=[self.domain]
+                ),
+            }
+        ]
 
     def _get_display_version(self):
         version_param = self.request.GET.get('version')
@@ -162,7 +174,8 @@ class CaseSearchEndpointEditView(CaseSearchEndpointMixin, BaseProjectDataView):
     def page_context(self):
         version = self._get_display_version()
         is_current = (
-            version and self.endpoint_obj.current_version
+            version
+            and self.endpoint_obj.current_version
             and version.pk == self.endpoint_obj.current_version.pk
         )
         all_versions = list(
@@ -174,15 +187,20 @@ class CaseSearchEndpointEditView(CaseSearchEndpointMixin, BaseProjectDataView):
             'endpoint': self.endpoint_obj,
             'version': version,
             'initial_parameters': version.parameters if version else [],
-            'initial_query': version.query if version else {'type': 'and', 'children': []},
+            'initial_query': version.query
+            if version
+            else {'type': 'and', 'children': []},
             'initial_target_name': self.endpoint_obj.target_name,
             'initial_name': self.endpoint_obj.name,
             'versions': all_versions,
             'current_version_number': (
                 self.endpoint_obj.current_version.version_number
-                if self.endpoint_obj.current_version else None
+                if self.endpoint_obj.current_version
+                else None
             ),
-            'display_version_number': version.version_number if version else None,
+            'display_version_number': version.version_number
+            if version
+            else None,
             'post_url': reverse(
                 self.urlname, args=[self.domain, self.endpoint_obj.id]
             ),
@@ -204,30 +222,38 @@ class CaseSearchEndpointEditView(CaseSearchEndpointMixin, BaseProjectDataView):
             return JsonResponse({'errors': errors}, status=400)
 
         version = save_new_version(self.endpoint_obj, parameters, query)
-        return JsonResponse({
-            'redirect': reverse(
-                self.urlname, args=[self.domain, self.endpoint_obj.id]
-            ),
-            'version_number': version.version_number,
-        })
+        return JsonResponse(
+            {
+                'redirect': reverse(
+                    self.urlname, args=[self.domain, self.endpoint_obj.id]
+                ),
+                'version_number': version.version_number,
+            }
+        )
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointDeactivateView(CaseSearchEndpointMixin, BaseProjectDataView):
+class CaseSearchEndpointDeactivateView(
+    CaseSearchEndpointMixin, BaseProjectDataView
+):
     urlname = 'case_search_endpoint_deactivate'
     http_method_names = ['post']
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.kwargs['endpoint_id']])
+        return reverse(
+            self.urlname, args=[self.domain, self.kwargs['endpoint_id']]
+        )
 
     def post(self, request, *args, **kwargs):
         deactivate_endpoint(self.endpoint_obj)
-        return JsonResponse({
-            'redirect': reverse(
-                CaseSearchEndpointsView.urlname, args=[self.domain]
-            ),
-        })
+        return JsonResponse(
+            {
+                'redirect': reverse(
+                    CaseSearchEndpointsView.urlname, args=[self.domain]
+                ),
+            }
+        )
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')

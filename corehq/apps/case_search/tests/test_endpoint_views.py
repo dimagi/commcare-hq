@@ -36,7 +36,9 @@ class EndpointViewTestCase(TestCase):
         )
         self.addCleanup(
             toggles.CASE_SEARCH_ENDPOINTS.set,
-            DOMAIN, False, namespace=toggles.NAMESPACE_DOMAIN,
+            DOMAIN,
+            False,
+            namespace=toggles.NAMESPACE_DOMAIN,
         )
         self.client.login(username=USERNAME, password=PASSWORD)
 
@@ -52,7 +54,6 @@ class EndpointViewTestCase(TestCase):
 
 
 class TestCaseSearchEndpointsView(EndpointViewTestCase):
-
     def _url(self):
         return reverse('case_search_endpoints', args=[DOMAIN])
 
@@ -72,11 +73,13 @@ class TestCaseSearchEndpointsView(EndpointViewTestCase):
         self.client.logout()
         response = self.client.get(self._url())
         assert response.status_code == 302
-        assert '/accounts/login/' in response['Location'] or 'login' in response['Location']
+        assert (
+            '/accounts/login/' in response['Location']
+            or 'login' in response['Location']
+        )
 
 
 class TestCaseSearchEndpointNewView(EndpointViewTestCase):
-
     def _url(self):
         return reverse('case_search_endpoint_new', args=[DOMAIN])
 
@@ -84,8 +87,16 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         response = self.client.get(self._url())
         assert response.status_code == 200
         ctx = response.context
-        for key in ('capability', 'mode', 'initial_parameters', 'initial_query',
-                    'initial_target_name', 'initial_name', 'versions', 'post_url'):
+        for key in (
+            'capability',
+            'mode',
+            'initial_parameters',
+            'initial_query',
+            'initial_target_name',
+            'initial_name',
+            'versions',
+            'post_url',
+        ):
             assert key in ctx, f'Missing context key: {key}'
 
     def test_post_valid_data_creates_endpoint_and_redirects(self):
@@ -142,7 +153,6 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
 
 
 class TestCaseSearchEndpointEditView(EndpointViewTestCase):
-
     def _url(self, endpoint_id):
         return reverse('case_search_endpoint_edit', args=[DOMAIN, endpoint_id])
 
@@ -189,9 +199,10 @@ class TestCaseSearchEndpointEditView(EndpointViewTestCase):
 
 
 class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
-
     def _url(self, endpoint_id):
-        return reverse('case_search_endpoint_deactivate', args=[DOMAIN, endpoint_id])
+        return reverse(
+            'case_search_endpoint_deactivate', args=[DOMAIN, endpoint_id]
+        )
 
     def test_post_deactivates_endpoint_and_redirects(self):
         endpoint = self._make_endpoint('Deactivate Me')
@@ -208,7 +219,6 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
 
 
 class TestCaseSearchCapabilityView(EndpointViewTestCase):
-
     def _url(self):
         return reverse('case_search_capability', args=[DOMAIN])
 

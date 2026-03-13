@@ -15,7 +15,6 @@ from corehq.apps.case_search.models import (
 
 
 class TestCreateEndpoint(TestCase):
-
     def test_creates_endpoint_and_first_version(self):
         endpoint = create_endpoint(
             domain='test-domain',
@@ -52,7 +51,6 @@ class TestCreateEndpoint(TestCase):
 
 
 class TestSaveNewVersion(TestCase):
-
     def setUp(self):
         self.endpoint = create_endpoint(
             domain='test-domain',
@@ -86,11 +84,16 @@ class TestSaveNewVersion(TestCase):
 
 
 class TestListEndpoints(TestCase):
-
     def test_returns_only_active_for_domain(self):
-        create_endpoint('d1', 'A', 'project_db', 'p', [], {'type': 'and', 'children': []})
-        create_endpoint('d1', 'B', 'project_db', 'p', [], {'type': 'and', 'children': []})
-        create_endpoint('d2', 'C', 'project_db', 'p', [], {'type': 'and', 'children': []})
+        create_endpoint(
+            'd1', 'A', 'project_db', 'p', [], {'type': 'and', 'children': []}
+        )
+        create_endpoint(
+            'd1', 'B', 'project_db', 'p', [], {'type': 'and', 'children': []}
+        )
+        create_endpoint(
+            'd2', 'C', 'project_db', 'p', [], {'type': 'and', 'children': []}
+        )
 
         ep_b = CaseSearchEndpoint.objects.get(domain='d1', name='B')
         deactivate_endpoint(ep_b)
@@ -100,22 +103,26 @@ class TestListEndpoints(TestCase):
 
 
 class TestGetEndpoint(TestCase):
-
     def test_returns_endpoint_for_domain(self):
-        ep = create_endpoint('d1', 'X', 'project_db', 'p', [], {'type': 'and', 'children': []})
+        ep = create_endpoint(
+            'd1', 'X', 'project_db', 'p', [], {'type': 'and', 'children': []}
+        )
         fetched = get_endpoint('d1', ep.id)
         assert fetched.pk == ep.pk
 
     def test_raises_404_wrong_domain(self):
-        ep = create_endpoint('d1', 'X', 'project_db', 'p', [], {'type': 'and', 'children': []})
+        ep = create_endpoint(
+            'd1', 'X', 'project_db', 'p', [], {'type': 'and', 'children': []}
+        )
         with self.assertRaises(Http404):
             get_endpoint('d2', ep.id)
 
 
 class TestDeactivateEndpoint(TestCase):
-
     def test_sets_is_active_false(self):
-        ep = create_endpoint('d1', 'Del', 'project_db', 'p', [], {'type': 'and', 'children': []})
+        ep = create_endpoint(
+            'd1', 'Del', 'project_db', 'p', [], {'type': 'and', 'children': []}
+        )
         deactivate_endpoint(ep)
         ep.refresh_from_db()
         assert ep.is_active is False

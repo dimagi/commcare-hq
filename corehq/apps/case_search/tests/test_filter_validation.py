@@ -5,17 +5,40 @@ from corehq.apps.case_search.endpoint_service import validate_filter_spec
 
 def _make_capability():
     return {
-        'case_types': [{
-            'name': 'patient',
-            'fields': [
-                {'name': 'province', 'type': 'text',
-                 'operations': ['exact_match', 'is_empty']},
-                {'name': 'age', 'type': 'number',
-                 'operations': ['equals', 'gt', 'gte', 'lt', 'lte', 'is_empty']},
-                {'name': 'dob', 'type': 'date',
-                 'operations': ['before', 'after', 'date_range', 'is_empty']},
-            ],
-        }],
+        'case_types': [
+            {
+                'name': 'patient',
+                'fields': [
+                    {
+                        'name': 'province',
+                        'type': 'text',
+                        'operations': ['exact_match', 'is_empty'],
+                    },
+                    {
+                        'name': 'age',
+                        'type': 'number',
+                        'operations': [
+                            'equals',
+                            'gt',
+                            'gte',
+                            'lt',
+                            'lte',
+                            'is_empty',
+                        ],
+                    },
+                    {
+                        'name': 'dob',
+                        'type': 'date',
+                        'operations': [
+                            'before',
+                            'after',
+                            'date_range',
+                            'is_empty',
+                        ],
+                    },
+                ],
+            }
+        ],
         'auto_values': {
             'date': [{'ref': 'today()', 'label': 'Today'}],
             'text': [{'ref': 'user.username', 'label': 'Username'}],
@@ -30,8 +53,10 @@ def _make_capability():
             'lte': [{'name': 'value', 'type': 'number'}],
             'before': [{'name': 'value', 'type': 'match_field'}],
             'after': [{'name': 'value', 'type': 'match_field'}],
-            'date_range': [{'name': 'start', 'type': 'match_field'},
-                           {'name': 'end', 'type': 'match_field'}],
+            'date_range': [
+                {'name': 'start', 'type': 'match_field'},
+                {'name': 'end', 'type': 'match_field'},
+            ],
         },
     }
 
@@ -43,7 +68,6 @@ PARAMS = [
 
 
 class TestValidateFilterSpec(TestCase):
-
     def test_valid_simple_spec(self):
         spec = {
             'type': 'component',
@@ -53,7 +77,9 @@ class TestValidateFilterSpec(TestCase):
                 'value': {'type': 'parameter', 'ref': 'search_province'},
             },
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert errors == []
 
     def test_valid_and_group(self):
@@ -68,7 +94,9 @@ class TestValidateFilterSpec(TestCase):
                 },
             ],
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert errors == []
 
     def test_unknown_field(self):
@@ -80,7 +108,9 @@ class TestValidateFilterSpec(TestCase):
                 'value': {'type': 'constant', 'value': 'x'},
             },
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert any('nonexistent' in e for e in errors)
 
     def test_incompatible_component(self):
@@ -92,7 +122,9 @@ class TestValidateFilterSpec(TestCase):
                 'value': {'type': 'constant', 'value': '10'},
             },
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert any('gt' in e for e in errors)
 
     def test_missing_required_input(self):
@@ -102,7 +134,9 @@ class TestValidateFilterSpec(TestCase):
             'field': 'province',
             'inputs': {},
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert any('value' in e for e in errors)
 
     def test_unknown_parameter_ref(self):
@@ -114,7 +148,9 @@ class TestValidateFilterSpec(TestCase):
                 'value': {'type': 'parameter', 'ref': 'nonexistent_param'},
             },
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert any('nonexistent_param' in e for e in errors)
 
     def test_unknown_auto_value_ref(self):
@@ -126,7 +162,9 @@ class TestValidateFilterSpec(TestCase):
                 'value': {'type': 'auto_value', 'ref': 'bogus()'},
             },
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert any('bogus()' in e for e in errors)
 
     def test_invalid_input_type(self):
@@ -138,12 +176,16 @@ class TestValidateFilterSpec(TestCase):
                 'value': {'type': 'magic', 'value': 'x'},
             },
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert any('magic' in e for e in errors)
 
     def test_empty_and_is_valid(self):
         spec = {'type': 'and', 'children': []}
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert errors == []
 
     def test_nested_or_inside_and(self):
@@ -165,10 +207,14 @@ class TestValidateFilterSpec(TestCase):
                 },
             ],
         }
-        errors = validate_filter_spec(spec, _make_capability(), 'patient', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'patient', PARAMS
+        )
         assert errors == []
 
     def test_unknown_case_type(self):
         spec = {'type': 'and', 'children': []}
-        errors = validate_filter_spec(spec, _make_capability(), 'unknown_type', PARAMS)
+        errors = validate_filter_spec(
+            spec, _make_capability(), 'unknown_type', PARAMS
+        )
         assert any('unknown_type' in e for e in errors)

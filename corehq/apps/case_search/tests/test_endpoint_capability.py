@@ -13,7 +13,6 @@ from corehq.apps.data_dictionary.models import (
 
 
 class TestGetFieldType(TestCase):
-
     def test_plain_maps_to_text(self):
         assert get_field_type(CaseProperty.DataType.PLAIN) == 'text'
 
@@ -43,7 +42,6 @@ class TestGetFieldType(TestCase):
 
 
 class TestGetOperationsForFieldType(TestCase):
-
     def test_text_operations(self):
         ops = get_operations_for_field_type('text')
         assert 'exact_match' in ops
@@ -73,7 +71,6 @@ class TestGetOperationsForFieldType(TestCase):
 
 
 class TestGetCapability(TestCase):
-
     def setUp(self):
         self.case_type = CaseType.objects.create(
             domain='test-domain',

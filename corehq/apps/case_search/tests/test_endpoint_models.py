@@ -8,7 +8,6 @@ from corehq.apps.case_search.models import (
 
 
 class TestCaseSearchEndpoint(TestCase):
-
     def test_create_endpoint(self):
         endpoint = CaseSearchEndpoint.objects.create(
             domain='test-domain',
@@ -51,7 +50,6 @@ class TestCaseSearchEndpoint(TestCase):
 
 
 class TestCaseSearchEndpointVersion(TestCase):
-
     def setUp(self):
         self.endpoint = CaseSearchEndpoint.objects.create(
             domain='test-domain',

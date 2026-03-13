@@ -28,9 +28,9 @@ def create_endpoint(domain, name, target_type, target_name, parameters, query):
 
 def save_new_version(endpoint, parameters, query):
     """Create a new version for an existing endpoint."""
-    max_version = endpoint.versions.aggregate(
-        max_v=Max('version_number')
-    )['max_v'] or 0
+    max_version = (
+        endpoint.versions.aggregate(max_v=Max('version_number'))['max_v'] or 0
+    )
     version = CaseSearchEndpointVersion.objects.create(
         endpoint=endpoint,
         version_number=max_version + 1,
@@ -100,26 +100,48 @@ def validate_filter_spec(query, capability, case_type_name, parameters):
             all_auto_refs.add(ref['ref'])
     schemas = capability.get('component_input_schemas', {})
 
-    _validate_node(query, fields_by_name, param_names, all_auto_refs, schemas, errors)
+    _validate_node(
+        query, fields_by_name, param_names, all_auto_refs, schemas, errors
+    )
     return errors
 
 
-def _validate_node(node, fields_by_name, param_names, all_auto_refs, schemas, errors):
+def _validate_node(
+    node, fields_by_name, param_names, all_auto_refs, schemas, errors
+):
     node_type = node.get('type')
     if node_type in ('and', 'or'):
         for child in node.get('children', []):
-            _validate_node(child, fields_by_name, param_names, all_auto_refs, schemas, errors)
+            _validate_node(
+                child,
+                fields_by_name,
+                param_names,
+                all_auto_refs,
+                schemas,
+                errors,
+            )
     elif node_type == 'not':
         child = node.get('child')
         if child:
-            _validate_node(child, fields_by_name, param_names, all_auto_refs, schemas, errors)
+            _validate_node(
+                child,
+                fields_by_name,
+                param_names,
+                all_auto_refs,
+                schemas,
+                errors,
+            )
     elif node_type == 'component':
-        _validate_component(node, fields_by_name, param_names, all_auto_refs, schemas, errors)
+        _validate_component(
+            node, fields_by_name, param_names, all_auto_refs, schemas, errors
+        )
     else:
         errors.append(f'Unknown node type: {node_type}')
 
 
-def _validate_component(node, fields_by_name, param_names, all_auto_refs, schemas, errors):
+def _validate_component(
+    node, fields_by_name, param_names, all_auto_refs, schemas, errors
+):
     field_name = node.get('field', '')
     component = node.get('component', '')
     inputs = node.get('inputs', {})
@@ -146,13 +168,19 @@ def _validate_component(node, fields_by_name, param_names, all_auto_refs, schema
             )
             continue
         _validate_input_value(
-            inputs[slot_name], slot_name, component, field_name,
-            param_names, all_auto_refs, errors,
+            inputs[slot_name],
+            slot_name,
+            component,
+            field_name,
+            param_names,
+            all_auto_refs,
+            errors,
         )
 
 
-def _validate_input_value(value, slot_name, component, field_name,
-                          param_names, all_auto_refs, errors):
+def _validate_input_value(
+    value, slot_name, component, field_name, param_names, all_auto_refs, errors
+):
     value_type = value.get('type')
     if value_type == 'constant':
         pass
