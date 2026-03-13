@@ -245,6 +245,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     response_json = {}
     app.save(response_json)
+    response_json['actions'] = make_multi(form.actions.to_json())
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
