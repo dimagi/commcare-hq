@@ -40,6 +40,7 @@ def case_to_row_dict(case):
     ``prop.``) from ``case_json``, and ``parent_id``/``host_id``
     from ``live_indices``.
     """
+    ids_by_identifier = {idx.identifier: idx.referenced_id for idx in case.live_indices}
     row = {
         'case_id': case.case_id,
         'owner_id': case.owner_id,
@@ -50,8 +51,8 @@ def case_to_row_dict(case):
         'closed': case.closed,
         'external_id': case.external_id,
         'server_modified_on': case.server_modified_on,
-        'parent_id': _get_index_ref(case, 'parent'),
-        'host_id': _get_index_ref(case, 'host'),
+        'parent_id': ids_by_identifier.get('parent'),
+        'host_id': ids_by_identifier.get('host'),
     }
     for key, value in case.case_json.items():
         row[f'{PROPERTY_PREFIX}{key}'] = value
@@ -120,11 +121,3 @@ def _set_typed_columns(values, col_name, raw_value, table_columns):
         typed_col = f'{col_name}{SEP}{suffix}'
         if typed_col in table_columns:
             values[typed_col] = coerce_fn(raw_value)
-
-
-def _get_index_ref(case, identifier):
-    """Return the referenced_id for a case index, or None."""
-    for index in case.live_indices:
-        if index.identifier == identifier:
-            return index.referenced_id
-    return None

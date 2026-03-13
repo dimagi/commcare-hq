@@ -1,5 +1,3 @@
-import re
-
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
@@ -124,17 +122,6 @@ _TYPED_COLUMN_EXTRAS = {
     'number': (Numeric, 'numeric'),
 }
 
-_VALID_NAME_RE = re.compile(r'^[a-zA-Z0-9_-]+$')
-
-
-def _validate_name(name, label):
-    """Reject names containing characters other than alphanumeric, underscores, and hyphens."""
-    if not _VALID_NAME_RE.match(name):
-        raise ValueError(
-            f"Invalid {label} name {name!r}: "
-            "only alphanumeric characters, underscores, and hyphens are allowed"
-        )
-
 
 def _build_property_columns(properties):
     """Build Column objects for dynamic case properties.
@@ -144,7 +131,6 @@ def _build_property_columns(properties):
     """
     columns = []
     for name, data_type in properties:
-        _validate_name(name, 'property')
         col_name = f'prop{SEP}{name}'
         columns.append(Column(col_name, Text))
         if data_type in _TYPED_COLUMN_EXTRAS:

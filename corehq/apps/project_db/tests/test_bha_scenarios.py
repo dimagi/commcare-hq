@@ -574,6 +574,7 @@ class TestBHAScenarios(TestCase):
 
     def _execute(self, sql):
         with self.engine.begin() as conn:
+            # Using text queries only for clarity in tests
             return [dict(row) for row in conn.execute(sqlalchemy.text(sql))]
 
     def test_search_and_admit(self):

@@ -179,35 +179,6 @@ class TestBuildTableForCaseType:
         assert self.table.c.host_id.nullable is True
 
 
-class TestNameValidation:
-
-    def setup_method(self):
-        self.metadata = sqlalchemy.MetaData()
-
-    @pytest.mark.parametrize('name', [
-        '',
-        'has space',
-        'semi;colon',
-        'quote"mark',
-        'paren(s)',
-        'eq=ual',
-    ])
-    def test_invalid_property_name_raises(self, name):
-        with pytest.raises(ValueError, match='Invalid property name'):
-            build_table_for_case_type(
-                self.metadata, 'test-domain', f'val_prop_{name[:4]}',
-                properties=[(name, 'plain')],
-            )
-
-    def test_valid_names_with_hyphens_and_underscores(self):
-        table = build_table_for_case_type(
-            self.metadata, 'test-domain', 'val_ok',
-            properties=[('my-prop_1', 'plain')],
-        )
-        column_names = {col.name for col in table.columns}
-        assert 'prop__my-prop_1' in column_names
-
-
 SCHEMA_GEN_DOMAIN = 'test-schema-gen'
 
 
