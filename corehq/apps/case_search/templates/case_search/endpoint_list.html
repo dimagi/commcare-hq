@@ -1,0 +1,80 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+
+{% block page_actions %}
+  <a href="{% url 'case_search_endpoint_new' domain %}" class="btn btn-primary">
+    {% trans "New Endpoint" %}
+  </a>
+{% endblock page_actions %}
+
+{% block page_content %}
+  {% if endpoints %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Case Type" %}</th>
+          <th>{% trans "Version" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for endpoint in endpoints %}
+          <tr>
+            <td>
+              <a
+                href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
+              >
+                {{ endpoint.name }}
+              </a>
+            </td>
+            <td>{{ endpoint.target_name }}</td>
+            <td>
+              {% if endpoint.current_version %}
+                {{ endpoint.current_version.version_number }}
+              {% else %}
+                <span class="text-muted">{% trans "No version" %}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if endpoint.is_active %}
+                <span class="badge bg-success">{% trans "Active" %}</span>
+              {% else %}
+                <span class="badge bg-secondary">{% trans "Inactive" %}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a
+                href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
+                class="btn btn-sm btn-outline-primary me-1"
+              >
+                {% trans "Edit" %}
+              </a>
+              {% if endpoint.is_active %}
+                <form
+                  method="post"
+                  action="{% url 'case_search_endpoint_deactivate' domain endpoint.id %}"
+                  class="d-inline"
+                >
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    {% trans "Deactivate" %}
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">{% trans "No endpoints configured yet." %}</p>
+    <a
+      href="{% url 'case_search_endpoint_new' domain %}"
+      class="btn btn-primary"
+    >
+      {% trans "Create New Endpoint" %}
+    </a>
+  {% endif %}
+{% endblock page_content %}
