@@ -522,3 +522,44 @@ def after_save(sender, instance, created, **kwargs):
             name=instance.name,
             csql=instance.csql
         )
+
+
+class CaseSearchEndpoint(models.Model):
+    domain = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    target_type = models.CharField(max_length=50)
+    target_name = models.CharField(max_length=255)
+    current_version = models.ForeignKey(
+        'CaseSearchEndpointVersion',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('domain', 'name')
+
+    def __str__(self):
+        return f'{self.domain}: {self.name}'
+
+
+class CaseSearchEndpointVersion(models.Model):
+    endpoint = models.ForeignKey(
+        CaseSearchEndpoint,
+        on_delete=models.CASCADE,
+        related_name='versions',
+    )
+    version_number = models.PositiveIntegerField()
+    parameters = models.JSONField(default=list)
+    query = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('endpoint', 'version_number')
+        ordering = ['-version_number']
+
+    def __str__(self):
+        return f'{self.endpoint.name} v{self.version_number}'
