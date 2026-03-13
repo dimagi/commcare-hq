@@ -20,7 +20,7 @@
     </div>
     <div class="card-body">
       {# Children of the root group #}
-      <template x-for="(child, childIdx) in query.children" :key="childIdx">
+      <template x-for="(child, childIdx) in query.children" :key="child._id">
         <div class="mb-2">
           {# Component condition #}
           <template x-if="child.type === 'component'">
@@ -97,12 +97,11 @@
                                 <option value="constant">
                                   {% trans "Value" %}
                                 </option>
-                                <option
-                                  value="parameter"
-                                  x-show="parameters.length > 0"
+                                <template x-if="parameters.length > 0"
+                                  ><option value="parameter">
+                                    {% trans "Parameter" %}
+                                  </option></template
                                 >
-                                  {% trans "Parameter" %}
-                                </option>
                                 <option value="auto_value">
                                   {% trans "Auto" %}
                                 </option>
@@ -223,7 +222,7 @@
                 {# Nested group children (conditions only at this level) #}
                 <template
                   x-for="(grandchild, grandIdx) in child.children"
-                  :key="grandIdx"
+                  :key="grandchild._id"
                 >
                   <div class="mb-2">
                     <template x-if="grandchild.type === 'component'">
@@ -302,12 +301,11 @@
                                           <option value="constant">
                                             {% trans "Value" %}
                                           </option>
-                                          <option
-                                            value="parameter"
-                                            x-show="parameters.length > 0"
+                                          <template x-if="parameters.length > 0"
+                                            ><option value="parameter">
+                                              {% trans "Parameter" %}
+                                            </option></template
                                           >
-                                            {% trans "Parameter" %}
-                                          </option>
                                           <option value="auto_value">
                                             {% trans "Auto" %}
                                           </option>
@@ -434,7 +432,7 @@
                               </div>
                               <template
                                 x-for="(notChild, notIdx) in grandchild.child.children"
-                                :key="notIdx"
+                                :key="notChild._id"
                               >
                                 <template x-if="notChild.type === 'component'">
                                   <div class="card border-secondary mb-2">
@@ -502,12 +500,14 @@
                                                     <option value="constant">
                                                       {% trans "Value" %}
                                                     </option>
-                                                    <option
-                                                      value="parameter"
-                                                      x-show="parameters.length > 0"
+                                                    <template
+                                                      x-if="parameters.length > 0"
+                                                      ><option
+                                                        value="parameter"
+                                                      >
+                                                        {% trans "Parameter" %}
+                                                      </option></template
                                                     >
-                                                      {% trans "Parameter" %}
-                                                    </option>
                                                     <option value="auto_value">
                                                       {% trans "Auto" %}
                                                     </option>
@@ -662,7 +662,7 @@
                     </div>
                     <template
                       x-for="(notChild, notIdx) in child.child.children"
-                      :key="notIdx"
+                      :key="notChild._id"
                     >
                       <template x-if="notChild.type === 'component'">
                         <div class="card border-secondary mb-2">
@@ -727,12 +727,11 @@
                                           <option value="constant">
                                             {% trans "Value" %}
                                           </option>
-                                          <option
-                                            value="parameter"
-                                            x-show="parameters.length > 0"
+                                          <template x-if="parameters.length > 0"
+                                            ><option value="parameter">
+                                              {% trans "Parameter" %}
+                                            </option></template
                                           >
-                                            {% trans "Parameter" %}
-                                          </option>
                                           <option value="auto_value">
                                             {% trans "Auto" %}
                                           </option>

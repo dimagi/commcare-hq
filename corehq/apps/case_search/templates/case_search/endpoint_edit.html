@@ -238,6 +238,7 @@
         errors: [],
         submitting: false,
         mode: "{{ mode }}",
+        _nextId: 1,
 
         get currentFields() {
           if (!this.targetCasetype) return [];
@@ -264,6 +265,20 @@
           return this.capability.auto_values[fieldType] || [];
         },
 
+        initializeIds(node) {
+          if (!node._id) node._id = this._nextId++;
+          if (node.children) {
+            node.children.forEach((child) => this.initializeIds(child));
+          }
+          if (node.child) {
+            this.initializeIds(node.child);
+          }
+        },
+
+        init() {
+          this.initializeIds(this.query);
+        },
+
         onCasetypeChange() {
           // Reset query when case type changes in new mode
           this.query = { type: "and", children: [] };
@@ -281,6 +296,7 @@
         addCondition(group) {
           if (!group.children) group.children = [];
           group.children.push({
+            _id: this._nextId++,
             type: "component",
             field: "",
             component: "",
@@ -290,23 +306,23 @@
 
         addGroup(parentGroup, type) {
           if (!parentGroup.children) parentGroup.children = [];
-          parentGroup.children.push({ type: type, children: [] });
+          parentGroup.children.push({
+            _id: this._nextId++,
+            type: type,
+            children: [],
+          });
         },
 
         addNotGroup(parentGroup) {
           if (!parentGroup.children) parentGroup.children = [];
           parentGroup.children.push({
+            _id: this._nextId++,
             type: "not",
-            child: { type: "and", children: [] },
+            child: { _id: this._nextId++, type: "and", children: [] },
           });
         },
 
         removeNode(parentGroup, idx) {
-          parentGroup.children.splice(idx, 1);
-        },
-
-        removeChildNode(parentGroup, idx) {
-          // same as removeNode but named for clarity
           parentGroup.children.splice(idx, 1);
         },
 
@@ -373,7 +389,7 @@
               query: this.query,
             };
 
-            const resp = await fetch("{{ post_url }}", {
+            const resp = await fetch("{{ post_url|escapejs }}", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -400,7 +416,8 @@
             .split(";")
             .map((c) => c.trim())
             .find((c) => c.startsWith("csrftoken="));
-          return cookie ? cookie.split("=")[1] : "";
+          const parts = cookie.split("=");
+          return parts.length > 1 ? parts.slice(1).join("=") : "";
         },
       };
     }
