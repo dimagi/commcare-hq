@@ -76,3 +76,102 @@ def deactivate_endpoint(endpoint):
     """Soft-delete an endpoint."""
     endpoint.is_active = False
     endpoint.save(update_fields=['is_active'])
+
+
+def validate_filter_spec(query, capability, case_type_name, parameters):
+    """Validate a filter spec tree against capability and parameters.
+    Returns a list of error strings. Empty list means valid.
+    """
+    errors = []
+    case_type_def = None
+    for ct in capability.get('case_types', []):
+        if ct['name'] == case_type_name:
+            case_type_def = ct
+            break
+    if case_type_def is None:
+        errors.append(f'Unknown case type: {case_type_name}')
+        return errors
+
+    fields_by_name = {f['name']: f for f in case_type_def.get('fields', [])}
+    param_names = {p['name'] for p in parameters}
+    all_auto_refs = set()
+    for refs in capability.get('auto_values', {}).values():
+        for ref in refs:
+            all_auto_refs.add(ref['ref'])
+    schemas = capability.get('component_input_schemas', {})
+
+    _validate_node(query, fields_by_name, param_names, all_auto_refs, schemas, errors)
+    return errors
+
+
+def _validate_node(node, fields_by_name, param_names, all_auto_refs, schemas, errors):
+    node_type = node.get('type')
+    if node_type in ('and', 'or'):
+        for child in node.get('children', []):
+            _validate_node(child, fields_by_name, param_names, all_auto_refs, schemas, errors)
+    elif node_type == 'not':
+        child = node.get('child')
+        if child:
+            _validate_node(child, fields_by_name, param_names, all_auto_refs, schemas, errors)
+    elif node_type == 'component':
+        _validate_component(node, fields_by_name, param_names, all_auto_refs, schemas, errors)
+    else:
+        errors.append(f'Unknown node type: {node_type}')
+
+
+def _validate_component(node, fields_by_name, param_names, all_auto_refs, schemas, errors):
+    field_name = node.get('field', '')
+    component = node.get('component', '')
+    inputs = node.get('inputs', {})
+
+    field_def = fields_by_name.get(field_name)
+    if field_def is None:
+        errors.append(f'Unknown field: {field_name}')
+        return
+
+    if component not in field_def.get('operations', []):
+        errors.append(
+            f'Component "{component}" is not valid for field "{field_name}" '
+            f'(type: {field_def["type"]})'
+        )
+        return
+
+    schema = schemas.get(component, [])
+    for slot in schema:
+        slot_name = slot['name']
+        if slot_name not in inputs:
+            errors.append(
+                f'Missing required input "{slot_name}" for component "{component}" '
+                f'on field "{field_name}"'
+            )
+            continue
+        _validate_input_value(
+            inputs[slot_name], slot_name, component, field_name,
+            param_names, all_auto_refs, errors,
+        )
+
+
+def _validate_input_value(value, slot_name, component, field_name,
+                          param_names, all_auto_refs, errors):
+    value_type = value.get('type')
+    if value_type == 'constant':
+        pass
+    elif value_type == 'parameter':
+        ref = value.get('ref', '')
+        if ref not in param_names:
+            errors.append(
+                f'Unknown parameter "{ref}" in input "{slot_name}" '
+                f'for component "{component}" on field "{field_name}"'
+            )
+    elif value_type == 'auto_value':
+        ref = value.get('ref', '')
+        if ref not in all_auto_refs:
+            errors.append(
+                f'Unknown auto-value "{ref}" in input "{slot_name}" '
+                f'for component "{component}" on field "{field_name}"'
+            )
+    else:
+        errors.append(
+            f'Invalid input type "{value_type}" in input "{slot_name}" '
+            f'for component "{component}" on field "{field_name}"'
+        )
