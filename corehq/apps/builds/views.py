@@ -37,19 +37,6 @@ def post(request):
 
 
 @require_GET
-def get(request, version, build_number, path):
-    build = CommCareBuild.get_build(version, build_number)
-    try:
-        file = build.fetch_file(path)
-    except ResourceNotFound:
-        raise Http404()
-
-    response = HttpResponse(file)
-    response['Content-Disposition'] = 'attachment; filename="%s"' % path.split("/")[-1]
-    return response
-
-
-@require_GET
 @require_superuser
 def get_all(request):
     builds = sorted(CommCareBuild.all_builds(), key=lambda build: build.time)

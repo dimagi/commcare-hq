@@ -44,15 +44,6 @@ class CommCareBuild(BlobMixin, Document):
     time = DateTimeProperty()
     _blobdb_type_code = BLOB_CODES.commcarebuild
 
-    def fetch_file(self, path, filename=None):
-        if filename:
-            path = '/'.join([path, filename])
-        attachment = self.fetch_attachment(path)
-        try:
-            return attachment.decode('utf-8')
-        except UnicodeDecodeError:
-            return attachment
-
     @classmethod
     def create_without_artifacts(cls, version, build_number):
         self = cls(build_number=build_number, version=version,
