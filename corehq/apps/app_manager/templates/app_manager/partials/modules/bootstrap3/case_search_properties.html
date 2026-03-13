@@ -124,75 +124,73 @@
         </p>
       </div>
     </div>
-    {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
-      <div class="panel panel-appmanager">
-        <div class="panel-heading">
-          <h4 class="panel-title panel-title-nolink">
-            {% trans "Custom Sort Properties" %}
-          </h4>
-        </div>
-        <div class="panel-body">
-          <p>
-            {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
-          </p>
-          <table class="table table-condensed">
-            <thead data-bind="visible: custom_sort_properties().length > 0">
-              <tr>
-                <th></th>
-                <th>{% trans "Case Property" %}</th>
-                <th>{% trans "Format" %}</th>
-                <th>{% trans "Direction" %}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody
-              data-bind="foreach: custom_sort_properties, sortableList: custom_sort_properties"
-              class="ui-sortable"
-            >
-              <tr>
-                <td>
-                  <i class="grip fa-solid fa-up-down icon-blue"></i>
-                </td>
-                <td class="form-group">
-                  <input
-                    class="form-control"
-                    type="text"
-                    data-bind="value: property_name"
-                  />
-                </td>
-                <td>
-                  <select class="form-control" data-bind="value: sort_type">
-                    <option value="exact">{% trans "Exact" %}</option>
-                    <option value="date">{% trans "Date" %}</option>
-                    <option value="numeric">{% trans "Numeric" %}</option>
-                  </select>
-                </td>
-                <td>
-                  <select class="form-control" data-bind="value: direction">
-                    <option value="ascending">{% trans "Ascending" %}</option>
-                    <option value="descending">{% trans "Descending" %}</option>
-                  </select>
-                </td>
-                <td>
-                  <a data-bind="click: $parent.removeCustomSortProperty">
-                    <i class="fa fa-remove icon-blue"></i>
-                  </a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="form-group">
-            <button
-              class="btn btn-default"
-              data-bind="click: addCustomSortProperty"
-            >
-              <i class="fa fa-plus"></i>
-              {% trans "Add custom sort property" %}
-            </button>
-          </div>
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+          {% trans "Custom Sort Properties" %}
+        </h4>
+      </div>
+      <div class="panel-body">
+        <p>
+          {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
+        </p>
+        <table class="table table-condensed">
+          <thead data-bind="visible: custom_sort_properties().length > 0">
+            <tr>
+              <th></th>
+              <th>{% trans "Case Property" %}</th>
+              <th>{% trans "Format" %}</th>
+              <th>{% trans "Direction" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody
+            data-bind="foreach: custom_sort_properties, sortableList: custom_sort_properties"
+            class="ui-sortable"
+          >
+            <tr>
+              <td>
+                <i class="grip fa-solid fa-up-down icon-blue"></i>
+              </td>
+              <td class="form-group">
+                <input
+                  class="form-control"
+                  type="text"
+                  data-bind="value: property_name"
+                />
+              </td>
+              <td>
+                <select class="form-control" data-bind="value: sort_type">
+                  <option value="exact">{% trans "Exact" %}</option>
+                  <option value="date">{% trans "Date" %}</option>
+                  <option value="numeric">{% trans "Numeric" %}</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-control" data-bind="value: direction">
+                  <option value="ascending">{% trans "Ascending" %}</option>
+                  <option value="descending">{% trans "Descending" %}</option>
+                </select>
+              </td>
+              <td>
+                <a data-bind="click: $parent.removeCustomSortProperty">
+                  <i class="fa fa-remove icon-blue"></i>
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="form-group">
+          <button
+            class="btn btn-default"
+            data-bind="click: addCustomSortProperty"
+          >
+            <i class="fa fa-plus"></i>
+            {% trans "Add custom sort property" %}
+          </button>
         </div>
       </div>
-    {% endif %}
+    </div>
     <div class="panel panel-appmanager" data-bind="visible: isEnabled">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">
@@ -236,25 +234,21 @@
                     data-bind="value: workflow"
                     id="search-workflow"
                   >
-                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-                      <option
-                        value="classic"
-                        data-bind="hidden: restrictWorkflowForDataRegistry"
-                      >
-                        {% trans "Normal Case List" %}
-                      </option>
-                    {% endif %}
+                    <option
+                      value="classic"
+                      data-bind="hidden: restrictWorkflowForDataRegistry"
+                    >
+                      {% trans "Normal Case List" %}
+                    </option>
                     <option value="auto_launch">
                       {% trans "Search First" %}
                     </option>
-                    {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
-                      <option
-                        value="see_more"
-                        data-bind="hidden: restrictWorkflowForDataRegistry"
-                      >
-                        {% trans "See More" %}
-                      </option>
-                    {% endif %}
+                    <option
+                      value="see_more"
+                      data-bind="hidden: restrictWorkflowForDataRegistry"
+                    >
+                      {% trans "See More" %}
+                    </option>
                     <option value="es_only">
                       {% trans "Skip to Default Case Search Results" %}
                     </option>
@@ -263,7 +257,7 @@
               </div>
             {% endif %}
           </div>
-          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+          {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
             <div
               class="form-group"
               data-bind="slideVisible: inlineSearchVisible"
@@ -311,7 +305,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
             <div class="form-group" data-bind="hidden: inlineSearchActive">
               <label
                 for="search_label"
@@ -329,8 +323,6 @@
                 {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: search_label" %}
               </div>
             </div>
-          {% endif %}
-          {% if request|toggle_enabled:'SYNC_SEARCH_CASE_CLAIM' %}
             <div
               class="case-search-multimedia-input"
               data-bind="hidden: inlineSearchActive"
@@ -341,6 +333,35 @@
               {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
               <!-- /ko -->
             </div>
+            {% if not request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' %}
+              <div class="form-group" data-bind="hidden: inlineSearchActive">
+                <label
+                  for="search_again_label"
+                  class="{% css_label_class %} control-label"
+                >
+                  {% trans "Label for Searching Again" %}
+                  <span
+                    class="hq-help-template"
+                    data-title="{% trans "Label for Searching Again" %}"
+                    data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}"
+                  >
+                  </span>
+                </label>
+                <div class="{% css_field_class %}">
+                  {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
+                </div>
+              </div>
+              <div
+                class="case-search-multimedia-input"
+                data-bind="hidden: inlineSearchActive"
+              >
+                <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+                <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+                <!-- ko stopBinding: true -->
+                {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+                <!-- /ko -->
+              </div>
+            {% endif %}
             <div class="form-group">
               <label
                 for="search_screen_title"
@@ -445,7 +466,6 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
           <div class="form-group">
             <label
               for="claim-relevant-condition"
@@ -474,7 +494,6 @@
               ></textarea>
             </div>
           </div>
-          {% endif %}
           <div class="form-group">
             <label
               for="blacklisted-user-ids"
@@ -627,7 +646,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
             <div class="form-group">
               <label
                 for="custom-related-case-property"
@@ -659,8 +678,6 @@
                 />
               </div>
             </div>
-          {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_RELATED_LOOKUPS' %}
             <div class="form-group">
               <label class="control-label {% css_label_class %}">
                 {% trans "Include all related cases in search results" %}
@@ -677,7 +694,7 @@
               </div>
             </div>
           {% endif %}
-          {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
+          {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search %}
             <div class="form-group">
               <label class="control-label {% css_label_class %}">
                 {% trans "Clearing search terms resets search results" %}

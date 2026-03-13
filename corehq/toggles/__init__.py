@@ -998,7 +998,10 @@ GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     When enabled this will add a small button to the geocoder widget that, when pressed, and if
     the user grants permission, will perform a reverse geocoding query based on the user's reported location.
     The result will be used to populate the search field of the geocoder widget.
+
+    This is intended as a temporary toggle and will likely get rolled into the "USH_CASE_CLAIM_UPDATES" toggle.
     """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
@@ -1012,14 +1015,15 @@ GEOCODER_USER_PROXIMITY = StaticToggle(
        will be filtered out when used in the case search.
     2. Proximity to the users location will be taken into account for the results order.
     """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
 
 USH_SEARCH_FILTER = StaticToggle(
     'case_search_filter',
     "USH Specific toggle to use Search Filter in case search options.",
-    TAG_DEPRECATED,
+    TAG_FROZEN,
     namespaces=[NAMESPACE_DOMAIN],
-    parent_toggles=[CASE_SEARCH_ADVANCED],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_INLINE_SEARCH = StaticToggle(
@@ -1031,6 +1035,7 @@ USH_INLINE_SEARCH = StaticToggle(
     description="""
     Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
     """,
+    parent_toggles=[USH_CASE_CLAIM_UPDATES]
 )
 
 USH_EMPTY_CASE_LIST_TEXT = StaticToggle(

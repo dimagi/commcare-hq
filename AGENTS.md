@@ -9,8 +9,7 @@ for AI coding assistants. For coding standards and best practices, see
 - Backend: Python, Django
 - Python dependency management: uv
 - Testing: pytest
-- Linting: Flake8
-- Formatting & import sorting: Ruff
+- Linting, formatting, & import sorting: Ruff
 - Frontend: JavaScript, HTMX, Alpine.js, Knockout.js (legacy), Bootstrap 5
   (Bootstrap 3 for legacy code)
 - JavaScript bundling & dependency management: Webpack, Yarn
@@ -31,7 +30,7 @@ for AI coding assistants. For coding standards and best practices, see
 ## Common Commands
 
 **Activate the virtualenv** before running any commands to ensure tools
-like `flake8`, `pytest`, and `manage.py` are available:
+like `ruff`, `pytest`, and `manage.py` are available:
 
 ```bash
 source .venv/bin/activate
@@ -67,7 +66,7 @@ Notable markers: `es_test` (Elasticsearch), `sharded` (shard DBs), `slow`.
 
 ```bash
 # Python linting
-flake8 path/to/file.py
+ruff check path/to/file.py
 
 # JavaScript linting
 npx eslint path/to/file.js
@@ -115,6 +114,16 @@ scripts/pr-failures.sh [pr_number]  # uses current branch if omitted
 
 - **migrations.lock** — If you wrote a migration instead of generating one,
   run `./manage.py makemigrations --lock-update` to update the lock file.
+- **New domain-scoped models** — Any new model with a `domain` field (or
+  reachable via FK to a domain) must be registered in two places or CI will
+  fail:
+  - `corehq/apps/dump_reload/sql/dump.py` — add a
+    `FilteredModelIteratorBuilder` entry so the model is included in domain
+    data exports.
+  - `corehq/apps/domain/deletion.py` — add a `ModelDeletion` entry so the
+    model is cleaned up when a domain is deleted.
+  Use `SimpleFilter('domain')` for direct domain fields, or
+  `SimpleFilter('parent__domain')` for FK traversal.
 - **CouchDB is legacy** — Use PostgreSQL for new data models
 - **Knockout.js is legacy** — Prefer HTMX or Alpine.js for new frontend code
 - **Bootstrap 3 is legacy** — Prefer Bootstrap 5; both coexist in the codebase

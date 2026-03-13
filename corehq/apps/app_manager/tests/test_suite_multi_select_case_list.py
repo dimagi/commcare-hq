@@ -42,6 +42,7 @@ from .util import patch_validate_xform
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
+@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite', 'multi_select_case_list')
 
@@ -170,6 +171,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         self.assertTrue(shadow_module.is_multi_select())
         del self.factory.app.modules[shadow_module.id]
 
+    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_multi_select_case_list_auto_launch(self):
         self.module.search_config.auto_launch = True
         suite = self.factory.app.create_suite()
@@ -196,10 +198,33 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./detail[@id='m0_case_short']/action",
         )
 
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <action auto_launch="false()" redo_last="true">
+                <display>
+                  <text>
+                    <locale id="case_search.m0.again"/>
+                  </text>
+                </display>
+                <stack>
+                  <push>
+                    <mark/>
+                    <command value="'search_command.m0'"/>
+                  </push>
+                </stack>
+              </action>
+            </partial>
+            """,
+            suite,
+            "./detail[@id='m0_search_short']/action",
+        )
+
 
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
+@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.factory = AppFactory(domain="multiple-referrals")
@@ -323,6 +348,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
+@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     MAIN_CASE_TYPE = 'beneficiary'
     OTHER_CASE_TYPE = 'household'
@@ -515,6 +541,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
 @patch.object(Application, 'enable_practice_users', return_value=False)
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
+@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
     CASE_TYPE = 'noun'
 

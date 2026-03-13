@@ -4,7 +4,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
 
-from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -147,7 +146,6 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
             pass
         else:
             helper = RegistryQueryHelper(domain, couch_user, registry_helper)
-    helper.is_case_search = True
     return helper
 
 
@@ -155,7 +153,6 @@ class QueryHelper:
     def __init__(self, domain):
         self.domain = domain
         self.profiler = CaseSearchProfiler()
-        self.is_case_search = False
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
@@ -243,7 +240,6 @@ class CaseSearchQueryBuilder:
 
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
-            _require_case_search_advanced(self.request_domain)
             if not criteria.is_empty:
                 xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
                 for xpath in xpaths:
@@ -514,10 +510,3 @@ def _get_case_search_cases(helper, case_ids):
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):
     case.case_json[IS_RELATED_CASE] = "true"
-
-
-# log once per domain per day
-@quickcache(['domain'], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
-def _require_case_search_advanced(domain):
-    if not toggles.CASE_SEARCH_ADVANCED.enabled(domain):
-        notify_exception(None, "Advanced case search feature attempted")

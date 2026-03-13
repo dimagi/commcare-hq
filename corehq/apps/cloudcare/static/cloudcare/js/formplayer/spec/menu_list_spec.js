@@ -1,3 +1,4 @@
+/* global before, after, afterEach */
 import sinon from "sinon";
 import Backbone from "backbone";
 import initialPageData from "hqwebapp/js/initial_page_data";
@@ -16,6 +17,7 @@ describe('Render a case list', function () {
         initialPageData.register(
             "toggles_dict",
             {
+                SPLIT_SCREEN_CASE_SEARCH: false,
                 DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
                 USE_PROMINENT_PROGRESS_BAR: false,
                 ACTIVATE_DATADOG_APM_TRACES: false,

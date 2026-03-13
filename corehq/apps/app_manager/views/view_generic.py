@@ -377,7 +377,7 @@ def _get_specific_media(
             module
             and hasattr(module, 'search_config')
             and module.uses_media()
-            and toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain)
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
         ):
             specific_media.extend([
                 {
@@ -392,6 +392,19 @@ def _get_specific_media(
                         lang,
                     ),
                     'qualifier': 'case_search-search_label_media_'
+                },
+                {
+                    'menu_refs': app.get_case_search_label_media(
+                        module,
+                        module.search_config.search_again_label,
+                        to_language=lang,
+                    ),
+                    'default_file_name': _make_file_name(
+                        default_file_name,
+                        'case_search_again_label_item',
+                        lang,
+                    ),
+                    'qualifier': 'case_search-search_again_label_media_'
                 }
             ])
 

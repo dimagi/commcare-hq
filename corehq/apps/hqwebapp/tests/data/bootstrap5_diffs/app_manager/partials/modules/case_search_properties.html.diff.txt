@@ -127,66 +127,66 @@
              data-bind="click: addDefaultProperty"
            >
              <i class="fa fa-plus"></i> {% trans "Add default search property" %}
-@@ -125,13 +125,13 @@
+@@ -124,13 +124,13 @@
+         </p>
        </div>
      </div>
-     {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
--      <div class="panel panel-appmanager">
--        <div class="panel-heading">
--          <h4 class="panel-title panel-title-nolink">
-+      <div class="card panel-appmanager">  {# todo B5: css-panel #}
-+        <div class="card-header">
-+          <h4 class="card-title card-title-nolink">
-             {% trans "Custom Sort Properties" %}
-           </h4>
-         </div>
--        <div class="panel-body">
-+        <div class="card-body">
-           <p>
-             {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
-           </p>
-@@ -153,7 +153,7 @@
-                 <td>
-                   <i class="grip fa-solid fa-up-down icon-blue"></i>
-                 </td>
--                <td class="form-group">
-+                <td class="form-group">  {# todo B5: css-form-group #}
-                   <input
-                     class="form-control"
-                     type="text"
-@@ -161,14 +161,14 @@
-                   />
-                 </td>
-                 <td>
--                  <select class="form-control" data-bind="value: sort_type">
-+                  <select class="form-select" data-bind="value: sort_type">
-                     <option value="exact">{% trans "Exact" %}</option>
-                     <option value="date">{% trans "Date" %}</option>
-                     <option value="numeric">{% trans "Numeric" %}</option>
-                   </select>
-                 </td>
-                 <td>
--                  <select class="form-control" data-bind="value: direction">
-+                  <select class="form-select" data-bind="value: direction">
-                     <option value="ascending">{% trans "Ascending" %}</option>
-                     <option value="descending">{% trans "Descending" %}</option>
-                   </select>
-@@ -181,9 +181,9 @@
-               </tr>
-             </tbody>
-           </table>
--          <div class="form-group">
-+          <div class="form-group">  {# todo B5: css-form-group #}
-             <button
--              class="btn btn-default"
-+              class="btn btn-outline-primary"
-               data-bind="click: addCustomSortProperty"
-             >
-               <i class="fa fa-plus"></i>
-@@ -193,19 +193,19 @@
+-    <div class="panel panel-appmanager">
+-      <div class="panel-heading">
+-        <h4 class="panel-title panel-title-nolink">
++    <div class="card panel-appmanager">  {# todo B5: css-panel #}
++      <div class="card-header">
++        <h4 class="card-title card-title-nolink">
+           {% trans "Custom Sort Properties" %}
+         </h4>
+       </div>
+-      <div class="panel-body">
++      <div class="card-body">
+         <p>
+           {% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}
+         </p>
+@@ -152,7 +152,7 @@
+               <td>
+                 <i class="grip fa-solid fa-up-down icon-blue"></i>
+               </td>
+-              <td class="form-group">
++              <td class="form-group">  {# todo B5: css-form-group #}
+                 <input
+                   class="form-control"
+                   type="text"
+@@ -160,14 +160,14 @@
+                 />
+               </td>
+               <td>
+-                <select class="form-control" data-bind="value: sort_type">
++                <select class="form-select" data-bind="value: sort_type">
+                   <option value="exact">{% trans "Exact" %}</option>
+                   <option value="date">{% trans "Date" %}</option>
+                   <option value="numeric">{% trans "Numeric" %}</option>
+                 </select>
+               </td>
+               <td>
+-                <select class="form-control" data-bind="value: direction">
++                <select class="form-select" data-bind="value: direction">
+                   <option value="ascending">{% trans "Ascending" %}</option>
+                   <option value="descending">{% trans "Descending" %}</option>
+                 </select>
+@@ -180,9 +180,9 @@
+             </tr>
+           </tbody>
+         </table>
+-        <div class="form-group">
++        <div class="form-group">  {# todo B5: css-form-group #}
+           <button
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             data-bind="click: addCustomSortProperty"
+           >
+             <i class="fa fa-plus"></i>
+@@ -191,19 +191,19 @@
          </div>
        </div>
-     {% endif %}
+     </div>
 -    <div class="panel panel-appmanager" data-bind="visible: isEnabled">
 -      <div class="panel-heading">
 -        <h4 class="panel-title panel-title-nolink">
@@ -210,7 +210,7 @@
                    for="search-workflow"
                    data-bind="hidden: restrictWorkflowForDataRegistry"
                  >
-@@ -218,7 +218,7 @@
+@@ -216,7 +216,7 @@
                    </span>
                  </label>
                  <label
@@ -219,7 +219,7 @@
                    for="search-workflow"
                    data-bind="visible: restrictWorkflowForDataRegistry"
                  >
-@@ -231,7 +231,7 @@
+@@ -229,7 +229,7 @@
                    </span>
                  </label>
                  <div class="{% css_field_class %}">
@@ -228,9 +228,9 @@
                      class="form-control"
                      data-bind="value: workflow"
                      id="search-workflow"
-@@ -265,10 +265,10 @@
+@@ -259,10 +259,10 @@
            </div>
-           {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+           {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
              <div
 -              class="form-group"
 +              class="form-group"  {# todo B5: css-form-group #}
@@ -241,7 +241,7 @@
                  {% trans "Make search input available after search" %}
                  <span
                    class="hq-help-template"
-@@ -277,9 +277,9 @@
+@@ -271,9 +271,9 @@
                  >
                  </span>
                </label>
@@ -253,7 +253,7 @@
                    <input
                      type="hidden"
                      name="search-input"
-@@ -291,8 +291,8 @@
+@@ -285,8 +285,8 @@
                  </p>
                </div>
              </div>
@@ -264,10 +264,10 @@
                  {% trans "Search Input Instance Name" %}
                  <span
                    class="hq-help-template"
-@@ -312,10 +312,10 @@
+@@ -306,10 +306,10 @@
              </div>
            {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
+           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
 -            <div class="form-group" data-bind="hidden: inlineSearchActive">
 +            <div class="form-group" data-bind="hidden: inlineSearchActive">  {# todo B5: css-form-group #}
                <label
@@ -277,7 +277,7 @@
                >
                  {% trans "Label for Searching" %}
                  <span
-@@ -338,19 +338,19 @@
+@@ -330,14 +330,14 @@
                <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
                <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
                <!-- ko stopBinding: true -->
@@ -285,6 +285,25 @@
 +              {% include "app_manager/partials/bootstrap5/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
                <!-- /ko -->
              </div>
+             {% if not request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' %}
+-              <div class="form-group" data-bind="hidden: inlineSearchActive">
++              <div class="form-group" data-bind="hidden: inlineSearchActive">  {# todo B5: css-form-group #}
+                 <label
+                   for="search_again_label"
+-                  class="{% css_label_class %} control-label"
++                  class="{% css_label_class %} form-label"
+                 >
+                   {% trans "Label for Searching Again" %}
+                   <span
+@@ -358,20 +358,20 @@
+                 <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+                 <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+                 <!-- ko stopBinding: true -->
+-                {% include "app_manager/partials/bootstrap3/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
++                {% include "app_manager/partials/bootstrap5/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+                 <!-- /ko -->
+               </div>
+             {% endif %}
 -            <div class="form-group">
 +            <div class="form-group">  {# todo B5: css-form-group #}
                <label
@@ -301,7 +320,7 @@
                  >
                  </span>
                </label>
-@@ -358,10 +358,10 @@
+@@ -379,10 +379,10 @@
                  {% input_trans module.search_config.title_label langs input_name='title_label' input_id='title_label' data_bind="value: title_label" %}
                </div>
              </div>
@@ -314,7 +333,7 @@
                >
                  {% trans "Search Screen Subtitle" %}
                  <span
-@@ -376,10 +376,10 @@
+@@ -397,10 +397,10 @@
                </div>
              </div>
            {% endif %}
@@ -327,7 +346,7 @@
              >
                {% trans "Display Condition" %}
                <span
-@@ -406,10 +406,10 @@
+@@ -427,10 +427,10 @@
              </div>
            </div>
            {% if request|toggle_enabled:'USH_SEARCH_FILTER' %}
@@ -340,7 +359,7 @@
                >
                  {% trans "Search Filter" %}
                  <span
-@@ -434,7 +434,7 @@
+@@ -455,7 +455,7 @@
                  ></textarea>
                  <p class="help-block">
                    <button
@@ -349,10 +368,10 @@
                      data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter"
                    >
                      <i class="fa-solid fa-reply"></i>
-@@ -446,10 +446,10 @@
+@@ -466,10 +466,10 @@
+               </div>
              </div>
            {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_DEPRECATED' %}
 -          <div class="form-group">
 +          <div class="form-group">  {# todo B5: css-form-group #}
              <label
@@ -362,10 +381,10 @@
              >
                {% trans "Claim Condition" %}
                <span
-@@ -475,10 +475,10 @@
+@@ -494,10 +494,10 @@
+               ></textarea>
              </div>
            </div>
-           {% endif %}
 -          <div class="form-group">
 +          <div class="form-group">  {# todo B5: css-form-group #}
              <label
@@ -375,7 +394,7 @@
              >
                {% trans "Don't search cases owned by the following ids" %}
                <span
-@@ -511,10 +511,10 @@
+@@ -530,10 +530,10 @@
              </div>
            </div>
            {% if data_registry_enabled %}
@@ -388,7 +407,7 @@
                >
                  {% trans "Data Registry" %}
                  <span
-@@ -525,7 +525,7 @@
+@@ -544,7 +544,7 @@
                  </span>
                </label>
                <div class="{% css_field_class %}">
@@ -397,7 +416,7 @@
                    class="form-control"
                    id="data-registry"
                    data-bind="value: data_registry"
-@@ -539,15 +539,15 @@
+@@ -558,15 +558,15 @@
                  </select>
                </div>
              </div>
@@ -416,7 +435,7 @@
                    class="form-control"
                    data-bind="value: data_registry_workflow"
                  >
-@@ -558,12 +558,12 @@
+@@ -577,12 +577,12 @@
                </div>
              </div>
              <div
@@ -431,7 +450,7 @@
                >
                  {% trans "Load Additional Data Registry Cases" %}
                  <span
-@@ -585,8 +585,8 @@
+@@ -604,8 +604,8 @@
                      data-bind="visible: additional_registry_cases().length > 0"
                    >
                      <tr>
@@ -442,7 +461,7 @@
                      </tr>
                    </thead>
                    <tbody
-@@ -608,7 +608,7 @@
+@@ -627,7 +627,7 @@
                        </td>
                        <td>
                          <i
@@ -451,7 +470,7 @@
                            class="fa fa-remove"
                            data-bind="click: $parent.removeRegistryQuery"
                          ></i>
-@@ -618,7 +618,7 @@
+@@ -637,7 +637,7 @@
                  </table>
                  <button
                    type="button"
@@ -460,10 +479,10 @@
                    data-bind="click: addRegistryQuery"
                  >
                    <i class="fa fa-plus"></i>
-@@ -628,10 +628,10 @@
+@@ -647,10 +647,10 @@
              </div>
            {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' %}
+           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
 -            <div class="form-group">
 +            <div class="form-group">  {# todo B5: css-form-group #}
                <label
@@ -473,10 +492,10 @@
                >
                  {% trans "Case property with additional case id to add to results" %}
                  <span
-@@ -661,15 +661,15 @@
+@@ -678,15 +678,15 @@
+                 />
+               </div>
              </div>
-           {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_RELATED_LOOKUPS' %}
 -            <div class="form-group">
 -              <label class="control-label {% css_label_class %}">
 +            <div class="form-group">  {# todo B5: css-form-group #}
@@ -493,10 +512,10 @@
                        data-bind="checked: include_all_related_cases"
                      />
                    </label>
-@@ -678,18 +678,18 @@
+@@ -695,18 +695,18 @@
              </div>
            {% endif %}
-           {% if request|toggle_enabled:'CASE_SEARCH_ADVANCED' and not app.split_screen_dynamic_search %}
+           {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search %}
 -            <div class="form-group">
 -              <label class="control-label {% css_label_class %}">
 +            <div class="form-group">  {# todo B5: css-form-group #}
