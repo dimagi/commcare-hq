@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Max
 from django.http import Http404
 
@@ -7,6 +8,7 @@ from corehq.apps.case_search.models import (
 )
 
 
+@transaction.atomic
 def create_endpoint(domain, name, target_type, target_name, parameters, query):
     """Create a new endpoint with its first version."""
     endpoint = CaseSearchEndpoint.objects.create(
@@ -26,6 +28,7 @@ def create_endpoint(domain, name, target_type, target_name, parameters, query):
     return endpoint
 
 
+@transaction.atomic
 def save_new_version(endpoint, parameters, query):
     """Create a new version for an existing endpoint."""
     max_version = (

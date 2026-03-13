@@ -416,6 +416,7 @@
             .split(";")
             .map((c) => c.trim())
             .find((c) => c.startsWith("csrftoken="));
+          if (!cookie) return "";
           const parts = cookie.split("=");
           return parts.length > 1 ? parts.slice(1).join("=") : "";
         },
