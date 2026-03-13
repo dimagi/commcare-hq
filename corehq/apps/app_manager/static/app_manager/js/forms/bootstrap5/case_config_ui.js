@@ -156,6 +156,7 @@ $(function () {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
+        self.pageState = {};
         self.caseConfigViewModel = ko.observable(caseConfigViewModel(self));
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
@@ -364,8 +365,16 @@ $(function () {
         };
 
         // Pagination and search
+        if (!caseConfig.pageState[data.type]) {
+            // setup global page state for data.type on first call, reuse thereafter
+            caseConfig.pageState[data.type] = {
+                currentPage: ko.observable(3),
+                searchQuery: ko.observable(''),
+            };
+        }
+        self.currentPage = caseConfig.pageState[data.type].currentPage;
         self.searchAndFilter = true;
-        self.case_property_query = ko.observable('');
+        self.case_property_query = caseConfig.pageState[data.type].searchQuery;
         self.filtered_case_properties = ko.computed(function () {
             var query = self.case_property_query() || '';
             var props = _.filter(self.case_properties(), function (item) {
@@ -377,18 +386,22 @@ $(function () {
         self.visible_case_properties = ko.observableArray();
         self.pagination_reset_flag = ko.observable(false);
         self.goToPage = function (page) {
-            page = page || 1;
             var props = self.filtered_case_properties();
+            var lastPage = Math.ceil(props.length / self.per_page()) || 1;
+            page = Math.min(page || 1, lastPage);
             var skip = self.per_page() * (page - 1);
             props = props.slice(skip, skip + self.per_page());
             self.visible_case_properties(props);
+            if (page !== self.currentPage()) {
+                self.currentPage(page);
+            };
         };
         // Don't allow changing per page; "Add Property" button is where the per page changer usually is
         self.per_page = ko.observable(10);
         self.total_case_properties = ko.computed(function () {
             return self.filtered_case_properties().length;
         });
-        self.goToPage(1);
+        self.goToPage(self.currentPage());
 
         self.suggestedSaveProperties = ko.computed(function () {
             const properties = caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
