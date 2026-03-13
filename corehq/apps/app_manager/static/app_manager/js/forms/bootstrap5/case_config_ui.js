@@ -22,6 +22,14 @@ $(function () {
         // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload",
     ];
+    function filterActions(formActions) {
+        var actions = {};
+        _(actionNames).each(function (actionName) {
+            actions[actionName] = formActions[actionName];
+        });
+        actions.subcases = formActions.subcases;
+        return actions;
+    }
 
     var caseConfig = function (params) {
         var self = {};
@@ -33,14 +41,7 @@ $(function () {
         };
 
         self.home = params.home;
-        self.actions = (function (a) {
-            var actions = {};
-            _(actionNames).each(function (actionName) {
-                actions[actionName] = a[actionName];
-            });
-            actions.subcases = a.subcases;
-            return actions;
-        }(params.actions));
+        self.actions = filterActions(params.actions);
         self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;
         // `requires` is a ko observable so it can be read by another UI
@@ -73,11 +74,11 @@ $(function () {
         self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
-                var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
-                var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
+                var requires = self.caseConfigViewModel().actionType() === 'update' ? 'case' : 'none';
+                var subcases = _(self.caseConfigViewModel().subcases()).map(HQOpenSubCaseAction.from_case_transaction);
                 const opensCase = self.caseType && (requires === 'none');
                 const updatedActions = Object.assign(
-                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction, opensCase),
+                    HQFormActions.from_case_transaction(self.caseConfigViewModel().case_transaction, opensCase),
                     {subcases: subcases},
                 );
                 const diff = getDiff(self.baseline, updatedActions);
@@ -97,7 +98,9 @@ $(function () {
                         self.setPropertiesMap(data.propertiesMap);
                         // update the "original" state so that subsequent changes prior to a reload
                         // can generate a correct diff
-                        self.baseline = getBaseline(updatedActions);
+                        self.baseline = getBaseline(data.actions);
+                        self.actions = filterActions(data.actions);
+                        self.caseConfigViewModel(caseConfigViewModel(self));
 
                         if (_(data.propertiesMap).has(self.caseType)) {
                             noopMetrics.track.event("Saved question as a Case Property", {
@@ -113,7 +116,7 @@ $(function () {
             unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 const actions = JSON.stringify(
-                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction),
+                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel().usercase_transaction),
                 );
                 self.saveUsercaseButton.ajax({
                     type: 'post',
@@ -153,7 +156,7 @@ $(function () {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
-        self.caseConfigViewModel = caseConfigViewModel(self);
+        self.caseConfigViewModel = ko.observable(caseConfigViewModel(self));
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
             return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
@@ -167,7 +170,7 @@ $(function () {
             self.saveButton.fire('change');
             self.forceRefreshTextchangeBinding(self.home);
             const property = ko.dataFor($(this).closest(".case-property-mapping")[0]);
-            property.conflictingDelete?.(undefined);
+            property?.conflictingDelete?.(undefined);
         };
 
         self.usercaseChange = function () {
@@ -438,7 +441,7 @@ $(function () {
         };
 
         self.dismissConflictingDelete = function (property) {
-            property.conflictingDelete && property.conflictingDelete(undefined);
+            property.conflictingDelete?.(undefined);
             saveButton.fire('change');
         };
 
@@ -724,7 +727,7 @@ $(function () {
             }, caseConfig, true);
             x.allow = {
                 condition: ko.pureComputed(function () {
-                    return caseConfig.caseConfigViewModel.actionType() === 'open';
+                    return caseConfig.caseConfigViewModel().actionType() === 'open';
                 }),
                 repeats: function () {
                     return false;
@@ -742,7 +745,7 @@ $(function () {
             var openCondition = o.condition;
             var closeCondition = o.close_condition;
             var updateCondition = DEFAULT_CONDITION_ALWAYS;
-            var actionType = caseTransaction.caseConfig.caseConfigViewModel.actionType();
+            var actionType = caseTransaction.caseConfig.caseConfigViewModel().actionType();
 
             if (actionType === 'open') {
                 if (openCondition.type === 'never') {
