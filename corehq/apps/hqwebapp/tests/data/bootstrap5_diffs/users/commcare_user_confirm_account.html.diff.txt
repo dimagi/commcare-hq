@@ -1,6 +1,9 @@
 --- 
 +++ 
-@@ -3,7 +3,7 @@
+@@ -1,9 +1,9 @@
+-{% extends login_template_b3 %}
++{% extends login_template %}
+ {% load i18n %}
  {% load field_tags %}
  {% load hq_shared_tags %}
  
