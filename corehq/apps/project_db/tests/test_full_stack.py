@@ -56,7 +56,8 @@ class TestFullStack:
             server_modified_on='2025-06-01',
             case_json={'district': 'Kamuli'},
         )
-        upsert_case(self.engine, table, case_to_row_dict(household))
+        with self.engine.begin() as conn:
+            upsert_case(conn, table, case_to_row_dict(household))
 
     def _populate_patient(self, table):
         patient = CommCareCase(
@@ -75,7 +76,8 @@ class TestFullStack:
                 relationship_id=CommCareCaseIndex.CHILD,
             ),
         ]
-        upsert_case(self.engine, table, case_to_row_dict(patient))
+        with self.engine.begin() as conn:
+            upsert_case(conn, table, case_to_row_dict(patient))
 
     def _verify_single_table_query(self, patient_table):
         with self.engine.begin() as conn:

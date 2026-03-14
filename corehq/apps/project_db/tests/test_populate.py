@@ -35,6 +35,10 @@ class TestUpsertCase:
                 f'DROP TABLE IF EXISTS "{self.table.name}"'
             ))
 
+    def _upsert(self, case_data):
+        with self.engine.begin() as conn:
+            upsert_case(conn, self.table, case_data)
+
     def _select_case(self, case_id):
         with self.engine.begin() as conn:
             result = conn.execute(
@@ -50,7 +54,7 @@ class TestUpsertCase:
             'prop.first_name': 'Alice',
         }
 
-        upsert_case(self.engine, self.table, case_data)
+        self._upsert(case_data)
 
         row = self._select_case('case-001')
         assert row['case_id'] == 'case-001'
@@ -65,7 +69,7 @@ class TestUpsertCase:
             'case_name': 'Original Name',
             'prop.first_name': 'Bob',
         }
-        upsert_case(self.engine, self.table, case_data)
+        self._upsert(case_data)
 
         updated_data = {
             'case_id': 'case-002',
@@ -73,7 +77,7 @@ class TestUpsertCase:
             'case_name': 'Updated Name',
             'prop.first_name': 'Robert',
         }
-        upsert_case(self.engine, self.table, updated_data)
+        self._upsert(updated_data)
 
         row = self._select_case('case-002')
         assert row['case_name'] == 'Updated Name'
@@ -86,7 +90,7 @@ class TestUpsertCase:
             'prop.unknown_prop': 'should be skipped',
         }
 
-        upsert_case(self.engine, self.table, case_data)
+        self._upsert(case_data)
 
         row = self._select_case('case-004')
         assert row['case_id'] == 'case-004'
@@ -114,6 +118,10 @@ class TestUpsertCaseTypeCoercion:
                 f'DROP TABLE IF EXISTS "{self.table.name}"'
             ))
 
+    def _upsert(self, case_data):
+        with self.engine.begin() as conn:
+            upsert_case(conn, self.table, case_data)
+
     def _select_case(self, case_id):
         with self.engine.begin() as conn:
             result = conn.execute(
@@ -122,7 +130,7 @@ class TestUpsertCaseTypeCoercion:
             return dict(result.fetchone())
 
     def test_date_property_coerced(self):
-        upsert_case(self.engine, self.table, {
+        self._upsert({
             'case_id': 'tc-001',
             'owner_id': 'owner-1',
             'prop.dob': '1990-05-20',
@@ -133,7 +141,7 @@ class TestUpsertCaseTypeCoercion:
         assert row['prop__dob__date'] == datetime.date(1990, 5, 20)
 
     def test_number_property_coerced(self):
-        upsert_case(self.engine, self.table, {
+        self._upsert({
             'case_id': 'tc-002',
             'owner_id': 'owner-1',
             'prop.age': '34',
@@ -144,7 +152,7 @@ class TestUpsertCaseTypeCoercion:
         assert row['prop__age__numeric'] == Decimal('34')
 
     def test_invalid_date_sets_typed_column_to_none(self):
-        upsert_case(self.engine, self.table, {
+        self._upsert({
             'case_id': 'tc-003',
             'owner_id': 'owner-1',
             'prop.dob': 'not-a-date',
@@ -155,7 +163,7 @@ class TestUpsertCaseTypeCoercion:
         assert row['prop__dob__date'] is None
 
     def test_invalid_number_sets_typed_column_to_none(self):
-        upsert_case(self.engine, self.table, {
+        self._upsert({
             'case_id': 'tc-004',
             'owner_id': 'owner-1',
             'prop.age': 'abc',
@@ -166,7 +174,7 @@ class TestUpsertCaseTypeCoercion:
         assert row['prop__age__numeric'] is None
 
     def test_datetime_string_coerced_to_date(self):
-        upsert_case(self.engine, self.table, {
+        self._upsert({
             'case_id': 'tc-005',
             'owner_id': 'owner-1',
             'prop.dob': '1990-05-20T14:30:00',

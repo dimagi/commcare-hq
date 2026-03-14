@@ -118,6 +118,7 @@ class Command(BaseCommand):
                     for db in accessor.sql_db_aliases)
 
         self.stdout.write(f"\n{case_type}")
-        for case in with_progress_bar(cases, length=total, oneline='concise'):
-            row_dict = case_to_row_dict(case)
-            upsert_case(engine, table, row_dict)
+        with engine.begin() as conn:
+            for case in with_progress_bar(cases, length=total, oneline='concise'):
+                row_dict = case_to_row_dict(case)
+                upsert_case(conn, table, row_dict)

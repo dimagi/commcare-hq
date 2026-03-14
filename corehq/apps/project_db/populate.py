@@ -8,7 +8,31 @@ from corehq.apps.project_db.schema import FIXED_COLUMN_NAMES, SEP
 PROPERTY_PREFIX = 'prop.'
 
 
-def upsert_case(engine, table, case_data):
+def send_to_project_db(case):
+    """Upsert a single CommCareCase into its project DB table.
+
+    Resolves the table by reflecting the live schema for the case's
+    domain and type. Raises if no table exists for this case type.
+    """
+    from corehq.apps.project_db.schema import (
+        get_case_table_schema,
+        get_project_db_engine,
+    )
+
+    table = get_case_table_schema(case.domain, case.type)
+    if table is None:
+        raise LookupError(
+            f"No project DB table for case type {case.type!r} "
+            f"in domain {case.domain!r}"
+        )
+
+    engine = get_project_db_engine()
+    case_data = case_to_row_dict(case)
+    with engine.begin() as conn:
+        upsert_case(conn, table, case_data)
+
+
+def upsert_case(conn, table, case_data):
     """Insert or update a single case row in a project DB table.
 
     ``case_data`` is a dict with:
@@ -18,6 +42,8 @@ def upsert_case(engine, table, case_data):
     On conflict on ``case_id``, only the columns present in ``case_data``
     are updated — columns not included in the dict are left unchanged.
     Callers should include all fields for a full upsert.
+
+    The caller is responsible for connection and transaction management.
     """
     table_columns = set(table.c.keys())
     values = _build_values_dict(case_data, table_columns)
@@ -29,8 +55,7 @@ def upsert_case(engine, table, case_data):
         set_=update_dict,
     )
 
-    with engine.begin() as conn:
-        conn.execute(stmt)
+    conn.execute(stmt)
 
 
 def case_to_row_dict(case):

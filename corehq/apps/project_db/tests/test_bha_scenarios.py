@@ -546,8 +546,9 @@ class TestBHAScenarios(TestCase):
             ('referral', REFERRALS),
         ]:
             table = cls.tables[case_type]
-            for case_data in cases:
-                upsert_case(cls.engine, table, case_data)
+            with cls.engine.begin() as conn:
+                for case_data in cases:
+                    upsert_case(conn, table, case_data)
 
     @classmethod
     def tearDownClass(cls):
