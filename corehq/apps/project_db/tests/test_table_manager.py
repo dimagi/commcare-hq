@@ -103,7 +103,7 @@ class TestEvolveTable:
 
     def test_add_new_index(self):
         metadata = sqlalchemy.MetaData()
-        table = self._build_and_track(
+        self._build_and_track(
             metadata, DOMAIN, 'evolve-idx',
             properties=[('name', 'plain')],
         )

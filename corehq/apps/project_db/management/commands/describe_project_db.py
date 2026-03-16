@@ -30,7 +30,7 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(f"-- Project DB schema for domain: {domain}")
-        self.stdout.write(f"-- Tables are queryable by case type name with:")
+        self.stdout.write("-- Tables are queryable by case type name with:")
         self.stdout.write(f"--   SET LOCAL search_path TO \"{schema_name}\";")
         self.stdout.write("")
 
