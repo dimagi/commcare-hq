@@ -1116,8 +1116,6 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
         username = request.user.username
         results = []
         for domain in couch_user.get_domains():
-            if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
-                continue
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
                 continue

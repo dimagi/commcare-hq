@@ -27,24 +27,11 @@ jobs:
           files: |
             **/*.py
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Run ruff linter
         if: ${{ steps.changed-files.outputs.all_changed_files }}
+        uses: astral-sh/ruff-action@v3
         with:
-          python-version: 3.9
-
-      - name: Install Python dependencies
-        if: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: pip install flake8
-
-      - name: Run flake8 linter
-        if: ${{ steps.changed-files.outputs.all_changed_files }}
-        uses: wearerequired/lint-action@v2
-        with:
-          flake8: true
-          flake8_auto_fix: false
-          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}
-          continue_on_error: false
+          src: ${{ steps.changed-files.outputs.all_changed_files }}
 
   # If this is in the same step as python linting the annotations don't show up
   lint-javascript:

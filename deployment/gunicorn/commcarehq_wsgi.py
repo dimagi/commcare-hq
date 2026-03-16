@@ -1,4 +1,4 @@
-# flake8: noqa: E402
+# ruff: noqa: E402
 import os
 from manage import init_hq_python_path, run_patches
 
