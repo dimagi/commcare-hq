@@ -32,6 +32,16 @@
 
         1. [Install sdkman](https://sdkman.io/install)
 
+           On macOS, the default shell (Zsh) and the outdated system Bash can cause the standard installer to fail. Use this command to ensure a compatible installation:
+
+           ```sh
+           # Run the installer with Zsh-compatible pattern matching
+           curl -s "https://get.sdkman.io" | zsh -o NO_NOMATCH
+
+           # Initialize SDKMAN! in your current session
+           source "$HOME/.sdkman/bin/sdkman-init.sh"
+           ```
+
         2. List available java versions to file one that matches Java (JDK 17)
            ```sh
            sdk list java | grep 17
