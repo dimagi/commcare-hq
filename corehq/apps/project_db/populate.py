@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.dialects.postgresql import insert
 
-from corehq.apps.project_db.schema import FIXED_COLUMN_NAMES, SEP
+from .schema import FIXED_COLUMN_NAMES, SEP
 
 PROPERTY_PREFIX = 'prop.'
 

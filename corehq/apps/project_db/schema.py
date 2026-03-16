@@ -3,7 +3,6 @@ from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text, inspect
 
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 
 # Columns present on every project DB table, in order.
@@ -58,6 +57,7 @@ def build_all_table_schemas(domain, metadata=None):
     :param metadata: optional SQLAlchemy MetaData instance
     :returns: dict mapping case type name to SQLAlchemy Table
     """
+    from corehq.apps.data_dictionary.models import CaseProperty, CaseType
     if metadata is None:
         metadata = sqlalchemy.MetaData()
 
