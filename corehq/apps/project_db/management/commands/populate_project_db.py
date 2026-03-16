@@ -5,10 +5,8 @@ import dateutil.parser
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.project_db.populate import case_to_row_dict, upsert_case
 from corehq.apps.project_db.schema import (
-    build_tables_for_domain,
-    create_tables,
-    evolve_table,
     get_project_db_engine,
+    sync_domain_tables,
 )
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
@@ -86,26 +84,13 @@ class Command(BaseCommand):
                 raise CommandError(f"Invalid --since date: {since!r}")
 
         engine = get_project_db_engine()
-        tables = self._build_and_sync_tables(engine, domain, selected_types)
+        tables = sync_domain_tables(engine, domain)
 
         for case_type in selected_types:
             table = tables[case_type]
             self._populate_case_type(
                 engine, domain, case_type, table, start_date,
             )
-
-    def _build_and_sync_tables(self, engine, domain, selected_types):
-        """Build table schemas from the data dictionary and sync DDL."""
-        import sqlalchemy
-        metadata = sqlalchemy.MetaData()
-        all_tables = build_tables_for_domain(metadata, domain)
-        tables = {name: all_tables[name] for name in selected_types}
-
-        create_tables(engine, metadata)
-        for table in tables.values():
-            evolve_table(engine, table)
-
-        return tables
 
     def _populate_case_type(self, engine, domain, case_type, table, start_date):
         accessor = CaseReindexAccessor(

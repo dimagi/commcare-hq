@@ -3,8 +3,7 @@ import sqlalchemy
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.project_db.populate import case_to_row_dict, upsert_case
-from corehq.apps.project_db.schema import build_tables_for_domain
-from corehq.apps.project_db.schema import create_tables, get_project_db_engine
+from corehq.apps.project_db.schema import get_project_db_engine, sync_domain_tables
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
 DOMAIN = 'test-full-stack'
@@ -44,10 +43,8 @@ class TestFullStack:
         )
 
     def _build_and_create_tables(self):
-        metadata = sqlalchemy.MetaData()
-        tables = build_tables_for_domain(metadata, DOMAIN)
+        tables = sync_domain_tables(self.engine, DOMAIN)
         self._schemas.update(t.schema for t in tables.values())
-        create_tables(self.engine, metadata)
         return tables
 
     def _populate_household(self, table):

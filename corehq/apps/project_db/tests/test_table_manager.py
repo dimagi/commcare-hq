@@ -2,7 +2,7 @@ import pytest
 import sqlalchemy
 from sqlalchemy import inspect as sa_inspect
 
-from corehq.apps.project_db.schema import build_table_for_case_type
+from corehq.apps.project_db.schema import build_table_schema
 from corehq.apps.project_db.schema import (
     create_tables,
     evolve_table,
@@ -31,7 +31,7 @@ class TestCreateTables:
                 ))
 
     def _build_and_track(self, metadata, domain, case_type, **kwargs):
-        table = build_table_for_case_type(metadata, domain, case_type, **kwargs)
+        table = build_table_schema(domain, case_type, metadata=metadata, **kwargs)
         self._schemas.add(table.schema)
         return table
 
@@ -74,7 +74,7 @@ class TestEvolveTable:
                 ))
 
     def _build_and_track(self, metadata, domain, case_type, **kwargs):
-        table = build_table_for_case_type(metadata, domain, case_type, **kwargs)
+        table = build_table_schema(domain, case_type, metadata=metadata, **kwargs)
         self._schemas.add(table.schema)
         return table
 
@@ -87,9 +87,8 @@ class TestEvolveTable:
         create_tables(self.engine, metadata)
 
         # Build a new definition with an additional property
-        metadata2 = sqlalchemy.MetaData()
-        table2 = build_table_for_case_type(
-            metadata2, DOMAIN, 'evolve1',
+        table2 = build_table_schema(
+            DOMAIN, 'evolve1',
             properties=[('name', 'plain'), ('age', 'number')],
         )
 
@@ -111,9 +110,8 @@ class TestEvolveTable:
         create_tables(self.engine, metadata)
 
         # Build a new definition and add an extra index
-        metadata2 = sqlalchemy.MetaData()
-        table2 = build_table_for_case_type(
-            metadata2, DOMAIN, 'evolve-idx',
+        table2 = build_table_schema(
+            DOMAIN, 'evolve-idx',
             properties=[('name', 'plain')],
         )
         sqlalchemy.Index(f'ix_{table2.name}_case_name', table2.c['case_name'])
@@ -135,9 +133,8 @@ class TestEvolveTable:
         create_tables(self.engine, metadata)
 
         # Build a new definition that lacks the 'village' property
-        metadata2 = sqlalchemy.MetaData()
-        table2 = build_table_for_case_type(
-            metadata2, DOMAIN, 'evolve2',
+        table2 = build_table_schema(
+            DOMAIN, 'evolve2',
             properties=[('name', 'plain')],
         )
 

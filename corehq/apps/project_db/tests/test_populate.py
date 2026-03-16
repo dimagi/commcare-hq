@@ -11,7 +11,7 @@ from corehq.apps.project_db.populate import (
     coerce_to_number,
     upsert_case,
 )
-from corehq.apps.project_db.schema import build_table_for_case_type
+from corehq.apps.project_db.schema import build_table_schema
 from corehq.apps.project_db.schema import create_tables, get_project_db_engine
 
 DOMAIN = 'test-populate'
@@ -22,12 +22,11 @@ class TestUpsertCase:
 
     def setup_method(self):
         self.engine = get_project_db_engine()
-        self.metadata = sqlalchemy.MetaData()
-        self.table = build_table_for_case_type(
-            self.metadata, DOMAIN, 'patient',
+        self.table = build_table_schema(
+            DOMAIN, 'patient',
             properties=[('first_name', 'plain')],
         )
-        create_tables(self.engine, self.metadata)
+        create_tables(self.engine, self.table.metadata)
 
     def teardown_method(self):
         with self.engine.begin() as conn:
@@ -101,16 +100,15 @@ class TestUpsertCaseTypeCoercion:
 
     def setup_method(self):
         self.engine = get_project_db_engine()
-        self.metadata = sqlalchemy.MetaData()
-        self.table = build_table_for_case_type(
-            self.metadata, DOMAIN, 'typed_patient',
+        self.table = build_table_schema(
+            DOMAIN, 'typed_patient',
             properties=[
                 ('first_name', 'plain'),
                 ('dob', 'date'),
                 ('age', 'number'),
             ],
         )
-        create_tables(self.engine, self.metadata)
+        create_tables(self.engine, self.table.metadata)
 
     def teardown_method(self):
         with self.engine.begin() as conn:

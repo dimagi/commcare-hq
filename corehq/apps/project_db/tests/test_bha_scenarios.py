@@ -16,9 +16,8 @@ import sqlalchemy
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.project_db.populate import upsert_case
 from corehq.apps.project_db.schema import (
-    build_tables_for_domain,
-    create_tables,
     get_project_db_engine,
+    sync_domain_tables,
 )
 
 DOMAIN = 'test-bha-scenarios'
@@ -532,9 +531,7 @@ class TestBHAScenarios(TestCase):
         for case_type, prop_list in CASE_TYPE_DEFINITIONS.items():
             setup_data_dictionary(DOMAIN, case_type, prop_list=prop_list)
 
-        metadata = sqlalchemy.MetaData()
-        cls.tables = build_tables_for_domain(metadata, DOMAIN)
-        create_tables(cls.engine, metadata)
+        cls.tables = sync_domain_tables(cls.engine, DOMAIN)
 
         for case_type, cases in [
             ('clinic', CLINICS),

@@ -47,17 +47,20 @@ def get_case_table_schema(domain, case_type):
         return None
 
 
-def build_tables_for_domain(metadata, domain):
+def build_all_table_schemas(domain, metadata=None):
     """Build SQLAlchemy Tables for all active case types in a domain.
 
     Reads the data dictionary (CaseType and CaseProperty models) and
     produces a corresponding SQLAlchemy Table for each non-deprecated
     case type.
 
-    :param metadata: SQLAlchemy MetaData instance
     :param domain: CommCare project domain
+    :param metadata: optional SQLAlchemy MetaData instance
     :returns: dict mapping case type name to SQLAlchemy Table
     """
+    if metadata is None:
+        metadata = sqlalchemy.MetaData()
+
     case_types = CaseType.objects.filter(
         domain=domain, is_deprecated=False,
     )
@@ -69,26 +72,29 @@ def build_tables_for_domain(metadata, domain):
                 case_type=case_type, deprecated=False,
             ).values_list('name', 'data_type')
         )
-        tables[case_type.name] = build_table_for_case_type(
-            metadata, domain, case_type.name,
+        tables[case_type.name] = build_table_schema(
+            domain, case_type.name,
+            metadata=metadata,
             properties=properties,
         )
 
     return tables
 
 
-def build_table_for_case_type(metadata, domain, case_type, properties=None):
+def build_table_schema(domain, case_type, metadata=None, properties=None):
     """Build a SQLAlchemy Table for a case type with fixed case columns.
 
     The table is placed in the domain's project DB schema
     (``projectdb_<domain>``), with the case type name as the table name.
 
-    :param metadata: SQLAlchemy MetaData instance
     :param domain: CommCare project domain
     :param case_type: case type name
+    :param metadata: optional SQLAlchemy MetaData instance
     :param properties: list of (name, data_type) tuples for dynamic columns
     :returns: SQLAlchemy Table
     """
+    if metadata is None:
+        metadata = sqlalchemy.MetaData()
     property_columns = _build_property_columns(properties or [])
     fixed_columns = [Column(name, col_type, **kwargs)
                      for name, col_type, kwargs in FIXED_COLUMNS]
@@ -137,6 +143,24 @@ def _build_property_columns(properties):
 
 
 # --- Engine and DDL management ---
+
+
+def sync_domain_tables(engine, domain):
+    """Ensure project DB tables for a domain exist and match the data dictionary.
+
+    Creates the schema and any missing tables, then evolves existing
+    tables to add new columns and indexes.
+
+    :returns: dict mapping case type name to SQLAlchemy Table
+    """
+    tables = build_all_table_schemas(domain)
+    if not tables:
+        return tables
+    metadata = next(iter(tables.values())).metadata
+    create_tables(engine, metadata)
+    for table in tables.values():
+        evolve_table(engine, table)
+    return tables
 
 
 def get_project_db_engine():
