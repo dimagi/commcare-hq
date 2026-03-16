@@ -16,11 +16,14 @@ class TestFullStack:
 
     def setup_method(self):
         self.engine = get_project_db_engine()
-        self._tables = []
+        self._schemas = set()
 
     def teardown_method(self):
-        for table in self._tables:
-            table.drop(self.engine, checkfirst=True)
+        with self.engine.begin() as conn:
+            for schema in self._schemas:
+                conn.execute(sqlalchemy.text(
+                    f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'
+                ))
 
     def test_full_stack(self):
         self._create_data_dictionary()
@@ -43,7 +46,7 @@ class TestFullStack:
     def _build_and_create_tables(self):
         metadata = sqlalchemy.MetaData()
         tables = build_tables_for_domain(metadata, DOMAIN)
-        self._tables.extend(tables.values())
+        self._schemas.update(t.schema for t in tables.values())
         create_tables(self.engine, metadata)
         return tables
 

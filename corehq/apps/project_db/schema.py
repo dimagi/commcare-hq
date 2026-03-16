@@ -4,10 +4,7 @@ from alembic.operations import Operations
 from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text, inspect
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
-
-PROJECT_DB_TABLE_PREFIX = 'projectdb_'
 
 # Columns present on every project DB table, in order.
 # Each entry is (name, type, column_kwargs).
@@ -28,16 +25,24 @@ FIXED_COLUMNS = (
 FIXED_COLUMN_NAMES = frozenset(name for name, _, _ in FIXED_COLUMNS)
 
 
+def get_schema_name(domain):
+    """Return the PostgreSQL schema name for a domain's project DB tables."""
+    return f'projectdb_{domain}'
+
+
 def get_case_table_schema(domain, case_type):
     """Construct a SQLAlchemy ``Table`` schema by reflection
 
     This inspects the DB to get the schema for a case type table in the ProjectDB
     """
-    table_name = get_project_db_table_name(domain, case_type)
-    engine = get_project_db_engine()
-    metadata = sqlalchemy.MetaData()
     try:
-        return Table(table_name, metadata, autoload=True, autoload_with=engine)
+        return Table(
+            case_type,
+            sqlalchemy.MetaData(),
+            schema=get_schema_name(domain),
+            autoload=True,
+            autoload_with=get_project_db_engine(),
+        )
     except sqlalchemy.exc.NoSuchTableError:
         return None
 
@@ -75,38 +80,30 @@ def build_tables_for_domain(metadata, domain):
 def build_table_for_case_type(metadata, domain, case_type, properties=None):
     """Build a SQLAlchemy Table for a case type with fixed case columns.
 
+    The table is placed in the domain's project DB schema
+    (``projectdb_<domain>``), with the case type name as the table name.
+
     :param metadata: SQLAlchemy MetaData instance
     :param domain: CommCare project domain
     :param case_type: case type name
     :param properties: list of (name, data_type) tuples for dynamic columns
     :returns: SQLAlchemy Table
     """
-    table_name = get_project_db_table_name(domain, case_type)
     property_columns = _build_property_columns(properties or [])
     fixed_columns = [Column(name, col_type, **kwargs)
                      for name, col_type, kwargs in FIXED_COLUMNS]
     table = Table(
-        table_name,
+        case_type,
         metadata,
         *fixed_columns,
         *property_columns,
+        schema=get_schema_name(domain),
     )
-    Index(f'ix_{table_name}_owner_id', table.c['owner_id'])
-    Index(f'ix_{table_name}_modified_on', table.c['modified_on'])
-    Index(f'ix_{table_name}_parent_id', table.c['parent_id'])
-    Index(f'ix_{table_name}_host_id', table.c['host_id'])
+    Index(f'ix_{case_type}_owner_id', table.c['owner_id'])
+    Index(f'ix_{case_type}_modified_on', table.c['modified_on'])
+    Index(f'ix_{case_type}_parent_id', table.c['parent_id'])
+    Index(f'ix_{case_type}_host_id', table.c['host_id'])
     return table
-
-
-def get_project_db_table_name(domain, case_type):
-    """Generate a PostgreSQL table name for a project DB case type table.
-
-    Uses the same hashing/truncation strategy as UCR tables to ensure
-    names are unique, deterministic, and within Postgres's 63-char limit.
-    """
-    return get_table_name(
-        domain, case_type, max_length=63, prefix=PROJECT_DB_TABLE_PREFIX,
-    )
 
 
 # --- Private helpers ---
@@ -152,10 +149,15 @@ def get_project_db_engine():
 
 
 def create_tables(engine, metadata):
-    """Create all tables in ``metadata`` that don't yet exist.
-
-    Uses ``checkfirst=True`` so existing tables are left untouched.
-    """
+    """Create all tables in ``metadata`` that don't yet exist"""
+    schemas = {t.schema for t in metadata.tables.values() if t.schema}
+    with engine.begin() as conn:
+        # First create any schemas referenced by the tables
+        for schema in schemas:
+            conn.execute(sqlalchemy.text(
+                f'CREATE SCHEMA IF NOT EXISTS "{schema}"'
+            ))
+    # checkfirst=True ensures existing tables are left untouched.
     metadata.create_all(bind=engine, checkfirst=True)
 
 
@@ -166,10 +168,15 @@ def evolve_table(engine, table):
     but not in ``table`` are left in place (never dropped).
     """
     inspector = inspect(engine)
-    existing_columns = {col['name'] for col in inspector.get_columns(table.name)}
+    schema = table.schema
+    existing_columns = {
+        col['name'] for col in inspector.get_columns(table.name, schema=schema)
+    }
     new_columns = [col for col in table.columns if col.name not in existing_columns]
 
-    existing_indexes = {idx['name'] for idx in inspector.get_indexes(table.name)}
+    existing_indexes = {
+        idx['name'] for idx in inspector.get_indexes(table.name, schema=schema)
+    }
     new_indexes = [idx for idx in table.indexes if idx.name not in existing_indexes]
 
     if not new_columns and not new_indexes:
@@ -180,6 +187,6 @@ def evolve_table(engine, table):
         for column in new_columns:
             col = column.copy()
             col.table = None
-            op.add_column(table.name, col)
+            op.add_column(table.name, col, schema=schema)
         for index in new_indexes:
             index.create(bind=conn)

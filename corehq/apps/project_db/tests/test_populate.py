@@ -32,7 +32,7 @@ class TestUpsertCase:
     def teardown_method(self):
         with self.engine.begin() as conn:
             conn.execute(sqlalchemy.text(
-                f'DROP TABLE IF EXISTS "{self.table.name}"'
+                f'DROP SCHEMA IF EXISTS "{self.table.schema}" CASCADE'
             ))
 
     def _upsert(self, case_data):
@@ -115,7 +115,7 @@ class TestUpsertCaseTypeCoercion:
     def teardown_method(self):
         with self.engine.begin() as conn:
             conn.execute(sqlalchemy.text(
-                f'DROP TABLE IF EXISTS "{self.table.name}"'
+                f'DROP SCHEMA IF EXISTS "{self.table.schema}" CASCADE'
             ))
 
     def _upsert(self, case_data):

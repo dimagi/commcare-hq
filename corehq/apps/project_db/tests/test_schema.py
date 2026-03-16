@@ -7,7 +7,7 @@ from corehq.apps.project_db.schema import (
     build_table_for_case_type,
     build_tables_for_domain,
     get_case_table_schema,
-    get_project_db_table_name,
+    get_schema_name,
 )
 
 # Derive test expectations from the canonical FIXED_COLUMNS definition.
@@ -21,38 +21,19 @@ FIXED_COLUMN_EXPECTATIONS = {
 }
 
 
-class TestGetProjectDbTableName:
+class TestGetSchemaName:
 
     def test_starts_with_prefix(self):
-        name = get_project_db_table_name('test-domain', 'person')
-        assert name.startswith('projectdb_')
+        assert get_schema_name('test-domain').startswith('projectdb_')
 
-    def test_contains_domain_and_case_type(self):
-        name = get_project_db_table_name('my-domain', 'household')
-        assert 'my-domain' in name
-        assert 'household' in name
-
-    def test_within_postgres_limit(self):
-        name = get_project_db_table_name(
-            'a-very-long-domain-name-that-keeps-going',
-            'a-very-long-case-type-name-that-also-keeps-going',
-        )
-        assert len(name) <= 63
+    def test_contains_domain(self):
+        assert 'my-domain' in get_schema_name('my-domain')
 
     def test_deterministic(self):
-        name1 = get_project_db_table_name('domain', 'case_type')
-        name2 = get_project_db_table_name('domain', 'case_type')
-        assert name1 == name2
+        assert get_schema_name('domain') == get_schema_name('domain')
 
     def test_different_domains_produce_different_names(self):
-        name1 = get_project_db_table_name('domain-a', 'person')
-        name2 = get_project_db_table_name('domain-b', 'person')
-        assert name1 != name2
-
-    def test_different_case_types_produce_different_names(self):
-        name1 = get_project_db_table_name('domain', 'person')
-        name2 = get_project_db_table_name('domain', 'household')
-        assert name1 != name2
+        assert get_schema_name('domain-a') != get_schema_name('domain-b')
 
 
 class TestBuildTableForCaseType:
@@ -63,8 +44,11 @@ class TestBuildTableForCaseType:
             self.metadata, 'test-domain', 'person',
         )
 
-    def test_table_name_starts_with_prefix(self):
-        assert self.table.name.startswith('projectdb_')
+    def test_table_name_is_case_type(self):
+        assert self.table.name == 'person'
+
+    def test_table_schema_is_domain_schema(self):
+        assert self.table.schema == get_schema_name('test-domain')
 
     def test_has_all_fixed_columns(self):
         column_names = {col.name for col in self.table.columns}
@@ -158,19 +142,19 @@ class TestBuildTableForCaseType:
 
     def test_owner_id_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
-        assert f'ix_{self.table.name}_owner_id' in index_names
+        assert 'ix_person_owner_id' in index_names
 
     def test_modified_on_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
-        assert f'ix_{self.table.name}_modified_on' in index_names
+        assert 'ix_person_modified_on' in index_names
 
     def test_parent_id_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
-        assert f'ix_{self.table.name}_parent_id' in index_names
+        assert 'ix_person_parent_id' in index_names
 
     def test_host_id_has_index(self):
         index_names = {idx.name for idx in self.table.indexes}
-        assert f'ix_{self.table.name}_host_id' in index_names
+        assert 'ix_person_host_id' in index_names
 
     def test_parent_id_is_nullable(self):
         assert self.table.c.parent_id.nullable is True
@@ -263,11 +247,14 @@ class TestGetCaseTableSchema:
     def setup_method(self):
         from corehq.apps.project_db.schema import get_project_db_engine
         self.engine = get_project_db_engine()
-        self._tables = []
+        self._schemas = []
 
     def teardown_method(self):
-        for table in self._tables:
-            table.drop(self.engine, checkfirst=True)
+        with self.engine.begin() as conn:
+            for schema in self._schemas:
+                conn.execute(sqlalchemy.text(
+                    f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'
+                ))
 
     def test_returns_none_when_table_does_not_exist(self):
         result = get_case_table_schema('test-domain', 'nonexistent')
@@ -281,7 +268,7 @@ class TestGetCaseTableSchema:
             metadata, 'test-domain', 'patient',
             properties=[('color', 'plain')],
         )
-        self._tables.append(table)
+        self._schemas.append(table.schema)
         create_tables(self.engine, metadata)
 
         schema = get_case_table_schema('test-domain', 'patient')

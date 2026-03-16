@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.project_db.schema import (
     get_project_db_engine,
-    get_project_db_table_name,
+    get_schema_name,
 )
 
 
@@ -26,35 +26,42 @@ class Command(BaseCommand):
                 f"No case types found for domain '{domain}'."
             )
 
+        schema_name = get_schema_name(domain)
         engine = get_project_db_engine()
-        metadata = sqlalchemy.MetaData()
-        tables = []
-        for case_type in case_type_names:
-            name = get_project_db_table_name(domain, case_type)
-            try:
-                tables.append(
-                    sqlalchemy.Table(name, metadata, autoload_with=engine)
-                )
-            except sqlalchemy.exc.NoSuchTableError:
-                pass
 
-        if not tables:
-            self.stdout.write("No project DB tables found for this domain.")
+        # Check if the schema exists
+        inspector = sqlalchemy.inspect(engine)
+        if schema_name not in inspector.get_schema_names():
+            self.stdout.write(
+                f"Schema \"{schema_name}\" does not exist. Nothing to drop."
+            )
             return
 
-        self.stdout.write(f"Tables to drop ({len(tables)}):")
-        for table in tables:
-            self.stdout.write(f"  - {table.name}")
+        # List tables in the schema
+        table_names = inspector.get_table_names(schema=schema_name)
+        if not table_names:
+            self.stdout.write(
+                f"Schema \"{schema_name}\" exists but has no tables."
+            )
+            return
 
-        confirm = input("\nType 'yes' to confirm: ")
+        self.stdout.write(f"Tables in \"{schema_name}\" ({len(table_names)}):")
+        for name in sorted(table_names):
+            self.stdout.write(f"  - {name}")
+
+        confirm = input("\nType 'yes' to drop schema and all tables: ")
         if confirm != 'yes':
             self.stdout.write("Aborted.")
             return
 
-        for table in tables:
-            table.drop(engine)
-            self.stdout.write(f"  Dropped {table.name}")
+        with engine.begin() as conn:
+            conn.execute(sqlalchemy.text(
+                f'DROP SCHEMA "{schema_name}" CASCADE'
+            ))
 
         self.stdout.write(
-            self.style.SUCCESS(f"Dropped {len(tables)} tables.")
+            self.style.SUCCESS(
+                f"Dropped schema \"{schema_name}\" "
+                f"with {len(table_names)} tables."
+            )
         )

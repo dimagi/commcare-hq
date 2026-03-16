@@ -552,8 +552,12 @@ class TestBHAScenarios(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for table in cls.tables.values():
-            table.drop(cls.engine, checkfirst=True)
+        schemas = {t.schema for t in cls.tables.values()}
+        with cls.engine.begin() as conn:
+            for schema in schemas:
+                conn.execute(sqlalchemy.text(
+                    f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'
+                ))
         super().tearDownClass()
 
     def _select_all(self, case_type):
@@ -574,8 +578,12 @@ class TestBHAScenarios(TestCase):
         return self.tables[case_type].name
 
     def _execute(self, sql):
+        from corehq.apps.project_db.schema import get_schema_name
         with self.engine.begin() as conn:
-            # Using text queries only for clarity in tests
+            schema = get_schema_name(DOMAIN)
+            conn.execute(sqlalchemy.text(
+                f'SET LOCAL search_path TO "{schema}"'
+            ))
             return [dict(row) for row in conn.execute(sqlalchemy.text(sql))]
 
     def test_search_and_admit(self):
