@@ -148,7 +148,6 @@ docs = [
     "Sphinx",
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
-    "pyOpenSSL", # CI builds fail without OpenSSL
     "urllib3<=2.6.3", # fix doc tests AssertionError: Current app already created
 ]
 prod = [
