@@ -266,14 +266,14 @@ needs of most developers.
     source .venv/bin/activate
     ```
 
-3. Install `docker compose`
+2. Install `docker compose`
   - **Mac**: comes with Docker Desktop
   - **Linux**:
     ```sh
     sudo apt install docker-compose-plugin
     ```
 
-4. Ensure the elasticsearch config files are world-readable (their containers
+3. Ensure the elasticsearch config files are world-readable (their containers
    will fail to start otherwise).
 
     ```sh
@@ -291,7 +291,7 @@ needs of most developers.
    
    
 
-6. Bring up the docker containers.
+4. Bring up the docker containers.
 
     In either of the following commands, omit the `-d` option to keep the
     containers attached in the foreground.
@@ -306,7 +306,7 @@ needs of most developers.
    We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
-7. If you are planning on running Formplayer from a binary or source, stop the
+5. If you are planning on running Formplayer from a binary or source, stop the
    formplayer container to avoid port collisions.
 
     ```sh
