@@ -189,7 +189,7 @@ sed -i '' '/10-:-XX:UseAVX=2/ s/^/# /' config/jvm.options
 - In `config/elasticsearch.yml`, add xpack.ml.enabled: false
 
 ```
-echo "xpack.ml.enabled: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+echo "xpack.ml.enabled: false" | sudo tee -a config/elasticsearch.yml
 ```
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
