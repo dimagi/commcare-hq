@@ -1,6 +1,6 @@
 import json
 
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
@@ -236,13 +236,7 @@ class CaseSearchEndpointDeactivateView(
 
     def post(self, request, *args, **kwargs):
         deactivate_endpoint(self.endpoint_obj)
-        return JsonResponse(
-            {
-                'redirect': reverse(
-                    CaseSearchEndpointsView.urlname, args=[self.domain]
-                ),
-            }
-        )
+        return HttpResponse(status=200)
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')

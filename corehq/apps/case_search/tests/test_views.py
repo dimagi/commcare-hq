@@ -275,10 +275,9 @@ class TestCaseSearchEndpointDeactivateView(EndpointViewTestCase):
         self.endpoint.refresh_from_db()
         self.assertFalse(self.endpoint.is_active)
 
-    def test_post_returns_redirect_url(self):
+    def test_post_returns_empty_response(self):
         response = self.client.post(self.get_url())
-        data = json.loads(response.content)
-        self.assertIn('redirect', data)
+        self.assertEqual(response.content, b'')
 
 
 @flag_enabled('CASE_SEARCH_ENDPOINTS')
