@@ -140,44 +140,18 @@ outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commca
 
 ## Downloading & Running CommCare HQ
 
-### Step 1: Create your virtual environment and activate it
+### Step 1: Clone this repo
 
-Create a virtualenv with `uv`:
 ```sh
-uv venv
-```
-Note: creating a virtualenv this way is not strictly necessary. It would be done
-automatically when `uv sync` is run below. However, `uv sync` does not activate
-the vitualenv.
-
-To activate the environment:
-```sh
-source .venv/bin/activate
+git clone https://github.com/dimagi/commcare-hq.git
+cd commcare-hq
+git submodule update --init --recursive
+git-hooks/install.sh
 ```
 
-For convenience, you can create an alias to activate virtual environments in
-".venv" and "venv" directories. To do that, add the following to your
-`.bashrc` or `.zshrc` file:
-```shell
-alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
-```
-Then you can activate virtual environments with
-```shell
-$ venv
-```
+### Step 2: Install requirements and set up your virtual environment
 
-### Step 2: Clone this repo and install requirements
-
-1. Once all the dependencies are in order, please do the following:
-
-    ```sh
-    git clone https://github.com/dimagi/commcare-hq.git
-    cd commcare-hq
-    git submodule update --init --recursive
-    git-hooks/install.sh
-    ```
-
-2. Next, install the appropriate requirements (**only one is necessary**).
+1. Install the appropriate requirements (**only one is necessary**).
 
     NOTE: If this fails you may need to [install the prerequisite system dependencies](#prerequisites).
 
@@ -187,6 +161,23 @@ $ venv
 
     ```sh
     uv sync --compile-bytecode
+    ```
+
+    This will also create a virtual environment in `.venv` if one does not
+    already exist. To activate the environment:
+    ```sh
+    source .venv/bin/activate
+    ```
+
+    For convenience, you can create an alias to activate virtual environments in
+    ".venv" and "venv" directories. To do that, add the following to your
+    `.bashrc` or `.zshrc` file:
+    ```shell
+    alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
+    ```
+    Then you can activate virtual environments with
+    ```shell
+    $ venv
     ```
 
     - Recommended for developers or others with custom requirements: create a
@@ -275,14 +266,14 @@ needs of most developers.
     source .venv/bin/activate
     ```
 
-3. Install `docker compose`
+2. Install `docker compose`
   - **Mac**: comes with Docker Desktop
   - **Linux**:
     ```sh
     sudo apt install docker-compose-plugin
     ```
 
-4. Ensure the elasticsearch config files are world-readable (their containers
+3. Ensure the elasticsearch config files are world-readable (their containers
    will fail to start otherwise).
 
     ```sh
@@ -300,7 +291,7 @@ needs of most developers.
    
    
 
-6. Bring up the docker containers.
+4. Bring up the docker containers.
 
     In either of the following commands, omit the `-d` option to keep the
     containers attached in the foreground.
@@ -315,7 +306,7 @@ needs of most developers.
    We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
-7. If you are planning on running Formplayer from a binary or source, stop the
+5. If you are planning on running Formplayer from a binary or source, stop the
    formplayer container to avoid port collisions.
 
     ```sh
