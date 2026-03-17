@@ -84,6 +84,11 @@ class CaseSearchEndpointNewView(CaseSearchEndpointMixin, BaseProjectDataView):
         return {
             'capability': self.capability,
             'mode': 'new',
+            'initial_name': '',
+            'initial_target_name': '',
+            'initial_parameters': [],
+            'initial_query': {'type': 'and', 'children': []},
+            'post_url': reverse(self.urlname, args=[self.domain]),
         }
 
     def post(self, request, *args, **kwargs):
@@ -138,15 +143,35 @@ class CaseSearchEndpointEditView(CaseSearchEndpointMixin, BaseProjectDataView):
     @property
     def page_context(self):
         endpoint = self.endpoint_obj
+        current_version = endpoint.current_version
         all_versions = list(
             endpoint.versions.values_list('version_number', flat=True)
         )
+        versions_with_urls = [
+            {
+                'number': v,
+                'url': reverse(self.urlname, args=[self.domain, endpoint.id])
+                if v == current_version.version_number
+                else reverse(
+                    CaseSearchEndpointVersionView.urlname,
+                    args=[self.domain, endpoint.id, v],
+                ),
+                'is_current': v == current_version.version_number,
+            }
+            for v in all_versions
+        ]
         return {
             'capability': self.capability,
             'mode': 'edit',
             'endpoint': endpoint,
-            'current_version': endpoint.current_version,
-            'versions': all_versions,
+            'initial_name': endpoint.name,
+            'initial_target_name': endpoint.target_name,
+            'initial_parameters': current_version.parameters,
+            'initial_query': current_version.query,
+            'post_url': reverse(self.urlname, args=[self.domain, endpoint.id]),
+            'display_version_number': current_version.version_number,
+            'current_version_number': current_version.version_number,
+            'versions_with_urls': versions_with_urls,
         }
 
     def post(self, request, *args, **kwargs):
@@ -213,11 +238,35 @@ class CaseSearchEndpointVersionView(
     def page_context(self):
         endpoint = self.endpoint_obj
         version = get_version(endpoint, int(self.kwargs['version_number']))
+        current_version = endpoint.current_version
+        all_versions = list(
+            endpoint.versions.values_list('version_number', flat=True)
+        )
+        versions_with_urls = [
+            {
+                'number': v,
+                'url': reverse(
+                    CaseSearchEndpointEditView.urlname,
+                    args=[self.domain, endpoint.id],
+                )
+                if v == current_version.version_number
+                else reverse(self.urlname, args=[self.domain, endpoint.id, v]),
+                'is_current': v == current_version.version_number,
+            }
+            for v in all_versions
+        ]
         return {
             'capability': self.capability,
             'mode': 'readonly',
             'endpoint': endpoint,
-            'current_version': version,
+            'initial_name': endpoint.name,
+            'initial_target_name': endpoint.target_name,
+            'initial_parameters': version.parameters,
+            'initial_query': version.query,
+            'post_url': None,
+            'display_version_number': version.version_number,
+            'current_version_number': current_version.version_number,
+            'versions_with_urls': versions_with_urls,
         }
 
 

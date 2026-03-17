@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Max
 from django.http import Http404
 
@@ -14,9 +15,10 @@ from corehq.apps.case_search.models import (
 class FilterSpecValidationError(Exception):
     def __init__(self, errors):
         self.errors = errors
-        super().__init__(f"Validation errors: {errors}")
+        super().__init__(f'Validation errors: {errors}')
 
 
+@transaction.atomic
 def create_endpoint(domain, name, target_type, target_name, parameters, query):
     """Create a new endpoint with its first version."""
     capability = get_capability(domain)
@@ -40,15 +42,18 @@ def create_endpoint(domain, name, target_type, target_name, parameters, query):
     return endpoint
 
 
+@transaction.atomic
 def save_new_version(endpoint, parameters, query):
     """Create a new version for an existing endpoint."""
     capability = get_capability(endpoint.domain)
-    errors = validate_filter_spec(query, parameters, endpoint.target_name, capability)
+    errors = validate_filter_spec(
+        query, parameters, endpoint.target_name, capability
+    )
     if errors:
         raise FilterSpecValidationError(errors)
-    max_version = endpoint.versions.aggregate(
-        max_v=Max('version_number')
-    )['max_v'] or 0
+    max_version = (
+        endpoint.versions.aggregate(max_v=Max('version_number'))['max_v'] or 0
+    )
     version = CaseSearchEndpointVersion.objects.create(
         endpoint=endpoint,
         version_number=max_version + 1,
@@ -73,10 +78,18 @@ def validate_filter_spec(spec, parameters, case_type_name, capability):
         for auto_value in avs
     }
     case_type = next(
-        (case_type for case_type in capability.get('case_types', []) if case_type['name'] == case_type_name),
+        (
+            case_type
+            for case_type in capability.get('case_types', [])
+            if case_type['name'] == case_type_name
+        ),
         None,
     )
-    fields_by_name = {field['name']: field for field in case_type['fields']} if case_type else {}
+    fields_by_name = (
+        {field['name']: field for field in case_type['fields']}
+        if case_type
+        else {}
+    )
 
     _validate_node(spec, fields_by_name, param_names, auto_value_refs, errors)
     return errors
@@ -87,22 +100,30 @@ def _validate_node(node, fields_by_name, param_names, auto_value_refs, errors):
 
     if node_type in ('and', 'or'):
         for child in node.get('children', []):
-            _validate_node(child, fields_by_name, param_names, auto_value_refs, errors)
+            _validate_node(
+                child, fields_by_name, param_names, auto_value_refs, errors
+            )
     elif node_type == 'not':
         child = node.get('child')
         if child:
-            _validate_node(child, fields_by_name, param_names, auto_value_refs, errors)
+            _validate_node(
+                child, fields_by_name, param_names, auto_value_refs, errors
+            )
         else:
             errors.append("'not' node must have a 'child'")
     elif node_type == 'component':
-        _validate_component(node, fields_by_name, param_names, auto_value_refs, errors)
+        _validate_component(
+            node, fields_by_name, param_names, auto_value_refs, errors
+        )
     else:
         errors.append(
             f"Invalid node type: '{node_type}'. Expected 'and', 'or', 'not', or 'component'."
         )
 
 
-def _validate_component(node, fields_by_name, param_names, auto_value_refs, errors):
+def _validate_component(
+    node, fields_by_name, param_names, auto_value_refs, errors
+):
     field_name = node.get('field', '')
     component_name = node.get('component', '')
     inputs = node.get('inputs', {})
@@ -115,7 +136,7 @@ def _validate_component(node, fields_by_name, param_names, auto_value_refs, erro
     if component_name not in field.get('operations', []):
         errors.append(
             f"'{component_name}' is not a valid operation for field '{field_name}' "
-            f"(type: {field['type']})"
+            f'(type: {field["type"]})'
         )
         return
 
@@ -127,17 +148,23 @@ def _validate_component(node, fields_by_name, param_names, auto_value_refs, erro
                 f"Missing required input '{slot_name}' for component '{component_name}'"
             )
             continue
-        _validate_input_value(inputs[slot_name], slot_name, param_names, auto_value_refs, errors)
+        _validate_input_value(
+            inputs[slot_name], slot_name, param_names, auto_value_refs, errors
+        )
 
 
-def _validate_input_value(value, slot_name, param_names, auto_value_refs, errors):
+def _validate_input_value(
+    value, slot_name, param_names, auto_value_refs, errors
+):
     value_type = value.get('type')
     if value_type == 'constant':
         pass  # any value accepted
     elif value_type == 'parameter':
         ref = value.get('ref', '')
         if ref not in param_names:
-            errors.append(f"Parameter '{ref}' referenced in '{slot_name}' is not defined")
+            errors.append(
+                f"Parameter '{ref}' referenced in '{slot_name}' is not defined"
+            )
     elif value_type == 'auto_value':
         ref = value.get('ref', '')
         if ref not in auto_value_refs:
