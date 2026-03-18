@@ -45,9 +45,9 @@ class Command(BaseCommand):
             )
 
         with engine.begin() as conn:
-            conn.execute(sqlalchemy.text(
-                f'SET LOCAL search_path TO "{schema_name}"'
-            ))
+            # Use execution_options postgresql_readonly in sqlalchemy 1.4+
+            conn.execute(sqlalchemy.text('SET TRANSACTION READ ONLY'))
+            conn.execute(sqlalchemy.text(f'SET LOCAL search_path TO "{schema_name}"'))
             start = time.monotonic()
             result = conn.execute(sqlalchemy.text(sql))
             rows = result.fetchall()
