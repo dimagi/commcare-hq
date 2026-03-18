@@ -575,12 +575,9 @@ class TestBHAScenarios(TestCase):
         return self.tables[case_type].name
 
     def _execute(self, sql):
-        from corehq.apps.project_db.schema import get_schema_name
+        from corehq.apps.project_db.schema import set_local_search_path
         with self.engine.begin() as conn:
-            schema = get_schema_name(DOMAIN)
-            conn.execute(sqlalchemy.text(
-                f'SET LOCAL search_path TO "{schema}"'
-            ))
+            set_local_search_path(conn, DOMAIN)
             return [dict(row) for row in conn.execute(sqlalchemy.text(sql))]
 
     def test_search_and_admit(self):

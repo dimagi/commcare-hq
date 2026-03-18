@@ -10,6 +10,7 @@ from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.project_db.schema import (
     get_project_db_engine,
     get_schema_name,
+    set_local_search_path,
 )
 
 _HELP = """Execute a read-only SQL query against a domain's project DB tables.
@@ -47,7 +48,7 @@ class Command(BaseCommand):
         with engine.begin() as conn:
             # Use execution_options postgresql_readonly in sqlalchemy 1.4+
             conn.execute(sqlalchemy.text('SET TRANSACTION READ ONLY'))
-            conn.execute(sqlalchemy.text(f'SET LOCAL search_path TO "{schema_name}"'))
+            set_local_search_path(conn, domain)
             start = time.monotonic()
             result = conn.execute(sqlalchemy.text(sql))
             rows = result.fetchall()

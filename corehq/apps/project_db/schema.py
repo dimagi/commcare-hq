@@ -2,6 +2,7 @@ import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from sqlalchemy import Boolean, Column, Date, DateTime, Index, Numeric, Table, Text, inspect
+from sqlalchemy.sql.elements import quoted_name
 
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 
@@ -26,7 +27,16 @@ FIXED_COLUMN_NAMES = frozenset(name for name, _, _ in FIXED_COLUMNS)
 
 def get_schema_name(domain):
     """Return the PostgreSQL schema name for a domain's project DB tables."""
-    return f'projectdb_{domain}'
+    # Note that SQLAlchemy will quote this later
+    # It still needs to be quoted manually for raw text queries
+    return quoted_name(f'projectdb_{domain}', quote=True)
+
+
+def set_local_search_path(conn, domain):
+    """Scope the connection's search_path to a domain's project DB schema"""
+    schema = get_schema_name(domain)
+    quoted = '"' + str(schema).replace('"', '""') + '"'
+    conn.execute(sqlalchemy.text(f'SET LOCAL search_path TO {quoted}'))
 
 
 def get_case_table_schema(domain, case_type):
