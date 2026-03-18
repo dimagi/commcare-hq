@@ -1,0 +1,12 @@
+{% load i18n %}
+
+<div x-data="queryBuilder()">
+  <template x-if="root">
+    <div x-data="{ node: root }">
+      {% include "case_search/partials/query_group_children.html" with depth=0 %}
+    </div>
+  </template>
+
+  <h6 class="mt-3">{% trans "Debug: Serialized Output" %}</h6>
+  <pre x-text="serialized" class="bg-light p-2 rounded" style="max-height: 300px; overflow: auto;"></pre>
+</div>
