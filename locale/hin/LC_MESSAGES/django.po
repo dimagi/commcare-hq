@@ -4713,18 +4713,34 @@ msgstr "USD %s"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
+#| msgid ""
+#| "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+#| "{num_days} days"
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+"{num_days} day"
+msgid_plural ""
+"Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} days"
-msgstr ""
+msgstr[0] ""
+"आपके CommCare खाते {account_name} के लिए स्वतः भुगतान {num_days} दिनों में "
+"निर्धारित है"
+msgstr[1] ""
 "आपके CommCare खाते {account_name} के लिए स्वतः भुगतान {num_days} दिनों में "
 "निर्धारित है"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
+#| msgid ""
+#| "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
 msgid ""
+"Your CommCare Billing Statement for {account_name} is due in {num_days} day"
+msgid_plural ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-msgstr ""
+msgstr[0] ""
+"आपका CommCare बिलिंग स्टेटमेंट {account_name} के लिए {num_days} दिनों में "
+"देय है"
+msgstr[1] ""
 "आपका CommCare बिलिंग स्टेटमेंट {account_name} के लिए {num_days} दिनों में "
 "देय है"
 
@@ -10025,16 +10041,6 @@ msgstr "नहीं धन्यवाद, मुझे यहाँ से ब
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Your form display condition for form\n"
-#| "                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-#| "                but cases are not available for this form. Please either remove\n"
-#| "                the case reference or (1) make sure that the case list is set to\n"
-#| "                display the case list first and then form, and (2) make sure\n"
-#| "                that all forms in this case list update or btn-close a case (which  \n"
-#| "                means registration forms must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -10054,15 +10060,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                You have a display condition which refers to a case, but cases\n"
-#| "                are not available. Please either remove the case reference or\n"
-#| "                (1) make sure that the case list is set to display the case list\n"
-#| "                first and then form, and (2) make sure that all forms in this\n"
-#| "                case list update or btn-close a case (which means registration forms  \n"
-#| "                must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                You have a display condition which refers to a case, but cases\n"
@@ -22889,11 +22886,6 @@ msgstr "वर्तमान सदस्यता"
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your subscription is currently paused because you have\n"
-#| "            <a href=\"%(url_statements)s\">past-due invoices</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            For more information on Subscription Management & Billing, please\n"
@@ -25056,6 +25048,28 @@ msgstr "लॉग इन करें"
 msgid "Log In :: CommCare HQ"
 msgstr "लॉग इन :: CommCare HQ"
 
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/urls.py
+msgid "Password Change Complete"
+msgstr "पासवर्ड परिवर्तन पूर्ण"
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+msgid "Your password was successfully changed."
+msgstr "आपका पासवर्ड सफलतापूर्वक बदल दिया गया है।"
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+msgid "Sign In"
+msgstr "साइन इन करें"
+
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 msgid ""
 "\n"
@@ -25165,25 +25179,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Reset Password"
 msgstr "पासवर्ड रीसेट करें"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/urls.py
-msgid "Password Change Complete"
-msgstr "पासवर्ड परिवर्तन पूर्ण"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-msgid "Your password was successfully changed."
-msgstr "आपका पासवर्ड सफलतापूर्वक बदल दिया गया है।"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-msgid "Sign In"
-msgstr "साइन इन करें"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
 #: corehq/apps/domain/urls.py
@@ -35168,7 +35163,6 @@ msgid "MTN Money"
 msgstr "MTN मनी"
 
 #: corehq/apps/integration/payments/models.py
-#| msgid "Orange Cameroon KYC"
 msgid "Orange Cameroon Money"
 msgstr "Orange Cameroon मनी"
 
@@ -35194,7 +35188,6 @@ msgstr ""
 "केवल वे भुगतान जिनमें '{}' 'true' पर सेट है, सत्यापन के लिए पात्र हैं।"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Unsupported Report"
 msgid "Unsupported payment provider"
 msgstr "असमर्थित भुगतान प्रदाता"
 
@@ -35348,11 +35341,6 @@ msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Successfully verified %(success_count)s records for payments! Updated\n"
-#| "      status will reflect shortly.\n"
-#| "    "
 msgid ""
 "\n"
 "      Successfully verified %(success_count)s rows! Updated status will\n"
@@ -35365,10 +35353,6 @@ msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Failed to verify %(failure_count)s rows!\n"
-#| "    "
 msgid ""
 "\n"
 "      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
@@ -35432,11 +35416,6 @@ msgstr ""
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Successfully verified %(success_count)s records for payments! Updated\n"
-#| "      status will reflect shortly.\n"
-#| "    "
 msgid ""
 "\n"
 "      Failed to verify %(failure_count)s records for payments! Updated status\n"
@@ -44771,7 +44750,6 @@ msgid "Recipient did not match filters:"
 msgstr "प्राप्तकर्ता फ़िल्टर से मेल नहीं खाता:"
 
 #: corehq/apps/sms/models.py
-#| msgid "No FCM tokens found for recipient."
 msgid "Connect user not found for recipient."
 msgstr "प्राप्तकर्ता के लिए कनेक्ट यूज़र नहीं मिला।"
 
@@ -54188,7 +54166,6 @@ msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 #, python-brace-format
-#| msgid "'{}' recipient types are not supported for Push Notifications"
 msgid ""
 "The following recipient type(s) are not supported for Connect Messages: "
 "{types}"

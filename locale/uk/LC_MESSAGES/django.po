@@ -5533,16 +5533,42 @@ msgstr "USD %s"
 #| "days"
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+"{num_days} day"
+msgid_plural ""
+"Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} days"
-msgstr ""
+msgstr[0] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[1] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[2] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[3] ""
 "Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
 "днів"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
-#, python-brace-format
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "Your CommCare Billing Statement for {account_name} is due in {num_days} "
+#| "days"
 msgid ""
+"Your CommCare Billing Statement for {account_name} is due in {num_days} day"
+msgid_plural ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-msgstr ""
+msgstr[0] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[1] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[2] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[3] ""
 "Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
 "днів"
 
@@ -28567,6 +28593,28 @@ msgstr "Увійти"
 msgid "Log In :: CommCare HQ"
 msgstr "Увійти :: CommCare HQ"
 
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/urls.py
+msgid "Password Change Complete"
+msgstr "Пароль успішно змінено"
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+msgid "Your password was successfully changed."
+msgstr "Ваш пароль було успішно змінено."
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+msgid "Sign In"
+msgstr "Увійти"
+
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 msgid ""
 "\n"
@@ -28696,25 +28744,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Reset Password"
 msgstr "Скинути пароль"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/urls.py
-msgid "Password Change Complete"
-msgstr "Пароль успішно змінено"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-msgid "Your password was successfully changed."
-msgstr "Ваш пароль було успішно змінено."
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-msgid "Sign In"
-msgstr "Увійти"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
 #: corehq/apps/domain/urls.py

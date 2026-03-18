@@ -4756,18 +4756,46 @@ msgstr "USD %s"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
+#| msgid ""
+#| "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+#| "{num_days} days"
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
+"{num_days} day"
+msgid_plural ""
+"Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} days"
-msgstr ""
+msgstr[0] ""
+"Ваша автоматична оплата для акаунту CommCare {account_name} запланована "
+"через {num_days} днів"
+msgstr[1] ""
+"Ваша автоматична оплата для акаунту CommCare {account_name} запланована "
+"через {num_days} днів"
+msgstr[2] ""
+"Ваша автоматична оплата для акаунту CommCare {account_name} запланована "
+"через {num_days} днів"
+msgstr[3] ""
 "Ваша автоматична оплата для акаунту CommCare {account_name} запланована "
 "через {num_days} днів"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
+#| msgid ""
+#| "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
 msgid ""
+"Your CommCare Billing Statement for {account_name} is due in {num_days} day"
+msgid_plural ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-msgstr ""
+msgstr[0] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[1] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[2] ""
+"Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
+"днів"
+msgstr[3] ""
 "Ваш рахунок за CommCare для {account_name} підлягає оплаті через {num_days} "
 "днів"
 
@@ -10131,16 +10159,6 @@ msgstr "Ні, дякую, вийти звідси"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                Your form display condition for form\n"
-#| "                <a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-#| "                but cases are not available for this form. Please either remove\n"
-#| "                the case reference or (1) make sure that the case list is set to\n"
-#| "                display the case list first and then form, and (2) make sure\n"
-#| "                that all forms in this case list update or btn-close a case (which  \n"
-#| "                means registration forms must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                Your form display condition for form\n"
@@ -10165,15 +10183,6 @@ msgstr ""
 "              "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
-#| msgid ""
-#| "\n"
-#| "                You have a display condition which refers to a case, but cases\n"
-#| "                are not available. Please either remove the case reference or\n"
-#| "                (1) make sure that the case list is set to display the case list\n"
-#| "                first and then form, and (2) make sure that all forms in this\n"
-#| "                case list update or btn-close a case (which means registration forms  \n"
-#| "                must go in a different case list).\n"
-#| "              "
 msgid ""
 "\n"
 "                You have a display condition which refers to a case, but cases\n"
@@ -23110,11 +23119,6 @@ msgstr "Поточна підписка"
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your subscription is currently paused because you have\n"
-#| "            <a href=\"%(url_statements)s\">past-due invoices</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            For more information on Subscription Management & Billing, please\n"
@@ -25364,6 +25368,28 @@ msgstr "Увійти"
 msgid "Log In :: CommCare HQ"
 msgstr "Увійти :: CommCare HQ"
 
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/urls.py
+msgid "Password Change Complete"
+msgstr "Пароль успішно змінено"
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+msgid "Your password was successfully changed."
+msgstr "Ваш пароль було успішно змінено."
+
+#: corehq/apps/domain/templates/login_and_password/bootstrap3/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/bootstrap5/password_change_done.html
+#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
+#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+msgid "Sign In"
+msgstr "Увійти"
+
 #: corehq/apps/domain/templates/login_and_password/partials/bootstrap3/login_full.html
 msgid ""
 "\n"
@@ -25473,25 +25499,6 @@ msgstr ""
 #: corehq/apps/users/forms.py
 msgid "Reset Password"
 msgstr "Скинути пароль"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/urls.py
-msgid "Password Change Complete"
-msgstr "Пароль успішно змінено"
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-msgid "Your password was successfully changed."
-msgstr "Ваш пароль було успішно змінено."
-
-#: corehq/apps/domain/templates/login_and_password/password_change_done.html
-#: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap3/_wizard_actions.html
-#: corehq/apps/domain/templates/login_and_password/two_factor/bootstrap5/_wizard_actions.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
-msgid "Sign In"
-msgstr "Увійти"
 
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html
 #: corehq/apps/domain/urls.py
@@ -35558,7 +35565,6 @@ msgid "MTN Money"
 msgstr "MTN Money"
 
 #: corehq/apps/integration/payments/models.py
-#| msgid "Orange Cameroon KYC"
 msgid "Orange Cameroon Money"
 msgstr "Orange Cameroon Money"
 
@@ -35584,7 +35590,6 @@ msgstr ""
 "Тільки платежі, у яких '{}' встановлено як 'true', підлягають верифікації."
 
 #: corehq/apps/integration/payments/services.py
-#| msgid "Unsupported Report"
 msgid "Unsupported payment provider"
 msgstr "Непідтримуваний платіжний провайдер"
 
@@ -35741,11 +35746,6 @@ msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Successfully verified %(success_count)s records for payments! Updated\n"
-#| "      status will reflect shortly.\n"
-#| "    "
 msgid ""
 "\n"
 "      Successfully verified %(success_count)s rows! Updated status will\n"
@@ -35759,10 +35759,6 @@ msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Failed to verify %(failure_count)s rows!\n"
-#| "    "
 msgid ""
 "\n"
 "      Failed to verify %(failure_count)s rows! Updated status will reflect\n"
@@ -35828,11 +35824,6 @@ msgstr ""
 
 #: corehq/apps/integration/templates/payments/partials/payments_verify_alert.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      Successfully verified %(success_count)s records for payments! Updated\n"
-#| "      status will reflect shortly.\n"
-#| "    "
 msgid ""
 "\n"
 "      Failed to verify %(failure_count)s records for payments! Updated status\n"
@@ -45206,7 +45197,6 @@ msgid "Recipient did not match filters:"
 msgstr "Одержувач не відповідає фільтрам:"
 
 #: corehq/apps/sms/models.py
-#| msgid "No FCM tokens found for recipient."
 msgid "Connect user not found for recipient."
 msgstr "Користувача Connect для одержувача не знайдено."
 
@@ -54683,7 +54673,6 @@ msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
 #, python-brace-format
-#| msgid "'{}' recipient types are not supported for Push Notifications"
 msgid ""
 "The following recipient type(s) are not supported for Connect Messages: "
 "{types}"
