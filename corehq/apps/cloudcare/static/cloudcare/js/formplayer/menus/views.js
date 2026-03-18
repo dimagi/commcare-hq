@@ -1259,7 +1259,6 @@ const CaseListView = Marionette.CollectionView.extend({
             isMultiSelect: false,
             mapAvailable: this.mapAvailable,
             sidebarEnabled: this.options.sidebarEnabled,
-            splitScreenToggleEnabled: toggles.toggleEnabled('SYNC_SEARCH_CASE_CLAIM'),
             smallScreenEnabled: this.smallScreenEnabled,
             triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
@@ -1777,7 +1776,6 @@ const PersistentMenuView = Marionette.View.extend({
         $('#persistent-menu-region').removeClass('d-none');
         this.sidebarEnabled = options.sidebarEnabled;
         this.menuExpanded;
-        this.splitScreenToggleEnabled = toggles.toggleEnabled('SYNC_SEARCH_CASE_CLAIM'),
         this.offcanvas = 'offcanvas';
         this.collapse = 'collapse';
         this.containerCollapseClasses = this.collapse + ' position-relative';
@@ -1904,7 +1902,7 @@ const PersistentMenuView = Marionette.View.extend({
             persistentMenuContainer.addClass('border-top');
         }
 
-        if (this.splitScreenToggleEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
+        if (this.sidebarEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
             self.hideMenu();
             self.unlockMenu();
             self.flipArrowRight();
