@@ -282,7 +282,7 @@ msgstr "Aina hii ya kesi imeondolewa kwenye Kamusi ya Data."
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap3/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/bootstrap5/manage_releases_by_location.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add"
 msgstr "Ongeza"
 
@@ -418,7 +418,7 @@ msgstr "Jina la Tab"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap3/column.js
 #: corehq/apps/app_manager/static/app_manager/js/details/bootstrap5/column.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Display Condition"
 msgstr "Hali ya Kuonyesha"
@@ -666,7 +666,7 @@ msgstr "Chaguzi za Jedwali la Utafutaji"
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap3/case_config_ui.js
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/bootstrap5/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Lookup Table"
 msgstr "Jedwali la Utafutaji"
 
@@ -701,7 +701,7 @@ msgid "Plain"
 msgstr "Nyororo"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Date"
 msgstr "Tarehe"
@@ -767,7 +767,7 @@ msgid "Picture"
 msgstr "Picha"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Audio"
 msgstr "Sauti"
 
@@ -1280,112 +1280,121 @@ msgstr "Iliyohifadhiwa hivi karibuni"
 msgid "[unknown]"
 msgstr "[haijulikani]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/2229.js
+msgid "\n"
+msgstr "\n"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "{path} is not a valid data parent"
+msgstr "{path} si mzazi halali wa data"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Drag question here"
 msgstr "Buruta swali hapa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "is equal to"
 msgstr "ni sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "is not equal to"
 msgstr "si sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "is less than"
 msgstr "ni chini ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "is less than or equal to"
 msgstr "ni chini au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "is greater than"
 msgstr "ni zaidi ya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "is greater than or equal to"
 msgstr "ni zaidi au sawa na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "has selected value"
 msgstr "ina thamani iliyochaguliwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "True when ALL of the expressions are true."
 msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/319.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/5319.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "True when ANY of the expressions are true."
 msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Command Bar"
 msgstr "Upau wa Amri"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Cannot insert $1 into $2"
 msgstr "Haiwezi kuweka $1 ndani ya $2"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Cannot insert $1 into or after $2"
 msgstr "Haiwezi kuweka $1 ndani au baada ya $2"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Cannot insert {type} into tree root"
 msgstr "Haiwezi kuweka {type} kwenye mzizi wa mti"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Unsupported paste format"
 msgstr "Muundo wa kubandika hauungwa mkono"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Unsupported paste format:"
 msgstr "Muundo wa kubandika hauungwa mkono:"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Unknown question type:"
 msgstr "Aina isiyojulikana ya swali:"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Error"
 msgstr "Hitilafu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Warning"
 msgstr "Onyo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Form Warning"
 msgstr "Onyo la Fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Notification"
 msgstr "Arifa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Holding the ALT key while clicking save invokes an inefficient save "
@@ -1394,14 +1403,14 @@ msgstr ""
 "Kushikilia kitufe cha ALT wakati wa kubofya hifadhi kunatumia utaratibu wa "
 "kuhifadhi usiofanisi. Fanya hivi tu ikiwa kuhifadhi kawaida kunashindwa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Are you sure you want to exit? All unsaved changes will be lost!"
 msgstr ""
 "Una uhakika unataka kutoka? Mabadiliko yote ambayo hayajahifadhiwa "
 "yatapotea!"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Look for questions marked with $1 and check they don't reference deleted "
@@ -1410,62 +1419,62 @@ msgstr ""
 "Tafuta maswali yaliyowekwa alama na $1 na hakikisha hayarejelei maswali "
 "yaliyofutwa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Errors in Form"
 msgstr "Hitilafu kwenye Fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Form has reference errors."
 msgstr "Fomu ina makosa ya marejeleo."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Look for questions marked with $1 and fix the errors."
 msgstr "Tafuta maswali yaliyowekwa alama na $1 na rekebisha makosa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Form has validation errors."
 msgstr "Fomu ina makosa ya uthibitishaji."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Multimedia Capture"
 msgstr "Ukamataji wa Vyombo vya Habari"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Multiple Choice"
 msgstr "Chaguo Nyingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Number"
 msgstr "Nambari"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Groups"
 msgstr "Makundi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Hidden Value"
 msgstr "Thamani Iliyofichwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Advanced"
 msgstr "Juu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Make Required"
 msgstr "Fanya Liwe la Lazima"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "You are about to make all existing questions on this form required. This "
@@ -1476,12 +1485,12 @@ msgstr ""
 "Hatua hii itabadilisha mpangilio wa sasa wa fomu hii na inaweza kubatilishwa"
 " tu kwa kuhariri maswali mmoja mmoja."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Load Default Values"
 msgstr "Pakia Thamani Chaguo-msingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "You are about to set matching case properties as Default Values for all "
@@ -1494,72 +1503,72 @@ msgstr ""
 " kwa maswali yote yenye sifa za kesi zinazolingana na inaweza kubatilishwa "
 "tu kwa kuhariri maswali mmoja mmoja."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Are you sure you want to perform this action?"
 msgstr "Una uhakika unataka kufanya hatua hii?"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 #: corehq/apps/registration/static/registration/js/bootstrap3/user_login_form.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/user_login_form.js
 msgid "Continue"
 msgstr "Endelea"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Cancel"
 msgstr "Ghairi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Expand Editor"
 msgstr "Panua Kihariri"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Shrink Editor"
 msgstr "Punguza Kihariri"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Export Form Contents"
 msgstr "Hamisha Yaliyomo ya Fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Edit Source XML"
 msgstr "Hariri Chanzo cha XML"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Form Properties"
 msgstr "Sifa za Fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Find Usages"
 msgstr "Tafuta Matumizi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Validation failed. Form may not perform correctly on your device!"
 msgstr ""
 "Uthibitishaji umeshindwa. Fomu huenda isifanye kazi ipasavyo kwenye kifaa "
 "chako!"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Edit Form's Source XML"
 msgstr "Hariri Chanzo cha XML cha Fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Update Source"
 msgstr "Sasisha Chanzo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "This is the raw XML. You can edit or paste into this box to make changes to "
@@ -1569,7 +1578,7 @@ msgstr ""
 "kufanya mabadiliko kwenye fomu yako. Bonyeza 'Sasisha Chanzo' kuhifadhi "
 "mabadiliko, au 'Funga' kughairi."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Copy and paste this content into a spreadsheet program like Excel to easily "
@@ -1578,22 +1587,22 @@ msgstr ""
 "Nakili na ubandike maudhui haya kwenye programu ya lahajedwali kama Excel "
 "ili kushiriki fomu yako kwa urahisi na wengine."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Lost Work Warning"
 msgstr "Onyo la Kazi Iliyopotea"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Overwrite their work"
 msgstr "Andika upya kazi yao"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Show XML Differences"
 msgstr "Onyesha Tofauti za XML"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Looks like someone else has edited this form since you loaded the page. Are "
@@ -1602,39 +1611,39 @@ msgstr ""
 "Inaonekana mtu mwingine amehariri fomu hii tangu ulipofungua ukurasa. Una "
 "uhakika unataka kufuta kazi yao?"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Edit Form Properties"
 msgstr "Hariri Sifa za Fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Disable Text Formatting"
 msgstr "Zima Uundaji wa Maandishi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Use Easy References"
 msgstr "Tumia Marejeleo Rahisi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Use of each question"
 msgstr "Matumizi ya kila swali"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
 msgid "Close"
 msgstr "Funga"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Unsaved Changes in Editor"
 msgstr "Mabadiliko Yasiyohifadhiwa kwenye Kihariri"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "You have UNSAVED changes in the Expression Editor. Please save changes "
@@ -1643,53 +1652,53 @@ msgstr ""
 "Una mabadiliko AMBAYO HAYAJAHIFADHIWA kwenye Kihariri cha Maelezo. Tafadhali"
 " hifadhi mabadiliko kabla ya kuendelea."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Parsing Error. Please check that your form is valid XML."
 msgstr "Hitilafu ya Kuchambua. Tafadhali hakikisha fomu yako ni XML halali."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "OK"
 msgstr "Sawa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Expression Editor"
 msgstr "Kihariri wa Usemi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Sorry, {err}"
 msgstr "Samahani, {err}"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Add Choice"
 msgstr "Ongeza Chaguo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "and"
 msgstr "na"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "There are errors in the form"
 msgstr "Kuna makosa kwenye fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Fix Manually"
 msgstr "Rekebisha Mwenyewe"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Fix Automatically"
 msgstr "Rekebisha Kiotomatiki"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 #: corehq/apps/export/static/export/js/models.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
@@ -1697,7 +1706,7 @@ msgstr "Rekebisha Kiotomatiki"
 msgid "Save"
 msgstr "Hifadhi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "It looks like your form is not valid XML. This can often happen if you use a"
@@ -1710,27 +1719,27 @@ msgstr ""
 "kuangalia ni <, >, na &. Unaweza bado kuhifadhi, lakini HUWEZI KUFUNGUA FOMU"
 " HII tena hadi utengeneze XML kwa mkono. Ungependa kufanya nini?"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Form Validation Error"
 msgstr "Hitilafu ya Uthibitishaji wa Fomu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Fix the problem (recommended)"
 msgstr "Rekebisha tatizo (inapendekezwa)"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Save anyway"
 msgstr "Hifadhi hata hivyo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Basic"
 msgstr "Msingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "The {displaytext} appears in the application. This text will not appear in "
@@ -1739,18 +1748,18 @@ msgstr ""
 "{displaytext} inaonekana kwenye programu. Maandishi haya hayatakuwepo kwenye"
 " uhamishaji wa data."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Display Text"
 msgstr "Maandishi ya Kuonyesha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
 msgid "Data Source"
 msgstr "Chanzo cha Data"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "You can configure an external data source like a case list or lookup table "
@@ -1759,12 +1768,12 @@ msgstr ""
 "Unaweza kusanidi chanzo cha data cha nje kama orodha ya kesi au jedwali la "
 "kutafuta ili kutumia kama chaguo za swali la chaguo nyingi."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Logic"
 msgstr "Mantiki"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "Use logic to control when questions are asked and what answers are valid. "
@@ -1775,12 +1784,12 @@ msgstr ""
 "Unaweza kuongeza mantiki ili kuonyesha swali kulingana na jibu la awali, "
 "kufanya swali liwe la lazima au kuhakikisha jibu liko kwenye kiwango halali."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Media"
 msgstr "Vyombo vya Habari"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "This will allow you to add images, audio or video media to a question, or "
@@ -1789,7 +1798,7 @@ msgstr ""
 "Hii itakuwezesha kuongeza picha, sauti au video kwenye swali, au maudhui "
 "mengine maalum."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "These are advanced settings and are not needed for most applications.  "
@@ -1798,27 +1807,27 @@ msgstr ""
 "Haya ni mipangilio ya juu na haihitajiki kwa programu nyingi. Tafadhali "
 "badilisha haya tu ikiwa una hitaji maalum!"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Could not load app properties."
 msgstr "Haikuweza kupakia sifa za programu."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "If this error persists, please report an issue."
 msgstr "Ikiwa kosa hili litaendelea, tafadhali ripoti tatizo."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Not Found"
 msgstr "Haikupatikana"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "No Formatting"
 msgstr "Hakuna Muundo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "The {field} for a question is not allowed to reference the question itself. "
@@ -1827,12 +1836,12 @@ msgstr ""
 "{field} ya swali hairuhusiwi kujirejelea yenyewe. Tafadhali ondoa {ref} "
 "kutoka kwenye {field} au fomu yako itakuwa na makosa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "output value"
 msgstr "thamani ya matokeo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "{type} nodes cannot be used in an output value. Please remove the output "
@@ -1841,12 +1850,12 @@ msgstr ""
 "Nodi za {type} haziwezi kutumika kwenye thamani ya matokeo. Tafadhali ondoa "
 "thamani ya matokeo kwa '{path}' au fomu yako itakuwa na makosa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Invalid XPath expression."
 msgstr "Kielezi cha XPath si sahihi."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "The {property} for a question is not allowed to reference the question "
@@ -1856,17 +1865,17 @@ msgstr ""
 "{property} ya swali hairuhusiwi kurejelea swali lenyewe. Tafadhali ondoa . "
 "kwenye {property} au fomu yako itakuwa na makosa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Unknown question:"
 msgstr "Swali lisilojulikana:"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Unknown questions:"
 msgstr "Maswali yasiyojulikana:"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "This question represents advanced content that is not supported by the form "
 "builder. Please only change it if you have a specific need!"
@@ -1874,27 +1883,27 @@ msgstr ""
 "Swali hili linawakilisha maudhui ya juu ambayo hayatumiki kwenye "
 "mtengenezaji wa fomu. Tafadhali badilisha tu ikiwa una hitaji maalum!"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Ignored XML"
 msgstr "XML Iliyopuuzwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Android App Callout"
 msgstr "Mwito wa Programu ya Android"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "External App"
 msgstr "Programu ya Nje"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Insert Android Application ID"
 msgstr "Weka Kitambulisho cha Programu ya Android"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "change your subscription"
 msgstr "badilisha usajili wako"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "You no longer have access to built in or external integration in your application.\n"
 "\n"
@@ -1904,7 +1913,7 @@ msgstr ""
 "\n"
 "Muunganiko wa ndani unapatikana kwenye mpango wa Pro na juu zaidi. Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "Your subscription only has access to built-in integration.\n"
 "\n"
@@ -1914,38 +1923,38 @@ msgstr ""
 "\n"
 "Muunganiko wa nje unapatikana kwenye mpango wa Advanced na juu zaidi. Kabla ya kuunda toleo jipya la programu yako, lazima {link} au uondoe swali hili."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "Android app callouts of the same type must have different question ids."
 msgstr ""
 "Mwito wa programu ya Android wa aina moja lazima uwe na vitambulisho tofauti"
 " vya maswali."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Extra"
 msgstr "Ziada"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Response"
 msgstr "Majibu"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Special Intent XMLNS attribute"
 msgstr "Sifa Maalum ya XMLNS ya Intent"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Print"
 msgstr "Chapisha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Document Template"
 msgstr "Kiolezo cha Hati"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Lookup table was not found in the project"
 msgstr "Jedwali la utafutaji halikupatikana kwenye mradi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 #: corehq/apps/reports/static/reports/js/bootstrap3/project_health_dashboard.js
@@ -1953,12 +1962,12 @@ msgstr "Jedwali la utafutaji halikupatikana kwenye mradi"
 msgid "Loading..."
 msgstr "Inapakia..."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Lookup Table Data"
 msgstr "Data ya Jedwali la Utafutaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
 "Before you can make a new version of your application, you must {link} or delete this question"
@@ -1966,23 +1975,23 @@ msgstr ""
 "Huna tena ufikiaji wa Jedwali la Utafutaji kwenye programu yako. Jedwali la Utafutaji linapatikana kwenye mpango wa Standard na juu zaidi.\n"
 "Kabla ya kuunda toleo jipya la programu yako, lazima {link} au ufute swali hili"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "A data source must be selected."
 msgstr "Chanzo cha data lazima kichaguliwe."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Display Text Field"
 msgstr "Sehemu ya Maandishi ya Kuonyesha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Sort Field"
 msgstr "Sehemu ya Kupanga"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Filter"
 msgstr "Chuja"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "This is an XPath expression that will filter the set of choices from the "
 "lookup table"
@@ -1990,19 +1999,19 @@ msgstr ""
 "Hii ni usemi wa XPath ambao utachuja seti ya chaguo kutoka kwenye jedwali la"
 " utafutaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "{attr} was not found in the lookup table"
 msgstr "{attr} haikupatikana kwenye jedwali la utafutaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Lookup Tables"
 msgstr "Majedwali ya Utafutaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Checkbox Lookup Table"
 msgstr "Jedwali la Utafutaji la Kisanduku cha Kuhakiki"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "Cannot change to Multiple/Single Choice question if it has Choices. Please "
 "remove all Choices and try again."
@@ -2010,142 +2019,142 @@ msgstr ""
 "Haiwezi kubadilisha kuwa swali la Chaguo Nyingi/Moja ikiwa lina Chaguo. "
 "Tafadhali ondoa Chaguo zote na ujaribu tena."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Can only change to a Multiple Choice Lookup Table"
 msgstr "Inaweza kubadilishwa tu kuwa Jedwali la Utafutaji la Chaguo Nyingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Multiple Choice Lookup Table"
 msgstr "Jedwali la Utafutaji la Chaguo Nyingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Can only change to a Checkbox Lookup Table"
 msgstr ""
 "Inaweza kubadilishwa tu kuwa Jedwali la Utafutaji la Kisanduku cha Kuhakiki"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "custom..."
 msgstr "desturi..."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "New Content Type"
 msgstr "Aina Mpya ya Maudhui"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Content Type"
 msgstr "Aina ya Maudhui"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Question ID"
 msgstr "Kitambulisho cha Swali"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "{name} (or multimedia) is required."
 msgstr "{name} (au multimedia) inahitajika."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "{name} (or multimedia) is required for all languages."
 msgstr "{name} (au multimedia) inahitajika kwa lugha zote."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "{name} Itext ID is required."
 msgstr "Itext ID ya {name} inahitajika."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "{name} is not a valid ID."
 msgstr "{name} si kitambulisho halali."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Multimedia was not copied; it must be uploaded separately."
 msgstr "Multimedia haikunakiliwa; lazima ipakwe kando."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Discarded languages:"
 msgstr "Lugha zilizotupiliwa mbali:"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
 "You cannot have a Validation Error Message with no Validation Condition!"
 msgstr "Huwezi kuwa na Ujumbe wa Hitilafu ya Uhakiki bila Hali ya Uhakiki!"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Validation Message"
 msgstr "Ujumbe wa Uthibitishaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "Can't have a Validation Message Itext ID without a Validation Condition"
 msgstr ""
 "Huwezi kuwa na Itext ID ya Ujumbe wa Uthibitishaji bila Masharti ya "
 "Uthibitishaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Validation Message Itext ID"
 msgstr "Itext ID ya Ujumbe wa Uthibitishaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add Validation Media"
 msgstr "Ongeza Vyombo vya Habari vya Uthibitishaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Display Text Itext ID"
 msgstr "Itext ID ya Maandishi ya Kuonyesha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Hint Message"
 msgstr "Ujumbe wa Dokezo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Hint Itext ID"
 msgstr "Itext ID ya Dokezo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Help Message"
 msgstr "Ujumbe wa Msaada"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Help Itext ID"
 msgstr "Itext ID ya Msaada"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add New Item Button Text"
 msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kipya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add New Itext ID"
 msgstr "Ongeza Itext ID Mpya"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add Another Item Button Text"
 msgstr "Maandishi ya Kitufe cha Ongeza Kipengee Kingine"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add Another Itext ID"
 msgstr "Ongeza Itext ID Nyingine"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add Other Content"
 msgstr "Ongeza Maudhui Mengine"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add Multimedia"
 msgstr "Ongeza Multimedia"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Add Help Media"
 msgstr "Ongeza Vyombo vya Habari vya Msaada"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Edit Bulk Translations"
 msgstr "Hariri Tafsiri kwa Wingi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Update Translations"
 msgstr "Sasisha Tafsiri"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "Copy these translations into a spreadsheet program like Excel. You can edit "
 "them there and then paste them back here when you're done. These will update"
@@ -2157,7 +2166,7 @@ msgstr ""
 " zinazotumika kwenye fomu yako. Bonyeza 'Sasisha Tafsiri' kuhifadhi "
 "mabadiliko, au 'Funga' kughairi."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "The {questionid} is an internal identifier for a question. It does not "
 "appear on the phone. It is the name of the question in data exports."
@@ -2165,15 +2174,15 @@ msgstr ""
 "{questionid} ni kitambulisho cha ndani cha swali. Hakiwezi kuonekana kwenye "
 "simu. Ni jina la swali katika usafirishaji wa data."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "The date and time of the action, e.g., now() or today()"
 msgstr "Tarehe na saa ya tukio, mfano, now() au today()"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Balance ID"
 msgstr "Kitambulisho cha Mizania"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid ""
 "The name of the balance you are tracking. This is an internal identifier "
 "which does not appear on the phone."
@@ -2181,86 +2190,86 @@ msgstr ""
 "Jina la mizania unayofuatilia. Hiki ni kitambulisho cha ndani ambacho "
 "hakionekani kwenye simu."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Product"
 msgstr "Bidhaa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
 msgstr ""
 "Rejeleo la kitambulisho cha bidhaa, mfano, "
 "\"/data/products/current_product\""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Quantity"
 msgstr "Kiasi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "A reference to an integer question in this form."
 msgstr "Rejeleo la swali la nambari kamili katika fomu hii."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 #: corehq/apps/userreports/static/userreports/js/data_source_select_model.js
 msgid "Case"
 msgstr "Kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "XPath expression for the case ID associated with this balance."
 msgstr ""
 "Msururu wa XPath kwa kitambulisho cha kesi kinachohusishwa na mizania hii."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Transfer must have both Source Case and Destination Case defined."
 msgstr ""
 "Uhamisho lazima uwe na Kesi Chanzo na Kesi Lengwa zikiwa zimeainishwa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Cannot change $1 to $2"
 msgstr "Haiwezi kubadilisha $1 kuwa $2"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Source Case"
 msgstr "Kesi Chanzo"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "XPath expression for the case ID issuing the transaction."
 msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinachotoa muamala."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Destination Case"
 msgstr "Kesi Lengwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "XPath expression for the case ID receiving the transaction."
 msgstr "Msururu wa XPath kwa kitambulisho cha kesi kinayopokea muamala."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Dispense must have a Source Case."
 msgstr "Ugawaji lazima uwe na Kesi Chanzo."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Receive must have a Destination Case."
 msgstr "Upokeaji lazima uwe na Kesi Lengwa."
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Model Iteration ID Query"
 msgstr "Hojaji ya Kitambulisho cha Iteration ya Mfano"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Date Modified"
 msgstr "Tarehe Iliyorekebishwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "User ID"
 msgstr "Kitambulisho cha Mtumiaji"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Case Type"
 msgstr "Aina ya Kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_grouping_map.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
@@ -2269,151 +2278,82 @@ msgstr "Aina ya Kesi"
 msgid "Case ID"
 msgstr "Kitambulisho cha Kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Create Case"
 msgstr "Unda Kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Properties To Create"
 msgstr "Sifa za Kuunda"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "You must include {columns} columns to create a case"
 msgstr "Lazima ujumuisha safu wima za {columns} ili kuunda kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "You can only use the following properties:"
 msgstr "Unaweza kutumia tu sifa zifuatazo:"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "{props} are invalid properties"
 msgstr "{props} ni sifa batili"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Close Case"
 msgstr "Funga Kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Close Condition"
 msgstr "Hali ya Kufunga"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Update Case"
 msgstr "Sasisha Kesi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Properties To Update"
 msgstr "Sifa za Kusasisha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Use Index"
 msgstr "Tumia Kiashiria"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Index Properties"
 msgstr "Sifa za Kiashiria"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Relationship must be child or extension"
 msgstr "Uhusiano lazima uwe mtoto au kiendelezi"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 #: corehq/apps/export/static/export/js/models.js
 msgid "Create"
 msgstr "Unda"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Update"
 msgstr "Sasisha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Index"
 msgstr "Orodha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Image"
 msgstr "Picha"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Video"
 msgstr "Video"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Inline Video"
 msgstr "Video Iliyounganishwa"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/428.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "HTML"
 msgstr "HTML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "getCurrentMugInput"
-msgstr "pataMugInputWaSasa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "jstree"
-msgstr "jstree"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "getMugByPath"
-msgstr "getMugByPath"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "getData"
-msgstr "pataData"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "loadXML"
-msgstr "pakiaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "createXML"
-msgstr "undaXML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "loadXFormOrError"
-msgstr "pakiaXFormAuHitilafu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "addQuestion"
-msgstr "ongezaSwali"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "nodeIDFromLabel"
-msgstr "kitambulishoChaNodeKutokaKwaLebo"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "getSections"
-msgstr "pataSehemu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/664.js
-msgid "collapseSection"
-msgstr "kunjaSehemu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "{path} is not a valid data parent"
-msgstr "{path} si mzazi halali wa data"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "{question} is not allowed."
-msgstr "{question} hairuhusiwi."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "{question} validation failed"
-msgstr "Uhakiki wa {question} umeshindwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "{question} is required."
-msgstr "{question} inahitajika."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Unknown (read-only) question type"
-msgstr "Aina ya swali isiyojulikana (soma-tu)"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "No Translation Data"
-msgstr "Hakuna Data ya Tafsiri"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid ""
@@ -2546,6 +2486,14 @@ msgid "Integer"
 msgstr "Nambari Kamili"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Long"
+msgstr "Ndefu"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Decimal"
+msgstr "Desimali"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Audio Capture"
 msgstr "Kurekodi Sauti"
 
@@ -2598,14 +2546,6 @@ msgid "Document Upload"
 msgstr "Kupakia Hati"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "GPS"
-msgstr "GPS"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Barcode Scan"
-msgstr "Kuskanisha Msimbopau"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Date and Time"
 msgstr "Tarehe na Saa"
 
@@ -2614,14 +2554,6 @@ msgstr "Tarehe na Saa"
 #: corehq/apps/reports/static/reports/js/bootstrap5/edit_scheduled_report.js
 msgid "Time"
 msgstr "Saa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Long"
-msgstr "Ndefu"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
-msgid "Decimal"
-msgstr "Desimali"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Choice"
@@ -2674,6 +2606,34 @@ msgstr "Idadi ya Marudio inahitajika."
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "Extra Repeat Attributes"
 msgstr "Sifa za Ziada za Marudio"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "GPS"
+msgstr "GPS"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Barcode Scan"
+msgstr "Kuskanisha Msimbopau"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "{question} is not allowed."
+msgstr "{question} hairuhusiwi."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "{question} validation failed"
+msgstr "Uhakiki wa {question} umeshindwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "{question} is required."
+msgstr "{question} inahitajika."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "Unknown (read-only) question type"
+msgstr "Aina ya swali isiyojulikana (soma-tu)"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
+msgid "No Translation Data"
+msgstr "Hakuna Data ya Tafsiri"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/main.js
 msgid "New Form"
@@ -5601,6 +5561,39 @@ msgstr "Imeshindikana! Majibu ni: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
+#~ msgid "getCurrentMugInput"
+#~ msgstr "pataMugInputWaSasa"
+
+#~ msgid "jstree"
+#~ msgstr "jstree"
+
+#~ msgid "getMugByPath"
+#~ msgstr "getMugByPath"
+
+#~ msgid "getData"
+#~ msgstr "pataData"
+
+#~ msgid "loadXML"
+#~ msgstr "pakiaXML"
+
+#~ msgid "createXML"
+#~ msgstr "undaXML"
+
+#~ msgid "loadXFormOrError"
+#~ msgstr "pakiaXFormAuHitilafu"
+
+#~ msgid "addQuestion"
+#~ msgstr "ongezaSwali"
+
+#~ msgid "nodeIDFromLabel"
+#~ msgstr "kitambulishoChaNodeKutokaKwaLebo"
+
+#~ msgid "getSections"
+#~ msgstr "pataSehemu"
+
+#~ msgid "collapseSection"
+#~ msgstr "kunjaSehemu"
+
 #~ msgid "Active"
 #~ msgstr "Hai"
 
@@ -5734,9 +5727,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
 #~ msgid "New Role"
 #~ msgstr "Jukumu Jipya"
-
-#~ msgid "\n"
-#~ msgstr "\n"
 
 #~ msgid "Your location"
 #~ msgstr "Eneo lako"
