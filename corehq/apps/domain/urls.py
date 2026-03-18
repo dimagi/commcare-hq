@@ -113,7 +113,7 @@ urlpatterns = [
         name='password_change'),
     url(r'^accounts/password_change_done/$',
         PasswordChangeDoneView.as_view(
-            template_name='login_and_password/password_change_done.html',
+            template_name='login_and_password/bootstrap3/password_change_done.html',
             extra_context={'current_page': {'page_name': _('Password Change Complete')}}),
         name='password_change_done'),
     url(r'^accounts/password_reset_email/$',

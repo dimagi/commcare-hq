@@ -32,6 +32,16 @@
 
         1. [Install sdkman](https://sdkman.io/install)
 
+           On macOS, the default shell (Zsh) and the outdated system Bash can cause the standard installer to fail. Use this command to ensure a compatible installation:
+
+           ```sh
+           # Run the installer with Zsh-compatible pattern matching
+           curl -s "https://get.sdkman.io" | zsh -o NO_NOMATCH
+
+           # Initialize SDKMAN! in your current session
+           source "$HOME/.sdkman/bin/sdkman-init.sh"
+           ```
+
         2. List available java versions to file one that matches Java (JDK 17)
            ```sh
            sdk list java | grep 17
@@ -179,7 +189,7 @@ sed -i '' '/10-:-XX:UseAVX=2/ s/^/# /' config/jvm.options
 - In `config/elasticsearch.yml`, add xpack.ml.enabled: false
 
 ```
-echo "xpack.ml.enabled: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+echo "xpack.ml.enabled: false" | sudo tee -a config/elasticsearch.yml
 ```
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
@@ -203,7 +213,7 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
     ```shell
     $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
-    > analysis-phonetic 5.6.16
+    > analysis-phonetic 6.8.23
     ```
 
 
