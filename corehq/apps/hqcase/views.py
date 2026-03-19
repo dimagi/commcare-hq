@@ -29,6 +29,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.models import CommCareCase
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
+from .api.field_filters import extract_fields_params
 from .api.get_list import get_list
 from .api.get_bulk import get_bulk
 from .api.updates import handle_case_update
@@ -132,6 +133,11 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+    filter_fields = extract_fields_params(request.GET)
+    res['cases'] = [
+        filter_fields(case) if 'error' not in case else case
+        for case in res['cases']
+    ]
     return JsonResponse(res)
 
 
@@ -146,7 +152,8 @@ def _get_single_case(request, case_id):
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
     except PermissionDenied:
         return JsonResponse({'error': f"Insufficent permission for Case '{case_id}'"}, status=403)
-    return JsonResponse(serialize_es_case(case))
+    filter_fields = extract_fields_params(request.GET)
+    return JsonResponse(filter_fields(serialize_es_case(case)))
 
 
 def _handle_ext_get(request, external_id):
@@ -184,7 +191,8 @@ def _handle_ext_get(request, external_id):
             {'error': f"Insufficent permission for Case '{case.case_id}'"},
             status=403,
         )
-    return JsonResponse(serialize_case(case))
+    filter_fields = extract_fields_params(request.GET)
+    return JsonResponse(filter_fields(serialize_case(case)))
 
 
 def _handle_bulk_fetch(request):
@@ -206,6 +214,9 @@ def _handle_list_view(request):
         res = get_list(request.domain, request.couch_user, request.GET)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+    filter_fields = extract_fields_params(request.GET)
+    res['cases'] = [filter_fields(case) for case in res['cases']]
 
     if 'next' in res:
         res['next'] = reverse('case_api', args=[request.domain], params=res['next'], absolute=True)
@@ -288,12 +299,13 @@ def _handle_case_update(request, data, is_creation):
             'form_id': e.form_id,
         }, status=400)
 
+    filter_fields = extract_fields_params(request.GET)
     if isinstance(case_or_cases, list):
         return JsonResponse({
             'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
+            'cases': [filter_fields(serialize_case(case)) for case in case_or_cases],
         })
     return JsonResponse({
         'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
+        'case': filter_fields(serialize_case(case_or_cases)),
     })
