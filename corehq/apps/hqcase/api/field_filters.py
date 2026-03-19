@@ -35,4 +35,14 @@ def _limit_fields(data, field_tree):
 
 
 def _exclude_fields(data, field_tree):
-    raise NotImplementedError
+    """Return a copy of data with the fields in field_tree removed."""
+    result = {}
+    for key, value in data.items():
+        if key not in field_tree:
+            result[key] = value
+        elif field_tree[key]:
+            if isinstance(value, dict):
+                result[key] = _exclude_fields(value, field_tree[key])
+            else:
+                result[key] = value
+    return result
