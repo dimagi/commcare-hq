@@ -22,7 +22,16 @@ def _build_field_tree(fields):
 
 
 def _limit_fields(data, field_tree):
-    raise NotImplementedError
+    """Return a copy of data containing only the fields in field_tree."""
+    result = {}
+    for key, subtree in field_tree.items():
+        if key not in data:
+            continue
+        if not subtree:
+            result[key] = data[key]
+        elif isinstance(data[key], dict):
+            result[key] = _limit_fields(data[key], subtree)
+    return result
 
 
 def _exclude_fields(data, field_tree):
