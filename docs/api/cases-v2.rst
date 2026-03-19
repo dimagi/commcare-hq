@@ -295,6 +295,73 @@ Return value is a list of cases, each serialized as described in
 "`Single Case Serialization Format`_".
 
 
+Limiting Response Fields
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two optional, mutually exclusive query parameters allow you to control which
+fields appear in the response:
+
+``fields``
+    A comma-separated list of field names to include. Only specified fields
+    will appear in the response. Use dot notation for nested fields.
+
+``exclude``
+    A comma-separated list of field names to remove from the response. Use
+    dot notation for nested fields.
+
+Using both ``fields`` and ``exclude`` in the same request will return an
+error.
+
+**Dot-param syntax** for grouping sub-fields under a parent:
+
+.. code-block:: text
+
+    ?fields=case_id,external_id&fields.properties=edd,lmp,age
+
+This is equivalent to:
+
+.. code-block:: text
+
+    ?fields=case_id,external_id,properties.edd,properties.lmp,properties.age
+
+Examples
+^^^^^^^^
+
+Include only specific fields:
+
+.. code-block:: text
+
+    GET /a/<domain>/api/case/v2/?case_type=patient&fields=case_id&fields.properties=edd,age
+
+.. code-block:: json
+
+    {
+        "matching_records": 1,
+        "cases": [
+            {
+                "case_id": "abc123",
+                "properties": {
+                    "edd": "2013-12-09",
+                    "age": "22"
+                }
+            }
+        ]
+    }
+
+Exclude specific fields:
+
+.. code-block:: text
+
+    GET /a/<domain>/api/case/v2/<case_id>?exclude=case_name&exclude.properties=husband_name
+
+These parameters work on all GET endpoints and on the case object returned
+by POST/PUT (create/update) endpoints. For list and bulk responses, the
+filtering applies to each individual case object; envelope fields
+(``matching_records``, ``next``) are not affected.
+
+Field filtering is preserved across paginated requests.
+
+
 Pagination
 ~~~~~~~~~~
 
