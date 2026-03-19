@@ -1902,7 +1902,7 @@ const PersistentMenuView = Marionette.View.extend({
             persistentMenuContainer.addClass('border-top');
         }
 
-        if (!sessionStorage.getItem('handledDefaultClosed')) {
+        if (this.sidebarEnabled && !sessionStorage.getItem('handledDefaultClosed')) {
             self.hideMenu();
             self.unlockMenu();
             self.flipArrowRight();
