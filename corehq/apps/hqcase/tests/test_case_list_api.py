@@ -121,6 +121,19 @@ class TestCaseListAPI(TestCase):
         self.assertFalse(res['cases'])  # empty result set
         self.assertNotIn('next', res)  # no next param
 
+    def test_fields_preserved_in_cursor(self):
+        params = QueryDict("case_type=person&limit=2&fields=case_id,external_id")
+        res = get_list(self.domain, self.couch_user, params)
+        cursor = b64decode(res['next']['cursor']).decode('utf-8')
+        self.assertIn('fields=', cursor)
+
+    def test_dot_param_fields_preserved_in_cursor(self):
+        params = QueryDict("case_type=person&limit=2&fields=case_id&fields.properties=alias")
+        res = get_list(self.domain, self.couch_user, params)
+        cursor = b64decode(res['next']['cursor']).decode('utf-8')
+        self.assertIn('fields=case_id', cursor)
+        self.assertIn('fields.properties=alias', cursor)
+
     def test_deprecated_case_type(self):
         self.case_type_obj.is_deprecated = True
         self.case_type_obj.save()

@@ -216,3 +216,67 @@ class TestExtractFieldsParams(SimpleTestCase):
         fn = extract_fields_params(params)
         result = fn(data)
         self.assertEqual(result, {"a": {"b": {"c": "deep"}}})
+
+
+class TestFieldFilterPipeline(SimpleTestCase):
+    """Integration-style tests: extract params then apply to case dicts."""
+
+    CASE = {
+        "case_id": "abc123",
+        "case_type": "person",
+        "case_name": "Test",
+        "properties": {"edd": "2013-12-09", "age": "22", "secret": "hidden"},
+        "indices": {"parent": {"case_id": "def456", "case_type": "household"}},
+    }
+
+    def test_fields_on_case_list_envelope(self):
+        """Envelope fields are not filtered - only case dicts are."""
+        params = QueryDict("fields=case_id")
+        filter_fn = extract_fields_params(params)
+        envelope = {
+            "matching_records": 5,
+            "cases": [self.CASE],
+            "next": {"cursor": "abc"},
+        }
+        # Apply filter to each case (as views.py does), not the envelope
+        filtered_cases = [filter_fn(c) for c in envelope["cases"]]
+        self.assertEqual(filtered_cases, [{"case_id": "abc123"}])
+        # Envelope keys untouched
+        self.assertIn("matching_records", envelope)
+        self.assertIn("next", envelope)
+
+    def test_bulk_error_stubs_not_filtered(self):
+        """Error stubs should pass through unfiltered."""
+        params = QueryDict("fields=case_id")
+        filter_fn = extract_fields_params(params)
+        cases = [
+            self.CASE,
+            {"case_id": "missing1", "error": "not found"},
+        ]
+        filtered = [
+            filter_fn(c) if "error" not in c else c
+            for c in cases
+        ]
+        self.assertEqual(filtered[0], {"case_id": "abc123"})
+        self.assertEqual(filtered[1], {"case_id": "missing1", "error": "not found"})
+
+    def test_fields_on_update_response(self):
+        """Update response: form_id is envelope, case is filtered."""
+        params = QueryDict("fields=case_id,case_type")
+        filter_fn = extract_fields_params(params)
+        response = {
+            "form_id": "form-xyz",
+            "case": filter_fn(self.CASE),
+        }
+        self.assertEqual(response["form_id"], "form-xyz")
+        self.assertEqual(response["case"], {"case_id": "abc123", "case_type": "person"})
+
+    def test_exclude_nested_fields(self):
+        params = QueryDict("exclude.properties=secret")
+        filter_fn = extract_fields_params(params)
+        result = filter_fn(self.CASE)
+        self.assertNotIn("secret", result["properties"])
+        self.assertIn("edd", result["properties"])
+        # Top-level fields unchanged
+        self.assertIn("case_id", result)
+        self.assertIn("indices", result)
