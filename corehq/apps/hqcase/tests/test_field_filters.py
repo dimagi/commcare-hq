@@ -1,9 +1,12 @@
+from django.http import QueryDict
 from django.test import SimpleTestCase
 
+from corehq.apps.hqcase.api.core import UserError
 from corehq.apps.hqcase.api.field_filters import (
     _build_field_tree,
     _exclude_fields,
     _limit_fields,
+    extract_fields_params,
 )
 
 SAMPLE_CASE = {
@@ -138,3 +141,78 @@ class TestExcludeFields(SimpleTestCase):
         tree = {"a": {"b": {"c": {}}}}
         result = _exclude_fields(data, tree)
         self.assertEqual(result, {"a": {"b": {"d": "also_deep"}}})
+
+
+class TestExtractFieldsParams(SimpleTestCase):
+
+    def test_no_params_returns_identity(self):
+        params = QueryDict("")
+        fn = extract_fields_params(params)
+        data = {"case_id": "abc", "case_type": "foo"}
+        self.assertEqual(fn(data), data)
+
+    def test_fields_basic(self):
+        params = QueryDict("fields=case_id,case_type")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertEqual(result, {"case_id": "abc123", "case_type": "pregnant_mother"})
+
+    def test_exclude_basic(self):
+        params = QueryDict("exclude=case_name")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertNotIn("case_name", result)
+        self.assertIn("case_id", result)
+
+    def test_both_raises_error(self):
+        params = QueryDict("fields=case_id&exclude=case_name")
+        with self.assertRaises(UserError):
+            extract_fields_params(params)
+
+    def test_dot_param_fields(self):
+        params = QueryDict("fields=case_id&fields.properties=edd,age")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertEqual(result, {
+            "case_id": "abc123",
+            "properties": {"edd": "2013-12-09", "age": "22"},
+        })
+
+    def test_dot_param_without_base(self):
+        params = QueryDict("fields.properties=edd")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertEqual(result, {"properties": {"edd": "2013-12-09"}})
+
+    def test_repeated_params(self):
+        params = QueryDict("fields=case_id&fields=case_type")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertEqual(result, {"case_id": "abc123", "case_type": "pregnant_mother"})
+
+    def test_empty_fields_returns_empty(self):
+        params = QueryDict("fields=")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertEqual(result, {})
+
+    def test_empty_exclude_returns_all(self):
+        params = QueryDict("exclude=")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertEqual(result, SAMPLE_CASE)
+
+    def test_dot_param_exclude(self):
+        params = QueryDict("exclude=case_name&exclude.properties=husband_name")
+        fn = extract_fields_params(params)
+        result = fn(SAMPLE_CASE)
+        self.assertNotIn("case_name", result)
+        self.assertNotIn("husband_name", result["properties"])
+        self.assertIn("edd", result["properties"])
+
+    def test_deep_dot_param(self):
+        params = QueryDict("fields.a.b=c")
+        data = {"a": {"b": {"c": "deep", "d": "other"}}, "x": "y"}
+        fn = extract_fields_params(params)
+        result = fn(data)
+        self.assertEqual(result, {"a": {"b": {"c": "deep"}}})

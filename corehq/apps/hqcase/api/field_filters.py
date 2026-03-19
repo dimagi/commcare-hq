@@ -1,3 +1,62 @@
+from corehq.apps.hqcase.api.core import UserError
+
+FIELDS_PARAM = 'fields'
+EXCLUDE_PARAM = 'exclude'
+
+
+def extract_fields_params(params):
+    """Read 'fields'/'exclude' params from QueryDict, return filter function.
+
+    Reads but does not pop params from the QueryDict. The params remain
+    in the QueryDict so they are preserved in pagination cursors.
+
+    Returns a callable (dict -> dict) that applies field filtering.
+    Returns the identity function if neither fields nor exclude was specified.
+    """
+    has_fields, fields_spec = _collect_field_spec(params, FIELDS_PARAM)
+    has_exclude, exclude_spec = _collect_field_spec(params, EXCLUDE_PARAM)
+
+    if has_fields and has_exclude:
+        raise UserError("You cannot specify both 'fields' and 'exclude'")
+
+    if has_fields:
+        tree = _build_field_tree(fields_spec)
+        return lambda data: _limit_fields(data, tree)
+    if has_exclude:
+        tree = _build_field_tree(exclude_spec)
+        return lambda data: _exclude_fields(data, tree)
+    return _identity
+
+
+def _identity(data):
+    return data
+
+
+def _collect_field_spec(params, prefix):
+    """Collect field paths from a QueryDict for the given prefix.
+
+    Reads 'prefix' and all 'prefix.*' keys. Values are comma-separated.
+    Returns (key_present, fields) where key_present is True if any
+    matching keys exist in the QueryDict (even if values are empty).
+    """
+    fields = []
+    key_present = False
+    for key in list(params.keys()):
+        if key == prefix:
+            key_present = True
+            for value in params.getlist(key):
+                fields.extend(part.strip() for part in value.split(",") if part.strip())
+        elif key.startswith(prefix + "."):
+            key_present = True
+            nesting = key[len(prefix) + 1:]  # e.g. "properties" from "fields.properties"
+            for value in params.getlist(key):
+                for part in value.split(","):
+                    part = part.strip()
+                    if part:
+                        fields.append(f"{nesting}.{part}")
+    return key_present, fields
+
+
 def _build_field_tree(fields):
     """Build a nested dict (field tree) from a list of dot-separated field paths.
 
