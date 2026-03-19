@@ -140,8 +140,14 @@ def _get_query(domain, params):
     return query
 
 
+def _is_field_filter_param(key):
+    return key in ('fields', 'exclude') or key.startswith(('fields.', 'exclude.'))
+
+
 def _get_filter(domain, key, val):
     if key == 'limit':
+        return filters.match_all()
+    elif _is_field_filter_param(key):
         return filters.match_all()
     elif key == 'query':
         return _get_query_filter(domain, val)
