@@ -29,7 +29,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.models import CommCareCase
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
-from .api.field_filters import extract_fields_params
+from .api.field_filters import get_fields_filter_fn
 from .api.get_list import get_list
 from .api.get_bulk import get_bulk
 from .api.updates import handle_case_update
@@ -133,7 +133,7 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
-    filter_fields = extract_fields_params(request.GET)
+    filter_fields = get_fields_filter_fn(request.GET)
     res['cases'] = [
         filter_fields(case) if 'error' not in case else case
         for case in res['cases']
@@ -152,7 +152,7 @@ def _get_single_case(request, case_id):
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
     except PermissionDenied:
         return JsonResponse({'error': f"Insufficent permission for Case '{case_id}'"}, status=403)
-    filter_fields = extract_fields_params(request.GET)
+    filter_fields = get_fields_filter_fn(request.GET)
     return JsonResponse(filter_fields(serialize_es_case(case)))
 
 
@@ -191,7 +191,7 @@ def _handle_ext_get(request, external_id):
             {'error': f"Insufficent permission for Case '{case.case_id}'"},
             status=403,
         )
-    filter_fields = extract_fields_params(request.GET)
+    filter_fields = get_fields_filter_fn(request.GET)
     return JsonResponse(filter_fields(serialize_case(case)))
 
 
@@ -215,7 +215,7 @@ def _handle_list_view(request):
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
-    filter_fields = extract_fields_params(request.GET)
+    filter_fields = get_fields_filter_fn(request.GET)
     res['cases'] = [filter_fields(case) for case in res['cases']]
 
     if 'next' in res:
@@ -299,7 +299,7 @@ def _handle_case_update(request, data, is_creation):
             'form_id': e.form_id,
         }, status=400)
 
-    filter_fields = extract_fields_params(request.GET)
+    filter_fields = get_fields_filter_fn(request.GET)
     if isinstance(case_or_cases, list):
         return JsonResponse({
             'form_id': xform.form_id,

@@ -1,12 +1,14 @@
 from django.http import QueryDict
 from django.test import SimpleTestCase
 
+import pytest
+
 from corehq.apps.hqcase.api.core import UserError
 from corehq.apps.hqcase.api.field_filters import (
-    _build_field_tree,
     _exclude_fields,
+    _get_tree,
     _limit_fields,
-    extract_fields_params,
+    get_fields_filter_fn,
 )
 
 SAMPLE_CASE = {
@@ -22,39 +24,30 @@ SAMPLE_CASE = {
 }
 
 
-class TestBuildFieldTree(SimpleTestCase):
-    def test_top_level_fields(self):
-        self.assertEqual(
-            _build_field_tree(["case_id", "case_type"]),
-            {"case_id": {}, "case_type": {}},
-        )
+def test_get_tree_realistic():
+    qs = 'fields=case_id&fields=case_name&fields.properties=dob,edd'
+    assert _get_tree(QueryDict(qs), 'fields') == {
+        'case_id': {},
+        'case_name': {},
+        'properties': {'dob': {}, 'edd': {}},
+    }
 
-    def test_dotted_fields(self):
-        self.assertEqual(
-            _build_field_tree(["properties.edd", "properties.age"]),
-            {"properties": {"edd": {}, "age": {}}},
-        )
 
-    def test_mixed_top_and_dotted(self):
-        self.assertEqual(
-            _build_field_tree(["case_id", "properties.edd"]),
-            {"case_id": {}, "properties": {"edd": {}}},
-        )
+@pytest.mark.parametrize("querystring, expected", [
+    ("a=A&a=B&x=Y", {'A': {}, 'B': {}}),
+    ("a.A=B&a.C=D", {'A': {'B': {}},
+                     'C': {'D': {}}}),
+    ("a.A=B&a.A=C", {'A': {'B': {}, 'C': {}}}),
+    ("a=A.B&a=A.C", {'A': {'B': {}, 'C': {}}}),
+    ("a.A=B&a=A.C", {'A': {'B': {}, 'C': {}}}),
+    ("a.A=B,C", {'A': {'B': {}, 'C': {}}}),
+    ("a.A=B,C&a.A=D", {'A': {'B': {}, 'C': {}, 'D': {}}}),
 
-    def test_deep_nesting(self):
-        self.assertEqual(
-            _build_field_tree(["a.b.c.d"]),
-            {"a": {"b": {"c": {"d": {}}}}},
-        )
-
-    def test_whole_object_and_sub_field(self):
-        self.assertEqual(
-            _build_field_tree(["properties", "properties.edd"]),
-            {"properties": {}},
-        )
-
-    def test_empty_list(self):
-        self.assertEqual(_build_field_tree([]), {})
+    ("", {}),
+    ("somethingelse=yes", {}),
+])
+def test_get_tree(querystring, expected):
+    assert _get_tree(QueryDict(querystring), 'a') == expected
 
 
 class TestLimitFields(SimpleTestCase):
@@ -147,19 +140,19 @@ class TestExtractFieldsParams(SimpleTestCase):
 
     def test_no_params_returns_identity(self):
         params = QueryDict("")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         data = {"case_id": "abc", "case_type": "foo"}
         self.assertEqual(fn(data), data)
 
     def test_fields_basic(self):
         params = QueryDict("fields=case_id,case_type")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertEqual(result, {"case_id": "abc123", "case_type": "pregnant_mother"})
 
     def test_exclude_basic(self):
         params = QueryDict("exclude=case_name")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertNotIn("case_name", result)
         self.assertIn("case_id", result)
@@ -167,11 +160,11 @@ class TestExtractFieldsParams(SimpleTestCase):
     def test_both_raises_error(self):
         params = QueryDict("fields=case_id&exclude=case_name")
         with self.assertRaises(UserError):
-            extract_fields_params(params)
+            get_fields_filter_fn(params)
 
     def test_dot_param_fields(self):
         params = QueryDict("fields=case_id&fields.properties=edd,age")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertEqual(result, {
             "case_id": "abc123",
@@ -180,31 +173,31 @@ class TestExtractFieldsParams(SimpleTestCase):
 
     def test_dot_param_without_base(self):
         params = QueryDict("fields.properties=edd")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertEqual(result, {"properties": {"edd": "2013-12-09"}})
 
     def test_repeated_params(self):
         params = QueryDict("fields=case_id&fields=case_type")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertEqual(result, {"case_id": "abc123", "case_type": "pregnant_mother"})
 
     def test_empty_fields_returns_empty(self):
         params = QueryDict("fields=")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertEqual(result, {})
 
     def test_empty_exclude_returns_all(self):
         params = QueryDict("exclude=")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertEqual(result, SAMPLE_CASE)
 
     def test_dot_param_exclude(self):
         params = QueryDict("exclude=case_name&exclude.properties=husband_name")
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(SAMPLE_CASE)
         self.assertNotIn("case_name", result)
         self.assertNotIn("husband_name", result["properties"])
@@ -213,7 +206,7 @@ class TestExtractFieldsParams(SimpleTestCase):
     def test_deep_dot_param(self):
         params = QueryDict("fields.a.b=c")
         data = {"a": {"b": {"c": "deep", "d": "other"}}, "x": "y"}
-        fn = extract_fields_params(params)
+        fn = get_fields_filter_fn(params)
         result = fn(data)
         self.assertEqual(result, {"a": {"b": {"c": "deep"}}})
 
@@ -232,7 +225,7 @@ class TestFieldFilterPipeline(SimpleTestCase):
     def test_fields_on_case_list_envelope(self):
         """Envelope fields are not filtered - only case dicts are."""
         params = QueryDict("fields=case_id")
-        filter_fn = extract_fields_params(params)
+        filter_fn = get_fields_filter_fn(params)
         envelope = {
             "matching_records": 5,
             "cases": [self.CASE],
@@ -248,7 +241,7 @@ class TestFieldFilterPipeline(SimpleTestCase):
     def test_bulk_error_stubs_not_filtered(self):
         """Error stubs should pass through unfiltered."""
         params = QueryDict("fields=case_id")
-        filter_fn = extract_fields_params(params)
+        filter_fn = get_fields_filter_fn(params)
         cases = [
             self.CASE,
             {"case_id": "missing1", "error": "not found"},
@@ -263,7 +256,7 @@ class TestFieldFilterPipeline(SimpleTestCase):
     def test_fields_on_update_response(self):
         """Update response: form_id is envelope, case is filtered."""
         params = QueryDict("fields=case_id,case_type")
-        filter_fn = extract_fields_params(params)
+        filter_fn = get_fields_filter_fn(params)
         response = {
             "form_id": "form-xyz",
             "case": filter_fn(self.CASE),
@@ -273,7 +266,7 @@ class TestFieldFilterPipeline(SimpleTestCase):
 
     def test_exclude_nested_fields(self):
         params = QueryDict("exclude.properties=secret")
-        filter_fn = extract_fields_params(params)
+        filter_fn = get_fields_filter_fn(params)
         result = filter_fn(self.CASE)
         self.assertNotIn("secret", result["properties"])
         self.assertIn("edd", result["properties"])
