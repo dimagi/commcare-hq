@@ -535,7 +535,9 @@ def patch_xform(request, domain, app_id, form_unique_id):
     try:
         xml = save_xform(app, form, xml.encode('utf-8'), case_mapping_diff)
     except XFormException:
-        return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
+        # Patch produced invalid XML. Tell the client there's a "conflict"
+        # so it retries with a full save.
+        return JsonResponse({'status': 'conflict', 'xform': form.source})
 
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
