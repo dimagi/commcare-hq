@@ -54,7 +54,12 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
-    FormActionsDiffException,
+)
+from corehq.apps.app_manager.form_action_diff import (
+    from_combined_diff,
+    get_case_mappings,
+    make_multi,
+    update_form_actions,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -73,7 +78,6 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
-    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -227,11 +231,9 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    allow_conflicts = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    try:
-        form.actions = _get_updates(form.actions, request.POST, allow_conflicts)
-    except FormActionsDiffException as e:
-        return HttpResponseBadRequest(e.get_user_message())
+    actions_json = json.loads(request.POST['actions'])
+    diff = json.loads(request.POST['case_mapping_diff']) if 'case_mapping_diff' in request.POST else {}
+    update_form_actions(form.actions, actions_json, diff)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -243,15 +245,10 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     response_json = {}
     app.save(response_json)
+    response_json['actions'] = make_multi(form.actions.to_json())
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
-
-
-def _get_updates(existing_actions, data, allow_conflicts):
-    updates = json.loads(data['actions'])
-    update_diff = FormActionsDiff(json.loads(data['update_diff']) if 'update_diff' in data else {})
-    return existing_actions.with_updates(updates, update_diff, allow_conflicts)
 
 
 @waf_allow('XSS_BODY')
@@ -441,7 +438,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         set_session_endpoint(form, raw_endpoint_id, app)
 
     if should_edit('access_hidden_forms'):
-        form.respect_relevancy = not ('true' in request.POST.getlist('access_hidden_forms'))
+        form.respect_relevancy = 'true' not in request.POST.getlist('access_hidden_forms')
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
@@ -453,6 +450,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     app.save(resp)
     if ajax:
+        _add_case_management_data(resp, form, request)
         return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
@@ -545,6 +543,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
+    _add_case_management_data(response_json, form, request)
     return JsonResponse(response_json)
 
 
@@ -557,7 +556,7 @@ def _get_case_mapping_diff(request, form):
     case_mapping_diff = None
     has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     if has_vellum_case_mapping and 'mapping_diff' in request.POST:
-        case_mapping_diff = FormActionsDiff.from_json(
+        case_mapping_diff = from_combined_diff(
             json.loads(request.POST['mapping_diff']),
             is_registration=form.is_registration_form(),
         )
@@ -569,6 +568,14 @@ def _get_xform_conflict_response(form, sha1_checksum):
     if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
         return json_response({'status': 'conflict', 'xform': form_xml})
     return None
+
+
+def _add_case_management_data(response_json, form, request):
+    """Allow clients to immediately display concurrent edit conflict warnings"""
+    if toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request):
+        response_json['caseManagement'] = {
+            "mappings": get_case_mappings(form.actions),
+        }
 
 
 @require_GET
@@ -883,10 +890,8 @@ def get_form_view_context(
                 'schedule_options': schedule_options,
             })
     else:
-        # TODO: figure out a cleaner method
-        form.actions.make_multi()
         case_config_options.update({
-            'actions': form.actions,
+            'actions': make_multi(form.actions.to_json()),
             'allowUsercase': allow_usercase,
             'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
             'valid_index_names': valid_index_names,
