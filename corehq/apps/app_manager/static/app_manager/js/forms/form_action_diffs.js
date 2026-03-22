@@ -28,7 +28,6 @@ export function getDiff(baseline, incoming) {
 function getUpdateMultiDiff(original, incoming) {
     const additions = {};
     const deletions = {};
-    const updates = {};
 
     const allKeys = new Set([...Object.keys(original), ...Object.keys(incoming)]);
     const baseline = Object.fromEntries(
@@ -42,9 +41,11 @@ function getUpdateMultiDiff(original, incoming) {
                 if (!match) {
                     additions[key] = additions[key] || [];
                     additions[key].push(item);
-                } else if (match.update_mode !== item.update_mode) {
-                    updates[key] = updates[key] || [];
-                    updates[key].push(item);
+                } else if (!_.isEqual(match, item)) {
+                    deletions[key] = deletions[key] || [];
+                    deletions[key].push(match);
+                    additions[key] = additions[key] || [];
+                    additions[key].push(item);
                 }
             });
             baseline[key].forEach(item => {
@@ -72,9 +73,6 @@ function getUpdateMultiDiff(original, incoming) {
     }
     if (Object.keys(deletions).length) {
         diff.delete = deletions;
-    }
-    if (Object.keys(updates).length) {
-        diff.update = updates;
     }
     return diff;
 }
