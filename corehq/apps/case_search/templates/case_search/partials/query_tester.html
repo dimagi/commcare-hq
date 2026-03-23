@@ -1,0 +1,35 @@
+{% load i18n %}
+{# Query builder partial — rendered inside an Alpine.js x-data="endpointForm()" context. #}
+
+<div class="filter-tree">
+  <div>
+    <template x-for="param in parameters" :key="param.name">
+      <div class="row mb-3">
+        <label
+          class="col-sm-2 form-label fw-semibold"
+          x-text="param.name"
+          :for="'param-name-' + param.name"
+        >
+        </label>
+        <div class="col-sm-10">
+          <input
+            class="form-control"
+            type="text"
+            :id="'param-name-' + param.name"
+          />
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <button type="button" class="btn btn-primary btn-sm" @click="testQuery()">
+    <span>{% trans "Generate query" %}</span>
+  </button>
+
+  <textarea
+    class="form-control font-monospace mt-3"
+    rows="5"
+    readonly
+    x-text="JSON.stringify(query, null, 2)"
+  ></textarea>
+</div>

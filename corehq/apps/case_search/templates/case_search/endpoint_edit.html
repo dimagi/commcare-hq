@@ -258,7 +258,7 @@
 
     {# Actions #}
     {% if mode != 'readonly' %}
-      <div class="mt-3 d-flex gap-2">
+      <div class="mb-3 d-flex gap-2">
         <button
           type="button"
           class="btn btn-primary btn-sm"
@@ -283,7 +283,7 @@
         >
       </div>
     {% else %}
-      <div class="mt-3">
+      <div class="mb-3">
         <a
           href="{% url 'case_search_endpoints' domain %}"
           class="btn btn-outline-secondary btn-sm"
@@ -291,5 +291,16 @@
         >
       </div>
     {% endif %}
+
+    {# ── Tester card ── #}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="fa-solid fa-mangifying-glass me-1"></i
+        >{% trans "Test query" %}
+      </div>
+      <div class="card-body">
+        {% include "case_search/partials/query_tester.html" %}
+      </div>
+    </div>
   </div>
 {% endblock page_content %}
