@@ -103,6 +103,9 @@ class Command(BaseCommand):
             # Custom search input instance name
             if search_config.get('instance_name'):
                 reasons.append(f"module '{mod}': instance_name")
+            # Additional Case List and Case Search Types
+            if search_config.get('additional_case_types'):
+                reasons.append(f"module '{mod}': additional_case_types")
             # Custom Search Sort Properties
             if search_config.get('custom_sort_properties'):
                 reasons.append(f"module '{mod}': custom_sort_properties")
