@@ -59,11 +59,14 @@
         href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}"
         >Temporarily Disable Two-Factor Authentication</a
       >
-      {% if web_user.domain_memberships or web_user.is_superuser or is_accounting_admin %}
+      {% if web_user.is_staff %}
         <button
           class="btn btn-danger"
           data-toggle="modal"
           data-target="#remove-all-access-modal"
+          {% if not web_user.domain_memberships and not web_user.is_superuser and not is_accounting_admin %}
+            disabled
+          {% endif %}
         >
           {% trans "Remove All Access" %}
         </button>
@@ -102,7 +105,7 @@
 
 {% block modals %}
   {{ block.super }}
-  {% if web_user.domain_memberships or web_user.is_superuser or is_accounting_admin %}
+  {% if web_user.is_staff %}
     <div
       class="modal fade"
       id="remove-all-access-modal"
