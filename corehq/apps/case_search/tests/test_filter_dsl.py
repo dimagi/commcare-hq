@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -30,6 +30,7 @@ from corehq.apps.es.case_search import (
 from corehq.apps.es.cases import case_name, is_closed
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test
@@ -505,3 +506,18 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+
+@patch('corehq.apps.case_search.xpath_functions.subcase_functions'
+       '._get_parent_case_ids_matching_subcase_query',
+       new=MagicMock(return_value=[]))
+def test_subcase_query_logging():
+    parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') >= 1")
+    with patch('corehq.apps.case_search.filter_dsl.notify_exception') as notify:
+        build_filter_from_ast(parsed, SearchFilterContext("mydomain"))
+        notify.assert_called()
+
+    with patch('corehq.apps.case_search.filter_dsl.notify_exception') as notify:
+        with flag_enabled('CASE_SEARCH_RELATED_LOOKUPS'):
+            build_filter_from_ast(parsed, SearchFilterContext("mydomain"))
+        notify.assert_not_called()
