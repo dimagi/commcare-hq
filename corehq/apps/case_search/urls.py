@@ -1,7 +1,10 @@
 from django.urls import re_path as url
 
 from corehq.apps.case_search.views import (
-    CaseSearchView, CSQLFixtureExpressionView, ProfileCaseSearchView
+    CaseSearchView,
+    CaseSearchEndpoint,
+    CSQLFixtureExpressionView,
+    ProfileCaseSearchView,
 )
 from corehq.apps.case_search.endpoint_views import (
     CaseSearchCapabilityView,
@@ -54,4 +57,5 @@ urlpatterns = [
         CaseSearchEndpointDeactivateView.as_view(),
         name=CaseSearchEndpointDeactivateView.urlname,
     ),
+    url(r'^case_search_endpoint/$', CaseSearchEndpoint.as_view(), name=CaseSearchEndpoint.urlname),
 ]
