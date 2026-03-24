@@ -548,13 +548,19 @@ def patch_xform(request, domain, app_id, form_unique_id):
     return JsonResponse(response_json)
 
 
+# Characters that JS encodeURI preserves (beyond letters/digits which
+# Python's quote already preserves). Used to match encodeURI behavior
+# so patch coordinates align between JS and Python.
+ENCODE_URI_SAFE = "!#$&'()*+,-./:;=?@_~"
+
+
 def apply_patch(patch, text):
     from urllib.parse import quote, unquote
     dmp = diff_match_patch()
     # JS pre-encodes text with encodeURI before diffing to avoid emoji
     # breaking the diff (see core.js). Encode source the same way before
-    # applying, then decode. safe= matches JS encodeURI's preserved chars.
-    encoded_text = quote(text, safe="!#$&'()*+,-./:;=?@_~")
+    # applying, then decode.
+    encoded_text = quote(text, safe=ENCODE_URI_SAFE)
     encoded_result = dmp.patch_apply(dmp.patch_fromText(patch), encoded_text)[0]
     return unquote(encoded_result)
 
