@@ -246,6 +246,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CSQLFixtureExpression', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CSQLFixtureExpressionLog', SimpleFilter('expression__domain')),
+    FilteredModelIteratorBuilder('case_search.CaseSearchEndpoint', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_search.CaseSearchEndpointVersion', SimpleFilter('endpoint__domain')),
     FilteredModelIteratorBuilder('hqmedia.LogoForSystemEmailsReference', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('userreports.UCRExpression', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableAPI', SimpleFilter('domain')),
