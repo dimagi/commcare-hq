@@ -548,8 +548,14 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
 
 def apply_patch(patch, text):
+    from urllib.parse import quote, unquote
     dmp = diff_match_patch()
-    return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
+    # JS pre-encodes text with encodeURI before diffing to avoid emoji
+    # breaking the diff (see core.js). Encode source the same way before
+    # applying, then decode. safe= matches JS encodeURI's preserved chars.
+    encoded_text = quote(text, safe="!#$&'()*+,-./:;=?@_~")
+    encoded_result = dmp.patch_apply(dmp.patch_fromText(patch), encoded_text)[0]
+    return unquote(encoded_result)
 
 
 def _get_case_mapping_diff(request, form):
