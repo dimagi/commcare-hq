@@ -26,6 +26,7 @@ from text_unidecode import unidecode
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
+from urllib.parse import quote, unquote
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -555,7 +556,6 @@ ENCODE_URI_SAFE = "!#$&'()*+,-./:;=?@_~"
 
 
 def apply_patch(patch, text):
-    from urllib.parse import quote, unquote
     dmp = diff_match_patch()
     # JS pre-encodes text with encodeURI before diffing to avoid emoji
     # breaking the diff (see core.js). Encode source the same way before
