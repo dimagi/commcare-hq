@@ -551,18 +551,27 @@ def remove_all_web_user_access(request):
         messages.error(request, _("User '%(username)s' not found.") % {'username': username})
     else:
         removed = []
+        fields_changed = {}
         django_user = web_user.get_django_user()
 
         if web_user.domains:
             count = len(web_user.domains)
             for domain in list(web_user.domains):
                 web_user.delete_domain_membership(domain)
+                log_user_change(
+                    by_domain=None, for_domain=domain, couch_user=web_user,
+                    changed_by_user=request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    change_messages=UserChangeMessage.domain_removal(domain),
+                    by_domain_required_for_log=False,
+                )
             web_user.save()
             removed.append(_("%(count)d domain membership(s)") % {'count': count})
 
         if django_user.is_superuser:
             django_user.is_superuser = False
             django_user.save()
+            fields_changed['is_superuser'] = False
             removed.append(_("superuser access"))
 
         if is_accounting_admin(django_user):
@@ -571,7 +580,18 @@ def remove_all_web_user_access(request):
                 from_role=django_user.prbac_role.role,
                 to_role=ops_role,
             ).delete()
+            fields_changed['is_accounting_admin'] = False
             removed.append(_("accounting admin access"))
+
+        if fields_changed:
+            log_user_change(
+                by_domain=None, for_domain=None, couch_user=web_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                fields_changed=fields_changed,
+                by_domain_required_for_log=False,
+                for_domain_required_for_log=False,
+            )
 
         if removed:
             messages.success(
