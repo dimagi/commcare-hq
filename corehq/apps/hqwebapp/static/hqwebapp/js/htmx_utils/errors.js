@@ -20,6 +20,7 @@ const showHtmxErrorModal = (errorCode, errorText, errorEvent, showDetails = true
     if (!modalElem) {return;} // Exit if modal element is not found
 
     const errorModal = new Modal(modalElem);
+    // Tied to update-htmx-request-error-modal.camel
     window.dispatchEvent(new CustomEvent('updateHtmxRequestErrorModal', {
         detail: {
             errorCode: errorCode,
