@@ -4,7 +4,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
-from corehq.apps.userreports.datatypes import NUMERIC_TYPE_CHOICES
+from corehq.apps.userreports.datatypes import NUMERIC_TYPE_CHOICES, DATA_TYPE_CHOICES, DATA_TYPE_BOOLEAN
 from corehq.apps.userreports.reports.builder import (
     make_case_property_indicator,
     make_multiselect_question_indicator,
@@ -115,6 +115,10 @@ class ColumnOption(object):
         }]
 
     def _has_a_numeric_type(self):
+        # apart from boolean any other datatype should be from choices
+        assert all(
+            [datatype in DATA_TYPE_CHOICES for datatype in self._data_types if datatype != DATA_TYPE_BOOLEAN]
+        ), "Unexpected data type"
         return any([datatype in self._data_types for datatype in NUMERIC_TYPE_CHOICES])
 
 
