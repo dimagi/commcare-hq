@@ -537,6 +537,32 @@ def web_user_lookup(request):
     return render(request, template, context)
 
 
+@require_superuser
+def remove_web_user_domains(request):
+    username = request.POST.get("username")
+    if not username:
+        return HttpResponseBadRequest("Missing username")
+
+    web_user = WebUser.get_by_username(username)
+    if web_user is None:
+        messages.error(request, _("User '%(username)s' not found.") % {'username': username})
+    elif not web_user.domains:
+        messages.info(request, _("User '%(username)s' has no domain memberships.") % {'username': username})
+    else:
+        domains = list(web_user.domains)
+        for domain in domains:
+            web_user.delete_domain_membership(domain)
+        web_user.save()
+        messages.success(
+            request,
+            _("Removed %(count)d domain membership(s) from user '%(username)s'.")
+            % {'count': len(domains), 'username': username},
+        )
+
+    redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), urllib.parse.quote(username))
+    return redirect(redirect_url)
+
+
 @method_decorator(require_superuser, name='dispatch')
 class DisableUserView(FormView):
     template_name = 'hqadmin/disable_user.html'
