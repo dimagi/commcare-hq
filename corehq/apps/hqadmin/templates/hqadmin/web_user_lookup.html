@@ -49,6 +49,15 @@
   {% endif %}
 {% endblock %}
 
+{% block js-inline %}
+  {{ block.super }}
+  <script>
+    document.getElementById("confirm-remove-access").addEventListener("input", function () {
+        document.getElementById("remove-access-btn").disabled = this.value !== "REMOVE ACCESS";
+    });
+  </script>
+{% endblock js-inline %}
+
 {% block modals %}
   {{ block.super }}
   {% if web_user.domain_memberships or web_user.is_superuser or is_accounting_admin %}
@@ -80,17 +89,21 @@
                 <li>{% trans "Accounting admin access" %}</li>
               {% endif %}
             </ul>
+            <div class="form-group">
+              <label for="confirm-remove-access">{% trans 'Type <strong>REMOVE ACCESS</strong> to confirm' %}</label>
+              <input type="text" class="form-control" id="confirm-remove-access" autocomplete="off">
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
             <form method="POST" action="{% url 'remove_all_web_user_access' %}" style="display:inline">
               {% csrf_token %}
               <input type="hidden" name="username" value="{{ web_user.username }}">
-              <button type="submit" class="btn btn-danger">{% trans "Remove All Access" %}</button>
+              <button type="submit" class="btn btn-danger" id="remove-access-btn" disabled>{% trans "Remove All Access" %}</button>
             </form>
           </div>
         </div>
       </div>
     </div>
   {% endif %}
-{% endblock modals%}
+{% endblock modals %}
