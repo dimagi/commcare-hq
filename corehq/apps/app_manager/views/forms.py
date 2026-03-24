@@ -1,8 +1,13 @@
 import hashlib
 import json
 import logging
+from urllib.parse import quote, unquote
 from xml.sax.saxutils import escape
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from diff_match_patch import diff_match_patch
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.http import (
@@ -17,16 +22,9 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-
-from diff_match_patch import diff_match_patch
 from lxml import etree
 from no_exceptions.exceptions import Http400
 from text_unidecode import unidecode
-
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-from urllib.parse import quote, unquote
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -52,10 +50,10 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
+    FormActionsDiffException,
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
-    FormActionsDiffException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -69,12 +67,12 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
+    FormActionsDiff,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
-    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -106,9 +104,9 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
-    get_case_property_count,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -120,7 +118,10 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.const import (
+    CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
+    DEFAULT_CASE_PROPS_PER_CASE_TYPE,
+)
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
 
@@ -1009,7 +1010,9 @@ def get_form_datums(request, domain, app_id):
 
 
 def _get_form_datums(domain, app_id, form_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    from corehq.apps.app_manager.suite_xml.sections.entries import (
+        EntriesHelper,
+    )
     try:
         app = get_app(domain, app_id)
     except AppInDifferentDomainException as e:
