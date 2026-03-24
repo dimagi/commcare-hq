@@ -529,7 +529,18 @@ def patch_xform(request, domain, app_id, form_unique_id):
     if conflict is not None:
         return conflict
 
-    xml = apply_patch(patch, form.source)
+    try:
+        xml = apply_patch(patch, form.source)
+    except ValueError:
+        notify_exception(request, "patch application failed", details={
+            'domain': domain,
+            'app_id': app_id,
+            'form_id': form_unique_id,
+            'patch_length': len(patch),
+            'patch_preview': patch[:200],
+        })
+        return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
+
     case_mapping_diff = _get_case_mapping_diff(request, form)
 
     try:
@@ -561,8 +572,13 @@ def apply_patch(patch, text):
     # breaking the diff (see core.js). Encode source the same way before
     # applying, then decode.
     encoded_text = quote(text, safe=ENCODE_URI_SAFE)
-    encoded_result = dmp.patch_apply(dmp.patch_fromText(patch), encoded_text)[0]
+    encoded_result, successes = dmp.patch_apply(dmp.patch_fromText(patch), encoded_text)
+    if not all(successes):
+        raise ValueError(
+            f"patch application failed: {sum(successes)} of {len(successes)} hunks succeeded"
+        )
     return unquote(encoded_result)
+
 
 
 def _get_case_mapping_diff(request, form):
