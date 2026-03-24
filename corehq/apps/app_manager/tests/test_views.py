@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from corehq.apps.app_manager.exceptions import XFormValidationError
@@ -30,6 +30,7 @@ from corehq.apps.app_manager.views.forms import (
     _get_linkable_forms_context,
     get_apps_modules,
 )
+from corehq.apps.app_manager.views.view_generic import _get_specific_media
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.apps import app_adapter
@@ -1041,6 +1042,26 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+
+class TestGetSpecificMedia(SimpleTestCase):
+    domain = 'test-specific-media'
+
+    def _qualifiers(self, result):
+        return [entry.get('qualifier') for entry in result]
+
+    def test_case_search_label_media_included_with_toggle(self):
+        factory = AppFactory(domain=self.domain)
+        module, _ = factory.new_basic_module('cases', 'case')
+        with flag_enabled('SYNC_SEARCH_CASE_CLAIM'):
+            result = _get_specific_media('user', self.domain, factory.app, module, None, 'en')
+        assert 'case_search-search_label_media_' in self._qualifiers(result)
+
+    def test_case_search_label_media_excluded_without_toggle(self):
+        factory = AppFactory(domain=self.domain)
+        module, _ = factory.new_basic_module('cases', 'case')
+        result = _get_specific_media('user', self.domain, factory.app, module, None, 'en')
+        assert 'case_search-search_label_media_' not in self._qualifiers(result)
 
 
 def test_doctests():
