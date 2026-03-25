@@ -1,4 +1,3 @@
-/* global before, after, afterEach */
 import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
