@@ -48,6 +48,7 @@ from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_TAGS_MAPPING,
+    case_search_enabled_for_domain,
 )
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
@@ -94,6 +95,7 @@ from .utils import (
     is_permitted_to_restore,
 )
 
+CASE_SEARCH_DISABLED_MSG = "Case search is not enabled for this project"
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
@@ -135,7 +137,7 @@ def search(request, domain):
 @csrf_exempt
 @mobile_auth
 @check_domain_mobile_access
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator(plain_message=CASE_SEARCH_DISABLED_MSG)
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -144,6 +146,9 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
+    if not case_search_enabled_for_domain(domain):
+        return HttpResponse(CASE_SEARCH_DISABLED_MSG, status=404)
+
     start_time = datetime.now()
     request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
 
