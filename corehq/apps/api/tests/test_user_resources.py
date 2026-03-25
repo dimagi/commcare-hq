@@ -1083,6 +1083,7 @@ class TestUserDomainsResource(TestCase):
         bundle.request = Mock()
         bundle.request.GET = {}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertListEqual([self.domain], [d.domain_name for d in resp])
 
@@ -1093,6 +1094,7 @@ class TestUserDomainsResource(TestCase):
         bundle.request = Mock()
         bundle.request.GET = {"feature_flag": "its_a_feature_not_bug"}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         with self.assertRaises(BadRequest):
             UserDomainsResource().obj_get_list(bundle)
 
@@ -1104,6 +1106,7 @@ class TestUserDomainsResource(TestCase):
         bundle.request = Mock()
         bundle.request.GET = {"feature_flag": "superset-analytics"}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertListEqual([self.domain], [d.domain_name for d in resp])
 
@@ -1114,8 +1117,64 @@ class TestUserDomainsResource(TestCase):
         bundle.request = Mock()
         bundle.request.GET = {"feature_flag": "superset-analytics"}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertEqual(0, len(resp))
+
+
+class TestUserDomainsResourceApiKeyFiltering(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain2 = 'test-domain-2'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.domain_obj2 = create_domain(cls.domain2)
+        cls.addClassCleanup(cls.domain_obj2.delete)
+        cls.user = WebUser.create(cls.domain, 'api-key-test@example.com', 'testpass', None, None)
+        cls.user.add_domain_membership(cls.domain2)
+        cls.user.save()
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
+
+    def _make_bundle(self, api_key=None):
+        bundle = Bundle()
+        bundle.request = Mock()
+        bundle.request.GET = {}
+        bundle.request.user = self.user.get_django_user()
+        bundle.request.api_key = api_key
+        return bundle
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_all_domains_returned_without_api_key(self, _):
+        resp = UserDomainsResource().obj_get_list(self._make_bundle())
+        domain_names = [d.domain_name for d in resp]
+        self.assertCountEqual([self.domain, self.domain2], domain_names)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_all_domains_returned_with_unrestricted_api_key(self, _):
+        api_key = Mock()
+        api_key.domain = ''
+        resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
+        domain_names = [d.domain_name for d in resp]
+        self.assertCountEqual([self.domain, self.domain2], domain_names)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_only_key_domain_returned_with_domain_scoped_api_key(self, _):
+        api_key = Mock()
+        api_key.domain = self.domain
+        resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
+        domain_names = [d.domain_name for d in resp]
+        self.assertEqual([self.domain], domain_names)
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_only_key_domain2_returned_with_domain_scoped_api_key(self, _):
+        api_key = Mock()
+        api_key.domain = self.domain2
+        resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
+        domain_names = [d.domain_name for d in resp]
+        self.assertEqual([self.domain2], domain_names)
 
 
 class TestCommCareAnalyticsUserResource(APIResourceTest):
