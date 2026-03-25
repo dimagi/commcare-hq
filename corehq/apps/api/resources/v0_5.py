@@ -1089,6 +1089,7 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
         authentication = LoginAuthentication(allow_session_auth=True)
         object_class = UserDomain
         include_resource_uri = False
+        paginator_class = DoesNothingPaginator
 
     def dispatch_list(self, request, **kwargs):
         try:

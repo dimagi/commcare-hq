@@ -43,7 +43,7 @@ from corehq.const import USER_CHANGE_VIA_API
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
-from ..resources.v0_5 import BadRequest, UserDomainsResource
+from ..resources.v0_5 import BadRequest, UserDomain, UserDomainsResource
 from .utils import APIResourceTest
 
 
@@ -1120,6 +1120,25 @@ class TestUserDomainsResource(TestCase):
         bundle.request.api_key = None
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertEqual(0, len(resp))
+
+
+class TestUserDomainsResourcePagination(TestCase):
+
+    def test_all_domains_returned_when_more_than_default_page_size(self):
+        domain_names = [f'domain-{i}' for i in range(25)]
+        mock_domains = [
+            UserDomain(domain_name=name, project_name=name)
+            for name in domain_names
+        ]
+        request = Mock()
+        request.GET = {}
+        request.META = {}
+        resource = UserDomainsResource()
+        with patch.object(resource, 'get_object_list', return_value=mock_domains):
+            response = resource.get_list(request)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(len(data['objects']), 25)
 
 
 class TestUserDomainsResourceApiKeyFiltering(TestCase):
