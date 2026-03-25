@@ -1,0 +1,154 @@
+{% load i18n %}
+
+{% comment %}
+  Recursive template for rendering query builder group nodes.
+  Each level receives a `depth` variable (0-indexed). Django unrolls the
+  recursion at render time (up to 5 levels); Alpine handles data binding at
+  runtime. The current group is accessed via `node` in the Alpine scope.
+{% endcomment %}
+
+<div
+  class="query-group"
+  style="border-left: 3px solid #ccc; padding-left: 15px; margin: 5px 0;"
+>
+  <div class="btn-group btn-group-xs" style="margin-bottom: 10px;">
+    <button
+      type="button"
+      class="btn"
+      :class="node.operator === 'and' ? 'btn-primary' : 'btn-default'"
+      @click="node.operator = 'and'"
+    >
+      All
+    </button>
+    <button
+      type="button"
+      class="btn"
+      :class="node.operator === 'or' ? 'btn-primary' : 'btn-default'"
+      @click="node.operator = 'or'"
+    >
+      Any
+    </button>
+  </div>
+
+  <template x-for="(child, index) in node.children" :key="child._id">
+    <div style="margin-bottom: 8px;">
+
+      <!-- Term node -->
+      <template x-if="child.type === 'term'">
+        <div class="form-inline" style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
+          <select
+            class="form-control input-sm"
+            x-model="child.variable"
+            @change="child.operator = ''; child.value = '';"
+          >
+            <option value="">{% trans "-- Select Property --" %}</option>
+            <template x-for="v in variables" :key="v.id">
+              <option :value="v.id" x-text="v.name"></option>
+            </template>
+          </select>
+
+          <template x-if="child.variable">
+            <select
+              class="form-control input-sm"
+              x-model="child.operator"
+              @change="child.value = '';"
+            >
+              <option value="">{% trans "-- Operator --" %}</option>
+              <template x-for="op in getOperatorsForVariable(child.variable)" :key="op.name">
+                <option :value="op.name" x-text="op.name"></option>
+              </template>
+            </select>
+          </template>
+
+          <template x-if="operatorHasValue(child.variable, child.operator)">
+            <div style="display: flex; gap: 5px; align-items: center;">
+              <div class="btn-group btn-group-xs">
+                <button
+                  type="button"
+                  class="btn"
+                  :class="child.value_type === 'constant' ? 'btn-primary' : 'btn-default'"
+                  @click="child.value_type = 'constant'; child.value = '';"
+                >
+                  {% trans "Constant" %}
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  :class="child.value_type === 'parameter' ? 'btn-primary' : 'btn-default'"
+                  @click="child.value_type = 'parameter'; child.value = '';"
+                >
+                  {% trans "Parameter" %}
+                </button>
+              </div>
+              <template x-if="child.value_type === 'constant'">
+                <input
+                  type="text"
+                  class="form-control input-sm"
+                  x-model="child.value"
+                  placeholder="{% trans "Value" %}"
+                />
+              </template>
+              <template x-if="child.value_type === 'parameter'">
+                <select class="form-control input-sm" x-model="child.value">
+                  <option value="">{% trans "-- Parameter --" %}</option>
+                  <template x-for="p in parameters" :key="p.id">
+                    <option :value="p.id" x-text="p.name"></option>
+                  </template>
+                </select>
+              </template>
+            </div>
+          </template>
+
+          <button
+            type="button"
+            class="btn btn-danger btn-xs"
+            @click="removeChild(node, index)"
+            :title="'{% trans "Remove condition" %}'"
+          >
+            <i class="fa fa-remove"></i>
+          </button>
+        </div>
+      </template>
+
+      <!-- Group node -->
+      <template x-if="child.type === 'group'">
+        <div style="position: relative;">
+          <button
+            type="button"
+            class="btn btn-danger btn-xs"
+            style="position: absolute; right: 5px; top: 5px; z-index: 1;"
+            @click="removeChild(node, index)"
+            :title="'{% trans "Remove group" %}'"
+          >
+            <i class="fa fa-remove"></i> {% trans "Group" %}
+          </button>
+          {% if depth < 4 %}
+            <div x-data="{ node: child }">
+              {% include "app_manager/partials/query_builder/query_group_children.html" with depth=depth|add:1 %}
+            </div>
+          {% endif %}
+        </div>
+      </template>
+
+    </div>
+  </template>
+
+  <div style="margin-top: 10px;">
+    <button
+      type="button"
+      class="btn btn-default btn-xs"
+      @click="addTerm(node)"
+    >
+      <i class="fa fa-plus"></i> {% trans "Add Condition" %}
+    </button>
+    {% if depth < 4 %}
+      <button
+        type="button"
+        class="btn btn-default btn-xs"
+        @click="addGroup(node)"
+      >
+        <i class="fa fa-plus"></i> {% trans "Add Group" %}
+      </button>
+    {% endif %}
+  </div>
+</div>
