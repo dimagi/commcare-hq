@@ -1,0 +1,24 @@
+name: Rebuild staging branch
+on:
+  workflow_dispatch:
+
+jobs:
+  rebuild-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        # Full history needed for branch manipulation
+        fetch-depth: 0
+    - uses: astral-sh/setup-uv@v7
+    - name: Install git-build-branch
+      run: uv tool install git-build-branch
+    - name: Configure git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+    - name: Rebuild staging
+      run: ./scripts/rebuildstaging
