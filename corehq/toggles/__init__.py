@@ -7,7 +7,7 @@ from typing import List
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -198,10 +198,13 @@ class StaticToggle(object):
 
         return set_toggle(self.slug, item, enabled, namespace)
 
-    def required_decorator(self):
+    def required_decorator(self, plain_message=None):
         """
         Returns a view function decorator that checks to see if the domain
         or user in the request has the appropriate toggle enabled.
+
+        If ``plain_message`` is Truthy, returns a plain-text HTTP 404
+        instead of raising ``Http404`` (useful for API views).
         """
 
         def decorator(view_func):
@@ -221,6 +224,8 @@ class StaticToggle(object):
                         ),
                         fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
                     )
+                if plain_message:
+                    return HttpResponse(plain_message, status=404)
                 raise Http404()
 
             return wrapped_view
