@@ -165,7 +165,8 @@ def save_xform(app, form, xml, case_mapping_diff=None):
         pass
     else:
         if case_mapping_diff:
-            form.actions = form.actions.with_updates({}, case_mapping_diff)
+            from .form_action_diff import merge_case_mappings
+            merge_case_mappings(case_mapping_diff, form.actions)
 
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
         uid = generate_xmlns()
