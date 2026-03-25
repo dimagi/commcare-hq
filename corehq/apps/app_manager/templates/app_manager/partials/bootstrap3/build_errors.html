@@ -647,6 +647,12 @@
             {% if not not_actual_build %}
               in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
+            {% case "conflicting delete" %}
+            Separate editing sessions concurrently changed and deleted mapping
+            for case property "{{ error.property }}"
+            {% if not not_actual_build %}
+              in {% include "app_manager/partials/form_error_message.html" %}
+            {% endif %}
             {% case "error" %}
               Details: {{ error.message }}
             {% else %}
