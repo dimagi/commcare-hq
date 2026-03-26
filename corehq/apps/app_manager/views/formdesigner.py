@@ -50,7 +50,7 @@ from corehq.apps.app_manager.views.utils import (
     set_lang_cookie,
 )
 from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.apps.data_dictionary.util import get_case_properties
+from corehq.apps.data_dictionary.util import get_case_properties, get_data_dict_case_types
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
@@ -259,6 +259,11 @@ def _get_base_vellum_options(request, domain, form, displayLang):
             'properties': sorted(get_case_properties(domain, case_type).values_list('name', flat=True)),
             'view_form_url': reverse('view_form', args=[domain, app.id, form.unique_id]),
             'reserved_words': load_case_reserved_words(),
+        }
+
+    if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
+        options['saveToCase'] = {
+            'existingCaseTypes': sorted(get_data_dict_case_types(domain, is_deprecated=False)),
         }
 
     return options
