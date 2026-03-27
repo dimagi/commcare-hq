@@ -37,6 +37,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.es.client import BulkActionItem
+from corehq.apps.project_db import send_to_project_db
 from corehq.apps.receiverwrapper.rate_limiter import (
     report_case_usage,
     report_submission_usage,
@@ -64,6 +65,7 @@ from corehq.toggles import (
     ASYNC_RESTORE,
     BLOCK_SUMOLOGIC_LOGS,
     NAMESPACE_OTHER,
+    PROJECT_DB,
     SUMOLOGIC_LOGS,
 )
 from corehq.util.global_request import get_request
@@ -495,6 +497,10 @@ class SubmissionPost(object):
 
             with timing_context("index_case_search"):
                 SubmissionPost.index_case_search(instance, case_stock_result.case_models)
+
+            with timing_context("update_project_db"):
+                if PROJECT_DB.enabled(instance.domain):
+                    send_to_project_db(instance.domain, case_stock_result.case_models)
 
             with timing_context("_fire_post_save_signals"):
                 SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models, timing_context)

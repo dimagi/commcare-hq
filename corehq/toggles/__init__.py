@@ -855,6 +855,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+PROJECT_DB = StaticToggle(
+    'project_db',
+    'Project DB - Auto-managed SQL database of project data',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 ASYNC_RESTORE = StaticToggle(
     'async_restore',
     'Generate restore response in an asynchronous task to prevent timeouts',

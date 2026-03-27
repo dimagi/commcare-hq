@@ -84,7 +84,7 @@ write time.
 
 ``send_to_project_db(case)``
     High-level function that accepts a ``CommCareCase``, resolves the
-    table by reflection, and upserts. Raises ``LookupError`` if no
+    table by reflection, and upserts. Raises ``ProjectDBError`` if no
     table exists.
 
 

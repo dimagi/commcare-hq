@@ -3,33 +3,37 @@ from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.dialects.postgresql import insert
 
-from .schema import FIXED_COLUMN_NAMES, SEP
+from .schema import (
+    FIXED_COLUMN_NAMES,
+    SEP,
+    get_case_table_schema,
+    get_project_db_engine,
+)
 
 PROPERTY_PREFIX = 'prop.'
 
 
-def send_to_project_db(case):
-    """Upsert a single CommCareCase into its project DB table.
+def send_to_project_db(domain, cases):
+    """Upsert CommCareCases into the appropriate project DB tables.
 
-    Resolves the table by reflecting the live schema for the case's
-    domain and type. Raises if no table exists for this case type.
+    Resolves tables by reflecting the live schema for each case type, skipping
+    those without tables.
     """
-    from corehq.apps.project_db.schema import (
-        get_case_table_schema,
-        get_project_db_engine,
-    )
-
-    table = get_case_table_schema(case.domain, case.type)
-    if table is None:
-        raise LookupError(
-            f"No project DB table for case type {case.type!r} "
-            f"in domain {case.domain!r}"
-        )
+    case_types = {c.type for c in cases}
+    tables = {}
+    for case_type in case_types:
+        if (table := get_case_table_schema(domain, case_type)) is not None:
+            tables[case_type] = table
+    if not tables:
+        return
 
     engine = get_project_db_engine()
-    case_data = case_to_row_dict(case)
     with engine.begin() as conn:
-        upsert_case(conn, table, case_data)
+        for case in cases:
+            # TODO add cases missing tables to a retry queue or something
+            if (table := tables.get(case.type)) is not None:
+                case_data = case_to_row_dict(case)
+                upsert_case(conn, table, case_data)
 
 
 def upsert_case(conn, table, case_data):
