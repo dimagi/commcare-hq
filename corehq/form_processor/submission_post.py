@@ -1,55 +1,76 @@
 import logging
+import sys
 from collections import namedtuple
 
-from ddtrace import tracer
-from django.db import IntegrityError
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseForbidden,
-)
 from django.conf import settings
+from django.db import IntegrityError
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.utils.translation import gettext as _
-import sys
 
-from casexml.apps.case.xform import close_extension_cases
-from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
+from couchdbkit.exceptions import ResourceNotFound
+from ddtrace import tracer
+
 import couchforms
-from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
-    CaseValueError
-from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
-from corehq.const import OPENROSA_VERSION_3
-from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, BLOCK_SUMOLOGIC_LOGS, NAMESPACE_OTHER, SUMOLOGIC_LOGS
+from casexml.apps.case.exceptions import (
+    CaseValueError,
+    IllegalCaseId,
+    InvalidCaseIndex,
+    PhoneDateValueError,
+    UsesReferrals,
+)
+from casexml.apps.case.xform import close_extension_cases
+from casexml.apps.phone.restore_caching import (
+    AsyncRestoreTaskIdCache,
+    RestorePayloadPathCache,
+)
+from couchforms import openrosa_response
+from couchforms.const import DEVICE_LOG_XMLNS
+from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
+from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
+from couchforms.signals import successful_form_received
+from dimagi.utils.logging import log_signal_errors, notify_exception
+from phonelog.utils import SumoLogicLog, process_device_log
+
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.es.client import BulkActionItem
+from corehq.apps.receiverwrapper.rate_limiter import (
+    report_case_usage,
+    report_submission_usage,
+)
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.permissions import SUBMISSION_HISTORY_PERMISSION, has_permission_to_view_report
+from corehq.apps.users.permissions import (
+    SUBMISSION_HISTORY_PERMISSION,
+    has_permission_to_view_report,
+)
+from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.parsers.form import process_xform_xml
-from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
+from corehq.form_processor.submission_process_tracker import (
+    unfinished_submission,
+)
+from corehq.form_processor.system_action import (
+    SYSTEM_ACTION_XMLNS,
+    handle_system_action,
+)
 from corehq.form_processor.utils.metadata import scrub_meta
-from corehq.form_processor.submission_process_tracker import unfinished_submission
+from corehq.middleware import OPENROSA_VERSION_HEADER
+from corehq.toggles import (
+    ASYNC_RESTORE,
+    BLOCK_SUMOLOGIC_LOGS,
+    NAMESPACE_OTHER,
+    SUMOLOGIC_LOGS,
+)
+from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import form_load_counter
-from corehq.util.global_request import get_request
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
-from couchdbkit.exceptions import ResourceNotFound
-from couchforms import openrosa_response
-from couchforms.const import DEVICE_LOG_XMLNS
-from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
-from couchforms.signals import successful_form_received
-from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
-from dimagi.utils.logging import notify_exception, log_signal_errors
-from phonelog.utils import process_device_log, SumoLogicLog
-
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
