@@ -131,6 +131,8 @@ def _get_query(domain, params):
              .size(page_size))
     query = query.sort('@indexed_on').sort('doc_id', reset_sort=False)
     for key, val in params.lists():
+        if _is_handled_elsewhere(key):
+            continue
         if len(val) == 1:
             query = query.filter(_get_filter(domain, key, val[0]))
         else:
@@ -140,16 +142,15 @@ def _get_query(domain, params):
     return query
 
 
-def _is_field_filter_param(key):
-    return key in ('fields', 'exclude') or key.startswith(('fields.', 'exclude.'))
+def _is_handled_elsewhere(key):
+    return (
+        key in ('limit', 'fields', 'exclude')
+        or key.startswith(('fields.', 'exclude.'))
+    )
 
 
 def _get_filter(domain, key, val):
-    if key == 'limit':
-        return filters.match_all()
-    elif _is_field_filter_param(key):
-        return filters.match_all()
-    elif key == 'query':
+    if key == 'query':
         return _get_query_filter(domain, val)
     elif key in SIMPLE_FILTERS:
         if key == INCLUDE_DEPRECATED:
