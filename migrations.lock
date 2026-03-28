@@ -265,6 +265,7 @@ case_search
  0014_casesearchconfig_index_name
  0015_csqlfixtureexpression_csqlfixtureexpressionlog
  0016_csqlfixtureexpression_user_data_criteria
+ 0017_casesearchendpoint_casesearchendpointversion
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization

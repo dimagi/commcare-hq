@@ -22,26 +22,30 @@ from corehq.util.models import GetOrNoneManager
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
-FUZZY_PROPERTIES = "fuzzy_properties"
+FUZZY_PROPERTIES = 'fuzzy_properties'
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
-CASE_SEARCH_CASE_TYPE_KEY = "case_type"
-CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
-CASE_SEARCH_SORT_KEY = "commcare_sort"
+CASE_SEARCH_CASE_TYPE_KEY = 'case_type'
+CASE_SEARCH_INDEX_KEY_PREFIX = 'indices.'
+CASE_SEARCH_SORT_KEY = 'commcare_sort'
 
 # These use the `x_commcare_` prefix to distinguish them from 'filter' keys
 # This is a purely aesthetic distinction and not functional
 CASE_SEARCH_REGISTRY_ID_KEY = 'x_commcare_data_registry'
-CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = 'x_commcare_custom_related_case_property'
-CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY = 'x_commcare_include_all_related_cases'
-CASE_SEARCH_MODULE_NAME_TAG_KEY = "x_commcare_tag_module_name"
+CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY = (
+    'x_commcare_custom_related_case_property'
+)
+CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY = (
+    'x_commcare_include_all_related_cases'
+)
+CASE_SEARCH_MODULE_NAME_TAG_KEY = 'x_commcare_tag_module_name'
 
 CONFIG_KEYS_MAPPING = {
-    CASE_SEARCH_CASE_TYPE_KEY: "case_types",
-    CASE_SEARCH_REGISTRY_ID_KEY: "data_registry",
-    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: "custom_related_case_property",
-    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: "include_all_related_cases",
-    CASE_SEARCH_SORT_KEY: "commcare_sort",
+    CASE_SEARCH_CASE_TYPE_KEY: 'case_types',
+    CASE_SEARCH_REGISTRY_ID_KEY: 'data_registry',
+    CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: 'custom_related_case_property',
+    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: 'include_all_related_cases',
+    CASE_SEARCH_SORT_KEY: 'commcare_sort',
 }
 
 CASE_SEARCH_TAGS_MAPPING = {
@@ -49,14 +53,21 @@ CASE_SEARCH_TAGS_MAPPING = {
 }
 
 UNSEARCHABLE_KEYS = (
-    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-    'owner_id',
-    'include_closed',   # backwards compatibility for deprecated functionality to include closed cases
-) + tuple(CONFIG_KEYS_MAPPING.values())
+    (
+        CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+        'owner_id',
+        'include_closed',  # backwards compatibility for deprecated functionality to include closed cases
+    )
+    + tuple(CONFIG_KEYS_MAPPING.values())
+)
 
 
 def _flatten_singleton_list(value):
-    return value[0] if value and isinstance(value, list) and len(value) == 1 else value
+    return (
+        value[0]
+        if value and isinstance(value, list) and len(value) == 1
+        else value
+    )
 
 
 @attr.s(frozen=True)
@@ -127,14 +138,18 @@ class SearchCriteria:
 
         if self.is_daterange and len(self.value) > 2:
             raise CaseFilterError(
-                _("Only one blank value plus one date range value are supprted"),
-                self.key
+                _(
+                    'Only one blank value plus one date range value are supprted'
+                ),
+                self.key,
             )
 
         if self.key in disallowed_parameters:
             raise CaseFilterError(
-                _("Multiple values are only supported for simple text and range searches"),
-                self.key
+                _(
+                    'Multiple values are only supported for simple text and range searches'
+                ),
+                self.key,
             )
 
     def _validate_daterange(self):
@@ -149,7 +164,9 @@ class SearchCriteria:
         for v in values:
             match = pattern.match(v)
             if not match:
-                raise CaseFilterError(_('Invalid date range format, {}').format(v), self.key)
+                raise CaseFilterError(
+                    _('Invalid date range format, {}').format(v), self.key
+                )
 
 
 def criteria_dict_to_criteria_list(criteria_dict):
@@ -171,15 +188,18 @@ def _parse_commcare_sort_properties(values):
         return
 
     parsed_sort_properties = []
-    flattened_values = [sort_property for value in values for sort_property in value.split(',')]
+    flattened_values = [
+        sort_property for value in values for sort_property in value.split(',')
+    ]
     for sort_property in flattened_values:
         parts = sort_property.lstrip('+-').split(':')
         parsed_sort_properties.append(
             CommcareSortProperty(
                 property_name=parts[0],
                 sort_type=parts[1] if len(parts) > 1 else 'exact',
-                is_descending=sort_property.startswith('-')
-            ))
+                is_descending=sort_property.startswith('-'),
+            )
+        )
     return parsed_sort_properties
 
 
@@ -187,22 +207,36 @@ def _parse_commcare_sort_properties(values):
 class CaseSearchRequestConfig:
     criteria = attr.ib(kw_only=True)
     case_types = attr.ib(kw_only=True, default=None)
-    data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
-    custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
-    include_all_related_cases = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
-    commcare_sort = attr.ib(kw_only=True, default=None, converter=_parse_commcare_sort_properties)
+    data_registry = attr.ib(
+        kw_only=True, default=None, converter=_flatten_singleton_list
+    )
+    custom_related_case_property = attr.ib(
+        kw_only=True, default=None, converter=_flatten_singleton_list
+    )
+    include_all_related_cases = attr.ib(
+        kw_only=True, default=None, converter=_flatten_singleton_list
+    )
+    commcare_sort = attr.ib(
+        kw_only=True, default=None, converter=_parse_commcare_sort_properties
+    )
 
     @case_types.validator
     def _require_case_type(self, attribute, value):
         # custom validator to allow custom exception and message
         if not value:
-            raise CaseSearchUserError(_('Search request must specify {param}').format(param=attribute.name))
+            raise CaseSearchUserError(
+                _('Search request must specify {param}').format(
+                    param=attribute.name
+                )
+            )
 
     @data_registry.validator
     @custom_related_case_property.validator
     def _is_string(self, attribute, value):
         if value and not isinstance(value, str):
-            raise CaseSearchUserError(_("{param} must be a string").format(param=attribute.name))
+            raise CaseSearchUserError(
+                _('{param} must be a string').format(param=attribute.name)
+            )
 
 
 def extract_search_request_config(request_dict):
@@ -270,6 +304,7 @@ class CaseSearchConfig(models.Model):
     """
     Contains config for case search
     """
+
     class Meta(object):
         app_label = 'case_search'
 
@@ -278,34 +313,53 @@ class CaseSearchConfig(models.Model):
         null=False,
         blank=False,
         db_index=True,
-        primary_key=True
+        primary_key=True,
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
-    synchronous_web_apps = models.BooleanField(blank=False, null=False, default=False)
-    sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
+    synchronous_web_apps = models.BooleanField(
+        blank=False, null=False, default=False
+    )
+    sync_cases_on_form_entry = models.BooleanField(
+        blank=False, null=False, default=False
+    )
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
     # Deprecated - this will be removed in a later PR
-    fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
-        MinValueValidator(0), MaxValueValidator(10),
-    ])
+    fuzzy_prefix_length = models.SmallIntegerField(
+        blank=True,
+        null=True,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(10),
+        ],
+    )
     # See case_search_sub.py docstring for context
-    index_name = models.CharField(max_length=256, blank=True, default='', help_text=(
-        "Name or alias of alternative index to use for case search"))
+    index_name = models.CharField(
+        max_length=256,
+        blank=True,
+        default='',
+        help_text=(
+            'Name or alias of alternative index to use for case search'
+        ),
+    )
 
     objects = GetOrNoneManager()
 
     @classmethod
     def enabled_domains(cls):
-        return cls.objects.filter(enabled=True).values_list('domain', flat=True)
+        return cls.objects.filter(enabled=True).values_list(
+            'domain', flat=True
+        )
 
     def to_json(self):
         config = model_to_dict(self)
         config['fuzzy_properties'] = [
-            model_to_dict(fuzzy_property, exclude=['id']) for fuzzy_property in config['fuzzy_properties']
+            model_to_dict(fuzzy_property, exclude=['id'])
+            for fuzzy_property in config['fuzzy_properties']
         ]
         config['ignore_patterns'] = [
-            model_to_dict(ignore_pattern, exclude=['id']) for ignore_pattern in config['ignore_patterns']
+            model_to_dict(ignore_pattern, exclude=['id'])
+            for ignore_pattern in config['ignore_patterns']
         ]
         return config
 
@@ -406,9 +460,10 @@ def disable_case_search(domain):
 
 
 def case_search_enabled_domains():
-    """Returns a list of all domains that have case search enabled
-    """
-    return CaseSearchConfig.objects.filter(enabled=True).values_list('domain', flat=True)
+    """Returns a list of all domains that have case search enabled"""
+    return CaseSearchConfig.objects.filter(enabled=True).values_list(
+        'domain', flat=True
+    )
 
 
 class DomainsNotInCaseSearchIndex(models.Model):
@@ -426,6 +481,7 @@ class DomainsNotInCaseSearchIndex(models.Model):
     Eventually, this model will be removed once the indexing of older
     data is complete.
     """
+
     domain = models.CharField(
         max_length=256,
         null=False,
@@ -440,14 +496,16 @@ def validate_user_data_criteria(value):
     for criteria in value:
         if criteria['operator'] not in valid_operators:
             raise ValidationError(
-                _(f'Invalid operator "{criteria["operator"]}". Allowed values are '
-                f'{", ".join(valid_operators)}.')
+                _(
+                    f'Invalid operator "{criteria["operator"]}". Allowed values are '
+                    f'{", ".join(valid_operators)}.'
+                )
             )
 
 
 class CSQLFixtureExpression(models.Model):
-    MATCH_IS = "IS"
-    MATCH_IS_NOT = "IS_NOT"
+    MATCH_IS = 'IS'
+    MATCH_IS_NOT = 'IS_NOT'
     VALID_OPERATORS = {MATCH_IS, MATCH_IS_NOT}
 
     domain = models.CharField(max_length=64, default='')
@@ -456,8 +514,9 @@ class CSQLFixtureExpression(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
-    user_data_criteria = models.JSONField(default=list, blank=True,
-                                          validators=(validate_user_data_criteria,))
+    user_data_criteria = models.JSONField(
+        default=list, blank=True, validators=(validate_user_data_criteria,)
+    )
 
     @classmethod
     def by_domain(cls, domain):
@@ -504,7 +563,9 @@ class CSQLFixtureExpressionLog(models.Model):
         DELETE = 'DE', _('Delete')
         UPDATE = 'UP', _('Update')
 
-    expression = models.ForeignKey(CSQLFixtureExpression, on_delete=models.CASCADE)
+    expression = models.ForeignKey(
+        CSQLFixtureExpression, on_delete=models.CASCADE
+    )
     date = models.DateTimeField(auto_now_add=True)
     action = models.CharField(max_length=2, choices=Action.choices, null=False)
     name = models.CharField(max_length=64, default='')
@@ -514,11 +575,55 @@ class CSQLFixtureExpressionLog(models.Model):
 @receiver(post_save, sender=CSQLFixtureExpression)
 def after_save(sender, instance, created, **kwargs):
     if not instance.deleted:
-        updated_or_created = (CSQLFixtureExpressionLog.Action.CREATE if created
-                            else CSQLFixtureExpressionLog.Action.UPDATE)
+        updated_or_created = (
+            CSQLFixtureExpressionLog.Action.CREATE
+            if created
+            else CSQLFixtureExpressionLog.Action.UPDATE
+        )
         CSQLFixtureExpressionLog.objects.create(
             expression=instance,
             action=updated_or_created,
             name=instance.name,
-            csql=instance.csql
+            csql=instance.csql,
         )
+
+
+class CaseSearchEndpoint(models.Model):
+    domain = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    target_type = models.CharField(max_length=50)
+    target_name = models.CharField(max_length=255)
+    current_version = models.ForeignKey(
+        'CaseSearchEndpointVersion',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('domain', 'name')
+
+    def __str__(self):
+        return f'{self.domain}: {self.name}'
+
+
+class CaseSearchEndpointVersion(models.Model):
+    endpoint = models.ForeignKey(
+        CaseSearchEndpoint,
+        on_delete=models.CASCADE,
+        related_name='versions',
+    )
+    version_number = models.PositiveIntegerField()
+    parameters = models.JSONField(default=list)
+    query = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('endpoint', 'version_number')
+        ordering = ['-version_number']
+
+    def __str__(self):
+        return f'{self.endpoint.name} v{self.version_number}'

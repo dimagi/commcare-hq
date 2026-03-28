@@ -633,6 +633,13 @@ class ProjectDataTab(UITab):
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
             }]])
 
+        if toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain):
+            from corehq.apps.case_search.views.endpoints import CaseSearchEndpointsView
+            items.append([_('Case Search Endpoints'), [{
+                'title': _(CaseSearchEndpointsView.page_title),
+                'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
+            }]])
+
         if self._can_view_data_dictionary:
             items.append([DataDictionaryView.page_title, [{
                 'title': DataDictionaryView.page_title,

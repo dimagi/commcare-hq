@@ -1,0 +1,227 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n hq_shared_tags %}
+{% js_entry "case_search/js/endpoint_edit" %}
+
+{% block page_content %}
+  {{ capability|json_script:"capability-data" }}
+  {{ initial_query|json_script:"initial-query" }}
+  {{ initial_parameters|json_script:"initial-parameters" }}
+  {{ initial_name|json_script:"initial-name" }}
+  {{ initial_target_name|json_script:"initial-target-name" }}
+  {{ mode|json_script:"endpoint-mode" }}
+  {{ post_url|json_script:"endpoint-post-url" }}
+  {% trans "Name is required." as msg_name_required %}
+  {% trans "Case type is required." as msg_case_type_required %}
+  {% trans "An unexpected error occurred." as msg_unexpected_error %}
+  {% trans "Network error. Please try again." as msg_network_error %}
+  {{ msg_name_required|json_script:"msg-name-required" }}
+  {{ msg_case_type_required|json_script:"msg-case-type-required" }}
+  {{ msg_unexpected_error|json_script:"msg-unexpected-error" }}
+  {{ msg_network_error|json_script:"msg-network-error" }}
+
+  <div x-data="endpointForm()" x-cloak>
+    {% if mode == 'readonly' %}
+      <div class="alert alert-info" role="alert">
+        {% trans "You are viewing a historical version. To edit, go to the current version." %}
+        {% if endpoint %}
+          <a
+            href="{% url 'case_search_endpoint_edit' domain endpoint.id %}"
+            class="alert-link"
+          >
+            {% trans "View current version" %}
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Name field -->
+    <div class="mb-3">
+      <label for="endpoint-name" class="form-label fw-bold"
+        >{% trans "Endpoint Name" %}</label
+      >
+      {% if mode == 'readonly' %}
+        <p class="form-control-plaintext">{{ initial_name }}</p>
+      {% else %}
+        <input
+          type="text"
+          id="endpoint-name"
+          class="form-control"
+          x-model="name"
+          {% if mode == 'edit' %}readonly{% endif %}
+          placeholder="{% trans "Enter endpoint name" %}"
+          required
+        />
+        {% if mode == 'edit' %}
+          <div class="form-text text-muted">
+            {% trans "Endpoint name cannot be changed after creation." %}
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Case Type -->
+    <div class="mb-3">
+      <label for="case-type" class="form-label fw-bold"
+        >{% trans "Case Type" %}</label
+      >
+      {% if mode == 'new' %}
+        <select
+          id="case-type"
+          class="form-select"
+          x-model="targetCasetype"
+          @change="onCasetypeChange()"
+          required
+        >
+          <option value="">{% trans "-- Select a case type --" %}</option>
+          {% for ct in capability.case_types %}
+            <option value="{{ ct.name }}">{{ ct.name }}</option>
+          {% endfor %}
+        </select>
+      {% else %}
+        <p class="form-control-plaintext">{{ initial_target_name }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Version History (edit mode only) -->
+    {% if mode != 'new' and versions %}
+      <div class="mb-3">
+        <label for="version-select" class="form-label fw-bold"
+          >{% trans "Version" %}</label
+        >
+        <div class="d-flex align-items-center gap-2">
+          <select
+            id="version-select"
+            class="form-select w-auto"
+            onchange="if(this.value) { window.location = '?version=' + this.value; }"
+          >
+            {% for v in versions %}
+              <option
+                value="{{ v }}"
+                {% if v == display_version_number %}selected{% endif %}
+              >
+                {% trans "Version" %} {{ v }}
+                {% if v == current_version_number %}({% trans "Current" %}){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          {% if display_version_number == current_version_number %}
+            <span class="badge bg-success">{% trans "Current" %}</span>
+          {% else %}
+            <span class="badge bg-secondary">{% trans "Historical" %}</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Parameters -->
+    <div class="mb-4">
+      <label class="form-label fw-bold">{% trans "Parameters" %}</label>
+      <p class="form-text text-muted">
+        {% trans "Define named parameters that can be referenced in query conditions." %}
+      </p>
+
+      <template x-for="(param, idx) in parameters" :key="idx">
+        <div class="row g-2 mb-2 align-items-center">
+          <div class="col-auto">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              :placeholder="'{% trans "Name" %}'"
+              x-model="param.name"
+              :disabled="'{{ mode }}' === 'readonly'"
+              :id="'param-name-' + idx"
+            />
+          </div>
+          <div class="col-auto">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              :placeholder="'{% trans "Label" %}'"
+              x-model="param.label"
+              :disabled="'{{ mode }}' === 'readonly'"
+              :id="'param-label-' + idx"
+            />
+          </div>
+          {% if mode != 'readonly' %}
+            <div class="col-auto">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                @click="removeParameter(idx)"
+                :aria-label="'{% trans "Remove parameter" %}'"
+              >
+                &times;
+              </button>
+            </div>
+          {% endif %}
+        </div>
+      </template>
+
+      {% if mode != 'readonly' %}
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary mt-1"
+          @click="addParameter()"
+        >
+          + {% trans "Add Parameter" %}
+        </button>
+      {% endif %}
+    </div>
+
+    <!-- Query Builder -->
+    <div class="mb-4">
+      <h5 class="fw-bold">{% trans "Query" %}</h5>
+      <p class="form-text text-muted">
+        {% trans "Build filter conditions for this endpoint." %}
+      </p>
+      {% include "case_search/partials/query_builder.html" %}
+    </div>
+
+    <!-- Errors -->
+    <template x-if="errors.length > 0">
+      <div class="alert alert-danger" role="alert">
+        <ul class="mb-0">
+          <template x-for="(err, idx) in errors" :key="idx">
+            <li x-text="err"></li>
+          </template>
+        </ul>
+      </div>
+    </template>
+
+    <!-- Submit -->
+    {% if mode != 'readonly' %}
+      <div class="mt-3">
+        <button
+          type="button"
+          class="btn btn-primary"
+          @click="submitForm()"
+          :disabled="submitting"
+        >
+          <span
+            x-show="submitting"
+            class="spinner-border spinner-border-sm me-1"
+            role="status"
+            aria-hidden="true"
+          ></span>
+          <span x-show="!submitting">{% trans "Save" %}</span>
+          <span x-show="submitting">{% trans "Saving..." %}</span>
+        </button>
+        <a
+          href="{% url 'case_search_endpoints' domain %}"
+          class="btn btn-outline-secondary ms-2"
+        >
+          {% trans "Cancel" %}
+        </a>
+      </div>
+    {% else %}
+      <div class="mt-3">
+        <a
+          href="{% url 'case_search_endpoints' domain %}"
+          class="btn btn-outline-secondary"
+        >
+          {% trans "Back to Endpoints" %}
+        </a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock page_content %}
