@@ -130,9 +130,10 @@
             <ul>
               {% if web_user.domain_memberships %}
                 <li>
-                  {% blocktrans with count=web_user.domain_memberships|length %}
-                    {{ count }}
-                    domain membership(s)
+                  {% blocktrans count count=web_user.domain_memberships|length %}
+                    {{ count }} domain membership
+                  {% plural %}
+                    {{ count }} domain memberships
                   {% endblocktrans %}
                 </li>
               {% endif %}
