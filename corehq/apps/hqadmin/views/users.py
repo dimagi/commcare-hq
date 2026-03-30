@@ -24,7 +24,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, ngettext
 from django.views.generic import FormView, TemplateView, View
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -548,7 +548,7 @@ def remove_all_web_user_access(request):
 
     web_user = WebUser.get_by_username(username)
     if web_user is None:
-        messages.error(request, _("User '%(username)s' not found.") % {'username': username})
+        messages.error(request, _("User '{username}' not found.").format(username=username))
     else:
         removed = []
         fields_changed = {}
@@ -566,7 +566,11 @@ def remove_all_web_user_access(request):
                     by_domain_required_for_log=False,
                 )
             web_user.save()
-            removed.append(_("%(count)d domain membership(s)") % {'count': count})
+            removed.append(ngettext(
+                "{count} domain membership",
+                "{count} domain memberships",
+                count,
+            ).format(count=count))
 
         if django_user.is_superuser:
             django_user.is_superuser = False
@@ -596,12 +600,11 @@ def remove_all_web_user_access(request):
         if removed:
             messages.success(
                 request,
-                _("Removed %(items)s from user '%(username)s'.")
-                % {'items': ', '.join(removed), 'username': username},
+                _("Removed {items} from user '{username}'.").format(items=", ".join(removed), username=username)
             )
         else:
             messages.info(
-                request, _("User '%(username)s' has no access to remove.") % {'username': username}
+                request, _("User '{username}' has no access to remove.").format(username=username)
             )
 
     redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), urllib.parse.quote(username))
