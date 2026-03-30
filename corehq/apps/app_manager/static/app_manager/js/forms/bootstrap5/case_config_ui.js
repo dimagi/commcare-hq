@@ -166,6 +166,8 @@ $(function () {
         self.change = function () {
             self.saveButton.fire('change');
             self.forceRefreshTextchangeBinding(self.home);
+            const property = ko.dataFor($(this).closest(".case-property-mapping")[0]);
+            property.conflictingDelete?.(undefined);
         };
 
         self.usercaseChange = function () {
@@ -432,6 +434,11 @@ $(function () {
             var updatedCaseProp = caseProperty.wrap(_.extend(ko.mapping.toJS(property), {save_only_if_edited: checked}), self);
             self.case_properties.replace(property, updatedCaseProp);
             self.visible_case_properties.replace(property, updatedCaseProp);
+            self.dismissConflictingDelete(updatedCaseProp);
+        };
+
+        self.dismissConflictingDelete = function (property) {
+            property.conflictingDelete && property.conflictingDelete(undefined);
             saveButton.fire('change');
         };
 
@@ -542,7 +549,7 @@ $(function () {
 
     var casePropertyBase = {
         mapping: {
-            include: ['key', 'path', 'required', 'save_only_if_edited'],
+            include: ['key', 'path', 'required', 'save_only_if_edited', 'conflictingDelete'],
         },
         wrap: function (data, caseTransaction) {
             var self = ko.mapping.fromJS(data, caseProperty.mapping);
