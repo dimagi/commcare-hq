@@ -39,30 +39,24 @@ function getUpdateMultiDiff(original, incoming) {
             incoming[key].forEach(item => {
                 const match = baseline[key].find(q => q.question_path === item.question_path);
                 if (!match) {
-                    additions[key] = additions[key] || [];
-                    additions[key].push(item);
+                    push(key, item, additions);
                 } else if (!_.isEqual(match, item)) {
-                    deletions[key] = deletions[key] || [];
-                    deletions[key].push(match);
-                    additions[key] = additions[key] || [];
-                    additions[key].push(item);
+                    push(key, match, deletions);
+                    push(key, item, additions);
                 }
             });
             baseline[key].forEach(item => {
                 if (!incoming[key].find(q => q.question_path === item.question_path)) {
-                    deletions[key] = deletions[key] || [];
-                    deletions[key].push(item);
+                    push(key, item, deletions);
                 }
             });
         } else if (Object.hasOwn(incoming, key)) {  // not in baseline
             incoming[key].forEach(item => {
-                additions[key] = additions[key] || [];
-                additions[key].push(item);
+                push(key, item, additions);
             });
         } else {  // key in baseline, not in incoming
             baseline[key].forEach(item => {
-                deletions[key] = deletions[key] || [];
-                deletions[key].push(item);
+                push(key, item, deletions);
             });
         }
     });
@@ -75,6 +69,11 @@ function getUpdateMultiDiff(original, incoming) {
         diff.delete = deletions;
     }
     return diff;
+}
+
+function push(key, item, mapping) {
+    mapping[key] = mapping[key] || [];
+    mapping[key].push(item);
 }
 
 function getNameDiff(original, updated) {
