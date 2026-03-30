@@ -28,7 +28,6 @@ export function getDiff(baseline, incoming) {
 function getUpdateMultiDiff(original, incoming) {
     const additions = {};
     const deletions = {};
-    const updates = {};
 
     const allKeys = new Set([...Object.keys(original), ...Object.keys(incoming)]);
     const baseline = Object.fromEntries(
@@ -37,31 +36,28 @@ function getUpdateMultiDiff(original, incoming) {
 
     allKeys.forEach(key => {
         if (Object.hasOwn(baseline, key) && Object.hasOwn(incoming, key)) {
+            const cache = {};
             incoming[key].forEach(item => {
-                const match = baseline[key].find(q => q.question_path === item.question_path);
-                if (!match) {
-                    additions[key] = additions[key] || [];
-                    additions[key].push(item);
-                } else if (match.update_mode !== item.update_mode) {
-                    updates[key] = updates[key] || [];
-                    updates[key].push(item);
+                const num = countExactMataches(item, baseline[key], incoming[key], cache);
+                if (num === null || num > 0) {
+                    push(key, item, additions);
+                } else if (num < 0) {
+                    push(key, item, deletions);
                 }
             });
             baseline[key].forEach(item => {
-                if (!incoming[key].find(q => q.question_path === item.question_path)) {
-                    deletions[key] = deletions[key] || [];
-                    deletions[key].push(item);
+                const num = countExactMataches(item, baseline[key], incoming[key], cache);
+                if (num === null || num < 0) {
+                    push(key, item, deletions);
                 }
             });
         } else if (Object.hasOwn(incoming, key)) {  // not in baseline
             incoming[key].forEach(item => {
-                additions[key] = additions[key] || [];
-                additions[key].push(item);
+                push(key, item, additions);
             });
         } else {  // key in baseline, not in incoming
             baseline[key].forEach(item => {
-                deletions[key] = deletions[key] || [];
-                deletions[key].push(item);
+                push(key, item, deletions);
             });
         }
     });
@@ -73,10 +69,44 @@ function getUpdateMultiDiff(original, incoming) {
     if (Object.keys(deletions).length) {
         diff.delete = deletions;
     }
-    if (Object.keys(updates).length) {
-        diff.update = updates;
-    }
     return diff;
+}
+
+function push(key, item, mapping) {
+    mapping[key] = mapping[key] || [];
+    mapping[key].push(item);
+}
+
+/**
+ * Count exact matches of item in baseline and incoming
+ *
+ * Returns null if there are no other exact matches.
+ * Returns a positive number if incoming has more exact matches.
+ * Returns a negative number if baseline has more exact matches.
+ * If not null, the difference is moved toward zero and cached each
+ * time this function is called. Once cached, the cached difference
+ * (which remains zero once zero) is returned.
+ */
+function countExactMataches(item, baseline, incoming, cache) {
+    const key = Object.keys(item).sort().map(k => `${k}=${item[k]}`).join(' ');
+    let num = cache[key];
+    if (num === undefined) {
+        const nBaseline = baseline.filter(q => _.isEqual(q, item)).length;
+        const nIncoming = incoming.filter(q => _.isEqual(q, item)).length;
+        if (nIncoming + nBaseline === 1) {
+            cache[key] = null;
+            return null;
+        }
+        num = cache[key] = nIncoming - nBaseline;
+    } else if (num === null) {
+        return null;
+    }
+    if (num > 0) {
+        cache[key]--;
+    } else if (num < 0) {
+        cache[key]++;
+    }
+    return num;
 }
 
 function getNameDiff(original, updated) {
