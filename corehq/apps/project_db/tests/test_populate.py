@@ -9,6 +9,7 @@ from corehq.apps.project_db.populate import (
     case_to_row_dict,
     coerce_to_date,
     coerce_to_number,
+    send_to_project_db,
     upsert_case,
 )
 from corehq.apps.project_db.schema import build_table_schema
@@ -242,6 +243,7 @@ def _make_index(identifier, referenced_id):
 
 def _make_case(case_json=None, live_indices=None, **fields):
     case = Mock()
+    case.type = fields.get('type', 'default')
     case.case_id = fields.get('case_id', 'abc123')
     case.owner_id = fields.get('owner_id', 'owner1')
     case.name = fields.get('name', 'Test Case')
@@ -357,3 +359,101 @@ class TestCaseToRowDict:
         # The case_json values are namespaced, so they coexist safely
         assert result['prop.case_id'] == 'fake-id'
         assert result['prop.owner_id'] == 'fake-owner'
+
+
+# --- send_to_project_db tests (requires DB) ---
+
+
+SEND_DOMAIN = 'test-send-to-project-db'
+
+
+@pytest.mark.django_db
+class TestSendToProjectDb:
+
+    def setup_method(self):
+        self.engine = get_project_db_engine()
+        metadata = sqlalchemy.MetaData()
+        self.patient_table = build_table_schema(
+            SEND_DOMAIN, 'patient', metadata=metadata,
+            properties=[('first_name', 'plain')],
+        )
+        self.household_table = build_table_schema(
+            SEND_DOMAIN, 'household', metadata=metadata,
+            properties=[('district', 'plain')],
+        )
+        create_tables(self.engine, metadata)
+
+    def teardown_method(self):
+        schema = self.patient_table.schema
+        with self.engine.begin() as conn:
+            conn.execute(sqlalchemy.text(
+                f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'
+            ))
+
+    def _select_all(self, table):
+        with self.engine.begin() as conn:
+            rows = conn.execute(table.select()).fetchall()
+            return [dict(row) for row in rows]
+
+    def test_single_case_type(self):
+        cases = [
+            _make_case(type='patient', case_id='pt-1', owner_id='o1',
+                       case_json={'first_name': 'Alice'}),
+        ]
+        send_to_project_db(SEND_DOMAIN, cases)
+
+        rows = self._select_all(self.patient_table)
+        assert len(rows) == 1
+        assert rows[0]['case_id'] == 'pt-1'
+        assert rows[0]['prop__first_name'] == 'Alice'
+
+    def test_multiple_case_types(self):
+        cases = [
+            _make_case(type='patient', case_id='pt-1', owner_id='o1',
+                       case_json={'first_name': 'Alice'}),
+            _make_case(type='household', case_id='hh-1', owner_id='o1',
+                       case_json={'district': 'Kamuli'}),
+        ]
+        send_to_project_db(SEND_DOMAIN, cases)
+
+        patients = self._select_all(self.patient_table)
+        households = self._select_all(self.household_table)
+        assert len(patients) == 1
+        assert len(households) == 1
+        assert patients[0]['prop__first_name'] == 'Alice'
+        assert households[0]['prop__district'] == 'Kamuli'
+
+    def test_unknown_case_type_skipped(self):
+        cases = [
+            _make_case(type='patient', case_id='pt-1', owner_id='o1'),
+            _make_case(type='unknown_type', case_id='u-1', owner_id='o1'),
+        ]
+        send_to_project_db(SEND_DOMAIN, cases)
+
+        patients = self._select_all(self.patient_table)
+        assert len(patients) == 1
+
+    def test_all_unknown_case_types_is_noop(self):
+        send_to_project_db(SEND_DOMAIN, [
+            _make_case(type='unknown_type', case_id='u-1', owner_id='o1'),
+        ])
+        # No error raised, no rows written
+        assert self._select_all(self.patient_table) == []
+
+    def test_empty_cases_is_noop(self):
+        send_to_project_db(SEND_DOMAIN, [])
+        assert self._select_all(self.patient_table) == []
+
+    def test_multiple_cases_same_type(self):
+        cases = [
+            _make_case(type='patient', case_id='pt-1', owner_id='o1',
+                       case_json={'first_name': 'Alice'}),
+            _make_case(type='patient', case_id='pt-2', owner_id='o1',
+                       case_json={'first_name': 'Bob'}),
+        ]
+        send_to_project_db(SEND_DOMAIN, cases)
+
+        rows = self._select_all(self.patient_table)
+        assert len(rows) == 2
+        names = {r['prop__first_name'] for r in rows}
+        assert names == {'Alice', 'Bob'}

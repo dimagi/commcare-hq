@@ -82,10 +82,10 @@ Cases are upserted via PostgreSQL's ``INSERT ... ON CONFLICT DO
 UPDATE`` on ``case_id``. Type coercion for typed columns happens at
 write time.
 
-``send_to_project_db(case)``
-    High-level function that accepts a ``CommCareCase``, resolves the
-    table by reflection, and upserts. Raises ``ProjectDBError`` if no
-    table exists.
+``send_to_project_db(domain, cases)``
+    High-level function that accepts a domain and list of
+    ``CommCareCase`` objects, resolves each table by reflection,
+    and upserts. Case types without a project DB table are skipped.
 
 
 Management commands
