@@ -2,29 +2,75 @@
 {% load i18n %}
 
 {% block page_content %}
-  <p>{% trans "See a user's projects by entering their email address below." %}</p>
+  <p>
+    {% trans "See a user's projects by entering their email address below." %}
+  </p>
   <form class="form-inline" method="GET" action="">
-    <input name="q" type="text" class="form-control" placeholder="you@example.com"/>
-    <input class="btn btn-primary" type="submit"/>
+    <input
+      name="q"
+      type="text"
+      class="form-control"
+      placeholder="you@example.com"
+    />
+    <input class="btn btn-primary" type="submit" />
   </form>
   {% if web_user %}
-    <hr>
-    <h1>{% blocktrans with user_name=web_user.human_friendly_name %}{{ user_name }}'s Information{% endblocktrans %}</h1>
+    <hr />
+    <h1>
+      {% blocktrans with user_name=web_user.human_friendly_name %}{{ user_name }}'s
+      Information{% endblocktrans %}
+    </h1>
     {% if not web_user.is_active %}
-      <div class="alert alert-warning" role="alert">{% trans "This account is disabled." %}</div>
+      <div class="alert alert-warning" role="alert">
+        {% trans "This account is disabled." %}
+      </div>
     {% endif %}
     <dl>
-      <div><b>{% trans "ID" %}:</b>
+      <div>
+        <b>{% trans "ID" %}:</b>
         {{ web_user.get_id }}
-        <small><a href="{% url 'raw_doc' %}?id={{ web_user.get_id }}">{% trans "couch doc" %}</a></small> |
-        <small><a href="{% url 'doc_in_es' %}?id={{ web_user.get_id }}">{% trans "elasticsearch lookup" %}</a></small>
+        <small
+          ><a href="{% url 'raw_doc' %}?id={{ web_user.get_id }}"
+            >{% trans "couch doc" %}</a
+          ></small
+        >
+        |
+        <small
+          ><a href="{% url 'doc_in_es' %}?id={{ web_user.get_id }}"
+            >{% trans "elasticsearch lookup" %}</a
+          ></small
+        >
       </div>
       <div><b>{% trans "Is Superuser" %}:</b> {{ web_user.is_superuser }}</div>
     </dl>
     <div class="btn-toolbar">
-      <a class="btn btn-default" href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}">View User Audit Report</a>
-      <a class="btn btn-default" href="{% url 'disable_user' %}?username={{ web_user.username|urlencode }}">Disable/Enable User Account</a>
-      <a class="btn btn-default {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}">Temporarily Disable Two-Factor Authentication</a>
+      <a
+        class="btn btn-default"
+        href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}"
+        >View User Audit Report</a
+      >
+      <a
+        class="btn btn-default"
+        href="{% url 'disable_user' %}?username={{ web_user.username|urlencode }}"
+        >Disable/Enable User Account</a
+      >
+      <a
+        class="btn btn-default {% if not has_two_factor %}disabled{% endif %}"
+        href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}"
+        >Temporarily Disable Two-Factor Authentication</a
+      >
+      {% if web_user.is_staff %}
+        <button
+          class="btn btn-danger"
+          data-toggle="modal"
+          data-target="#remove-all-access-modal"
+          {% if not web_user.domain_memberships and not web_user.is_superuser and not is_accounting_admin %}
+            disabled
+          {% endif %}
+        >
+          {% trans "Remove All Access" %}
+        </button>
+      {% endif %}
     </div>
     <h3>{% trans "Domains" %}</h3>
     <div class="col-md-6">
@@ -35,7 +81,11 @@
         </tr>
         {% for membership in web_user.domain_memberships %}
           <tr>
-            <td><a href="{% url 'dashboard_default' membership.domain %}">{{ membership.domain  }}</a></td>
+            <td>
+              <a href="{% url 'dashboard_default' membership.domain %}"
+                >{{ membership.domain }}</a
+              >
+            </td>
             <td>{{ membership.role.name|default:'Unknown' }}</td>
           </tr>
         {% endfor %}
@@ -43,3 +93,96 @@
     </div>
   {% endif %}
 {% endblock %}
+
+{% block js-inline %}
+  {{ block.super }}
+  <script>
+    document.getElementById("confirm-remove-access").addEventListener("input", function () {
+        document.getElementById("remove-access-btn").disabled = this.value !== "REMOVE ACCESS";
+    });
+  </script>
+{% endblock js-inline %}
+
+{% block modals %}
+  {{ block.super }}
+  {% if web_user.is_staff %}
+    <div
+      class="modal fade"
+      id="remove-all-access-modal"
+      tabindex="-1"
+      role="dialog"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              &times;
+            </button>
+            <h4 class="modal-title">{% trans "Remove All Access" %}</h4>
+          </div>
+          <div class="modal-body">
+            <p>
+              {% blocktrans with user_name=web_user.username %}
+                The following will be removed from
+                <strong>{{ user_name }}</strong>:
+              {% endblocktrans %}
+            </p>
+            <ul>
+              {% if web_user.domain_memberships %}
+                <li>
+                  {% blocktrans count count=web_user.domain_memberships|length %}
+                    {{ count }} domain membership
+                  {% plural %}
+                    {{ count }} domain memberships
+                  {% endblocktrans %}
+                </li>
+              {% endif %}
+              {% if web_user.is_superuser %}
+                <li>{% trans "Superuser access" %}</li>
+              {% endif %}
+              {% if is_accounting_admin %}
+                <li>{% trans "Accounting admin access" %}</li>
+              {% endif %}
+            </ul>
+            <div class="form-group">
+              <label for="confirm-remove-access"
+                >{% trans 'Type <strong>REMOVE ACCESS</strong> to confirm' %}</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="confirm-remove-access"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">
+              {% trans "Cancel" %}
+            </button>
+            <form
+              method="POST"
+              action="{% url 'remove_all_web_user_access' %}"
+              style="display:inline"
+            >
+              {% csrf_token %}
+              <input
+                type="hidden"
+                name="username"
+                value="{{ web_user.username }}"
+              />
+              <button
+                type="submit"
+                class="btn btn-danger"
+                id="remove-access-btn"
+                disabled
+              >
+                {% trans "Remove All Access" %}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock modals %}

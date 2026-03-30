@@ -28,6 +28,7 @@ from corehq.apps.hqadmin.views.users import (
     OffboardingUserList,
     WebUserDataView,
     email_status,
+    remove_all_web_user_access,
     superuser_table,
     web_user_lookup,
 )
@@ -56,6 +57,7 @@ urlpatterns = [
     url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),
     url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
     url(r'^web_user_lookup/$', web_user_lookup, name='web_user_lookup'),
+    url(r'^remove_all_web_user_access/$', remove_all_web_user_access, name='remove_all_web_user_access'),
     url(r'^disable_two_factor/$', DisableTwoFactorView.as_view(), name=DisableTwoFactorView.urlname),
     url(r'^disable_account/$', DisableUserView.as_view(), name=DisableUserView.urlname),
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
