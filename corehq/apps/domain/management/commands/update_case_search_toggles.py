@@ -134,7 +134,9 @@ class Command(BaseCommand):
             # Normal Navigation / See More - only if case search is actually configured
             if bool(search_config.get('properties')) and not auto_launch:
                 reasons.append(f"module '{mod}': not auto_launch (See More / Normal Case List)")
-            if search_config.get('command_label'):  # Label for searching
+            # Label for searching
+            command_label = search_config.get('command_label', {})
+            if command_label and command_label != {'en': 'Search All Cases'}:
                 reasons.append(f"module '{mod}': command_label")
             if search_config.get('additional_relevant'):  # Claim condition
                 reasons.append(f"module '{mod}': additional_relevant (claim condition)")
