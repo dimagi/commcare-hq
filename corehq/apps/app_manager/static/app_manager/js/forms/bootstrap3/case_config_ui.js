@@ -88,7 +88,7 @@ $(function () {
                     data: {
                         requires: requires,
                         actions: JSON.stringify(updatedActions),
-                        update_diff: JSON.stringify(diff),
+                        case_mapping_diff: JSON.stringify(diff),
                     },
                     dataType: 'json',
                     success: function (data) {
