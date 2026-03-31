@@ -24,10 +24,11 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, ngettext
 from django.views.generic import FormView, TemplateView, View
 
 from couchdbkit.exceptions import ResourceNotFound
+from django_prbac.models import Grant, Role
 from lxml import etree
 from lxml.builder import E
 from two_factor.utils import default_device
@@ -38,6 +39,7 @@ from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
+from corehq import privileges
 from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
@@ -534,7 +536,79 @@ def web_user_lookup(request):
         context['web_user'] = web_user
         django_user = web_user.get_django_user()
         context['has_two_factor'] = user_has_device(django_user)
+        context['is_accounting_admin'] = is_accounting_admin(django_user)
     return render(request, template, context)
+
+
+@require_superuser
+def offboard_staff_user(request):
+    username = request.POST.get("username")
+    if not username:
+        return HttpResponseBadRequest("Missing username")
+
+    web_user = WebUser.get_by_username(username)
+    if web_user is None:
+        messages.error(request, _("User '{username}' not found.").format(username=username))
+    else:
+        removed = []
+        fields_changed = {}
+        django_user = web_user.get_django_user()
+
+        if web_user.domains:
+            count = len(web_user.domains)
+            for domain in list(web_user.domains):
+                web_user.delete_domain_membership(domain)
+                log_user_change(
+                    by_domain=None, for_domain=domain, couch_user=web_user,
+                    changed_by_user=request.couch_user,
+                    changed_via=USER_CHANGE_VIA_WEB,
+                    change_messages=UserChangeMessage.domain_removal(domain),
+                    by_domain_required_for_log=False,
+                )
+            web_user.save()
+            removed.append(ngettext(
+                "{count} domain membership",
+                "{count} domain memberships",
+                count,
+            ).format(count=count))
+
+        if django_user.is_superuser:
+            django_user.is_superuser = False
+            django_user.save()
+            fields_changed['is_superuser'] = False
+            removed.append(_("superuser access"))
+
+        if is_accounting_admin(django_user):
+            ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
+            Grant.objects.filter(
+                from_role=django_user.prbac_role.role,
+                to_role=ops_role,
+            ).delete()
+            fields_changed['is_accounting_admin'] = False
+            removed.append(_("accounting admin access"))
+
+        if fields_changed:
+            log_user_change(
+                by_domain=None, for_domain=None, couch_user=web_user,
+                changed_by_user=request.couch_user,
+                changed_via=USER_CHANGE_VIA_WEB,
+                fields_changed=fields_changed,
+                by_domain_required_for_log=False,
+                for_domain_required_for_log=False,
+            )
+
+        if removed:
+            messages.success(
+                request,
+                _("Removed {items} from user '{username}'.").format(items=", ".join(removed), username=username)
+            )
+        else:
+            messages.info(
+                request, _("User '{username}' has no access to remove.").format(username=username)
+            )
+
+    redirect_url = '{}?{}'.format(reverse('web_user_lookup'), urllib.parse.urlencode({'q': username}))
+    return redirect(redirect_url)
 
 
 @method_decorator(require_superuser, name='dispatch')
@@ -565,8 +639,7 @@ class DisableUserView(FormView):
     def redirect_url(self):
         base_url = reverse('web_user_lookup')
         if self.username:
-            encoded_username = urllib.parse.quote(self.username) if self.username else None
-            return '{}?q={}'.format(base_url, encoded_username)
+            return '{}?{}'.format(base_url, urllib.parse.urlencode({'q': self.username}))
 
         return base_url
 
@@ -672,7 +745,7 @@ class DisableTwoFactorView(FormView):
         from django_otp import user_has_device
 
         username = request.GET.get("q")
-        redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), username)
+        redirect_url = '{}?{}'.format(reverse('web_user_lookup'), urllib.parse.urlencode({'q': username}))
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
@@ -742,7 +815,7 @@ class DisableTwoFactorView(FormView):
         )
 
         messages.success(self.request, _('Two-Factor Auth successfully disabled.'))
-        return redirect('{}?q={}'.format(reverse('web_user_lookup'), username))
+        return redirect('{}?{}'.format(reverse('web_user_lookup'), urllib.parse.urlencode({'q': username})))
 
 
 class WebUserDataView(View):

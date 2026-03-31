@@ -5,10 +5,14 @@ from django.http import HttpResponse
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
+from django_prbac.models import Grant, Role, UserRole
 from lxml import etree
 from unittest.mock import Mock, patch
 
+from corehq import privileges
+from corehq.apps.accounting.utils import is_accounting_admin
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
 from corehq.apps.users.models import WebUser
 from corehq.toggles import TAG_RELEASE, TAG_GA_PATH
@@ -159,3 +163,70 @@ class TestSuperuserManagementView(TestCase):
         for tag_slug in [TAG_GA_PATH.slug, TAG_RELEASE.slug]:
             permission = ToggleEditPermission.objects.get_by_tag_slug(tag_slug)
             self.assertIn(user.username, permission.enabled_users)
+
+
+class TestRemoveAllWebUserAccess(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.superuser = WebUser.create(
+            None, "admin@dimagi.com", "password", None, None, is_superuser=True
+        )
+        cls.addClassCleanup(cls.superuser.delete, None, None)
+        cls.url = reverse('offboard_staff_user')
+
+    def setUp(self):
+        self.client.login(username=self.superuser.username, password='password')
+
+    def _create_user(self):
+        user = WebUser.create(None, "testuser@dimagi.com", "password", None, None)
+        self.addCleanup(user.delete, None, None)
+        return user
+
+    def _make_accounting_admin(self, django_user):
+        # privileges.ACCOUNTING_ADMIN is applied via OPERATIONS_TEAM role
+        ops_role = Role.objects.create(slug=privileges.OPERATIONS_TEAM, name='Ops')
+        accounting_role = Role.objects.create(slug=privileges.ACCOUNTING_ADMIN, name='Accounting')
+        Grant.objects.create(from_role=ops_role, to_role=accounting_role)
+        user_privs = Role.objects.create(slug=f"{django_user.username}_privs", name="Test user privileges")
+        UserRole.objects.create(user=django_user, role=user_privs)
+        Grant.objects.create(from_role=user_privs, to_role=ops_role)
+
+    def test_removes_domain_memberships(self):
+        domain_a = create_domain('domain-a')
+        domain_b = create_domain('domain-b')
+        self.addCleanup(domain_a.delete)
+        self.addCleanup(domain_b.delete)
+        user = self._create_user()
+        user.add_domain_membership('domain-a')
+        user.add_domain_membership('domain-b')
+        user.save()
+
+        self.client.post(self.url, {'username': user.username})
+
+        user = WebUser.get_by_username(user.username)
+        assert user.domains == []
+        assert user.domain_memberships == []
+
+    def test_removes_superuser(self):
+        user = self._create_user()
+        django_user = user.get_django_user()
+        django_user.is_superuser = True
+        django_user.save()
+
+        self.client.post(self.url, {'username': user.username})
+
+        django_user.refresh_from_db()
+        assert not django_user.is_superuser
+
+    def test_removes_accounting_admin(self):
+        user = self._create_user()
+        django_user = user.get_django_user()
+        self._make_accounting_admin(django_user)
+
+        self.client.post(self.url, {'username': user.username})
+
+        Role.update_cache()
+        django_user.refresh_from_db()
+        assert not is_accounting_admin(django_user)
