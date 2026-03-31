@@ -302,8 +302,8 @@ needs of most developers.
     ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio formplayer
     ```
 
-   **Mac OS:** Note that you will encounter many issues at this stage.
-   We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
+   **Mac OS:** You may encounter issues with formplayer and elasticsearch at this stage.
+   We recommend visiting the Docker section in the [Supplementary Guide](DEV_SETUP_MAC.md#Docker).
 
 
 5. If you are planning on running Formplayer from a binary or source, stop the

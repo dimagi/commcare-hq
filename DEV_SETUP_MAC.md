@@ -84,7 +84,7 @@
 
 ## Issues With `uv sync`
 
-- `psycopg2` will complain
+- `psycopg2` may complain
 
   As of Mac OS 11.x Big Sur, the solution for this is:
   ```sh
@@ -101,7 +101,7 @@
 
 - `uv pip install xmlsec` gives `ImportError`
 
-  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `uv pip install xmlsec` is currently broken.
+  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `uv pip install xmlsec` may be broken.
   This is a workaround. This solution also assumes your `homebrew` version is greater than `4.0.13`*:
 
 1. run `brew unlink libxmlsec1`
@@ -118,8 +118,6 @@ and [thread](https://github.com/xmlsec/python-xmlsec/issues/254) are good starti
 
 ### M1 Issues
 
-- `gevent` may present errors when installing with Python <3.9. For this reason, you should avoid using an older version of Python unless it is required.
-
 - `pynacl` will likely install but may throw an error `symbol not found in flat namespace '_ffi_prep_closure'` when attempting to run, particularly when setting up CommCare-Cloud.
 
   This can be fixed by installing a version of `pynacl` specific to the system architecture:
@@ -134,7 +132,7 @@ Docker images that will not run on Mac OS (Intel or M1):
 
 - `formplayer` (See section on Running Formplayer Outside of Docker in the [Main Developer Setup Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md))
 
-Docker images that will not run on Mac OS (as of 11.x Big Sur and above):
+Docker images that may not run on Mac OS (as of 11.x Big Sur and above):
 
 - `elasticsearch6` (Image is not optimized for arm but can run on apple silicon)
 
