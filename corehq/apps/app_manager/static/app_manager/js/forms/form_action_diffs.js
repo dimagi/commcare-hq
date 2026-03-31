@@ -41,7 +41,7 @@ function getUpdateMultiDiff(original, incoming) {
                 if (!match) {
                     additions[key] = additions[key] || [];
                     additions[key].push(item);
-                } else if (match.update_mode !== item.update_mode) {
+                } else if (!_.isEqual(match, item)) {
                     deletions[key] = deletions[key] || [];
                     deletions[key].push(match);
                     additions[key] = additions[key] || [];
