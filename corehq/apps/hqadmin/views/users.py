@@ -541,7 +541,7 @@ def web_user_lookup(request):
 
 
 @require_superuser
-def remove_all_web_user_access(request):
+def offboard_staff_user(request):
     username = request.POST.get("username")
     if not username:
         return HttpResponseBadRequest("Missing username")

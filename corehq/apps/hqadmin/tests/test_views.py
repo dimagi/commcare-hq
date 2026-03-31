@@ -174,7 +174,7 @@ class TestRemoveAllWebUserAccess(TestCase):
             None, "admin@dimagi.com", "password", None, None, is_superuser=True
         )
         cls.addClassCleanup(cls.superuser.delete, None, None)
-        cls.url = reverse('remove_all_web_user_access')
+        cls.url = reverse('offboard_staff_user')
 
     def setUp(self):
         self.client.login(username=self.superuser.username, password='password')

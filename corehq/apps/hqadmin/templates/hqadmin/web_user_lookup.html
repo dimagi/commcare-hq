@@ -63,12 +63,12 @@
         <button
           class="btn btn-danger"
           data-toggle="modal"
-          data-target="#remove-all-access-modal"
+          data-target="#offboard-staff-user-modal"
           {% if not web_user.domain_memberships and not web_user.is_superuser and not is_accounting_admin %}
             disabled
           {% endif %}
         >
-          {% trans "Remove All Access" %}
+          {% trans "Offboard Staff User" %}
         </button>
       {% endif %}
     </div>
@@ -97,8 +97,8 @@
 {% block js-inline %}
   {{ block.super }}
   <script>
-    document.getElementById("confirm-remove-access").addEventListener("input", function () {
-        document.getElementById("remove-access-btn").disabled = this.value !== "REMOVE ACCESS";
+    document.getElementById("confirm-offboard-user").addEventListener("input", function () {
+        document.getElementById("offboard-user-btn").disabled = this.value !== "OFFBOARD USER";
     });
   </script>
 {% endblock js-inline %}
@@ -108,7 +108,7 @@
   {% if web_user.is_staff %}
     <div
       class="modal fade"
-      id="remove-all-access-modal"
+      id="offboard-staff-user-modal"
       tabindex="-1"
       role="dialog"
     >
@@ -118,7 +118,7 @@
             <button type="button" class="close" data-dismiss="modal">
               &times;
             </button>
-            <h4 class="modal-title">{% trans "Remove All Access" %}</h4>
+            <h4 class="modal-title">{% trans "Offboard Staff User" %}</h4>
           </div>
           <div class="modal-body">
             <p>
@@ -145,13 +145,13 @@
               {% endif %}
             </ul>
             <div class="form-group">
-              <label for="confirm-remove-access"
-                >{% trans 'Type <strong>REMOVE ACCESS</strong> to confirm' %}</label
+              <label for="confirm-offboard-user"
+                >{% trans 'Type <strong>OFFBOARD USER</strong> to confirm' %}</label
               >
               <input
                 type="text"
                 class="form-control"
-                id="confirm-remove-access"
+                id="confirm-offboard-user"
                 autocomplete="off"
               />
             </div>
@@ -162,7 +162,7 @@
             </button>
             <form
               method="POST"
-              action="{% url 'remove_all_web_user_access' %}"
+              action="{% url 'offboard_staff_user' %}"
               style="display:inline"
             >
               {% csrf_token %}
@@ -174,10 +174,10 @@
               <button
                 type="submit"
                 class="btn btn-danger"
-                id="remove-access-btn"
+                id="offboard-user-btn"
                 disabled
               >
-                {% trans "Remove All Access" %}
+                {% trans "Offboard Staff User" %}
               </button>
             </form>
           </div>
