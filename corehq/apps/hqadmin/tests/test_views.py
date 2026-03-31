@@ -194,6 +194,7 @@ class TestOffboardStaffUser(TestCase):
         user_privs = Role.objects.create(slug=f"{django_user.username}_privs", name="Test user privileges")
         UserRole.objects.create(user=django_user, role=user_privs)
         Grant.objects.create(from_role=user_privs, to_role=ops_role)
+        Role.update_cache()
 
     def test_removes_domain_memberships(self):
         domain_a = create_domain('domain-a')
@@ -227,6 +228,7 @@ class TestOffboardStaffUser(TestCase):
         django_user = user.get_django_user()
         self._make_accounting_admin(django_user)
         assert is_accounting_admin(django_user)
+
         self.client.post(self.url, {'username': user.username})
 
         Role.update_cache()
