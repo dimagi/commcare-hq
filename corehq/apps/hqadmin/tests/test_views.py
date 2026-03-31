@@ -165,7 +165,7 @@ class TestSuperuserManagementView(TestCase):
             self.assertIn(user.username, permission.enabled_users)
 
 
-class TestRemoveAllWebUserAccess(TestCase):
+class TestOffboardStaffUser(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -186,9 +186,11 @@ class TestRemoveAllWebUserAccess(TestCase):
 
     def _make_accounting_admin(self, django_user):
         # privileges.ACCOUNTING_ADMIN is applied via OPERATIONS_TEAM role
-        ops_role = Role.objects.create(slug=privileges.OPERATIONS_TEAM, name='Ops')
-        accounting_role = Role.objects.create(slug=privileges.ACCOUNTING_ADMIN, name='Accounting')
-        Grant.objects.create(from_role=ops_role, to_role=accounting_role)
+        ops_role, _ = Role.objects.get_or_create(slug=privileges.OPERATIONS_TEAM, defaults={'name': 'Ops'})
+        accounting_role, _ = Role.objects.get_or_create(
+            slug=privileges.ACCOUNTING_ADMIN, defaults={'name': 'Accounting'}
+        )
+        Grant.objects.get_or_create(from_role=ops_role, to_role=accounting_role)
         user_privs = Role.objects.create(slug=f"{django_user.username}_privs", name="Test user privileges")
         UserRole.objects.create(user=django_user, role=user_privs)
         Grant.objects.create(from_role=user_privs, to_role=ops_role)
@@ -224,7 +226,7 @@ class TestRemoveAllWebUserAccess(TestCase):
         user = self._create_user()
         django_user = user.get_django_user()
         self._make_accounting_admin(django_user)
-
+        assert is_accounting_admin(django_user)
         self.client.post(self.url, {'username': user.username})
 
         Role.update_cache()
