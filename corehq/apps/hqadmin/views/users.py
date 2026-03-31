@@ -607,7 +607,7 @@ def remove_all_web_user_access(request):
                 request, _("User '{username}' has no access to remove.").format(username=username)
             )
 
-    redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), urllib.parse.quote(username))
+    redirect_url = '{}?{}'.format(reverse('web_user_lookup'), urllib.parse.urlencode({'q': username}))
     return redirect(redirect_url)
 
 
@@ -639,8 +639,7 @@ class DisableUserView(FormView):
     def redirect_url(self):
         base_url = reverse('web_user_lookup')
         if self.username:
-            encoded_username = urllib.parse.quote(self.username) if self.username else None
-            return '{}?q={}'.format(base_url, encoded_username)
+            return '{}?{}'.format(base_url, urllib.parse.urlencode({'q': self.username}))
 
         return base_url
 
@@ -746,7 +745,7 @@ class DisableTwoFactorView(FormView):
         from django_otp import user_has_device
 
         username = request.GET.get("q")
-        redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), username)
+        redirect_url = '{}?{}'.format(reverse('web_user_lookup'), urllib.parse.urlencode({'q': username}))
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
@@ -816,7 +815,7 @@ class DisableTwoFactorView(FormView):
         )
 
         messages.success(self.request, _('Two-Factor Auth successfully disabled.'))
-        return redirect('{}?q={}'.format(reverse('web_user_lookup'), username))
+        return redirect('{}?{}'.format(reverse('web_user_lookup'), urllib.parse.urlencode({'q': username})))
 
 
 class WebUserDataView(View):
