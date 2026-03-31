@@ -97,9 +97,12 @@
 {% block js-inline %}
   {{ block.super }}
   <script>
-    document.getElementById("confirm-offboard-user").addEventListener("input", function () {
-        document.getElementById("offboard-user-btn").disabled = this.value !== "OFFBOARD USER";
-    });
+    const confirmOffboardEl = document.getElementById("confirm-offboard-user");
+    if (confirmOffboardEl) {
+        confirmOffboardEl.addEventListener("input", function () {
+            document.getElementById("offboard-user-btn").disabled = this.value !== "OFFBOARD USER";
+        });
+    }
   </script>
 {% endblock js-inline %}
 
