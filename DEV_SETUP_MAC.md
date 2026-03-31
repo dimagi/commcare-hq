@@ -160,7 +160,7 @@ curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.23.t
 
 Un-tar and put the folder somewhere you can find it. Take note of that path (`pwd`) and add the following to your `~/.zshrc`:
 
-```
+```sh
 tar -xvzf elasticsearch-6.8.23.tar.gz
 ```
 
@@ -174,19 +174,19 @@ You would need to update couple of setting in order to make elasticsearch run on
 
 Change into elasticsearch directory
 
-```
+```sh
 cd /path/to/elasticsearch-6.8.23
 ```
 
 - In `config/jvm.options`, comment out `10-:-XX:UseAVX=2`
 
-```
+```sh
 sed -i '' '/10-:-XX:UseAVX=2/ s/^/# /' config/jvm.options
 ```
 
 - In `config/elasticsearch.yml`, add xpack.ml.enabled: false
 
-```
+```sh
 echo "xpack.ml.enabled: false" | sudo tee -a config/elasticsearch.yml
 ```
 
@@ -199,8 +199,8 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
 1. Install the plugin
 
-    ```shell
-    $ elasticsearch-plugin install analysis-phonetic
+    ```sh
+    elasticsearch-plugin install analysis-phonetic
     ```
 
     (If the `plugin` command is not found you will need to use the full path `<es home>/bin/plugin`).
@@ -209,8 +209,8 @@ Now that you have Elasticsearch running you will need to install the necessary p
 
 3. Verify the plugin was correctly installed
 
-    ```shell
-    $ curl "localhost:9200/_cat/plugins?s=component&h=component,version"
+    ```sh
+    curl "localhost:9200/_cat/plugins?s=component&h=component,version"
     > analysis-phonetic 6.8.23
     ```
 
