@@ -171,7 +171,7 @@ def post_user_role(request, domain):
     return JsonResponse(response_data)
 
 
-def _update_role_from_view(domain, role_data):
+def _update_role_from_view(domain, role_data, role_id=None):
     landing_page = role_data["default_landing_page"]
     if landing_page:
         validate_landing_page(domain, landing_page)
@@ -183,14 +183,13 @@ def _update_role_from_view(domain, role_data):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    if "_id" in role_data:
+    if role_id is not None:
         try:
-            role = UserRole.objects.by_couch_id(role_data["_id"])
+            role = UserRole.objects.by_couch_id(role_id)
         except UserRole.DoesNotExist:
-            role = UserRole()
-        else:
-            if role.domain != domain:
-                raise Http404()
+            raise Http404()
+        if role.domain != domain:
+            raise Http404()
     else:
         role = UserRole()
 

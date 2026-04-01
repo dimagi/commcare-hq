@@ -174,14 +174,13 @@ class TestUpdateRoleFromView(TestCase):
 
     def test_update_role(self):
         role_data = deepcopy(self.BASE_JSON)
-        role_data["_id"] = self.role.get_id
         role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
         role_data["permissions"] = get_default_available_permissions(
             edit_reports=True, view_report_list=["report1"]
         )
-        updated_role = _update_role_from_view(self.domain, role_data)
+        updated_role = _update_role_from_view(self.domain, role_data, role_id=self.role.get_id)
         self.assertEqual(updated_role.name, "role1")
         self.assertIsNone(updated_role.default_landing_page)
         self.assertTrue(updated_role.is_non_admin_editable)
@@ -195,13 +194,12 @@ class TestUpdateRoleFromView(TestCase):
             return domain_has_privilege(_domain, privilege_slug)
 
         role_data = deepcopy(self.BASE_JSON)
-        role_data['_id'] = self.role.get_id
         role_data['permissions']['manage_domain_alerts'] = True
         self.assertFalse(self.role.permissions.to_json()['manage_domain_alerts'])
 
         role_data['permissions']['manage_domain_alerts'] = True
         with patch('corehq.apps.users.views.domain_has_privilege', side_effect=patch_privilege_check):
-            _update_role_from_view(self.domain, role_data)
+            _update_role_from_view(self.domain, role_data, role_id=self.role.get_id)
         self.role.refresh_from_db()
         self.assertTrue(self.role.permissions.to_json()['manage_domain_alerts'])
 
