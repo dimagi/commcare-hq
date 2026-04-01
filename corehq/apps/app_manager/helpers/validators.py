@@ -44,6 +44,7 @@ from corehq.apps.app_manager.suite_xml.features.case_tiles import CUSTOM, case_t
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import (
     app_callout_templates,
+    is_valid_case_type,
     module_case_hierarchy_has_circular_reference,
     module_loads_registry_case,
     module_uses_inline_search,
@@ -1158,6 +1159,18 @@ class IndexedFormBaseValidator(FormBaseValidator):
                     errors.append({'type': 'save_to_case_missing_case_type', 'case_tag': save_ref.path})
                 if 'case_name' not in save_ref.properties:
                     errors.append({'type': 'save_to_case_missing_case_name', 'case_tag': save_ref.path})
+            case_type = save_ref.case_type
+            if case_type and not is_valid_case_type(case_type):
+                errors.append({
+                    'type': 'save_to_case_invalid_case_type',
+                    'case_tag': save_ref.path,
+                    'case_type': case_type,
+                })
+            if case_type == 'commcare-user' and (save_ref.create or save_ref.close):
+                errors.append({
+                    'type': 'save_to_case_commcare_user_not_update_only',
+                    'case_tag': save_ref.path,
+                })
 
         return errors
 

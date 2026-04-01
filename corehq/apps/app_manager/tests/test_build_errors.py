@@ -102,6 +102,97 @@ class BuildErrorsTest(TestCase):
             for error in errors
         ))
 
+    def test_save_to_case_invalid_case_type(self, *args):
+        factory = AppFactory()
+        _, form = factory.new_basic_module('save_to_case', 'household')
+        form.source = get_simple_form()
+        form.case_references_data = CaseReferences(
+            load={},
+            save={
+                '/data/save_to_case': CaseSaveReference(
+                    case_type='invalid case type!',
+                    properties=['case_type', 'case_name'],
+                    create=True,
+                    close=False,
+                )
+            },
+        )
+
+        errors = form.validate_for_build()
+        self.assertTrue(any(
+            error.get('type') == 'save_to_case_invalid_case_type'
+            and error.get('case_tag') == '/data/save_to_case'
+            for error in errors
+        ))
+
+    def test_save_to_case_commcare_user_not_update_only(self, *args):
+        factory = AppFactory()
+        _, form = factory.new_basic_module('save_to_case', 'household')
+        form.source = get_simple_form()
+        form.case_references_data = CaseReferences(
+            load={},
+            save={
+                '/data/save_to_case': CaseSaveReference(
+                    case_type='commcare-user',
+                    properties=['case_type', 'case_name'],
+                    create=True,
+                    close=False,
+                )
+            },
+        )
+
+        errors = form.validate_for_build()
+        self.assertTrue(any(
+            error.get('type') == 'save_to_case_commcare_user_not_update_only'
+            and error.get('case_tag') == '/data/save_to_case'
+            for error in errors
+        ))
+
+    def test_save_to_case_commcare_user_close(self, *args):
+        factory = AppFactory()
+        _, form = factory.new_basic_module('save_to_case', 'household')
+        form.source = get_simple_form()
+        form.case_references_data = CaseReferences(
+            load={},
+            save={
+                '/data/save_to_case': CaseSaveReference(
+                    case_type='commcare-user',
+                    properties=[],
+                    create=False,
+                    close=True,
+                )
+            },
+        )
+
+        errors = form.validate_for_build()
+        self.assertTrue(any(
+            error.get('type') == 'save_to_case_commcare_user_not_update_only'
+            and error.get('case_tag') == '/data/save_to_case'
+            for error in errors
+        ))
+
+    def test_save_to_case_commcare_user_update_is_allowed(self, *args):
+        factory = AppFactory()
+        _, form = factory.new_basic_module('save_to_case', 'household')
+        form.source = get_simple_form()
+        form.case_references_data = CaseReferences(
+            load={},
+            save={
+                '/data/save_to_case': CaseSaveReference(
+                    case_type='commcare-user',
+                    properties=[],
+                    create=False,
+                    close=False,
+                )
+            },
+        )
+
+        errors = form.validate_for_build()
+        self.assertFalse(any(
+            error.get('type') == 'save_to_case_commcare_user_not_update_only'
+            for error in errors
+        ))
+
     def test_empty_module_errors(self, *args):
         factory = AppFactory(build_version='2.24.0')
         app = factory.app

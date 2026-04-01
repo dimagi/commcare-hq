@@ -467,6 +467,22 @@
             {% if not not_actual_build %}
               in {% include "app_manager/partials/form_error_message.html" %}
             {% endif %}
+            {% case "save_to_case_invalid_case_type" %}
+            {% blocktrans with case_tag=error.case_tag case_type=error.case_type %}
+              <strong>Save to Case question "{{ case_tag }}" has an invalid case type "{{ case_type }}".</strong>
+              Case types can only include the characters a-z, 0-9, '-' and '_'.
+            {% endblocktrans %}
+            {% if not not_actual_build %}
+              in {% include "app_manager/partials/form_error_message.html" %}
+            {% endif %}
+            {% case "save_to_case_commcare_user_not_update_only" %}
+            {% blocktrans with case_tag=error.case_tag %}
+              <strong>Save to Case question "{{ case_tag }}" has an invalid action for 'commcare-user' cases.</strong>
+              'commcare-user' cases are managed by the system and can only be updated, not created or closed.
+            {% endblocktrans %}
+            {% if not not_actual_build %}
+              in {% include "app_manager/partials/form_error_message.html" %}
+            {% endif %}
             {% case "path error" %}
             {% if error.path %}
               The case management
