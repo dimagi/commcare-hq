@@ -57,7 +57,6 @@ $(function () {
 
     userRoles.initUserRoles($userRolesTable, $linkedRolesModal, $infoBar, {
         userRoles: initialPageData.get("user_roles"),
-        deleteUrl: url,
         allowEdit: initialPageData.get("can_edit_roles"),
     });
 });
