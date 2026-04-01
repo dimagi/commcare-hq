@@ -61,7 +61,7 @@ var RolesViewModel = function (o) {
         saveOptions: function () {
             var role = self.roleBeingDeleted();
             return {
-                url: o.deleteUrlTemplate.replace('---', role._id),
+                url: o.deleteUrl("delete_user_role", role._id),
                 type: 'post',
                 dataType: 'json',
                 success: function (data) {
