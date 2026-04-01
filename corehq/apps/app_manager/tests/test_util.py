@@ -12,7 +12,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_validate_xform,
     SuiteMixin,
 )
-from corehq.apps.app_manager.util import split_path, does_app_have_mobile_ucr_v1_refs
+from corehq.apps.app_manager.util import is_valid_case_type, split_path, does_app_have_mobile_ucr_v1_refs
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -159,6 +159,19 @@ class TestGlobalAppConfig(TestCase):
         config = GlobalAppConfig.by_app_id(self.domain, app_id)
         config.app_prompt = 'on'
         return config
+
+
+class TestIsValidCaseType(SimpleTestCase):
+
+    def test_valid_case_types(self):
+        for value in ('foo', 'foo-bar', 'case_type_1', 'CaseType123'):
+            with self.subTest(value=value):
+                self.assertTrue(is_valid_case_type(value))
+
+    def test_invalid_case_types(self):
+        for value in ('foo bar', '', None, 'foo\tbar', '!special-char'):
+            with self.subTest(value=value):
+                self.assertFalse(is_valid_case_type(value))
 
 
 class TestSplitPath(SimpleTestCase):

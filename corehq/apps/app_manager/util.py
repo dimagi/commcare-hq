@@ -208,21 +208,6 @@ _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 
 def is_valid_case_type(case_type):
-    """
-    Returns ``True`` if ``case_type`` is valid for ``module``
-
-    >>> from corehq.apps.app_manager.models import Module, AdvancedModule
-    >>> is_valid_case_type('foo', Module())
-    True
-    >>> is_valid_case_type('foo-bar', Module())
-    True
-    >>> is_valid_case_type('foo bar', Module())
-    False
-    >>> is_valid_case_type('', Module())
-    False
-    >>> is_valid_case_type(None, Module())
-    False
-    """
     matches_regex = bool(_case_type_regex.match(case_type or ''))
     return matches_regex
 
