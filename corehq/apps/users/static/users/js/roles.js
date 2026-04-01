@@ -59,10 +59,10 @@ var RolesViewModel = function (o) {
     self.modalDeleteButton = {
         state: ko.observable(),
         saveOptions: function () {
+            var role = self.roleBeingDeleted();
             return {
-                url: o.deleteUrl,
+                url: o.deleteUrlTemplate.replace('---', role._id),
                 type: 'post',
-                data: JSON.stringify(self.roleBeingDeleted()),
                 dataType: 'json',
                 success: function (data) {
                     self.removeRole(data);

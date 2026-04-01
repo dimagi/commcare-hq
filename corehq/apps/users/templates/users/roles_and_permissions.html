@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% js_entry 'users/js/roles_and_permissions' %}
 {% block page_content %}
-  {% registerurl "delete_user_role" domain %}
+  {% registerurl "delete_user_role" domain '---' %}
   {% initial_page_data "user_roles" user_roles %}
   {% initial_page_data "can_edit_roles" can_edit_roles %}
   {% initial_page_data "report_list" report_list %}
@@ -211,7 +211,7 @@
                     class="badge text-bg-secondary"
                     data-bind="text: $data"
                   ></span
-                  ><br/>
+                  ><br />
                 </span>
               </div>
             </td>
@@ -232,9 +232,7 @@
                   data-bind="visible: !permissions.manage_data_registry && manage_data_registry_list.length"
                 >
                   <strong>{% trans "Manage Only" %}</strong><br />
-                  <span
-                    data-bind="foreach: manage_data_registry_list"
-                  >
+                  <span data-bind="foreach: manage_data_registry_list">
                     <span
                       class="badge text-bg-secondary"
                       data-bind="text: $data"
@@ -243,16 +241,16 @@
                   </span>
                 </div>
                 <br />
-                <div data-bind="visible: permissions.view_data_registry_contents">
+                <div
+                  data-bind="visible: permissions.view_data_registry_contents"
+                >
                   {% trans "View All Data" %}
                 </div>
                 <div
                   data-bind="visible: !permissions.view_data_registry_contents && view_data_registry_contents_list.length"
                 >
                   <strong>{% trans "View Data From" %}</strong><br />
-                  <span
-                    data-bind="foreach: view_data_registry_contents_list"
-                  >
+                  <span data-bind="foreach: view_data_registry_contents_list">
                     <span
                       class="badge text-bg-secondary"
                       data-bind="text: $data"
