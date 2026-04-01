@@ -405,12 +405,6 @@ def disable_case_search(domain):
     return config
 
 
-def case_search_enabled_domains():
-    """Returns a list of all domains that have case search enabled
-    """
-    return CaseSearchConfig.objects.filter(enabled=True).values_list('domain', flat=True)
-
-
 class DomainsNotInCaseSearchIndex(models.Model):
     """
     NOTE: This is a temporary "migration" model.
