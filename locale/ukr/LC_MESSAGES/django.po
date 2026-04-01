@@ -4756,9 +4756,6 @@ msgstr "USD %s"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
-#| msgid ""
-#| "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
-#| "{num_days} days"
 msgid ""
 "Your Automatic Payment for CommCare Account {account_name} is scheduled in "
 "{num_days} day"
@@ -4780,8 +4777,6 @@ msgstr[3] ""
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 #, python-brace-format
-#| msgid ""
-#| "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
 msgid ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} day"
 msgid_plural ""
