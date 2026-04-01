@@ -49,8 +49,6 @@ ko.bindingHandlers.linkChecked = {
 };
 
 $(function () {
-    var url = initialPageData.reverse;
-
     var $userRolesTable = $('#user-roles-table');
     let $linkedRolesModal = $('#modal_linked_roles');
     const $infoBar = $('#infobar');
