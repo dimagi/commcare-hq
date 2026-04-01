@@ -222,16 +222,16 @@ def delete_user_role(request, domain):
     role_data = json.loads(request.body.decode('utf-8'))
 
     try:
-        response_data = _delete_user_role(domain, role_data)
+        response_data = _delete_user_role(domain, role_data["_id"])
     except InvalidRequestException as e:
         return JsonResponse({"message": str(e)}, status=400)
 
     return JsonResponse(response_data)
 
 
-def _delete_user_role(domain, role_data):
+def _delete_user_role(domain, role_id):
     try:
-        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+        role = UserRole.objects.by_couch_id(role_id, domain=domain)
     except UserRole.DoesNotExist:
         raise Http404
 
@@ -239,9 +239,9 @@ def _delete_user_role(domain, role_data):
         raise InvalidRequestException(_(
             "Unable to delete role '{role}'. "
             "This role is the default role for Mobile Users and can not be deleted.",
-        ).format(role=role_data["name"]))
+        ).format(role=role.name))
 
-    user_count = get_role_user_count(domain, role_data["_id"])
+    user_count = get_role_user_count(domain, role_id)
     if user_count:
         raise InvalidRequestException(ngettext(
             "Unable to delete role '{role}'. "
@@ -251,7 +251,7 @@ def _delete_user_role(domain, role_data):
             "It has {user_count} users and/or invitations still assigned to it. "
             "Remove all users assigned to the role before deleting it.",
             user_count,
-        ).format(role=role_data["name"], user_count=user_count))
+        ).format(role=role.name, user_count=user_count))
 
     copy_id = role.couch_id
     role.delete()

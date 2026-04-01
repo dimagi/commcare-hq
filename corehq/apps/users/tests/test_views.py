@@ -215,28 +215,28 @@ class TestDeleteRole(TestCase):
 
     def test_delete_role(self):
         role = UserRole.create(self.domain, 'test-role')
-        _delete_user_role(self.domain, {"_id": role.get_id})
+        _delete_user_role(self.domain, role.get_id)
         self.assertFalse(UserRole.objects.filter(pk=role.id).exists())
 
     def test_delete_role_not_exist(self):
         with self.assertRaises(Http404):
-            _delete_user_role(self.domain, {"_id": "mising"})
+            _delete_user_role(self.domain, "missing")
 
     def test_delete_role_with_users(self):
         self.user_count_mock.return_value = 1
         role = UserRole.create(self.domain, 'test-role')
         with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
-            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+            _delete_user_role(self.domain, role.get_id)
 
     def test_delete_commcare_user_default_role(self):
         role = UserRole.create(self.domain, 'test-role', is_commcare_user_default=True)
         with self.assertRaisesRegex(InvalidRequestException, "default role for Mobile Users"):
-            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+            _delete_user_role(self.domain, role.get_id)
 
     def test_delete_role_wrong_domain(self):
         role = UserRole.create("other-domain", 'test-role')
         with self.assertRaises(Http404):
-            _delete_user_role(self.domain, {"_id": role.get_id})
+            _delete_user_role(self.domain, role.get_id)
 
     def setUp(self):
         user_count_patcher = patch('corehq.apps.users.views.role.get_role_user_count', return_value=0)
