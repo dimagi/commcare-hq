@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -482,7 +482,7 @@
+@@ -498,7 +498,7 @@
                in the
                form{% include "app_manager/partials/form_error_message.html" with no_form="." %}
                is missing a question. Please choose a question from the dropdown
@@ -9,7 +9,7 @@
              {% endif %}
              {% case "multimedia case property not supported" %}
              {% blocktrans with path=error.path %}
-@@ -552,8 +552,9 @@
+@@ -568,8 +568,9 @@
                  but cases are not available for this form. Please either remove
                  the case reference or (1) make sure that the case list is set to
                  display the case list first and then form, and (2) make sure
@@ -21,7 +21,7 @@
                {% endblocktrans %}
              {% else %}
                {% blocktrans %}
-@@ -561,8 +562,9 @@
+@@ -577,8 +578,9 @@
                  are not available. Please either remove the case reference or
                  (1) make sure that the case list is set to display the case list
                  first and then form, and (2) make sure that all forms in this
