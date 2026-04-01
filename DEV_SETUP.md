@@ -172,12 +172,12 @@ git-hooks/install.sh
     For convenience, you can create an alias to activate virtual environments in
     ".venv" and "venv" directories. To do that, add the following to your
     `.bashrc` or `.zshrc` file:
-    ```shell
+    ```sh
     alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
     ```
     Then you can activate virtual environments with
-    ```shell
-    $ venv
+    ```sh
+    venv
     ```
 
     - Recommended for developers or others with custom requirements: create a
@@ -302,8 +302,8 @@ needs of most developers.
     ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio formplayer
     ```
 
-   **Mac OS:** Note that you will encounter many issues at this stage.
-   We recommend visiting the Docker section in the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
+   **Mac OS:** You may encounter issues with formplayer and elasticsearch at this stage.
+   We recommend visiting the Docker section in the [Supplementary Guide](DEV_SETUP_MAC.md#Docker).
 
 
 5. If you are planning on running Formplayer from a binary or source, stop the
@@ -382,14 +382,14 @@ If you want to use a partitioned database, change
 You will also need to create the additional databases manually:
 
 ```sh
-$ psql -h localhost -p 5432 -U commcarehq
+psql -h localhost -p 5432 -U commcarehq
 ```
 
 (assuming that "commcarehq" is the username in `DATABASES` in
 `localsettings.py`). When prompted, use the password associated with the
 username, of course.
 
-```sh
+```sql
 commcarehq=# CREATE DATABASE commcarehq_proxy;
 CREATE DATABASE
 commcarehq=# CREATE DATABASE commcarehq_p1;
@@ -401,24 +401,24 @@ commcarehq=# \q
 If you are running formplayer through docker, you will need to create the
 database for the service
 
-```sh
+```sql
 commcarehq=# CREATE DATABASE formplayer;
 CREATE DATABASE
 ```
 Populate your database:
 
 ```sh
-$ ./manage.py sync_couch_views
-$ ./manage.py create_kafka_topics
-$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+./manage.py sync_couch_views
+./manage.py create_kafka_topics
+env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
 ```
 
 If you are using a partitioned database, populate the additional
 databases too, and configure PL/Proxy:
 
 ```sh
-$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
-$ ./manage.py configure_pl_proxy_cluster --create_only
+env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
+./manage.py configure_pl_proxy_cluster --create_only
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment
@@ -435,8 +435,8 @@ you do not expect to be using the global changes feed. You can use
 `curl` to create the databases:
 
 ```sh
-$ curl -X PUT http://username:password@127.0.0.1:5984/_users
-$ curl -X PUT http://username:password@127.0.0.1:5984/_replicator
+curl -X PUT http://username:password@127.0.0.1:5984/_users
+curl -X PUT http://username:password@127.0.0.1:5984/_replicator
 ```
 
 where "username" and "password" are the values of "COUCH_USERNAME"
@@ -447,7 +447,7 @@ and "COUCH_PASSWORD" given in `COUCH_DATABASES` set in
 
 **Mac OS M1 Users:** If you see the following error, check the [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 ```sh
-ImportError: failed to find libmagic.  Check your installation
+> ImportError: failed to find libmagic.  Check your installation
 ```
 
 #### Troubleshooting Issues with `migrate`
@@ -556,10 +556,10 @@ have locally, you might run into issues. Here are minimum version requirements
 for these packages.
 
 ```sh
-$ npm --version
-11.6.2
-$ node --version
-v24.11.1
+npm --version
+> 11.6.2
+node --version
+> v24.11.1
 ```
 
 On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
@@ -582,7 +582,7 @@ compile SASS, we need Dart Sass. There is a `sass` npm package that can be insta
 `npm install -g sass`, however this installs the pure javascript version without a binary. For speed in a
 development environment, it is recommended to install `sass` with homebrew:
 
-```shell
+```sh
 brew install sass/sass/sass
 ```
 
