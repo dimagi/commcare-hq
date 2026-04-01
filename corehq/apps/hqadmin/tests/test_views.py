@@ -231,6 +231,5 @@ class TestOffboardStaffUser(TestCase):
 
         self.client.post(self.url, {'username': user.username})
 
-        Role.update_cache()
         django_user.refresh_from_db()
         assert not is_accounting_admin(django_user)

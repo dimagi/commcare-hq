@@ -584,6 +584,7 @@ def offboard_staff_user(request):
                 from_role=django_user.prbac_role.role,
                 to_role=ops_role,
             ).delete()
+            Role.update_cache()
             fields_changed['is_accounting_admin'] = False
             removed.append(_("accounting admin access"))
 
