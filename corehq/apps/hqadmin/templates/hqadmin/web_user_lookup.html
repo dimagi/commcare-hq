@@ -148,9 +148,11 @@
               {% endif %}
             </ul>
             <div class="form-group">
-              <label for="confirm-offboard-user"
-                >{% trans 'Type <strong>OFFBOARD USER</strong> to confirm' %}</label
-              >
+              <label for="confirm-offboard-user">
+                {% blocktrans with confirm_text="OFFBOARD USER" %}
+                  Type <strong>{{ confirm_text }}</strong> to confirm
+                {% endblocktrans %}
+              </label>
               <input
                 type="text"
                 class="form-control"
