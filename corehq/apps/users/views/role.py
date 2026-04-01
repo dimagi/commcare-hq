@@ -151,19 +151,7 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
 @require_POST
 @use_bootstrap5
 def create_user_role(request, domain):
-    if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return JsonResponse({})
-    role_data = json.loads(request.body.decode('utf-8'))
-
-    try:
-        role = _update_role_from_view(domain, role_data)
-    except ValueError as e:
-        return JsonResponse({
-            "message": str(e)
-        }, status=400)
-
-    response_data = role.to_json()
-    return JsonResponse(response_data)
+    return _save_user_role(request, domain)
 
 
 @json_error
@@ -171,6 +159,10 @@ def create_user_role(request, domain):
 @require_POST
 @use_bootstrap5
 def update_user_role(request, domain, role_id):
+    return _save_user_role(request, domain, role_id=role_id)
+
+
+def _save_user_role(request, domain, role_id=None):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
