@@ -150,13 +150,33 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
 @domain_admin_required
 @require_POST
 @use_bootstrap5
-def post_user_role(request, domain):
+def create_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
 
     try:
         role = _update_role_from_view(domain, role_data)
+    except ValueError as e:
+        return JsonResponse({
+            "message": str(e)
+        }, status=400)
+
+    response_data = role.to_json()
+    return JsonResponse(response_data)
+
+
+@json_error
+@domain_admin_required
+@require_POST
+@use_bootstrap5
+def update_user_role(request, domain, role_id):
+    if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
+        return JsonResponse({})
+    role_data = json.loads(request.body.decode('utf-8'))
+
+    try:
+        role = _update_role_from_view(domain, role_data, role_id=role_id)
     except ValueError as e:
         return JsonResponse({
             "message": str(e)
@@ -216,13 +236,12 @@ def _update_role_from_view(domain, role_data, role_id=None):
 @domain_admin_required
 @require_POST
 @use_bootstrap5
-def delete_user_role(request, domain):
+def delete_user_role(request, domain, role_id):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
-    role_data = json.loads(request.body.decode('utf-8'))
 
     try:
-        response_data = _delete_user_role(domain, role_data["_id"])
+        response_data = _delete_user_role(domain, role_id)
     except InvalidRequestException as e:
         return JsonResponse({"message": str(e)}, status=400)
 
