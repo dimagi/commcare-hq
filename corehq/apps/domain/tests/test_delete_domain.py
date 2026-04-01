@@ -33,7 +33,6 @@ from corehq.apps.aggregate_ucrs.models import (
 from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
     GlobalAppConfig,
-    LatestEnabledBuildProfiles,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverride,
@@ -448,7 +447,6 @@ class TestDeleteDomain(TestCase):
     def _assert_app_manager_counts(self, domain_name, count):
         self._assert_queryset_count([
             AppReleaseByLocation.objects.filter(domain=domain_name),
-            LatestEnabledBuildProfiles.objects.filter(domain=domain_name),
             GlobalAppConfig.objects.filter(domain=domain_name),
             ResourceOverride.objects.filter(domain=domain_name),
         ], count)
@@ -464,9 +462,6 @@ class TestDeleteDomain(TestCase):
             location.save()
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                 version=23, location=location)
-            with patch('corehq.apps.app_manager.models.GlobalAppConfig.by_app_id'):
-                LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456',
-                                                          version=10)
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
             ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
                                             pre_id='456', post_id='789')
