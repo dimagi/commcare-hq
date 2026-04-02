@@ -150,6 +150,7 @@ def get_action_and_resource(event):
 
 def get_generic_log_event_row(event):
     action, resource = get_action_and_resource(event)
+    status_code = event.status_code if event.doc_type == 'NavigationEventAudit' else ''
     return [
         event.event_date.strftime("%Y-%m-%d %H:%M:%S.%f UTC"),
         event.doc_type,
@@ -158,13 +159,17 @@ def get_generic_log_event_row(event):
         event.ip_address,
         action,
         resource,
+        status_code,
         event.description,
     ]
 
 
 def write_export_from_all_log_events(file_obj, start, end):
     writer = csv.writer(file_obj)
-    writer.writerow(['Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'Resource', 'Description'])
+    writer.writerow([
+        'Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'URL', 'Status Code',
+        'Description',
+    ])
     for event in get_all_log_events(start, end):
         write_generic_log_event(writer, event)
 

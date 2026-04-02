@@ -214,6 +214,33 @@ class TestGetGenericLogEventRow(AuditcareTest):
         row = get_generic_log_event_row(event)
         self.assertEqual(row[0], "2026-03-27 15:17:52.000000 UTC")
 
+    def test_row_includes_status_code_for_navigation_event(self):
+        event = NavigationEventAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 0),
+            ip_address="10.0.0.1",
+            path="/a/test/dashboard/",
+            headers={"REQUEST_METHOD": "GET"},
+            status_code=200,
+        )
+        row = get_generic_log_event_row(event)
+        # Columns: Date, DocType, Username, Domain, IP, Action, URL, StatusCode, Description
+        self.assertEqual(len(row), 9)
+        self.assertEqual(row[6], "/a/test/dashboard/?")  # URL (was Resource)
+        self.assertEqual(row[7], 200)  # Status Code
+
+    def test_row_has_empty_status_code_for_access_event(self):
+        event = AccessAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 0),
+            ip_address="10.0.0.1",
+            path="/a/test/login/",
+            access_type="i",
+        )
+        row = get_generic_log_event_row(event)
+        self.assertEqual(len(row), 9)
+        self.assertEqual(row[7], "")  # Status Code empty for AccessAudit
+
 
 class TestNavigationEventsQueriesWithoutData(AuditcareTest):
 

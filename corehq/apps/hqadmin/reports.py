@@ -193,7 +193,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
             DataTablesColumn(gettext_lazy("Domain")),
             DataTablesColumn(gettext_lazy("IP Address")),
             DataTablesColumn(gettext_lazy("Action")),
-            DataTablesColumn(gettext_lazy("Resource")),
+            DataTablesColumn(gettext_lazy("URL")),
+            DataTablesColumn(gettext_lazy("Status Code")),
             DataTablesColumn(gettext_lazy("Description")),
         )
 
