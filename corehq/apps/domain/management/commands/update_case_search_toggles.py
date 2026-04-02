@@ -119,13 +119,6 @@ class Command(BaseCommand):
         return reasons
 
     @staticmethod
-    def _domain_uses_deprecated_feature(domain_name):
-        reasons = []
-        if toggles.WEBAPPS_STICKY_SEARCH.enabled(domain_name):  # Sticky Search
-            reasons.append("toggle WEBAPPS_STICKY_SEARCH")
-        return reasons
-
-    @staticmethod
     def _app_uses_deprecated_feature(app):
         reasons = []
 
@@ -209,12 +202,8 @@ class Command(BaseCommand):
             if advanced_reasons:
                 advanced_reasons = [f"domain: {r}" for r in advanced_reasons]
 
-            deprecated_reasons = Command._domain_uses_deprecated_feature(domain_name)
-            if deprecated_reasons:
-                deprecated_reasons = [f"domain: {r}" for r in deprecated_reasons]
-
+            deprecated_reasons = []
             related_lookup_reasons = []
-
             for app_id in get_app_ids_in_domain(domain_name):
                 if advanced_reasons and deprecated_reasons and related_lookup_reasons:
                     break
