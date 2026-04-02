@@ -199,7 +199,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def selected_url_include_mode(self):
-        return self.request.GET.get('url_include_mode', 'contains')
+        mode = self.request.GET.get('url_include_mode', 'contains')
+        return mode if mode in ('contains', 'startswith') else 'contains'
 
     @property
     def selected_url_exclude_patterns(self):
@@ -208,7 +209,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def selected_url_exclude_mode(self):
-        return self.request.GET.get('url_exclude_mode', 'contains')
+        mode = self.request.GET.get('url_exclude_mode', 'contains')
+        return mode if mode in ('contains', 'startswith') else 'contains'
 
     @property
     def selected_status_codes(self):
@@ -275,6 +277,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
     MAX_RECORDS = 5000
 
     @property
+    @memoized
     def rows(self):
         if not (self.selected_domain or self.selected_user):
             return []

@@ -37,10 +37,10 @@
         var endDateInput = document.querySelector('[name="enddate"]');
         var endTimeInput = document.querySelector('[name="end_time"]');
         if (endDateInput) {
-          endDateInput.value = "{{ adjusted_end_date }}";
+          endDateInput.value = "{{ adjusted_end_date|escapejs }}";
         }
         if (endTimeInput) {
-          endTimeInput.value = "{{ adjusted_end_time }}";
+          endTimeInput.value = "{{ adjusted_end_time|escapejs }}";
         }
       });
     </script>
