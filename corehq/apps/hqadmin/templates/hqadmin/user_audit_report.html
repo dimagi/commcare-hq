@@ -34,13 +34,28 @@
   {% if adjusted_end_date %}
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        var adjustedEndDate = "{{ adjusted_end_date|escapejs }}";
+        var adjustedEndTime = "{{ adjusted_end_time|escapejs }}";
+
+        // Update the hidden enddate input (used on form submission)
         var endDateInput = document.querySelector('[name="enddate"]');
-        var endTimeInput = document.querySelector('[name="end_time"]');
         if (endDateInput) {
-          endDateInput.value = "{{ adjusted_end_date|escapejs }}";
+          endDateInput.value = adjustedEndDate;
         }
+
+        // Update the visible daterangepicker text
+        var filterRange = document.getElementById("filter_range");
+        if (filterRange) {
+          var separator = filterRange.getAttribute("data-separator") || " to ";
+          var startDate = filterRange.getAttribute("data-start-date") || "";
+          filterRange.value = startDate + separator + adjustedEndDate;
+          filterRange.setAttribute("data-end-date", adjustedEndDate);
+        }
+
+        // Update the end time input
+        var endTimeInput = document.querySelector('[name="end_time"]');
         if (endTimeInput) {
-          endTimeInput.value = "{{ adjusted_end_time|escapejs }}";
+          endTimeInput.value = adjustedEndTime;
         }
       });
     </script>
