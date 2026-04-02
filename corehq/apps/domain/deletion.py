@@ -455,10 +455,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'QueryStringHash', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     CustomDeletion('toggles', _disable_toggles, []),
-    ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
-    ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
-    ModelDeletion('translations', 'TransifexProject', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
         extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],
