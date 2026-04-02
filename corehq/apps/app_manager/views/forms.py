@@ -28,6 +28,7 @@ from text_unidecode import unidecode
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
     get_usercase_properties,
@@ -254,6 +255,13 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     response_json = {}
     app.save(response_json)
+
+    if _case_mapping_diff_has_changes(diff):
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES,
+            request.couch_user,
+            {'source': UPDATE_CASE_SOURCE_CASE_MANAGEMENT},
+        )
     response_json['actions'] = make_multi(form.actions.to_json())
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
@@ -344,6 +352,14 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = xform.encode('utf-8')
                 case_mapping_diff = _get_case_mapping_diff(request, form)
                 save_xform(app, form, xform, case_mapping_diff)
+                if _case_mapping_diff_has_changes(case_mapping_diff):
+                    # form builder is the only client that submits
+                    # mapping_diff at time of writing, but that could change.
+                    record_google_analytics_event(
+                        METRICS_UPDATE_CASE_PROPERTIES,
+                        request.couch_user,
+                        {'source': UPDATE_CASE_SOURCE_FORM_BUILDER},
+                    )
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -552,9 +568,21 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
+
+    if _case_mapping_diff_has_changes(case_mapping_diff):
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES,
+            request.couch_user,
+            {'source': UPDATE_CASE_SOURCE_FORM_BUILDER},
+        )
+
     _add_case_management_data(response_json, form, request)
     return JsonResponse(response_json)
 
+
+METRICS_UPDATE_CASE_PROPERTIES = 'update_case_properties'
+UPDATE_CASE_SOURCE_FORM_BUILDER = 'formbuilder'
+UPDATE_CASE_SOURCE_CASE_MANAGEMENT = 'casemanagement'
 
 # Characters that JS encodeURI preserves (beyond letters/digits which
 # Python's quote already preserves). Used to match encodeURI behavior
@@ -581,6 +609,10 @@ def _get_case_mapping_diff(request, form):
             is_registration=form.is_registration_form(),
         )
     return case_mapping_diff
+
+
+def _case_mapping_diff_has_changes(diff):
+    return diff and any(any(v.values()) for v in diff.values())
 
 
 def _get_xform_conflict_response(form, sha1_checksum):

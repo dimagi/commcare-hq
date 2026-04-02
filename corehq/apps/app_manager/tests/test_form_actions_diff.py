@@ -15,6 +15,7 @@ from ..form_action_diff import (
 from ..models import (
     FormActions, UpdateCaseAction, OpenCaseAction
 )
+from ..views.forms import _case_mapping_diff_has_changes
 
 
 class OpenCaseActionApplyDiffTests(SimpleTestCase):
@@ -662,6 +663,44 @@ class FormActionsTests(SimpleTestCase):
         update_form_actions(form_actions, close_case_update, {})
 
         assert form_actions.close_case.condition.type == 'never'
+
+
+class CaseMappingDiffHasChangesTests(SimpleTestCase):
+
+    def test_none(self):
+        assert not _case_mapping_diff_has_changes(None)
+
+    def test_empty(self):
+        assert not _case_mapping_diff_has_changes({})
+
+    def test_empty_open_case(self):
+        assert not _case_mapping_diff_has_changes({"open_case": {}})
+
+    def test_empty_update_case(self):
+        assert not _case_mapping_diff_has_changes({"update_case": {}})
+
+    def test_both_empty(self):
+        assert not _case_mapping_diff_has_changes({"open_case": {}, "update_case": {}})
+
+    def test_empty_actions(self):
+        assert not _case_mapping_diff_has_changes({
+            "open_case": {"add": [], "delete": []},
+            "update_case": {"add": {}, "delete": {}},
+        })
+
+    def test_has_changes(self):
+        diff = {
+            'open_case': {
+                'delete': [{'question_path': 'old_name'}],
+                'add': [{'question_path': 'new_name'}],
+            },
+            'update_case': {
+                'delete': {'one': [{'question_path': 'one'}]},
+                'add': {'two': [{'question_path': 'two'}]},
+            }
+        }
+
+        assert _case_mapping_diff_has_changes(diff)
 
 
 class ConvertUpdateToAddPlusDeleteTests(SimpleTestCase):
