@@ -1,8 +1,13 @@
 from datetime import datetime
+from unittest.mock import MagicMock
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
-from corehq.apps.hqadmin.reports import truncate_rows_to_minute_boundary
+from dimagi.utils.dates import DateSpan
+
+from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.auditcare.tests.testutils import AuditcareTest
+from corehq.apps.hqadmin.reports import UserAuditReport, truncate_rows_to_minute_boundary
 from corehq.apps.reports.filters.simple import IPAddressFilter
 
 
@@ -100,3 +105,108 @@ class TestTruncateRowsToMinuteBoundary(TestCase):
         # Can only keep rows < 15:01:00, which is the 2 rows at 15:00
         self.assertEqual(len(result), 2)
         self.assertEqual(cutoff_dt, datetime(2026, 3, 27, 15, 1))
+
+
+def _make_mock_couch_user():
+    mock_user = MagicMock()
+    mock_user._id = 'test-user-id'
+    mock_user.can_view_some_reports.return_value = True
+    return mock_user
+
+
+class TestUserAuditReportFilters(AuditcareTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = RequestFactory()
+        headers = {"REQUEST_METHOD": "GET"}
+        NavigationEventAudit.objects.bulk_create([
+            NavigationEventAudit(
+                user="admin@test.com",
+                domain="test-domain",
+                event_date=datetime(2026, 3, 27, 15, 0, i),
+                ip_address="10.0.0.1",
+                path="/a/test-domain/dashboard/",
+                headers=headers,
+                status_code=200,
+            )
+            for i in range(5)
+        ] + [
+            NavigationEventAudit(
+                user="admin@test.com",
+                domain="test-domain",
+                event_date=datetime(2026, 3, 27, 15, 0, 10),
+                ip_address="192.168.1.100",
+                path="/a/test-domain/api/v1/cases/",
+                headers=headers,
+                status_code=404,
+            ),
+        ])
+
+    def _get_report(self, params):
+        request = self.factory.get('/hq/admin/audit_events/', params)
+        request.couch_user = _make_mock_couch_user()
+        request.can_access_all_locations = True
+        # Set up request.datespan from the startdate/enddate params so DatespanMixin
+        # picks up the correct date range.
+        from datetime import date
+        startdate = date.fromisoformat(params['startdate'])
+        enddate = date.fromisoformat(params['enddate'])
+        request.datespan = DateSpan(startdate, enddate)
+        report = UserAuditReport(request, domain=None)
+        return report
+
+    def test_ip_filter_exact(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'ip_address': '192.168.1.100',
+        })
+        rows = report.rows
+        self.assertEqual(len(rows), 1)
+        self.assertIn('192.168.1.100', rows[0][4])
+
+    def test_ip_filter_cidr(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'ip_address': '10.0.0.0/8',
+        })
+        rows = report.rows
+        self.assertEqual(len(rows), 5)
+
+    def test_status_code_filter(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'status_code': '404',
+        })
+        rows = report.rows
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][7], 404)
+
+    def test_url_include_contains(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'url_include': '/api/',
+            'url_include_mode': 'contains',
+        })
+        rows = report.rows
+        self.assertEqual(len(rows), 1)
+
+    def test_url_exclude_contains(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'url_exclude': '/dashboard/',
+            'url_exclude_mode': 'contains',
+        })
+        rows = report.rows
+        self.assertEqual(len(rows), 1)  # only the API row
