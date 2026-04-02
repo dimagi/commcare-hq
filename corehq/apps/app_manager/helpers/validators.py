@@ -1159,13 +1159,13 @@ class IndexedFormBaseValidator(FormBaseValidator):
                     errors.append({'type': 'save_to_case_missing_case_type', 'case_tag': save_ref.path})
                 if 'case_name' not in save_ref.properties:
                     errors.append({'type': 'save_to_case_missing_case_name', 'case_tag': save_ref.path})
-            case_type = save_ref.case_type
-            if case_type and not is_valid_case_type(case_type):
-                errors.append({
-                    'type': 'save_to_case_invalid_case_type',
-                    'case_tag': save_ref.path,
-                    'case_type': case_type,
-                })
+                case_type = save_ref.case_type
+                if case_type and not is_valid_case_type(case_type):
+                    errors.append({
+                        'type': 'save_to_case_invalid_case_type',
+                        'case_tag': save_ref.path,
+                        'case_type': case_type,
+                    })
             if case_type == 'commcare-user' and (save_ref.create or save_ref.close):
                 errors.append({
                     'type': 'save_to_case_commcare_user_not_update_only',
