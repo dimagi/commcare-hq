@@ -830,9 +830,12 @@ Alpine.data('initRole', (roleJson) => {
             self.saveRole = () => {
                 self.isSaving = true;
                 const isNewRole = !self.role._id;
+                const url = isNewRole
+                    ? initialPageData.reverse("create_user_role")
+                    : initialPageData.reverse("update_user_role", self.role._id);
                 $.ajax({
                     method: 'POST',
-                    url: initialPageData.reverse("post_user_role"),
+                    url: url,
                     data: JSON.stringify(self.role, null, 2),
                     dataType: 'json',
                     success: (response) => {

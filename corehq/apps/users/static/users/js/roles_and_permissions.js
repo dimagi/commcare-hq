@@ -49,15 +49,12 @@ ko.bindingHandlers.linkChecked = {
 };
 
 $(function () {
-    var url = initialPageData.reverse;
-
     var $userRolesTable = $('#user-roles-table');
     let $linkedRolesModal = $('#modal_linked_roles');
     const $infoBar = $('#infobar');
 
     userRoles.initUserRoles($userRolesTable, $linkedRolesModal, $infoBar, {
         userRoles: initialPageData.get("user_roles"),
-        deleteUrl: url("delete_user_role"),
         allowEdit: initialPageData.get("can_edit_roles"),
     });
 });

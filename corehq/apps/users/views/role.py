@@ -150,13 +150,25 @@ class ListRolesView(RoleContextMixin, BaseRoleAccessView):
 @domain_admin_required
 @require_POST
 @use_bootstrap5
-def post_user_role(request, domain):
+def create_user_role(request, domain):
+    return _save_user_role(request, domain)
+
+
+@json_error
+@domain_admin_required
+@require_POST
+@use_bootstrap5
+def update_user_role(request, domain, role_id):
+    return _save_user_role(request, domain, role_id=role_id)
+
+
+def _save_user_role(request, domain, role_id=None):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
 
     try:
-        role = _update_role_from_view(domain, role_data)
+        role = _update_role_from_view(domain, role_data, role_id=role_id)
     except ValueError as e:
         return JsonResponse({
             "message": str(e)
@@ -171,7 +183,7 @@ def post_user_role(request, domain):
     return JsonResponse(response_data)
 
 
-def _update_role_from_view(domain, role_data):
+def _update_role_from_view(domain, role_data, role_id=None):
     landing_page = role_data["default_landing_page"]
     if landing_page:
         validate_landing_page(domain, landing_page)
@@ -183,14 +195,13 @@ def _update_role_from_view(domain, role_data):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    if "_id" in role_data:
+    if role_id is not None:
         try:
-            role = UserRole.objects.by_couch_id(role_data["_id"])
+            role = UserRole.objects.by_couch_id(role_id)
         except UserRole.DoesNotExist:
-            role = UserRole()
-        else:
-            if role.domain != domain:
-                raise Http404()
+            raise Http404()
+        if role.domain != domain:
+            raise Http404()
     else:
         role = UserRole()
 
@@ -217,22 +228,21 @@ def _update_role_from_view(domain, role_data):
 @domain_admin_required
 @require_POST
 @use_bootstrap5
-def delete_user_role(request, domain):
+def delete_user_role(request, domain, role_id):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
-    role_data = json.loads(request.body.decode('utf-8'))
 
     try:
-        response_data = _delete_user_role(domain, role_data)
+        response_data = _delete_user_role(domain, role_id)
     except InvalidRequestException as e:
         return JsonResponse({"message": str(e)}, status=400)
 
     return JsonResponse(response_data)
 
 
-def _delete_user_role(domain, role_data):
+def _delete_user_role(domain, role_id):
     try:
-        role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
+        role = UserRole.objects.by_couch_id(role_id, domain=domain)
     except UserRole.DoesNotExist:
         raise Http404
 
@@ -240,9 +250,9 @@ def _delete_user_role(domain, role_data):
         raise InvalidRequestException(_(
             "Unable to delete role '{role}'. "
             "This role is the default role for Mobile Users and can not be deleted.",
-        ).format(role=role_data["name"]))
+        ).format(role=role.name))
 
-    user_count = get_role_user_count(domain, role_data["_id"])
+    user_count = get_role_user_count(domain, role_id)
     if user_count:
         raise InvalidRequestException(ngettext(
             "Unable to delete role '{role}'. "
@@ -252,7 +262,7 @@ def _delete_user_role(domain, role_data):
             "It has {user_count} users and/or invitations still assigned to it. "
             "Remove all users assigned to the role before deleting it.",
             user_count,
-        ).format(role=role_data["name"], user_count=user_count))
+        ).format(role=role.name, user_count=user_count))
 
     copy_id = role.couch_id
     role.delete()
