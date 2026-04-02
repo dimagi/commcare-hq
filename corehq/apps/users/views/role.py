@@ -197,10 +197,8 @@ def _update_role_from_view(domain, role_data, role_id=None):
 
     if role_id is not None:
         try:
-            role = UserRole.objects.by_couch_id(role_id)
+            role = UserRole.objects.by_couch_id(role_id, domain=domain)
         except UserRole.DoesNotExist:
-            raise Http404()
-        if role.domain != domain:
             raise Http404()
     else:
         role = UserRole()
