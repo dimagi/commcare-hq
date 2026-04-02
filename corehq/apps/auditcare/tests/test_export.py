@@ -17,6 +17,7 @@ from ..utils.export import (
     get_date_range_where,
     get_domain_first_access_times,
     get_foreign_names,
+    get_generic_log_event_row,
     navigation_events_by_user,
     write_export_from_all_log_events,
 )
@@ -108,25 +109,25 @@ class TestNavigationEventsQueries(AuditcareTest):
                 items = sorted([unpack(r) for r in rows], key=key)
                 expected_items = [
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'AccessAudit',
                         'User': 'other@test.com',
                         'Description': 'Login: other@test.com',
                     },
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'AccessAudit',
                         'User': 'test@test.com',
                         'Description': 'Logout: test@test.com',
                     },
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'NavigationEventAudit',
                         'User': 'other@test.com',
                         'Description': 'other@test.com',
                     },
                     {
-                        'Date': '2021-02-01 03:00:00',
+                        'Date': '2021-02-01 03:00:00.000000 UTC',
                         'Type': 'NavigationEventAudit',
                         'User': 'test@test.com',
                         'Description': 'test@test.com',
@@ -185,6 +186,33 @@ class TestNavigationEventsQueries(AuditcareTest):
             # remove the session key (not returned by the query)
             del login_event["session_key"]
         self.assertEqual(list(get_domain_first_access_times([domain])), login_events)
+
+
+class TestGetGenericLogEventRow(AuditcareTest):
+
+    def test_date_format_is_sortable_utc_string(self):
+        event = NavigationEventAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 17, 52, 132987),
+            ip_address="10.0.0.1",
+            path="/a/test/dashboard/",
+            headers={"REQUEST_METHOD": "GET"},
+            status_code=200,
+        )
+        row = get_generic_log_event_row(event)
+        self.assertEqual(row[0], "2026-03-27 15:17:52.132987 UTC")
+
+    def test_date_format_with_zero_microseconds(self):
+        event = NavigationEventAudit(
+            user="test@test.com",
+            event_date=datetime(2026, 3, 27, 15, 17, 52, 0),
+            ip_address="10.0.0.1",
+            path="/a/test/dashboard/",
+            headers={"REQUEST_METHOD": "GET"},
+            status_code=200,
+        )
+        row = get_generic_log_event_row(event)
+        self.assertEqual(row[0], "2026-03-27 15:17:52.000000 UTC")
 
 
 class TestNavigationEventsQueriesWithoutData(AuditcareTest):

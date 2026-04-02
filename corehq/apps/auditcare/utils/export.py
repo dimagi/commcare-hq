@@ -151,7 +151,7 @@ def get_action_and_resource(event):
 def get_generic_log_event_row(event):
     action, resource = get_action_and_resource(event)
     return [
-        event.event_date,
+        event.event_date.strftime("%Y-%m-%d %H:%M:%S.%f UTC"),
         event.doc_type,
         event.user,
         event.domain or '',
