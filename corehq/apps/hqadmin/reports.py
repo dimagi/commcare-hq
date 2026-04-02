@@ -49,6 +49,51 @@ from corehq.toggles import (
 )
 
 
+def truncate_rows_to_minute_boundary(rows, max_records):
+    """Truncate a sorted row list to a clean minute boundary.
+
+    Rows must be sorted by date ascending (index 0 is the formatted date string).
+
+    Returns:
+        (truncated_rows, cutoff_datetime) tuple.
+        - If no truncation needed: (rows, None)
+        - If truncated to a minute boundary: (trimmed_rows, cutoff_datetime)
+          where cutoff_datetime is the minute floored datetime used as the boundary
+          (rows with event_date < cutoff_datetime are kept)
+        - If all rows fall in the same minute (can't trim meaningfully):
+          (rows[:max_records], None) — caller should show a same-minute warning
+    """
+    if len(rows) <= max_records:
+        return rows, None
+
+    def parse_date(date_str):
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f UTC")
+
+    def floor_to_minute(dt):
+        return dt.replace(second=0, microsecond=0)
+
+    # Find the minute of the row that pushed us over the limit
+    overflow_date = parse_date(rows[max_records][0])
+    overflow_minute = floor_to_minute(overflow_date)
+
+    # Find the minute of the first row
+    first_minute = floor_to_minute(parse_date(rows[0][0]))
+
+    # If all rows are in the same minute, we can't trim
+    if overflow_minute == first_minute:
+        return rows[:max_records], None
+
+    # Trim to rows with event_date < overflow_minute
+    cutoff = overflow_minute
+    trimmed = [r for r in rows if parse_date(r[0]) < cutoff]
+
+    # Guard: if trimmed still exceeds (shouldn't normally happen)
+    if len(trimmed) > max_records:
+        return truncate_rows_to_minute_boundary(trimmed, max_records)
+
+    return trimmed, cutoff
+
+
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     base_template = 'reports/bootstrap3/base_template.html'
@@ -229,6 +274,8 @@ class UserAuditReport(AdminReport, DatespanMixin):
             DataTablesColumn(gettext_lazy("Description")),
         )
 
+    MAX_RECORDS = 5000
+
     @property
     def rows(self):
         if not (self.selected_domain or self.selected_user):
@@ -248,11 +295,20 @@ class UserAuditReport(AdminReport, DatespanMixin):
             access_extra_filters=None if skip_access else access_filters,
             skip_access=skip_access,
         )
+        count = 0
         for event in events:
             row = get_generic_log_event_row(event)
             rows.append(row)
+            count += 1
+            if count > self.MAX_RECORDS:
+                break
 
-        return sorted(rows, key=lambda x: x[0])
+        sorted_rows = sorted(rows, key=lambda x: x[0])
+
+        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(sorted_rows, self.MAX_RECORDS)
+        self._truncation_cutoff = cutoff_dt
+        self._truncation_same_minute = (len(sorted_rows) > self.MAX_RECORDS and cutoff_dt is None)
+        return truncated_rows
 
     def _build_common_filters(self):
         filters = Q()
@@ -335,6 +391,30 @@ class UserAuditReport(AdminReport, DatespanMixin):
                 context['info_message'] += _(
                     'Note: URLs for this domain typically start with "{domain_prefix}".'
                 ).format(domain_prefix=domain_prefix)
+
+        # Truncation messages (set by rows property)
+        # Access rows to trigger the query and truncation logic
+        _rows = self.rows  # noqa: F841
+        if getattr(self, '_truncation_same_minute', False):
+            context['truncation_message'] = _(
+                "Showing {max_records} results, but there are additional events within the "
+                "same minute that are not shown. Try narrowing by username, domain, IP address, "
+                "or other filters to see all results."
+            ).format(max_records=self.MAX_RECORDS)
+            context['truncation_level'] = 'warning'
+        elif getattr(self, '_truncation_cutoff', None):
+            cutoff = self._truncation_cutoff
+            context['truncation_message'] = _(
+                "Showing events through {cutoff_time}. Your query returned more than "
+                "{max_records} results; the end date/time has been adjusted. "
+                "Change the end time to see later events."
+            ).format(
+                cutoff_time=cutoff.strftime("%Y-%m-%d %H:%M UTC"),
+                max_records=self.MAX_RECORDS,
+            )
+            context['truncation_level'] = 'info'
+            context['adjusted_end_date'] = cutoff.strftime("%Y-%m-%d")
+            context['adjusted_end_time'] = cutoff.strftime("%H:%M")
 
         return context
 
