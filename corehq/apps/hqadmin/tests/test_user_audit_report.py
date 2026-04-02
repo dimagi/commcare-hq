@@ -1,16 +1,16 @@
-from datetime import datetime
+from datetime import date, datetime
 from unittest.mock import MagicMock
 
 from dimagi.utils.dates import DateSpan
 from django.test import RequestFactory, TestCase
 
-from corehq.apps.auditcare.models import NavigationEventAudit
+from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
 from corehq.apps.auditcare.tests.testutils import AuditcareTest
 from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     truncate_rows_to_minute_boundary,
 )
-from corehq.apps.reports.filters.simple import IPAddressFilter
+from corehq.apps.reports.filters.simple import IPAddressFilter, StatusCodeFilter
 
 
 class TestIPAddressParsing(TestCase):
@@ -53,6 +53,27 @@ class TestIPAddressParsing(TestCase):
     def test_whitespace_only(self):
         result = IPAddressFilter.parse_ip_input("   ")
         self.assertEqual(result, [])
+
+
+class TestStatusCodeParsing(TestCase):
+
+    def test_single_code(self):
+        self.assertEqual(StatusCodeFilter.parse_status_codes("200"), [200])
+
+    def test_multiple_codes(self):
+        self.assertEqual(StatusCodeFilter.parse_status_codes("200, 403, 500"), [200, 403, 500])
+
+    def test_empty_input(self):
+        self.assertEqual(StatusCodeFilter.parse_status_codes(""), [])
+
+    def test_whitespace_only(self):
+        self.assertEqual(StatusCodeFilter.parse_status_codes("   "), [])
+
+    def test_invalid_input(self):
+        self.assertIsNone(StatusCodeFilter.parse_status_codes("200, abc"))
+
+    def test_trailing_comma(self):
+        self.assertEqual(StatusCodeFilter.parse_status_codes("200, 403,"), [200, 403])
 
 
 class TestTruncateRowsToMinuteBoundary(TestCase):
@@ -145,6 +166,14 @@ class TestUserAuditReportFilters(AuditcareTest):
                 status_code=404,
             ),
         ])
+        AccessAudit.objects.create(
+            user="admin@test.com",
+            domain="test-domain",
+            event_date=datetime(2026, 3, 27, 15, 0, 5),
+            ip_address="10.0.0.1",
+            path="/a/test-domain/login/",
+            access_type="i",
+        )
 
     def _get_report(self, params):
         request = self.factory.get('/hq/admin/user_audit_report/', params)
@@ -152,7 +181,6 @@ class TestUserAuditReportFilters(AuditcareTest):
         request.can_access_all_locations = True
         # Set up request.datespan from the startdate/enddate params so DatespanMixin
         # picks up the correct date range.
-        from datetime import date
         startdate = date.fromisoformat(params['startdate'])
         enddate = date.fromisoformat(params['enddate'])
         request.datespan = DateSpan(startdate, enddate)
@@ -178,7 +206,7 @@ class TestUserAuditReportFilters(AuditcareTest):
             'ip_address': '10.0.0.0/8',
         })
         rows = report.rows
-        self.assertEqual(len(rows), 5)
+        self.assertEqual(len(rows), 6)  # 5 nav events + 1 access event
 
     def test_status_code_filter(self):
         report = self._get_report({
@@ -211,4 +239,179 @@ class TestUserAuditReportFilters(AuditcareTest):
             'url_exclude_mode': 'contains',
         })
         rows = report.rows
-        self.assertEqual(len(rows), 1)  # only the API row
+        # API row + AccessAudit login row (neither contains /dashboard/)
+        nav_rows = [r for r in rows if r[1] == 'NavigationEventAudit']
+        self.assertEqual(len(nav_rows), 1)
+
+    def test_url_include_mode_defaults_for_invalid_input(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'url_include_mode': 'iregex',
+        })
+        self.assertEqual(report.selected_url_include_mode, 'contains')
+
+    def test_url_exclude_mode_defaults_for_invalid_input(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'url_exclude_mode': 'regex',
+        })
+        self.assertEqual(report.selected_url_exclude_mode, 'contains')
+
+    def test_status_code_filter_excludes_access_events(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'status_code': '200',
+        })
+        rows = report.rows
+        for row in rows:
+            self.assertEqual(row[1], 'NavigationEventAudit')
+
+    def test_no_status_code_filter_includes_access_events(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        rows = report.rows
+        doc_types = {row[1] for row in rows}
+        self.assertIn('AccessAudit', doc_types)
+        self.assertIn('NavigationEventAudit', doc_types)
+
+    def test_url_include_and_exclude_combined(self):
+        """Include URLs containing /a/test-domain/ but exclude /dashboard/"""
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'url_include': '/a/test-domain/',
+            'url_include_mode': 'contains',
+            'url_exclude': '/dashboard/',
+            'url_exclude_mode': 'contains',
+        })
+        rows = report.rows
+        # Should get the API row and the AccessAudit login row
+        nav_rows = [r for r in rows if r[1] == 'NavigationEventAudit']
+        self.assertEqual(len(nav_rows), 1)
+        self.assertIn('/api/', nav_rows[0][6])
+
+    def test_url_include_startswith(self):
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+            'url_include': '/a/test-domain/api/',
+            'url_include_mode': 'startswith',
+        })
+        rows = report.rows
+        nav_rows = [r for r in rows if r[1] == 'NavigationEventAudit']
+        self.assertEqual(len(nav_rows), 1)
+
+    def test_no_user_no_domain_returns_empty(self):
+        report = self._get_report({
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        rows = report.rows
+        self.assertEqual(rows, [])
+
+    def test_events_interleave_by_date(self):
+        """Nav and access events should be merged in chronological order."""
+        report = self._get_report({
+            'username': 'admin@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        rows = report.rows
+        # Verify rows are sorted by date
+        dates = [row[0] for row in rows]
+        self.assertEqual(dates, sorted(dates))
+        # Verify both types are present (not all of one then all of other)
+        doc_types = [row[1] for row in rows]
+        self.assertIn('AccessAudit', doc_types)
+        self.assertIn('NavigationEventAudit', doc_types)
+
+
+class TestUserAuditReportTruncation(AuditcareTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = RequestFactory()
+        headers = {"REQUEST_METHOD": "GET"}
+        events = []
+        for minute in range(3):
+            for second in range(10):
+                events.append(NavigationEventAudit(
+                    user="bulk@test.com",
+                    domain="test-domain",
+                    event_date=datetime(2026, 3, 27, 15, minute, second),
+                    ip_address="10.0.0.1",
+                    path="/a/test-domain/dashboard/",
+                    headers=headers,
+                    status_code=200,
+                ))
+        NavigationEventAudit.objects.bulk_create(events)
+
+    def _get_report(self, params):
+        request = RequestFactory().get('/hq/admin/user_audit_report/', params)
+        request.couch_user = _make_mock_couch_user()
+        request.can_access_all_locations = True
+        startdate = date.fromisoformat(params['startdate'])
+        enddate = date.fromisoformat(params['enddate'])
+        request.datespan = DateSpan(startdate, enddate)
+        return UserAuditReport(request, domain=None)
+
+    def test_truncation_sets_context(self):
+        report = self._get_report({
+            'username': 'bulk@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        original_max = UserAuditReport.MAX_RECORDS
+        UserAuditReport.MAX_RECORDS = 15
+        try:
+            rows = report.rows
+            self.assertLessEqual(len(rows), 15)
+            self.assertTrue(
+                report._truncation_cutoff is not None
+                or report._truncation_same_minute
+            )
+        finally:
+            UserAuditReport.MAX_RECORDS = original_max
+
+    def test_truncation_result_matches_narrower_query(self):
+        """The truncated result should match what you'd get with the narrower time range."""
+        report = self._get_report({
+            'username': 'bulk@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        original_max = UserAuditReport.MAX_RECORDS
+        UserAuditReport.MAX_RECORDS = 15
+        try:
+            rows = report.rows
+            cutoff = report._truncation_cutoff
+        finally:
+            UserAuditReport.MAX_RECORDS = original_max
+
+        if cutoff is not None:
+            # Now query with the narrower time range that truncation would suggest
+            narrower_report = self._get_report({
+                'username': 'bulk@test.com',
+                'startdate': '2026-03-27',
+                'enddate': cutoff.strftime('%Y-%m-%d'),
+                'end_time': cutoff.strftime('%H:%M'),
+            })
+            # Need high limit so no truncation happens on the narrower query
+            UserAuditReport.MAX_RECORDS = 50000
+            try:
+                narrower_rows = narrower_report.rows
+            finally:
+                UserAuditReport.MAX_RECORDS = original_max
+            self.assertEqual(len(rows), len(narrower_rows))
