@@ -1174,7 +1174,7 @@ class FormValidator(IndexedFormBaseValidator):
             subcase_names.update(subcase_action.case_properties)
 
         if self.form.requires == 'none' and self.form.actions.open_case.is_active() \
-                and not self.form.actions.open_case.has_name_update():
+                and not self.form.actions.open_case.name_update.question_path:
             errors.append({'type': 'case_name required'})
         errors.extend(self.check_save_to_case_references())
 
@@ -1202,22 +1202,23 @@ class FormValidator(IndexedFormBaseValidator):
 
     def check_for_conflicting_questions(self):
         errors = []
-
         open_case = self.form.actions.open_case
         update_case = self.form.actions.update_case
 
-        if open_case.name_update_multi and len(open_case.name_update_multi) > 0:
-            errors.append(self._get_property_conflict_error('name'))
+        if open_case.conflicts:
+            errors.append(self._get_error('name', 'conflicting questions'))
 
-        if update_case.update_multi:
-            for (key, value) in update_case.update_multi.items():
-                if len(value) > 1:
-                    errors.append(self._get_property_conflict_error(key))
+        for key, items in update_case.conflicts.items():
+            if items:
+                if key in update_case.update:
+                    errors.append(self._get_error(key, 'conflicting questions'))
+                else:
+                    errors.append(self._get_error(key, 'conflicting delete'))
 
         return errors
 
-    def _get_property_conflict_error(self, property_name):
-        return {'type': 'conflicting questions', 'property': property_name}
+    def _get_error(self, property_name, error_type):
+        return {'type': error_type, 'property': property_name}
 
     @time_method()
     def extended_build_validation(self, xml_valid):
