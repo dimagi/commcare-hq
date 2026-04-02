@@ -5,7 +5,7 @@ events to the `NavigationEventAudit` and `AccessAudit` database tables. Each
 record captures the timestamp, username, domain, IP address, URL path, HTTP
 method, response status code, and selected request headers.
 
-The **User Audit Report** (`/hq/admin/audit_events/`) provides a filterable
+The **User Audit Report** (`/hq/admin/user_audit_report/`) provides a filterable
 view over these records for support and security investigations.
 
 ## Filters
