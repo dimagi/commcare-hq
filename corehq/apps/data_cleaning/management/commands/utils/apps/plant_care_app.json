@@ -720,25 +720,11 @@
         "command_label": {
           "en": "Search All Cases"
         },
-        "again_label": {
-          "en": "Search Again"
-        },
         "search_label": {
           "label": {
             "en": "Search All Cases"
           },
           "doc_type": "CaseSearchLabel",
-          "media_image": {},
-          "media_audio": {},
-          "custom_icons": [],
-          "use_default_image_for_all": false,
-          "use_default_audio_for_all": false
-        },
-        "search_again_label": {
-          "label": {
-            "en": "Search Again"
-          },
-          "doc_type": "CaseSearchAgainLabel",
           "media_image": {},
           "media_audio": {},
           "custom_icons": [],
@@ -1424,25 +1410,11 @@
         "command_label": {
           "en": "Search All Cases"
         },
-        "again_label": {
-          "en": "Search Again"
-        },
         "search_label": {
           "label": {
             "en": "Search All Cases"
           },
           "doc_type": "CaseSearchLabel",
-          "media_image": {},
-          "media_audio": {},
-          "custom_icons": [],
-          "use_default_image_for_all": false,
-          "use_default_audio_for_all": false
-        },
-        "search_again_label": {
-          "label": {
-            "en": "Search Again"
-          },
-          "doc_type": "CaseSearchAgainLabel",
           "media_image": {},
           "media_audio": {},
           "custom_icons": [],
