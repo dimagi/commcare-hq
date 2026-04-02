@@ -147,7 +147,7 @@ class TestUserAuditReportFilters(AuditcareTest):
         ])
 
     def _get_report(self, params):
-        request = self.factory.get('/hq/admin/audit_events/', params)
+        request = self.factory.get('/hq/admin/user_audit_report/', params)
         request.couch_user = _make_mock_couch_user()
         request.can_access_all_locations = True
         # Set up request.datespan from the startdate/enddate params so DatespanMixin
