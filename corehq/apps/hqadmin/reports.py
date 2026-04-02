@@ -408,7 +408,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
             context['truncation_message'] = _(
                 "Showing events through {cutoff_time}. Your query returned more than "
                 "{max_records} results; the end date/time has been adjusted. "
-                "Change the end time to see later events."
+                "To see later events, set the start time to {cutoff_time}."
             ).format(
                 cutoff_time=cutoff.strftime("%Y-%m-%d %H:%M UTC"),
                 max_records=self.MAX_RECORDS,
