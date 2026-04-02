@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime, time, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -14,14 +15,11 @@ from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
-from corehq.apps.auditcare.models import (
-    ACCESS_CHOICES,
-    AccessAudit,
-    NavigationEventAudit,
-)
 from corehq.apps.auditcare.utils.export import (
     all_audit_events_by_user,
-    filters_for_audit_event_query,
+    build_ip_filter,
+    build_url_exclude_filter,
+    build_url_include_filter,
     get_generic_log_event_row,
 )
 from corehq.apps.es.aggregations import TermsAggregation
@@ -114,7 +112,6 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 class UserAuditReport(AdminReport, DatespanMixin):
     slug = 'user_audit_report'
     name = gettext_lazy("User Audit Events")
-    MAX_RECORDS = 4000  # Tuned based on performance testing and user experience
     report_template_path = "hqadmin/user_audit_report.html"
 
     fields = [
@@ -124,6 +121,10 @@ class UserAuditReport(AdminReport, DatespanMixin):
         'corehq.apps.reports.filters.simple.SimpleUsername',
         'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
         'corehq.apps.reports.filters.select.UserAuditActionFilter',
+        'corehq.apps.reports.filters.simple.IPAddressFilter',
+        'corehq.apps.reports.filters.simple.URLIncludeFilter',
+        'corehq.apps.reports.filters.simple.URLExcludeFilter',
+        'corehq.apps.reports.filters.simple.StatusCodeFilter',
     ]
     emailable = False
     exportable = True
@@ -141,6 +142,36 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def selected_action(self):
         return self.request.GET.get('action', None)
+
+    @property
+    def selected_ip_addresses(self):
+        from corehq.apps.reports.filters.simple import IPAddressFilter
+        raw = self.request.GET.get('ip_address', '')
+        return IPAddressFilter.parse_ip_input(raw)
+
+    @property
+    def selected_url_include_patterns(self):
+        raw = self.request.GET.get('url_include', '')
+        return [line.strip() for line in raw.splitlines() if line.strip()]
+
+    @property
+    def selected_url_include_mode(self):
+        return self.request.GET.get('url_include_mode', 'contains')
+
+    @property
+    def selected_url_exclude_patterns(self):
+        raw = self.request.GET.get('url_exclude', '')
+        return [line.strip() for line in raw.splitlines() if line.strip()]
+
+    @property
+    def selected_url_exclude_mode(self):
+        return self.request.GET.get('url_exclude_mode', 'contains')
+
+    @property
+    def selected_status_codes(self):
+        from corehq.apps.reports.filters.simple import StatusCodeFilter
+        raw = self.request.GET.get('status_code', '')
+        return StatusCodeFilter.parse_status_codes(raw)
 
     @property
     def start_time(self):
@@ -200,46 +231,64 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def rows(self):
-        # Either domain or user must have a value
         if not (self.selected_domain or self.selected_user):
             return []
-
-        if self._is_limit_exceeded():
+        if self.selected_ip_addresses is None or self.selected_status_codes is None:
             return []
+
+        nav_filters = self._build_nav_filters()
+        access_filters = self._build_access_filters()
+        skip_access = access_filters is False
 
         rows = []
         events = all_audit_events_by_user(
             self.selected_user, self.selected_domain, self.start_datetime, self.end_datetime,
-            self.selected_action
+            self.selected_action,
+            nav_extra_filters=nav_filters,
+            access_extra_filters=None if skip_access else access_filters,
+            skip_access=skip_access,
         )
         for event in events:
             row = get_generic_log_event_row(event)
             rows.append(row)
 
-        # sort by date asc
         return sorted(rows, key=lambda x: x[0])
 
-    @memoized
-    def _is_limit_exceeded(self):
-        where = filters_for_audit_event_query(
-            user=self.selected_user,
-            domain=self.selected_domain,
-            start_date=self.start_datetime,
-            end_date=self.end_datetime
+    def _build_common_filters(self):
+        filters = Q()
+
+        ip_parsed = self.selected_ip_addresses
+        if ip_parsed:
+            ip_q = build_ip_filter(ip_parsed)
+            if ip_q:
+                filters &= ip_q
+
+        url_include = build_url_include_filter(
+            self.selected_url_include_patterns, self.selected_url_include_mode
         )
-        if self.selected_action in ACCESS_CHOICES:
-            where['access_type'] = self.selected_action
-            return AccessAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+        if url_include:
+            filters &= url_include
 
-        # if action is not selected from AccessAudit, we use number of records in NavigationEventAudit as baseline
-        query = NavigationEventAudit.objects.filter(**where)
+        url_exclude = build_url_exclude_filter(
+            self.selected_url_exclude_patterns, self.selected_url_exclude_mode
+        )
+        if url_exclude:
+            filters &= url_exclude
 
-        if self.selected_action:
-            query = query.extra(
-                where=["headers::jsonb->>'REQUEST_METHOD' = %s"],
-                params=[self.selected_action]
-            )
-        return query[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+        return filters if filters != Q() else None
+
+    def _build_nav_filters(self):
+        filters = self._build_common_filters() or Q()
+        status_codes = self.selected_status_codes
+        if status_codes:
+            filters &= Q(status_code__in=status_codes)
+        return filters if filters != Q() else None
+
+    def _build_access_filters(self):
+        status_codes = self.selected_status_codes
+        if status_codes:
+            return False  # AccessAudit has no status code
+        return self._build_common_filters()
 
     def _is_invalid_time_range(self):
         """Check if start date equals end date and end time is before start time.
@@ -266,15 +315,28 @@ class UserAuditReport(AdminReport, DatespanMixin):
         elif self._is_invalid_time_range():
             context['warning_message'] = _("The end time cannot be earlier than the start time when "
                     "both dates are the same. Please adjust your time range.")
-        elif self._is_limit_exceeded():
-            context['warning_message'] = self._get_limit_exceeded_message()
+        elif self.selected_ip_addresses is None:
+            context['warning_message'] = _(
+                "Invalid IP address filter. Use single IPs, CIDR notation "
+                "(/8, /16, /24, /32), or comma-separated combinations."
+            )
+        elif self.selected_status_codes is None:
+            context['warning_message'] = _(
+                "Invalid status code filter. Use comma-separated integers (e.g. 200, 403, 500)."
+            )
+
+        # URL domain hint
+        if (self.selected_url_include_mode == 'startswith'
+                and self.selected_domain
+                and self.selected_url_include_patterns):
+            domain_prefix = f'/a/{self.selected_domain}/'
+            if not any(p.startswith(domain_prefix) for p in self.selected_url_include_patterns):
+                context.setdefault('info_message', '')
+                context['info_message'] += _(
+                    'Note: URLs for this domain typically start with "{domain_prefix}".'
+                ).format(domain_prefix=domain_prefix)
 
         return context
-
-    def _get_limit_exceeded_message(self):
-        return _("Your search returned more than {max_records} records. "
-                 "Please narrow down your search by selecting a specific user, domain, or a shorter date range."
-                 ).format(max_records=self.MAX_RECORDS)
 
 
 class UserListReport(GetParamsMixin, AdminReport):

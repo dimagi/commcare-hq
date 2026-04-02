@@ -24,14 +24,20 @@ def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=N
     return where
 
 
-def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
-    return chain(
-        navigation_events_by_user(user, domain, start_date, end_date, action),
-        access_events_by_user(user, domain, start_date, end_date, action),
-    )
+def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
+                              nav_extra_filters=None, access_extra_filters=None,
+                              skip_access=False):
+    nav = navigation_events_by_user(user, domain, start_date, end_date, action,
+                                     extra_filters=nav_extra_filters)
+    if skip_access:
+        return nav
+    access = access_events_by_user(user, domain, start_date, end_date, action,
+                                    extra_filters=access_extra_filters)
+    return chain(nav, access)
 
 
-def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
+def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
+                               extra_filters=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
     query = NavigationEventAudit.objects.filter(**where)
     if action:
@@ -39,14 +45,19 @@ def navigation_events_by_user(user, domain=None, start_date=None, end_date=None,
             where=["headers::jsonb->>'REQUEST_METHOD' = %s"],
             params=[action]
         )
+    if extra_filters:
+        query = query.filter(extra_filters)
     return AuditWindowQuery(query)
 
 
-def access_events_by_user(user, domain=None, start_date=None, end_date=None, action=None):
+def access_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
+                           extra_filters=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
     if action:
         where['access_type'] = action
     query = AccessAudit.objects.filter(**where)
+    if extra_filters:
+        query = query.filter(extra_filters)
     return AuditWindowQuery(query)
 
 
