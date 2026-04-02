@@ -1,6 +1,8 @@
 from django.http import Http404
 from django.test.testcases import TestCase, SimpleTestCase
 
+import pytest
+
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -12,7 +14,11 @@ from corehq.apps.app_manager.tests.util import (
     patch_validate_xform,
     SuiteMixin,
 )
-from corehq.apps.app_manager.util import is_valid_case_type, split_path, does_app_have_mobile_ucr_v1_refs
+from corehq.apps.app_manager.util import (
+    is_valid_case_type,
+    split_path,
+    does_app_have_mobile_ucr_v1_refs,
+)
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -161,17 +167,18 @@ class TestGlobalAppConfig(TestCase):
         return config
 
 
-class TestIsValidCaseType(SimpleTestCase):
+@pytest.mark.parametrize(
+    'value', ('foo', 'foo-bar', 'case_type_1', 'CaseType123')
+)
+def test_valid_case_types(value):
+    assert is_valid_case_type(value)
 
-    def test_valid_case_types(self):
-        for value in ('foo', 'foo-bar', 'case_type_1', 'CaseType123'):
-            with self.subTest(value=value):
-                self.assertTrue(is_valid_case_type(value))
 
-    def test_invalid_case_types(self):
-        for value in ('foo bar', '', None, 'foo\tbar', '!special-char'):
-            with self.subTest(value=value):
-                self.assertFalse(is_valid_case_type(value))
+@pytest.mark.parametrize(
+    'value', ('foo bar', '', None, 'foo\tbar', '!special-char')
+)
+def test_invalid_case_types(value):
+    assert not is_valid_case_type(value)
 
 
 class TestSplitPath(SimpleTestCase):
