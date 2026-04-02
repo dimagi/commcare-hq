@@ -10,9 +10,14 @@ from testil import tempdir
 
 from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
 
+from django.db.models import Q
+
 from ..utils.export import (
     AuditWindowQuery,
     ForeignKeyAccessError,
+    build_ip_filter,
+    build_url_exclude_filter,
+    build_url_include_filter,
     get_all_log_events,
     get_date_range_where,
     get_domain_first_access_times,
@@ -309,6 +314,60 @@ class TestGetDateRangeWhere(AuditcareTest):
         # End at midnight should add 1 day to include the full day
         self.assertEqual(where["event_date__gt"], datetime(2021, 2, 5, 0, 0))
         self.assertEqual(where["event_date__lt"], datetime(2021, 2, 16, 0, 0))
+
+
+class TestBuildIPFilter(AuditcareTest):
+
+    def test_exact_match(self):
+        q = build_ip_filter([("exact", "10.0.0.1")])
+        self.assertEqual(q, Q(ip_address="10.0.0.1"))
+
+    def test_prefix_match(self):
+        q = build_ip_filter([("startswith", "10.")])
+        self.assertEqual(q, Q(ip_address__startswith="10."))
+
+    def test_multiple_or(self):
+        q = build_ip_filter([("exact", "10.0.0.1"), ("startswith", "192.168.")])
+        self.assertEqual(q, Q(ip_address="10.0.0.1") | Q(ip_address__startswith="192.168."))
+
+    def test_empty_returns_none(self):
+        q = build_ip_filter([])
+        self.assertIsNone(q)
+
+
+class TestBuildURLFilters(AuditcareTest):
+
+    def test_include_contains(self):
+        q = build_url_include_filter(["/api/v1/"], "contains")
+        self.assertEqual(q, Q(path__contains="/api/v1/"))
+
+    def test_include_startswith(self):
+        q = build_url_include_filter(["/a/test/"], "startswith")
+        self.assertEqual(q, Q(path__startswith="/a/test/"))
+
+    def test_include_multiple_or(self):
+        q = build_url_include_filter(["/api/", "/dashboard/"], "contains")
+        self.assertEqual(q, Q(path__contains="/api/") | Q(path__contains="/dashboard/"))
+
+    def test_include_empty_returns_none(self):
+        q = build_url_include_filter([], "contains")
+        self.assertIsNone(q)
+
+    def test_exclude_contains(self):
+        q = build_url_exclude_filter(["/heartbeat/"], "contains")
+        self.assertEqual(q, ~Q(path__contains="/heartbeat/"))
+
+    def test_exclude_startswith(self):
+        q = build_url_exclude_filter(["/a/test/heartbeat/"], "startswith")
+        self.assertEqual(q, ~Q(path__startswith="/a/test/heartbeat/"))
+
+    def test_exclude_multiple_and_not(self):
+        q = build_url_exclude_filter(["/heartbeat/", "/ping/"], "contains")
+        self.assertEqual(q, ~Q(path__contains="/heartbeat/") & ~Q(path__contains="/ping/"))
+
+    def test_exclude_empty_returns_none(self):
+        q = build_url_exclude_filter([], "contains")
+        self.assertIsNone(q)
 
 
 class TestNavigationEventsWithDatetime(AuditcareTest):

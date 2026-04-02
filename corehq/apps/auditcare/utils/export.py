@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from itertools import chain
 
 from django.contrib.auth.models import User
-from django.db.models import ForeignKey, Min
+from django.db.models import ForeignKey, Min, Q
 
 import attr
 
@@ -276,3 +276,61 @@ class NoForeignQuery:
 
 class ForeignKeyAccessError(AttributeError):
     pass
+
+
+def build_ip_filter(parsed_ips):
+    """Build a Q object for IP address filtering.
+
+    Args:
+        parsed_ips: list of (match_type, value) tuples from IPAddressFilter.parse_ip_input()
+
+    Returns:
+        Q object, or None if the list is empty.
+    """
+    if not parsed_ips:
+        return None
+    q = Q()
+    for match_type, value in parsed_ips:
+        if match_type == "exact":
+            q |= Q(ip_address=value)
+        elif match_type == "startswith":
+            q |= Q(ip_address__startswith=value)
+    return q
+
+
+def build_url_include_filter(patterns, mode):
+    """Build a Q object for URL include filtering.
+
+    Args:
+        patterns: list of URL pattern strings
+        mode: "contains" or "startswith"
+
+    Returns:
+        Q object, or None if the list is empty.
+    """
+    if not patterns:
+        return None
+    lookup = f"path__{mode}"
+    q = Q()
+    for pattern in patterns:
+        q |= Q(**{lookup: pattern})
+    return q
+
+
+def build_url_exclude_filter(patterns, mode):
+    """Build a Q object for URL exclude filtering.
+
+    Args:
+        patterns: list of URL pattern strings
+        mode: "contains" or "startswith"
+
+    Returns:
+        Q object (negated), or None if the list is empty.
+    """
+    if not patterns:
+        return None
+    lookup = f"path__{mode}"
+    q = Q()
+    for pattern in patterns:
+        q &= ~Q(**{lookup: pattern})
+    return q
