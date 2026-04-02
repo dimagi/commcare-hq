@@ -162,6 +162,9 @@ class Command(BaseCommand):
             "parent/"           # Related properties
         ]
 
+        def is_parent_reference(prop):
+            return prop.startswith('parent/') and prop.removeprefix('parent/') != '@case_id'
+
         for m in Command._get_case_list_modules(app):
             search_config = m.get('search_config', {})
             properties = search_config.get('properties', [])
@@ -180,10 +183,10 @@ class Command(BaseCommand):
                     reasons.append(f"module '{mod}': xpath_query default with {matched}")
 
             # Related properties
-            if any(p['name'].startswith('parent/') for p in properties):
+            if any(is_parent_reference(p['name']) for p in properties):
                 reasons.append(f"module '{mod}': parent/ search property")
             # Related properties
-            if any(p.get('property', '').startswith('parent/') for p in default_properties):
+            if any(is_parent_reference(p.get('property', '')) for p in default_properties):
                 reasons.append(f"module '{mod}': parent/ default property")
             # Include related cases in search results
             if search_config.get('include_all_related_cases', False):
