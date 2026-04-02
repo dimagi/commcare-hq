@@ -153,6 +153,20 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 
 
 class UserAuditReport(AdminReport, DatespanMixin):
+    """Admin report for querying auditcare access logs.
+
+    Displays NavigationEventAudit and AccessAudit records with filters
+    for date range, time, username, domain, action (HTTP method or
+    login/logout), IP address, URL path, and HTTP status code.
+
+    Results are capped at MAX_RECORDS. When the query exceeds this limit
+    the report trims results in memory to a clean minute boundary (so
+    that the displayed rows exactly match what a narrower time filter
+    would have returned), updates the end date/time filter to match,
+    and shows a message explaining the adjustment. See
+    ``truncate_rows_to_minute_boundary`` and ``corehq/apps/auditcare/README.md``
+    for details.
+    """
     slug = 'user_audit_report'
     name = gettext_lazy("User Audit Events")
     report_template_path = "hqadmin/user_audit_report.html"
