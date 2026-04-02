@@ -110,50 +110,49 @@ class IPAddressFilter(BaseSimpleFilter):
         return results
 
 
-class URLIncludeFilter(BaseSimpleFilter):
+class BaseURLFilter(BaseSimpleFilter):
+    template = "reports/filters/bootstrap3/textarea_with_select.html"
+    placeholder = ''
+    mode_slug = None  # override in subclass: e.g. 'url_include_mode'
+
+    @property
+    def selected_mode(self):
+        return self.request.GET.get(self.mode_slug, 'contains')
+
+    @property
+    def filter_context(self):
+        from corehq.apps.reports.util import DatatablesServerSideParams
+        return {
+            'default': DatatablesServerSideParams.get_value_from_request(
+                self.request, self.slug, default_value=""
+            ),
+            'help_inline': self.help_inline,
+            'mode_options': [("contains", "contains"), ("startswith", "starts with")],
+            'selected_mode': self.selected_mode,
+            'placeholder': self.placeholder,
+        }
+
+
+class URLIncludeFilter(BaseURLFilter):
     slug = 'url_include'
     label = gettext_lazy("URL Include")
-    template = "reports/filters/bootstrap3/textarea_with_select.html"
+    mode_slug = 'url_include_mode'
+    placeholder = '/a/domain/api/v1/'
     help_inline = gettext_lazy(
         "One URL pattern per line. Patterns are OR'd together. "
         "Leave blank to include all URLs."
     )
 
-    @property
-    def filter_context(self):
-        from corehq.apps.reports.util import DatatablesServerSideParams
-        return {
-            'default': DatatablesServerSideParams.get_value_from_request(
-                self.request, self.slug, default_value=""
-            ),
-            'help_inline': self.help_inline,
-            'mode_options': [("contains", "contains"), ("startswith", "starts with")],
-            'selected_mode': self.request.GET.get(f'{self.slug}_mode', 'contains'),
-            'placeholder': '/a/domain/api/v1/',
-        }
 
-
-class URLExcludeFilter(BaseSimpleFilter):
+class URLExcludeFilter(BaseURLFilter):
     slug = 'url_exclude'
     label = gettext_lazy("URL Exclude")
-    template = "reports/filters/bootstrap3/textarea_with_select.html"
+    mode_slug = 'url_exclude_mode'
+    placeholder = '/a/domain/heartbeat/'
     help_inline = gettext_lazy(
         "One URL pattern per line. Matching rows are excluded. "
         "Patterns are OR'd (any match excludes the row)."
     )
-
-    @property
-    def filter_context(self):
-        from corehq.apps.reports.util import DatatablesServerSideParams
-        return {
-            'default': DatatablesServerSideParams.get_value_from_request(
-                self.request, self.slug, default_value=""
-            ),
-            'help_inline': self.help_inline,
-            'mode_options': [("contains", "contains"), ("startswith", "starts with")],
-            'selected_mode': self.request.GET.get(f'{self.slug}_mode', 'contains'),
-            'placeholder': '/a/domain/heartbeat/',
-        }
 
 
 class StatusCodeFilter(BaseSimpleFilter):
