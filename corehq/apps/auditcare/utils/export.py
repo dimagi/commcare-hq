@@ -25,18 +25,20 @@ def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=N
 
 def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
                               nav_extra_filters=None, access_extra_filters=None,
-                              skip_access=False):
+                              skip_access=False, window_size=None):
     nav = navigation_events_by_user(user, domain, start_date, end_date, action,
-                                     extra_filters=nav_extra_filters)
+                                     extra_filters=nav_extra_filters,
+                                     window_size=window_size)
     if skip_access:
         return nav
     access = access_events_by_user(user, domain, start_date, end_date, action,
-                                    extra_filters=access_extra_filters)
+                                    extra_filters=access_extra_filters,
+                                    window_size=window_size)
     return heapq.merge(nav, access, key=lambda e: e.event_date)
 
 
 def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
-                               extra_filters=None):
+                               extra_filters=None, window_size=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
     query = NavigationEventAudit.objects.filter(**where)
     if action:
@@ -46,18 +48,20 @@ def navigation_events_by_user(user, domain=None, start_date=None, end_date=None,
         )
     if extra_filters:
         query = query.filter(extra_filters)
-    return AuditWindowQuery(query)
+    kwargs = {'window_size': window_size} if window_size else {}
+    return AuditWindowQuery(query, **kwargs)
 
 
 def access_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
-                           extra_filters=None):
+                           extra_filters=None, window_size=None):
     where = filters_for_audit_event_query(user, domain, start_date, end_date)
     if action:
         where['access_type'] = action
     query = AccessAudit.objects.filter(**where)
     if extra_filters:
         query = query.filter(extra_filters)
-    return AuditWindowQuery(query)
+    kwargs = {'window_size': window_size} if window_size else {}
+    return AuditWindowQuery(query, **kwargs)
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):

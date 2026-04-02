@@ -309,6 +309,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
             nav_extra_filters=nav_filters,
             access_extra_filters=None if skip_access else access_filters,
             skip_access=skip_access,
+            window_size=self.MAX_RECORDS + 1,
         )
         count = 0
         for event in events:
