@@ -288,6 +288,9 @@ class UserAuditReport(AdminReport, DatespanMixin):
             DataTablesColumn(gettext_lazy("Description")),
         )
 
+    # 4,000 was previously validated as performant; 5,000 is only 25% more,
+    # and the round number makes it easy to tally totals when manually
+    # paginating through results by adjusting the date range.
     MAX_RECORDS = 5000
 
     @property
