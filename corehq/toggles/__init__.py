@@ -969,6 +969,13 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+CASE_SEARCH_ENDPOINTS = StaticToggle(
+    'case_search_endpoints',
+    'Case Search Endpoints: configurable query builder for case search',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     'ush_case_list_multi_select',
     'USH: Allow selecting multiple cases from the case list',
@@ -2584,3 +2591,11 @@ DEMO_CASE_PILLOW = StaticToggle(
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+# Removed 2026-02-17
+# CONVERT_XML_GROUP_SEPARATOR = StaticToggle(
+#     slug='convert_xml_group_separator',
+#     label='Convert the group separator to a symbol XML can support',
+#     tag=TAG_DEPRECATED,
+#     namespaces=[NAMESPACE_DOMAIN]
+# )
