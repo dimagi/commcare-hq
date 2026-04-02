@@ -1,13 +1,15 @@
 from datetime import datetime
 from unittest.mock import MagicMock
 
-from django.test import RequestFactory, TestCase
-
 from dimagi.utils.dates import DateSpan
+from django.test import RequestFactory, TestCase
 
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.auditcare.tests.testutils import AuditcareTest
-from corehq.apps.hqadmin.reports import UserAuditReport, truncate_rows_to_minute_boundary
+from corehq.apps.hqadmin.reports import (
+    UserAuditReport,
+    truncate_rows_to_minute_boundary,
+)
 from corehq.apps.reports.filters.simple import IPAddressFilter
 
 

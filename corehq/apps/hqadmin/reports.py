@@ -1,6 +1,8 @@
 from collections import defaultdict
 from datetime import datetime, time, timedelta
 
+from dateutil.parser import parse
+from dimagi.utils.logging import notify_exception
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q
 from django.urls import reverse
@@ -8,11 +10,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-
-from dateutil.parser import parse
 from memoized import memoized
-
-from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.auditcare.utils.export import (

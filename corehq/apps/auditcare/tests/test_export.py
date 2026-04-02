@@ -6,11 +6,10 @@ from datetime import datetime, timedelta
 from itertools import chain
 from unittest.mock import patch
 
+from django.db.models import Q
 from testil import tempdir
 
 from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
-
-from django.db.models import Q
 
 from ..utils.export import (
     AuditWindowQuery,
