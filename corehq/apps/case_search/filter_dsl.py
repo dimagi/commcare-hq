@@ -121,7 +121,8 @@ def build_filter_from_ast(node, context):
 
         if is_ancestor_comparison(node):
             # this node represents a filter on a property for a related case
-            _require_related_lookups_flag(context)
+            if serialize(node.left.right) != '@case_id':
+                _require_related_lookups_flag(context)
             return ancestor_comparison_query(context, node)
 
         if _is_subcase_count(node):
