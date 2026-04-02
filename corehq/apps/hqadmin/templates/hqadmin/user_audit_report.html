@@ -10,7 +10,39 @@
       </h4>
       <p>{{ warning_message }}</p>
     </div>
-  {% else %}
+  {% endif %}
+  {% if truncation_message %}
+    <div class="alert alert-{{ truncation_level }}">
+      <h4>
+        {% if truncation_level == 'warning' %}
+          <i class="fa-solid fa-triangle-exclamation"></i> {% trans "Warning" %}
+        {% else %}
+          <i class="fa-solid fa-circle-info"></i> {% trans "Note" %}
+        {% endif %}
+      </h4>
+      <p>{{ truncation_message }}</p>
+    </div>
+  {% endif %}
+  {% if info_message %}
+    <div class="alert alert-info">
+      <p>{{ info_message }}</p>
+    </div>
+  {% endif %}
+  {% if not warning_message %}
     {{ block.super }}
+  {% endif %}
+  {% if adjusted_end_date %}
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var endDateInput = document.querySelector('[name="enddate"]');
+        var endTimeInput = document.querySelector('[name="end_time"]');
+        if (endDateInput) {
+          endDateInput.value = "{{ adjusted_end_date }}";
+        }
+        if (endTimeInput) {
+          endTimeInput.value = "{{ adjusted_end_time }}";
+        }
+      });
+    </script>
   {% endif %}
 {% endblock reportcontent %}
