@@ -307,6 +307,15 @@ def build_ip_filter(parsed_ips):
     return q
 
 
+def _q_for_path(pattern, mode):
+    if mode == "contains":
+        return Q(path__contains=pattern)
+    elif mode == "startswith":
+        return Q(path__startswith=pattern)
+    else:
+        raise ValueError(f"Invalid URL filter mode: {mode!r}")
+
+
 def build_url_include_filter(patterns, mode):
     """Build a Q object for URL include filtering.
 
@@ -319,10 +328,9 @@ def build_url_include_filter(patterns, mode):
     """
     if not patterns:
         return None
-    lookup = f"path__{mode}"
     q = Q()
     for pattern in patterns:
-        q |= Q(**{lookup: pattern})
+        q |= _q_for_path(pattern, mode)
     return q
 
 
@@ -338,8 +346,7 @@ def build_url_exclude_filter(patterns, mode):
     """
     if not patterns:
         return None
-    lookup = f"path__{mode}"
     q = Q()
     for pattern in patterns:
-        q &= ~Q(**{lookup: pattern})
+        q &= ~_q_for_path(pattern, mode)
     return q
