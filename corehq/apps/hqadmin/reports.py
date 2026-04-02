@@ -318,11 +318,9 @@ class UserAuditReport(AdminReport, DatespanMixin):
             if count > self.MAX_RECORDS:
                 break
 
-        sorted_rows = sorted(rows, key=lambda x: x[0])
-
-        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(sorted_rows, self.MAX_RECORDS)
+        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(rows, self.MAX_RECORDS)
         self._truncation_cutoff = cutoff_dt
-        self._truncation_same_minute = (len(sorted_rows) > self.MAX_RECORDS and cutoff_dt is None)
+        self._truncation_same_minute = (len(rows) > self.MAX_RECORDS and cutoff_dt is None)
         return truncated_rows
 
     def _build_common_filters(self):

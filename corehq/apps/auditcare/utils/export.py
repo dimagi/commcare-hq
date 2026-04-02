@@ -1,4 +1,5 @@
 import csv
+import heapq
 from datetime import date, datetime, timedelta
 from itertools import chain
 
@@ -31,7 +32,7 @@ def all_audit_events_by_user(user, domain=None, start_date=None, end_date=None, 
         return nav
     access = access_events_by_user(user, domain, start_date, end_date, action,
                                     extra_filters=access_extra_filters)
-    return chain(nav, access)
+    return heapq.merge(nav, access, key=lambda e: e.event_date)
 
 
 def navigation_events_by_user(user, domain=None, start_date=None, end_date=None, action=None,
