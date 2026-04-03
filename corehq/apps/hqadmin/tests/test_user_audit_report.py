@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from dimagi.utils.dates import DateSpan
 from django.test import RequestFactory, TestCase
@@ -414,17 +414,13 @@ class TestUserAuditReportTruncation(AuditcareTest):
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
         })
-        original_max = UserAuditReport.MAX_RECORDS
-        UserAuditReport.MAX_RECORDS = 15
-        try:
+        with patch.object(UserAuditReport, 'MAX_RECORDS', 15):
             rows = report.rows
             self.assertLessEqual(len(rows), 15)
             self.assertTrue(
                 report._truncation_cutoff is not None
                 or report._truncation_same_minute
             )
-        finally:
-            UserAuditReport.MAX_RECORDS = original_max
 
     def test_truncation_result_matches_narrower_query(self):
         """The truncated result should match what you'd get with the narrower time range."""
@@ -433,13 +429,9 @@ class TestUserAuditReportTruncation(AuditcareTest):
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
         })
-        original_max = UserAuditReport.MAX_RECORDS
-        UserAuditReport.MAX_RECORDS = 15
-        try:
+        with patch.object(UserAuditReport, 'MAX_RECORDS', 15):
             rows = report.rows
             cutoff = report._truncation_cutoff
-        finally:
-            UserAuditReport.MAX_RECORDS = original_max
 
         if cutoff is not None:
             # Now query with the narrower time range that truncation would suggest
@@ -450,9 +442,6 @@ class TestUserAuditReportTruncation(AuditcareTest):
                 'end_time': cutoff.strftime('%H:%M'),
             })
             # Need high limit so no truncation happens on the narrower query
-            UserAuditReport.MAX_RECORDS = 50000
-            try:
+            with patch.object(UserAuditReport, 'MAX_RECORDS', 50000):
                 narrower_rows = narrower_report.rows
-            finally:
-                UserAuditReport.MAX_RECORDS = original_max
             self.assertEqual(len(rows), len(narrower_rows))
