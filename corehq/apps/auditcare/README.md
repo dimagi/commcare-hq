@@ -17,8 +17,8 @@ those values with **OR**.
 day using the start/end time fields (`HH:MM` format). An end time of `00:00`
 means "include the full day".
 
-**Username** — Filter to a single user's events. Leave blank to include all
-users (requires a domain filter).
+**Username** — One or more usernames, comma-separated. Leave blank to include
+all users (requires a domain filter).
 
 **Domain** — Filter to events for a single domain. Optional if username is set.
 

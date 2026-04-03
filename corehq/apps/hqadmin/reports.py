@@ -194,7 +194,13 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
     @property
     def selected_user(self):
-        return self.request.GET.get('username', None)
+        raw = self.request.GET.get('username', '')
+        if not raw or not raw.strip():
+            return None
+        users = [u.strip() for u in raw.split(',') if u.strip()]
+        if len(users) == 1:
+            return users[0]
+        return users
 
     @property
     def selected_action(self):

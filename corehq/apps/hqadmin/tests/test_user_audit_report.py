@@ -174,6 +174,15 @@ class TestUserAuditReportFilters(AuditcareTest):
             path="/a/test-domain/login/",
             access_type="i",
         )
+        NavigationEventAudit.objects.create(
+            user="other@test.com",
+            domain="test-domain",
+            event_date=datetime(2026, 3, 27, 15, 0, 7),
+            ip_address="10.0.0.2",
+            path="/a/test-domain/dashboard/",
+            headers=headers,
+            status_code=200,
+        )
 
     def _get_report(self, params):
         request = self.factory.get('/hq/admin/user_audit_report/', params)
@@ -335,6 +344,38 @@ class TestUserAuditReportFilters(AuditcareTest):
         doc_types = [row[1] for row in rows]
         self.assertIn('AccessAudit', doc_types)
         self.assertIn('NavigationEventAudit', doc_types)
+
+    def test_single_username(self):
+        report = self._get_report({
+            'username': 'other@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        rows = report.rows
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][2], 'other@test.com')
+
+    def test_multiple_usernames_comma_separated(self):
+        report = self._get_report({
+            'username': 'admin@test.com, other@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        rows = report.rows
+        users = {row[2] for row in rows}
+        self.assertEqual(users, {'admin@test.com', 'other@test.com'})
+        # admin has 5 nav + 1 nav(404) + 1 access = 7, other has 1 nav = 1, total = 8
+        self.assertEqual(len(rows), 8)
+
+    def test_multiple_usernames_excludes_unlisted_users(self):
+        report = self._get_report({
+            'username': 'other@test.com',
+            'startdate': '2026-03-27',
+            'enddate': '2026-03-27',
+        })
+        rows = report.rows
+        users = {row[2] for row in rows}
+        self.assertNotIn('admin@test.com', users)
 
 
 class TestUserAuditReportTruncation(AuditcareTest):

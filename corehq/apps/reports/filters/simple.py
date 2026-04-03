@@ -11,8 +11,9 @@ class RepeaterPayloadIdFilter(BaseSimpleFilter):
 class SimpleUsername(BaseSimpleFilter):
     slug = 'username'
     label = gettext_lazy("Username")
-    help_inline = gettext_lazy("Leave this blank to include all users. "
-                               "In that case, domain is required to limit the scope.")
+    help_inline = gettext_lazy("One or more usernames, comma-separated. "
+                               "Leave blank to include all users "
+                               "(requires domain to limit the scope).")
 
 
 class SimpleDomain(BaseSimpleFilter):
