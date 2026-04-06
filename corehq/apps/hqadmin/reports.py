@@ -193,8 +193,9 @@ class UserAuditReport(AdminReport, DatespanMixin):
         return selected_domain if selected_domain != '' else None
 
     @property
-    def selected_user(self):
-        return self.request.GET.get('username', None)
+    def selected_users(self):
+        raw = self.request.GET.get('username', '')
+        return [u.strip() for u in raw.split(',') if u.strip()]
 
     @property
     def selected_action(self):
@@ -296,7 +297,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     @memoized
     def rows(self):
-        if not (self.selected_domain or self.selected_user):
+        if not (self.selected_domain or self.selected_users):
             return []
         if self.selected_ip_addresses is None or self.selected_status_codes is None:
             return []
@@ -307,7 +308,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
 
         rows = []
         events = all_audit_events_by_user(
-            self.selected_user, self.selected_domain, self.start_datetime, self.end_datetime,
+            self.selected_users, self.selected_domain, self.start_datetime, self.end_datetime,
             self.selected_action,
             nav_extra_filters=nav_filters,
             access_extra_filters=None if skip_access else access_filters,
@@ -382,7 +383,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
     def report_context(self):
         context = super().report_context
 
-        if not (self.selected_domain or self.selected_user):
+        if not (self.selected_domain or self.selected_users):
             context['warning_message'] = _("You must specify either a username or a domain. "
                     "Requesting all audit events across all users and domains would exceed system limits.")
         elif self._is_invalid_time_range():

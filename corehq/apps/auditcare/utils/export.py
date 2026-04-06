@@ -17,7 +17,10 @@ from ..models import ACCESS_CHOICES, AccessAudit, NavigationEventAudit
 def filters_for_audit_event_query(user, domain=None, start_date=None, end_date=None):
     where = get_date_range_where(start_date, end_date)
     if user:
-        where['user'] = user
+        if isinstance(user, list):
+            where['user__in'] = user
+        else:
+            where['user'] = user
     if domain:
         where['domain'] = domain
     return where
