@@ -16,6 +16,7 @@
             class="form-control"
             type="text"
             :id="'param-name-' + param.name"
+            x-model="param.value"
           />
         </div>
       </div>
@@ -26,10 +27,43 @@
     <span>{% trans "Generate query" %}</span>
   </button>
 
+  <template x-if="testErrors.length > 0">
+    <div class="alert alert-danger mt-3" role="alert">
+      <ul class="mb-0">
+        <template x-for="(err, idx) in testErrors" :key="idx">
+          <li x-text="err"></li>
+        </template>
+      </ul>
+    </div>
+  </template>
+
   <textarea
     class="form-control font-monospace mt-3"
-    rows="5"
+    rows="3"
     readonly
-    x-text="JSON.stringify(query, null, 2)"
+    x-text="sqlQuery"
   ></textarea>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <template x-for="column in columns">
+            <th x-text="column">h</th>
+          </template>
+
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="row in rows">
+          <tr>
+            <template x-for="col in row">
+              <td x-text="col"></td>
+            </template>
+          </tr>
+        </template>
+
+      </tbody>
+    </table>
+  </div>
 </div>

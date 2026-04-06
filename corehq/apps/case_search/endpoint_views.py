@@ -15,6 +15,7 @@ from corehq.apps.case_search.endpoint_service import (
     get_version,
     list_endpoints,
     save_new_version,
+    test_query,
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView
@@ -169,6 +170,7 @@ class CaseSearchEndpointEditView(CaseSearchEndpointMixin, BaseProjectDataView):
             'initial_parameters': current_version.parameters,
             'initial_query': current_version.query,
             'post_url': reverse(self.urlname, args=[self.domain, endpoint.id]),
+            'test_url': reverse(CaseSearchEndpointTestView.urlname, args=[self.domain]),
             'display_version_number': current_version.version_number,
             'current_version_number': current_version.version_number,
             'versions_with_urls': versions_with_urls,
@@ -268,6 +270,39 @@ class CaseSearchEndpointVersionView(
             'current_version_number': current_version.version_number,
             'versions_with_urls': versions_with_urls,
         }
+
+
+@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+class CaseSearchEndpointTestView(
+    CaseSearchEndpointMixin, BaseProjectDataView
+):
+    urlname = 'case_search_endpoint_test'
+    http_method_names = ['post']
+
+    @property
+    def page_url(self):
+        return reverse(
+            self.urlname, args=[self.domain]
+        )
+
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'errors': ['Invalid JSON']}, status=400)
+        try:
+            return JsonResponse(
+                test_query(
+                    domain=self.domain,
+                    target_type=data.get('target_type', 'project_db'),
+                    target_name=data.get('target_name', ''),
+                    parameters=data.get('parameters', []),
+                    query=data.get('query', {'type': 'and', 'children': []}),
+                )
+            )
+        except FilterSpecValidationError as e:
+            return JsonResponse({'errors': e.errors}, status=400)
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')

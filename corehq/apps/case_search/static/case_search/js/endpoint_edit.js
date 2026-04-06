@@ -8,6 +8,7 @@ function _getJson(id) {
 Alpine.data("endpointForm", () => {
   const mode = _getJson("endpoint-mode");
   const postUrl = _getJson("endpoint-post-url");
+  const testUrl = _getJson("endpoint-test-url");
 
   return {
     name: _getJson("initial-name"),
@@ -15,6 +16,9 @@ Alpine.data("endpointForm", () => {
     parameters: _getJson("initial-parameters"),
     query: _getJson("initial-query"),
     capability: _getJson("capability-data"),
+    sqlQuery: "",
+    columns: [],
+    rows: [],
     errors: [],
     submitting: false,
     mode: mode,
@@ -220,6 +224,39 @@ Alpine.data("endpointForm", () => {
 
     async testQuery() {
       console.log("testing query ...");
+      try {
+        const payload = {
+          name: this.name.trim(),
+          target_type: "project_db",
+          target_name: this.targetCasetype,
+          parameters: this.parameters.filter((p) => p.name.trim()),
+          query: this.query,
+        };
+
+        const resp = await fetch(testUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": this._getCsrfToken(),
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await resp.json();
+        if (resp.ok) {
+            console.log("done");
+            this.sqlQuery = data.sql;
+            this.columns = data.columns;
+            this.rows = data.rows;
+            this.testErrors = data.errors;
+        } else {
+          this.testErrors = data.errors || [_getJson("msg-unexpected-error")];
+        }
+      } catch {
+        this.testErrors = [_getJson("msg-network-error")];
+      } finally {
+
+      }
     },
 
     _getCsrfToken() {
