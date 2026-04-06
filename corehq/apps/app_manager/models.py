@@ -6432,21 +6432,6 @@ class AppReleaseByLocation(models.Model):
         }
 
 
-class LatestEnabledBuildProfiles(models.Model):
-    # ToDo: this would be deprecated after AppReleaseByLocation is released and
-    # this model's entries are migrated to the new location specific model
-    domain = models.CharField(max_length=255, null=False, default='')
-    app_id = models.CharField(max_length=255)
-    build_profile_id = models.CharField(max_length=255)
-    version = models.IntegerField()
-    build_id = models.CharField(max_length=255)
-    active = models.BooleanField(default=True)
-
-    def save(self, *args, **kwargs):
-        super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_caches()
-
-
 class ApplicationReleaseLog(models.Model):
     ACTION_RELEASED = "released"
     ACTION_IN_TEST = "in_test"

@@ -1,27 +1,23 @@
 from collections import defaultdict
 from datetime import datetime, time, timedelta
 
+from dateutil.parser import parse
+from dimagi.utils.logging import notify_exception
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-
-from dateutil.parser import parse
 from memoized import memoized
 
-from dimagi.utils.logging import notify_exception
-
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
-from corehq.apps.auditcare.models import (
-    ACCESS_CHOICES,
-    AccessAudit,
-    NavigationEventAudit,
-)
 from corehq.apps.auditcare.utils.export import (
     all_audit_events_by_user,
-    filters_for_audit_event_query,
+    build_ip_filter,
+    build_url_exclude_filter,
+    build_url_include_filter,
     get_generic_log_event_row,
 )
 from corehq.apps.es.aggregations import TermsAggregation
@@ -49,6 +45,51 @@ from corehq.toggles import (
     RESTRICT_DATA_SOURCE_REBUILD,
     USER_CONFIGURABLE_REPORTS,
 )
+
+
+def truncate_rows_to_minute_boundary(rows, max_records):
+    """Truncate a sorted row list to a clean minute boundary.
+
+    Rows must be sorted by date ascending (index 0 is the formatted date string).
+
+    Returns:
+        (truncated_rows, cutoff_datetime) tuple.
+        - If no truncation needed: (rows, None)
+        - If truncated to a minute boundary: (trimmed_rows, cutoff_datetime)
+          where cutoff_datetime is the minute floored datetime used as the boundary
+          (rows with event_date < cutoff_datetime are kept)
+        - If all rows fall in the same minute (can't trim meaningfully):
+          (rows[:max_records], None) — caller should show a same-minute warning
+    """
+    if len(rows) <= max_records:
+        return rows, None
+
+    def parse_date(date_str):
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f UTC")
+
+    def floor_to_minute(dt):
+        return dt.replace(second=0, microsecond=0)
+
+    # Find the minute of the row that pushed us over the limit
+    overflow_date = parse_date(rows[max_records][0])
+    overflow_minute = floor_to_minute(overflow_date)
+
+    # Find the minute of the first row
+    first_minute = floor_to_minute(parse_date(rows[0][0]))
+
+    # If all rows are in the same minute, we can't trim
+    if overflow_minute == first_minute:
+        return rows[:max_records], None
+
+    # Trim to rows with event_date < overflow_minute
+    cutoff = overflow_minute
+    trimmed = [r for r in rows if parse_date(r[0]) < cutoff]
+
+    # Guard: if trimmed still exceeds (shouldn't normally happen)
+    if len(trimmed) > max_records:
+        return truncate_rows_to_minute_boundary(trimmed, max_records)
+
+    return trimmed, cutoff
 
 
 class AdminReport(GenericTabularReport):
@@ -112,9 +153,22 @@ class AdminPhoneNumberReport(PhoneNumberReport):
 
 
 class UserAuditReport(AdminReport, DatespanMixin):
+    """Admin report for querying auditcare access logs.
+
+    Displays NavigationEventAudit and AccessAudit records with filters
+    for date range, time, username, domain, action (HTTP method or
+    login/logout), IP address, URL path, and HTTP status code.
+
+    Results are capped at MAX_RECORDS. When the query exceeds this limit
+    the report trims results in memory to a clean minute boundary (so
+    that the displayed rows exactly match what a narrower time filter
+    would have returned), updates the end date/time filter to match,
+    and shows a message explaining the adjustment. See
+    ``truncate_rows_to_minute_boundary`` and ``corehq/apps/auditcare/README.md``
+    for details.
+    """
     slug = 'user_audit_report'
     name = gettext_lazy("User Audit Events")
-    MAX_RECORDS = 4000  # Tuned based on performance testing and user experience
     report_template_path = "hqadmin/user_audit_report.html"
 
     fields = [
@@ -124,6 +178,10 @@ class UserAuditReport(AdminReport, DatespanMixin):
         'corehq.apps.reports.filters.simple.SimpleUsername',
         'corehq.apps.reports.filters.simple.SimpleOptionalDomain',
         'corehq.apps.reports.filters.select.UserAuditActionFilter',
+        'corehq.apps.reports.filters.simple.IPAddressFilter',
+        'corehq.apps.reports.filters.simple.URLIncludeFilter',
+        'corehq.apps.reports.filters.simple.URLExcludeFilter',
+        'corehq.apps.reports.filters.simple.StatusCodeFilter',
     ]
     emailable = False
     exportable = True
@@ -141,6 +199,38 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def selected_action(self):
         return self.request.GET.get('action', None)
+
+    @property
+    def selected_ip_addresses(self):
+        from corehq.apps.reports.filters.simple import IPAddressFilter
+        raw = self.request.GET.get('ip_address', '')
+        return IPAddressFilter.parse_ip_input(raw)
+
+    @property
+    def selected_url_include_patterns(self):
+        raw = self.request.GET.get('url_include', '')
+        return [line.strip() for line in raw.splitlines() if line.strip()]
+
+    @property
+    def selected_url_include_mode(self):
+        mode = self.request.GET.get('url_include_mode', 'contains')
+        return mode if mode in ('contains', 'startswith') else 'contains'
+
+    @property
+    def selected_url_exclude_patterns(self):
+        raw = self.request.GET.get('url_exclude', '')
+        return [line.strip() for line in raw.splitlines() if line.strip()]
+
+    @property
+    def selected_url_exclude_mode(self):
+        mode = self.request.GET.get('url_exclude_mode', 'contains')
+        return mode if mode in ('contains', 'startswith') else 'contains'
+
+    @property
+    def selected_status_codes(self):
+        from corehq.apps.reports.filters.simple import StatusCodeFilter
+        raw = self.request.GET.get('status_code', '')
+        return StatusCodeFilter.parse_status_codes(raw)
 
     @property
     def start_time(self):
@@ -193,52 +283,85 @@ class UserAuditReport(AdminReport, DatespanMixin):
             DataTablesColumn(gettext_lazy("Domain")),
             DataTablesColumn(gettext_lazy("IP Address")),
             DataTablesColumn(gettext_lazy("Action")),
-            DataTablesColumn(gettext_lazy("Resource")),
+            DataTablesColumn(gettext_lazy("URL")),
+            DataTablesColumn(gettext_lazy("Status Code")),
             DataTablesColumn(gettext_lazy("Description")),
         )
 
+    # 4,000 was previously validated as performant; 5,000 is only 25% more,
+    # and the round number makes it easy to tally totals when manually
+    # paginating through results by adjusting the date range.
+    MAX_RECORDS = 5000
+
     @property
+    @memoized
     def rows(self):
-        # Either domain or user must have a value
         if not (self.selected_domain or self.selected_user):
             return []
-
-        if self._is_limit_exceeded():
+        if self.selected_ip_addresses is None or self.selected_status_codes is None:
             return []
+
+        nav_filters = self._build_nav_filters()
+        access_filters = self._build_access_filters()
+        skip_access = access_filters is False
 
         rows = []
         events = all_audit_events_by_user(
             self.selected_user, self.selected_domain, self.start_datetime, self.end_datetime,
-            self.selected_action
+            self.selected_action,
+            nav_extra_filters=nav_filters,
+            access_extra_filters=None if skip_access else access_filters,
+            skip_access=skip_access,
+            window_size=self.MAX_RECORDS + 1,
         )
+        count = 0
         for event in events:
             row = get_generic_log_event_row(event)
             rows.append(row)
+            count += 1
+            if count > self.MAX_RECORDS:
+                break
 
-        # sort by date asc
-        return sorted(rows, key=lambda x: x[0])
+        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(rows, self.MAX_RECORDS)
+        self._truncation_cutoff = cutoff_dt
+        self._truncation_same_minute = (len(rows) > self.MAX_RECORDS and cutoff_dt is None)
+        return truncated_rows
 
-    @memoized
-    def _is_limit_exceeded(self):
-        where = filters_for_audit_event_query(
-            user=self.selected_user,
-            domain=self.selected_domain,
-            start_date=self.start_datetime,
-            end_date=self.end_datetime
+    def _build_common_filters(self):
+        filters = Q()
+
+        ip_parsed = self.selected_ip_addresses
+        if ip_parsed:
+            ip_q = build_ip_filter(ip_parsed)
+            if ip_q:
+                filters &= ip_q
+
+        url_include = build_url_include_filter(
+            self.selected_url_include_patterns, self.selected_url_include_mode
         )
-        if self.selected_action in ACCESS_CHOICES:
-            where['access_type'] = self.selected_action
-            return AccessAudit.objects.filter(**where)[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+        if url_include:
+            filters &= url_include
 
-        # if action is not selected from AccessAudit, we use number of records in NavigationEventAudit as baseline
-        query = NavigationEventAudit.objects.filter(**where)
+        url_exclude = build_url_exclude_filter(
+            self.selected_url_exclude_patterns, self.selected_url_exclude_mode
+        )
+        if url_exclude:
+            filters &= url_exclude
 
-        if self.selected_action:
-            query = query.extra(
-                where=["headers::jsonb->>'REQUEST_METHOD' = %s"],
-                params=[self.selected_action]
-            )
-        return query[:self.MAX_RECORDS + 1].count() > self.MAX_RECORDS
+        return filters if filters != Q() else None
+
+    def _build_nav_filters(self):
+        filters = self._build_common_filters() or Q()
+        status_codes = self.selected_status_codes
+        if status_codes:
+            filters &= Q(status_code__in=status_codes)
+        return filters if filters != Q() else None
+
+    def _build_access_filters(self):
+        status_codes = self.selected_status_codes
+        if status_codes:
+            return False  # AccessAudit has no status code
+        return self._build_common_filters()
 
     def _is_invalid_time_range(self):
         """Check if start date equals end date and end time is before start time.
@@ -265,15 +388,52 @@ class UserAuditReport(AdminReport, DatespanMixin):
         elif self._is_invalid_time_range():
             context['warning_message'] = _("The end time cannot be earlier than the start time when "
                     "both dates are the same. Please adjust your time range.")
-        elif self._is_limit_exceeded():
-            context['warning_message'] = self._get_limit_exceeded_message()
+        elif self.selected_ip_addresses is None:
+            context['warning_message'] = _(
+                "Invalid IP address filter. Use single IPs, CIDR notation "
+                "(/8, /16, /24, /32), or comma-separated combinations."
+            )
+        elif self.selected_status_codes is None:
+            context['warning_message'] = _(
+                "Invalid status code filter. Use comma-separated integers (e.g. 200, 403, 500)."
+            )
+
+        # URL domain hint
+        if (self.selected_url_include_mode == 'startswith'
+                and self.selected_domain
+                and self.selected_url_include_patterns):
+            domain_prefix = f'/a/{self.selected_domain}/'
+            if not any(p.startswith(domain_prefix) for p in self.selected_url_include_patterns):
+                context.setdefault('info_message', '')
+                context['info_message'] += _(
+                    'Note: URLs for this domain typically start with "{domain_prefix}".'
+                ).format(domain_prefix=domain_prefix)
+
+        # Truncation messages (set by rows property)
+        # Access rows to trigger the query and truncation logic
+        _rows = self.rows  # noqa: F841
+        if getattr(self, '_truncation_same_minute', False):
+            context['truncation_message'] = _(
+                "Showing {max_records} results, but there are additional events within the "
+                "same minute that are not shown. Try narrowing by username, domain, IP address, "
+                "or other filters to see all results."
+            ).format(max_records=self.MAX_RECORDS)
+            context['truncation_level'] = 'warning'
+        elif getattr(self, '_truncation_cutoff', None):
+            cutoff = self._truncation_cutoff
+            context['truncation_message'] = _(
+                "Showing events through {cutoff_time}. Your query returned more than "
+                "{max_records} results; the end date/time has been adjusted. "
+                "To see later events, set the start time to {cutoff_time}."
+            ).format(
+                cutoff_time=cutoff.strftime("%Y-%m-%d %H:%M UTC"),
+                max_records=self.MAX_RECORDS,
+            )
+            context['truncation_level'] = 'info'
+            context['adjusted_end_date'] = cutoff.strftime("%Y-%m-%d")
+            context['adjusted_end_time'] = cutoff.strftime("%H:%M")
 
         return context
-
-    def _get_limit_exceeded_message(self):
-        return _("Your search returned more than {max_records} records. "
-                 "Please narrow down your search by selecting a specific user, domain, or a shorter date range."
-                 ).format(max_records=self.MAX_RECORDS)
 
 
 class UserListReport(GetParamsMixin, AdminReport):

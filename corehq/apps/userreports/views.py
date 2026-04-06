@@ -24,6 +24,7 @@ from django.views.generic import View
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from no_exceptions.exceptions import HttpException
+from psycopg2.errors import UndefinedTable
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
@@ -1275,7 +1276,14 @@ def delete_data_source_shared(domain, config_id, request=None):
     adapter = get_indicator_adapter(config)
     username = request.user.username if request else None
     skip = not request  # skip logging when we remove temporary tables
-    adapter.drop_table(initiated_by=username, source='delete_data_source', skip_log=skip)
+    try:
+        adapter.drop_table(initiated_by=username, source='delete_data_source', skip_log=skip)
+    except ProgrammingError as e:
+        if isinstance(e.orig, UndefinedTable):
+            # Table doesn't exist anymore, just continue with deletion
+            pass
+        else:
+            raise
     soft_delete(config)
     if request:
         messages.success(

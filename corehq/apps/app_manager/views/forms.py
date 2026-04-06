@@ -1,8 +1,13 @@
 import hashlib
 import json
 import logging
+from urllib.parse import quote, unquote
 from xml.sax.saxutils import escape
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from diff_match_patch import diff_match_patch
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.http import (
@@ -17,15 +22,9 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-
-from diff_match_patch import diff_match_patch
 from lxml import etree
 from no_exceptions.exceptions import Http400
 from text_unidecode import unidecode
-
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -51,10 +50,10 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppInDifferentDomainException,
     AppMisconfigurationError,
+    FormActionsDiffException,
     FormNotFoundException,
     ModuleNotFoundException,
     XFormValidationFailed,
-    FormActionsDiffException,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -68,12 +67,12 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
+    FormActionsDiff,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
-    FormActionsDiff,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
@@ -105,9 +104,9 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
-    get_case_property_count,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -119,7 +118,10 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.const import (
+    CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
+    DEFAULT_CASE_PROPS_PER_CASE_TYPE,
+)
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
 
@@ -336,8 +338,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                case_update_diff = _get_case_update_diff(request, form)
-                save_xform(app, form, xform, case_update_diff)
+                case_mapping_diff = _get_case_mapping_diff(request, form)
+                save_xform(app, form, xform, case_mapping_diff)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -441,7 +443,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         set_session_endpoint(form, raw_endpoint_id, app)
 
     if should_edit('access_hidden_forms'):
-        form.respect_relevancy = not ('true' in request.POST.getlist('access_hidden_forms'))
+        form.respect_relevancy = 'true' not in request.POST.getlist('access_hidden_forms')
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
@@ -530,10 +532,10 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    case_update_diff = _get_case_update_diff(request, form)
+    case_mapping_diff = _get_case_mapping_diff(request, form)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'), case_update_diff)
+        xml = save_xform(app, form, xml.encode('utf-8'), case_mapping_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
@@ -548,20 +550,31 @@ def patch_xform(request, domain, app_id, form_unique_id):
     return JsonResponse(response_json)
 
 
+# Characters that JS encodeURI preserves (beyond letters/digits which
+# Python's quote already preserves). Used to match encodeURI behavior
+# so patch coordinates align between JS and Python.
+ENCODE_URI_SAFE = "!#$&'()*+,-./:;=?@_~"
+
+
 def apply_patch(patch, text):
     dmp = diff_match_patch()
-    return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
+    # JS pre-encodes text with encodeURI before diffing to avoid emoji
+    # breaking the diff (see core.js). Encode source the same way before
+    # applying, then decode.
+    encoded_text = quote(text, safe=ENCODE_URI_SAFE)
+    encoded_result = dmp.patch_apply(dmp.patch_fromText(patch), encoded_text)[0]
+    return unquote(encoded_result)
 
 
-def _get_case_update_diff(request, form):
-    update_diff = None
+def _get_case_mapping_diff(request, form):
+    case_mapping_diff = None
     has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
     if has_vellum_case_mapping and 'mapping_diff' in request.POST:
-        update_diff = FormActionsDiff.from_json(
+        case_mapping_diff = FormActionsDiff.from_json(
             json.loads(request.POST['mapping_diff']),
             is_registration=form.is_registration_form(),
         )
-    return update_diff
+    return case_mapping_diff
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
@@ -997,7 +1010,9 @@ def get_form_datums(request, domain, app_id):
 
 
 def _get_form_datums(domain, app_id, form_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    from corehq.apps.app_manager.suite_xml.sections.entries import (
+        EntriesHelper,
+    )
     try:
         app = get_app(domain, app_id)
     except AppInDifferentDomainException as e:

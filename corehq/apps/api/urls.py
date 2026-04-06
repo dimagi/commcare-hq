@@ -51,6 +51,7 @@ from corehq.apps.api.resources.v0_5 import (
     DomainUsernames,
     UserDomainsResource,
 )
+from corehq.apps.zapier.api.v0_5 import ZapierUserDomains
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures import resources as fixtures
 from corehq.apps.hqcase.views import case_api, case_api_bulk_fetch
@@ -221,7 +222,7 @@ ADMIN_API_LIST = (
     accounting.BillingRecordResource,
     MaltResource,
     GIRResource,
-    UserDomainsResource,
+    ZapierUserDomains,
 )
 
 

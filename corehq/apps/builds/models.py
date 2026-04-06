@@ -17,8 +17,6 @@ from dimagi.ext.couchdbkit import (
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
-from corehq.blobs import CODES as BLOB_CODES
-from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
 
 
@@ -38,20 +36,10 @@ class SemanticVersionProperty(StringProperty):
         return value
 
 
-class CommCareBuild(BlobMixin, Document):
+class CommCareBuild(Document):
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()
-    _blobdb_type_code = BLOB_CODES.commcarebuild
-
-    def fetch_file(self, path, filename=None):
-        if filename:
-            path = '/'.join([path, filename])
-        attachment = self.fetch_attachment(path)
-        try:
-            return attachment.decode('utf-8')
-        except UnicodeDecodeError:
-            return attachment
 
     @classmethod
     def create_without_artifacts(cls, version, build_number):

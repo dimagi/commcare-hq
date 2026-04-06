@@ -33,7 +33,6 @@ from corehq.apps.aggregate_ucrs.models import (
 from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
     GlobalAppConfig,
-    LatestEnabledBuildProfiles,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverride,
@@ -116,7 +115,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackendMapping,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
+from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
@@ -448,7 +447,6 @@ class TestDeleteDomain(TestCase):
     def _assert_app_manager_counts(self, domain_name, count):
         self._assert_queryset_count([
             AppReleaseByLocation.objects.filter(domain=domain_name),
-            LatestEnabledBuildProfiles.objects.filter(domain=domain_name),
             GlobalAppConfig.objects.filter(domain=domain_name),
             ResourceOverride.objects.filter(domain=domain_name),
         ], count)
@@ -464,9 +462,6 @@ class TestDeleteDomain(TestCase):
             location.save()
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                 version=23, location=location)
-            with patch('corehq.apps.app_manager.models.GlobalAppConfig.by_app_id'):
-                LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456',
-                                                          version=10)
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
             ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
                                             pre_id='456', post_id='789')
@@ -834,13 +829,11 @@ class TestDeleteDomain(TestCase):
     def _assert_translations_count(self, domain_name, count):
         self._assert_queryset_count([
             SMSTranslations.objects.filter(domain=domain_name),
-            TransifexBlacklist.objects.filter(domain=domain_name),
         ], count)
 
     def test_translations_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             SMSTranslations.objects.create(domain=domain_name, langs=['en'], translations={'a': 'a'})
-            TransifexBlacklist.objects.create(domain=domain_name, app_id='123', field_name='xyz')
             self._assert_translations_count(domain_name, 1)
 
         self.domain.delete()
