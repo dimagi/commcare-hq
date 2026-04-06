@@ -34,7 +34,7 @@ Use command prefix `uv run` to run Python commands in the uv virtualenv.
 ### Sync Python dev dependencies
 
 ```bash
-uv sync && uv pip install -r requirements/local.txt
+uv sync --compile-bytecode && uv pip install -r requirements/local.txt
 ```
 
 ### Testing
