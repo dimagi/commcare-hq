@@ -42,7 +42,7 @@ class Command(BaseCommand):
         reasons = []
         csc = CaseSearchConfig.objects.get_or_none(pk=domain_name)
         # USH Specific toggle to making case search user input available to other parts of the app.
-        if toggles.USH_INLINE_SEARCH.enabled(domain_name):
+        if csc and csc.enabled and toggles.USH_INLINE_SEARCH.enabled(domain_name):
             reasons.append("toggle USH_INLINE_SEARCH")
         if csc and csc.synchronous_web_apps:  # Synchronous Web Apps Submissions
             reasons.append("synchronous_web_apps")
