@@ -15,6 +15,7 @@ from corehq.apps.reports.standard.cases.utils import (
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
+from .field_filters import get_fields_filter_fn
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
@@ -97,9 +98,10 @@ def get_list(domain, couch_user, params):
 
     es_result = query.run()
     hits = es_result.hits
+    filter_fields = get_fields_filter_fn(params)
     ret = {
         "matching_records": es_result.total,
-        "cases": [serialize_es_case(case) for case in hits],
+        "cases": [filter_fields(serialize_es_case(case)) for case in hits],
     }
 
     cases_in_result = len(hits)

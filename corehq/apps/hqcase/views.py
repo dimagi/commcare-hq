@@ -215,9 +215,6 @@ def _handle_list_view(request):
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
-    filter_fields = get_fields_filter_fn(request.GET)
-    res['cases'] = [filter_fields(case) for case in res['cases']]
-
     if 'next' in res:
         res['next'] = reverse('case_api', args=[request.domain], params=res['next'], absolute=True)
     return JsonResponse(res)

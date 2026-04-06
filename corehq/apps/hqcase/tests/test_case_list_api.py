@@ -121,18 +121,27 @@ class TestCaseListAPI(TestCase):
         self.assertFalse(res['cases'])  # empty result set
         self.assertNotIn('next', res)  # no next param
 
-    def test_fields_preserved_in_cursor(self):
-        params = QueryDict("case_type=person&limit=2&fields=case_id,external_id")
-        res = get_list(self.domain, self.couch_user, params)
-        cursor = b64decode(res['next']['cursor']).decode('utf-8')
-        self.assertIn('fields=', cursor)
+    def test_fields_filtering_across_pages(self):
+        """Field filtering should work on page 2+, not just page 1."""
+        params = QueryDict("case_type=person&limit=3&fields=case_id,external_id")
 
-    def test_dot_param_fields_preserved_in_cursor(self):
-        params = QueryDict("case_type=person&limit=2&fields=case_id&fields.properties=alias")
         res = get_list(self.domain, self.couch_user, params)
-        cursor = b64decode(res['next']['cursor']).decode('utf-8')
-        self.assertIn('fields=case_id', cursor)
-        self.assertIn('fields.properties=alias', cursor)
+        self.assertEqual(set(res['cases'][0].keys()), {'case_id', 'external_id'})
+
+        res2 = get_list(self.domain, self.couch_user, res['next'])
+        self.assertEqual(set(res2['cases'][0].keys()), {'case_id', 'external_id'})
+
+    def test_dot_param_fields_filtering_across_pages(self):
+        params = QueryDict("case_type=person&limit=3&fields=case_id&fields.properties=alias")
+
+        res = get_list(self.domain, self.couch_user, params)
+        self.assertEqual(set(res['cases'][0].keys()), {'case_id', 'properties'})
+        # cases[1] is rooster, who has an alias property
+        self.assertEqual(set(res['cases'][1]['properties'].keys()), {'alias'})
+
+        res2 = get_list(self.domain, self.couch_user, res['next'])
+        self.assertEqual(set(res2['cases'][0].keys()), {'case_id', 'properties'})
+        self.assertEqual(set(res2['cases'][0]['properties'].keys()), {'alias'})
 
     def test_deprecated_case_type(self):
         self.case_type_obj.is_deprecated = True
