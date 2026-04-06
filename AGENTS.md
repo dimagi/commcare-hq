@@ -29,34 +29,22 @@ for AI coding assistants. For coding standards and best practices, see
 
 ## Common Commands
 
-**Activate the virtualenv** before running any commands to ensure tools
-like `ruff`, `pytest`, and `manage.py` are available:
+Use command prefix `uv run` to run Python commands in the uv virtualenv.
+
+### Sync Python dev dependencies
 
 ```bash
-source .venv/bin/activate
-```
-
-### Dependencies
-
-```bash
-# Install/sync Python dependencies
-uv sync
-```
-
-### Running the app
-
-```bash
-./manage.py runserver
+uv sync && uv pip install -r requirements/local.txt
 ```
 
 ### Testing
 
 ```bash
 # Run tests with database reuse for faster execution
-pytest --reusedb=1 path/to/test.py
+uv run pytest --reusedb=1 path/to/test.py
 
 # If tests fail due to schema changes, migrate the test DB:
-pytest --reusedb=migrate path/to/test.py
+uv run pytest --reusedb=migrate path/to/test.py
 ```
 
 Use `pytest-unmagic` for explicit test fixtures (see `CODE_STANDARDS.md`).
@@ -66,7 +54,7 @@ Notable markers: `es_test` (Elasticsearch), `sharded` (shard DBs), `slow`.
 
 ```bash
 # Python linting
-ruff check path/to/file.py
+uv run ruff check path/to/file.py
 
 # JavaScript linting
 npx eslint path/to/file.js
@@ -76,10 +64,10 @@ npx eslint path/to/file.js
 
 ```bash
 # Sort Python imports
-ruff check --select I --fix path/to/file.py
+uv run ruff check --select I --fix path/to/file.py
 
 # Format Python code
-ruff format path/to/file.py
+uv run ruff format path/to/file.py
 
 # Format HTML templates
 npx prettier --write path/to/template.html
