@@ -127,7 +127,7 @@ class TestNavigationEventAuditResource(APIResourceTest):
         self.assertEqual(result_objects, self.domain1_audits.expected_response_objects[:limit])
 
     def test_request_with_timezone_param(self):
-        timezone = 'US/Eastern'
+        timezone = 'America/New_York'
 
         params = {'local_timezone': timezone}
         list_endpoint = f'{self.list_endpoint}?{urlencode(params)}'
