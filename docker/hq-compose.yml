@@ -75,7 +75,7 @@ services:
       interval: 10s
       retries: 10
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql
 
   couch:
     build:
