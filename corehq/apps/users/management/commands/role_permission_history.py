@@ -184,6 +184,14 @@ class Command(BaseCommand):
     def _permission_line(self, event, delta, perm_map):
         perm_fk = delta.get("permission_fk", {})
         perm_id = perm_fk.get("new", perm_fk.get("old"))
+        if perm_id is None:
+            # Update events don't include permission_fk in the delta since it
+            # didn't change. Look it up from the RolePermission row directly.
+            try:
+                perm_id = (RolePermission.objects.values_list("permission_fk", flat=True)
+                           .get(pk=event.object_pk))
+            except RolePermission.DoesNotExist:
+                pass
         pname = perm_map.get(perm_id, f"unknown(id={perm_id})")
 
         if event.is_create:

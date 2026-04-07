@@ -168,8 +168,9 @@ class TestPermissionEvents(BaseRoleHistoryTest):
         rp.allow_all = False
         rp.save()
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Permission CHANGED", output)
+        self.assertIn("Permission CHANGED: view_reports", output)
         self.assertIn("allow_all: True \u2192 False", output)
+        self.assertNotIn("unknown", output)
 
 
 class TestAssignableByEvents(BaseRoleHistoryTest):
