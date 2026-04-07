@@ -133,6 +133,7 @@ from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.util import generate_mobile_username
 from corehq.toggles import (
     COMMCARE_CONNECT,
+    EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
@@ -521,6 +522,16 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    exports_use_elasticsearch = BooleanField(
+        label=gettext_lazy("Use elasticsearch when fetching apps for exports"),
+        required=False,
+        help_text=gettext_lazy(
+            """
+            (Internal) Fetches apps using elasticsearch instead of couch in exports
+            """
+        )
+    )
+
     connect_messaging_channel_name = CharField(
         label=gettext_lazy("Connect Messaging Channel Name"),
         required=False,
@@ -579,6 +590,11 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_orphan_case_alerts_setting_value()
         self._handle_opt_out_of_data_sharing_setting_value()
 
+        if not EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
+            del self.fields['exports_use_elasticsearch']
+        else:
+            self._handle_exports_use_elasticsearch_setting_value()
+
         checkbox_fields = [
             hqcrispy.CheckboxField('release_mode_visibility'),
         ]
@@ -628,6 +644,8 @@ class DomainGlobalSettingsForm(forms.Form):
             ])
         if MOBILE_UCR.enabled(self.domain):
             extra_fields.append('mobile_ucr_sync_interval')
+        if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
+            extra_fields.append('exports_use_elasticsearch')
         if COMMCARE_CONNECT.enabled(self.domain):
             extra_fields.append('connect_messaging_channel_name')
         return extra_fields
@@ -656,6 +674,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_orphan_case_alerts_setting_value(self):
         self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
+
+    def _handle_exports_use_elasticsearch_setting_value(self):
+        self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
 
     def _handle_opt_out_of_data_sharing_setting_value(self):
         self.fields['opt_out_of_data_sharing'].initial = not self.project.internal.can_use_data
@@ -817,6 +838,9 @@ class DomainGlobalSettingsForm(forms.Form):
     def _save_opt_out_of_data_sharing_setting(self, domain):
         domain.update_internal(can_use_data=not self.cleaned_data.get("opt_out_of_data_sharing"))
 
+    def _save_exports_use_elasticsearch(self, domain):
+        domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", True)
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -839,6 +863,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_enable_all_add_ons_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
         self._save_opt_out_of_data_sharing_setting(domain)
+        if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
+            self._save_exports_use_elasticsearch(domain)
         domain.save()
         return True
 
