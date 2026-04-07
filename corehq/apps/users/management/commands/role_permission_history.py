@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Q
 
 from field_audit.models import AuditEvent
 
@@ -117,24 +118,29 @@ class Command(BaseCommand):
         entries.sort(key=lambda x: x[1].event_date)
         return entries
 
+    def _get_related_pks_from_audit(self, model_class, role):
+        """Get all PKs for a related model from audit events where role matches.
+
+        The role field only appears in the delta for create and delete events
+        (since it doesn't change during updates), but that's sufficient to
+        discover all PKs that ever belonged to this role.
+        """
+        return set(
+            AuditEvent.objects.by_model(model_class)
+            .filter(Q(delta__role__new=role.id) | Q(delta__role__old=role.id))
+            .values_list("object_pk", flat=True)
+        )
+
     def _get_role_permission_pks(self, role):
         """Get all RolePermission PKs for this role, including deleted ones."""
         pks = set(role.rolepermission_set.values_list("pk", flat=True))
-        for event in (AuditEvent.objects.by_model(RolePermission)
-                      .order_by("event_date")):
-            role_ref = event.delta.get("role", {})
-            if role_ref.get("new", role_ref.get("old")) == role.id:
-                pks.add(event.object_pk)
+        pks.update(self._get_related_pks_from_audit(RolePermission, role))
         return pks
 
     def _get_role_assignable_by_pks(self, role):
         """Get all RoleAssignableBy PKs for this role, including deleted ones."""
         pks = set(role.roleassignableby_set.values_list("pk", flat=True))
-        for event in (AuditEvent.objects.by_model(RoleAssignableBy)
-                      .order_by("event_date")):
-            role_ref = event.delta.get("role", {})
-            if role_ref.get("new", role_ref.get("old")) == role.id:
-                pks.add(event.object_pk)
+        pks.update(self._get_related_pks_from_audit(RoleAssignableBy, role))
         return pks
 
     def _print_event(self, entry_type, event, perm_map):
