@@ -35,7 +35,8 @@
                      team with powerful service delivery apps that work where
                      you work, even offline. No coding required.
                    {% endblocktrans %}
-                   <a href="https://www.dimagi.com/commcare/">{% trans "Learn more about CommCare." %}</a>
+-                  <a target="_blank" href="https://www.dimagi.com/commcare/">{% trans "Learn more about CommCare." %}</a>
++                  <a class="text-decoration-underline" target="_blank" href="https://www.dimagi.com/commcare/">{% trans "Learn more about CommCare." %}</a>
 +                </p>
 +              {% endif %}
 +              <p class="text-center">
