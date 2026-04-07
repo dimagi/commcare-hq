@@ -968,7 +968,7 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     'Case Search: Related Lookups',
     TAG_FROZEN,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
