@@ -950,7 +950,8 @@ CASE_SEARCH_DEPRECATED = StaticToggle(
     'Case Search: Deprecated',
     TAG_DEPRECATED,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_ADVANCED = StaticToggle(
@@ -958,7 +959,8 @@ CASE_SEARCH_ADVANCED = StaticToggle(
     'Advanced Case Search',
     TAG_FROZEN,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM],
 )
 
 CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
@@ -967,6 +969,7 @@ CASE_SEARCH_RELATED_LOOKUPS = StaticToggle(
     TAG_FROZEN,
     help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528/Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
+    parent_toggles=[CASE_SEARCH_ADVANCED],
 )
 
 USH_CASE_LIST_MULTI_SELECT = StaticToggle(
