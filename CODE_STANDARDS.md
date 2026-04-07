@@ -121,9 +121,3 @@ writing code, or making changes to the project.
   YET" label, and always use the GitHub PR template.
 - When adding PR descriptions, avoid restating the code diff. Focus on
   useful context for the reviewer.
-
-## Version Control
-
-- **Logical commits**: When changes are ready to be committed, break
-  them into logical steps to make reviewing easier. Each step should be
-  staged with a suggested commit message that summarizes the step.
