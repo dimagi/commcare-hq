@@ -68,14 +68,14 @@ class Command(BaseCommand):
         if role_id:
             if role_id.isdigit():
                 try:
-                    return UserRole.objects.get(id=int(role_id))
+                    return UserRole.objects.get(domain=domain, id=int(role_id))
                 except UserRole.DoesNotExist:
-                    raise CommandError(f"No role found with id={role_id}")
+                    raise CommandError(f"No role found with id={role_id} in domain '{domain}'")
             else:
                 try:
-                    return UserRole.objects.get(couch_id=role_id)
+                    return UserRole.objects.get(domain=domain, couch_id=role_id)
                 except UserRole.DoesNotExist:
-                    raise CommandError(f"No role found with couch_id='{role_id}'")
+                    raise CommandError(f"No role found with couch_id='{role_id}' in domain '{domain}'")
 
         roles = UserRole.objects.filter(domain=domain, name=role_name)
         if roles.count() == 0:

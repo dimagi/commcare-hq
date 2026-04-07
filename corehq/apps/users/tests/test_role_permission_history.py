@@ -83,6 +83,20 @@ class TestGetRoleErrors(BaseRoleHistoryTest):
         output = self._call_command(self.domain_name, "--role-id", role.couch_id)
         self.assertIn("Couch Lookup", output)
 
+    def test_role_id_wrong_domain(self):
+        role = UserRole.create(self.domain_name, "Wrong Domain")
+        self.addCleanup(role.delete)
+        with self.assertRaises(CommandError) as ctx:
+            self._call_command("other-domain", "--role-id", str(role.id))
+        self.assertIn("No role found", str(ctx.exception))
+
+    def test_couch_id_wrong_domain(self):
+        role = UserRole.create(self.domain_name, "Wrong Domain Couch")
+        self.addCleanup(role.delete)
+        with self.assertRaises(CommandError) as ctx:
+            self._call_command("other-domain", "--role-id", role.couch_id)
+        self.assertIn("No role found", str(ctx.exception))
+
     def test_ambiguous_role_name(self):
         role1 = UserRole.create(self.domain_name, "Duplicate")
         role2 = UserRole.create(self.domain_name, "Duplicate")
