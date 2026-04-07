@@ -44,6 +44,7 @@ class TestListRoles(BaseRoleHistoryTest):
         output = self._call_command(self.domain_name, "--list")
         self.assertIn("Supervisor", output)
         self.assertIn(f"id={role.id}", output)
+        self.assertIn(f"couch_id={role.couch_id}", output)
 
     def test_list_roles_shows_archived(self):
         role = UserRole.create(self.domain_name, "Old Role", is_archived=True)
@@ -69,6 +70,18 @@ class TestGetRoleErrors(BaseRoleHistoryTest):
         with self.assertRaises(CommandError) as ctx:
             self._call_command(self.domain_name, "--role-id", "999999")
         self.assertIn("No role found", str(ctx.exception))
+
+    def test_nonexistent_couch_id(self):
+        with self.assertRaises(CommandError) as ctx:
+            self._call_command(self.domain_name, "--role-id", "abc123def456")
+        self.assertIn("No role found", str(ctx.exception))
+        self.assertIn("couch_id", str(ctx.exception))
+
+    def test_lookup_by_couch_id(self):
+        role = UserRole.create(self.domain_name, "Couch Lookup")
+        self.addCleanup(role.delete)
+        output = self._call_command(self.domain_name, "--role-id", role.couch_id)
+        self.assertIn("Couch Lookup", output)
 
     def test_ambiguous_role_name(self):
         role1 = UserRole.create(self.domain_name, "Duplicate")

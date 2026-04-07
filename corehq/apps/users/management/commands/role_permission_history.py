@@ -20,15 +20,16 @@ class Command(BaseCommand):
         # By role name
         ./manage.py role_permission_history my-domain --role-name "Field Worker"
 
-        # By role ID
+        # By database ID or couch_id
         ./manage.py role_permission_history my-domain --role-id 123
+        ./manage.py role_permission_history my-domain --role-id abc123def456
     """
 
     def add_arguments(self, parser):
         parser.add_argument("domain")
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument("--role-name", help="Name of the role")
-        group.add_argument("--role-id", type=int, help="Database ID of the role")
+        group.add_argument("--role-id", help="Database ID or couch_id of the role")
         group.add_argument("--list", action="store_true", dest="list_roles",
                            help="List all roles in the domain")
 
@@ -60,14 +61,20 @@ class Command(BaseCommand):
         self.stdout.write(f"Roles in domain '{domain}':")
         for r in roles:
             archived = " (archived)" if r.is_archived else ""
-            self.stdout.write(f"  {r.name} (id={r.id}){archived}")
+            self.stdout.write(f"  {r.name} (id={r.id}, couch_id={r.couch_id}){archived}")
 
     def _get_role(self, domain, role_name, role_id):
         if role_id:
-            try:
-                return UserRole.objects.get(id=role_id)
-            except UserRole.DoesNotExist:
-                raise CommandError(f"No role found with id={role_id}")
+            if role_id.isdigit():
+                try:
+                    return UserRole.objects.get(id=int(role_id))
+                except UserRole.DoesNotExist:
+                    raise CommandError(f"No role found with id={role_id}")
+            else:
+                try:
+                    return UserRole.objects.get(couch_id=role_id)
+                except UserRole.DoesNotExist:
+                    raise CommandError(f"No role found with couch_id='{role_id}'")
 
         roles = UserRole.objects.filter(domain=domain, name=role_name)
         if roles.count() == 0:
