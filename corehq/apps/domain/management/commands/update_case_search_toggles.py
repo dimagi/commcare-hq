@@ -119,13 +119,6 @@ class Command(BaseCommand):
         return reasons
 
     @staticmethod
-    def _domain_uses_deprecated_feature(domain_name):
-        reasons = []
-        if toggles.WEBAPPS_STICKY_SEARCH.enabled(domain_name):  # Sticky Search
-            reasons.append("toggle WEBAPPS_STICKY_SEARCH")
-        return reasons
-
-    @staticmethod
     def _app_uses_deprecated_feature(app):
         reasons = []
 
@@ -162,6 +155,9 @@ class Command(BaseCommand):
             "parent/"           # Related properties
         ]
 
+        def is_parent_reference(prop):
+            return prop.startswith('parent/') and prop.removeprefix('parent/') != '@case_id'
+
         for m in Command._get_case_list_modules(app):
             search_config = m.get('search_config', {})
             properties = search_config.get('properties', [])
@@ -180,10 +176,10 @@ class Command(BaseCommand):
                     reasons.append(f"module '{mod}': xpath_query default with {matched}")
 
             # Related properties
-            if any(p['name'].startswith('parent/') for p in properties):
+            if any(is_parent_reference(p['name']) for p in properties):
                 reasons.append(f"module '{mod}': parent/ search property")
             # Related properties
-            if any(p.get('property', '').startswith('parent/') for p in default_properties):
+            if any(is_parent_reference(p.get('property', '')) for p in default_properties):
                 reasons.append(f"module '{mod}': parent/ default property")
             # Include related cases in search results
             if search_config.get('include_all_related_cases', False):
@@ -206,12 +202,8 @@ class Command(BaseCommand):
             if advanced_reasons:
                 advanced_reasons = [f"domain: {r}" for r in advanced_reasons]
 
-            deprecated_reasons = Command._domain_uses_deprecated_feature(domain_name)
-            if deprecated_reasons:
-                deprecated_reasons = [f"domain: {r}" for r in deprecated_reasons]
-
+            deprecated_reasons = []
             related_lookup_reasons = []
-
             for app_id in get_app_ids_in_domain(domain_name):
                 if advanced_reasons and deprecated_reasons and related_lookup_reasons:
                     break

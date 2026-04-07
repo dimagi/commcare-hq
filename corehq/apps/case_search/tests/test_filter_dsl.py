@@ -521,3 +521,8 @@ def test_subcase_query_logging():
         with flag_enabled('CASE_SEARCH_RELATED_LOOKUPS'):
             build_filter_from_ast(parsed, SearchFilterContext("mydomain"))
         notify.assert_not_called()
+
+    parsed = parse_xpath("parent/@case_id = '123abc'")
+    with patch('corehq.apps.case_search.filter_dsl.notify_exception') as notify:
+        build_filter_from_ast(parsed, SearchFilterContext("mydomain"))
+        notify.assert_not_called()
