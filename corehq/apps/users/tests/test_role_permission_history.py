@@ -32,24 +32,21 @@ class BaseRoleHistoryTest(TestCase):
         call_command("role_permission_history", *args, stdout=out, stderr=err, **kwargs)
         return out.getvalue()
 
-    def setUp(self):
-        super().setUp()
-        AuditEvent.objects.all().delete()
+
 
 
 class TestListRoles(BaseRoleHistoryTest):
 
     def test_list_roles(self):
         role = UserRole.create(self.domain_name, "Supervisor")
-        self.addCleanup(role.delete)
+
         output = self._call_command(self.domain_name, "--list")
         assert "Supervisor" in output
         assert f"id={role.id}" in output
         assert f"couch_id={role.couch_id}" in output
 
     def test_list_roles_shows_archived(self):
-        role = UserRole.create(self.domain_name, "Old Role", is_archived=True)
-        self.addCleanup(role.delete)
+        UserRole.create(self.domain_name, "Old Role", is_archived=True)
         output = self._call_command(self.domain_name, "--list")
         assert "Old Role" in output
         assert "(archived)" in output
@@ -77,27 +74,25 @@ class TestGetRoleErrors(BaseRoleHistoryTest):
 
     def test_lookup_by_couch_id(self):
         role = UserRole.create(self.domain_name, "Couch Lookup")
-        self.addCleanup(role.delete)
+
         output = self._call_command(self.domain_name, "--role-id", role.couch_id)
         assert "Couch Lookup" in output
 
     def test_role_id_wrong_domain(self):
         role = UserRole.create(self.domain_name, "Wrong Domain")
-        self.addCleanup(role.delete)
+
         with pytest.raises(CommandError, match="No role found"):
             self._call_command("other-domain", "--role-id", str(role.id))
 
     def test_couch_id_wrong_domain(self):
         role = UserRole.create(self.domain_name, "Wrong Domain Couch")
-        self.addCleanup(role.delete)
+
         with pytest.raises(CommandError, match="No role found"):
             self._call_command("other-domain", "--role-id", role.couch_id)
 
     def test_ambiguous_role_name(self):
-        role1 = UserRole.create(self.domain_name, "Duplicate")
-        role2 = UserRole.create(self.domain_name, "Duplicate")
-        self.addCleanup(role1.delete)
-        self.addCleanup(role2.delete)
+        UserRole.create(self.domain_name, "Duplicate")
+        UserRole.create(self.domain_name, "Duplicate")
         with pytest.raises(CommandError, match="Multiple roles found") as exc_info:
             self._call_command(self.domain_name, "--role-name", "Duplicate")
         assert "--role-id" in str(exc_info.value)
@@ -107,14 +102,14 @@ class TestRoleCreatedEvent(BaseRoleHistoryTest):
 
     def test_shows_role_created(self):
         role = UserRole.create(self.domain_name, "New Role")
-        self.addCleanup(role.delete)
+
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
         assert "Role CREATED" in output
         assert "name: New Role" in output
 
     def test_shows_role_metadata_change(self):
         role = UserRole.create(self.domain_name, "Editable Role")
-        self.addCleanup(role.delete)
+
         role.is_non_admin_editable = True
         role.save()
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
@@ -125,7 +120,7 @@ class TestPermissionEvents(BaseRoleHistoryTest):
 
     def test_permission_granted(self):
         role = UserRole.create(self.domain_name, "Grant Test")
-        self.addCleanup(role.delete)
+
         perm = Permission.objects.first()
         role.set_permissions([PermissionInfo(perm.value)])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
@@ -135,7 +130,7 @@ class TestPermissionEvents(BaseRoleHistoryTest):
 
     def test_permission_granted_with_items(self):
         role = UserRole.create(self.domain_name, "Items Test")
-        self.addCleanup(role.delete)
+
         perm = Permission.objects.get(value="view_reports")
         role.set_permissions([PermissionInfo(perm.value, allow=["item_a", "item_b"])])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
@@ -145,7 +140,7 @@ class TestPermissionEvents(BaseRoleHistoryTest):
 
     def test_permission_revoked(self):
         role = UserRole.create(self.domain_name, "Revoke Test")
-        self.addCleanup(role.delete)
+
         perm = Permission.objects.first()
         role.set_permissions([PermissionInfo(perm.value)])
         role.set_permissions([])
@@ -155,7 +150,7 @@ class TestPermissionEvents(BaseRoleHistoryTest):
 
     def test_permission_changed(self):
         role = UserRole.create(self.domain_name, "Change Test")
-        self.addCleanup(role.delete)
+
         perm = Permission.objects.get(value="view_reports")
         role.set_permissions([PermissionInfo(perm.value)])
         # Re-fetch the RolePermission after set_permissions (which deletes and recreates)
@@ -172,7 +167,7 @@ class TestAssignableByEvents(BaseRoleHistoryTest):
 
     def test_assignable_by_added(self):
         role = UserRole.create(self.domain_name, "Assign Test")
-        self.addCleanup(role.delete)
+
         role.set_assignable_by([role.id])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
         assert "Assignable by ADDED" in output
@@ -180,7 +175,7 @@ class TestAssignableByEvents(BaseRoleHistoryTest):
 
     def test_assignable_by_removed(self):
         role = UserRole.create(self.domain_name, "Unassign Test")
-        self.addCleanup(role.delete)
+
         role.set_assignable_by([role.id])
         role.set_assignable_by([])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
@@ -191,7 +186,7 @@ class TestNoEvents(BaseRoleHistoryTest):
 
     def test_no_events(self):
         role = UserRole.create(self.domain_name, "Empty Test")
-        self.addCleanup(role.delete)
+
         # Clear all events including the create event
         AuditEvent.objects.all().delete()
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
@@ -202,7 +197,7 @@ class TestChronologicalOrder(BaseRoleHistoryTest):
 
     def test_events_in_chronological_order(self):
         role = UserRole.create(self.domain_name, "Chrono Test")
-        self.addCleanup(role.delete)
+
         perm = Permission.objects.first()
         role.set_permissions([PermissionInfo(perm.value)])
         role.set_permissions([])
