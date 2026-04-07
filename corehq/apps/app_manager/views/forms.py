@@ -592,7 +592,10 @@ def _get_xform_conflict_response(form, sha1_checksum):
 
 def _add_case_management_data(response_json, form, request):
     """Allow clients to immediately display concurrent edit conflict warnings"""
-    if toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request):
+    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
+    is_advanced_form = isinstance(form, AdvancedForm)
+    case_type = form.get_module().case_type
+    if case_type and has_vellum_case_mapping and not is_advanced_form:
         response_json['caseManagement'] = {
             "mappings": get_case_mappings(form.actions),
         }
