@@ -1,5 +1,6 @@
 from io import StringIO
 
+import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -42,70 +43,64 @@ class TestListRoles(BaseRoleHistoryTest):
         role = UserRole.create(self.domain_name, "Supervisor")
         self.addCleanup(role.delete)
         output = self._call_command(self.domain_name, "--list")
-        self.assertIn("Supervisor", output)
-        self.assertIn(f"id={role.id}", output)
-        self.assertIn(f"couch_id={role.couch_id}", output)
+        assert "Supervisor" in output
+        assert f"id={role.id}" in output
+        assert f"couch_id={role.couch_id}" in output
 
     def test_list_roles_shows_archived(self):
         role = UserRole.create(self.domain_name, "Old Role", is_archived=True)
         self.addCleanup(role.delete)
         output = self._call_command(self.domain_name, "--list")
-        self.assertIn("Old Role", output)
-        self.assertIn("(archived)", output)
+        assert "Old Role" in output
+        assert "(archived)" in output
 
     def test_list_roles_empty_domain(self):
         output = self._call_command("nonexistent-domain", "--list")
-        self.assertIn("No roles found", output)
+        assert "No roles found" in output
 
 
 class TestGetRoleErrors(BaseRoleHistoryTest):
 
     def test_nonexistent_role_name(self):
-        with self.assertRaises(CommandError) as ctx:
+        with pytest.raises(CommandError, match="No role found") as exc_info:
             self._call_command(self.domain_name, "--role-name", "Nonexistent")
-        self.assertIn("No role found", str(ctx.exception))
-        self.assertIn("--list", str(ctx.exception))
+        assert "--list" in str(exc_info.value)
 
     def test_nonexistent_role_id(self):
-        with self.assertRaises(CommandError) as ctx:
+        with pytest.raises(CommandError, match="No role found"):
             self._call_command(self.domain_name, "--role-id", "999999")
-        self.assertIn("No role found", str(ctx.exception))
 
     def test_nonexistent_couch_id(self):
-        with self.assertRaises(CommandError) as ctx:
+        with pytest.raises(CommandError, match="No role found") as exc_info:
             self._call_command(self.domain_name, "--role-id", "abc123def456")
-        self.assertIn("No role found", str(ctx.exception))
-        self.assertIn("couch_id", str(ctx.exception))
+        assert "couch_id" in str(exc_info.value)
 
     def test_lookup_by_couch_id(self):
         role = UserRole.create(self.domain_name, "Couch Lookup")
         self.addCleanup(role.delete)
         output = self._call_command(self.domain_name, "--role-id", role.couch_id)
-        self.assertIn("Couch Lookup", output)
+        assert "Couch Lookup" in output
 
     def test_role_id_wrong_domain(self):
         role = UserRole.create(self.domain_name, "Wrong Domain")
         self.addCleanup(role.delete)
-        with self.assertRaises(CommandError) as ctx:
+        with pytest.raises(CommandError, match="No role found"):
             self._call_command("other-domain", "--role-id", str(role.id))
-        self.assertIn("No role found", str(ctx.exception))
 
     def test_couch_id_wrong_domain(self):
         role = UserRole.create(self.domain_name, "Wrong Domain Couch")
         self.addCleanup(role.delete)
-        with self.assertRaises(CommandError) as ctx:
+        with pytest.raises(CommandError, match="No role found"):
             self._call_command("other-domain", "--role-id", role.couch_id)
-        self.assertIn("No role found", str(ctx.exception))
 
     def test_ambiguous_role_name(self):
         role1 = UserRole.create(self.domain_name, "Duplicate")
         role2 = UserRole.create(self.domain_name, "Duplicate")
         self.addCleanup(role1.delete)
         self.addCleanup(role2.delete)
-        with self.assertRaises(CommandError) as ctx:
+        with pytest.raises(CommandError, match="Multiple roles found") as exc_info:
             self._call_command(self.domain_name, "--role-name", "Duplicate")
-        self.assertIn("Multiple roles found", str(ctx.exception))
-        self.assertIn("--role-id", str(ctx.exception))
+        assert "--role-id" in str(exc_info.value)
 
 
 class TestRoleCreatedEvent(BaseRoleHistoryTest):
@@ -114,8 +109,8 @@ class TestRoleCreatedEvent(BaseRoleHistoryTest):
         role = UserRole.create(self.domain_name, "New Role")
         self.addCleanup(role.delete)
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Role CREATED", output)
-        self.assertIn("name: New Role", output)
+        assert "Role CREATED" in output
+        assert "name: New Role" in output
 
     def test_shows_role_metadata_change(self):
         role = UserRole.create(self.domain_name, "Editable Role")
@@ -123,7 +118,7 @@ class TestRoleCreatedEvent(BaseRoleHistoryTest):
         role.is_non_admin_editable = True
         role.save()
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("is_non_admin_editable: False \u2192 True", output)
+        assert "is_non_admin_editable: False \u2192 True" in output
 
 
 class TestPermissionEvents(BaseRoleHistoryTest):
@@ -134,9 +129,9 @@ class TestPermissionEvents(BaseRoleHistoryTest):
         perm = Permission.objects.first()
         role.set_permissions([PermissionInfo(perm.value)])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Permission GRANTED", output)
-        self.assertIn(perm.value, output)
-        self.assertNotIn("items:", output)
+        assert "Permission GRANTED" in output
+        assert perm.value in output
+        assert "items:" not in output
 
     def test_permission_granted_with_items(self):
         role = UserRole.create(self.domain_name, "Items Test")
@@ -144,9 +139,9 @@ class TestPermissionEvents(BaseRoleHistoryTest):
         perm = Permission.objects.get(value="view_reports")
         role.set_permissions([PermissionInfo(perm.value, allow=["item_a", "item_b"])])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Permission GRANTED", output)
-        self.assertIn("item_a", output)
-        self.assertIn("item_b", output)
+        assert "Permission GRANTED" in output
+        assert "item_a" in output
+        assert "item_b" in output
 
     def test_permission_revoked(self):
         role = UserRole.create(self.domain_name, "Revoke Test")
@@ -155,8 +150,8 @@ class TestPermissionEvents(BaseRoleHistoryTest):
         role.set_permissions([PermissionInfo(perm.value)])
         role.set_permissions([])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Permission REVOKED", output)
-        self.assertIn(perm.value, output)
+        assert "Permission REVOKED" in output
+        assert perm.value in output
 
     def test_permission_changed(self):
         role = UserRole.create(self.domain_name, "Change Test")
@@ -168,9 +163,9 @@ class TestPermissionEvents(BaseRoleHistoryTest):
         rp.allow_all = False
         rp.save()
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Permission CHANGED: view_reports", output)
-        self.assertIn("allow_all: True \u2192 False", output)
-        self.assertNotIn("unknown", output)
+        assert "Permission CHANGED: view_reports" in output
+        assert "allow_all: True \u2192 False" in output
+        assert "unknown" not in output
 
 
 class TestAssignableByEvents(BaseRoleHistoryTest):
@@ -180,8 +175,8 @@ class TestAssignableByEvents(BaseRoleHistoryTest):
         self.addCleanup(role.delete)
         role.set_assignable_by([role.id])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Assignable by ADDED", output)
-        self.assertIn("Assign Test", output)
+        assert "Assignable by ADDED" in output
+        assert "Assign Test" in output
 
     def test_assignable_by_removed(self):
         role = UserRole.create(self.domain_name, "Unassign Test")
@@ -189,7 +184,7 @@ class TestAssignableByEvents(BaseRoleHistoryTest):
         role.set_assignable_by([role.id])
         role.set_assignable_by([])
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("Assignable by REMOVED", output)
+        assert "Assignable by REMOVED" in output
 
 
 class TestNoEvents(BaseRoleHistoryTest):
@@ -200,7 +195,7 @@ class TestNoEvents(BaseRoleHistoryTest):
         # Clear all events including the create event
         AuditEvent.objects.all().delete()
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
-        self.assertIn("No audit events found", output)
+        assert "No audit events found" in output
 
 
 class TestChronologicalOrder(BaseRoleHistoryTest):
@@ -215,5 +210,4 @@ class TestChronologicalOrder(BaseRoleHistoryTest):
         created_pos = output.index("Role CREATED")
         granted_pos = output.index("Permission GRANTED")
         revoked_pos = output.index("Permission REVOKED")
-        self.assertLess(created_pos, granted_pos)
-        self.assertLess(granted_pos, revoked_pos)
+        assert created_pos < granted_pos < revoked_pos
