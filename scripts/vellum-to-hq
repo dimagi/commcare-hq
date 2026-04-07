@@ -151,7 +151,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, d
             git.reset("--hard", "origin/" + base_branch)
             assert hq_vellum.startswith(path), (path, hq_vellum)
         else:
-            git.checkout("-B", hq_branch, "origin/master")
+            git.checkout("-B", hq_branch, "--no-track", "origin/master")
     old_vellum_rev = get_old_vellum_rev(hq_vellum)
 
     print("Overwriting HQ Vellum with new build")
