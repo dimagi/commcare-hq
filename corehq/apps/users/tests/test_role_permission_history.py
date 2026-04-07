@@ -7,7 +7,7 @@ from django.test import TestCase
 
 from field_audit.models import AuditEvent
 
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import PermissionInfo
 from corehq.apps.users.models_role import Permission, UserRole
 
@@ -20,10 +20,7 @@ class BaseRoleHistoryTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         AuditEvent.objects.all().delete()
-        cls.domain = Domain.get_or_create_with_name(
-            name=cls.domain_name, is_active=True,
-        )
-        cls.domain.save()
+        cls.domain = create_domain(cls.domain_name)
         cls.addClassCleanup(cls.domain.delete)
 
     def _call_command(self, *args, **kwargs):
