@@ -136,7 +136,7 @@ class TestPermissionEvents(BaseRoleHistoryTest):
         output = self._call_command(self.domain_name, "--role-id", str(role.id))
         self.assertIn("Permission GRANTED", output)
         self.assertIn(perm.value, output)
-        self.assertIn("allow all", output)
+        self.assertNotIn("items:", output)
 
     def test_permission_granted_with_items(self):
         role = UserRole.create(self.domain_name, "Items Test")

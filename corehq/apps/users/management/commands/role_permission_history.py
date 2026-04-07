@@ -198,13 +198,13 @@ class Command(BaseCommand):
             allow_all = delta.get("allow_all", {}).get("new", True)
             items = delta.get("allowed_items", {}).get("new")
             if allow_all:
-                return f"Permission GRANTED: {pname} (allow all)"
+                return f"Permission GRANTED: {pname}"
             return f"Permission GRANTED: {pname} (items: {self._format_items(items)})"
         elif event.is_delete:
             allow_all = delta.get("allow_all", {}).get("old", True)
             items = delta.get("allowed_items", {}).get("old")
             if allow_all:
-                return f"Permission REVOKED: {pname} (was allow all)"
+                return f"Permission REVOKED: {pname}"
             return f"Permission REVOKED: {pname} (was items: {self._format_items(items)})"
         else:
             changes = []
