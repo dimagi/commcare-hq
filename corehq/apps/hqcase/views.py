@@ -94,19 +94,22 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @api_throttle
 @location_safe
 def case_api(request, domain, case_id=None, external_id=None):
-    if request.method == 'GET' and case_id:
-        return _handle_get(request, case_id)
-    if request.method == 'GET' and external_id:
-        return _handle_ext_get(request, external_id)
-    if request.method == 'GET' and not case_id:
-        return _handle_list_view(request)
-    if request.method == 'POST' and not case_id:
-        return _handle_case_put_post(request, is_creation=True)
-    if request.method == 'PUT' and external_id:
-        return _handle_ext_put(request, external_id)
-    if request.method == 'PUT':
-        return _handle_case_put_post(request, is_creation=False, case_id=case_id)
-    return JsonResponse({'error': "Request method not allowed"}, status=405)
+    try:
+        if request.method == 'GET' and case_id:
+            return _handle_get(request, case_id)
+        if request.method == 'GET' and external_id:
+            return _handle_ext_get(request, external_id)
+        if request.method == 'GET' and not case_id:
+            return _handle_list_view(request)
+        if request.method == 'POST' and not case_id:
+            return _handle_case_put_post(request, is_creation=True)
+        if request.method == 'PUT' and external_id:
+            return _handle_ext_put(request, external_id)
+        if request.method == 'PUT':
+            return _handle_case_put_post(request, is_creation=False, case_id=case_id)
+        return JsonResponse({'error': "Request method not allowed"}, status=405)
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 
 @waf_allow('XSS_BODY')
@@ -118,7 +121,10 @@ def case_api(request, domain, case_id=None, external_id=None):
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 def case_api_bulk_fetch(request, domain):
-    return _handle_bulk_fetch(request)
+    try:
+        return _handle_bulk_fetch(request)
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 
 def _handle_get(request, case_id):
@@ -128,11 +134,7 @@ def _handle_get(request, case_id):
 
 
 def _get_bulk_cases(request, case_ids=None, external_ids=None):
-    try:
-        res = get_bulk(request.domain, request.couch_user, case_ids, external_ids)
-    except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
+    res = get_bulk(request.domain, request.couch_user, case_ids, external_ids)
     filter_fields = get_fields_filter_fn(request.GET)
     res['cases'] = [
         filter_fields(case) if 'error' not in case else case
@@ -157,19 +159,7 @@ def _get_single_case(request, case_id):
 
 
 def _handle_ext_get(request, external_id):
-    try:
-        case = CommCareCase.objects.get_case_by_external_id(
-            request.domain,
-            external_id,
-            raise_multiple=True,
-        )
-    except CommCareCase.MultipleObjectsReturned as err:
-        case_ids = [case.case_id for case in err.cases]
-        return JsonResponse(
-            {'error': f"Multiple cases found with external_id '{external_id}': "
-                      f"{', '.join(case_ids)}"},
-            status=400,
-        )
+    case = _get_by_external_id(request.domain, external_id)
     if case is None:
         return JsonResponse(
             {'error': f"Case '{external_id}' not found"},
@@ -195,26 +185,37 @@ def _handle_ext_get(request, external_id):
     return JsonResponse(filter_fields(serialize_case(case)))
 
 
+def _get_by_external_id(domain, external_id):
+    try:
+        return CommCareCase.objects.get_case_by_external_id(
+            domain,
+            external_id,
+            raise_multiple=True,
+        )
+    except CommCareCase.MultipleObjectsReturned as err:
+        case_ids = [case.case_id for case in err.cases]
+        raise UserError(
+            f"Multiple cases found with external_id '{external_id}': "
+            f"{', '.join(case_ids)}"
+        )
+
+
 def _handle_bulk_fetch(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
-        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+        raise UserError("Payload must be valid JSON")
 
     case_ids = data.get('case_ids')
     external_ids = data.get('external_ids')
     if not case_ids and not external_ids:
-        return JsonResponse({'error': "Payload must include 'case_ids' or 'external_ids' fields"}, status=400)
+        raise UserError("Payload must include 'case_ids' or 'external_ids' fields")
 
     return _get_bulk_cases(request, case_ids=case_ids, external_ids=external_ids)
 
 
 def _handle_list_view(request):
-    try:
-        res = get_list(request.domain, request.couch_user, request.GET)
-    except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
+    res = get_list(request.domain, request.couch_user, request.GET)
     if 'next' in res:
         res['next'] = reverse('case_api', args=[request.domain], params=res['next'], absolute=True)
     return JsonResponse(res)
@@ -224,29 +225,13 @@ def _handle_ext_put(request, external_id):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
-        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+        raise UserError("Payload must be valid JSON")
     if not isinstance(data, dict):
-        return JsonResponse(
-            {'error': "Payload must be a single JSON object"},
-            status=400,
-        )
+        raise UserError("Payload must be a single JSON object")
     if 'external_id' not in data:
         data['external_id'] = external_id
 
-    try:
-        # Use PG instead of ES to ensure immediate consistency
-        case = CommCareCase.objects.get_case_by_external_id(
-            request.domain,
-            external_id,
-            raise_multiple=True,
-        )
-    except CommCareCase.MultipleObjectsReturned as err:
-        case_ids = [case.case_id for case in err.cases]
-        return JsonResponse(
-            {'error': f"Multiple cases found with external_id '{external_id}': "
-                      f"{', '.join(case_ids)}"},
-            status=400,
-        )
+    case = _get_by_external_id(request.domain, external_id)
     if case is None:
         is_creation = True
     else:
@@ -254,12 +239,10 @@ def _handle_ext_put(request, external_id):
         if 'case_id' not in data:
             data['case_id'] = case.case_id
         elif data['case_id'] != case.case_id:
-            return JsonResponse(
-                {'error': 'The given value of "case_id" does not match the '
-                          'existing value for the case identified by '
-                          f'external_id = "{external_id}". "case_id" is '
-                          'read-only and cannot be modified.'},
-                status=400,
+            raise UserError(
+                'The given value of "case_id" does not match the existing value '
+                f'for the case identified by external_id = "{external_id}". '
+                '"case_id" is read-only and cannot be modified.'
             )
 
     return _handle_case_update(request, data, is_creation)
@@ -269,7 +252,7 @@ def _handle_case_put_post(request, is_creation, case_id=None):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
-        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+        raise UserError("Payload must be valid JSON")
 
     if not is_creation and case_id and 'case_id' not in data:
         data['case_id'] = case_id
@@ -288,8 +271,6 @@ def _handle_case_update(request, data, is_creation):
         )
     except PermissionDenied as e:
         return JsonResponse({'error': str(e)}, status=403)
-    except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
