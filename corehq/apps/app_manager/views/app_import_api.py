@@ -22,6 +22,14 @@ from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import json_error
 
 
+@json_error
+@require_permission(HqPermissions.edit_apps, login_decorator=api_auth())
+@api_throttle
+@require_POST
+def import_app_api(request, domain):
+    return _handle_import_app(request, domain)
+
+
 def _handle_import_app(request, domain):
     app_name = request.POST.get('app_name')
     if not app_name:
@@ -52,8 +60,8 @@ def _handle_import_app(request, domain):
 @require_permission(HqPermissions.edit_apps, login_decorator=api_auth())
 @api_throttle
 @require_POST
-def import_app_api(request, domain):
-    return _handle_import_app(request, domain)
+def upload_multimedia_api(request, domain, app_id):
+    return _handle_upload_multimedia(request, domain, app_id)
 
 
 def _handle_upload_multimedia(request, domain, app_id):
@@ -95,9 +103,9 @@ def _handle_upload_multimedia(request, domain, app_id):
 @json_error
 @require_permission(HqPermissions.edit_apps, login_decorator=api_auth())
 @api_throttle
-@require_POST
-def upload_multimedia_api(request, domain, app_id):
-    return _handle_upload_multimedia(request, domain, app_id)
+@require_GET
+def multimedia_status_api(request, domain, app_id, processing_id):
+    return _handle_multimedia_status(request, domain, app_id, processing_id)
 
 
 def _handle_multimedia_status(request, domain, app_id, processing_id):
@@ -126,11 +134,3 @@ def _handle_multimedia_status(request, domain, app_id, processing_id):
     response_data = status.get_response()
     response_data['success'] = True
     return JsonResponse(response_data)
-
-
-@json_error
-@require_permission(HqPermissions.edit_apps, login_decorator=api_auth())
-@api_throttle
-@require_GET
-def multimedia_status_api(request, domain, app_id, processing_id):
-    return _handle_multimedia_status(request, domain, app_id, processing_id)
