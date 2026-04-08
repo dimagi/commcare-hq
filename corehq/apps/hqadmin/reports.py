@@ -70,18 +70,14 @@ def truncate_rows_to_minute_boundary(rows, max_records):
     def floor_to_minute(dt):
         return dt.replace(second=0, microsecond=0)
 
-    # Find the minute of the row that pushed us over the limit
     overflow_date = parse_date(rows[max_records][0])
     overflow_minute = floor_to_minute(overflow_date)
 
-    # Find the minute of the first row
     first_minute = floor_to_minute(parse_date(rows[0][0]))
 
-    # If all rows are in the same minute, we can't trim
     if overflow_minute == first_minute:
         return rows[:max_records], None
 
-    # Trim to rows with event_date < overflow_minute
     cutoff = overflow_minute
     trimmed = [r for r in rows if parse_date(r[0]) < cutoff]
 
