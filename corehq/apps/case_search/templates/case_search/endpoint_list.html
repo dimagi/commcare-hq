@@ -1,0 +1,66 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>{% trans "Case Search Endpoints" %}</h2>
+      <a
+        href="{% url 'case_search_endpoint_new' domain %}"
+        class="btn btn-primary"
+      >
+        {% trans "New Endpoint" %}
+      </a>
+    </div>
+
+    {% if endpoints %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Target" %}</th>
+            <th>{% trans "Current Version" %}</th>
+            <th>{% trans "Created" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ep in endpoints %}
+            <tr>
+              <td>
+                <a href="{% url 'case_search_endpoint_edit' domain ep.id %}">
+                  {{ ep.name }}
+                </a>
+              </td>
+              <td>{{ ep.target_type }}: {{ ep.target_name }}</td>
+              <td>
+                {% if ep.current_version %}
+                  v{{ ep.current_version.version_number }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>{{ ep.created_at|date:"N j, Y" }}</td>
+              <td>
+                <form
+                  method="post"
+                  action="{% url 'case_search_endpoint_deactivate' domain ep.id %}"
+                  onsubmit="return confirm('{% trans "Deactivate this endpoint?" %}')"
+                >
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    {% trans "Deactivate" %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="alert alert-info">
+        {% trans "No endpoints configured. Create one to get started." %}
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

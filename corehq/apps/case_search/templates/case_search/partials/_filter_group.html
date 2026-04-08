@@ -1,0 +1,84 @@
+{# Recursive filter group — rendered up to 2 levels deep to avoid Django template recursion #}
+{# x-data context: node (the boolean node); parent scope provides capability, parameters, targetName, mode #}
+{% load i18n %}
+
+<div class="border rounded p-2 mb-2 bg-light">
+  <div class="d-flex align-items-center mb-2">
+    <select
+      class="form-select form-select-sm w-auto"
+      x-model="node.type"
+      :disabled="mode === 'readonly'"
+      style="max-width: 100px"
+    >
+      <option value="and">AND</option>
+      <option value="or">OR</option>
+    </select>
+  </div>
+
+  <template x-for="(child, idx) in node.children" :key="idx">
+    <div class="ms-3 mb-2">
+      <!-- Nested group (rendered inline, no further nesting supported in UI) -->
+      <template x-if="child.type === 'and' || child.type === 'or'">
+        <div x-data="{ node: child }">
+          <div class="border rounded p-2 mb-2 bg-white">
+            <div class="d-flex align-items-center mb-2">
+              <select
+                class="form-select form-select-sm w-auto"
+                x-model="node.type"
+                :disabled="mode === 'readonly'"
+                style="max-width: 100px"
+              >
+                <option value="and">AND</option>
+                <option value="or">OR</option>
+              </select>
+            </div>
+
+            <template x-for="(child, idx) in node.children" :key="idx">
+              <div class="ms-3 mb-2">
+                <template x-if="child.type === 'component'">
+                  {% include "case_search/partials/_filter_row.html" %}
+                </template>
+              </div>
+            </template>
+
+            <div class="ms-3" x-show="mode !== 'readonly'">
+              <button
+                class="btn btn-sm btn-outline-primary"
+                @click="node.children.push({type: 'component', component: '', field: '', inputs: {value: {type: 'constant', value: ''}}})"
+              >
+                {% trans "+ Add condition" %}
+              </button>
+            </div>
+          </div>
+          <button
+            class="btn btn-sm btn-outline-danger mt-1"
+            x-show="mode !== 'readonly'"
+            @click="$parent.node.children.splice(idx, 1)"
+          >
+            {% trans "Remove group" %}
+          </button>
+        </div>
+      </template>
+
+      <!-- Leaf node (component) -->
+      <template x-if="child.type === 'component'">
+        {% include "case_search/partials/_filter_row.html" %}
+      </template>
+    </div>
+  </template>
+
+  <div class="ms-3" x-show="mode !== 'readonly'">
+    <button
+      class="btn btn-sm btn-outline-primary"
+      @click="node.children.push({type: 'component', component: '', field: '', inputs: {value: {type: 'constant', value: ''}}})"
+    >
+      {% trans "+ Add condition" %}
+    </button>
+    <button
+      class="btn btn-sm btn-outline-secondary"
+      @click="node.children.push({type: 'and', children: []})"
+    >
+      {% trans "+ Add group" %}
+    </button>
+  </div>
+</div>
