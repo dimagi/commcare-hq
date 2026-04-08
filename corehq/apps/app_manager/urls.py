@@ -85,6 +85,11 @@ from corehq.apps.app_manager.views import (
     view_module,
     view_module_legacy,
 )
+from corehq.apps.app_manager.views.app_import_api import (
+    import_app_api,
+    multimedia_status_api,
+    upload_multimedia_api,
+)
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView, AllCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -255,6 +260,10 @@ urlpatterns = [
 
     url(r'^api/list_apps/$', list_apps, name='list_apps'),
     url(r'^api/download_ccz/$', direct_ccz, name='direct_ccz'),
+    url(r'^api/import_app/$', import_app_api, name='import_app_api'),
+    url(r'^api/(?P<app_id>[\w-]+)/multimedia/$', upload_multimedia_api, name='upload_multimedia_api'),
+    url(r'^api/(?P<app_id>[\w-]+)/multimedia/status/(?P<processing_id>[\w-]+)/$',
+        multimedia_status_api, name='multimedia_status_api'),
     url(r'^download/(?P<app_id>[\w-]+)/$', download_index, name='download_index'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
