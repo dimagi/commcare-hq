@@ -138,7 +138,7 @@ class PathIncludeFilter(BasePathFilter):
     slug = 'path_include'
     label = gettext_lazy("URL Path Include")
     mode_slug = 'path_include_mode'
-    placeholder = '/a/domain/api/v1/'
+    placeholder = '/a/domain/api/v0.5/'
     help_inline = gettext_lazy(
         "One URL path pattern per line. Patterns are OR'd together. "
         "Leave blank to include all paths."
@@ -149,7 +149,7 @@ class PathExcludeFilter(BasePathFilter):
     slug = 'path_exclude'
     label = gettext_lazy("URL Path Exclude")
     mode_slug = 'path_exclude_mode'
-    placeholder = '/a/domain/heartbeat/'
+    placeholder = '/a/domain/phone/heartbeat/'
     help_inline = gettext_lazy(
         "One URL path pattern per line. Matching rows are excluded. "
         "Patterns are OR'd (any match excludes the row)."
