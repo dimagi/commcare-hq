@@ -1136,9 +1136,9 @@ class TestUserDomainsResourcePagination(TestCase):
         resource = UserDomainsResource()
         with patch.object(resource, 'get_object_list', return_value=mock_domains):
             response = resource.get_list(request)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         data = json.loads(response.content)
-        self.assertEqual(len(data['objects']), 25)
+        assert len(data['objects']) == 25
 
 
 class TestUserDomainsResourceApiKeyFiltering(TestCase):
@@ -1169,7 +1169,7 @@ class TestUserDomainsResourceApiKeyFiltering(TestCase):
     def test_all_domains_returned_without_api_key(self, _):
         resp = UserDomainsResource().obj_get_list(self._make_bundle())
         domain_names = [d.domain_name for d in resp]
-        self.assertCountEqual([self.domain, self.domain2], domain_names)
+        assert set(domain_names) == {self.domain, self.domain2}
 
     @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
     def test_all_domains_returned_with_unrestricted_api_key(self, _):
@@ -1177,7 +1177,7 @@ class TestUserDomainsResourceApiKeyFiltering(TestCase):
         api_key.domain = ''
         resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
         domain_names = [d.domain_name for d in resp]
-        self.assertCountEqual([self.domain, self.domain2], domain_names)
+        assert set(domain_names) == {self.domain, self.domain2}
 
     @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
     def test_only_key_domain_returned_with_domain_scoped_api_key(self, _):
@@ -1185,7 +1185,7 @@ class TestUserDomainsResourceApiKeyFiltering(TestCase):
         api_key.domain = self.domain
         resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
         domain_names = [d.domain_name for d in resp]
-        self.assertEqual([self.domain], domain_names)
+        assert domain_names == [self.domain]
 
     @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
     def test_only_key_domain2_returned_with_domain_scoped_api_key(self, _):
@@ -1193,7 +1193,7 @@ class TestUserDomainsResourceApiKeyFiltering(TestCase):
         api_key.domain = self.domain2
         resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
         domain_names = [d.domain_name for d in resp]
-        self.assertEqual([self.domain2], domain_names)
+        assert domain_names == [self.domain2]
 
 
 class TestCommCareAnalyticsUserResource(APIResourceTest):
