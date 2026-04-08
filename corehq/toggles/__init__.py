@@ -1200,6 +1200,15 @@ VELLUM_ALLOW_BULK_FORM_ACTIONS = StaticToggle(
                 "the Form Builder's main dropdown menu.",
 )
 
+LOCKED_ADMIN_QUESTIONS = FeatureRelease(
+    'locked_admin_questions',
+    "Locked Admin Questions",
+    TAG_RELEASE,
+    [NAMESPACE_DOMAIN],
+    owner="Evan Joseph-Pinero",
+    description="Enables Locked Admin Questions workflows in HQ and the form builder.",
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'REC: Enable the "Cache and Index" format option when choosing sort properties '
