@@ -80,10 +80,7 @@ def truncate_rows_to_minute_boundary(rows, max_records):
 
     cutoff = overflow_minute
     trimmed = [r for r in rows if parse_date(r[0]) < cutoff]
-
-    # Guard: if trimmed still exceeds (shouldn't normally happen)
-    if len(trimmed) > max_records:
-        return truncate_rows_to_minute_boundary(trimmed, max_records)
+    assert len(trimmed) <= max_records, (len(trimmed), max_records)
 
     return trimmed, cutoff
 
