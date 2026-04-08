@@ -1,8 +1,6 @@
-# Code Standards for CommCare HQ
+# Code Standards and Best Practices for CommCare HQ
 
-This document outlines coding standards and best practices for the
-CommCare HQ codebase. These guidelines apply when reviewing code,
-writing code, or making changes to the project.
+These guidelines apply when writing or reviewing code.
 
 ## General Principles
 
@@ -26,9 +24,9 @@ writing code, or making changes to the project.
 
 ## Documentation
 
-- **Comments explain "why" not "what"**: The "what" should be clear from
-  the code itself. Use comments to explain reasoning that might not be
-  immediately clear.
+- **Comments explain "why" not "what"**: When writing code, if the
+  "what" is not clear from the code, change the code. Use comments to
+  explain reasoning that might not be obvious.
 
 - **Docstrings for modules and classes**: Use docstrings to give the
   purpose of a module or class. Avoid docstrings on methods or functions
@@ -58,6 +56,10 @@ writing code, or making changes to the project.
       assert results.failed == 0
   ```
 
+- **Tests should be simple**: Tests that require a lot of patching or
+  mocking are often an indicator that the code they cover needs to be
+  simplified.
+
 - **Run tests before completing**: Run the tests that cover the changes
   before considering any changes complete.
 
@@ -66,8 +68,8 @@ writing code, or making changes to the project.
 - **Database queries**: For database operations, queries should be
   optimized. In rare instances this could require testing the
   performance of the query in an environment similar to production. If
-  you're writing code and believe this would be beneficial, notify the
-  developer.
+  you're writing code and believe this would be beneficial, **alert the
+  developer**.
 
 - **Front-end**: For front-end code, be mindful of rendering or loading
   concerns.
@@ -94,6 +96,7 @@ writing code, or making changes to the project.
 
 - **migrations.lock** — If you wrote a migration instead of generating one,
   run `./manage.py makemigrations --lock-update` to update the lock file.
+
 - **New domain-scoped models** — Any new model with a `domain` field (or
   reachable via FK to a domain) must be registered in two places or CI will
   fail:
@@ -104,20 +107,31 @@ writing code, or making changes to the project.
     model is cleaned up when a domain is deleted.
   Use `SimpleFilter('domain')` for direct domain fields, or
   `SimpleFilter('parent__domain')` for FK traversal.
+
 - **CouchDB is legacy** — Use PostgreSQL for new data models
+
 - **Knockout.js is legacy** — Prefer HTMX or Alpine.js for new frontend code
+
 - **Bootstrap 3 is legacy** — Prefer Bootstrap 5; both coexist in the codebase
 
 ## Version Control
 
 - Always commit on a branch, never directly on master.
+
 - When creating a new branch, each author has a prefix they use. Use the
   prefix the author has used most on local git branches, or else their
   initials (from `git config user.name`).
+
 - Commit work in logical chunks rather than one large commit. Group related
   changes together (e.g. a new module with its tests, a migration with its
   model changes) so that each commit is self-contained and reviewable.
+
+- Whenever code is moved and changed, or a file is renamed and changed,
+  do the move or the rename in one commit and make the changes in another
+  commit, so that the changes are clear.
+
 - When creating PRs, always create them as drafts with the "DON'T REVIEW
   YET" label, and always use the GitHub PR template.
+
 - When adding PR descriptions, avoid restating the code diff. Focus on
   useful context for the reviewer.
