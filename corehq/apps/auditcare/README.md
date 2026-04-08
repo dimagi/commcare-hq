@@ -31,16 +31,16 @@ all users (requires a domain filter).
   starting with `10.`.
 - Comma-separated for multiple: `10.0.0.0/8, 192.168.1.0/24`
 
-**URL Include** — One URL path pattern per line. Choose **contains** or
+**URL Path Include** — One URL path pattern per line. Choose **contains** or
 **starts with** mode. Rows matching any pattern are included. Leave blank to
-include all URLs.
+include all paths.
 
 When using "starts with" with a domain filter, the report shows a hint if your
-patterns don't start with `/a/<domain>/`, since most domain-scoped URLs follow
-that convention.
+patterns don't start with `/a/<domain>/`, since most domain-scoped URL paths
+follow that convention.
 
-**URL Exclude** — Same format as URL Include. Rows matching any pattern are
-excluded. Has its own independent contains/starts-with toggle.
+**URL Path Exclude** — Same format as URL Path Include. Rows matching any
+pattern are excluded. Has its own independent contains/starts-with toggle.
 
 **Status Code** — Comma-separated HTTP status codes, e.g. `200, 403, 500`. When
 active, only `NavigationEventAudit` rows with a matching status code are shown
