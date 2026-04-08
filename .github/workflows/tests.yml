@@ -4,7 +4,6 @@ on:
     branches:
     - master
     - hotfix-deploy
-    - es/case-search-ffs
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
