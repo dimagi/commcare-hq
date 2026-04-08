@@ -423,14 +423,24 @@ class UserAuditReport(AdminReport, DatespanMixin):
             context['truncation_level'] = 'warning'
         elif self._truncation_cutoff:
             cutoff = self._truncation_cutoff
-            context['truncation_message'] = _(
-                "Showing events through {cutoff_time}. Your query returned more than "
+            num_rows = len(self.rows)
+            message = _(
+                "Showing {num_rows} events through {cutoff_time}. Your query returned more than "
                 "{max_records} results; the end date/time has been adjusted. "
                 "To see later events, set the start time to {cutoff_time}."
             ).format(
+                num_rows=num_rows,
                 cutoff_time=cutoff.strftime("%Y-%m-%d %H:%M UTC"),
                 max_records=self.MAX_RECORDS,
             )
+            dropped = self.MAX_RECORDS - num_rows
+            if dropped > 500:
+                message += " " + _(
+                    "Note: {dropped} additional results within the cutoff minute were excluded "
+                    "to align with a clean minute boundary. Adding filters (IP address, "
+                    "URL path, status code) may help narrow results."
+                ).format(dropped=dropped)
+            context['truncation_message'] = message
             context['truncation_level'] = 'info'
             context['adjusted_end_date'] = cutoff.strftime("%Y-%m-%d")
             context['adjusted_end_time'] = cutoff.strftime("%H:%M")

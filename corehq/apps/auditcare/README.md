@@ -73,6 +73,10 @@ events:
 4. An info message explains the adjustment and suggests setting the start time
    to the displayed cutoff to page forward.
 
+If the minute boundary drops a large number of rows (more than 500), the
+message notes how many were excluded and suggests adding filters to narrow
+results.
+
 If all 5,001 rows fall within the same minute (making minute-boundary trimming
 impossible), the report shows the first 5,000 rows with a warning that
 additional events in that minute are not displayed.
