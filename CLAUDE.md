@@ -1,8 +1,10 @@
 # Guidelines for AI Agents
 
 This document provides technical information about the CommCare HQ codebase
-for AI coding assistants. For coding standards and best practices, see
-`CODE_STANDARDS.md`.
+for AI coding assistants.
+
+Before making code changes or doing code review, make sure you have read
+[CODE_STANDARDS.md](CODE_STANDARDS.md).
 
 ## Tech Stack
 
