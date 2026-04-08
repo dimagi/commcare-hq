@@ -541,7 +541,6 @@ msgstr ""
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -1172,7 +1171,6 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -27737,20 +27735,12 @@ msgstr ""
 msgid "Domain"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
+#: corehq/apps/hqadmin/reports.py
 msgid "IP Address"
 msgstr ""
 
-#: corehq/apps/hqadmin/reports.py corehq/apps/notifications/forms.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
-msgid "URL"
-msgstr ""
-
-#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
-#: corehq/motech/views.py
-msgid "Status Code"
+#: corehq/apps/hqadmin/reports.py
+msgid "Resource"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
@@ -27766,36 +27756,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
-msgid ""
-"Invalid IP address filter. Use single IPs, CIDR notation "
-"(/8, /16, /24, /32), or comma-separated combinations."
-msgstr ""
-
-#: corehq/apps/hqadmin/reports.py
-msgid ""
-"Invalid status code filter. Use comma-separated integers (e.g. 200, 403, "
-"500)."
-msgstr ""
-
-#: corehq/apps/hqadmin/reports.py
-#, python-brace-format
-msgid "Note: URLs for this domain typically start with \"{domain_prefix}\"."
-msgstr ""
-
-#: corehq/apps/hqadmin/reports.py
 #, python-brace-format
 msgid ""
-"Showing {max_records} results, but there are additional events within the "
-"same minute that are not shown. Try narrowing by username, domain, IP "
-"address, or other filters to see all results."
-msgstr ""
-
-#: corehq/apps/hqadmin/reports.py
-#, python-brace-format
-msgid ""
-"Showing events through {cutoff_time}. Your query returned more than "
-"{max_records} results; the end date/time has been adjusted. To see later "
-"events, set the start time to {cutoff_time}."
+"Your search returned more than {max_records} records. Please narrow down "
+"your search by selecting a specific user, domain, or a shorter date range."
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
@@ -28028,9 +27992,7 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-msgid ""
-"%(user_name)s's\n"
-"      Information"
+msgid "%(user_name)s's Information"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
@@ -28050,51 +28012,9 @@ msgid "Is Superuser"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-msgid "Offboard Staff User"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Domains"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#, python-format
-msgid ""
-"\n"
-"                The following will be removed from\n"
-"                <strong>%(user_name)s</strong>:\n"
-"              "
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#, python-format
-msgid ""
-"\n"
-"                    %(count)s domain membership\n"
-"                  "
-msgid_plural ""
-"\n"
-"                    %(count)s domain memberships\n"
-"                  "
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-msgid "Superuser access"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-msgid "Accounting admin access"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#, python-format
-msgid ""
-"\n"
-"                  Type <strong>%(confirm_text)s</strong> to confirm\n"
-"                "
 msgstr ""
 
 #: corehq/apps/hqadmin/views/data.py
@@ -28161,36 +28081,6 @@ msgstr ""
 msgid ""
 "Unexpected restore response {}: {}. If you believe this is a bug please "
 "report an issue."
-msgstr ""
-
-#: corehq/apps/hqadmin/views/users.py
-#, python-brace-format
-msgid "User '{username}' not found."
-msgstr ""
-
-#: corehq/apps/hqadmin/views/users.py
-#, python-brace-format
-msgid "{count} domain membership"
-msgid_plural "{count} domain memberships"
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/hqadmin/views/users.py
-msgid "superuser access"
-msgstr ""
-
-#: corehq/apps/hqadmin/views/users.py
-msgid "accounting admin access"
-msgstr ""
-
-#: corehq/apps/hqadmin/views/users.py
-#, python-brace-format
-msgid "Removed {items} from user '{username}'."
-msgstr ""
-
-#: corehq/apps/hqadmin/views/users.py
-#, python-brace-format
-msgid "User '{username}' has no access to remove."
 msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
@@ -32849,6 +32739,13 @@ msgid "Here are your keys!"
 msgstr ""
 
 #: corehq/apps/notifications/forms.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
+msgid "URL"
+msgstr ""
+
+#: corehq/apps/notifications/forms.py
 msgid "Domain-specific"
 msgstr ""
 
@@ -35416,8 +35313,8 @@ msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
 msgid ""
-"One or more usernames, comma-separated. Leave blank to include all users "
-"(requires domain to limit the scope)."
+"Leave this blank to include all users. In that case, domain is required to "
+"limit the scope."
 msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
@@ -35430,38 +35327,6 @@ msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional. Leave blank to include the full day."
-msgstr ""
-
-#: corehq/apps/reports/filters/simple.py
-msgid ""
-"Single IP, CIDR (/8, /16, /24, /32), or comma-separated. Example: "
-"10.0.0.0/8, 192.168.1.1"
-msgstr ""
-
-#: corehq/apps/reports/filters/simple.py
-msgid "URL Include"
-msgstr ""
-
-#: corehq/apps/reports/filters/simple.py
-msgid ""
-"One URL pattern per line. Patterns are OR'd together. Leave blank to include "
-"all URLs."
-msgstr ""
-
-#: corehq/apps/reports/filters/simple.py
-msgid "URL Exclude"
-msgstr ""
-
-#: corehq/apps/reports/filters/simple.py
-msgid ""
-"One URL pattern per line. Matching rows are excluded. Patterns are OR'd (any "
-"match excludes the row)."
-msgstr ""
-
-#: corehq/apps/reports/filters/simple.py
-msgid ""
-"Comma-separated status codes. Example: 200, 403, 500. Leave blank to include "
-"all."
 msgstr ""
 
 #: corehq/apps/reports/filters/users.py
@@ -50903,6 +50768,10 @@ msgstr ""
 
 #: corehq/motech/views.py
 msgid "Request Body"
+msgstr ""
+
+#: corehq/motech/views.py
+msgid "Status Code"
 msgstr ""
 
 #: corehq/motech/views.py
