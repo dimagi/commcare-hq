@@ -2287,6 +2287,28 @@ msgid "Case ID"
 msgstr "ID Caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#| msgid "Case type is required."
+msgid "Case ID is required"
+msgstr "ID del caso obbligatorio"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid "uuid() should not have arguments"
+msgstr "uuid() non dovrebbe avere argomenti"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid ""
+"Case ID cannot be uuid() without a Create action. It must reference an "
+"existing case."
+msgstr ""
+"L'ID del caso non può essere uuid() senza un'azione di creazione. Deve fare "
+"riferimento a un caso esistente."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#| msgid "Invalid XPath expression."
+msgid "Case ID must be an XPath expression"
+msgstr "L'ID del caso deve essere un'espressione XPath"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Create Case"
 msgstr "Crea Caso"
 

@@ -2336,6 +2336,28 @@ msgid "Case ID"
 msgstr "Identifiant de dossier"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#| msgid "Case type is required."
+msgid "Case ID is required"
+msgstr "L'identifiant du dossier est requis"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid "uuid() should not have arguments"
+msgstr "uuid() ne doit pas avoir d'arguments"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid ""
+"Case ID cannot be uuid() without a Create action. It must reference an "
+"existing case."
+msgstr ""
+"L'identifiant du dossier ne peut pas être uuid() sans une action de "
+"création. Il doit faire référence à un dossier existant."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#| msgid "Invalid XPath expression."
+msgid "Case ID must be an XPath expression"
+msgstr "L'identifiant du dossier doit être une expression XPath"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Create Case"
 msgstr "Créer un dossier"
 

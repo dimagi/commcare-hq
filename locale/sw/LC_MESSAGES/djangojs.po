@@ -2279,6 +2279,28 @@ msgid "Case ID"
 msgstr "Kitambulisho cha Kesi"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#| msgid "Case type is required."
+msgid "Case ID is required"
+msgstr "Kitambulisho cha Kesi kinahitajika"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid "uuid() should not have arguments"
+msgstr "uuid() haipaswi kuwa na hoja"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid ""
+"Case ID cannot be uuid() without a Create action. It must reference an "
+"existing case."
+msgstr ""
+"Kitambulisho cha Kesi hakiwezi kuwa uuid() bila hatua ya Kuunda. Lazima "
+"kiashirie kesi iliyopo."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#| msgid "Invalid XPath expression."
+msgid "Case ID must be an XPath expression"
+msgstr "Kitambulisho cha Kesi lazima kiwe usemi wa XPath"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Create Case"
 msgstr "Unda Kesi"
 
