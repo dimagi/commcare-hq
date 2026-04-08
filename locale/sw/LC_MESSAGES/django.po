@@ -558,6 +558,7 @@ msgstr "Tarehe ya mwisho lazima iwe baada ya tarehe ya kuanza."
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -1234,6 +1235,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -31923,13 +31925,21 @@ msgstr "Aina ya Hati"
 msgid "Domain"
 msgstr "Domain"
 
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
 msgid "IP Address"
 msgstr "Anwani ya IP"
 
-#: corehq/apps/hqadmin/reports.py
-msgid "Resource"
-msgstr "Rasilimali"
+#: corehq/apps/hqadmin/reports.py corehq/apps/notifications/forms.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
+msgid "URL"
+msgstr "URL"
+
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
+#: corehq/motech/views.py
+msgid "Status Code"
+msgstr "Nambari ya Hali"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -31948,14 +31958,47 @@ msgstr ""
 "sawa. Tafadhali rekebisha muda wako."
 
 #: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid IP address filter. Use single IPs, CIDR notation (/8, /16, /24, "
+"/32), or comma-separated combinations."
+msgstr ""
+"Kichujio cha anwani ya IP si sahihi. Tumia IP moja, noti ya CIDR (/8, /16, "
+"/24, /32), au mchanganyiko uliotenganishwa kwa koma."
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid status code filter. Use comma-separated integers (e.g. 200, 403, "
+"500)."
+msgstr ""
+"Kichujio cha msimbo wa hali si sahihi. Tumia nambari zilizotenganishwa kwa "
+"koma (mf. 200, 403, 500)."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid "Note: URLs for this domain typically start with \"{domain_prefix}\"."
+msgstr "Kumbuka: URL za domain hii kawaida huanza na \"{domain_prefix}\"."
+
+#: corehq/apps/hqadmin/reports.py
 #, python-brace-format
 msgid ""
-"Your search returned more than {max_records} records. Please narrow down "
-"your search by selecting a specific user, domain, or a shorter date range."
+"Showing {max_records} results, but there are additional events within the "
+"same minute that are not shown. Try narrowing by username, domain, IP "
+"address, or other filters to see all results."
 msgstr ""
-"Utafutaji wako umerejesha rekodi zaidi ya {max_records}. Tafadhali punguza "
-"utafutaji wako kwa kuchagua mtumiaji maalum, domain, au kipindi kifupi cha "
-"tarehe."
+"Inaonyesha matokeo {max_records}, lakini kuna matukio mengine ndani ya "
+"dakika hiyo hiyo ambayo hayajaonyeshwa. Jaribu kupunguza kwa jina la "
+"mtumiaji, domain, anwani ya IP, au vichujio vingine ili kuona matokeo yote."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Showing events through {cutoff_time}. Your query returned more than "
+"{max_records} results; the end date/time has been adjusted. To see later "
+"events, set the start time to {cutoff_time}."
+msgstr ""
+"Inaonyesha matukio hadi {cutoff_time}. Utafutaji wako umerejesha matokeo "
+"zaidi ya {max_records}; tarehe/muda wa mwisho umebadilishwa. Ili kuona "
+"matukio ya baadaye, weka muda wa kuanza kuwa {cutoff_time}."
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
@@ -32200,8 +32243,13 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-msgid "%(user_name)s's Information"
-msgstr "Taarifa za %(user_name)s"
+#| msgid "%(user_name)s's Information"
+msgid ""
+"%(user_name)s's\n"
+"      Information"
+msgstr ""
+"Taarifa za\n"
+"      %(user_name)s"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "This account is disabled."
@@ -32220,10 +32268,80 @@ msgid "Is Superuser"
 msgstr "Ni Mtumiaji Mkuu"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Offboard Staff User"
+msgstr "Ondoa Mtumiaji wa Wafanyakazi"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Domains"
 msgstr "Nyanja"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                Are you sure you want to permanently delete\n"
+#| "                <strong>%(attendee_name)s</strong>?\n"
+#| "              "
+msgid ""
+"\n"
+"                The following will be removed from\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+msgstr ""
+"\n"
+"                Yafuatayo yataondolewa kutoka kwa\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                        %(cc_name)s Help\n"
+#| "                    "
+msgid ""
+"\n"
+"                    %(count)s domain membership\n"
+"                  "
+msgid_plural ""
+"\n"
+"                    %(count)s domain memberships\n"
+"                  "
+msgstr[0] ""
+"\n"
+"                        Msaada wa %(cc_name)s\n"
+"                    "
+msgstr[1] ""
+"\n"
+"                        Msaada wa %(cc_name)s\n"
+"                    "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "Superuser"
+msgid "Superuser access"
+msgstr "Ufikiaji wa superuser"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "Accounting Admins"
+msgid "Accounting admin access"
+msgstr "Ufikiaji wa msimamizi wa uhasibu"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                "
+msgid ""
+"\n"
+"                  Type <strong>%(confirm_text)s</strong> to confirm\n"
+"                "
+msgstr ""
+"\n"
+"                  Andika <strong>%(confirm_text)s</strong> ili kuthibitisha\n"
+"                "
 
 #: corehq/apps/hqadmin/views/data.py
 msgid "Missing Form XML"
@@ -32293,6 +32411,40 @@ msgid ""
 msgstr ""
 "Jibu lisilotarajiwa la kurejesha {}: {}. Ikiwa unaamini hii ni hitilafu "
 "tafadhali ripoti tatizo."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+#| msgid "User with ID '{user_id}' not found"
+msgid "User '{username}' not found."
+msgstr "Mtumiaji '{username}' hakupatikana."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+#| msgid "Update Location Membership"
+msgid "{count} domain membership"
+msgid_plural "{count} domain memberships"
+msgstr[0] "Sasisha Uanachama wa Eneo"
+msgstr[1] "Sasisha Uanachama wa Eneo"
+
+#: corehq/apps/hqadmin/views/users.py
+#| msgid "Grant or revoke superuser access"
+msgid "superuser access"
+msgstr "ufikiaji wa superuser"
+
+#: corehq/apps/hqadmin/views/users.py
+#| msgid "Accounting Admins"
+msgid "accounting admin access"
+msgstr "ufikiaji wa msimamizi wa uhasibu"
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "Removed {items} from user '{username}'."
+msgstr "Imetoa {items} kutoka kwa mtumiaji '{username}'."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "User '{username}' has no access to remove."
+msgstr "Mtumiaji '{username}' hana ufikiaji wa kuondoa."
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-format
@@ -37606,13 +37758,6 @@ msgid "Here are your keys!"
 msgstr "Hizi ndizo funguo zako!"
 
 #: corehq/apps/notifications/forms.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
-msgid "URL"
-msgstr "URL"
-
-#: corehq/apps/notifications/forms.py
 msgid "Domain-specific"
 msgstr "Maalum kwa kikoa"
 
@@ -40546,12 +40691,15 @@ msgid "Payload ID"
 msgstr "Kitambulisho cha Payload"
 
 #: corehq/apps/reports/filters/simple.py
+#| msgid ""
+#| "Leave this blank to include all users. In that case, domain is required to "
+#| "limit the scope."
 msgid ""
-"Leave this blank to include all users. In that case, domain is required to "
-"limit the scope."
+"One or more usernames, comma-separated. Leave blank to include all users "
+"(requires domain to limit the scope)."
 msgstr ""
-"Acha hii wazi kujumuisha watumiaji wote. Katika hali hiyo, domain "
-"inahitajika ili kupunguza wigo."
+"Jina moja au zaidi la mtumiaji, limetenganishwa kwa koma. Acha wazi "
+"kujumuisha watumiaji wote (inahitaji domain ili kupunguza wigo)."
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
@@ -40564,6 +40712,47 @@ msgstr "Hiari. Acha wazi kutumia chaguo-msingi (saa sita usiku)."
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional. Leave blank to include the full day."
 msgstr "Hiari. Acha wazi kujumuisha siku nzima."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Single IP, CIDR (/8, /16, /24, /32), or comma-separated. Example: "
+"10.0.0.0/8, 192.168.1.1"
+msgstr ""
+"IP moja, CIDR (/8, /16, /24, /32), au mchanganyiko uliotenganishwa kwa koma."
+" Mfano: 10.0.0.0/8, 192.168.1.1"
+
+#: corehq/apps/reports/filters/simple.py
+#| msgid "Include?"
+msgid "URL Include"
+msgstr "Jumuisha URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL pattern per line. Patterns are OR'd together. Leave blank to include"
+" all URLs."
+msgstr ""
+"Mfumo mmoja wa URL kwa kila mstari. Mifumo inaunganishwa kwa OR. Acha wazi "
+"kujumuisha URL zote."
+
+#: corehq/apps/reports/filters/simple.py
+msgid "URL Exclude"
+msgstr "Ondoa URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL pattern per line. Matching rows are excluded. Patterns are OR'd (any"
+" match excludes the row)."
+msgstr ""
+"Mfumo mmoja wa URL kwa kila mstari. Mistari inayolingana itaondolewa. Mifumo"
+" inaunganishwa kwa OR (mfanano wowote unaondoa mstari)."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Comma-separated status codes. Example: 200, 403, 500. Leave blank to include"
+" all."
+msgstr ""
+"Nambari za hali zilizotenganishwa kwa koma. Mfano: 200, 403, 500. Acha wazi "
+"kujumuisha zote."
 
 #: corehq/apps/reports/filters/users.py
 msgid "View by Users or Groups"
@@ -58008,10 +58197,6 @@ msgid "Request Body"
 msgstr "Mwili wa Ombi"
 
 #: corehq/motech/views.py
-msgid "Status Code"
-msgstr "Nambari ya Hali"
-
-#: corehq/motech/views.py
 msgid "Response Headers"
 msgstr "Vichwa vya Majibu"
 
@@ -59283,6 +59468,18 @@ msgstr "Safu zinazohitajika ni {column_names}"
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
 
+#~ msgid "Resource"
+#~ msgstr "Rasilimali"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Your search returned more than {max_records} records. Please narrow down "
+#~ "your search by selecting a specific user, domain, or a shorter date range."
+#~ msgstr ""
+#~ "Utafutaji wako umerejesha rekodi zaidi ya {max_records}. Tafadhali punguza "
+#~ "utafutaji wako kwa kuchagua mtumiaji maalum, domain, au kipindi kifupi cha "
+#~ "tarehe."
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -59493,18 +59690,6 @@ msgstr "Weka JSON halali"
 
 #~ msgid "Delete Attendee"
 #~ msgstr "Futa Mhudhuriaji"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "                Are you sure you want to permanently delete\n"
-#~ "                <strong>%(attendee_name)s</strong>?\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "                Una uhakika unataka kufuta kabisa\n"
-#~ "                <strong>%(attendee_name)s</strong>?\n"
-#~ "              "
 
 #, python-format
 #~ msgid ""

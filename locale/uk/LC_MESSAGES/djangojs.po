@@ -2291,6 +2291,28 @@ msgid "Case ID"
 msgstr "ID кейсу"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#, fuzzy
+#| msgid "Case type is required."
+msgid "Case ID is required"
+msgstr "Тип справи є обов'язковим."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid "uuid() should not have arguments"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+msgid ""
+"Case ID cannot be uuid() without a Create action. It must reference an "
+"existing case."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
+#, fuzzy
+#| msgid "Invalid XPath expression."
+msgid "Case ID must be an XPath expression"
+msgstr "Неправильний вираз XPath."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/6367.js
 msgid "Create Case"
 msgstr "Створити кейс"
 

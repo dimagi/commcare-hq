@@ -564,6 +564,7 @@ msgstr "La fecha de finalización debe ser posterior a la fecha de inicio. "
 
 #: corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/hqadmin/templates/hqadmin/user_audit_report.html
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -1293,6 +1294,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -32200,13 +32202,21 @@ msgstr "Tipo de Documento"
 msgid "Domain"
 msgstr "Dominio"
 
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
 msgid "IP Address"
 msgstr "Dirección IP"
 
-#: corehq/apps/hqadmin/reports.py
-msgid "Resource"
-msgstr "Recurso"
+#: corehq/apps/hqadmin/reports.py corehq/apps/notifications/forms.py
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
+msgid "URL"
+msgstr "URL"
+
+#: corehq/apps/hqadmin/reports.py corehq/apps/reports/filters/simple.py
+#: corehq/motech/views.py
+msgid "Status Code"
+msgstr "Código de estado"
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
@@ -32226,14 +32236,49 @@ msgstr ""
 "ambas fechas son iguales. Por favor, ajusta tu rango de tiempo."
 
 #: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid IP address filter. Use single IPs, CIDR notation (/8, /16, /24, "
+"/32), or comma-separated combinations."
+msgstr ""
+"Filtro de dirección IP no válido. Usa IPs individuales, notación CIDR (/8, "
+"/16, /24, /32), o combinaciones separadas por comas."
+
+#: corehq/apps/hqadmin/reports.py
+msgid ""
+"Invalid status code filter. Use comma-separated integers (e.g. 200, 403, "
+"500)."
+msgstr ""
+"Filtro de código de estado no válido. Usa enteros separados por comas (ej. "
+"200, 403, 500)."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid "Note: URLs for this domain typically start with \"{domain_prefix}\"."
+msgstr ""
+"Nota: Las URLs para este dominio normalmente comienzan con "
+"\"{domain_prefix}\"."
+
+#: corehq/apps/hqadmin/reports.py
 #, python-brace-format
 msgid ""
-"Your search returned more than {max_records} records. Please narrow down "
-"your search by selecting a specific user, domain, or a shorter date range."
+"Showing {max_records} results, but there are additional events within the "
+"same minute that are not shown. Try narrowing by username, domain, IP "
+"address, or other filters to see all results."
 msgstr ""
-"Tu búsqueda devolvió más de {max_records} registros. Por favor, acota tu "
-"búsqueda seleccionando una persona usuaria, dominio o un rango de fechas más"
-" corto."
+"Mostrando {max_records} resultados, pero hay eventos adicionales dentro del "
+"mismo minuto que no se muestran. Intenta filtrar por nombre de usuario, "
+"dominio, dirección IP u otros filtros para ver todos los resultados."
+
+#: corehq/apps/hqadmin/reports.py
+#, python-brace-format
+msgid ""
+"Showing events through {cutoff_time}. Your query returned more than "
+"{max_records} results; the end date/time has been adjusted. To see later "
+"events, set the start time to {cutoff_time}."
+msgstr ""
+"Mostrando eventos hasta {cutoff_time}. Tu consulta devolvió más de "
+"{max_records} resultados; la fecha/hora final ha sido ajustada. Para ver "
+"eventos posteriores, establece la hora de inicio en {cutoff_time}."
 
 #: corehq/apps/hqadmin/reports.py corehq/tabs/tabclasses.py
 msgid "User List"
@@ -32482,8 +32527,13 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-msgid "%(user_name)s's Information"
-msgstr "Información de %(user_name)s' "
+#| msgid "%(user_name)s's Information"
+msgid ""
+"%(user_name)s's\n"
+"      Information"
+msgstr ""
+"Información de %(user_name)s\n"
+"      "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "This account is disabled."
@@ -32502,10 +32552,84 @@ msgid "Is Superuser"
 msgstr "Es superusuario"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+msgid "Offboard Staff User"
+msgstr "Desincorporar Usuario/a del Personal"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 msgid "Domains"
 msgstr "Dominios"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                Are you sure you want to permanently delete\n"
+#| "                <strong>%(attendee_name)s</strong>?\n"
+#| "              "
+msgid ""
+"\n"
+"                The following will be removed from\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+msgstr ""
+"\n"
+"                Se eliminará lo siguiente de\n"
+"                <strong>%(user_name)s</strong>:\n"
+"              "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                        %(cc_name)s Help\n"
+#| "                    "
+msgid ""
+"\n"
+"                    %(count)s domain membership\n"
+"                  "
+msgid_plural ""
+"\n"
+"                    %(count)s domain memberships\n"
+"                  "
+msgstr[0] ""
+"\n"
+"                        Ayuda de %(cc_name)s\n"
+"                    "
+msgstr[1] ""
+"\n"
+"                        Ayuda de %(cc_name)s\n"
+"                    "
+msgstr[2] ""
+"\n"
+"                        Ayuda de %(cc_name)s\n"
+"                    "
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "Superuser"
+msgid "Superuser access"
+msgstr "Acceso de superusuario/a"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#| msgid "Accounting Admins"
+msgid "Accounting admin access"
+msgstr "Acceso de administrador/a de contabilidad"
+
+#: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to <strong>delete</strong> this rule?\n"
+#| "                "
+msgid ""
+"\n"
+"                  Type <strong>%(confirm_text)s</strong> to confirm\n"
+"                "
+msgstr ""
+"\n"
+"                  Escribe <strong>%(confirm_text)s</strong> para confirmar\n"
+"                "
 
 #: corehq/apps/hqadmin/views/data.py
 msgid "Missing Form XML"
@@ -32576,6 +32700,41 @@ msgid ""
 msgstr ""
 "Respuesta de restauración inesperada  {}: {}. Si cree que esto es un error, "
 "por favor reporte un problema."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+#| msgid "User with ID '{user_id}' not found"
+msgid "User '{username}' not found."
+msgstr "Usuario/a '{username}' no encontrado/a."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+#| msgid "Update Location Membership"
+msgid "{count} domain membership"
+msgid_plural "{count} domain memberships"
+msgstr[0] "Actualizar Membresía de Ubicación"
+msgstr[1] "Actualizar Membresía de Ubicación"
+msgstr[2] "Actualizar Membresía de Ubicación"
+
+#: corehq/apps/hqadmin/views/users.py
+#| msgid "Grant or revoke superuser access"
+msgid "superuser access"
+msgstr "acceso de superusuario/a"
+
+#: corehq/apps/hqadmin/views/users.py
+#| msgid "Accounting Admins"
+msgid "accounting admin access"
+msgstr "acceso de administrador/a de contabilidad"
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "Removed {items} from user '{username}'."
+msgstr "Se eliminaron {items} del usuario/a '{username}'."
+
+#: corehq/apps/hqadmin/views/users.py
+#, python-brace-format
+msgid "User '{username}' has no access to remove."
+msgstr "El usuario/a '{username}' no tiene acceso para eliminar."
 
 #: corehq/apps/hqadmin/views/users.py
 #, python-format
@@ -37920,13 +38079,6 @@ msgid "Here are your keys!"
 msgstr "¡Aquí están sus llaves!"
 
 #: corehq/apps/notifications/forms.py
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/views.py corehq/motech/views.py
-msgid "URL"
-msgstr "URL"
-
-#: corehq/apps/notifications/forms.py
 msgid "Domain-specific"
 msgstr "Específico del dominio"
 
@@ -40891,12 +41043,16 @@ msgid "Payload ID"
 msgstr "ID de Carga Util"
 
 #: corehq/apps/reports/filters/simple.py
+#| msgid ""
+#| "Leave this blank to include all users. In that case, domain is required to "
+#| "limit the scope."
 msgid ""
-"Leave this blank to include all users. In that case, domain is required to "
-"limit the scope."
+"One or more usernames, comma-separated. Leave blank to include all users "
+"(requires domain to limit the scope)."
 msgstr ""
-"Deja esto en blanco para incluir a todas las personas usuarias. En ese caso,"
-" el dominio es obligatorio para limitar el alcance."
+"Uno o más nombres de usuario, separados por comas. Deja en blanco para "
+"incluir a todas las personas usuarias (requiere dominio para limitar el "
+"alcance)."
 
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional"
@@ -40910,6 +41066,47 @@ msgstr ""
 #: corehq/apps/reports/filters/simple.py
 msgid "Optional. Leave blank to include the full day."
 msgstr "Opcional. Deja en blanco para incluir el día completo."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Single IP, CIDR (/8, /16, /24, /32), or comma-separated. Example: "
+"10.0.0.0/8, 192.168.1.1"
+msgstr ""
+"IP individual, CIDR (/8, /16, /24, /32), o separados por comas. Ejemplo: "
+"10.0.0.0/8, 192.168.1.1"
+
+#: corehq/apps/reports/filters/simple.py
+#| msgid "Include?"
+msgid "URL Include"
+msgstr "Incluir URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL pattern per line. Patterns are OR'd together. Leave blank to include"
+" all URLs."
+msgstr ""
+"Un patrón de URL por línea. Los patrones se combinan con OR. Deja en blanco "
+"para incluir todas las URLs."
+
+#: corehq/apps/reports/filters/simple.py
+msgid "URL Exclude"
+msgstr "Excluir URL"
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"One URL pattern per line. Matching rows are excluded. Patterns are OR'd (any"
+" match excludes the row)."
+msgstr ""
+"Un patrón de URL por línea. Las filas coincidentes se excluyen. Los patrones"
+" se combinan con OR (cualquier coincidencia excluye la fila)."
+
+#: corehq/apps/reports/filters/simple.py
+msgid ""
+"Comma-separated status codes. Example: 200, 403, 500. Leave blank to include"
+" all."
+msgstr ""
+"Códigos de estado separados por comas. Ejemplo: 200, 403, 500. Deja en "
+"blanco para incluir todos."
 
 #: corehq/apps/reports/filters/users.py
 msgid "View by Users or Groups"
@@ -58518,10 +58715,6 @@ msgid "Request Body"
 msgstr "Cuerpo de la solicitud"
 
 #: corehq/motech/views.py
-msgid "Status Code"
-msgstr "Código de estado"
-
-#: corehq/motech/views.py
 msgid "Response Headers"
 msgstr "Encabezados de respuesta"
 
@@ -59797,6 +59990,18 @@ msgstr "Las columnas requeridas son {column_names}"
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
 
+#~ msgid "Resource"
+#~ msgstr "Recurso"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Your search returned more than {max_records} records. Please narrow down "
+#~ "your search by selecting a specific user, domain, or a shorter date range."
+#~ msgstr ""
+#~ "Tu búsqueda devolvió más de {max_records} registros. Por favor, acota tu "
+#~ "búsqueda seleccionando una persona usuaria, dominio o un rango de fechas más"
+#~ " corto."
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -60007,18 +60212,6 @@ msgstr "Ingrese un JSON válido"
 
 #~ msgid "Delete Attendee"
 #~ msgstr "Eliminar asistente"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "                Are you sure you want to permanently delete\n"
-#~ "                <strong>%(attendee_name)s</strong>?\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "                ¿Estás seguro/a de que deseas eliminar permanentemente a\n"
-#~ "                <strong>%(attendee_name)s</strong>?\n"
-#~ "              "
 
 #, python-format
 #~ msgid ""
