@@ -29,8 +29,8 @@ from corehq.apps.accounting.views import (
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.builds.views import EditMenuView
-from corehq.apps.case_search.views.base import CSQLFixtureExpressionView
-from corehq.apps.case_search.views.endpoints import CaseSearchEndpointsView
+from corehq.apps.case_search.views import CSQLFixtureExpressionView
+from corehq.apps.case_search.endpoint_views import CaseSearchEndpointsView
 from corehq.apps.data_cleaning.decorators import (
     bulk_data_cleaning_enabled_for_request,
 )

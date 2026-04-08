@@ -2,19 +2,20 @@ import json
 import re
 from io import BytesIO
 
-from dimagi.utils.web import json_response
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 
+from dimagi.utils.web import json_response
+
 from corehq import toggles
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.apps.case_search.forms import (
     CSQLFixtureExpressionForm,
-    CSQLFixtureFilterForm,
     UserDataCriteriaForm,
+    CSQLFixtureFilterForm,
 )
 from corehq.apps.case_search.models import (
     CSQLFixtureExpression,
@@ -32,11 +33,11 @@ from corehq.util.view_utils import BadRequest, json_error
 
 
 class _BaseCaseSearchView(BaseDomainView):
-    section_name = gettext_lazy('Data')
+    section_name = gettext_lazy("Data")
 
     @property
     def section_url(self):
-        return reverse('data_interfaces_default', args=[self.domain])
+        return reverse("data_interfaces_default", args=[self.domain])
 
     @property
     def page_url(self):
@@ -45,7 +46,7 @@ class _BaseCaseSearchView(BaseDomainView):
     @cls_require_superuser_or_contractor
     def get(self, request, *args, **kwargs):
         if not case_search_enabled_for_domain(self.domain):
-            raise Http404('Domain does not have case search enabled')
+            raise Http404("Domain does not have case search enabled")
 
         return self.render_to_response(self.get_context_data())
 
@@ -54,33 +55,28 @@ class _BaseCaseSearchView(BaseDomainView):
 class CaseSearchView(_BaseCaseSearchView):
     template_name = 'case_search/case_search.html'
     urlname = 'case_search'
-    page_title = gettext_lazy('Case Search')
+    page_title = gettext_lazy("Case Search")
 
     @property
     def page_context(self):
         context = super().page_context
-        context.update(
-            {
-                'settings_url': reverse(
-                    'case_search_config', args=[self.domain]
-                ),
-            }
-        )
+        context.update({
+            'settings_url': reverse("case_search_config", args=[self.domain]),
+        })
         return context
 
     @json_error
     @cls_require_superuser_or_contractor
     def post(self, request, *args, **kwargs):
         from corehq.apps.es.case_search import CaseSearchES
-
         if not case_search_enabled_for_domain(self.domain):
-            raise BadRequest('Domain does not have case search enabled')
+            raise BadRequest("Domain does not have case search enabled")
 
         query = json.loads(request.POST.get('q'))
         case_type = query.get('type')
         owner_id = query.get('owner_id')
         search_params = query.get('parameters', [])
-        xpath_expressions = query.get('xpath_expressions', [])
+        xpath_expressions = query.get("xpath_expressions", [])
         search = CaseSearchES()
         search = search.domain(self.domain).size(10)
         if case_type:
@@ -88,14 +84,10 @@ class CaseSearchView(_BaseCaseSearchView):
         if owner_id:
             search = search.owner(owner_id)
         for param in search_params:
-            value = re.sub(
-                re.escape(param.get('regex', '')), '', param.get('value')
-            )
+            value = re.sub(re.escape(param.get('regex', '')), '', param.get('value'))
             if '/' in param.get('key'):
                 query = '{} = "{}"'.format(param.get('key'), value)
-                search = search.xpath_query(
-                    self.domain, query, fuzzy=param.get('fuzzy')
-                )
+                search = search.xpath_query(self.domain, query, fuzzy=param.get('fuzzy'))
             else:
                 search = search.case_property_query(
                     param.get('key'),
@@ -107,75 +99,58 @@ class CaseSearchView(_BaseCaseSearchView):
         for xpath in filter(None, xpath_expressions):
             search = search.xpath_query(self.domain, xpath)
 
-        include_profile = request.POST.get('include_profile', False)
+        include_profile = request.POST.get("include_profile", False)
         if include_profile:
             search = search.enable_profiling()
 
         search_results = search.run()
-        return json_response(
-            {
-                'values': search_results.raw_hits,
-                'count': search_results.total,
-                'took': search_results.raw['took'],
-                'query': search_results.query.dumps(pretty=True),
-                'profile': json.dumps(
-                    search_results.raw.get('profile', {}), indent=2
-                ),
-            }
-        )
+        return json_response({
+            'values': search_results.raw_hits,
+            'count': search_results.total,
+            'took': search_results.raw['took'],
+            'query': search_results.query.dumps(pretty=True),
+            'profile': json.dumps(search_results.raw.get('profile', {}), indent=2),
+        })
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class ProfileCaseSearchView(_BaseCaseSearchView):
     template_name = 'case_search/profile_case_search.html'
     urlname = 'profile_case_search'
-    page_title = gettext_lazy('Profile Case Search')
+    page_title = gettext_lazy("Profile Case Search")
 
     @json_error
     @cls_require_superuser_or_contractor
     def post(self, request, *args, **kwargs):
         data = json.loads(request.POST.get('q'))
         request_dict = data.get('request_dict', data)
-        app_id = data.get(
-            'app_id', request.POST.get('app_id')
-        )  # may be in either place
+        app_id = data.get('app_id', request.POST.get('app_id'))  # may be in either place
         _, profiler = get_case_search_results_from_request(
-            self.domain, app_id, request.couch_user, request_dict, debug=True
-        )
-        return json_response(
-            {
-                'primary_count': profiler.primary_count,
-                'related_count': profiler.related_count,
-                'timing_data': profiler.timing_context.to_dict(),
-                'queries': [
-                    self._make_profile_downloadable(q)
-                    for q in profiler.queries
-                ],
-            }
-        )
+            self.domain, app_id, request.couch_user, request_dict, debug=True)
+        return json_response({
+            'primary_count': profiler.primary_count,
+            'related_count': profiler.related_count,
+            'timing_data': profiler.timing_context.to_dict(),
+            'queries': [self._make_profile_downloadable(q) for q in profiler.queries],
+        })
 
     @staticmethod
     def _make_profile_downloadable(query):
         profile_json = query.pop('profile_json')
         timestamp = get_timestamp_for_filename()
-        name = f'es_profile_{query["query_number"]}_{query["slug"]}_{timestamp}.json'
+        name = f"es_profile_{query['query_number']}_{query['slug']}_{timestamp}.json"
         io = BytesIO()
         io.write(json.dumps(profile_json).encode('utf-8'))
         io.seek(0)
-        query['profile_url'] = get_download_url(
-            io, name, content_type='application/json'
-        )
+        query['profile_url'] = get_download_url(io, name, content_type='application/json')
         return query
 
 
-@method_decorator(
-    [
-        use_bootstrap5,
-        toggles.CSQL_FIXTURE.required_decorator(),
-        require_can_edit_data,
-    ],
-    name='dispatch',
-)
+@method_decorator([
+    use_bootstrap5,
+    toggles.CSQL_FIXTURE.required_decorator(),
+    require_can_edit_data,
+], name='dispatch')
 class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
     urlname = 'csql_fixture_configuration'
     page_title = gettext_lazy('CSQL Fixture Configuration')
@@ -184,12 +159,9 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
     @property
     def page_context(self):
         expressions = CSQLFixtureExpression.by_domain(self.domain)
-        return {
-            'csql_fixture_forms': [
-                CSQLFixtureExpressionForm(self.domain, instance=expression)
-                for expression in expressions
-            ]
-        }
+        return {'csql_fixture_forms': [
+            CSQLFixtureExpressionForm(self.domain, instance=expression) for expression in expressions
+        ]}
 
     @hq_hx_action('post')
     def new_expression(self, *args, **kwargs):
@@ -198,52 +170,36 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
     @hq_hx_action('post')
     def save_expression(self, request, domain, *args, **kwargs):
         if pk := request.POST.get('pk'):
-            expression = CSQLFixtureExpression.objects.get(
-                domain=domain, pk=pk
-            )
+            expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
         else:
             expression = None
-        form = CSQLFixtureExpressionForm(
-            self.domain, request.POST, instance=expression
-        )
+        form = CSQLFixtureExpressionForm(self.domain, request.POST, instance=expression)
         if form.is_valid():
             form.save()
             return HttpResponse(form.render())
-        raise AssertionError(
-            "The user shouldn't be able to submit an invalid form"
-        )
+        raise AssertionError("The user shouldn't be able to submit an invalid form")
 
     @hq_hx_action('post')
     def delete_expression(self, request, domain, *args, **kwargs):
         if pk := request.POST.get('pk'):
-            CSQLFixtureExpression.objects.get(
-                domain=domain, pk=pk
-            ).soft_delete()
+            CSQLFixtureExpression.objects.get(domain=domain, pk=pk).soft_delete()
         return self.render_htmx_no_response(request)
 
     @hq_hx_action('post')
     def new_criteria(self, request, *args, **kwargs):
-        return render(
-            request,
-            'case_search/csql_user_data_criteria_fields.html',
-            {'form': UserDataCriteriaForm()},
-        )
+        return render(request, 'case_search/csql_user_data_criteria_fields.html', {'form': UserDataCriteriaForm()})
 
     @hq_hx_action('post')
     def save_filter_modal(self, request, domain, *args, **kwargs):
         mutable_post = request.POST.copy()
 
         pk = request.POST.get('pk')
-        expression = (
-            CSQLFixtureExpression.objects.get(domain=domain, pk=pk)
-            if pk
-            else None
-        )
+        expression = CSQLFixtureExpression.objects.get(domain=domain, pk=pk) if pk else None
 
         operators = request.POST.getlist('operator', [])
         properties = request.POST.getlist('property_name', [])
         mutable_post['user_data_criteria'] = [
-            {'operator': operator, 'property_name': property}
+            {"operator": operator, "property_name": property}
             for operator, property in zip(operators, properties)
         ]
 
@@ -251,6 +207,4 @@ class CSQLFixtureExpressionView(HqHtmxActionMixin, BaseProjectDataView):
         if form.is_valid():
             form.save()
             return HttpResponse(form.render())
-        raise AssertionError(
-            "The user shouldn't be able to submit an invalid form"
-        )
+        raise AssertionError("The user shouldn't be able to submit an invalid form")

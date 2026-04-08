@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from corehq.apps.case_search import endpoint_service
 from corehq.apps.case_search.models import CaseSearchEndpoint
-from corehq.apps.case_search.views.endpoints import (
+from corehq.apps.case_search.endpoint_views import (
     CaseSearchCapabilityView,
     CaseSearchEndpointDeactivateView,
     CaseSearchEndpointEditView,
@@ -16,7 +16,7 @@ from corehq.tests.util.htmx import HtmxViewTestCase
 from corehq.util.test_utils import flag_enabled
 
 from ..models import CSQLFixtureExpression, CSQLFixtureExpressionLog
-from ..views.base import CSQLFixtureExpressionView
+from ..views import CSQLFixtureExpressionView
 
 EMPTY_QUERY = {'type': 'and', 'children': []}
 SAMPLE_PARAMS = [{'name': 'province', 'type': 'text'}]

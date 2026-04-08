@@ -1,11 +1,9 @@
 from django.urls import re_path as url
 
-from corehq.apps.case_search.views.base import (
-    CaseSearchView,
-    CSQLFixtureExpressionView,
-    ProfileCaseSearchView,
+from corehq.apps.case_search.views import (
+    CaseSearchView, CSQLFixtureExpressionView, ProfileCaseSearchView
 )
-from corehq.apps.case_search.views.endpoints import (
+from corehq.apps.case_search.endpoint_views import (
     CaseSearchCapabilityView,
     CaseSearchEndpointDeactivateView,
     CaseSearchEndpointEditView,
