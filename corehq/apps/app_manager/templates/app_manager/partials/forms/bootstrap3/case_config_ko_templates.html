@@ -271,7 +271,7 @@
       </thead>
 
       <tbody data-bind="foreach: visible_case_properties">
-      <tr class="form-group"
+      <tr class="form-group case-property-mapping"
           data-bind="css: {
                       'has-error': validate,
                       warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key()),
@@ -286,6 +286,14 @@
         <td data-bind="class: $parent.saveOnlyEditedFormFieldsEnabled ? 'col-sm-5' : 'col-sm-6'">
           <div class="full-width-select2"
                data-bind="template: 'case-config:case-properties:question'"></div>
+          <div class="alert alert-warning mt-2" data-bind="visible: $data.conflictingDelete?.()">
+            <button class="close" aria-label="close" data-bind="click: $parent.dismissConflictingDelete">&times;</button>
+            <p class="alert-heading">
+              <i class="fa fa-triangle-exclamation"></i>
+              {% trans "Property mapping concurrently changed and deleted" %}
+            </p>
+            <p>{% trans "Dismiss this alert to keep the mapping." %}</p>
+          </div>
         </td>
         <td class="text-center col-sm-1">
           <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
@@ -348,6 +356,7 @@
         <pagination data-apply-bindings="false"
                     params="goToPage: goToPage,
                             perPage: per_page,
+                            currentPage: currentPage,
                             totalItems: total_case_properties,
                             resetFlag: pagination_reset_flag,
                             inlinePageListOnly: true"></pagination>
