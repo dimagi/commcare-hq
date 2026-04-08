@@ -287,13 +287,12 @@ class UserAuditReport(AdminReport, DatespanMixin):
     # paginating through results by adjusting the date range.
     MAX_RECORDS = 5000
 
-    @property
     @memoized
-    def rows(self):
+    def _compute_rows(self):
         if not (self.selected_domain or self.selected_users):
-            return []
+            return [], None, False
         if self.selected_ip_addresses is None or self.selected_status_codes is None:
-            return []
+            return [], None, False
 
         nav_filters = self._build_nav_filters()
         access_filters = self._build_access_filters()
@@ -316,10 +315,22 @@ class UserAuditReport(AdminReport, DatespanMixin):
             if count > self.MAX_RECORDS:
                 break
 
-        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(rows, self.MAX_RECORDS)
-        self._truncation_cutoff = cutoff_dt
-        self._truncation_same_minute = (len(rows) > self.MAX_RECORDS and cutoff_dt is None)
-        return truncated_rows
+        sorted_rows = sorted(rows, key=lambda x: x[0])
+        truncated_rows, cutoff_dt = truncate_rows_to_minute_boundary(sorted_rows, self.MAX_RECORDS)
+        same_minute = len(rows) > self.MAX_RECORDS and cutoff_dt is None
+        return truncated_rows, cutoff_dt, same_minute
+
+    @property
+    def rows(self):
+        return self._compute_rows()[0]
+
+    @property
+    def _truncation_cutoff(self):
+        return self._compute_rows()[1]
+
+    @property
+    def _truncation_same_minute(self):
+        return self._compute_rows()[2]
 
     def _build_common_filters(self):
         filters = Q()
@@ -403,17 +414,14 @@ class UserAuditReport(AdminReport, DatespanMixin):
                     'Note: URLs for this domain typically start with "{domain_prefix}".'
                 ).format(domain_prefix=domain_prefix)
 
-        # Truncation messages (set by rows property)
-        # Access rows to trigger the query and truncation logic
-        _rows = self.rows  # noqa: F841
-        if getattr(self, '_truncation_same_minute', False):
+        if self._truncation_same_minute:
             context['truncation_message'] = _(
                 "Showing {max_records} results, but there are additional events within the "
                 "same minute that are not shown. Try narrowing by username, domain, IP address, "
                 "or other filters to see all results."
             ).format(max_records=self.MAX_RECORDS)
             context['truncation_level'] = 'warning'
-        elif getattr(self, '_truncation_cutoff', None):
+        elif self._truncation_cutoff:
             cutoff = self._truncation_cutoff
             context['truncation_message'] = _(
                 "Showing events through {cutoff_time}. Your query returned more than "
