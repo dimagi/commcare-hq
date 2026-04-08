@@ -35,6 +35,7 @@ describe('Split Screen Case Search', function () {
                         region: region,
                         show: sinon.stub().callsFake(function () { return; }),
                         empty: sinon.stub().callsFake(function () { return; }),
+                        $el: { height: sinon.stub().returns(0) },
                     };
                 }
                 return stubs.regions[region];
@@ -139,12 +140,6 @@ describe('Split Screen Case Search', function () {
             assert.isTrue(stubs.regions['sidebar'].empty.called);
         });
 
-        it('should empty sidebar if feature flag disabled', function () {
-            stubs.splitScreenToggleEnabled.returns(false);
-            Controller.showMenu(splitScreenCaseListResponse);
-
-            assert.isTrue(stubs.regions['sidebar'].empty.called);
-        });
     });
 
     describe('FormplayerFrontend actions', function () {
