@@ -1,42 +1,29 @@
+import jsonfield
 import uuid
 from contextlib import contextmanager
-
+from memoized import memoized
 from django.conf import settings
 from django.db import models, transaction
 from django.http import Http404
-from django.utils.functional import cached_property
-
-import jsonfield
-from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
-from corehq.apps.app_manager.exceptions import (
-    AppInDifferentDomainException,
-    FormNotFoundException,
-)
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException, FormNotFoundException
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
-from corehq.apps.reminders.util import (
-    get_one_way_number_for_recipient,
-    get_two_way_number_for_recipient,
-)
-from corehq.apps.sms.api import (
-    MessageMetadata,
-    send_message_to_verified_number,
-    send_sms,
-)
+from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
+from corehq.apps.sms.api import MessageMetadata, send_sms, send_message_to_verified_number
 from corehq.apps.sms.forms import (
-    LANGUAGE_FALLBACK_DOMAIN,
     LANGUAGE_FALLBACK_NONE,
     LANGUAGE_FALLBACK_SCHEDULE,
+    LANGUAGE_FALLBACK_DOMAIN,
 )
 from corehq.apps.sms.models import (
-    WORKFLOW_BROADCAST,
-    WORKFLOW_KEYWORD,
-    WORKFLOW_REMINDER,
     MessagingEvent,
     PhoneNumber,
+    WORKFLOW_REMINDER,
+    WORKFLOW_KEYWORD,
+    WORKFLOW_BROADCAST,
 )
 from corehq.apps.sms.util import (
     get_formplayer_exception,
@@ -44,23 +31,21 @@ from corehq.apps.sms.util import (
 )
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.smsforms.util import (
-    critical_section_for_smsforms_sessions,
-    form_requires_input,
-)
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions, form_requires_input
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import (
     NoAvailableContent,
     UnknownContentType,
 )
+from corehq.messaging.scheduling import util
 from corehq.messaging.templating import (
-    CaseMessagingTemplateParam,
+    _get_obj_template_info,
     MessagingTemplateRenderer,
     SimpleDictTemplateParam,
-    _get_obj_template_info,
+    CaseMessagingTemplateParam,
 )
+from django.utils.functional import cached_property
 
 
 @contextmanager
@@ -196,10 +181,7 @@ class Schedule(models.Model):
     @memoized
     def memoized_language_set(self):
         from corehq.messaging.scheduling.models import (
-            ConnectMessageContent,
-            EmailContent,
-            SMSCallbackContent,
-            SMSContent,
+            ConnectMessageContent, SMSContent, EmailContent, SMSCallbackContent
         )
 
         result = set()
@@ -281,6 +263,8 @@ class ContentForeignKeyMixin(models.Model):
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
     sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
+    fcm_notification_content = models.ForeignKey('scheduling.FCMNotificationContent', null=True,
+                                                 on_delete=models.CASCADE)
     connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
                                                 on_delete=models.CASCADE)
     connect_survey_content = models.ForeignKey('scheduling.ConnectMessageSurveyContent', null=True,
@@ -303,6 +287,8 @@ class ContentForeignKeyMixin(models.Model):
             return self.custom_content
         elif self.sms_callback_content_id:
             return self.sms_callback_content
+        elif self.fcm_notification_content:
+            return self.fcm_notification_content
         elif self.connect_message_content:
             return self.connect_message_content
         elif self.connect_survey_content:
@@ -321,16 +307,9 @@ class ContentForeignKeyMixin(models.Model):
 
     @content.setter
     def content(self, value):
-        from corehq.messaging.scheduling.models import (
-            ConnectMessageContent,
-            ConnectMessageSurveyContent,
-            CustomContent,
-            EmailContent,
-            IVRSurveyContent,
-            SMSCallbackContent,
-            SMSContent,
-            SMSSurveyContent,
-        )
+        from corehq.messaging.scheduling.models import (SMSContent, EmailContent, SMSSurveyContent,
+            IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent,
+            ConnectMessageContent, ConnectMessageSurveyContent)
 
         self.sms_content = None
         self.email_content = None
@@ -353,6 +332,8 @@ class ContentForeignKeyMixin(models.Model):
             self.custom_content = value
         elif isinstance(value, SMSCallbackContent):
             self.sms_callback_content = value
+        elif isinstance(value, FCMNotificationContent):
+            self.fcm_notification_content = value
         elif isinstance(value, ConnectMessageContent):
             self.connect_message_content = value
         elif isinstance(value, ConnectMessageSurveyContent):
