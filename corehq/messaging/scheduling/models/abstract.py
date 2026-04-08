@@ -287,8 +287,6 @@ class ContentForeignKeyMixin(models.Model):
             return self.custom_content
         elif self.sms_callback_content_id:
             return self.sms_callback_content
-        elif self.fcm_notification_content:
-            return self.fcm_notification_content
         elif self.connect_message_content:
             return self.connect_message_content
         elif self.connect_survey_content:
@@ -308,7 +306,7 @@ class ContentForeignKeyMixin(models.Model):
     @content.setter
     def content(self, value):
         from corehq.messaging.scheduling.models import (SMSContent, EmailContent, SMSSurveyContent,
-            IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent,
+            IVRSurveyContent, CustomContent, SMSCallbackContent,
             ConnectMessageContent, ConnectMessageSurveyContent)
 
         self.sms_content = None
@@ -332,8 +330,6 @@ class ContentForeignKeyMixin(models.Model):
             self.custom_content = value
         elif isinstance(value, SMSCallbackContent):
             self.sms_callback_content = value
-        elif isinstance(value, FCMNotificationContent):
-            self.fcm_notification_content = value
         elif isinstance(value, ConnectMessageContent):
             self.connect_message_content = value
         elif isinstance(value, ConnectMessageSurveyContent):
