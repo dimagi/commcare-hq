@@ -146,7 +146,8 @@ def app_aware_search(request, domain, app_id):
     Returns results as a fixture with the same structure as a casedb instance.
     """
     if not case_search_enabled_for_domain(domain):
-        return HttpResponse(CASE_SEARCH_DISABLED_MSG, status=404)
+        # TODO return HttpResponse(CASE_SEARCH_DISABLED_MSG, status=404)
+        _notify_bad_case_search_request(domain)
 
     start_time = datetime.now()
     request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
@@ -158,6 +159,12 @@ def app_aware_search(request, domain, app_id):
     profiler.timing_context.add_to_sentry_breadcrumbs()
     _log_search_timing(start_time, request_dict, domain, app_id)
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+
+
+# log once per domain per day
+@quickcache(['domain'], timeout=ONE_DAY)
+def _notify_bad_case_search_request(domain):
+    notify_exception(None, "Attempted a case search without the project setting enabled")
 
 
 def _log_search_timing(start_time, request_dict, domain, app_id):
