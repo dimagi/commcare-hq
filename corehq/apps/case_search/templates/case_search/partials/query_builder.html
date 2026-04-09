@@ -1,0 +1,903 @@
+{% load i18n %}
+{# Query builder partial — rendered inside an Alpine.js x-data="endpointForm()" context. #}
+
+<div class="filter-tree">
+  {# ── Root group header ── #}
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <span class="ep-type-badge bg-secondary text-white">
+      <i class="fa-solid fa-code-branch"></i>
+    </span>
+    <div class="btn-group btn-group-sm" role="group">
+      <button
+        type="button"
+        class="btn"
+        :class="query.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
+        @click="if (mode !== 'readonly') query.type = 'and'"
+        :disabled="mode === 'readonly'"
+      >
+        AND
+      </button>
+      <button
+        type="button"
+        class="btn"
+        :class="query.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
+        @click="if (mode !== 'readonly') query.type = 'or'"
+        :disabled="mode === 'readonly'"
+      >
+        OR
+      </button>
+    </div>
+    <span class="text-muted small fst-italic">
+      <span x-show="query.type === 'and'"
+        >{% trans "match all of the following" %}</span
+      >
+      <span x-show="query.type === 'or'"
+        >{% trans "match any of the following" %}</span
+      >
+    </span>
+  </div>
+
+  {# ── Root group children ── #}
+  <div class="ps-4 border-start border-2">
+    <template x-for="(child, childIdx) in query.children" :key="child._id">
+      <div class="mb-2">
+        {# Component condition #}
+        <template x-if="child.type === 'component'">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="ep-type-badge bg-secondary text-white">
+              <i :class="typeIconClass(getFieldType(child.field))"></i>
+            </span>
+            <select
+              class="form-select form-select-sm"
+              style="width: auto; min-width: 120px;"
+              @change="child.field = $event.target.value; onFieldChange(child)"
+              :disabled="mode === 'readonly'"
+            >
+              <option value="" :selected="!child.field">
+                {% trans "-- Field --" %}
+              </option>
+              <template x-for="field in currentFields" :key="field.name">
+                <option
+                  :value="field.name"
+                  x-text="field.name"
+                  :selected="child.field === field.name"
+                ></option>
+              </template>
+            </select>
+            <template x-if="child.field">
+              <select
+                class="form-select form-select-sm"
+                style="width: auto; min-width: 120px;"
+                @change="child.component = $event.target.value; onComponentChange(child)"
+                :disabled="mode === 'readonly'"
+              >
+                <option value="" :selected="!child.component">
+                  {% trans "-- Operation --" %}
+                </option>
+                <template
+                  x-for="op in getOperationsForField(child.field)"
+                  :key="op"
+                >
+                  <option
+                    :value="op"
+                    x-text="op"
+                    :selected="child.component === op"
+                  ></option>
+                </template>
+              </select>
+            </template>
+            <template x-if="child.component">
+              <template
+                x-for="slot in getInputSchemaForOperation(child.component)"
+                :key="slot.name"
+              >
+                <div class="d-flex gap-1 flex-grow-1">
+                  <select
+                    class="form-select form-select-sm"
+                    style="width: auto;"
+                    :value="getInputValue(child, slot.name).type"
+                    @change="setInputType(child, slot.name, $event.target.value)"
+                    :disabled="mode === 'readonly'"
+                  >
+                    <option value="constant">{% trans "Value" %}</option>
+                    <option value="parameter">{% trans "Parameter" %}</option>
+                    <option value="auto_value">{% trans "Auto value" %}</option>
+                  </select>
+                  <template
+                    x-if="getInputValue(child, slot.name).type === 'constant'"
+                  >
+                    <input
+                      type="text"
+                      class="form-control form-control-sm"
+                      x-model="child.inputs[slot.name].value"
+                      :disabled="mode === 'readonly'"
+                      :placeholder="slot.name"
+                    />
+                  </template>
+                  <template
+                    x-if="getInputValue(child, slot.name).type === 'parameter'"
+                  >
+                    <select
+                      class="form-select form-select-sm"
+                      @change="child.inputs[slot.name].ref = $event.target.value"
+                      :disabled="mode === 'readonly'"
+                    >
+                      <option
+                        value=""
+                        :selected="!getInputValue(child, slot.name).ref"
+                      >
+                        {% trans "-- Parameter --" %}
+                      </option>
+                      <template x-for="param in parameters" :key="param.name">
+                        <option
+                          :value="param.name"
+                          x-text="param.name"
+                          :selected="getInputValue(child, slot.name).ref === param.name"
+                        ></option>
+                      </template>
+                    </select>
+                  </template>
+                  <template
+                    x-if="getInputValue(child, slot.name).type === 'auto_value'"
+                  >
+                    <select
+                      class="form-select form-select-sm"
+                      @change="child.inputs[slot.name].ref = $event.target.value"
+                      :disabled="mode === 'readonly'"
+                    >
+                      <option
+                        value=""
+                        :selected="!getInputValue(child, slot.name).ref"
+                      >
+                        {% trans "-- Auto value --" %}
+                      </option>
+                      <template
+                        x-for="(refs, fieldType) in capability.auto_values"
+                        :key="fieldType"
+                      >
+                        <template x-for="av in refs" :key="av.ref">
+                          <option
+                            :value="av.ref"
+                            x-text="av.label + ' (' + fieldType + ')'"
+                            :selected="getInputValue(child, slot.name).ref === av.ref"
+                          ></option>
+                        </template>
+                      </template>
+                    </select>
+                  </template>
+                </div>
+              </template>
+            </template>
+            <template x-if="mode !== 'readonly'">
+              <button
+                type="button"
+                class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
+                @click="removeNode(query, childIdx)"
+                aria-label="{% trans "Remove condition" %}"
+              >
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </template>
+          </div>
+        </template>
+
+        {# Nested AND/OR group #}
+        <template x-if="child.type === 'and' || child.type === 'or'">
+          <div>
+            {# Nested group header #}
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="ep-type-badge bg-secondary text-white">
+                <i class="fa-solid fa-code-branch"></i>
+              </span>
+              <div class="btn-group btn-group-sm" role="group">
+                <button
+                  type="button"
+                  class="btn"
+                  :class="child.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
+                  @click="if (mode !== 'readonly') child.type = 'and'"
+                  :disabled="mode === 'readonly'"
+                >
+                  AND
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  :class="child.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
+                  @click="if (mode !== 'readonly') child.type = 'or'"
+                  :disabled="mode === 'readonly'"
+                >
+                  OR
+                </button>
+              </div>
+              <span class="text-muted small fst-italic">
+                <span x-show="child.type === 'and'"
+                  >{% trans "match all of the following" %}</span
+                >
+                <span x-show="child.type === 'or'"
+                  >{% trans "match any of the following" %}</span
+                >
+              </span>
+              <template x-if="mode !== 'readonly'">
+                <button
+                  type="button"
+                  class="btn btn-sm text-secondary border-0 p-1 ms-auto"
+                  @click="removeNode(query, childIdx)"
+                  aria-label="{% trans "Remove group" %}"
+                >
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </template>
+            </div>
+
+            {# Nested group children #}
+            <div class="ps-4 border-start border-2">
+              <template
+                x-for="(grandchild, grandIdx) in child.children"
+                :key="grandchild._id"
+              >
+                <div class="mb-2">
+                  {# Component condition #}
+                  <template x-if="grandchild.type === 'component'">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="ep-type-badge bg-secondary text-white">
+                        <i
+                          :class="typeIconClass(getFieldType(grandchild.field))"
+                        ></i>
+                      </span>
+                      <select
+                        class="form-select form-select-sm"
+                        style="width: auto; min-width: 120px;"
+                        @change="grandchild.field = $event.target.value; onFieldChange(grandchild)"
+                        :disabled="mode === 'readonly'"
+                      >
+                        <option value="" :selected="!grandchild.field">
+                          {% trans "-- Field --" %}
+                        </option>
+                        <template
+                          x-for="field in currentFields"
+                          :key="field.name"
+                        >
+                          <option
+                            :value="field.name"
+                            x-text="field.name"
+                            :selected="grandchild.field === field.name"
+                          ></option>
+                        </template>
+                      </select>
+                      <template x-if="grandchild.field">
+                        <select
+                          class="form-select form-select-sm"
+                          style="width: auto; min-width: 120px;"
+                          @change="grandchild.component = $event.target.value; onComponentChange(grandchild)"
+                          :disabled="mode === 'readonly'"
+                        >
+                          <option value="" :selected="!grandchild.component">
+                            {% trans "-- Operation --" %}
+                          </option>
+                          <template
+                            x-for="op in getOperationsForField(grandchild.field)"
+                            :key="op"
+                          >
+                            <option
+                              :value="op"
+                              x-text="op"
+                              :selected="grandchild.component === op"
+                            ></option>
+                          </template>
+                        </select>
+                      </template>
+                      <template x-if="grandchild.component">
+                        <template
+                          x-for="slot in getInputSchemaForOperation(grandchild.component)"
+                          :key="slot.name"
+                        >
+                          <div class="d-flex gap-1 flex-grow-1">
+                            <select
+                              class="form-select form-select-sm"
+                              style="width: auto;"
+                              :value="getInputValue(grandchild, slot.name).type"
+                              @change="setInputType(grandchild, slot.name, $event.target.value)"
+                              :disabled="mode === 'readonly'"
+                            >
+                              <option value="constant">
+                                {% trans "Value" %}
+                              </option>
+                              <option value="parameter">
+                                {% trans "Parameter" %}
+                              </option>
+                              <option value="auto_value">
+                                {% trans "Auto value" %}
+                              </option>
+                            </select>
+                            <template
+                              x-if="getInputValue(grandchild, slot.name).type === 'constant'"
+                            >
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                x-model="grandchild.inputs[slot.name].value"
+                                :disabled="mode === 'readonly'"
+                                :placeholder="slot.name"
+                              />
+                            </template>
+                            <template
+                              x-if="getInputValue(grandchild, slot.name).type === 'parameter'"
+                            >
+                              <select
+                                class="form-select form-select-sm"
+                                @change="grandchild.inputs[slot.name].ref = $event.target.value"
+                                :disabled="mode === 'readonly'"
+                              >
+                                <option
+                                  value=""
+                                  :selected="!getInputValue(grandchild, slot.name).ref"
+                                >
+                                  {% trans "-- Parameter --" %}
+                                </option>
+                                <template
+                                  x-for="param in parameters"
+                                  :key="param.name"
+                                >
+                                  <option
+                                    :value="param.name"
+                                    x-text="param.name"
+                                    :selected="getInputValue(grandchild, slot.name).ref === param.name"
+                                  ></option>
+                                </template>
+                              </select>
+                            </template>
+                            <template
+                              x-if="getInputValue(grandchild, slot.name).type === 'auto_value'"
+                            >
+                              <select
+                                class="form-select form-select-sm"
+                                @change="grandchild.inputs[slot.name].ref = $event.target.value"
+                                :disabled="mode === 'readonly'"
+                              >
+                                <option
+                                  value=""
+                                  :selected="!getInputValue(grandchild, slot.name).ref"
+                                >
+                                  {% trans "-- Auto value --" %}
+                                </option>
+                                <template
+                                  x-for="(refs, fieldType) in capability.auto_values"
+                                  :key="fieldType"
+                                >
+                                  <template x-for="av in refs" :key="av.ref">
+                                    <option
+                                      :value="av.ref"
+                                      x-text="av.label + ' (' + fieldType + ')'"
+                                      :selected="getInputValue(grandchild, slot.name).ref === av.ref"
+                                    ></option>
+                                  </template>
+                                </template>
+                              </select>
+                            </template>
+                          </div>
+                        </template>
+                      </template>
+                      <template x-if="mode !== 'readonly'">
+                        <button
+                          type="button"
+                          class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
+                          @click="removeNode(child, grandIdx)"
+                          aria-label="{% trans "Remove condition" %}"
+                        >
+                          <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                      </template>
+                    </div>
+                  </template>
+
+                  {# NOT wrapper inside nested group #}
+                  <template x-if="grandchild.type === 'not'">
+                    <div>
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-warning text-dark"
+                          >{% trans "NOT" %}</span
+                        >
+                        <template x-if="mode !== 'readonly'">
+                          <button
+                            type="button"
+                            class="btn btn-sm text-secondary border-0 p-1 ms-auto"
+                            @click="removeNode(child, grandIdx)"
+                            aria-label="{% trans "Remove NOT group" %}"
+                          >
+                            <i class="fa-regular fa-trash-can"></i>
+                          </button>
+                        </template>
+                      </div>
+                      <template
+                        x-if="grandchild.child && (grandchild.child.type === 'and' || grandchild.child.type === 'or')"
+                      >
+                        <div class="ps-4 border-start border-2">
+                          <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="btn-group btn-group-sm" role="group">
+                              <button
+                                type="button"
+                                class="btn"
+                                :class="grandchild.child.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
+                                @click="if (mode !== 'readonly') grandchild.child.type = 'and'"
+                                :disabled="mode === 'readonly'"
+                              >
+                                AND
+                              </button>
+                              <button
+                                type="button"
+                                class="btn"
+                                :class="grandchild.child.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
+                                @click="if (mode !== 'readonly') grandchild.child.type = 'or'"
+                                :disabled="mode === 'readonly'"
+                              >
+                                OR
+                              </button>
+                            </div>
+                          </div>
+                          <template
+                            x-for="(notChild, notIdx) in grandchild.child.children"
+                            :key="notChild._id"
+                          >
+                            <template x-if="notChild.type === 'component'">
+                              <div
+                                class="d-flex align-items-center gap-2 mb-2 flex-wrap"
+                              >
+                                <span
+                                  class="ep-type-badge bg-secondary text-white"
+                                >
+                                  <i
+                                    :class="typeIconClass(getFieldType(notChild.field))"
+                                  ></i>
+                                </span>
+                                <select
+                                  class="form-select form-select-sm"
+                                  style="width: auto; min-width: 120px;"
+                                  @change="notChild.field = $event.target.value; onFieldChange(notChild)"
+                                  :disabled="mode === 'readonly'"
+                                >
+                                  <option value="" :selected="!notChild.field">
+                                    {% trans "-- Field --" %}
+                                  </option>
+                                  <template
+                                    x-for="field in currentFields"
+                                    :key="field.name"
+                                  >
+                                    <option
+                                      :value="field.name"
+                                      x-text="field.name"
+                                      :selected="notChild.field === field.name"
+                                    ></option>
+                                  </template>
+                                </select>
+                                <template x-if="notChild.field">
+                                  <select
+                                    class="form-select form-select-sm"
+                                    style="width: auto; min-width: 120px;"
+                                    @change="notChild.component = $event.target.value; onComponentChange(notChild)"
+                                    :disabled="mode === 'readonly'"
+                                  >
+                                    <option
+                                      value=""
+                                      :selected="!notChild.component"
+                                    >
+                                      {% trans "-- Operation --" %}
+                                    </option>
+                                    <template
+                                      x-for="op in getOperationsForField(notChild.field)"
+                                      :key="op"
+                                    >
+                                      <option
+                                        :value="op"
+                                        x-text="op"
+                                        :selected="notChild.component === op"
+                                      ></option>
+                                    </template>
+                                  </select>
+                                </template>
+                                <template x-if="notChild.component">
+                                  <template
+                                    x-for="slot in getInputSchemaForOperation(notChild.component)"
+                                    :key="slot.name"
+                                  >
+                                    <div class="d-flex gap-1 flex-grow-1">
+                                      <select
+                                        class="form-select form-select-sm"
+                                        style="width: auto;"
+                                        :value="getInputValue(notChild, slot.name).type"
+                                        @change="setInputType(notChild, slot.name, $event.target.value)"
+                                        :disabled="mode === 'readonly'"
+                                      >
+                                        <option value="constant">
+                                          {% trans "Value" %}
+                                        </option>
+                                        <option value="parameter">
+                                          {% trans "Parameter" %}
+                                        </option>
+                                        <option value="auto_value">
+                                          {% trans "Auto value" %}
+                                        </option>
+                                      </select>
+                                      <template
+                                        x-if="getInputValue(notChild, slot.name).type === 'constant'"
+                                      >
+                                        <input
+                                          type="text"
+                                          class="form-control form-control-sm"
+                                          x-model="notChild.inputs[slot.name].value"
+                                          :disabled="mode === 'readonly'"
+                                          :placeholder="slot.name"
+                                        />
+                                      </template>
+                                      <template
+                                        x-if="getInputValue(notChild, slot.name).type === 'parameter'"
+                                      >
+                                        <select
+                                          class="form-select form-select-sm"
+                                          @change="notChild.inputs[slot.name].ref = $event.target.value"
+                                          :disabled="mode === 'readonly'"
+                                        >
+                                          <option
+                                            value=""
+                                            :selected="!getInputValue(notChild, slot.name).ref"
+                                          >
+                                            {% trans "-- Parameter --" %}
+                                          </option>
+                                          <template
+                                            x-for="param in parameters"
+                                            :key="param.name"
+                                          >
+                                            <option
+                                              :value="param.name"
+                                              x-text="param.name"
+                                              :selected="getInputValue(notChild, slot.name).ref === param.name"
+                                            ></option>
+                                          </template>
+                                        </select>
+                                      </template>
+                                      <template
+                                        x-if="getInputValue(notChild, slot.name).type === 'auto_value'"
+                                      >
+                                        <select
+                                          class="form-select form-select-sm"
+                                          @change="notChild.inputs[slot.name].ref = $event.target.value"
+                                          :disabled="mode === 'readonly'"
+                                        >
+                                          <option
+                                            value=""
+                                            :selected="!getInputValue(notChild, slot.name).ref"
+                                          >
+                                            {% trans "-- Auto value --" %}
+                                          </option>
+                                          <template
+                                            x-for="(refs, fieldType) in capability.auto_values"
+                                            :key="fieldType"
+                                          >
+                                            <template
+                                              x-for="av in refs"
+                                              :key="av.ref"
+                                            >
+                                              <option
+                                                :value="av.ref"
+                                                x-text="av.label + ' (' + fieldType + ')'"
+                                                :selected="getInputValue(notChild, slot.name).ref === av.ref"
+                                              ></option>
+                                            </template>
+                                          </template>
+                                        </select>
+                                      </template>
+                                    </div>
+                                  </template>
+                                </template>
+                                <template x-if="mode !== 'readonly'">
+                                  <button
+                                    type="button"
+                                    class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
+                                    @click="removeNode(grandchild.child, notIdx)"
+                                    aria-label="{% trans "Remove condition" %}"
+                                  >
+                                    <i class="fa-regular fa-trash-can"></i>
+                                  </button>
+                                </template>
+                              </div>
+                            </template>
+                          </template>
+                          <template x-if="mode !== 'readonly'">
+                            <button
+                              type="button"
+                              class="btn btn-primary btn-sm mt-1"
+                              @click="addCondition(grandchild.child)"
+                            >
+                              <i class="fa-solid fa-plus me-1"></i
+                              >{% trans "Add Condition" %}
+                            </button>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              {# Add buttons for nested group #}
+              <template x-if="mode !== 'readonly'">
+                <div class="d-flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    @click="addCondition(child)"
+                  >
+                    <i class="fa-solid fa-plus me-1"></i
+                    >{% trans "Add Condition" %}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    @click="addGroup(child, 'and')"
+                  >
+                    <i class="fa-solid fa-code-branch me-1"></i
+                    >{% trans "Add Group" %}
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        {# NOT wrapper at root level #}
+        <template x-if="child.type === 'not'">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-warning text-dark">{% trans "NOT" %}</span>
+              <template x-if="mode !== 'readonly'">
+                <button
+                  type="button"
+                  class="btn btn-sm text-secondary border-0 p-1 ms-auto"
+                  @click="removeNode(query, childIdx)"
+                  aria-label="{% trans "Remove NOT group" %}"
+                >
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </template>
+            </div>
+            <template
+              x-if="child.child && (child.child.type === 'and' || child.child.type === 'or')"
+            >
+              <div class="ps-4 border-start border-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button
+                      type="button"
+                      class="btn"
+                      :class="child.child.type === 'and' ? 'btn-primary' : 'btn-outline-secondary'"
+                      @click="if (mode !== 'readonly') child.child.type = 'and'"
+                      :disabled="mode === 'readonly'"
+                    >
+                      AND
+                    </button>
+                    <button
+                      type="button"
+                      class="btn"
+                      :class="child.child.type === 'or' ? 'btn-primary' : 'btn-outline-secondary'"
+                      @click="if (mode !== 'readonly') child.child.type = 'or'"
+                      :disabled="mode === 'readonly'"
+                    >
+                      OR
+                    </button>
+                  </div>
+                </div>
+                <template
+                  x-for="(notChild, notIdx) in child.child.children"
+                  :key="notChild._id"
+                >
+                  <template x-if="notChild.type === 'component'">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                      <span class="ep-type-badge bg-secondary text-white">
+                        <i
+                          :class="typeIconClass(getFieldType(notChild.field))"
+                        ></i>
+                      </span>
+                      <select
+                        class="form-select form-select-sm"
+                        style="width: auto; min-width: 120px;"
+                        @change="notChild.field = $event.target.value; onFieldChange(notChild)"
+                        :disabled="mode === 'readonly'"
+                      >
+                        <option value="" :selected="!notChild.field">
+                          {% trans "-- Field --" %}
+                        </option>
+                        <template
+                          x-for="field in currentFields"
+                          :key="field.name"
+                        >
+                          <option
+                            :value="field.name"
+                            x-text="field.name"
+                            :selected="notChild.field === field.name"
+                          ></option>
+                        </template>
+                      </select>
+                      <template x-if="notChild.field">
+                        <select
+                          class="form-select form-select-sm"
+                          style="width: auto; min-width: 120px;"
+                          @change="notChild.component = $event.target.value; onComponentChange(notChild)"
+                          :disabled="mode === 'readonly'"
+                        >
+                          <option value="" :selected="!notChild.component">
+                            {% trans "-- Operation --" %}
+                          </option>
+                          <template
+                            x-for="op in getOperationsForField(notChild.field)"
+                            :key="op"
+                          >
+                            <option
+                              :value="op"
+                              x-text="op"
+                              :selected="notChild.component === op"
+                            ></option>
+                          </template>
+                        </select>
+                      </template>
+                      <template x-if="notChild.component">
+                        <template
+                          x-for="slot in getInputSchemaForOperation(notChild.component)"
+                          :key="slot.name"
+                        >
+                          <div class="d-flex gap-1 flex-grow-1">
+                            <select
+                              class="form-select form-select-sm"
+                              style="width: auto;"
+                              :value="getInputValue(notChild, slot.name).type"
+                              @change="setInputType(notChild, slot.name, $event.target.value)"
+                              :disabled="mode === 'readonly'"
+                            >
+                              <option value="constant">
+                                {% trans "Value" %}
+                              </option>
+                              <option value="parameter">
+                                {% trans "Parameter" %}
+                              </option>
+                              <option value="auto_value">
+                                {% trans "Auto value" %}
+                              </option>
+                            </select>
+                            <template
+                              x-if="getInputValue(notChild, slot.name).type === 'constant'"
+                            >
+                              <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                x-model="notChild.inputs[slot.name].value"
+                                :disabled="mode === 'readonly'"
+                                :placeholder="slot.name"
+                              />
+                            </template>
+                            <template
+                              x-if="getInputValue(notChild, slot.name).type === 'parameter'"
+                            >
+                              <select
+                                class="form-select form-select-sm"
+                                @change="notChild.inputs[slot.name].ref = $event.target.value"
+                                :disabled="mode === 'readonly'"
+                              >
+                                <option
+                                  value=""
+                                  :selected="!getInputValue(notChild, slot.name).ref"
+                                >
+                                  {% trans "-- Parameter --" %}
+                                </option>
+                                <template
+                                  x-for="param in parameters"
+                                  :key="param.name"
+                                >
+                                  <option
+                                    :value="param.name"
+                                    x-text="param.name"
+                                    :selected="getInputValue(notChild, slot.name).ref === param.name"
+                                  ></option>
+                                </template>
+                              </select>
+                            </template>
+                            <template
+                              x-if="getInputValue(notChild, slot.name).type === 'auto_value'"
+                            >
+                              <select
+                                class="form-select form-select-sm"
+                                @change="notChild.inputs[slot.name].ref = $event.target.value"
+                                :disabled="mode === 'readonly'"
+                              >
+                                <option
+                                  value=""
+                                  :selected="!getInputValue(notChild, slot.name).ref"
+                                >
+                                  {% trans "-- Auto value --" %}
+                                </option>
+                                <template
+                                  x-for="(refs, fieldType) in capability.auto_values"
+                                  :key="fieldType"
+                                >
+                                  <template x-for="av in refs" :key="av.ref">
+                                    <option
+                                      :value="av.ref"
+                                      x-text="av.label + ' (' + fieldType + ')'"
+                                      :selected="getInputValue(notChild, slot.name).ref === av.ref"
+                                    ></option>
+                                  </template>
+                                </template>
+                              </select>
+                            </template>
+                          </div>
+                        </template>
+                      </template>
+                      <template x-if="mode !== 'readonly'">
+                        <button
+                          type="button"
+                          class="btn btn-sm text-secondary border-0 p-1 ms-auto flex-shrink-0"
+                          @click="removeNode(child.child, notIdx)"
+                          aria-label="{% trans "Remove condition" %}"
+                        >
+                          <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                      </template>
+                    </div>
+                  </template>
+                </template>
+                <template x-if="mode !== 'readonly'">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm mt-1"
+                    @click="addCondition(child.child)"
+                  >
+                    <i class="fa-solid fa-plus me-1"></i
+                    >{% trans "Add Condition" %}
+                  </button>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    {# Empty state #}
+    <template x-if="query.children.length === 0">
+      <p class="text-muted fst-italic small">
+        {% trans "No conditions yet. Add a condition or group below." %}
+      </p>
+    </template>
+
+    {# Root add buttons #}
+    <template x-if="mode !== 'readonly'">
+      <div class="d-flex gap-2 mt-2 flex-wrap">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          @click="addCondition(query)"
+        >
+          <i class="fa-solid fa-plus me-1"></i>{% trans "Add Condition" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          @click="addGroup(query, 'and')"
+        >
+          <i class="fa-solid fa-code-branch me-1"></i>{% trans "Add Group" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          @click="addNotGroup(query)"
+        >
+          {% trans "Add NOT group" %}
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <textarea
+    class="form-control font-monospace mt-3"
+    rows="8"
+    readonly
+    x-text="JSON.stringify(query, null, 2)"
+  ></textarea>
+</div>
