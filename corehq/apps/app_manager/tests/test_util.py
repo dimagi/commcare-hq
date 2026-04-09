@@ -1,5 +1,5 @@
 from django.http import Http404
-from django.test.testcases import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
 
-class TestGetDefaultFollowupForm(TestCase):
+class TestGetDefaultFollowupForm(SimpleTestCase):
     def test_default_followup_form(self):
         app = Application.new_app('domain', "Untitled Application")
 
