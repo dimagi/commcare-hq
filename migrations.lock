@@ -1289,6 +1289,7 @@ userreports
  0018_ucrexpression
  0019_ucrexpression_upstream_id
  0020_delete_ucr_comparison_models
+ 0021_drop_aggregate_ucrs_tables
 users
  0001_add_location_permission
  0002_domainrequest
