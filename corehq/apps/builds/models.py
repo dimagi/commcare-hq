@@ -14,6 +14,11 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from dimagi.utils.couch.migration import (
+    SyncCouchToSQLMixin,
+    SyncSQLToCouchMixin,
+)
+from django.db import models
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
@@ -36,7 +41,7 @@ class SemanticVersionProperty(StringProperty):
         return value
 
 
-class CommCareBuild(Document):
+class CommCareBuild(SyncCouchToSQLMixin, Document):
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()
@@ -97,7 +102,49 @@ class CommCareBuild(Document):
     @classmethod
     def all_builds(cls):
         return cls.view('builds/all', include_docs=True, reduce=False)
+    
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "version",
+            "build_number",
+            "external_blobs",
+            "time",
+            "j2me_enabled",
+        ]
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCommCareBuild
+
+
+class SQLCommCareBuild(SyncSQLToCouchMixin, models.Model):
+    version = models.CharField(max_length=8, null=False)
+    build_number = models.IntegerField(null=True)
+    external_blobs = models.JSONField(null=False, default=dict)
+    time = models.DateTimeField(null=False)
+    j2me_enabled = models.BooleanField(null=False, default='TODO')
+    couch_id = models.CharField(max_length=126, null=True)
+
+    class Meta:
+        db_table = "builds_commcarebuild"
+        indexes = (
+            models.Index(fields=('couch_id',)),
+        )
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "version",
+            "build_number",
+            "external_blobs",
+            "time",
+            "j2me_enabled",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CommCareBuild
 
 class BuildSpec(DocumentSchema):
     version = SemanticVersionProperty(required=False)
