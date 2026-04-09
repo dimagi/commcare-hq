@@ -261,6 +261,7 @@ def _handle_case_put_post(request, is_creation, case_id=None):
 
 
 def _handle_case_update(request, data, is_creation):
+    filter_fields = get_fields_filter_fn(request.GET)
     try:
         xform, case_or_cases = handle_case_update(
             domain=request.domain,
@@ -277,7 +278,6 @@ def _handle_case_update(request, data, is_creation):
             'form_id': e.form_id,
         }, status=400)
 
-    filter_fields = get_fields_filter_fn(request.GET)
     if isinstance(case_or_cases, list):
         return JsonResponse({
             'form_id': xform.form_id,
