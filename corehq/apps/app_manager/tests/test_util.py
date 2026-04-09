@@ -1,8 +1,12 @@
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.app_manager.models import AdvancedModule, Application
+from corehq.apps.app_manager.models import AdvancedModule, Application, Module
 from corehq.apps.app_manager.tests.util import SuiteMixin
-from corehq.apps.app_manager.util import split_path, does_app_have_mobile_ucr_v1_refs
+from corehq.apps.app_manager.util import (
+    _save_question_to_case_name,
+    does_app_have_mobile_ucr_v1_refs,
+    split_path,
+)
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 
 
@@ -44,6 +48,23 @@ class TestSplitPath(SimpleTestCase):
         path, name = split_path('')
         self.assertEqual(path, '')
         self.assertEqual(name, '')
+
+
+class TestSaveQuestionToCaseName:
+    LANG = 'en'
+
+    def test_default_question_path_is_null(self):
+        form = self._create_form()
+        assert form.actions.open_case.name_update is not None
+
+        _save_question_to_case_name(form, self.LANG)
+
+        assert form.actions.open_case.name_update.question_path is None
+
+    def _create_form(self):
+        app = Application.new_app('domain', "App")
+        module = app.add_module(Module.new_module('module', None))
+        return module.new_form(name="Registration", lang=None)
 
 
 class TestDoesAppHaveMobileUCRV1Refs(TestCase, SuiteMixin):
