@@ -1,6 +1,6 @@
 from corehq.apps.cleanup.tests.util import ModelAttrEqualityHelper
-from corehq.apps.builds.models.CommCareBuild import CommCareBuild
-from corehq.apps.builds.models.CommCareBuild import SQLCommCareBuild
+from corehq.apps.builds.models import CommCareBuild
+from corehq.apps.builds.models import SQLCommCareBuild
 
 
 class TestCommCareBuildModelsAttrEquality(ModelAttrEqualityHelper):
