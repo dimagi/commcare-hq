@@ -102,15 +102,13 @@ class CommCareBuild(SyncCouchToSQLMixin, Document):
     @classmethod
     def all_builds(cls):
         return cls.view('builds/all', include_docs=True, reduce=False)
-    
+
     @classmethod
     def _migration_get_fields(cls):
         return [
             "version",
             "build_number",
-            "external_blobs",
             "time",
-            "j2me_enabled",
         ]
 
     @classmethod
@@ -121,9 +119,7 @@ class CommCareBuild(SyncCouchToSQLMixin, Document):
 class SQLCommCareBuild(SyncSQLToCouchMixin, models.Model):
     version = models.CharField(max_length=8, null=False)
     build_number = models.IntegerField(null=True)
-    external_blobs = models.JSONField(null=False, default=dict)
     time = models.DateTimeField(null=False)
-    j2me_enabled = models.BooleanField(null=False, default='TODO')
     couch_id = models.CharField(max_length=126, null=True)
 
     class Meta:
@@ -137,9 +133,7 @@ class SQLCommCareBuild(SyncSQLToCouchMixin, models.Model):
         return [
             "version",
             "build_number",
-            "external_blobs",
             "time",
-            "j2me_enabled",
         ]
 
     @classmethod
