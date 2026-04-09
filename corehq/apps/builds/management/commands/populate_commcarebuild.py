@@ -13,7 +13,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.builds.models.CommCareBuild import SQLCommCareBuild
+        from corehq.apps.builds.models import SQLCommCareBuild
         return SQLCommCareBuild
 
     @classmethod
