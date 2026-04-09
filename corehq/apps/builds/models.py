@@ -18,7 +18,9 @@ from dimagi.utils.couch.migration import (
     SyncCouchToSQLMixin,
     SyncSQLToCouchMixin,
 )
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
@@ -116,8 +118,22 @@ class CommCareBuild(SyncCouchToSQLMixin, Document):
         return CommCareMobileBuild
 
 
+def validate_semantic_version(value):
+    try:
+        major, minor, point = value.split('.')
+        int(major)
+        int(minor)
+        int(point)
+    except Exception:
+        raise ValidationError(
+            _("Build version %(value)s does not comply with the x.y.z schema"),
+            params={"value": value},
+            code="invalid",
+        )
+
+
 class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
-    version = models.CharField(max_length=8, null=False)
+    version = models.CharField(max_length=8, null=False, validators=[validate_semantic_version])
     build_number = models.IntegerField(null=True)
     time = models.DateTimeField(null=False)
     couch_id = models.CharField(max_length=126, null=True)
@@ -126,6 +142,10 @@ class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
         indexes = (
             models.Index(fields=('couch_id',)),
         )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     @classmethod
     def _migration_get_fields(cls):
