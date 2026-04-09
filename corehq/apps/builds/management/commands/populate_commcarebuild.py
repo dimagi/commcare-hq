@@ -13,8 +13,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.builds.models import SQLCommCareBuild
-        return SQLCommCareBuild
+        from corehq.apps.builds.models import CommCareMobileBuild
+        return CommCareMobileBuild
 
     @classmethod
     def commit_adding_migration(cls):

@@ -1,13 +1,13 @@
 from corehq.apps.cleanup.tests.util import ModelAttrEqualityHelper
 from corehq.apps.builds.models import CommCareBuild
-from corehq.apps.builds.models import SQLCommCareBuild
+from corehq.apps.builds.models import CommCareMobileBuild
 
 
 class TestCommCareBuildModelsAttrEquality(ModelAttrEqualityHelper):
 
     def test_have_same_attrs(self):
         couch_attrs = self.get_cleaned_couch_attrs(CommCareBuild)
-        sql_attrs = self.get_sql_attrs(SQLCommCareBuild)
+        sql_attrs = self.get_sql_attrs(CommCareMobileBuild)
         self.assertEqual(couch_attrs ^ sql_attrs, set())
 
     couch_only_attrs = {*[
