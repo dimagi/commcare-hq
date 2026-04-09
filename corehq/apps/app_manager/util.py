@@ -5,6 +5,7 @@ import re
 import uuid
 from collections import namedtuple
 from copy import deepcopy
+from itertools import chain
 
 from django.core.cache import cache
 from django.http import Http404
@@ -194,18 +195,28 @@ def save_xform(app, form, xml, case_mapping_diff=None):
 
 
 def _save_question_to_case_name(form, lang):
+    """Map the first question to case name if not already mapped
+
+    Create a case mapping with as little friction as possible.
+    """
     from corehq.apps.app_manager.models import ConditionalCaseUpdate
-    # For registration forms, assume that the first question is the
-    # case name unless something else has been specified
     questions = form.get_questions([lang])
-    if hasattr(form.actions, 'open_case'):
+    if hasattr(form.actions, 'open_case') and questions:
         path = getattr(form.actions.open_case.name_update, 'question_path', None)
         if path and not any(path == q['value'] for q in questions):
             # should be rare since the form builder automatically
             # updates case mappings when questions are renamed or moved
             path = None
-        if not path and len(questions):
-            form.actions.open_case.name_update = ConditionalCaseUpdate(question_path=questions[0]['value'])
+        first_path = questions[0]['value']
+        if not path and not _question_is_mapped(first_path, form.actions.update_case):
+            form.actions.open_case.name_update = ConditionalCaseUpdate(question_path=first_path)
+
+
+def _question_is_mapped(question_path, update_case_action):
+    return any(question_path == ccu.question_path for ccu in chain(
+        update_case_action.update.values(),
+        *update_case_action.conflicts.values()
+    ))
 
 
 CASE_TYPE_REGEX = r'^[\w-]+$'

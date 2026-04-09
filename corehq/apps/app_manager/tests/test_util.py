@@ -1,6 +1,13 @@
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.app_manager.models import AdvancedModule, Application, Module
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Application,
+    FormActions,
+    Module,
+    UpdateCaseAction,
+)
+
 from corehq.apps.app_manager.tests.util import SuiteMixin
 from corehq.apps.app_manager.util import (
     _save_question_to_case_name,
@@ -56,6 +63,32 @@ class TestSaveQuestionToCaseName:
     def test_default_question_path_is_null(self):
         form = self._create_form()
         assert form.actions.open_case.name_update is not None
+
+        _save_question_to_case_name(form, self.LANG)
+
+        assert form.actions.open_case.name_update.question_path is None
+
+    def test_does_not_map_name_if_first_question_is_already_mapped(self):
+        form = self._create_form()
+        form.actions = FormActions(update_case=UpdateCaseAction({
+            'update': {'one': {'question_path': '/data/one'}},
+        }))
+        form.get_questions.set_cached_value(form, ['en']).to([
+            {"value": "/data/one"},
+        ])
+
+        _save_question_to_case_name(form, self.LANG)
+
+        assert form.actions.open_case.name_update.question_path is None
+
+    def test_does_not_map_name_if_first_question_has_conflicted_mapping(self):
+        form = self._create_form()
+        form.actions = FormActions(update_case=UpdateCaseAction({
+            'conflicts': {'one': [{'question_path': '/data/one'}]},
+        }))
+        form.get_questions.set_cached_value(form, ['en']).to([
+            {"value": "/data/one"},
+        ])
 
         _save_question_to_case_name(form, self.LANG)
 
