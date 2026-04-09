@@ -113,17 +113,16 @@ class CommCareBuild(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def _migration_get_sql_model_class(cls):
-        return SQLCommCareBuild
+        return CommCareMobileBuild
 
 
-class SQLCommCareBuild(SyncSQLToCouchMixin, models.Model):
+class CommCareMobileBuild(SyncSQLToCouchMixin, models.Model):
     version = models.CharField(max_length=8, null=False)
     build_number = models.IntegerField(null=True)
     time = models.DateTimeField(null=False)
     couch_id = models.CharField(max_length=126, null=True)
 
     class Meta:
-        db_table = "builds_commcarebuild"
         indexes = (
             models.Index(fields=('couch_id',)),
         )
