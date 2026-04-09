@@ -9,12 +9,13 @@ from corehq.util.log import with_progress_bar
 def _delete_aggregate_report_configs(apps, schema_editor):
     from corehq.apps.userreports.models import ReportConfiguration
     db = ReportConfiguration.get_db()
-    count = db.view(
+    result = db.view(
         'all_docs/by_doc_type',
         startkey=['ReportConfiguration'],
         endkey=['ReportConfiguration', {}],
         reduce=True,
-    ).one()['value']
+    ).one()
+    count = result['value'] if result else 0
     rows = paginate_view(
         db,
         'all_docs/by_doc_type',
