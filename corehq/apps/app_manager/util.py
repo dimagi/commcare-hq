@@ -200,10 +200,10 @@ def _save_question_to_case_name(form, lang):
     questions = form.get_questions([lang])
     if hasattr(form.actions, 'open_case'):
         path = getattr(form.actions.open_case.name_update, 'question_path', None)
-        if path:
-            name_questions = [q for q in questions if q['value'] == path]
-            if not len(name_questions):
-                path = None
+        if path and not any(path == q['value'] for q in questions):
+            # should be rare since the form builder automatically
+            # updates case mappings when questions are renamed or moved
+            path = None
         if not path and len(questions):
             form.actions.open_case.name_update = ConditionalCaseUpdate(question_path=questions[0]['value'])
 
