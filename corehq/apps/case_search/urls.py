@@ -12,6 +12,7 @@ from corehq.apps.case_search.endpoint_views import (
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
+    CaseSearchEndpointTestView,
     CaseSearchEndpointVersionView,
 )
 
@@ -56,6 +57,11 @@ urlpatterns = [
         r'^endpoints/(?P<endpoint_id>\d+)/deactivate/$',
         CaseSearchEndpointDeactivateView.as_view(),
         name=CaseSearchEndpointDeactivateView.urlname,
+    ),
+    url(
+        r'^endpoints/test/$',
+        CaseSearchEndpointTestView.as_view(),
+        name=CaseSearchEndpointTestView.urlname,
     ),
     url(r'^case_search_endpoint/$', CaseSearchEndpoint.as_view(), name=CaseSearchEndpoint.urlname),
 ]

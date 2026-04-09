@@ -1,8 +1,11 @@
+import datetime
+
 from django.db import transaction
 from django.db.models import Max
 from django.http import Http404
 
 from corehq.apps.case_search.endpoint_capability import (
+    COMPONENT_INPUT_FUNCTIONS,
     COMPONENT_INPUT_SCHEMAS,
     get_capability,
 )
@@ -10,6 +13,7 @@ from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
 )
+from corehq.const import SERVER_DATE_FORMAT
 
 
 class FilterSpecValidationError(Exception):
@@ -63,6 +67,82 @@ def save_new_version(endpoint, parameters, query):
     endpoint.current_version = version
     endpoint.save(update_fields=['current_version'])
     return version
+
+
+def test_query(domain, target_type, target_name, parameters, query):
+    """Test a query. First validate it then run it and return the results"""
+    capability = get_capability(domain)
+    errors = validate_filter_spec(query, parameters, target_name, capability)
+    if errors:
+        raise FilterSpecValidationError(errors)
+
+
+    import sqlalchemy
+    from corehq.apps.project_db.schema import (
+        get_project_db_engine,
+        get_schema_name,
+        set_local_search_path,
+    )
+
+    parameter_values = {p['name']: p['value'] for p in parameters}
+    sql_base = f"SELECT * FROM {target_name} WHERE {_build_where_clause(query, parameter_values)}"
+    sql_limit = f"{sql_base} LIMIT 10;"
+
+    if "not implemented" in sql_limit:
+        return {
+            'sql': sql_base,
+            'columns': [],
+            'rows': [],
+            'errors': ["parts of the query to sql convertion is not implemented yet"]
+        }
+
+    engine = get_project_db_engine()
+    schema_name = get_schema_name(domain)
+
+    inspector = sqlalchemy.inspect(engine)
+    if schema_name not in inspector.get_schema_names():
+        return
+
+    with engine.begin() as conn:
+        # Use execution_options postgresql_readonly in sqlalchemy 1.4+
+        conn.execute(sqlalchemy.text('SET TRANSACTION READ ONLY'))
+        set_local_search_path(conn, domain)
+        result = conn.execute(sqlalchemy.text(sql_limit))
+        rows = [list(r) for r in result.fetchall()]
+        columns = list(result.keys())
+
+        return {
+            'sql': sql_base,
+            'columns': columns,
+            'rows': rows,
+            'errors': [],
+        }
+
+
+def _materialize_value(input, parameter_values):
+    if input['type'] == 'constant':
+        return input['value']
+    if input['type'] == 'parameter':
+        return parameter_values[input['ref']]
+    if input['type'] == 'auto_value':
+        if input['ref'] == 'today()':
+            return datetime.datetime.now(datetime.timezone.utc).strftime(SERVER_DATE_FORMAT)
+
+def _materialize_values(inputs, parameter_values):
+    return {k: _materialize_value(v, parameter_values) for k, v in inputs.items()}
+
+def _build_where_clause(query, parameter_values):
+    if query['type'] == 'and':
+        return f"({' AND '.join([_build_where_clause(c, parameter_values) for c in query["children"]])})"
+    if query['type'] == 'or':
+        return f"({' OR '.join([_build_where_clause(c, parameter_values) for c in query["children"]])})"
+    if query['type'] == 'component':
+        toSql = COMPONENT_INPUT_FUNCTIONS[query['component']]
+        field = query['field']
+        inputs = query['inputs']
+        return toSql(field, _materialize_values(inputs, parameter_values))
+
+    return 'not implemented'
 
 
 def validate_filter_spec(spec, parameters, case_type_name, capability):

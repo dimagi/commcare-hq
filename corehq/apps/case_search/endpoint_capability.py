@@ -9,6 +9,8 @@ FIELD_TYPE_DATE = 'date'
 FIELD_TYPE_DATETIME = 'datetime'
 FIELD_TYPE_SELECT = 'select'
 FIELD_TYPE_GEOPOINT = 'geopoint'
+SCHEMA = 'schema'
+TO_SQL = 'toSql'
 
 # DataType -> field type mapping
 _DATA_TYPE_MAP = {
@@ -46,29 +48,89 @@ _OPERATIONS_BY_TYPE = {
     ],
 }
 
-COMPONENT_INPUT_SCHEMAS = {
-    'exact_match':    [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'not_equals':     [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'starts_with':    [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'fuzzy_match':    [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'phonetic_match': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'selected_any':   [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'selected_all':   [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'is_empty':       [],
-    'equals':         [{'name': 'value', 'type': 'match_field'}],
-    'gt':             [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'gte':            [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'lt':             [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'lte':            [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
-    'before':         [{'name': 'value', 'type': 'match_field'}],
-    'after':          [{'name': 'value', 'type': 'match_field'}],
-    'date_range':     [{'name': 'start', 'type': 'match_field'},
-                       {'name': 'end', 'type': 'match_field'}],
-    'fuzzy_date':     [{'name': 'value', 'type': FIELD_TYPE_DATE}],
-    'within_distance': [{'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
-                        {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
-                        {'name': 'unit', 'type': 'choice'}],
+COMPONENT_INPUT_SCHEMAS_AND_FUNCTIONS = {
+    'exact_match': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}\" = '{inputs['value']}'"
+    },
+    'not_equals': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}\" != '{inputs['value']}'"
+    },
+    'starts_with': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}\" LIKE '{inputs['value']}%'"
+    },
+    'fuzzy_match': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+        TO_SQL: lambda field, inputs: 'not implemented'
+    },
+    'phonetic_match': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+        TO_SQL: lambda field, inputs: 'not implemented'
+    },
+    'selected_any': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+        TO_SQL: lambda field, inputs: 'not implemented'
+    },
+    'selected_all': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+        TO_SQL: lambda field, inputs: 'not implemented'
+    },
+    'is_empty': {
+        SCHEMA: [],
+        TO_SQL: lambda field, inputs: f"(\"prop__{field}\" = '' OR \"prop__{field}\" IS NULL)"
+    },
+    'equals': {
+        SCHEMA: [{'name': 'value', 'type': 'match_field'}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}__numeric\" = {inputs['value']}"
+    },
+    'gt': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}__numeric\" > {inputs['value']}"
+    },
+    'gte': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}__numeric\" >= {inputs['value']}"
+    },
+    'lt': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}__numeric\" < {inputs['value']}"
+    },
+    'lte': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_NUMBER}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}__numeric\" <= {inputs['value']}"
+    },
+    'before': {
+        SCHEMA: [{'name': 'value', 'type': 'match_field'}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}__date\" < '{inputs['value']}'"
+    },
+    'after': {
+        SCHEMA: [{'name': 'value', 'type': 'match_field'}],
+        TO_SQL: lambda field, inputs: f"\"prop__{field}__date\" > '{inputs['value']}'"
+    },
+    'date_range': {
+        SCHEMA: [{'name': 'start', 'type': 'match_field'},
+                 {'name': 'end', 'type': 'match_field'}],
+        TO_SQL: lambda field, inputs: (
+            f"\"prop__{field}__date\" > '{inputs['start']}'"
+            f" and \"prop__{field}__date\" < '{inputs['end']}'"
+        )
+    },
+    'fuzzy_date': {
+        SCHEMA: [{'name': 'value', 'type': FIELD_TYPE_DATE}],
+        TO_SQL: lambda field, inputs: 'not implemented'
+    },
+    'within_distance': {
+        SCHEMA: [{'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
+                 {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
+                 {'name': 'unit', 'type': 'choice'}],
+        TO_SQL: lambda field, inputs: 'not implemented'
+    },
 }
+
+COMPONENT_INPUT_SCHEMAS = { k: v[SCHEMA] for k, v in COMPONENT_INPUT_SCHEMAS_AND_FUNCTIONS.items() }
+COMPONENT_INPUT_FUNCTIONS = { k: v[TO_SQL] for k, v in COMPONENT_INPUT_SCHEMAS_AND_FUNCTIONS.items() }
 
 _AUTO_VALUES = {
     FIELD_TYPE_DATE: [
