@@ -187,21 +187,25 @@ def save_xform(app, form, xml, case_mapping_diff=None):
 
     form.source = xml.decode('utf-8')
 
-    from corehq.apps.app_manager.models import ConditionalCaseUpdate
     if form.is_registration_form():
-        # For registration forms, assume that the first question is the
-        # case name unless something else has been specified
-        questions = form.get_questions([app.default_language])
-        if hasattr(form.actions, 'open_case'):
-            path = getattr(form.actions.open_case.name_update, 'question_path', None)
-            if path:
-                name_questions = [q for q in questions if q['value'] == path]
-                if not len(name_questions):
-                    path = None
-            if not path and len(questions):
-                form.actions.open_case.name_update = ConditionalCaseUpdate(question_path=questions[0]['value'])
+        _save_question_to_case_name(form, app.default_language)
 
     return xml
+
+
+def _save_question_to_case_name(form, lang):
+    from corehq.apps.app_manager.models import ConditionalCaseUpdate
+    # For registration forms, assume that the first question is the
+    # case name unless something else has been specified
+    questions = form.get_questions([lang])
+    if hasattr(form.actions, 'open_case'):
+        path = getattr(form.actions.open_case.name_update, 'question_path', None)
+        if path:
+            name_questions = [q for q in questions if q['value'] == path]
+            if not len(name_questions):
+                path = None
+        if not path and len(questions):
+            form.actions.open_case.name_update = ConditionalCaseUpdate(question_path=questions[0]['value'])
 
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
