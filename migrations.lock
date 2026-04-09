@@ -140,9 +140,6 @@ admin
  0001_initial
  0002_logentry_remove_auto_add
  0003_logentry_add_action_flag_choices
-aggregate_ucrs
- 0001_initial_squashed_0008_auto_20180625_1105 (8 squashed migrations)
- 0002_auto_20180827_1148
 analytics
  0001_initial
  0002_data_point_unique_constraint
@@ -1295,6 +1292,7 @@ userreports
  0018_ucrexpression
  0019_ucrexpression_upstream_id
  0020_delete_ucr_comparison_models
+ 0021_drop_aggregate_ucrs_tables
 users
  0001_add_location_permission
  0002_domainrequest
