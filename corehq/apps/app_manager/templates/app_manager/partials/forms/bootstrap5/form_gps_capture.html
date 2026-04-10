@@ -1,17 +1,20 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-<label class="form-label col-md-2">
+<label class="col-form-label field-label" for="auto-gps-capture">
   {% trans "Auto Capture Location" %}
   <span class="hq-help-template"
         data-title="{% trans "Auto Capture Location" %}"
         data-content="{% blocktrans %}On CommCare Android, have this form automatically capture the user's current geo-location.{% endblocktrans %}"
   ></span>
 </label>
-<div id="auto-gps-capture" class="col-md-8 commcare-feature" data-since-version="2.14">
+<div class="field-control commcare-feature" data-since-version="2.14">
   {% if app.auto_gps_capture %}
-    <input type="checkbox" value="true" disabled="disabled"  {# todo B5: css-checkbox #}
-           data-bind="checked: true"/>
-    <div class="help-block">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="true" disabled="disabled"
+             id="auto-gps-capture"
+             data-bind="checked: true"/>
+    </div>
+    <div class="form-text">
       {% blocktrans %}
         This application is configured to auto capture location for all forms.
         <br>
@@ -20,8 +23,11 @@
       {% endblocktrans %}
     </div>
   {% else %}
-    <input type="checkbox" value="true"  {# todo B5: css-checkbox #}
-           data-bind="checked: auto_gps_capture"/>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="true"
+             id="auto-gps-capture"
+             data-bind="checked: auto_gps_capture"/>
+    </div>
   {% endif %}
   <input type="hidden" name="auto_gps_capture" data-bind="value: auto_gps_capture"/>
 </div>
