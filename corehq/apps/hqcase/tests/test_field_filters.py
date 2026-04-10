@@ -44,6 +44,15 @@ def test_get_tree_realistic():
 
     ("", {}),
     ("somethingelse=yes", {}),
+
+    # Whitespace is not stripped: "a=x, y" produces a key " y", not "y"
+    ("a=x, y", {'x': {}, ' y': {}}),
+    # Trailing comma produces an empty-string key
+    ("a=x,", {'x': {}, '': {}}),
+    # Empty value produces an empty-string key
+    ("a=", {'': {}}),
+    # Empty dot-param value produces an empty-string key in the subtree
+    ("a.b=", {'b': {'': {}}}),
 ])
 def test_get_tree(querystring, expected):
     assert _get_tree(QueryDict(querystring), 'a') == expected
