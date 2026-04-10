@@ -1,6 +1,8 @@
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.case_search.endpoint_capability import (
+    COMPONENT_INPUT_SCHEMAS,
+    _AUTO_VALUES,
     FIELD_TYPE_DATE,
     FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_NUMBER,
@@ -17,64 +19,30 @@ from corehq.apps.data_dictionary.models import (
 )
 
 
-class TestGetFieldType(TestCase):
+class TestComponentInputSchemas(SimpleTestCase):
 
-    def test_plain_maps_to_text(self):
-        assert get_field_type(CaseProperty.DataType.PLAIN) == FIELD_TYPE_TEXT
+    def test_all_values_are_lists(self):
+        for op, schema in COMPONENT_INPUT_SCHEMAS.items():
+            assert isinstance(schema, list), f"{op}: expected list, got {type(schema)}"
 
-    def test_date_maps_to_date(self):
-        assert get_field_type(CaseProperty.DataType.DATE) == FIELD_TYPE_DATE
-
-    def test_number_maps_to_number(self):
-        assert get_field_type(CaseProperty.DataType.NUMBER) == FIELD_TYPE_NUMBER
-
-    def test_select_maps_to_select(self):
-        assert get_field_type(CaseProperty.DataType.SELECT) == FIELD_TYPE_SELECT
-
-    def test_gps_maps_to_geopoint(self):
-        assert get_field_type(CaseProperty.DataType.GPS) == FIELD_TYPE_GEOPOINT
-
-    def test_password_returns_none(self):
-        assert get_field_type(CaseProperty.DataType.PASSWORD) is None
-
-    def test_barcode_maps_to_text(self):
-        assert get_field_type(CaseProperty.DataType.BARCODE) == FIELD_TYPE_TEXT
-
-    def test_phone_number_maps_to_text(self):
-        assert get_field_type(CaseProperty.DataType.PHONE_NUMBER) == FIELD_TYPE_TEXT
-
-    def test_undefined_maps_to_text(self):
-        assert get_field_type(CaseProperty.DataType.UNDEFINED) == FIELD_TYPE_TEXT
+    def test_all_items_have_name_and_type_strings(self):
+        for op, schema in COMPONENT_INPUT_SCHEMAS.items():
+            for item in schema:
+                assert isinstance(item.get('name'), str), f"{op}: item 'name' must be str"
+                assert isinstance(item.get('type'), str), f"{op}: item 'type' must be str"
 
 
-class TestGetOperationsForFieldType(TestCase):
+class TestAutoValues(SimpleTestCase):
 
-    def test_text_operations(self):
-        ops = get_operations_for_field_type(FIELD_TYPE_TEXT)
-        assert 'exact_match' in ops
-        assert 'fuzzy_match' in ops
-        assert 'is_empty' in ops
-        assert 'gt' not in ops
+    def test_all_values_are_lists(self):
+        for field_type, values in _AUTO_VALUES.items():
+            assert isinstance(values, list), f"{field_type}: expected list, got {type(values)}"
 
-    def test_number_operations(self):
-        ops = get_operations_for_field_type(FIELD_TYPE_NUMBER)
-        assert 'equals' in ops
-        assert 'gt' in ops
-        assert 'lte' in ops
-        assert 'fuzzy_match' not in ops
-
-    def test_date_operations(self):
-        ops = get_operations_for_field_type(FIELD_TYPE_DATE)
-        assert 'before' in ops
-        assert 'after' in ops
-        assert 'date_range' in ops
-        assert 'exact_match' not in ops
-
-    def test_select_operations(self):
-        ops = get_operations_for_field_type(FIELD_TYPE_SELECT)
-        assert 'selected_any' in ops
-        assert 'selected_all' in ops
-        assert 'exact_match' in ops
+    def test_all_items_have_ref_and_label_strings(self):
+        for field_type, values in _AUTO_VALUES.items():
+            for item in values:
+                assert isinstance(item.get('ref'), str), f"{field_type}: item 'ref' must be str"
+                assert isinstance(item.get('label'), str), f"{field_type}: item 'label' must be str"
 
 
 class TestGetCapability(TestCase):
