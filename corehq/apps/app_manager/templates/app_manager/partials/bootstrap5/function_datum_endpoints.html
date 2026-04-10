@@ -1,8 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-            <div class="form-group">  {# todo B5: css-form-group #}
-              <label class="form-label {% css_label_class %}">
+            <div class="row mb-3">
+              <label class="col-form-label {% css_label_class %}" for="function_datum_endpoints">
                 {% trans 'Enable these function datums in session endpoints' %}
                 <span class="hq-help-template"
                       data-title="{% trans 'Session Endpoint ID' %}"
@@ -10,8 +10,7 @@
               </label>
               <div id="computed-endpoints"
                    class="{% css_field_class %} commcare-feature"
-                   data-since-version="2.51"
-                   class="{% css_field_class %}">
+                   data-since-version="2.51">
                 <input class="code form-control"
                        type="text"
                        id="function_datum_endpoints"
