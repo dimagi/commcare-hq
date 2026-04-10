@@ -22,6 +22,14 @@ $(function () {
         // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload",
     ];
+    function filterActions(formActions) {
+        var actions = {};
+        _(actionNames).each(function (actionName) {
+            actions[actionName] = formActions[actionName];
+        });
+        actions.subcases = formActions.subcases;
+        return actions;
+    }
 
     var caseConfig = function (params) {
         var self = {};
@@ -33,14 +41,7 @@ $(function () {
         };
 
         self.home = params.home;
-        self.actions = (function (a) {
-            var actions = {};
-            _(actionNames).each(function (actionName) {
-                actions[actionName] = a[actionName];
-            });
-            actions.subcases = a.subcases;
-            return actions;
-        }(params.actions));
+        self.actions = filterActions(params.actions);
         self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;
         // `requires` is a ko observable so it can be read by another UI
@@ -73,11 +74,11 @@ $(function () {
         self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
-                var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
-                var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
+                var requires = self.caseConfigViewModel().actionType() === 'update' ? 'case' : 'none';
+                var subcases = _(self.caseConfigViewModel().subcases()).map(HQOpenSubCaseAction.from_case_transaction);
                 const opensCase = self.caseType && (requires === 'none');
                 const updatedActions = Object.assign(
-                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction, opensCase),
+                    HQFormActions.from_case_transaction(self.caseConfigViewModel().case_transaction, opensCase),
                     {subcases: subcases},
                 );
                 const diff = getDiff(self.baseline, updatedActions);
@@ -88,7 +89,7 @@ $(function () {
                     data: {
                         requires: requires,
                         actions: JSON.stringify(updatedActions),
-                        update_diff: JSON.stringify(diff),
+                        case_mapping_diff: JSON.stringify(diff),
                     },
                     dataType: 'json',
                     success: function (data) {
@@ -97,7 +98,14 @@ $(function () {
                         self.setPropertiesMap(data.propertiesMap);
                         // update the "original" state so that subsequent changes prior to a reload
                         // can generate a correct diff
-                        self.baseline = getBaseline(updatedActions);
+                        self.baseline = getBaseline(data.actions);
+                        self.actions = filterActions(data.actions);
+                        self.suspendTextBindingChanges = true;
+                        try {
+                            self.caseConfigViewModel(caseConfigViewModel(self));
+                        } finally {
+                            self.suspendTextBindingChanges = false;
+                        }
 
                         if (_(data.propertiesMap).has(self.caseType)) {
                             noopMetrics.track.event("Saved question as a Case Property", {
@@ -113,7 +121,7 @@ $(function () {
             unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 const actions = JSON.stringify(
-                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction),
+                    HQFormActions.from_usercase_transaction(self.caseConfigViewModel().usercase_transaction),
                 );
                 self.saveUsercaseButton.ajax({
                     type: 'post',
@@ -153,7 +161,8 @@ $(function () {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
-        self.caseConfigViewModel = caseConfigViewModel(self);
+        self.pageState = {};
+        self.caseConfigViewModel = ko.observable(caseConfigViewModel(self));
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
             return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
@@ -163,9 +172,13 @@ $(function () {
             return caseConfigUtils.getAnswers(self.questions(), condition);
         };
 
+        self.suspendTextBindingChanges = false;
         self.change = function () {
+            if (self.suspendTextBindingChanges) { return; }
             self.saveButton.fire('change');
             self.forceRefreshTextchangeBinding(self.home);
+            const property = ko.dataFor($(this).closest(".case-property-mapping")[0]);
+            property?.conflictingDelete?.(undefined);
         };
 
         self.usercaseChange = function () {
@@ -342,7 +355,7 @@ $(function () {
             self.case_name = _(self.case_properties()).find(function (p) {
                 return p.key() === 'name' && p.required();
             }).path;
-        } catch (e) {
+        } catch {
             self.case_name = null;
         }
 
@@ -359,8 +372,16 @@ $(function () {
         };
 
         // Pagination and search
+        if (!caseConfig.pageState[data.type]) {
+            // setup global page state for data.type on first call, reuse thereafter
+            caseConfig.pageState[data.type] = {
+                currentPage: ko.observable(1),
+                searchQuery: ko.observable(''),
+            };
+        }
+        self.currentPage = caseConfig.pageState[data.type].currentPage;
         self.searchAndFilter = true;
-        self.case_property_query = ko.observable('');
+        self.case_property_query = caseConfig.pageState[data.type].searchQuery;
         self.filtered_case_properties = ko.computed(function () {
             var query = self.case_property_query() || '';
             var props = _.filter(self.case_properties(), function (item) {
@@ -372,18 +393,22 @@ $(function () {
         self.visible_case_properties = ko.observableArray();
         self.pagination_reset_flag = ko.observable(false);
         self.goToPage = function (page) {
-            page = page || 1;
             var props = self.filtered_case_properties();
+            var lastPage = Math.ceil(props.length / self.per_page()) || 1;
+            page = Math.min(page || 1, lastPage);
             var skip = self.per_page() * (page - 1);
             props = props.slice(skip, skip + self.per_page());
             self.visible_case_properties(props);
+            if (page !== self.currentPage()) {
+                self.currentPage(page);
+            };
         };
         // Don't allow changing per page; "Add Property" button is where the per page changer usually is
         self.per_page = ko.observable(10);
         self.total_case_properties = ko.computed(function () {
             return self.filtered_case_properties().length;
         });
-        self.goToPage(1);
+        self.goToPage(self.currentPage());
 
         self.suggestedSaveProperties = ko.computed(function () {
             const properties = caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
@@ -432,6 +457,11 @@ $(function () {
             var updatedCaseProp = caseProperty.wrap(_.extend(ko.mapping.toJS(property), {save_only_if_edited: checked}), self);
             self.case_properties.replace(property, updatedCaseProp);
             self.visible_case_properties.replace(property, updatedCaseProp);
+            self.dismissConflictingDelete(updatedCaseProp);
+        };
+
+        self.dismissConflictingDelete = function (property) {
+            property.conflictingDelete?.(undefined);
             saveButton.fire('change');
         };
 
@@ -542,7 +572,7 @@ $(function () {
 
     var casePropertyBase = {
         mapping: {
-            include: ['key', 'path', 'required', 'save_only_if_edited'],
+            include: ['key', 'path', 'required', 'save_only_if_edited', 'conflictingDelete'],
         },
         wrap: function (data, caseTransaction) {
             var self = ko.mapping.fromJS(data, caseProperty.mapping);
@@ -715,16 +745,14 @@ $(function () {
                     }
                 },
             }, caseConfig, true);
-            _.delay(function () {
-                x.allow = {
-                    condition: ko.computed(function () {
-                        return caseConfig.caseConfigViewModel.actionType() === 'open';
-                    }),
-                    repeats: function () {
-                        return false;
-                    },
-                };
-            });
+            x.allow = {
+                condition: ko.pureComputed(function () {
+                    return caseConfig.caseConfigViewModel().actionType() === 'open';
+                }),
+                repeats: function () {
+                    return false;
+                },
+            };
             return x;
         },
         from_case_transaction: function (caseTransaction, opensCase) {
@@ -737,7 +765,7 @@ $(function () {
             var openCondition = o.condition;
             var closeCondition = o.close_condition;
             var updateCondition = DEFAULT_CONDITION_ALWAYS;
-            var actionType = caseTransaction.caseConfig.caseConfigViewModel.actionType();
+            var actionType = caseTransaction.caseConfig.caseConfigViewModel().actionType();
 
             if (actionType === 'open') {
                 if (openCondition.type === 'never') {
