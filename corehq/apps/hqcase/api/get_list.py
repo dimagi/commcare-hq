@@ -15,6 +15,7 @@ from corehq.apps.reports.standard.cases.utils import (
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
+from .field_filters import get_fields_filter_fn
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
@@ -97,9 +98,10 @@ def get_list(domain, couch_user, params):
 
     es_result = query.run()
     hits = es_result.hits
+    filter_fields = get_fields_filter_fn(params)
     ret = {
         "matching_records": es_result.total,
-        "cases": [serialize_es_case(case) for case in hits],
+        "cases": [filter_fields(serialize_es_case(case)) for case in hits],
     }
 
     cases_in_result = len(hits)
@@ -131,6 +133,8 @@ def _get_query(domain, params):
              .size(page_size))
     query = query.sort('@indexed_on').sort('doc_id', reset_sort=False)
     for key, val in params.lists():
+        if _is_handled_elsewhere(key):
+            continue
         if len(val) == 1:
             query = query.filter(_get_filter(domain, key, val[0]))
         else:
@@ -140,10 +144,15 @@ def _get_query(domain, params):
     return query
 
 
+def _is_handled_elsewhere(key):
+    return (
+        key in ('limit', 'fields', 'exclude')
+        or key.startswith(('fields.', 'exclude.'))
+    )
+
+
 def _get_filter(domain, key, val):
-    if key == 'limit':
-        return filters.match_all()
-    elif key == 'query':
+    if key == 'query':
         return _get_query_filter(domain, val)
     elif key in SIMPLE_FILTERS:
         if key == INCLUDE_DEPRECATED:
