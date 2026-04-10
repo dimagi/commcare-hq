@@ -17,6 +17,7 @@ from corehq.apps.case_search.endpoint_service import (
     save_new_version,
     test_query,
 )
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView
 
@@ -285,7 +286,6 @@ class CaseSearchEndpointTestView(
             self.urlname, args=[self.domain]
         )
 
-
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -324,12 +324,8 @@ class CaseSearchEndpointDeactivateView(
 
 
 @method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchCapabilityView(CaseSearchEndpointMixin, BaseProjectDataView):
+class CaseSearchCapabilityView(BaseDomainView):
     urlname = 'case_search_capability'
 
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
     def get(self, request, *args, **kwargs):
-        return JsonResponse(self.capability)
+        return JsonResponse(get_capability(self.domain))
