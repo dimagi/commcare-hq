@@ -153,7 +153,7 @@ def _get_single_case(request, case_id):
     except NotFoundError:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
     except PermissionDenied:
-        return JsonResponse({'error': f"Insufficent permission for Case '{case_id}'"}, status=403)
+        return JsonResponse({'error': f"Insufficient permission for Case '{case_id}'"}, status=403)
     filter_fields = get_fields_filter_fn(request.GET)
     return JsonResponse(filter_fields(serialize_es_case(case)))
 
@@ -178,7 +178,7 @@ def _handle_ext_get(request, external_id):
         )
     except PermissionDenied:
         return JsonResponse(
-            {'error': f"Insufficent permission for Case '{case.case_id}'"},
+            {'error': f"Insufficient permission for Case '{case.case_id}'"},
             status=403,
         )
     filter_fields = get_fields_filter_fn(request.GET)
