@@ -1,6 +1,11 @@
 # Upgrade to new version of Postgres in Docker
 
-This example upgrades PostgreSQL 9.4 to 9.6. Substitute the versions you're upgrading to/from as needed below.
+This example upgrades PostgreSQL 14.18 to 18.3. Substitute the versions you're upgrading to/from as needed below.
+
+[!NOTE]
+The data directory structure changed in postgres containers >= 18.
+Previously data lived in ~/.local/share/dockerhq/postgresql/data.
+Now data lives in ~/.local/share/dockerhq/postgresql/<major_version>/docker.
 
 ## Dump all databases to a file
 
@@ -39,7 +44,7 @@ Adjust `DATA_DIR` as needed to point to the place where docker stores data for p
 
 ```sh
 DATA_DIR=~/.local/share/dockerhq/postgresql
-sudo mv $DATA_DIR ${DATA_DIR}9.4
+sudo mv $DATA_DIR ${DATA_DIR}14
 ```
 
 The old data directory can be deleted when you're confident you will no longer need it.
@@ -47,7 +52,7 @@ The old data directory can be deleted when you're confident you will no longer n
 ## Optional: tag old docker image so we can get it back if needed
 
 ```sh
-docker tag dimagi/docker-postgresql dimagi/postgresql9.4
+docker tag dimagi/docker-postgresql dimagi/postgresql14
 ```
 
 ## Upgrade docker image and start it
@@ -62,7 +67,7 @@ docker pull dimagi/docker-postgresql
 ## Verify new database version
 
 ```sh
-sudo cat $DATA_DIR/PG_VERSION  # --> 9.6
+sudo ls $DATA_DIR  # should see a directory for 18
 ```
 
 ## Finally, restore the dumped databases
