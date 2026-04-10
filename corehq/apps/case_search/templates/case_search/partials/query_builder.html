@@ -4,7 +4,7 @@
 <div class="filter-tree">
   {# ── Root group header ── #}
   <div class="d-flex align-items-center gap-2 mb-2">
-    <span class="ep-type-badge bg-secondary text-white">
+    <span class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white">
       <i class="fa-solid fa-code-branch"></i>
     </span>
     <div class="btn-group btn-group-sm" role="group">
@@ -44,7 +44,7 @@
         {# Component condition #}
         <template x-if="child.type === 'component'">
           <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="ep-type-badge bg-secondary text-white">
+            <span class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white">
               <i :class="typeIconClass(getFieldType(child.field))"></i>
             </span>
             <select
@@ -186,7 +186,7 @@
           <div>
             {# Nested group header #}
             <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="ep-type-badge bg-secondary text-white">
+              <span class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white">
                 <i class="fa-solid fa-code-branch"></i>
               </span>
               <div class="btn-group btn-group-sm" role="group">
@@ -239,7 +239,7 @@
                   {# Component condition #}
                   <template x-if="grandchild.type === 'component'">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                      <span class="ep-type-badge bg-secondary text-white">
+                      <span class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white">
                         <i
                           :class="typeIconClass(getFieldType(grandchild.field))"
                         ></i>
@@ -443,7 +443,7 @@
                                 class="d-flex align-items-center gap-2 mb-2 flex-wrap"
                               >
                                 <span
-                                  class="ep-type-badge bg-secondary text-white"
+                                  class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white"
                                 >
                                   <i
                                     :class="typeIconClass(getFieldType(notChild.field))"
@@ -691,7 +691,7 @@
                 >
                   <template x-if="notChild.type === 'component'">
                     <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                      <span class="ep-type-badge bg-secondary text-white">
+                      <span class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white">
                         <i
                           :class="typeIconClass(getFieldType(notChild.field))"
                         ></i>
@@ -894,10 +894,24 @@
     </template>
   </div>
 
+<<<<<<< HEAD
   <textarea
     class="form-control font-monospace mt-3"
     rows="8"
     readonly
     x-text="JSON.stringify(query, null, 2)"
   ></textarea>
+=======
+  <div class="form-check mt-3" x-data="{ showJson: false }">
+    <input class="form-check-input" type="checkbox" id="show-query-json" x-model="showJson" />
+    <label class="form-check-label" for="show-query-json">{% trans "Show query JSON" %}</label>
+    <textarea
+      x-show="showJson"
+      class="form-control font-monospace mt-2"
+      rows="20"
+      readonly
+      x-text="JSON.stringify(query, null, 2)"
+    ></textarea>
+  </div>
+>>>>>>> riese/query_builder_claude_v3
 </div>

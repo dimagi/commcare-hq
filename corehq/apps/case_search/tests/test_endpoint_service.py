@@ -1,11 +1,16 @@
 from django.db import IntegrityError
 from django.http import Http404
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.case_search import endpoint_service
 from corehq.apps.case_search.models import CaseSearchEndpoint
-from corehq.apps.case_search.endpoint_capability import get_capability
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.case_search.endpoint_capability import (
+    _AUTO_VALUES,
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_TEXT,
+    get_operations_for_field_type,
+)
+
 
 DOMAIN = 'test-domain'
 EMPTY_QUERY = {'type': 'and', 'children': []}
@@ -132,23 +137,27 @@ class TestDeactivateEndpoint(TestCase):
         assert ep.is_active is False
 
 
-class TestValidateFilterSpec(TestCase):
+class TestValidateFilterSpec(SimpleTestCase):
 
     def setUp(self):
-        self.case_type = CaseType.objects.create(
-            domain=DOMAIN, name='patient',
-        )
-        CaseProperty.objects.create(
-            case_type=self.case_type,
-            name='province',
-            data_type=CaseProperty.DataType.PLAIN,
-        )
-        CaseProperty.objects.create(
-            case_type=self.case_type,
-            name='dob',
-            data_type=CaseProperty.DataType.DATE,
-        )
-        self.capability = get_capability(DOMAIN)
+        self.capability = {
+            'case_types': [{
+                'name': 'patient',
+                'fields': [
+                    {
+                        'name': 'province',
+                        'type': FIELD_TYPE_TEXT,
+                        'operations': get_operations_for_field_type(FIELD_TYPE_TEXT),
+                    },
+                    {
+                        'name': 'dob',
+                        'type': FIELD_TYPE_DATE,
+                        'operations': get_operations_for_field_type(FIELD_TYPE_DATE),
+                    },
+                ],
+            }],
+            'auto_values': _AUTO_VALUES,
+        }
 
     def test_valid_simple_spec(self):
         spec = {

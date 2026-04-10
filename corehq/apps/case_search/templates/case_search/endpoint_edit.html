@@ -1,6 +1,12 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
-{% load i18n hq_shared_tags %}
+{% load i18n hq_shared_tags compress %}
 {% js_entry "case_search/js/endpoint_edit" %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+    <link type="text/scss" rel="stylesheet" media="all" href="{% static 'case_search/scss/endpoint_edit.scss' %}"/>
+  {% endcompress %}
+{% endblock stylesheets %}
 
 {% block page_title %}{{ current_page.title }}{% endblock %}
 
@@ -38,23 +44,16 @@
     }
   </style>
 
-  {{ capability|json_script:"capability-data" }}
-  {{ initial_query|json_script:"initial-query" }}
-  {{ initial_parameters|json_script:"initial-parameters" }}
-  {{ initial_name|json_script:"initial-name" }}
-  {{ initial_target_name|json_script:"initial-target-name" }}
-  {{ mode|json_script:"endpoint-mode" }}
-  {{ post_url|json_script:"endpoint-post-url" }}
-  {{ test_url|json_script:"endpoint-test-url" }}
-  {% trans "Name is required." as msg_name_required %}
-  {% trans "Case type is required." as msg_case_type_required %}
-  {% trans "An unexpected error occurred." as msg_unexpected_error %}
-  {% trans "Network error. Please try again." as msg_network_error %}
-  {{ msg_name_required|json_script:"msg-name-required" }}
-  {{ msg_case_type_required|json_script:"msg-case-type-required" }}
-  {{ msg_unexpected_error|json_script:"msg-unexpected-error" }}
-  {{ msg_network_error|json_script:"msg-network-error" }}
-  {{ csrf_token|add:""|json_script:"csrf-token" }}
+  {% initial_page_data "endpoint_mode" mode %}
+  {% initial_page_data "post_url" post_url %}
+  {% initial_page_data "test_url" test_url %}
+  {% initial_page_data "initial_name" initial_name %}
+  {% initial_page_data "initial_target_name" initial_target_name %}
+  {% initial_page_data "initial_parameters" initial_parameters %}
+  {% initial_page_data "initial_query" initial_query %}
+  {% initial_page_data "capability" capability %}
+
+  <input type="hidden" id="csrfTokenContainer" value="{{ csrf_token }}">
 
   <div x-data="endpointForm()" x-cloak>
     {% if mode == 'readonly' %}
@@ -172,7 +171,7 @@
 
         <template x-for="(param, idx) in parameters" :key="idx">
           <div class="d-flex align-items-center gap-2 py-2 border-bottom">
-            <span class="ep-type-badge bg-secondary text-white">
+            <span class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white">
               <i :class="typeIconClass(param.type || 'text')"></i>
             </span>
             <input
@@ -296,7 +295,7 @@
     {# ── Tester card ── #}
     <div class="card mb-3">
       <div class="card-header">
-        <i class="fa-solid fa-mangifying-glass me-1"></i
+        <i class="fa-solid fa-magnifying-glass me-1"></i
         >{% trans "Test query" %}
       </div>
       <div class="card-body">
