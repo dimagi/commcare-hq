@@ -894,10 +894,15 @@
     </template>
   </div>
 
-  <textarea
-    class="form-control font-monospace mt-3"
-    rows="20"
-    readonly
-    x-text="JSON.stringify(query, null, 2)"
-  ></textarea>
+  <div class="form-check mt-3" x-data="{ showJson: false }">
+    <input class="form-check-input" type="checkbox" id="show-query-json" x-model="showJson" />
+    <label class="form-check-label" for="show-query-json">{% trans "Show query JSON" %}</label>
+    <textarea
+      x-show="showJson"
+      class="form-control font-monospace mt-2"
+      rows="20"
+      readonly
+      x-text="JSON.stringify(query, null, 2)"
+    ></textarea>
+  </div>
 </div>
