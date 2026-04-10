@@ -386,10 +386,10 @@ Interface -
 * ``GET /a/<domain>/api/case/v2/ext/<ext_id>/``
 
 
-This API takes no filter parameters.  The ``fields`` and ``exclude``
-parameters described in "`Limiting Response Fields`_" are supported.
-The return value is a single case serialized as described in
-"`Single Case Serialization Format`_".
+This API takes no filter parameters, though you can control which fields are
+returned using the ``fields`` and ``exclude`` parameters as described in
+"`Limiting Response Fields`_". The return value is a single case serialized as
+described in "`Single Case Serialization Format`_".
 
 .. WARNING::
 
