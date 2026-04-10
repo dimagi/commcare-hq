@@ -1,15 +1,15 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div class="form-group" xmlns="http://www.w3.org/1999/html">  {# todo B5: css-form-group #}
-  <label class="form-label col-md-2">
+<div class="row mb-3" xmlns="http://www.w3.org/1999/html">
+  <label class="col-form-label field-label" for="shadow-parent">
     {% trans "Shadow source" %}
     <span class="hq-help-template"
           data-content="{% blocktrans %}The form which this form will shadow{% endblocktrans %}"
     ></span>
   </label>
-  <div id="shadow-parent" class="col-md-4">
-    <select data-bind="value: shadow_parent" class="form-select">
+  <div class="field-control">
+    <select id="shadow-parent" data-bind="value: shadow_parent" class="form-select">
       <option value=""></option>
       {% for key, display in form.get_shadow_parent_options %}
         <option value="{{ key }}">{{ display }}</option>
