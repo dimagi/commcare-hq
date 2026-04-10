@@ -3,8 +3,8 @@
 
 
 <div id="release-notes-setting">
-  <div class="form-group">  {# todo B5: css-form-group #}
-    <label class="form-label col-md-2">
+  <div class="row mb-3">
+    <label class="col-form-label field-label" for="is-release-notes-form">
       {% trans "Make this my app’s Post-Update form" %}
       <!-- ko if: is_allowed_to_be_release_notes_form -->
       <span class="hq-help-template"
@@ -19,32 +19,37 @@
       ></span>
       <!-- /ko -->
     </label>
-    <div class="col-md-8">
-      <input type="checkbox"  {# todo B5: css-checkbox #}
-             data-bind="checked: is_release_notes_form, click:$root.toggle_enable,
-                value: is_release_notes_form,
-                enable: is_allowed_to_be_release_notes_form"
-             value="true"
-      />
+    <div class="field-control">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox"
+               id="is-release-notes-form"
+               data-bind="checked: is_release_notes_form, click:$root.toggle_enable,
+                  value: is_release_notes_form,
+                  enable: is_allowed_to_be_release_notes_form"
+               value="true"
+        />
+      </div>
       <input type="hidden" name="is_release_notes_form"
              data-bind="value: is_release_notes_form"/>
     </div>
   </div>
-  <div class="form-group" data-bind="visible: is_release_notes_form">  {# todo B5: css-form-group #}
-    <label class="form-label col-md-2">
+  <div class="row mb-3" data-bind="visible: is_release_notes_form">
+    <label class="col-form-label field-label" for="enable-release-notes">
       {% trans "Enable the Post-Update form for this release" %}
       <span class="hq-help-template"
             data-title="{% trans "Enable this" %}"
             data-content="{% blocktrans %}You can disable the Post-Update form if it is not necessary for the current app release, but you don’t want to delete it{% endblocktrans %}"
       ></span>
     </label>
-    <div class="col-md-8">
-      <input type="checkbox"  {# todo B5: css-checkbox #}
-             class="col-md-8"
-             data-bind="checked: enable_release_notes,
-                enable: is_allowed_to_be_release_notes_form,
-                value: enable_release_notes",
-             value="true" />
+    <div class="field-control">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox"
+               id="enable-release-notes"
+               data-bind="checked: enable_release_notes,
+                  enable: is_allowed_to_be_release_notes_form,
+                  value: enable_release_notes",
+               value="true" />
+      </div>
       <input type="hidden" name="enable_release_notes"
              data-bind="value: enable_release_notes"/>
     </div>
