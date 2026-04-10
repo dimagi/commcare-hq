@@ -41,18 +41,13 @@ def test_get_tree_realistic():
     ("a.A=B&a=A.C", {'A': {'B': {}, 'C': {}}}),
     ("a.A=B,C", {'A': {'B': {}, 'C': {}}}),
     ("a.A=B,C&a.A=D", {'A': {'B': {}, 'C': {}, 'D': {}}}),
-
+    ("a.A=B.C,D.E&", {'A': {'B': {'C': {}}, 'D': {'E': {}}}}),
     ("", {}),
     ("somethingelse=yes", {}),
-
-    # Whitespace is not stripped: "a=x, y" produces a key " y", not "y"
-    ("a=x, y", {'x': {}, ' y': {}}),
-    # Trailing comma produces an empty-string key
-    ("a=x,", {'x': {}, '': {}}),
-    # Empty value produces an empty-string key
-    ("a=", {'': {}}),
-    # Empty dot-param value produces an empty-string key in the subtree
-    ("a.b=", {'b': {'': {}}}),
+    ("a=x, y", {'x': {}, 'y': {}}),  # Strip whitespace
+    ("a=x,", {'x': {}}),  # Ignore paths with blank segments
+    ("a=", {}),
+    ("a.b=", {}),
 ])
 def test_get_tree(querystring, expected):
     assert _get_tree(QueryDict(querystring), 'a') == expected
@@ -122,6 +117,16 @@ def test_filter_fn_empty_fields_returns_empty():
     assert fn(SAMPLE_CASE) == {}
 
 
+def test_filter_fn_empty_nested_fields_returns_empty():
+    fn = get_fields_filter_fn(QueryDict("fields.properties="))
+    assert fn(SAMPLE_CASE) == {}
+
+
 def test_filter_fn_empty_exclude_returns_all():
     fn = get_fields_filter_fn(QueryDict("exclude="))
+    assert fn(SAMPLE_CASE) == SAMPLE_CASE
+
+
+def test_filter_fn_empty_nested_exclude_returns_all():
+    fn = get_fields_filter_fn(QueryDict("exclude.properties="))
     assert fn(SAMPLE_CASE) == SAMPLE_CASE

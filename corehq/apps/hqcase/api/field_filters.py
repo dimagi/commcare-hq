@@ -2,14 +2,16 @@ from corehq.apps.hqcase.api.core import UserError
 
 
 def get_fields_filter_fn(query_dict):
-    fields = _get_tree(query_dict, 'fields')
-    exclude = _get_tree(query_dict, 'exclude')
-    if fields and exclude:
-        raise UserError("You cannot specify both 'fields' and 'exclude'")
+    uses_fields = any(p.split('.')[0] == 'fields' for p in query_dict)
+    uses_exclude = any(p.split('.')[0] == 'exclude' for p in query_dict)
 
-    if fields:
+    if uses_fields and uses_exclude:
+        raise UserError("You cannot specify both 'fields' and 'exclude'")
+    if uses_fields:
+        fields = _get_tree(query_dict, 'fields')
         return lambda data: _limit_fields(data, fields)
-    if exclude:
+    if uses_exclude:
+        exclude = _get_tree(query_dict, 'exclude')
         return lambda data: _exclude_fields(data, exclude)
     return lambda data: data
 
@@ -27,17 +29,22 @@ def _get_tree(query_dict, param_name):
     """
     tree = {}
     for path in _extract_paths(query_dict, param_name):
-        _add_to_tree(tree, path)
+        if all(path):  # If the path has empty sections, they match nothing
+            _add_to_tree(tree, path)
     return tree
 
 
 def _extract_paths(query_dict, param_name):
-    for p, vals in query_dict.lists():
-        path = p.split('.')
+    for param, vals in query_dict.lists():
+        path = _split_and_strip(param, '.')
         if path[0] == param_name:
             for val in vals:
-                for v in val.split(','):
-                    yield path[1:] + v.split('.')
+                for v in _split_and_strip(val, ','):
+                    yield path[1:] + _split_and_strip(v, '.')
+
+
+def _split_and_strip(string, sep):
+    return [part.strip() for part in string.split(sep)]
 
 
 def _add_to_tree(tree, path):
