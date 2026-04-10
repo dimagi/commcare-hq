@@ -49,12 +49,6 @@ sudo mv $DATA_DIR ${DATA_DIR}14
 
 The old data directory can be deleted when you're confident you will no longer need it.
 
-## Optional: tag old docker image so we can get it back if needed
-
-```sh
-docker tag dimagi/docker-postgresql dimagi/postgresql14
-```
-
 ## Upgrade docker image and start it
 
 ```sh
