@@ -7,7 +7,7 @@ This example upgrades PostgreSQL 9.4 to 9.6. Substitute the versions you're upgr
 Run the following command to make a backup of all postgres data in a local file:
 
 ```sh
-docker exec -i hqservice_postgres_1 pg_dumpall -U commcarehq | gzip > pg-backup.sql.gz
+docker exec -i hqservice-postgres-1 pg_dumpall -U commcarehq | gzip > pg-backup.sql.gz
 ```
 
 Open the file with vim (or any editor that will automatically decompress the contents) and verify that it contains the expected content:
@@ -56,7 +56,7 @@ docker tag dimagi/docker-postgresql dimagi/postgresql9.4
 docker pull dimagi/docker-postgresql
 
 # this uses the commcare-hq docker script
-./scripts/docker up -d postgres  # --> Recreating hqservice_postgres_1
+./scripts/docker up -d postgres  # --> Recreating hqservice-postgres-1
 ```
 
 ## Verify new database version
@@ -68,11 +68,11 @@ sudo cat $DATA_DIR/PG_VERSION  # --> 9.6
 ## Finally, restore the dumped databases
 
 ```sh
-gzip -cd pg-backup.sql.gz | docker exec -i hqservice_postgres_1 psql -U commcarehq
+gzip -cd pg-backup.sql.gz | docker exec -i hqservice-postgres-1 psql -U commcarehq
 # should see a lot of output here as databases are created, etc.
 ```
 
 Reset commcarehq user password (adjust this command to set the password you use locally). This may only be necessary for some major version upgrades.
 ```sh
-docker exec -i hqservice_postgres_1 psql -U commcarehq -c "ALTER USER commcarehq WITH PASSWORD 'commcarehq';"
+docker exec -i hqservice-postgres-1 psql -U commcarehq -c "ALTER USER commcarehq WITH PASSWORD 'commcarehq';"
 ```
