@@ -1,6 +1,12 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
-{% load i18n hq_shared_tags %}
+{% load i18n hq_shared_tags compress %}
 {% js_entry "case_search/js/endpoint_edit" %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+    <link type="text/scss" rel="stylesheet" media="all" href="{% static 'case_search/scss/endpoint_edit.scss' %}"/>
+  {% endcompress %}
+{% endblock stylesheets %}
 
 {% block page_title %}{{ current_page.title }}{% endblock %}
 
@@ -12,39 +18,6 @@
   {% initial_page_data "initial_parameters" initial_parameters %}
   {% initial_page_data "initial_query" initial_query %}
   {% initial_page_data "capability" capability %}
-
-  <style>
-    .ep-type-badge {
-      width: 24px;
-      height: 24px;
-      border-radius: 4px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      flex-shrink: 0;
-    }
-    .ep-source-btn {
-      padding: 4px 7px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 12px;
-      color: #aaa;
-      line-height: 1;
-    }
-    .ep-source-btn.active {
-      color: var(--bs-primary);
-      background: rgba(var(--bs-primary-rgb), 0.08);
-    }
-    .ep-source-btn:disabled {
-      cursor: default;
-      opacity: 0.5;
-    }
-    .ep-source-btn:not(.active):not(:disabled):hover {
-      color: #333;
-    }
-  </style>
 
   <div x-data="endpointForm()" x-cloak>
     {% if mode == 'readonly' %}
@@ -162,7 +135,7 @@
 
         <template x-for="(param, idx) in parameters" :key="idx">
           <div class="d-flex align-items-center gap-2 py-2 border-bottom">
-            <span class="ep-type-badge bg-secondary text-white">
+            <span class="ep-type-badge d-inline-flex align-items-center justify-content-center flex-shrink-0 rounded-1 bg-secondary text-white">
               <i :class="typeIconClass(param.type || 'text')"></i>
             </span>
             <input
