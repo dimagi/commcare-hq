@@ -1,15 +1,15 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% initial_page_data 'custom_assertions' custom_assertions %}
-<label class="form-label col-md-2">
+<label class="col-form-label field-label">
   {% trans "Custom Assertions" %}
   <span class="hq-help-template"
         data-title="{% trans "Custom Assertions" %}"
         data-content="{% blocktrans %}Add custom assertions that you will use elsewhere.{% endblocktrans %}"
   ></span>
 </label>
-<div class="col-md-10" id="custom-assertions">
-  <table class="table table-condensed">
+<div class="field-control" id="custom-assertions">
+  <table class="table table-sm">
     <thead>
     <tr>
       <th class="col-md-4">{% trans "Test" %}</th>
@@ -40,8 +40,10 @@
         /><!-- Not directly sent to server since there is no "name" attribute -->
       </td>
       <td class="col-md-2">
-        <i style="cursor: pointer;" class="fa fa-remove"  {# todo B5: inline-style #}
-           data-bind="click: $parent.removeAssertion"></i>
+        <button type="button" class="btn btn-sm btn-outline-danger"
+                data-bind="click: $parent.removeAssertion">
+          <i class="fa fa-remove"></i>
+        </button>
       </td>
     </tr>
     </tbody>
