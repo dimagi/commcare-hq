@@ -1,20 +1,17 @@
 import "commcarehq";
 import Alpine from "alpinejs";
-
-function _getJson(id) {
-    return JSON.parse(document.getElementById(id).textContent);
-}
+import initialPageData from "hqwebapp/js/initial_page_data";
 
 Alpine.data("endpointForm", () => {
-    const mode = _getJson("endpoint-mode");
-    const postUrl = _getJson("endpoint-post-url");
+    const mode = initialPageData.get("endpoint_mode");
+    const postUrl = initialPageData.get("post_url");
 
     return {
-        name: _getJson("initial-name"),
-        targetCasetype: _getJson("initial-target-name"),
-        parameters: _getJson("initial-parameters"),
-        query: _getJson("initial-query"),
-        capability: _getJson("capability-data"),
+        name: initialPageData.get("initial_name"),
+        targetCasetype: initialPageData.get("initial_target_name"),
+        parameters: initialPageData.get("initial_parameters"),
+        query: initialPageData.get("initial_query"),
+        capability: initialPageData.get("capability"),
         errors: [],
         submitting: false,
         mode: mode,
@@ -167,10 +164,10 @@ Alpine.data("endpointForm", () => {
             this.errors = [];
 
             if (!this.name.trim()) {
-                this.errors.push(_getJson("msg-name-required"));
+                this.errors.push(gettext("Name is required."));
             }
             if (!this.targetCasetype) {
-                this.errors.push(_getJson("msg-case-type-required"));
+                this.errors.push(gettext("Case type is required."));
             }
             if (this.errors.length > 0) {return;}
 
@@ -197,17 +194,17 @@ Alpine.data("endpointForm", () => {
                 if (resp.ok && data.redirect) {
                     window.location.href = data.redirect;
                 } else {
-                    this.errors = data.errors || [_getJson("msg-unexpected-error")];
+                    this.errors = data.errors || [gettext("An unexpected error occurred.")];
                 }
             } catch {
-                this.errors = [_getJson("msg-network-error")];
+                this.errors = [gettext("Network error. Please try again.")];
             } finally {
                 this.submitting = false;
             }
         },
 
         _getCsrfToken() {
-            return _getJson("csrf-token");
+            return document.getElementById('csrfTokenContainer').value;
         },
     };
 });

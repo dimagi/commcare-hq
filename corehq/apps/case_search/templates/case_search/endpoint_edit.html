@@ -5,6 +5,14 @@
 {% block page_title %}{{ current_page.title }}{% endblock %}
 
 {% block page_content %}
+  {% initial_page_data "endpoint_mode" mode %}
+  {% initial_page_data "post_url" post_url %}
+  {% initial_page_data "initial_name" initial_name %}
+  {% initial_page_data "initial_target_name" initial_target_name %}
+  {% initial_page_data "initial_parameters" initial_parameters %}
+  {% initial_page_data "initial_query" initial_query %}
+  {% initial_page_data "capability" capability %}
+
   <style>
     .ep-type-badge {
       width: 24px;
@@ -37,23 +45,6 @@
       color: #333;
     }
   </style>
-
-  {{ capability|json_script:"capability-data" }}
-  {{ initial_query|json_script:"initial-query" }}
-  {{ initial_parameters|json_script:"initial-parameters" }}
-  {{ initial_name|json_script:"initial-name" }}
-  {{ initial_target_name|json_script:"initial-target-name" }}
-  {{ mode|json_script:"endpoint-mode" }}
-  {{ post_url|json_script:"endpoint-post-url" }}
-  {% trans "Name is required." as msg_name_required %}
-  {% trans "Case type is required." as msg_case_type_required %}
-  {% trans "An unexpected error occurred." as msg_unexpected_error %}
-  {% trans "Network error. Please try again." as msg_network_error %}
-  {{ msg_name_required|json_script:"msg-name-required" }}
-  {{ msg_case_type_required|json_script:"msg-case-type-required" }}
-  {{ msg_unexpected_error|json_script:"msg-unexpected-error" }}
-  {{ msg_network_error|json_script:"msg-network-error" }}
-  {{ csrf_token|add:""|json_script:"csrf-token" }}
 
   <div x-data="endpointForm()" x-cloak>
     {% if mode == 'readonly' %}
