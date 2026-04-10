@@ -109,7 +109,7 @@ def case_api(request, domain, case_id=None, external_id=None):
             return _handle_case_put_post(request, is_creation=False, case_id=case_id)
         return JsonResponse({'error': "Request method not allowed"}, status=405)
     except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({'error': e.message}, status=400)
 
 
 @waf_allow('XSS_BODY')
@@ -124,7 +124,7 @@ def case_api_bulk_fetch(request, domain):
     try:
         return _handle_bulk_fetch(request)
     except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({'error': e.message}, status=400)
 
 
 def _handle_get(request, case_id):
