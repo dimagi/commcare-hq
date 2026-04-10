@@ -2,14 +2,14 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="form-settings">
-  <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
+  <form class="save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
     {% csrf_token %}
     <div class="save-button-holder clearfix"></div>
     <div class="section-changer dropdown" data-collapse-key="form-view-settings">
       <a class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" href="#">
         <i class="fa fa-reorder"></i>
       </a>
-      <ul class="dropdown-menu dropdown-menu-right checklist">
+      <ul class="dropdown-menu dropdown-menu-end checklist">
         <li class="dropdown-header">{% trans "Show" %}</li>
         <li>
           <a class="dropdown-item" href="#" data-slug="multimedia">
@@ -61,7 +61,7 @@
           {% if is_training_module %}
             {% include "app_manager/partials/forms/bootstrap5/release_notes_setting.html" %}
           {% endif %}
-          <div class="form-group" data-bind="visible: visible, css: {error: hasError()}">  {# todo B5: css-form-group #}
+          <div class="row mb-3" data-bind="visible: visible, css: {error: hasError()}">
             {% include "app_manager/partials/forms/bootstrap5/form_gps_capture.html" %}
           </div>
 
@@ -70,10 +70,14 @@
           {% endif %}
 
           {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
-            {% include "app_manager/partials/forms/bootstrap5/custom_instances.html" %}
+            <div class="row mb-3">
+              {% include "app_manager/partials/forms/bootstrap5/custom_instances.html" %}
+            </div>
           {% endif %}
           {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
-            {% include "app_manager/partials/forms/bootstrap5/custom_assertions.html" %}
+            <div class="row mb-3">
+              {% include "app_manager/partials/forms/bootstrap5/custom_assertions.html" %}
+            </div>
           {% endif %}
 
           {% if session_endpoints_enabled %}
