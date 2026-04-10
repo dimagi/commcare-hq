@@ -14,7 +14,7 @@ def get_fields_filter_fn(query_dict):
     return lambda data: data
 
 
-def _get_tree(query_dict, name):
+def _get_tree(query_dict, param_name):
     """Turn URL parameters into tree of properties to keep/exclude
 
     >>> qs = 'fields=case_id&fields=case_name&fields.properties=dob,edd'
@@ -26,15 +26,15 @@ def _get_tree(query_dict, name):
     }
     """
     tree = {}
-    for path in _extract_paths(query_dict, name):
+    for path in _extract_paths(query_dict, param_name):
         _add_to_tree(tree, path)
     return tree
 
 
-def _extract_paths(query_dict, name):
+def _extract_paths(query_dict, param_name):
     for p, vals in query_dict.lists():
         path = p.split('.')
-        if path[0] == name:
+        if path[0] == param_name:
             for val in vals:
                 for v in val.split(','):
                     yield path[1:] + v.split('.')
