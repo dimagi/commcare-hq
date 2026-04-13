@@ -24,7 +24,9 @@
                         </span>
           </label>
           <div class="col-md-4">
-            <input type="checkbox" data-bind="checked: scheduleEnabled" />  {# todo B5: css-checkbox #}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" data-bind="checked: scheduleEnabled" />
+            </div>
           </div>
         </div>
         <div class="form-group" data-bind="visible: scheduleEnabled">  {# todo B5: css-form-group #}
@@ -82,12 +84,15 @@
           <div class="spacer"></div>
           <div class="container-fluid">
             <div class="form-inline">  {# todo B5: css-form-inline #}
-              <label>
-                <input type="checkbox"  {# todo B5: css-checkbox #}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox"
+                       id="enable-form-expiry"
                        data-bind="checked: relevancy.enableFormExpiry,
                                                   enable: allowExpiry">
-                {% trans "Hide this form " %}
-              </label>
+                <label class="form-check-label" for="enable-form-expiry">
+                  {% trans "Hide this form " %}
+                </label>
+              </div>
               <input type="number" required class="form-control"
                      data-bind="numericValue: relevancy.expires,
                                               enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
@@ -110,9 +115,11 @@
         <fieldset>
           <legend>{% trans "Transitions" %}</legend>
           <div class="form-group">  {# todo B5: css-form-group #}
-            <div class="checkbox">  {# todo B5: css-checkbox #}
-              <label>
-                <input type="checkbox" data-bind="checked: transition">  {# todo B5: css-checkbox #}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                     id="transition-checkbox"
+                     data-bind="checked: transition">
+              <label class="form-check-label" for="transition-checkbox">
                 {% trans "Transition to the next phase" %}
               </label>
               <div data-bind="template: {
@@ -122,9 +129,11 @@
             </div>
           </div>
           <div class="form-group">  {# todo B5: css-form-group #}
-            <div class="checkbox">  {# todo B5: css-checkbox #}
-              <label>
-                <input type="checkbox"  data-bind="checked: terminate">  {# todo B5: css-checkbox #}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                     id="terminate-checkbox"
+                     data-bind="checked: terminate">
+              <label class="form-check-label" for="terminate-checkbox">
                 {% trans "Terminate the schedule" %}
               </label>
               <div data-bind="template: {
@@ -138,9 +147,11 @@
         <fieldset>
           <legend>{% trans "Visit Schedule" %}</legend>
           <div class="form-group">  {# todo B5: css-form-group #}
-            <div class="checkbox">  {# todo B5: css-checkbox #}
-              <label>
-                <input type="checkbox"  data-bind="checked: allow_unscheduled">  {# todo B5: css-checkbox #}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                     id="allow-unscheduled"
+                     data-bind="checked: allow_unscheduled">
+              <label class="form-check-label" for="allow-unscheduled">
                 {% trans "Allow unscheduled visits" %}
               </label>
             </div>
