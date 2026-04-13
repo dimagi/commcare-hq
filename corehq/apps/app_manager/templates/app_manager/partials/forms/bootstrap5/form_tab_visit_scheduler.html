@@ -6,8 +6,8 @@
     <form>
       <div class="clearfix">
         <div data-bind="saveButton: saveButton"></div>
-        <div class="has-error float-end">  {# todo B5: css-has-error #}
-                    <span class="help-block error-text" style="display:none; margin-right: 5px;" id="form-errors">  {# todo B5: inline-style #}
+        <div class="float-end">
+                    <span class="error-text d-none me-1" id="form-errors">
                         {% trans 'There were errors saving. Please fix the errors below.'%}
                     </span>
         </div>
@@ -36,7 +36,7 @@
           <div class="field-control">
             <input type="text" class="form-control" id="schedule_form_id"
                    required data-bind="value: schedule_form_id">
-            <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
+            <span class="invalid-feedback error-text">
                             {% trans 'This field is required' %}
                         </span>
           </div>
@@ -58,7 +58,7 @@
                                            optionsCaption: '{% trans "Please select a phase..." %}',
                                            value: phase.anchor">
             </select>
-            <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
+            <span class="invalid-feedback error-text">
                             {% trans 'This field is required'%}
                         </span>
           </div>
@@ -71,7 +71,7 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <label>{% trans "Show this form " %}</label>
               <input type="number" min="0" required class="form-control" data-bind="numericValue: relevancy.starts"/>
-              <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
+              <span class="invalid-feedback error-text">
                                 {% trans 'This field is required'%}
                             </span>
               <label>{% trans "days" %}</label>
@@ -96,7 +96,7 @@
               <input type="number" required class="form-control"
                      data-bind="numericValue: relevancy.expires,
                                               enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
-              <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
+              <span class="invalid-feedback error-text">
                                 {% trans 'This field is required'%}
                             </span>
               <label>{% trans "days" %}</label>
@@ -170,7 +170,7 @@
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                   {% trans "Due" %}
                   <input type="number" required class="form-control" data-bind="numericValue: due"/>
-                  <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
+                  <span class="invalid-feedback error-text">
                                         {% trans 'This field is required'%}
                                     </span>
                   {% trans "days" %}
@@ -189,7 +189,7 @@
                   {% trans "Visit can be made up to" %}
                   <input type="number" required class="form-control"
                          data-bind="numericValue: starts"/>
-                  <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
+                  <span class="invalid-feedback error-text">
                                         {% trans 'This field is required'%}
                                     </span>
                   {% trans "days early and" %}
@@ -200,7 +200,7 @@
             </fieldset>
           </div>
           <div class="mb-3 container-fluid">
-                        <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
+                        <span class="error-text d-none">
                             {% trans 'Please add at least one visit' %}
                         </span>
             <button id="add-visit" class="btn btn-outline-primary"

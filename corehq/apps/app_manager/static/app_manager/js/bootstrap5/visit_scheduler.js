@@ -154,32 +154,28 @@ var schedulerModel = function (params) {
         var $addVisitButton = self.home.find("#add-visit");
 
         if (self.formSchedule.visits().length === 0) {
-            $addVisitButton.closest(".form-group").addClass("has-error");
-            $addVisitButton.siblings(".error-text").show();
+            $addVisitButton.siblings(".error-text").removeClass("d-none");
             errors += 1;
         } else {
-            $addVisitButton.closest(".form-group").removeClass("has-error");
-            $addVisitButton.siblings(".error-text").hide();
+            $addVisitButton.siblings(".error-text").addClass("d-none");
         }
 
         var required = self.home.find(":required").not(":disabled");
         required.each(function (i, req) {
             var $req = $(req);
             if ($req.val().trim().length === 0) {
-                $req.closest(".form-group").addClass("has-error");
-                $req.siblings(".error-text").show();
+                $req.addClass("is-invalid");
                 errors += 1;
             } else {
-                $req.closest(".form-group").removeClass("has-error");
-                $req.siblings(".error-text").hide();
+                $req.removeClass("is-invalid");
             }
         });
 
         if (!self.formSchedule.scheduleEnabled() || !errors) {
-            self.home.find("#form-errors").hide();
+            self.home.find("#form-errors").addClass("d-none");
             return true;
         } else {
-            self.home.find("#form-errors").show();
+            self.home.find("#form-errors").removeClass("d-none");
             return false;
         }
     };
