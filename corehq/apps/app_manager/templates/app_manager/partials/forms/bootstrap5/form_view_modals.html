@@ -12,7 +12,7 @@
               enctype="multipart/form-data"
               action="{% url "edit_form_attr" domain app.id form.get_unique_id 'xform' %}">
           {% csrf_token %}
-          <input type="file" id="xform_file_input" name="xform" />  {# todo B5: css-file-inputs #}
+          <input type="file" id="xform_file_input" name="xform" class="form-control" />
           <input type="hidden" name="ajax" value="false" />
           <button type="submit" id="xform_file_submit" class="btn btn-primary">
             {% trans "Upload" %}
