@@ -94,7 +94,10 @@ def test_import_app_success(mock_import):
     assert data['app_id'] == 'abc123'
     mock_import.assert_called_once()
     assert mock_import.call_args[0][1] == DOMAIN
-    assert mock_import.call_args[0][2] == {'name': 'My App'}
+    assert mock_import.call_args[0][2] == {
+        'name': 'My App',
+        'created_from_template': 'import_app_api',
+    }
 
 
 @patch(f'{MODULE}.import_app_util')
