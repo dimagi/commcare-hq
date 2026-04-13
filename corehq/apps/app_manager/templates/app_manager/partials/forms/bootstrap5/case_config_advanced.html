@@ -58,7 +58,7 @@
     </div>
     <div class="card-body">
 
-      <div class="form-horizontal">
+      <div>
         <!-- ko if:  actionType === 'load' -->
         {% if app.commtrack_enabled %}
           <!-- ko if:  allow_product_stock -->
@@ -113,10 +113,10 @@
         <!-- /ko -->
 
         <!-- ko if:  actionType === 'open' -->
-        <div class="form-group" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">  {# todo B5: css-form-group #}
+        <div class="row mb-3" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
 
-          <label class="form-label col-md-2">{% trans "Parent Indices" %}</label>
-          <div class="col-md-6">
+          <label class="col-form-label field-label">{% trans "Parent Indices" %}</label>
+          <div class="field-control">
             <div data-bind="foreach: case_indices">
               <div class="card mb-3">
                 <div class="card-body">
@@ -204,9 +204,9 @@
           </h4>
         </div>
         <div class="card-body">
-          <div class="form-inline" data-bind="css: {'has-warning': validate()}">  {# todo B5: css-form-inline #}
+          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'has-warning': validate()}">
 
-            <div class="d-flex justify-content-start align-items-center mb-3 gap-1">  {# todo B5: css-form-group reviewed#}
+            <div class="d-flex justify-content-start align-items-center mb-3 gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
               <input type="text" class="form-control w-auto" data-bind="value: case_tag, disable: disable_tag" />
               &nbsp;
@@ -324,15 +324,15 @@
           </h4>
         </div>
         <div class="card-body">
-          <div class="form-inline" data-bind="css: {'has-warning': validate()}">  {# todo B5: css-form-inline #}
-            <div class="form-group">  {# todo B5: css-form-group #}
+          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'has-warning': validate()}">
+            <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
               <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
             </div>
             <!-- ko with: auto_select -->
             &nbsp;
             <strong>(</strong>
-            <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex align-items-center gap-1">
               <label>{% trans "Autoselect mode" %}</label>
               <select class="form-select" data-bind="
                                 optstr: $parent.auto_select_modes,
@@ -342,7 +342,7 @@
             </div>
             <strong>)</strong>
             <br />
-            <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex align-items-center gap-1">
               <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
             </div>
             <!-- /ko -->
@@ -385,14 +385,14 @@
           </h4>
         </div>
         <div class="card-body">
-          <div class="form-inline" data-bind="css: {'has-warning': validate()}">  {# todo B5: css-form-inline #}
-            <div class="form-group">  {# todo B5: css-form-group #}
+          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'has-warning': validate()}">
+            <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
               <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
             </div>
             &nbsp;
             <strong>(</strong>
-            <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex align-items-center gap-1">
               <label>{% trans "Case Type" %}</label>
               <select class="form-select" data-bind="
                                 options: caseConfig.caseTypes,
@@ -403,7 +403,7 @@
 
             <!-- ko if: actionType == 'load'-->
             &nbsp;{% trans "from" %}
-            <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex align-items-center gap-1">
               &nbsp;
               <label><i class="fa-solid fa-list-check"></i> {% trans "Case List" %}</label>
               <select class="form-select" data-bind="optstr: available_modules,
@@ -420,8 +420,8 @@
             {% trans "Please select a case type." %}
           </div>
           <div class="card well-sm">  {# todo B5: css-well #}
-            <div class="form-inline">  {# todo B5: css-form-inline #}
-              <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Case Property" %}&nbsp;</label>
                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.case_property" />
               </div>
@@ -435,18 +435,18 @@
             </div>
           </div>
           <div class="card well-sm">  {# todo B5: css-well #}
-            <div class="form-inline">  {# todo B5: css-form-inline #}
-              <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Fixture Nodeset" %}&nbsp;</label>
                 <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.fixture_nodeset" />
               </div>
               &nbsp;&nbsp;
-              <div class="form-group">  {# todo B5: css-form-group #}
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Fixture Tag" %}&nbsp;</label>
                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_tag" />
               </div>
               &nbsp;&nbsp;
-              <div class="form-group">  {# todo B5: css-form-group #}
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Fixture Variable" %}&nbsp;</label>
                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_variable" />
               </div>
@@ -460,13 +460,13 @@
             </div>
           </div>
           <div class="card well-sm">  {# todo B5: css-well #}
-            <div class="form-inline">  {# todo B5: css-form-inline #}
-              <div class="form-group">  {# todo B5: css-form-group #}
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Arbitrary Datum Function" %}&nbsp;</label>
                 <input type="text" class="form-control nodeset" data-bind="value: load_case_from_fixture.arbitrary_datum_function" />
               </div>
               &nbsp;&nbsp;
-              <div class="form-group">  {# todo B5: css-form-group #}
+              <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Arbitrary Datum id" %}&nbsp;</label>
                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.arbitrary_datum_id" />
               </div>
