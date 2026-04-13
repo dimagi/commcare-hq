@@ -15,25 +15,25 @@
       <!--ko with: formSchedule -->
       <fieldset>
         <legend>{% trans "Form Settings" %}</legend>
-        <div class="form-group">  {# todo B5: css-form-group #}
-          <label class="form-label col-md-2">
+        <div class="row mb-3">
+          <label class="col-form-label field-label">
             {% trans "This form has a schedule" %}
             <span class="hq-help-template"
                   data-title="{% trans 'Schedule Phase' %}"
                   data-content="{% trans 'Forms that do not have a schedule are always shown' %}">
                         </span>
           </label>
-          <div class="col-md-4">
+          <div class="field-control">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" data-bind="checked: scheduleEnabled" />
             </div>
           </div>
         </div>
-        <div class="form-group" data-bind="visible: scheduleEnabled">  {# todo B5: css-form-group #}
-          <label class="col-md-2 form-label">
+        <div class="row mb-3" data-bind="visible: scheduleEnabled">
+          <label class="col-form-label field-label" for="schedule_form_id">
             {% trans "Form Abbreviation" %}
           </label>
-          <div class="col-md-4">
+          <div class="field-control">
             <input type="text" class="form-control" id="schedule_form_id"
                    required data-bind="value: schedule_form_id">
             <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
@@ -41,8 +41,8 @@
                         </span>
           </div>
         </div>
-        <div class="form-group" data-bind="visible: scheduleEnabled">  {# todo B5: css-form-group #}
-          <label class="col-md-2 form-label">
+        <div class="row mb-3" data-bind="visible: scheduleEnabled">
+          <label class="col-form-label field-label" for="anchor">
             {% trans "Schedule Phase" %}
             {% url "view_module" domain app.id module.unique_id as module_url %}
             <span class="hq-help-template"
@@ -52,8 +52,8 @@
                   {% endblocktrans %}>
                         </span>
           </label>
-          <div class="col-md-4">
-            <select id="achor" class="form-select" required
+          <div class="field-control">
+            <select id="anchor" class="form-select" required
                     data-bind="options: all_schedule_phase_anchors,
                                            optionsCaption: '{% trans "Please select a phase..." %}',
                                            value: phase.anchor">
@@ -114,7 +114,7 @@
         </fieldset>
         <fieldset>
           <legend>{% trans "Transitions" %}</legend>
-          <div class="form-group">  {# todo B5: css-form-group #}
+          <div class="mb-3">
             <div class="form-check">
               <input class="form-check-input" type="checkbox"
                      id="transition-checkbox"
@@ -128,7 +128,7 @@
                                             }"></div>
             </div>
           </div>
-          <div class="form-group">  {# todo B5: css-form-group #}
+          <div class="mb-3">
             <div class="form-check">
               <input class="form-check-input" type="checkbox"
                      id="terminate-checkbox"
@@ -146,7 +146,7 @@
 
         <fieldset>
           <legend>{% trans "Visit Schedule" %}</legend>
-          <div class="form-group">  {# todo B5: css-form-group #}
+          <div class="mb-3">
             <div class="form-check">
               <input class="form-check-input" type="checkbox"
                      id="allow-unscheduled"
@@ -166,7 +166,7 @@
                 {% trans "Visit" %}
                 <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
               </legend>
-              <div class="form-group">  {# todo B5: css-form-group #}
+              <div class="mb-3">
                 <div class="form-inline">  {# todo B5: css-form-inline #}
                   {% trans "Due" %}
                   <input type="number" required class="form-control" data-bind="numericValue: due"/>
@@ -184,7 +184,7 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group">  {# todo B5: css-form-group #}
+              <div class="mb-3">
                 <div class="form-inline">  {# todo B5: css-form-inline #}
                   {% trans "Visit can be made up to" %}
                   <input type="number" required class="form-control"
@@ -199,7 +199,7 @@
               </div>
             </fieldset>
           </div>
-          <div class="form-group container-fluid">  {# todo B5: css-form-group #}
+          <div class="mb-3 container-fluid">
                         <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
                             {% trans 'Please add at least one visit' %}
                         </span>
