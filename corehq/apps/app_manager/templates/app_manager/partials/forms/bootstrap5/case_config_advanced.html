@@ -24,7 +24,7 @@
 <script type="text/html" id="case-config:case-action:body">
   <!--ko if: actionType == 'open'-->
   <div class="spacer"></div>
-  <div class="card panel-appmanager">  {# todo B5: css-panel #}
+  <div class="card ">
     <div class="card-header">
       <h4 class="card-title card-title-nolink">
         {% trans "Open Condition" %}
@@ -40,17 +40,17 @@
   <!-- /ko -->
   <hr />
   <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="card-group">
-    <div class="card panel-appmanager"  {# todo B5: css-panel #}
+    <div class="card"
          data-bind="template: 'case-config:case-transaction:case-preload'"></div>
-    <div class="card panel-appmanager"  {# todo B5: css-panel #}
+    <div class="card"
          data-bind="template: 'case-config:case-transaction:case-properties'"></div>
   </div>
   <div data-bind="if: actionType == 'open'" class="card-group">
-    <div class="card panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>  {# todo B5: css-panel #}
+    <div class="card" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
   </div>
   <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
   <hr />
-  <div class="card panel-appmanager">  {# todo B5: css-panel #}
+  <div class="card ">
     <div class="card-header">
       <h4 class="card-title card-title-nolink">
         {% trans "Conditions" %}
@@ -197,7 +197,7 @@
   </div>
   <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
     <div class="card-body">
-      <div class="card panel-appmanager">  {# todo B5: css-panel #}
+      <div class="card ">
         <div class="card-header">
           <h4 class="card-title card-title-nolink">
             {% trans "Case Action Meta" %}
@@ -317,7 +317,7 @@
   </div>
   <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
     <div class="card-body">
-      <div class="card panel-appmanager">  {# todo B5: css-panel #}
+      <div class="card ">
         <div class="card-header">
           <h4 class="card-title card-title-nolink">
             {% trans "Case Action Meta" %}
@@ -378,7 +378,7 @@
   </div>
   <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
     <div class="card-body">
-      <div class="card panel-appmanager">  {# todo B5: css-panel #}
+      <div class="card ">
         <div class="card-header">
           <h4 class="card-title card-title-nolink">
             {% trans "Case Action Meta" %}
@@ -503,7 +503,7 @@
       <span class="text-body-secondary">{% trans "Add Action" %}</span>
     </div>
     <div class="spacer"></div>
-    <div class="card panel-appmanager" data-bind="visible: load_update_cases().length">  {# todo B5: css-panel #}
+    <div class="card" data-bind="visible: load_update_cases().length">
       <div class="card-header">
         <h4 class="card-title card-title-nolink">
           {% trans "Load / Update / Close Cases" %}
@@ -512,20 +512,20 @@
       <div class="card-body">
         <div id="case-load-accordion" class="card-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
           <!-- ko if: auto_select -->
-          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>  {# todo B5: css-panel #}
+          <div class="card panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
           <!-- /ko -->
           <!-- ko if: load_case_from_fixture -->
-          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>  {# todo B5: css-panel #}
+          <div class="card panel-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
           <!-- /ko -->
           <!-- ko ifnot: auto_select || load_case_from_fixture -->
-          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>  {# todo B5: css-panel #}
+          <div class="card panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
           <!-- /ko -->
         </div>
       </div>
     </div>
     <div class="spacer" data-bind="visible: open_cases().length && load_update_cases().length"></div>
 
-    <div class="card panel-appmanager" data-bind="visible: open_cases().length">  {# todo B5: css-panel #}
+    <div class="card" data-bind="visible: open_cases().length">
       <div class="card-header">
         <h4 class="card-title card-title-nolink" >
           {% trans "Open New Cases" %}
@@ -533,13 +533,13 @@
       </div>
       <div class="card-body">
         <div id="case-open-accordion" class="card-group" data-bind="foreach: open_cases">
-          <div class="card panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>  {# todo B5: css-panel #}
+          <div class="card panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
         </div>
       </div>
     </div>
     <div class="spacer" data-bind="visible: arbitrary_datums().length">
     </div>
-    <div class="card panel-appmanager">  {# todo B5: css-panel #}
+    <div class="card ">
       <div class="card-header">
         <h4 class="card-title card-title-nolink" >
           {% trans "Arbitrary Datums" %}
