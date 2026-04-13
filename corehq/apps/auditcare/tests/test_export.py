@@ -15,8 +15,8 @@ from ..utils.export import (
     AuditWindowQuery,
     ForeignKeyAccessError,
     build_ip_filter,
-    build_url_exclude_filter,
-    build_url_include_filter,
+    build_path_exclude_filter,
+    build_path_include_filter,
     get_all_log_events,
     get_date_range_where,
     get_domain_first_access_times,
@@ -334,38 +334,38 @@ class TestBuildIPFilter(AuditcareTest):
         self.assertIsNone(q)
 
 
-class TestBuildURLFilters(AuditcareTest):
+class TestBuildPathFilters(AuditcareTest):
 
     def test_include_contains(self):
-        q = build_url_include_filter(["/api/v1/"], "contains")
+        q = build_path_include_filter(["/api/v1/"], "contains")
         self.assertEqual(q, Q(path__contains="/api/v1/"))
 
     def test_include_startswith(self):
-        q = build_url_include_filter(["/a/test/"], "startswith")
+        q = build_path_include_filter(["/a/test/"], "startswith")
         self.assertEqual(q, Q(path__startswith="/a/test/"))
 
     def test_include_multiple_or(self):
-        q = build_url_include_filter(["/api/", "/dashboard/"], "contains")
+        q = build_path_include_filter(["/api/", "/dashboard/"], "contains")
         self.assertEqual(q, Q(path__contains="/api/") | Q(path__contains="/dashboard/"))
 
     def test_include_empty_returns_none(self):
-        q = build_url_include_filter([], "contains")
+        q = build_path_include_filter([], "contains")
         self.assertIsNone(q)
 
     def test_exclude_contains(self):
-        q = build_url_exclude_filter(["/heartbeat/"], "contains")
+        q = build_path_exclude_filter(["/heartbeat/"], "contains")
         self.assertEqual(q, ~Q(path__contains="/heartbeat/"))
 
     def test_exclude_startswith(self):
-        q = build_url_exclude_filter(["/a/test/heartbeat/"], "startswith")
+        q = build_path_exclude_filter(["/a/test/heartbeat/"], "startswith")
         self.assertEqual(q, ~Q(path__startswith="/a/test/heartbeat/"))
 
     def test_exclude_multiple_and_not(self):
-        q = build_url_exclude_filter(["/heartbeat/", "/ping/"], "contains")
+        q = build_path_exclude_filter(["/heartbeat/", "/ping/"], "contains")
         self.assertEqual(q, ~Q(path__contains="/heartbeat/") & ~Q(path__contains="/ping/"))
 
     def test_exclude_empty_returns_none(self):
-        q = build_url_exclude_filter([], "contains")
+        q = build_path_exclude_filter([], "contains")
         self.assertIsNone(q)
 
 

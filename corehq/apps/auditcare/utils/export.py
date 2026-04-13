@@ -321,14 +321,14 @@ def _q_for_path(pattern, mode):
     elif mode == "startswith":
         return Q(path__startswith=pattern)
     else:
-        raise ValueError(f"Invalid URL filter mode: {mode!r}")
+        raise ValueError(f"Invalid path filter mode: {mode!r}")
 
 
-def build_url_include_filter(patterns, mode):
-    """Build a Q object for URL include filtering.
+def build_path_include_filter(patterns, mode):
+    """Build a Q object for path include filtering.
 
     Args:
-        patterns: list of URL pattern strings
+        patterns: list of URL path pattern strings
         mode: "contains" or "startswith"
 
     Returns:
@@ -342,11 +342,11 @@ def build_url_include_filter(patterns, mode):
     return q
 
 
-def build_url_exclude_filter(patterns, mode):
-    """Build a Q object for URL exclude filtering.
+def build_path_exclude_filter(patterns, mode):
+    """Build a Q object for path exclude filtering.
 
     Args:
-        patterns: list of URL pattern strings
+        patterns: list of URL path pattern strings
         mode: "contains" or "startswith"
 
     Returns:

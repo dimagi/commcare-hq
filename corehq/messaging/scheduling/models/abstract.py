@@ -351,16 +351,6 @@ class Event(ContentForeignKeyMixin):
     class Meta(object):
         abstract = True
 
-    def create_copy(self):
-        """
-        The point of this method is to create a copy of this object with no
-        primary keys set or references to other objects. It's used in the
-        process of copying schedules to a different project in the copy
-        conditional alert workflow, so there should also not be any
-        unresolved project-specific references in the returned copy.
-        """
-        raise NotImplementedError()
-
 
 class Content(models.Model):
     # If this content is being invoked in the context of a case,
@@ -378,16 +368,6 @@ class Content(models.Model):
 
     class Meta(object):
         abstract = True
-
-    def create_copy(self):
-        """
-        The point of this method is to create a copy of this object with no
-        primary keys set or references to other objects. It's used in the
-        process of copying schedules to a different project in the copy
-        conditional alert workflow, so there should also not be any
-        unresolved project-specific references in the returned copy.
-        """
-        raise NotImplementedError()
 
     def set_context(self, case=None, schedule_instance=None, critical_section_already_acquired=False):
         if case:

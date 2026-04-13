@@ -45,8 +45,11 @@ writing code, or making changes to the project.
 - **Coverage**: Changes must be covered by appropriate tests. Tests need
   to cover edge cases and failure scenarios.
 
-- **pytest conventions**: Use pytest features like Pythonic `assert`
-  statements and parametrized tests for repetitive test cases.
+- **pytest conventions**: Use plain `assert` statements instead of
+  unittest-style assertion methods. For example, use `assert x == y`
+  instead of `self.assertEqual(x, y)`, `assert x in y` instead of
+  `self.assertIn(x, y)`, etc. Use parametrized tests for repetitive
+  test cases.
 
 - **Explicit fixtures**: Use [pytest-unmagic](https://github.com/dimagi/pytest-unmagic/)
   for explicit test fixtures.
