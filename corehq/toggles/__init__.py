@@ -794,6 +794,17 @@ DHIS2_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'exports_apps_use_elasticsearch',
+    'Exports apps use Elasticsearch',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    When enabled, exports page will use Elasticsearch to fetch apps.
+    This toggle is meant to be *only* used by QA domains.
+    """
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
