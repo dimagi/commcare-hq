@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 <div class="tab-pane" id="visit-scheduler">
   {% if form.source %}
-    <form class="form-horizontal">
+    <form>
       <div class="clearfix">
         <div data-bind="saveButton: saveButton"></div>
         <div class="has-error float-end">  {# todo B5: css-has-error #}
@@ -68,7 +68,7 @@
         <fieldset>
           <legend>{% trans "Form Relevancy Window" %}</legend>
           <div class="container-fluid">
-            <div class="form-inline">  {# todo B5: css-form-inline #}
+            <div class="d-flex align-items-center gap-2 flex-wrap">
               <label>{% trans "Show this form " %}</label>
               <input type="number" min="0" required class="form-control" data-bind="numericValue: relevancy.starts"/>
               <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
@@ -83,7 +83,7 @@
           </div>
           <div class="spacer"></div>
           <div class="container-fluid">
-            <div class="form-inline">  {# todo B5: css-form-inline #}
+            <div class="d-flex align-items-center gap-2 flex-wrap">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox"
                        id="enable-form-expiry"
@@ -167,7 +167,7 @@
                 <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
               </legend>
               <div class="mb-3">
-                <div class="form-inline">  {# todo B5: css-form-inline #}
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                   {% trans "Due" %}
                   <input type="number" required class="form-control" data-bind="numericValue: due"/>
                   <span class="help-block error-text" style="display:none">  {# todo B5: inline-style #}
@@ -185,7 +185,7 @@
                 </div>
               </div>
               <div class="mb-3">
-                <div class="form-inline">  {# todo B5: css-form-inline #}
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                   {% trans "Visit can be made up to" %}
                   <input type="number" required class="form-control"
                          data-bind="numericValue: starts"/>
