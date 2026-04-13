@@ -113,7 +113,7 @@
         <!-- /ko -->
 
         <!-- ko if:  actionType === 'open' -->
-        <div class="row mb-3" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
+        <div class="row mb-3" data-bind="visible: allow_subcase, css: {'text-warning': validate_subcase()}">
 
           <label class="col-form-label field-label">{% trans "Parent Indices" %}</label>
           <div class="field-control">
@@ -155,7 +155,7 @@
               <i class="fa fa-plus"></i>
               {% trans "Add parent index" %}
             </button>
-            <span class="help-block" data-bind="text: validate_subcase"></span>
+            <span class="form-text" data-bind="text: validate_subcase"></span>
           </div>
         </div>
         <hr />
@@ -204,7 +204,7 @@
           </h4>
         </div>
         <div class="card-body">
-          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'has-warning': validate()}">
+          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'text-warning': validate()}">
 
             <div class="d-flex justify-content-start align-items-center mb-3 gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
@@ -228,7 +228,7 @@
               </select>
               <!-- /ko -->
               <strong>)</strong><br />
-              <span class="help-block" data-bind="text: validate"></span>
+              <span class="form-text" data-bind="text: validate"></span>
             </div>
           </div>
           <div class="alert alert-warning" data-bind="visible: !case_type">
@@ -324,7 +324,7 @@
           </h4>
         </div>
         <div class="card-body">
-          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'has-warning': validate()}">
+          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'text-warning': validate()}">
             <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
               <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
@@ -346,7 +346,7 @@
               <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
             </div>
             <!-- /ko -->
-            <span class="help-block" data-bind="text: validate"></span>
+            <span class="form-text" data-bind="text: validate"></span>
           </div>
           <div class="alert alert-warning" data-bind="visible: !auto_select.mode()">
             {% trans "Please select an autoselection mode." %}
@@ -385,7 +385,7 @@
           </h4>
         </div>
         <div class="card-body">
-          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'has-warning': validate()}">
+          <div class="d-flex align-items-center gap-2 flex-wrap" data-bind="css: {'text-warning': validate()}">
             <div class="d-flex align-items-center gap-1">
               <label><i class="fa fa-tag"></i> {% trans "Case Tag" %}</label>
               <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
@@ -414,12 +414,12 @@
             </div>
             <!-- /ko -->
             <strong>)</strong><br />
-            <p class="help-block" data-bind="text: validate"></p>
+            <p class="form-text" data-bind="text: validate"></p>
           </div>
-          <div class="help-block" data-bind="visible: !case_type">
+          <div class="form-text" data-bind="visible: !case_type">
             {% trans "Please select a case type." %}
           </div>
-          <div class="card well-sm">  {# todo B5: css-well #}
+          <div class="card">
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Case Property" %}&nbsp;</label>
@@ -434,7 +434,7 @@
               </div>
             </div>
           </div>
-          <div class="card well-sm">  {# todo B5: css-well #}
+          <div class="card">
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Fixture Nodeset" %}&nbsp;</label>
@@ -459,7 +459,7 @@
               </div>
             </div>
           </div>
-          <div class="card well-sm">  {# todo B5: css-well #}
+          <div class="card">
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <div class="d-flex align-items-center gap-1">
                 <label>{% trans "Arbitrary Datum Function" %}&nbsp;</label>
