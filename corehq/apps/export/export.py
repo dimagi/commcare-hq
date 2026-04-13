@@ -16,7 +16,7 @@ from soil import DownloadBase
 
 from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.apps.export.logging import log_export_generated
+from corehq.apps.export.logging import ExportLoggingContext, build_filter_summary, log_export_generated
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
@@ -463,7 +463,7 @@ def _get_base_query(export_instance):
 
 
 @metrics_track_errors('rebuild_export')
-def rebuild_export(export_instance, progress_tracker):
+def rebuild_export(export_instance, progress_tracker, manual=False):
     """
     Rebuild the given daily saved ExportInstance
     """
@@ -475,10 +475,17 @@ def rebuild_export(export_instance, progress_tracker):
             f"{export_instance.name} is {export_size} rows. Exceeds the limit "
             f"of {MAX_DAILY_EXPORT_SIZE} rows.")
     es_filters = [f.to_es_filter() for f in filters]
+    logging_context = ExportLoggingContext(
+        download_id=None,
+        username=None,
+        trigger="manual_rebuild" if manual else "scheduled_rebuild",
+        filters=build_filter_summary(export_instance.filters),
+    )
     with TransientTempfile() as temp_path:
         export_file = get_export_file([export_instance], es_filters, temp_path,
                                       progress_tracker,
-                                      include_hyperlinks=include_hyperlinks)
+                                      include_hyperlinks=include_hyperlinks,
+                                      logging_context=logging_context)
         with export_file as payload:
             save_export_payload(export_instance, payload)
 

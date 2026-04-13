@@ -114,9 +114,9 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
-def _start_export_task(export_instance_id):
+def _start_export_task(export_instance_id, manual=False):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    rebuild_export(export_instance, progress_tracker=_start_export_task)
+    rebuild_export(export_instance, progress_tracker=_start_export_task, manual=manual)
 
 
 def _get_saved_export_download_data(export_instance_id):
@@ -145,6 +145,7 @@ def rebuild_saved_export(export_instance_id, manual=False):
     download_data.set_task(
         _start_export_task.apply_async(
             args=[export_instance_id],
+            kwargs={"manual": manual},
             queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )
