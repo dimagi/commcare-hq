@@ -181,31 +181,16 @@ $(function () {
 
         self.caseConfigViewModel = caseConfigViewModel(self, params);
 
-        self.applyAccordion = function (type, index) {
-            _.each(type ? [type] : ['open', 'load'], function (t) {
-                var selector = "#case-" + t + "-accordion";
-
-                // Make sure all parents are set correctly so panels behave like an accordion
-                $(selector + ' > .panel > .panel-collapse').collapse({
-                    parent: selector,
-                    toggle: false,
-                });
-
-                // Hide all panels, then show the requested one
-                $(selector + ' .panel-collapse.in').collapse('hide');
-                $(selector + ' > .panel:nth-child(' + (index + 1) + ') .panel-collapse').collapse('show');
+        self.initAccordion = function () {
+            // Show the first section in each group on page load.
+            _.each(['#case-load-accordion', '#case-open-accordion'], function (selector) {
+                $(selector + ' > .card:first-child .collapse').collapse('show');
             });
         };
 
-        self.initAccordion = function () {
-            // Leave all the actions, collapsed, unless there's just
-            // one in the section, and then open it
-            if ($('#case-load-accordion > .panel').length === 1) {
-                self.applyAccordion('load', 0);
-            }
-            if ($('#case-open-accordion > .panel').length === 1) {
-                self.applyAccordion('open', 0);
-            }
+        self.applyAccordion = function (type, index) {
+            // Show a specific section after Knockout renders it.
+            $('#' + type + index).collapse('show');
         };
 
         self.init = function () {
@@ -222,9 +207,6 @@ $(function () {
                 $home.find('input').on('textchange', self.change);
 
                 self.initAccordion();
-                $('#case-configuration-tab').on('click', function () {
-                    self.initAccordion();
-                });
 
                 $('.hq-help-template').each(function () {
                     main.transformHelpTemplate($(this), true);

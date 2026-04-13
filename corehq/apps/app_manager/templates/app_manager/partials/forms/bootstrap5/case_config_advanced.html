@@ -182,7 +182,7 @@
 </script>
 
 <script type="text/html" id="case-config:case-action">
-  <div class="card-header clickable panel-heading-case-action" data-bs-toggle="collapse"
+  <div class="card-header clickable" data-bs-toggle="collapse"
        data-bind="attr: {href: '#' + actionType + $index()}, css: {'not-droppable': moveable()}">
     <h4 class="card-title card-title-nolink" data-bind="html: header"></h4>
   </div>
@@ -195,7 +195,7 @@
       <i class="fa-regular fa-trash-can"></i>
     </button>
   </div>
-  <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
+  <div class="collapse" data-bind="attr: {id: actionType + $index()}" data-bs-parent="#load-update-close-cases">
     <div class="card-body">
       <div class="card ">
         <div class="card-header">
@@ -315,7 +315,7 @@
       <i class="fa-regular fa-trash-can"></i>
     </button>
   </div>
-  <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
+  <div class="collapse" data-bind="attr: {id: actionType + $index()}" data-bs-parent="#load-update-close-cases">
     <div class="card-body">
       <div class="card ">
         <div class="card-header">
@@ -376,7 +376,7 @@
       <i class="fa-regular fa-trash-can"></i>
     </button>
   </div>
-  <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
+  <div class="collapse" data-bind="attr: {id: actionType + $index()}" data-bs-parent="#load-update-close-cases">
     <div class="card-body">
       <div class="card ">
         <div class="card-header">
@@ -509,7 +509,7 @@
           {% trans "Load / Update / Close Cases" %}
         </h4>
       </div>
-      <div class="card-body">
+      <div class="card-body" id="load-update-close-cases">
         <div id="case-load-accordion" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
           <!-- ko if: auto_select -->
           <div class="card panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
