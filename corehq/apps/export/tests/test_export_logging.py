@@ -1,6 +1,20 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.export.logging import ExportLoggingContext, build_filter_summary
+from corehq.apps.export.logging import (
+    ExportLoggingContext,
+    build_export_log_data,
+    build_filter_summary,
+)
+from corehq.apps.export.models import (
+    MAIN_TABLE,
+    CaseExportInstance,
+    ExportColumn,
+    ExportItem,
+    FormExportInstance,
+    PathNode,
+    SMSExportInstance,
+    TableConfiguration,
+)
 from corehq.apps.export.models.new import (
     CaseExportInstanceFilters,
     FormExportInstanceFilters,
@@ -81,3 +95,156 @@ class TestBuildFilterSummary(SimpleTestCase):
     def test_none_filters_returns_empty(self):
         result = build_filter_summary(None)
         self.assertEqual(result, {"active": {}, "default": {}})
+
+
+class TestBuildExportLogData(SimpleTestCase):
+
+    def _make_case_export(self, case_type="patient", columns=None):
+        columns = columns or [
+            ExportColumn(label="name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
+            ExportColumn(label="dob", item=ExportItem(path=[PathNode(name="dob")]), selected=True),
+            ExportColumn(label="hidden", item=ExportItem(path=[PathNode(name="hidden")]), selected=False),
+        ]
+        return CaseExportInstance(
+            domain="test-domain",
+            case_type=case_type,
+            tables=[TableConfiguration(
+                label="Cases",
+                path=MAIN_TABLE,
+                selected=True,
+                columns=columns,
+            )],
+        )
+
+    def _make_form_export(self, xmlns="http://example.com/form"):
+        return FormExportInstance(
+            domain="test-domain",
+            xmlns=xmlns,
+            tables=[TableConfiguration(
+                label="Forms",
+                path=MAIN_TABLE,
+                selected=True,
+                columns=[
+                    ExportColumn(label="q1", item=ExportItem(path=[PathNode(name="q1")]), selected=True),
+                ],
+            )],
+        )
+
+    def _make_context(self, **overrides):
+        defaults = {
+            "download_id": "dl-test123",
+            "username": "testuser@example.com",
+            "trigger": "user_download",
+            "filters": {"active": {}, "default": {}},
+        }
+        defaults.update(overrides)
+        return ExportLoggingContext(**defaults)
+
+    def test_case_export_fields(self):
+        export = self._make_case_export()
+        ctx = self._make_context()
+        data = build_export_log_data(export, ctx, row_count=42)
+
+        self.assertEqual(data["event"], "export_generated")
+        self.assertEqual(data["domain"], "test-domain")
+        self.assertEqual(data["download_id"], "dl-test123")
+        self.assertEqual(data["username"], "testuser@example.com")
+        self.assertEqual(data["trigger"], "user_download")
+        self.assertEqual(data["export_type"], "case")
+        self.assertEqual(data["export_subtype"], "patient")
+        self.assertEqual(data["row_count"], 42)
+        self.assertEqual(data["columns"], ["name", "dob"])
+        self.assertNotIn("bulk", data)
+
+    def test_form_export_subtype_is_xmlns(self):
+        export = self._make_form_export(xmlns="http://example.com/myform")
+        ctx = self._make_context()
+        data = build_export_log_data(export, ctx, row_count=10)
+
+        self.assertEqual(data["export_type"], "form")
+        self.assertEqual(data["export_subtype"], "http://example.com/myform")
+
+    def test_sms_export_no_subtype(self):
+        export = SMSExportInstance(domain="test-domain", tables=[])
+        ctx = self._make_context()
+        data = build_export_log_data(export, ctx, row_count=5)
+
+        self.assertEqual(data["export_type"], "sms")
+        self.assertNotIn("export_subtype", data)
+
+    def test_only_selected_columns_included(self):
+        export = self._make_case_export()
+        ctx = self._make_context()
+        data = build_export_log_data(export, ctx, row_count=0)
+
+        self.assertIn("name", data["columns"])
+        self.assertIn("dob", data["columns"])
+        self.assertNotIn("hidden", data["columns"])
+
+    def test_columns_from_multiple_selected_tables(self):
+        export = CaseExportInstance(
+            domain="test-domain",
+            case_type="patient",
+            tables=[
+                TableConfiguration(
+                    label="Main",
+                    path=MAIN_TABLE,
+                    selected=True,
+                    columns=[
+                        ExportColumn(label="name", item=ExportItem(path=[PathNode(name="name")]), selected=True),
+                    ],
+                ),
+                TableConfiguration(
+                    label="History",
+                    path=[PathNode(name="history")],
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="action",
+                            item=ExportItem(path=[PathNode(name="action")]),
+                            selected=True,
+                        ),
+                    ],
+                ),
+                TableConfiguration(
+                    label="Unselected",
+                    path=[PathNode(name="other")],
+                    selected=False,
+                    columns=[
+                        ExportColumn(
+                            label="ignored",
+                            item=ExportItem(path=[PathNode(name="ignored")]),
+                            selected=True,
+                        ),
+                    ],
+                ),
+            ],
+        )
+        ctx = self._make_context()
+        data = build_export_log_data(export, ctx, row_count=0)
+
+        self.assertEqual(data["columns"], ["name", "action"])
+
+    def test_bulk_info_included(self):
+        export = self._make_case_export()
+        ctx = self._make_context()
+        data = build_export_log_data(export, ctx, row_count=0, bulk={"index": 2, "total": 3})
+
+        self.assertEqual(data["bulk"], {"index": 2, "total": 3})
+
+    def test_bulk_omitted_when_none(self):
+        export = self._make_case_export()
+        ctx = self._make_context()
+        data = build_export_log_data(export, ctx, row_count=0, bulk=None)
+
+        self.assertNotIn("bulk", data)
+
+    def test_none_context_still_works(self):
+        export = self._make_case_export()
+        data = build_export_log_data(export, None, row_count=10)
+
+        self.assertEqual(data["event"], "export_generated")
+        self.assertIsNone(data["download_id"])
+        self.assertIsNone(data["username"])
+        self.assertIsNone(data["trigger"])
+        self.assertEqual(data["filters"], {"active": {}, "default": {}})
