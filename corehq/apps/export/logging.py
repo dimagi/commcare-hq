@@ -54,6 +54,19 @@ def _serialize_filter_value(value):
     return value
 
 
+def build_filter_summary_from_form_data(filter_form_data):
+    """Build a filter summary from the on-demand export filter form data.
+
+    For on-demand exports, the user-selected filters come from the form
+    submission, not from export_instance.filters. We log the raw form
+    data as the 'active' filters since every filter the user submitted
+    represents an active choice.
+    """
+    if not filter_form_data:
+        return {"active": {}, "default": {}}
+    return {"active": filter_form_data, "default": {}}
+
+
 def build_filter_summary(filters):
     """Build a dict with 'active' and 'default' keys from an ExportInstanceFilters.
 

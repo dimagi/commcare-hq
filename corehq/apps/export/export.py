@@ -287,7 +287,8 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(domain, export_ids, exports_type, username, es_filters, owner_id, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, es_filters, owner_id,
+                        filename=None, filter_summary=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
@@ -299,7 +300,8 @@ def get_export_download(domain, export_ids, exports_type, username, es_filters, 
         es_filters,
         download.download_id,
         owner_id,
-        filename=filename
+        filename=filename,
+        filter_summary=filter_summary,
     ))
     return download
 

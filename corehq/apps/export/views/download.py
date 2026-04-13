@@ -46,6 +46,7 @@ from corehq.apps.export.export import (
     get_export_query,
     get_export_size,
 )
+from corehq.apps.export.logging import build_filter_summary_from_form_data
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
@@ -325,6 +326,8 @@ def prepare_custom_export(request, domain):
     export_filters = filter_form.get_export_filters(request, filter_form_data)
     export_es_filters = [f.to_es_filter() for f in export_filters]
 
+    filter_summary = build_filter_summary_from_form_data(filter_form_data)
+
     export_specs = json.loads(request.POST.get('exports'))
     export_ids = [spec['export_id'] for spec in export_specs]
     export_instances = [view_helper.get_export(export_id) for export_id in export_ids]
@@ -353,6 +356,7 @@ def prepare_custom_export(request, domain):
         es_filters=export_es_filters,
         owner_id=request.couch_user.get_id,
         filename=filename,
+        filter_summary=filter_summary,
     )
 
     return json_response({
