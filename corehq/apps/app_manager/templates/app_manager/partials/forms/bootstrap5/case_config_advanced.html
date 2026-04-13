@@ -39,13 +39,13 @@
   </div>
   <!-- /ko -->
   <hr />
-  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm" class="card-group">
+  <div data-bind="if: actionType == 'load' && !caseConfig.isShadowForm">
     <div class="card"
          data-bind="template: 'case-config:case-transaction:case-preload'"></div>
     <div class="card"
          data-bind="template: 'case-config:case-transaction:case-properties'"></div>
   </div>
-  <div data-bind="if: actionType == 'open'" class="card-group">
+  <div data-bind="if: actionType == 'open'">
     <div class="card" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
   </div>
   <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
@@ -510,7 +510,7 @@
         </h4>
       </div>
       <div class="card-body">
-        <div id="case-load-accordion" class="card-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
+        <div id="case-load-accordion" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: 'div:not(.not-droppable)'">
           <!-- ko if: auto_select -->
           <div class="card panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
           <!-- /ko -->
@@ -532,7 +532,7 @@
         </h4>
       </div>
       <div class="card-body">
-        <div id="case-open-accordion" class="card-group" data-bind="foreach: open_cases">
+        <div id="case-open-accordion" data-bind="foreach: open_cases">
           <div class="card panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
         </div>
       </div>
@@ -546,7 +546,7 @@
         </h4>
       </div>
       <div class="card-body">
-        <div id="arbitrary-datums" class="card-group">
+        <div id="arbitrary-datums">
           <table data-bind="visible: arbitrary_datums().length" class="col-md-12 table table-savecaseprops">
             <thead>
               <tr>
