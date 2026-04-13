@@ -9,6 +9,7 @@ import main from "hqwebapp/js/bootstrap5/main";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
 import utils from "app_manager/js/details/utils";
 import "app_manager/js/forms/case_knockout_bindings";  // numericValue
+import "hqwebapp/js/knockout_subscribables.ko";  // ko.snakeCase
 
 var moduleScheduler = function (params) {
     // Edits the schedule phases on the module setting page
