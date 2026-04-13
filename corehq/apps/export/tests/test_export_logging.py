@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.export.logging import (
@@ -248,3 +250,67 @@ class TestBuildExportLogData(SimpleTestCase):
         self.assertIsNone(data["username"])
         self.assertIsNone(data["trigger"])
         self.assertEqual(data["filters"], {"active": {}, "default": {}})
+
+
+class TestWriteExportInstanceLogging(SimpleTestCase):
+
+    def _make_simple_export(self):
+        return FormExportInstance(
+            domain="test-domain",
+            xmlns="http://example.com/form",
+            tables=[TableConfiguration(
+                label="Forms",
+                path=MAIN_TABLE,
+                selected=True,
+                columns=[
+                    ExportColumn(
+                        label="q1",
+                        item=ExportItem(path=[PathNode(name="q1")]),
+                        selected=True,
+                    ),
+                ],
+            )],
+        )
+
+    @patch('corehq.apps.export.export.log_export_generated')
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_logging_called_after_write(self, mock_save, mock_log):
+        from corehq.apps.export.export import get_export_writer, write_export_instance
+        from corehq.util.files import TransientTempfile
+
+        export = self._make_simple_export()
+        docs = [{"domain": "test-domain", "_id": "1", "form": {"q1": "val"}}]
+        ctx = ExportLoggingContext(
+            download_id="dl-abc",
+            username="user@test.com",
+            trigger="user_download",
+            filters={"active": {}, "default": {}},
+        )
+
+        with TransientTempfile() as temp_path:
+            writer = get_export_writer([export], temp_path)
+            with writer.open([export]):
+                write_export_instance(writer, export, docs, logging_context=ctx)
+
+        mock_log.assert_called_once()
+        args = mock_log.call_args
+        self.assertEqual(args.kwargs["export_instance"], export)
+        self.assertEqual(args.kwargs["logging_context"], ctx)
+        self.assertEqual(args.kwargs["row_count"], 1)
+        self.assertIsNone(args.kwargs["bulk"])
+
+    @patch('corehq.apps.export.export.log_export_generated')
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_logging_not_called_when_no_context(self, mock_save, mock_log):
+        from corehq.apps.export.export import get_export_writer, write_export_instance
+        from corehq.util.files import TransientTempfile
+
+        export = self._make_simple_export()
+        docs = [{"domain": "test-domain", "_id": "1", "form": {"q1": "val"}}]
+
+        with TransientTempfile() as temp_path:
+            writer = get_export_writer([export], temp_path)
+            with writer.open([export]):
+                write_export_instance(writer, export, docs)
+
+        mock_log.assert_not_called()

@@ -16,6 +16,7 @@ from soil import DownloadBase
 
 from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.logging import log_export_generated
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
@@ -304,18 +305,23 @@ def get_export_download(domain, export_ids, exports_type, username, es_filters, 
 
 
 def get_export_file(export_instances, es_filters, temp_path,
-                    progress_tracker=None, include_hyperlinks=True):
+                    progress_tracker=None, include_hyperlinks=True,
+                    logging_context=None):
     """
     Return an export file for the given ExportInstance and list of filters
     """
     writer = get_export_writer(export_instances, temp_path)
+    is_bulk = len(export_instances) > 1
 
     with writer.open(export_instances):
-        for export_instance in export_instances:
+        for i, export_instance in enumerate(export_instances):
             docs = get_export_documents(export_instance, es_filters)
+            bulk = {"index": i + 1, "total": len(export_instances)} if is_bulk else None
             write_export_instance(writer, export_instance, docs,
                                   progress_tracker,
-                                  include_hyperlinks=include_hyperlinks)
+                                  include_hyperlinks=include_hyperlinks,
+                                  logging_context=logging_context,
+                                  bulk=bulk)
 
     return ExportFile(writer.path, writer.format)
 
@@ -344,7 +350,8 @@ def get_export_size(export_instance, filters):
 
 
 def write_export_instance(writer, export_instance, documents,
-                          progress_tracker=None, include_hyperlinks=True):
+                          progress_tracker=None, include_hyperlinks=True,
+                          logging_context=None, bulk=None):
     """
     Write rows to the given open _Writer.
     Rows will be written to each table in the export instance for each of
@@ -408,6 +415,14 @@ def write_export_instance(writer, export_instance, documents,
     tags = {'domain': export_instance.domain, 'format': writer.format}
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
     _record_export_duration(end - start, export_instance)
+
+    if logging_context is not None:
+        log_export_generated(
+            export_instance=export_instance,
+            logging_context=logging_context,
+            row_count=total_rows,
+            bulk=bulk,
+        )
 
 
 def _time_in_milliseconds():
