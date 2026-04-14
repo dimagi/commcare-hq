@@ -19,7 +19,7 @@ from soil import DownloadBase
 from corehq.apps.export.const import (
     CASE_EXPORT, FORM_EXPORT, MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE,
 )
-from corehq.apps.export.logging import ExportLoggingContext
+from corehq.apps.export.logging import ExportLoggingContext, build_filter_summary
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.models.new import (
     CaseExportInstance,
@@ -293,7 +293,8 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(domain, export_ids, exports_type, username, es_filters, owner_id, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, es_filters, owner_id,
+                        filename=None, filter_summary=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
@@ -305,7 +306,8 @@ def get_export_download(domain, export_ids, exports_type, username, es_filters, 
         es_filters,
         download.download_id,
         owner_id,
-        filename=filename
+        filename=filename,
+        filter_summary=filter_summary,
     ))
     return download
 
@@ -429,6 +431,7 @@ def _log_export_generated(export_instance, row_count, logging_context):
         "download_id": logging_context.download_id if logging_context else None,
         "username": logging_context.username if logging_context else None,
         "trigger": logging_context.trigger if logging_context else None,
+        "filters": logging_context.filters if logging_context else {},
         "export_type": export_instance.type,
         "export_id": export_instance.get_id,
         "row_count": row_count,
@@ -497,6 +500,7 @@ def rebuild_export(export_instance, progress_tracker, manual=False):
         download_id=None,
         username=None,
         trigger="manual_rebuild" if manual else "scheduled_rebuild",
+        filters=build_filter_summary(export_instance.filters),
     )
     with TransientTempfile() as temp_path:
         export_file = get_export_file([export_instance], es_filters, temp_path,

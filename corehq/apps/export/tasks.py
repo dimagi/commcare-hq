@@ -43,7 +43,8 @@ logger = logging.getLogger('export_migration')
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(domain, export_ids, exports_type, username,
                                   es_filters, download_id, owner_id,
-                                  filename=None, expiry=10 * 60):
+                                  filename=None, expiry=10 * 60,
+                                  filter_summary=None):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
@@ -65,6 +66,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
         download_id=download_id,
         username=username,
         trigger="user_download",
+        filters=filter_summary or {},
     )
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
