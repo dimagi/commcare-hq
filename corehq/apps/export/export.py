@@ -1,5 +1,7 @@
 import contextlib
 import datetime
+import json
+import logging
 import sys
 import time
 from collections import Counter
@@ -14,7 +16,9 @@ from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE
+from corehq.apps.export.const import (
+    CASE_EXPORT, FORM_EXPORT, MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE,
+)
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.models.new import (
     CaseExportInstance,
@@ -26,6 +30,8 @@ from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
 from soil.progress import TaskProgressManager
+
+export_audit_logger = logging.getLogger("commcare.exports.audit")
 
 
 class ExportFile(object):
@@ -408,6 +414,28 @@ def write_export_instance(writer, export_instance, documents,
     tags = {'domain': export_instance.domain, 'format': writer.format}
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
     _record_export_duration(end - start, export_instance)
+
+    _log_export_generated(export_instance, total_rows)
+
+
+def _log_export_generated(export_instance, row_count):
+    data = {
+        "event": "export_generated",
+        "domain": export_instance.domain,
+        "export_type": export_instance.type,
+        "export_id": export_instance.get_id,
+        "row_count": row_count,
+        "columns": [
+            col.label
+            for table in export_instance.tables if table.selected
+            for col in table.columns if col.selected
+        ],
+    }
+    if export_instance.type == FORM_EXPORT:
+        data["export_subtype"] = export_instance.xmlns
+    elif export_instance.type == CASE_EXPORT:
+        data["export_subtype"] = export_instance.case_type
+    export_audit_logger.info(json.dumps(data))
 
 
 def _time_in_milliseconds():
