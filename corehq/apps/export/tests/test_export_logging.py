@@ -6,6 +6,7 @@ from corehq.apps.export.logging import (
     ExportLoggingContext,
     build_export_log_data,
     build_filter_summary,
+    build_filter_summary_from_form_data,
 )
 from corehq.apps.export.models import (
     MAIN_TABLE,
@@ -98,6 +99,26 @@ class TestBuildFilterSummary(SimpleTestCase):
     def test_none_filters_returns_empty(self):
         result = build_filter_summary(None)
         self.assertEqual(result, {'active': {}, 'default': {}})
+
+
+class TestBuildFilterSummaryFromFormData(SimpleTestCase):
+
+    def test_none_input_returns_empty(self):
+        result = build_filter_summary_from_form_data(None)
+        self.assertEqual(result, {'active': {}, 'default': {}})
+
+    def test_empty_dict_returns_empty(self):
+        result = build_filter_summary_from_form_data({})
+        self.assertEqual(result, {'active': {}, 'default': {}})
+
+    def test_populated_data_goes_to_active(self):
+        form_data = {
+            'date_range': '2026-01-01 to 2026-03-01',
+            'emw': 'u__abc123',
+        }
+        result = build_filter_summary_from_form_data(form_data)
+        self.assertEqual(result['active'], form_data)
+        self.assertEqual(result['default'], {})
 
 
 class TestBuildExportLogData(SimpleTestCase):

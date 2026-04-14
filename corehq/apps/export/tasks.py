@@ -27,8 +27,8 @@ from .dbaccessors import (
     get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
 )
-from corehq.apps.export.logging import ExportLoggingContext
 from .export import get_export_file, rebuild_export
+from .logging import ExportLoggingContext
 from .models.new import (
     EmailExportWhenDoneRequest,
     CaseExportInstance,

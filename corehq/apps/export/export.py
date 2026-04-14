@@ -16,7 +16,9 @@ from soil import DownloadBase
 
 from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.apps.export.logging import ExportLoggingContext, build_filter_summary, log_export_generated
+from corehq.apps.export.logging import (
+    ExportLoggingContext, build_filter_summary, log_export_generated, logger as audit_logger,
+)
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
@@ -419,12 +421,15 @@ def write_export_instance(writer, export_instance, documents,
     _record_export_duration(end - start, export_instance)
 
     if logging_context is not None:
-        log_export_generated(
-            export_instance=export_instance,
-            logging_context=logging_context,
-            row_count=total_rows,
-            bulk=bulk,
-        )
+        try:
+            log_export_generated(
+                export_instance=export_instance,
+                logging_context=logging_context,
+                row_count=total_rows,
+                bulk=bulk,
+            )
+        except Exception:
+            audit_logger.exception("Failed to emit export audit log")
 
 
 def _time_in_milliseconds():
