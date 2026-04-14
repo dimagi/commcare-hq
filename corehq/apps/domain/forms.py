@@ -839,7 +839,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.update_internal(can_use_data=not self.cleaned_data.get("opt_out_of_data_sharing"))
 
     def _save_exports_use_elasticsearch(self, domain):
-        domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", True)
+        domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", False)
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
