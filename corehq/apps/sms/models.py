@@ -1392,7 +1392,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ConnectMessageSurveyContent,
             CustomContent,
             EmailContent,
-            FCMNotificationContent,
             SMSContent,
             SMSSurveyContent,
         )
@@ -1405,8 +1404,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
             return cls.CONTENT_EMAIL, None, None, None
-        elif isinstance(content, FCMNotificationContent):
-            return cls.CONTENT_FCM_Notification, None, None, None
         elif isinstance(content, ConnectMessageContent):
             return cls.CONTENT_CONNECT, None, None, None
         elif isinstance(content, ConnectMessageSurveyContent):
