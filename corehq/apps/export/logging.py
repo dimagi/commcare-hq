@@ -15,40 +15,13 @@ ExportLoggingContext = namedtuple(
 )
 
 
-# Fields to include in filter summary, per class.
-# Order: base fields first, then subclass-specific fields.
-_BASE_FILTER_FIELDS = [
-    'can_access_all_locations',
-    'accessible_location_ids',
-    'locations',
-    'date_period',
-    'users',
-    'reporting_groups',
-    'user_types',
-]
-
-_CASE_FILTER_FIELDS = _BASE_FILTER_FIELDS + [
-    'sharing_groups',
-    'show_all_data',
-    'show_project_data',
-    'show_deactivated_data',
-]
-
-_FORM_FILTER_FIELDS = _BASE_FILTER_FIELDS  # user_types already in base
-
-
 def _get_filter_fields(filters):
-    from corehq.apps.export.models.new import (
-        CaseExportInstanceFilters,
-        FormExportInstanceFilters,
-    )
+    """Get the declared filter property names from a filter schema instance.
 
-    if isinstance(filters, CaseExportInstanceFilters):
-        return _CASE_FILTER_FIELDS
-    elif isinstance(filters, FormExportInstanceFilters):
-        return _FORM_FILTER_FIELDS
-    else:
-        return _BASE_FILTER_FIELDS
+    Uses the DocumentSchema.properties() introspection API to dynamically
+    discover fields, so new filter properties are automatically included.
+    """
+    return [name for name in type(filters).properties() if name != 'doc_type']
 
 
 def _serialize_filter_value(value):
