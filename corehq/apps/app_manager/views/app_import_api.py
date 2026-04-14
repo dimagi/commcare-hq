@@ -47,7 +47,8 @@ def _handle_import_app(request, domain):
     if not source:
         return JsonResponse({'success': False, 'error': 'Invalid JSON file'}, status=400)
 
-    app = import_app_util(source, domain, {'name': app_name}, request=request)
+    extra = {'name': app_name, 'created_from_template': 'import_app_api'}
+    app = import_app_util(source, domain, extra, request=request)
 
     response = {'success': True, 'app_id': app._id}
     warnings = [str(m) for m in get_messages(request)]

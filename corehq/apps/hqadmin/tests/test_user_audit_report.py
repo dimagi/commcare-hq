@@ -228,47 +228,47 @@ class TestUserAuditReportFilters(AuditcareTest):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][7], 404)
 
-    def test_url_include_contains(self):
+    def test_path_include_contains(self):
         report = self._get_report({
             'username': 'admin@test.com',
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
-            'url_include': '/api/',
-            'url_include_mode': 'contains',
+            'path_include': '/api/',
+            'path_include_mode': 'contains',
         })
         rows = report.rows
         self.assertEqual(len(rows), 1)
 
-    def test_url_exclude_contains(self):
+    def test_path_exclude_contains(self):
         report = self._get_report({
             'username': 'admin@test.com',
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
-            'url_exclude': '/dashboard/',
-            'url_exclude_mode': 'contains',
+            'path_exclude': '/dashboard/',
+            'path_exclude_mode': 'contains',
         })
         rows = report.rows
         # API row + AccessAudit login row (neither contains /dashboard/)
         nav_rows = [r for r in rows if r[1] == 'NavigationEventAudit']
         self.assertEqual(len(nav_rows), 1)
 
-    def test_url_include_mode_defaults_for_invalid_input(self):
+    def test_path_include_mode_defaults_for_invalid_input(self):
         report = self._get_report({
             'username': 'admin@test.com',
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
-            'url_include_mode': 'iregex',
+            'path_include_mode': 'iregex',
         })
-        self.assertEqual(report.selected_url_include_mode, 'contains')
+        self.assertEqual(report.selected_path_include_mode, 'contains')
 
-    def test_url_exclude_mode_defaults_for_invalid_input(self):
+    def test_path_exclude_mode_defaults_for_invalid_input(self):
         report = self._get_report({
             'username': 'admin@test.com',
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
-            'url_exclude_mode': 'regex',
+            'path_exclude_mode': 'regex',
         })
-        self.assertEqual(report.selected_url_exclude_mode, 'contains')
+        self.assertEqual(report.selected_path_exclude_mode, 'contains')
 
     def test_status_code_filter_excludes_access_events(self):
         report = self._get_report({
@@ -292,16 +292,16 @@ class TestUserAuditReportFilters(AuditcareTest):
         self.assertIn('AccessAudit', doc_types)
         self.assertIn('NavigationEventAudit', doc_types)
 
-    def test_url_include_and_exclude_combined(self):
-        """Include URLs containing /a/test-domain/ but exclude /dashboard/"""
+    def test_path_include_and_exclude_combined(self):
+        """Include paths containing /a/test-domain/ but exclude /dashboard/"""
         report = self._get_report({
             'username': 'admin@test.com',
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
-            'url_include': '/a/test-domain/',
-            'url_include_mode': 'contains',
-            'url_exclude': '/dashboard/',
-            'url_exclude_mode': 'contains',
+            'path_include': '/a/test-domain/',
+            'path_include_mode': 'contains',
+            'path_exclude': '/dashboard/',
+            'path_exclude_mode': 'contains',
         })
         rows = report.rows
         # Should get the API row and the AccessAudit login row
@@ -309,13 +309,13 @@ class TestUserAuditReportFilters(AuditcareTest):
         self.assertEqual(len(nav_rows), 1)
         self.assertIn('/api/', nav_rows[0][6])
 
-    def test_url_include_startswith(self):
+    def test_path_include_startswith(self):
         report = self._get_report({
             'username': 'admin@test.com',
             'startdate': '2026-03-27',
             'enddate': '2026-03-27',
-            'url_include': '/a/test-domain/api/',
-            'url_include_mode': 'startswith',
+            'path_include': '/a/test-domain/api/',
+            'path_include_mode': 'startswith',
         })
         rows = report.rows
         nav_rows = [r for r in rows if r[1] == 'NavigationEventAudit']
